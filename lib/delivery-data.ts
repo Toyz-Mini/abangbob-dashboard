@@ -7,8 +7,8 @@ export const MOCK_DELIVERY_ORDERS: DeliveryOrder[] = [
     customerName: 'Ali Ahmad',
     customerPhone: '+6737123456',
     items: [
-      { id: '1', name: 'Nasi Lemak Ayam', category: 'Nasi Lemak', price: 6.50, quantity: 2 },
-      { id: '7', name: 'Teh Ais', category: 'Minuman', price: 2.50, quantity: 2 },
+      { id: '1', name: 'Nasi Lemak Ayam', category: 'Nasi Lemak', price: 6.50, quantity: 2, selectedModifiers: [], itemTotal: 13.00, isAvailable: true, modifierGroupIds: [] },
+      { id: '7', name: 'Teh Ais', category: 'Minuman', price: 2.50, quantity: 2, selectedModifiers: [], itemTotal: 5.00, isAvailable: true, modifierGroupIds: [] },
     ],
     totalAmount: 18.00,
     status: 'new',
@@ -22,7 +22,7 @@ export const MOCK_DELIVERY_ORDERS: DeliveryOrder[] = [
     customerName: 'Sarah Binti Rahman',
     customerPhone: '+6737234567',
     items: [
-      { id: '4', name: 'Burger Ayam', category: 'Burger', price: 8.00, quantity: 1 },
+      { id: '4', name: 'Burger Ayam', category: 'Burger', price: 8.00, quantity: 1, selectedModifiers: [], itemTotal: 8.00, isAvailable: true, modifierGroupIds: [] },
     ],
     totalAmount: 8.00,
     status: 'preparing',
@@ -36,8 +36,8 @@ export const MOCK_DELIVERY_ORDERS: DeliveryOrder[] = [
     customerName: 'Hassan Bin Ali',
     customerPhone: '+6737345678',
     items: [
-      { id: '2', name: 'Nasi Lemak Rendang', category: 'Nasi Lemak', price: 7.00, quantity: 1 },
-      { id: '9', name: 'Lime Juice', category: 'Minuman', price: 3.00, quantity: 1 },
+      { id: '2', name: 'Nasi Lemak Rendang', category: 'Nasi Lemak', price: 7.00, quantity: 1, selectedModifiers: [], itemTotal: 7.00, isAvailable: true, modifierGroupIds: [] },
+      { id: '9', name: 'Lime Juice', category: 'Minuman', price: 3.00, quantity: 1, selectedModifiers: [], itemTotal: 3.00, isAvailable: true, modifierGroupIds: [] },
     ],
     totalAmount: 10.00,
     status: 'ready',

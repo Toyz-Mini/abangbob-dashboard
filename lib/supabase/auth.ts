@@ -104,19 +104,21 @@ export async function authenticateStaffPin(staffId: string, pin: string): Promis
       return { success: false, message: 'Staf tidak dijumpai' };
     }
 
-    if (data.status !== 'active') {
+    const staffData = data as { id: string; name: string; role: string; pin: string; status: string };
+
+    if (staffData.status !== 'active') {
       return { success: false, message: 'Staf tidak aktif' };
     }
 
-    if (data.pin !== pin) {
+    if (staffData.pin !== pin) {
       return { success: false, message: 'PIN salah' };
     }
 
     return { 
       success: true, 
-      message: `Selamat datang, ${data.name}`,
-      staffId: data.id,
-      role: data.role,
+      message: `Selamat datang, ${staffData.name}`,
+      staffId: staffData.id,
+      role: staffData.role as 'Manager' | 'Staff' | 'Admin',
     };
   } catch {
     return offlineStaffAuth(staffId, pin);

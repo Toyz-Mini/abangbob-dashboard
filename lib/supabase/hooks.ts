@@ -69,13 +69,13 @@ export function useRealtimeTable<T extends keyof Database['public']['Tables']>(
       let query = supabase.from(tableName).select('*');
       
       if (filter) {
-        query = query.eq(filter.column, filter.value);
+        query = query.eq(filter.column as string, filter.value as never);
       }
 
       const { data: result, error: queryError } = await query;
 
       if (queryError) throw queryError;
-      setData((result as TableRow[]) || []);
+      setData((result as unknown as TableRow[]) || []);
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Unknown error'));
     } finally {
@@ -163,11 +163,11 @@ export function useRealtimeRecord<T extends keyof Database['public']['Tables']>(
       const { data: result, error: queryError } = await supabase
         .from(tableName)
         .select('*')
-        .eq('id', id)
+        .eq('id' as string, id as never)
         .single();
 
       if (queryError) throw queryError;
-      setData(result as TableRow);
+      setData(result as unknown as TableRow);
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Unknown error'));
     } finally {
@@ -314,13 +314,13 @@ export function useInventoryWithAlerts(options?: { outlet_id?: string }) {
     try {
       let query = supabase.from('inventory').select('*');
       if (outlet_id) {
-        query = query.eq('outlet_id', outlet_id);
+        query = query.eq('outlet_id' as string, outlet_id as never);
       }
 
       const { data, error } = await query;
       if (error) throw error;
 
-      const items = data || [];
+      const items = (data || []) as unknown as Tables<'inventory'>[];
       setInventory(items);
       setLowStockItems(items.filter(item => item.current_quantity <= item.min_quantity));
     } catch (err) {

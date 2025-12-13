@@ -180,17 +180,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return loginWithPinOffline(staffId, pin);
         }
 
-        if (data.status !== 'active') {
+        const staffData = data as { id: string; name: string; email: string | null; role: string; status: string; outlet_id: string | null };
+
+        if (staffData.status !== 'active') {
           return { success: false, error: 'Staff account not active', errorKey: AUTH_ERROR_KEYS.STAFF_NOT_ACTIVE };
         }
 
         const staffProfile: StaffProfile = {
-          id: data.id,
-          name: data.name,
-          email: data.email,
-          role: data.role as 'Manager' | 'Staff' | 'Admin',
-          status: data.status,
-          outlet_id: data.outlet_id,
+          id: staffData.id,
+          name: staffData.name,
+          email: staffData.email,
+          role: staffData.role as 'Manager' | 'Staff' | 'Admin',
+          status: staffData.status,
+          outlet_id: staffData.outlet_id,
         };
 
         setCurrentStaff(staffProfile);

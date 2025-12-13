@@ -161,7 +161,7 @@ async function migrateTable(
       // Use insert for tables where we're generating new UUIDs
       const result = await supabase
         .from(tableName)
-        .insert(transformedData)
+        .insert(transformedData as never)
         .select();
       data = result.data;
       error = result.error;
@@ -169,7 +169,7 @@ async function migrateTable(
       // Use upsert for tables with existing UUIDs
       const result = await supabase
         .from(tableName)
-        .upsert(transformedData, { onConflict: 'id' })
+        .upsert(transformedData as never, { onConflict: 'id' })
         .select();
       data = result.data;
       error = result.error;

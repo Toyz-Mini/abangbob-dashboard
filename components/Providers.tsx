@@ -14,6 +14,7 @@ import { SetupProvider } from '@/lib/contexts/SetupContext';
 import TopProgressBar from '@/components/TopProgressBar';
 import OfflineIndicator from '@/components/OfflineIndicator';
 import { TourProvider } from '@/components/onboarding/TourProvider';
+import HelpButton from '@/components/onboarding/HelpButton';
 
 export default function Providers({ children }: { children: ReactNode }) {
   return (
@@ -35,6 +36,9 @@ export default function Providers({ children }: { children: ReactNode }) {
                           
                           {/* Main content */}
                           {children}
+                          
+                          {/* Floating Help Button */}
+                          <HelpButton />
                           
                           {/* Offline indicator */}
                           <OfflineIndicator />

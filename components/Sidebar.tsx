@@ -27,6 +27,7 @@ import {
   CheckSquare,
   Calendar,
   ClipboardCheck,
+  HelpCircle,
   type LucideIcon
 } from 'lucide-react';
 
@@ -34,6 +35,7 @@ interface NavItem {
   href: string;
   labelKey: string;
   icon: LucideIcon;
+  tourId?: string; // For interactive tour targeting
 }
 
 interface NavGroup {
@@ -46,59 +48,65 @@ const navGroupsConfig: NavGroup[] = [
   {
     titleKey: 'nav.group.main',
     items: [
-      { href: '/', labelKey: 'nav.dashboard', icon: LayoutDashboard },
+      { href: '/', labelKey: 'nav.dashboard', icon: LayoutDashboard, tourId: 'dashboard' },
     ]
   },
   {
     titleKey: 'nav.group.staffPortal',
     items: [
-      { href: '/staff-portal', labelKey: 'nav.portal', icon: UserCircle },
-      { href: '/staff-portal/schedule', labelKey: 'nav.mySchedule', icon: Calendar },
-      { href: '/staff-portal/checklist', labelKey: 'nav.checklist', icon: CheckSquare },
+      { href: '/staff-portal', labelKey: 'nav.portal', icon: UserCircle, tourId: 'staff-portal' },
+      { href: '/staff-portal/schedule', labelKey: 'nav.mySchedule', icon: Calendar, tourId: 'schedule' },
+      { href: '/staff-portal/checklist', labelKey: 'nav.checklist', icon: CheckSquare, tourId: 'checklist' },
     ]
   },
   {
     titleKey: 'nav.group.operations',
     items: [
-      { href: '/pos', labelKey: 'nav.pos', icon: ShoppingCart },
-      { href: '/menu-management', labelKey: 'nav.menu', icon: BookOpen },
-      { href: '/kds', labelKey: 'nav.kds', icon: Monitor },
-      { href: '/delivery', labelKey: 'nav.delivery', icon: Truck },
+      { href: '/pos', labelKey: 'nav.pos', icon: ShoppingCart, tourId: 'pos' },
+      { href: '/menu-management', labelKey: 'nav.menu', icon: BookOpen, tourId: 'menu' },
+      { href: '/kds', labelKey: 'nav.kds', icon: Monitor, tourId: 'kds' },
+      { href: '/delivery', labelKey: 'nav.delivery', icon: Truck, tourId: 'delivery' },
     ]
   },
   {
     titleKey: 'nav.group.inventoryProduction',
     items: [
-      { href: '/inventory', labelKey: 'nav.inventory', icon: Package },
-      { href: '/production', labelKey: 'nav.production', icon: Factory },
-      { href: '/recipes', labelKey: 'nav.recipes', icon: ChefHat },
-      { href: '/suppliers', labelKey: 'nav.suppliers', icon: Boxes },
+      { href: '/inventory', labelKey: 'nav.inventory', icon: Package, tourId: 'inventory' },
+      { href: '/production', labelKey: 'nav.production', icon: Factory, tourId: 'production' },
+      { href: '/recipes', labelKey: 'nav.recipes', icon: ChefHat, tourId: 'recipes' },
+      { href: '/suppliers', labelKey: 'nav.suppliers', icon: Boxes, tourId: 'suppliers' },
     ]
   },
   {
     titleKey: 'nav.group.hrFinance',
     items: [
-      { href: '/hr', labelKey: 'nav.hr', icon: Users },
+      { href: '/hr', labelKey: 'nav.hr', icon: Users, tourId: 'hr' },
       { href: '/hr/approvals', labelKey: 'nav.approvals', icon: ClipboardCheck },
-      { href: '/hr/leave-calendar', labelKey: 'nav.leaveCalendar', icon: Calendar },
+      { href: '/hr/leave-calendar', labelKey: 'nav.leaveCalendar', icon: Calendar, tourId: 'leave' },
       { href: '/hr/checklist-config', labelKey: 'nav.checklistConfig', icon: CheckSquare },
-      { href: '/finance', labelKey: 'nav.finance', icon: DollarSign },
+      { href: '/finance', labelKey: 'nav.finance', icon: DollarSign, tourId: 'finance' },
     ]
   },
   {
     titleKey: 'nav.group.marketing',
     items: [
-      { href: '/customers', labelKey: 'nav.customers', icon: UserCheck },
-      { href: '/promotions', labelKey: 'nav.promotions', icon: Tag },
+      { href: '/customers', labelKey: 'nav.customers', icon: UserCheck, tourId: 'customers' },
+      { href: '/promotions', labelKey: 'nav.promotions', icon: Tag, tourId: 'promotions' },
     ]
   },
   {
     titleKey: 'nav.group.reportsSettings',
     items: [
-      { href: '/analytics', labelKey: 'nav.analytics', icon: BarChart3 },
+      { href: '/analytics', labelKey: 'nav.analytics', icon: BarChart3, tourId: 'analytics' },
       { href: '/audit-log', labelKey: 'nav.auditLog', icon: FileText },
       { href: '/notifications', labelKey: 'nav.notifications', icon: Bell },
-      { href: '/settings', labelKey: 'nav.settings', icon: Settings },
+      { href: '/settings', labelKey: 'nav.settings', icon: Settings, tourId: 'settings' },
+    ]
+  },
+  {
+    titleKey: 'nav.group.help',
+    items: [
+      { href: '/help', labelKey: 'nav.help', icon: HelpCircle, tourId: 'help-center' },
     ]
   }
 ];
@@ -148,6 +156,7 @@ const Sidebar = forwardRef<HTMLElement, SidebarProps>(({ isOpen, onMouseEnter, o
                       href={item.href}
                       className={`nav-link ${isActive ? 'active' : ''}`}
                       title={!isOpen ? label : undefined}
+                      data-tour={item.tourId}
                     >
                       <Icon size={20} />
                       {isOpen && <span>{label}</span>}

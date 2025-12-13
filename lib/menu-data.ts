@@ -9,6 +9,8 @@ export const MOCK_MENU: MenuItem[] = [
     price: 6.50,
     description: 'Nasi lemak dengan ayam goreng',
     ingredients: ['nasi', 'ayam', 'sambal', 'telur', 'kacang', 'timun'],
+    isAvailable: true,
+    modifierGroupIds: [],
   },
   {
     id: '2',
@@ -17,6 +19,8 @@ export const MOCK_MENU: MenuItem[] = [
     price: 7.00,
     description: 'Nasi lemak dengan rendang daging',
     ingredients: ['nasi', 'daging', 'sambal', 'telur', 'kacang', 'timun'],
+    isAvailable: true,
+    modifierGroupIds: [],
   },
   {
     id: '3',
@@ -25,6 +29,8 @@ export const MOCK_MENU: MenuItem[] = [
     price: 4.00,
     description: 'Nasi lemak biasa dengan telur',
     ingredients: ['nasi', 'sambal', 'telur', 'kacang', 'timun'],
+    isAvailable: true,
+    modifierGroupIds: [],
   },
   
   // Burger Category
@@ -35,6 +41,8 @@ export const MOCK_MENU: MenuItem[] = [
     price: 8.00,
     description: 'Burger ayam crispy',
     ingredients: ['bun', 'ayam', 'lettuce', 'tomato', 'mayo'],
+    isAvailable: true,
+    modifierGroupIds: [],
   },
   {
     id: '5',
@@ -43,6 +51,8 @@ export const MOCK_MENU: MenuItem[] = [
     price: 9.00,
     description: 'Burger daging bakar',
     ingredients: ['bun', 'daging', 'cheese', 'lettuce', 'tomato', 'onion'],
+    isAvailable: true,
+    modifierGroupIds: [],
   },
   {
     id: '6',
@@ -51,6 +61,8 @@ export const MOCK_MENU: MenuItem[] = [
     price: 12.00,
     description: 'Burger double patty dengan extra cheese',
     ingredients: ['bun', 'daging', 'daging', 'cheese', 'cheese', 'lettuce', 'tomato'],
+    isAvailable: true,
+    modifierGroupIds: [],
   },
   
   // Minuman Category
@@ -61,6 +73,8 @@ export const MOCK_MENU: MenuItem[] = [
     price: 2.50,
     description: 'Teh tarik ais',
     ingredients: ['teh', 'susu', 'gula', 'ais'],
+    isAvailable: true,
+    modifierGroupIds: [],
   },
   {
     id: '8',
@@ -69,6 +83,8 @@ export const MOCK_MENU: MenuItem[] = [
     price: 2.00,
     description: 'Kopi hitam',
     ingredients: ['kopi', 'gula'],
+    isAvailable: true,
+    modifierGroupIds: [],
   },
   {
     id: '9',
@@ -77,6 +93,8 @@ export const MOCK_MENU: MenuItem[] = [
     price: 3.00,
     description: 'Air limau nipis',
     ingredients: ['limau', 'gula', 'ais'],
+    isAvailable: true,
+    modifierGroupIds: [],
   },
   {
     id: '10',
@@ -85,6 +103,8 @@ export const MOCK_MENU: MenuItem[] = [
     price: 3.50,
     description: 'Milo sejuk',
     ingredients: ['milo', 'susu', 'ais'],
+    isAvailable: true,
+    modifierGroupIds: [],
   },
 ];
 
