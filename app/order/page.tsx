@@ -23,10 +23,10 @@ export default function WebOrderPage() {
       const existing = prev.find(i => i.id === item.id);
       if (existing) {
         return prev.map(i => 
-          i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i
+          i.id === item.id ? { ...i, quantity: i.quantity + 1, itemTotal: (i.quantity + 1) * i.price } : i
         );
       }
-      return [...prev, { ...item, quantity: 1 }];
+      return [...prev, { ...item, quantity: 1, selectedModifiers: [], itemTotal: item.price }];
     });
   };
 
