@@ -405,6 +405,8 @@
   "settings.saving": "Saving...",
   "settings.saveSuccess": "Settings saved successfully!",
   "settings.resetSuccess": "Data reset successfully. Please refresh the page.",
+  "settings.paymentMethods": "Payment Methods",
+  "settings.security": "Security",
   
   "kds.title": "Kitchen Display System",
   "kds.subtitle": "Kitchen display",

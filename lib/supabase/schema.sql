@@ -15,9 +15,44 @@ CREATE TABLE IF NOT EXISTS public.outlets (
   address TEXT,
   phone TEXT,
   email TEXT,
+  logo_url TEXT,
+  social_media JSONB DEFAULT '{}'::jsonb,
   is_active BOOLEAN DEFAULT true,
   settings JSONB DEFAULT '{}'::jsonb
 );
+
+-- ========================================
+-- OUTLET SETTINGS TABLE (extended settings)
+-- ========================================
+CREATE TABLE IF NOT EXISTS public.outlet_settings (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  outlet_id UUID REFERENCES public.outlets(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  -- Payment Methods
+  payment_methods JSONB DEFAULT '{"cash": true, "card": true, "qr": true, "ewallet": false}'::jsonb,
+  -- Theme Settings
+  theme TEXT DEFAULT 'dark' CHECK (theme IN ('light', 'dark', 'auto')),
+  -- Order Settings
+  order_number_prefix TEXT DEFAULT 'AB',
+  -- Delivery Settings
+  delivery_enabled BOOLEAN DEFAULT false,
+  delivery_radius_km DECIMAL(5,2) DEFAULT 5.00,
+  delivery_min_order DECIMAL(10,2) DEFAULT 10.00,
+  delivery_fee DECIMAL(10,2) DEFAULT 3.00,
+  -- Security Settings
+  session_timeout_minutes INTEGER DEFAULT 480,
+  pin_min_length INTEGER DEFAULT 4,
+  require_clock_in_photo BOOLEAN DEFAULT true,
+  UNIQUE(outlet_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_outlet_settings_outlet ON public.outlet_settings(outlet_id);
+
+-- Add RLS for outlet_settings
+ALTER TABLE public.outlet_settings ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Anyone can view outlet settings" ON public.outlet_settings FOR SELECT USING (true);
+CREATE POLICY "Admin can manage outlet settings" ON public.outlet_settings FOR ALL USING (true);
 
 -- ========================================
 -- STAFF TABLE
@@ -295,4 +330,23 @@ CREATE TRIGGER update_orders_updated_at BEFORE UPDATE ON public.orders
 
 CREATE TRIGGER update_customers_updated_at BEFORE UPDATE ON public.customers
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_outlet_settings_updated_at BEFORE UPDATE ON public.outlet_settings
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- ========================================
+-- STORAGE BUCKETS (run in Supabase Dashboard > Storage)
+-- ========================================
+-- Create the following storage buckets manually in Supabase Dashboard:
+-- 
+-- 1. outlet-logos (public bucket for outlet logos)
+--    - Enable public access
+--    - Allowed MIME types: image/jpeg, image/png, image/webp, image/gif
+--    - Max file size: 2MB
+--
+-- Storage policies for outlet-logos bucket:
+-- INSERT: authenticated users can upload
+-- SELECT: public can view
+-- UPDATE: authenticated users can update
+-- DELETE: authenticated users can delete
 

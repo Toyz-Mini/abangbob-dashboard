@@ -405,6 +405,8 @@
   "settings.saving": "Menyimpan...",
   "settings.saveSuccess": "Tetapan berjaya disimpan!",
   "settings.resetSuccess": "Data berjaya direset. Sila refresh halaman.",
+  "settings.paymentMethods": "Kaedah Pembayaran",
+  "settings.security": "Keselamatan",
   
   "kds.title": "Kitchen Display System",
   "kds.subtitle": "Paparan dapur",

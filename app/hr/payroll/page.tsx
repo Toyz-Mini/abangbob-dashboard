@@ -228,7 +228,7 @@ export default function PayrollPage() {
           />
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4" style={{ gap: '1.5rem' }}>
+        <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-4" style={{ gap: '1.5rem' }}>
           {/* Settings */}
           <div>
             <div className="card">
@@ -290,7 +290,7 @@ export default function PayrollPage() {
           </div>
 
           {/* Payroll Table */}
-          <div className="lg:col-span-3">
+          <div className="md:col-span-3 lg:col-span-3">
             <div className="card">
               <div className="card-header">
                 <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>

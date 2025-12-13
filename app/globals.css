@@ -868,6 +868,12 @@ body {
   .md\:grid-cols-3 {
     grid-template-columns: repeat(3, 1fr);
   }
+  .md\:grid-cols-4 {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  .md\:col-span-3 {
+    grid-column: span 3 / span 3;
+  }
 }
 
 @media (min-width: 1024px) {
@@ -882,6 +888,9 @@ body {
   }
   .lg\:col-span-2 {
     grid-column: span 2 / span 2;
+  }
+  .lg\:col-span-3 {
+    grid-column: span 3 / span 3;
   }
 }
 

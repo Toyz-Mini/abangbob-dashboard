@@ -8,6 +8,7 @@ import Modal from '@/components/Modal';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import DataMigration from '@/components/DataMigration';
 import { useAuth } from '@/lib/contexts/AuthContext';
+import LogoUpload from '@/components/LogoUpload';
 import { 
   Settings, 
   Store, 
@@ -28,10 +29,16 @@ import {
   AlertTriangle,
   Cloud,
   LogOut,
-  User
+  User,
+  CreditCard,
+  Palette,
+  Lock,
+  Instagram,
+  Facebook,
+  MessageCircle
 } from 'lucide-react';
 
-type SettingSection = 'outlet' | 'operations' | 'receipt' | 'data' | 'notifications' | 'supabase';
+type SettingSection = 'outlet' | 'operations' | 'receipt' | 'data' | 'notifications' | 'supabase' | 'payment' | 'appearance' | 'security';
 
 export default function SettingsPage() {
   const { isInitialized } = useStore();
@@ -56,6 +63,39 @@ export default function SettingsPage() {
     currency: 'BND',
     timezone: 'Asia/Brunei',
     taxRate: 0,
+    logoUrl: '',
+  });
+
+  // Social media settings
+  const [socialMedia, setSocialMedia] = useState({
+    instagram: '@abangbob.bn',
+    facebook: 'abangbobnl',
+    tiktok: '@abangbob.bn',
+    whatsapp: '+673 712 3456',
+  });
+
+  // Payment method settings
+  const [paymentSettings, setPaymentSettings] = useState({
+    cash: true,
+    card: true,
+    qrCode: true,
+    dstPay: false,
+    bibdPay: false,
+    orderNumberPrefix: 'AB',
+  });
+
+  // Appearance settings
+  const [appearanceSettings, setAppearanceSettings] = useState({
+    theme: 'dark' as 'light' | 'dark' | 'auto',
+    compactMode: false,
+  });
+
+  // Security settings
+  const [securitySettings, setSecuritySettings] = useState({
+    sessionTimeoutMinutes: 480,
+    pinMinLength: 4,
+    requireClockInPhoto: true,
+    autoLockRegister: true,
   });
 
   // Operating hours
@@ -98,6 +138,10 @@ export default function SettingsPage() {
     localStorage.setItem('abangbob_operating_hours', JSON.stringify(operatingHours));
     localStorage.setItem('abangbob_receipt_settings', JSON.stringify(receiptSettings));
     localStorage.setItem('abangbob_notification_settings', JSON.stringify(notificationSettings));
+    localStorage.setItem('abangbob_social_media', JSON.stringify(socialMedia));
+    localStorage.setItem('abangbob_payment_settings', JSON.stringify(paymentSettings));
+    localStorage.setItem('abangbob_appearance_settings', JSON.stringify(appearanceSettings));
+    localStorage.setItem('abangbob_security_settings', JSON.stringify(securitySettings));
     
     setIsSaving(false);
     alert(t('settings.saveSuccess'));
@@ -111,6 +155,10 @@ export default function SettingsPage() {
       operatingHours,
       receiptSettings,
       notificationSettings,
+      socialMedia,
+      paymentSettings,
+      appearanceSettings,
+      securitySettings,
       // Would include all store data in real implementation
     };
 
@@ -148,6 +196,9 @@ export default function SettingsPage() {
     { id: 'outlet', labelKey: 'settings.outletProfile', icon: Store },
     { id: 'operations', labelKey: 'settings.operatingHours', icon: Clock },
     { id: 'receipt', labelKey: 'settings.receiptSettings', icon: Receipt },
+    { id: 'payment', labelKey: 'settings.paymentMethods', icon: CreditCard },
+    { id: 'appearance', labelKey: 'settings.appearance', icon: Palette },
+    { id: 'security', labelKey: 'settings.security', icon: Lock },
     { id: 'notifications', labelKey: 'settings.notifications', icon: Bell },
     { id: 'supabase', labelKey: 'settings.supabaseCloud', icon: Cloud },
     { id: 'data', labelKey: 'settings.dataBackup', icon: Database },
@@ -188,7 +239,7 @@ export default function SettingsPage() {
           </button>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4" style={{ gap: '1.5rem' }}>
+        <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-4" style={{ gap: '1.5rem' }}>
           {/* Sidebar Navigation */}
           <div>
             <div className="card" style={{ padding: 0 }}>
@@ -288,7 +339,7 @@ export default function SettingsPage() {
           </div>
 
           {/* Main Content */}
-          <div className="lg:col-span-3">
+          <div className="md:col-span-3 lg:col-span-3">
             {/* Outlet Profile */}
             {activeSection === 'outlet' && (
               <div className="card">
@@ -300,24 +351,35 @@ export default function SettingsPage() {
                   <div className="card-subtitle">{t('settings.outletProfileDesc')}</div>
                 </div>
 
-                <div className="form-group">
-                  <label className="form-label">{t('settings.outletName')}</label>
-                  <input
-                    type="text"
-                    className="form-input"
-                    value={outletSettings.name}
-                    onChange={(e) => setOutletSettings(prev => ({ ...prev, name: e.target.value }))}
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label className="form-label">{t('settings.address')}</label>
-                  <textarea
-                    className="form-input"
-                    value={outletSettings.address}
-                    onChange={(e) => setOutletSettings(prev => ({ ...prev, address: e.target.value }))}
-                    rows={2}
-                  />
+                {/* Logo Upload Section */}
+                <div style={{ display: 'flex', gap: '1.5rem', marginBottom: '1.5rem', flexWrap: 'wrap', alignItems: 'flex-start' }}>
+                  <div>
+                    <label className="form-label" style={{ marginBottom: '0.5rem', display: 'block' }}>Logo Kedai</label>
+                    <LogoUpload
+                      currentLogoUrl={outletSettings.logoUrl}
+                      onLogoChange={(url) => setOutletSettings(prev => ({ ...prev, logoUrl: url || '' }))}
+                    />
+                  </div>
+                  <div style={{ flex: 1, minWidth: '250px' }}>
+                    <div className="form-group">
+                      <label className="form-label">{t('settings.outletName')}</label>
+                      <input
+                        type="text"
+                        className="form-input"
+                        value={outletSettings.name}
+                        onChange={(e) => setOutletSettings(prev => ({ ...prev, name: e.target.value }))}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">{t('settings.address')}</label>
+                      <textarea
+                        className="form-input"
+                        value={outletSettings.address}
+                        onChange={(e) => setOutletSettings(prev => ({ ...prev, address: e.target.value }))}
+                        rows={2}
+                      />
+                    </div>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-2" style={{ gap: '1rem' }}>
@@ -376,6 +438,70 @@ export default function SettingsPage() {
                       min="0"
                       max="100"
                     />
+                  </div>
+                </div>
+
+                {/* Social Media Section */}
+                <div style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid var(--gray-200)' }}>
+                  <h4 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', fontSize: '1rem', fontWeight: 600 }}>
+                    <MessageCircle size={18} />
+                    Media Sosial
+                  </h4>
+                  <div className="grid grid-cols-2" style={{ gap: '1rem' }}>
+                    <div className="form-group">
+                      <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <Instagram size={16} />
+                        Instagram
+                      </label>
+                      <input
+                        type="text"
+                        className="form-input"
+                        value={socialMedia.instagram}
+                        onChange={(e) => setSocialMedia(prev => ({ ...prev, instagram: e.target.value }))}
+                        placeholder="@username"
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <Facebook size={16} />
+                        Facebook
+                      </label>
+                      <input
+                        type="text"
+                        className="form-input"
+                        value={socialMedia.facebook}
+                        onChange={(e) => setSocialMedia(prev => ({ ...prev, facebook: e.target.value }))}
+                        placeholder="Page name atau URL"
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/>
+                        </svg>
+                        TikTok
+                      </label>
+                      <input
+                        type="text"
+                        className="form-input"
+                        value={socialMedia.tiktok}
+                        onChange={(e) => setSocialMedia(prev => ({ ...prev, tiktok: e.target.value }))}
+                        placeholder="@username"
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <MessageCircle size={16} />
+                        WhatsApp
+                      </label>
+                      <input
+                        type="text"
+                        className="form-input"
+                        value={socialMedia.whatsapp}
+                        onChange={(e) => setSocialMedia(prev => ({ ...prev, whatsapp: e.target.value }))}
+                        placeholder="+673 XXX XXXX"
+                      />
+                    </div>
                   </div>
                 </div>
 
@@ -525,6 +651,362 @@ export default function SettingsPage() {
                       style={{ width: '18px', height: '18px' }}
                     />
                     <span>{t('settings.autoPrint')}</span>
+                  </label>
+                </div>
+              </div>
+            )}
+
+            {/* Payment Methods Settings */}
+            {activeSection === 'payment' && (
+              <div className="card">
+                <div className="card-header">
+                  <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <CreditCard size={20} />
+                    Kaedah Pembayaran
+                  </div>
+                  <div className="card-subtitle">Tetapkan kaedah pembayaran yang diterima</div>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  <label style={{ 
+                    display: 'flex', 
+                    justifyContent: 'space-between', 
+                    alignItems: 'center',
+                    padding: '1rem',
+                    background: 'var(--gray-100)',
+                    borderRadius: 'var(--radius-md)',
+                    cursor: 'pointer'
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                      <div style={{ width: '40px', height: '40px', background: '#22c55e', borderRadius: 'var(--radius-md)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
+                        <DollarSign size={20} />
+                      </div>
+                      <div>
+                        <div style={{ fontWeight: 600 }}>Tunai (Cash)</div>
+                        <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Terima bayaran tunai</div>
+                      </div>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={paymentSettings.cash}
+                      onChange={(e) => setPaymentSettings(prev => ({ ...prev, cash: e.target.checked }))}
+                      style={{ width: '20px', height: '20px' }}
+                    />
+                  </label>
+
+                  <label style={{ 
+                    display: 'flex', 
+                    justifyContent: 'space-between', 
+                    alignItems: 'center',
+                    padding: '1rem',
+                    background: 'var(--gray-100)',
+                    borderRadius: 'var(--radius-md)',
+                    cursor: 'pointer'
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                      <div style={{ width: '40px', height: '40px', background: '#3b82f6', borderRadius: 'var(--radius-md)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
+                        <CreditCard size={20} />
+                      </div>
+                      <div>
+                        <div style={{ fontWeight: 600 }}>Kad (Card)</div>
+                        <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Debit/Credit card</div>
+                      </div>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={paymentSettings.card}
+                      onChange={(e) => setPaymentSettings(prev => ({ ...prev, card: e.target.checked }))}
+                      style={{ width: '20px', height: '20px' }}
+                    />
+                  </label>
+
+                  <label style={{ 
+                    display: 'flex', 
+                    justifyContent: 'space-between', 
+                    alignItems: 'center',
+                    padding: '1rem',
+                    background: 'var(--gray-100)',
+                    borderRadius: 'var(--radius-md)',
+                    cursor: 'pointer'
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                      <div style={{ width: '40px', height: '40px', background: '#8b5cf6', borderRadius: 'var(--radius-md)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <rect x="3" y="3" width="18" height="18" rx="2"/>
+                          <path d="M7 7h.01M17 7h.01M7 17h.01M17 17h.01M12 12h.01"/>
+                        </svg>
+                      </div>
+                      <div>
+                        <div style={{ fontWeight: 600 }}>QR Code</div>
+                        <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Imbas & bayar</div>
+                      </div>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={paymentSettings.qrCode}
+                      onChange={(e) => setPaymentSettings(prev => ({ ...prev, qrCode: e.target.checked }))}
+                      style={{ width: '20px', height: '20px' }}
+                    />
+                  </label>
+
+                  <label style={{ 
+                    display: 'flex', 
+                    justifyContent: 'space-between', 
+                    alignItems: 'center',
+                    padding: '1rem',
+                    background: 'var(--gray-100)',
+                    borderRadius: 'var(--radius-md)',
+                    cursor: 'pointer'
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                      <div style={{ width: '40px', height: '40px', background: '#f97316', borderRadius: 'var(--radius-md)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 700, fontSize: '0.7rem' }}>
+                        DST
+                      </div>
+                      <div>
+                        <div style={{ fontWeight: 600 }}>DST Pay</div>
+                        <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>E-wallet DST</div>
+                      </div>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={paymentSettings.dstPay}
+                      onChange={(e) => setPaymentSettings(prev => ({ ...prev, dstPay: e.target.checked }))}
+                      style={{ width: '20px', height: '20px' }}
+                    />
+                  </label>
+
+                  <label style={{ 
+                    display: 'flex', 
+                    justifyContent: 'space-between', 
+                    alignItems: 'center',
+                    padding: '1rem',
+                    background: 'var(--gray-100)',
+                    borderRadius: 'var(--radius-md)',
+                    cursor: 'pointer'
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                      <div style={{ width: '40px', height: '40px', background: '#0891b2', borderRadius: 'var(--radius-md)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 700, fontSize: '0.6rem' }}>
+                        BIBD
+                      </div>
+                      <div>
+                        <div style={{ fontWeight: 600 }}>BIBD Pay</div>
+                        <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>E-wallet BIBD</div>
+                      </div>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={paymentSettings.bibdPay}
+                      onChange={(e) => setPaymentSettings(prev => ({ ...prev, bibdPay: e.target.checked }))}
+                      style={{ width: '20px', height: '20px' }}
+                    />
+                  </label>
+                </div>
+
+                <div style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid var(--gray-200)' }}>
+                  <h4 style={{ marginBottom: '1rem', fontSize: '1rem', fontWeight: 600 }}>Tetapan Pesanan</h4>
+                  <div className="form-group">
+                    <label className="form-label">Prefix Nombor Pesanan</label>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <input
+                        type="text"
+                        className="form-input"
+                        value={paymentSettings.orderNumberPrefix}
+                        onChange={(e) => setPaymentSettings(prev => ({ ...prev, orderNumberPrefix: e.target.value.toUpperCase() }))}
+                        maxLength={4}
+                        style={{ width: '100px' }}
+                      />
+                      <span style={{ color: 'var(--text-secondary)' }}>- 001, - 002, ...</span>
+                    </div>
+                    <small style={{ color: 'var(--text-secondary)', marginTop: '0.25rem', display: 'block' }}>
+                      Contoh: AB-001, AB-002
+                    </small>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Appearance Settings */}
+            {activeSection === 'appearance' && (
+              <div className="card">
+                <div className="card-header">
+                  <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <Palette size={20} />
+                    Paparan
+                  </div>
+                  <div className="card-subtitle">Sesuaikan rupa aplikasi</div>
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Tema</label>
+                  <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                    {[
+                      { value: 'light', label: 'Cerah', icon: '☀️', bg: '#f8fafc', border: '#e2e8f0' },
+                      { value: 'dark', label: 'Gelap', icon: '🌙', bg: '#1e293b', border: '#334155' },
+                      { value: 'auto', label: 'Auto', icon: '🔄', bg: 'linear-gradient(135deg, #f8fafc 50%, #1e293b 50%)', border: '#94a3b8' },
+                    ].map(theme => (
+                      <button
+                        key={theme.value}
+                        type="button"
+                        onClick={() => setAppearanceSettings(prev => ({ ...prev, theme: theme.value as 'light' | 'dark' | 'auto' }))}
+                        style={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          gap: '0.5rem',
+                          padding: '1rem',
+                          border: `2px solid ${appearanceSettings.theme === theme.value ? 'var(--primary)' : theme.border}`,
+                          borderRadius: 'var(--radius-lg)',
+                          background: 'var(--card-bg)',
+                          cursor: 'pointer',
+                          minWidth: '100px',
+                          transition: 'all 0.2s ease',
+                        }}
+                      >
+                        <div style={{
+                          width: '60px',
+                          height: '40px',
+                          background: theme.bg,
+                          borderRadius: 'var(--radius-md)',
+                          border: `1px solid ${theme.border}`,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: '1.2rem',
+                        }}>
+                          {theme.icon}
+                        </div>
+                        <span style={{ 
+                          fontWeight: appearanceSettings.theme === theme.value ? 600 : 400,
+                          color: appearanceSettings.theme === theme.value ? 'var(--primary)' : 'var(--text-primary)'
+                        }}>
+                          {theme.label}
+                        </span>
+                        {appearanceSettings.theme === theme.value && (
+                          <CheckCircle size={16} color="var(--primary)" />
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div style={{ marginTop: '1.5rem' }}>
+                  <label style={{ 
+                    display: 'flex', 
+                    justifyContent: 'space-between', 
+                    alignItems: 'center',
+                    padding: '1rem',
+                    background: 'var(--gray-100)',
+                    borderRadius: 'var(--radius-md)',
+                    cursor: 'pointer'
+                  }}>
+                    <div>
+                      <div style={{ fontWeight: 600 }}>Mod Kompak</div>
+                      <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+                        Kurangkan saiz elemen untuk lebih banyak kandungan
+                      </div>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={appearanceSettings.compactMode}
+                      onChange={(e) => setAppearanceSettings(prev => ({ ...prev, compactMode: e.target.checked }))}
+                      style={{ width: '20px', height: '20px' }}
+                    />
+                  </label>
+                </div>
+              </div>
+            )}
+
+            {/* Security Settings */}
+            {activeSection === 'security' && (
+              <div className="card">
+                <div className="card-header">
+                  <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <Lock size={20} />
+                    Keselamatan
+                  </div>
+                  <div className="card-subtitle">Tetapan keselamatan sistem</div>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                  <div className="form-group">
+                    <label className="form-label">Tamat Masa Sesi (minit)</label>
+                    <select
+                      className="form-select"
+                      value={securitySettings.sessionTimeoutMinutes}
+                      onChange={(e) => setSecuritySettings(prev => ({ ...prev, sessionTimeoutMinutes: Number(e.target.value) }))}
+                    >
+                      <option value={30}>30 minit</option>
+                      <option value={60}>1 jam</option>
+                      <option value={120}>2 jam</option>
+                      <option value={240}>4 jam</option>
+                      <option value={480}>8 jam</option>
+                      <option value={0}>Tiada (sentiasa aktif)</option>
+                    </select>
+                    <small style={{ color: 'var(--text-secondary)', marginTop: '0.25rem', display: 'block' }}>
+                      Auto logout selepas tempoh tidak aktif
+                    </small>
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">Panjang Minimum PIN</label>
+                    <select
+                      className="form-select"
+                      value={securitySettings.pinMinLength}
+                      onChange={(e) => setSecuritySettings(prev => ({ ...prev, pinMinLength: Number(e.target.value) }))}
+                    >
+                      <option value={4}>4 digit</option>
+                      <option value={5}>5 digit</option>
+                      <option value={6}>6 digit</option>
+                    </select>
+                    <small style={{ color: 'var(--text-secondary)', marginTop: '0.25rem', display: 'block' }}>
+                      Untuk PIN login staf
+                    </small>
+                  </div>
+
+                  <label style={{ 
+                    display: 'flex', 
+                    justifyContent: 'space-between', 
+                    alignItems: 'center',
+                    padding: '1rem',
+                    background: 'var(--gray-100)',
+                    borderRadius: 'var(--radius-md)',
+                    cursor: 'pointer'
+                  }}>
+                    <div>
+                      <div style={{ fontWeight: 600 }}>Wajib Foto Clock-In</div>
+                      <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+                        Staf perlu ambil gambar semasa clock-in/out
+                      </div>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={securitySettings.requireClockInPhoto}
+                      onChange={(e) => setSecuritySettings(prev => ({ ...prev, requireClockInPhoto: e.target.checked }))}
+                      style={{ width: '20px', height: '20px' }}
+                    />
+                  </label>
+
+                  <label style={{ 
+                    display: 'flex', 
+                    justifyContent: 'space-between', 
+                    alignItems: 'center',
+                    padding: '1rem',
+                    background: 'var(--gray-100)',
+                    borderRadius: 'var(--radius-md)',
+                    cursor: 'pointer'
+                  }}>
+                    <div>
+                      <div style={{ fontWeight: 600 }}>Auto Kunci Kaunter</div>
+                      <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+                        Kunci skrin POS bila tidak aktif
+                      </div>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={securitySettings.autoLockRegister}
+                      onChange={(e) => setSecuritySettings(prev => ({ ...prev, autoLockRegister: e.target.checked }))}
+                      style={{ width: '20px', height: '20px' }}
+                    />
                   </label>
                 </div>
               </div>
