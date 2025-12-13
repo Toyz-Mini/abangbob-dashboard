@@ -6,7 +6,7 @@ type PopoverPosition = 'top' | 'bottom' | 'left' | 'right';
 
 interface PopoverProps {
   trigger: ReactNode;
-  children: ReactNode;
+  children: ReactNode | ((props: { close: () => void }) => ReactNode);
   position?: PopoverPosition;
   align?: 'start' | 'center' | 'end';
   className?: string;
