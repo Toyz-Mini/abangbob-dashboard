@@ -115,7 +115,6 @@ export const ESCPOS = {
 export interface ThermalPrinterConnection {
   type: 'serial' | 'usb';
   port?: SerialPortType;
-  device?: USBDevice;
   writer?: WritableStreamDefaultWriter<Uint8Array>;
   reader?: ReadableStreamDefaultReader<Uint8Array>;
 }
