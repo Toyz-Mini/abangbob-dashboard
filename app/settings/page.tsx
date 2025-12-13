@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import MainLayout from '@/components/MainLayout';
 import { useStore } from '@/lib/store';
 import { useTranslation } from '@/lib/contexts/LanguageContext';
@@ -9,6 +9,9 @@ import LoadingSpinner from '@/components/LoadingSpinner';
 import DataMigration from '@/components/DataMigration';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import LogoUpload from '@/components/LogoUpload';
+import ReceiptDesigner from '@/components/ReceiptDesigner';
+import { ReceiptSettings, PrinterSettings, DEFAULT_RECEIPT_SETTINGS, DEFAULT_PRINTER_SETTINGS } from '@/lib/types';
+import { thermalPrinter, loadReceiptSettings, saveReceiptSettings } from '@/lib/services';
 import { 
   Settings, 
   Store, 
@@ -35,10 +38,16 @@ import {
   Lock,
   Instagram,
   Facebook,
-  MessageCircle
+  MessageCircle,
+  Printer,
+  Usb,
+  Wifi,
+  WifiOff,
+  Play,
+  Power,
 } from 'lucide-react';
 
-type SettingSection = 'outlet' | 'operations' | 'receipt' | 'data' | 'notifications' | 'supabase' | 'payment' | 'appearance' | 'security';
+type SettingSection = 'outlet' | 'operations' | 'receipt' | 'printer' | 'data' | 'notifications' | 'supabase' | 'payment' | 'appearance' | 'security';
 
 export default function SettingsPage() {
   const { isInitialized } = useStore();
@@ -109,14 +118,18 @@ export default function SettingsPage() {
     }))
   );
 
-  // Receipt settings
-  const [receiptSettings, setReceiptSettings] = useState({
-    header: 'ABANGBOB\nNasi Lemak & Burger\nSejak 2020',
-    footer: 'Terima kasih!\nSila datang lagi\nIG: @abangbob.bn',
-    showLogo: true,
-    printKitchenSlip: true,
-    autoPrint: false,
-  });
+  // Receipt settings - use new enhanced type
+  const [receiptSettings, setReceiptSettings] = useState<ReceiptSettings>(DEFAULT_RECEIPT_SETTINGS);
+
+  // Printer settings
+  const [printerSettings, setPrinterSettings] = useState<PrinterSettings>(DEFAULT_PRINTER_SETTINGS);
+  const [isPrinterConnecting, setIsPrinterConnecting] = useState(false);
+
+  // Load saved receipt settings on mount
+  useEffect(() => {
+    const savedSettings = loadReceiptSettings();
+    setReceiptSettings(savedSettings);
+  }, []);
 
   // Notification settings
   const [notificationSettings, setNotificationSettings] = useState({
@@ -196,6 +209,7 @@ export default function SettingsPage() {
     { id: 'outlet', labelKey: 'settings.outletProfile', icon: Store },
     { id: 'operations', labelKey: 'settings.operatingHours', icon: Clock },
     { id: 'receipt', labelKey: 'settings.receiptSettings', icon: Receipt },
+    { id: 'printer', labelKey: 'Printer & Drawer', icon: Printer },
     { id: 'payment', labelKey: 'settings.paymentMethods', icon: CreditCard },
     { id: 'appearance', labelKey: 'settings.appearance', icon: Palette },
     { id: 'security', labelKey: 'settings.security', icon: Lock },
@@ -203,6 +217,63 @@ export default function SettingsPage() {
     { id: 'supabase', labelKey: 'settings.supabaseCloud', icon: Cloud },
     { id: 'data', labelKey: 'settings.dataBackup', icon: Database },
   ];
+
+  // Printer connection handlers
+  const handleConnectPrinter = async () => {
+    setIsPrinterConnecting(true);
+    try {
+      const connected = await thermalPrinter.connect();
+      if (connected) {
+        setPrinterSettings(prev => ({ ...prev, isConnected: true }));
+        alert('Printer berjaya disambung!');
+      } else {
+        alert('Gagal menyambung printer. Sila pastikan printer disambung dan cuba lagi.');
+      }
+    } catch (error) {
+      console.error('Printer connection error:', error);
+      alert('Ralat menyambung printer. Pastikan browser menyokong Web Serial API.');
+    } finally {
+      setIsPrinterConnecting(false);
+    }
+  };
+
+  const handleDisconnectPrinter = async () => {
+    await thermalPrinter.disconnect();
+    setPrinterSettings(prev => ({ ...prev, isConnected: false }));
+  };
+
+  const handleTestPrint = async () => {
+    if (thermalPrinter.isConnected()) {
+      try {
+        await thermalPrinter.sendCommand(new Uint8Array([0x1B, 0x40])); // Init
+        await thermalPrinter.printText('=== TEST PRINT ===', { align: 'center', bold: true });
+        await thermalPrinter.printText('Printer berfungsi dengan baik!', { align: 'center' });
+        await thermalPrinter.printText(new Date().toLocaleString('ms-MY'), { align: 'center' });
+        await thermalPrinter.feedLines(3);
+        await thermalPrinter.cutPaper();
+        alert('Test print berjaya!');
+      } catch (error) {
+        console.error('Test print error:', error);
+        alert('Gagal mencetak. Sila cuba lagi.');
+      }
+    } else {
+      alert('Sila sambung printer terlebih dahulu.');
+    }
+  };
+
+  const handleTestDrawer = async () => {
+    if (thermalPrinter.isConnected()) {
+      try {
+        await thermalPrinter.openCashDrawer();
+        alert('Cash drawer telah dibuka!');
+      } catch (error) {
+        console.error('Drawer error:', error);
+        alert('Gagal membuka drawer. Sila pastikan drawer disambung ke printer.');
+      }
+    } else {
+      alert('Sila sambung printer terlebih dahulu.');
+    }
+  };
 
   if (!isInitialized) {
     return (
@@ -589,69 +660,252 @@ export default function SettingsPage() {
               </div>
             )}
 
-            {/* Receipt Settings */}
+            {/* Receipt Settings - Enhanced with ReceiptDesigner */}
             {activeSection === 'receipt' && (
+              <div>
+                <div className="card" style={{ marginBottom: '1.5rem' }}>
+                  <div className="card-header">
+                    <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <Receipt size={20} />
+                      Receipt Designer
+                    </div>
+                    <div className="card-subtitle">
+                      Customize receipt dengan logo, teks, QR code dan banyak lagi. Preview secara langsung!
+                    </div>
+                  </div>
+                </div>
+
+                <ReceiptDesigner
+                  initialSettings={receiptSettings}
+                  onSettingsChange={(newSettings) => setReceiptSettings(newSettings)}
+                  onSave={() => {
+                    saveReceiptSettings(receiptSettings);
+                    alert('Tetapan receipt berjaya disimpan!');
+                  }}
+                />
+              </div>
+            )}
+
+            {/* Printer & Hardware Settings */}
+            {activeSection === 'printer' && (
               <div className="card">
                 <div className="card-header">
                   <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <Receipt size={20} />
-                    {t('settings.receiptSettings')}
+                    <Printer size={20} />
+                    Printer & Cash Drawer
                   </div>
-                  <div className="card-subtitle">{t('settings.receiptSettingsDesc')}</div>
+                  <div className="card-subtitle">
+                    Sambungkan thermal printer USB dan cash drawer
+                  </div>
                 </div>
 
+                {/* Browser Support Notice */}
+                {!thermalPrinter.isSupported() && (
+                  <div style={{
+                    padding: '1rem',
+                    background: '#fef3c7',
+                    borderRadius: 'var(--radius-md)',
+                    marginBottom: '1.5rem',
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: '0.75rem',
+                  }}>
+                    <AlertTriangle size={20} color="#d97706" style={{ flexShrink: 0, marginTop: '2px' }} />
+                    <div>
+                      <div style={{ fontWeight: 600, color: '#92400e', marginBottom: '0.25rem' }}>
+                        Browser Tidak Disokong
+                      </div>
+                      <div style={{ fontSize: '0.875rem', color: '#a16207' }}>
+                        Browser anda tidak menyokong Web Serial API. Sila gunakan Chrome, Edge, atau Opera untuk sambungan printer terus.
+                        Anda masih boleh menggunakan browser print sebagai alternatif.
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Connection Status */}
+                <div style={{
+                  padding: '1.25rem',
+                  background: printerSettings.isConnected ? '#d1fae5' : 'var(--gray-100)',
+                  borderRadius: 'var(--radius-lg)',
+                  marginBottom: '1.5rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <div style={{
+                      width: '48px',
+                      height: '48px',
+                      borderRadius: '50%',
+                      background: printerSettings.isConnected ? '#059669' : 'var(--gray-300)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: 'white',
+                    }}>
+                      {printerSettings.isConnected ? <Wifi size={24} /> : <WifiOff size={24} />}
+                    </div>
+                    <div>
+                      <div style={{ fontWeight: 600, fontSize: '1.1rem' }}>
+                        {printerSettings.isConnected ? 'Printer Disambung' : 'Printer Tidak Disambung'}
+                      </div>
+                      <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+                        {printerSettings.isConnected 
+                          ? 'Thermal printer sedia untuk digunakan' 
+                          : 'Klik "Sambung Printer" untuk mula'}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {printerSettings.isConnected ? (
+                    <button
+                      className="btn btn-outline"
+                      onClick={handleDisconnectPrinter}
+                      style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                    >
+                      <Power size={16} />
+                      Putuskan
+                    </button>
+                  ) : (
+                    <button
+                      className="btn btn-primary"
+                      onClick={handleConnectPrinter}
+                      disabled={isPrinterConnecting || !thermalPrinter.isSupported()}
+                      style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                    >
+                      {isPrinterConnecting ? (
+                        <>
+                          <LoadingSpinner size="sm" />
+                          Menyambung...
+                        </>
+                      ) : (
+                        <>
+                          <Usb size={16} />
+                          Sambung Printer
+                        </>
+                      )}
+                    </button>
+                  )}
+                </div>
+
+                {/* Paper Width Setting */}
                 <div className="form-group">
-                  <label className="form-label">{t('settings.receiptHeader')}</label>
-                  <textarea
-                    className="form-input"
-                    value={receiptSettings.header}
-                    onChange={(e) => setReceiptSettings(prev => ({ ...prev, header: e.target.value }))}
-                    rows={3}
-                    placeholder={t('settings.receiptHeaderPlaceholder')}
-                  />
+                  <label className="form-label">Saiz Kertas Receipt</label>
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <button
+                      type="button"
+                      className={`btn ${printerSettings.paperWidth === '58mm' ? 'btn-primary' : 'btn-outline'}`}
+                      onClick={() => setPrinterSettings(prev => ({ ...prev, paperWidth: '58mm' }))}
+                      style={{ flex: 1 }}
+                    >
+                      58mm (Kecil)
+                    </button>
+                    <button
+                      type="button"
+                      className={`btn ${printerSettings.paperWidth === '80mm' ? 'btn-primary' : 'btn-outline'}`}
+                      onClick={() => setPrinterSettings(prev => ({ ...prev, paperWidth: '80mm' }))}
+                      style={{ flex: 1 }}
+                    >
+                      80mm (Standard)
+                    </button>
+                  </div>
                 </div>
 
-                <div className="form-group">
-                  <label className="form-label">{t('settings.receiptFooter')}</label>
-                  <textarea
-                    className="form-input"
-                    value={receiptSettings.footer}
-                    onChange={(e) => setReceiptSettings(prev => ({ ...prev, footer: e.target.value }))}
-                    rows={3}
-                    placeholder={t('settings.receiptFooterPlaceholder')}
-                  />
+                {/* Auto-cut Setting */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '1.5rem' }}>
+                  <label style={{ 
+                    display: 'flex', 
+                    justifyContent: 'space-between', 
+                    alignItems: 'center',
+                    padding: '1rem',
+                    background: 'var(--gray-100)',
+                    borderRadius: 'var(--radius-md)',
+                    cursor: 'pointer'
+                  }}>
+                    <div>
+                      <div style={{ fontWeight: 600 }}>Auto Cut Kertas</div>
+                      <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+                        Potong kertas secara automatik selepas cetak
+                      </div>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={printerSettings.autoCut}
+                      onChange={(e) => setPrinterSettings(prev => ({ ...prev, autoCut: e.target.checked }))}
+                      style={{ width: '20px', height: '20px' }}
+                    />
+                  </label>
+
+                  <label style={{ 
+                    display: 'flex', 
+                    justifyContent: 'space-between', 
+                    alignItems: 'center',
+                    padding: '1rem',
+                    background: 'var(--gray-100)',
+                    borderRadius: 'var(--radius-md)',
+                    cursor: 'pointer'
+                  }}>
+                    <div>
+                      <div style={{ fontWeight: 600 }}>Buka Cash Drawer Selepas Bayar Tunai</div>
+                      <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+                        Drawer akan dibuka secara automatik untuk bayaran cash
+                      </div>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={printerSettings.openDrawerOnCashPayment}
+                      onChange={(e) => setPrinterSettings(prev => ({ ...prev, openDrawerOnCashPayment: e.target.checked }))}
+                      style={{ width: '20px', height: '20px' }}
+                    />
+                  </label>
                 </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }}>
-                    <input
-                      type="checkbox"
-                      checked={receiptSettings.showLogo}
-                      onChange={(e) => setReceiptSettings(prev => ({ ...prev, showLogo: e.target.checked }))}
-                      style={{ width: '18px', height: '18px' }}
-                    />
-                    <span>{t('settings.showLogo')}</span>
-                  </label>
+                {/* Test Buttons */}
+                <div style={{ 
+                  marginTop: '1.5rem', 
+                  paddingTop: '1.5rem', 
+                  borderTop: '1px solid var(--gray-200)',
+                  display: 'flex',
+                  gap: '0.75rem',
+                }}>
+                  <button
+                    className="btn btn-outline"
+                    onClick={handleTestPrint}
+                    disabled={!printerSettings.isConnected}
+                    style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flex: 1 }}
+                  >
+                    <Play size={16} />
+                    Test Print
+                  </button>
+                  <button
+                    className="btn btn-outline"
+                    onClick={handleTestDrawer}
+                    disabled={!printerSettings.isConnected}
+                    style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flex: 1 }}
+                  >
+                    <DollarSign size={16} />
+                    Test Cash Drawer
+                  </button>
+                </div>
 
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }}>
-                    <input
-                      type="checkbox"
-                      checked={receiptSettings.printKitchenSlip}
-                      onChange={(e) => setReceiptSettings(prev => ({ ...prev, printKitchenSlip: e.target.checked }))}
-                      style={{ width: '18px', height: '18px' }}
-                    />
-                    <span>{t('settings.printKitchenSlip')}</span>
-                  </label>
-
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }}>
-                    <input
-                      type="checkbox"
-                      checked={receiptSettings.autoPrint}
-                      onChange={(e) => setReceiptSettings(prev => ({ ...prev, autoPrint: e.target.checked }))}
-                      style={{ width: '18px', height: '18px' }}
-                    />
-                    <span>{t('settings.autoPrint')}</span>
-                  </label>
+                {/* Help Section */}
+                <div style={{ 
+                  marginTop: '1.5rem',
+                  padding: '1rem',
+                  background: '#eff6ff',
+                  borderRadius: 'var(--radius-md)',
+                  border: '1px solid #3b82f6',
+                }}>
+                  <div style={{ fontWeight: 600, color: '#1e40af', marginBottom: '0.5rem' }}>
+                    Panduan Sambungan
+                  </div>
+                  <ol style={{ fontSize: '0.875rem', color: '#1e40af', paddingLeft: '1.25rem', margin: 0 }}>
+                    <li>Pastikan thermal printer disambung ke komputer via USB</li>
+                    <li>Klik "Sambung Printer" dan pilih printer dari senarai</li>
+                    <li>Untuk cash drawer, sambung kabel RJ12 dari drawer ke port DK pada printer</li>
+                    <li>Gunakan "Test Print" dan "Test Cash Drawer" untuk memastikan semua berfungsi</li>
+                  </ol>
                 </div>
               </div>
             )}

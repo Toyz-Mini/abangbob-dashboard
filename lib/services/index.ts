@@ -71,3 +71,26 @@ export type {
   ForecastSummary,
 } from './forecasting';
 
+// Thermal Printer Service
+export {
+  thermalPrinter,
+  ThermalPrinterService,
+  ESCPOS,
+} from './thermal-printer';
+export type { ThermalPrinterConnection } from './thermal-printer';
+
+// Receipt Generator
+export {
+  generateReceiptData,
+  generateKitchenSlipData,
+  saveReceiptSettings,
+  loadReceiptSettings,
+  savePrinterSettings,
+  loadPrinterSettings,
+  formatDateTime,
+  formatTime,
+  calculateSubtotal,
+  getPaymentMethodLabel,
+} from './receipt-generator';
+export type { ReceiptLine, ReceiptData } from './receipt-generator';
+

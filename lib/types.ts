@@ -53,9 +53,11 @@ export interface Order {
   orderNumber: string;
   items: CartItem[];
   total: number;
+  customerName?: string;        // Nama pelanggan untuk personalize receipt
   customerPhone: string;
   orderType: 'takeaway' | 'gomamam';
   status: 'pending' | 'preparing' | 'ready' | 'completed';
+  paymentMethod?: 'cash' | 'card' | 'qr' | 'ewallet';
   createdAt: string;
   staffId?: string;
   // Staff speed tracking timestamps
@@ -545,6 +547,111 @@ export interface OutletSettings {
   receiptFooter?: string;
   logoUrl?: string;
 }
+
+// ==================== RECEIPT SETTINGS TYPES ====================
+
+export type ReceiptWidth = '58mm' | '80mm';
+
+export interface ReceiptSettings {
+  // Logo
+  logoTopUrl: string;
+  logoBottomUrl: string;
+  showLogoTop: boolean;
+  showLogoBottom: boolean;
+  
+  // Business Info
+  businessName: string;
+  businessTagline: string;
+  businessAddress: string;
+  businessPhone: string;
+  
+  // Custom Content
+  headerText: string;
+  footerText: string;
+  customMessage: string;
+  
+  // Social Media
+  instagram: string;
+  facebook: string;
+  tiktok: string;
+  whatsapp: string;
+  showSocialMedia: boolean;
+  
+  // QR Code
+  qrCodeUrl: string;
+  showQrCode: boolean;
+  qrCodeLabel: string;
+  
+  // Customer Display Options
+  showCustomerName: boolean;
+  showCustomerPhone: boolean;
+  
+  // Printing Options
+  autoPrint: boolean;
+  printKitchenSlip: boolean;
+  openCashDrawer: boolean;
+  receiptWidth: ReceiptWidth;
+}
+
+// ==================== PRINTER SETTINGS TYPES ====================
+
+export type PrinterConnectionType = 'usb' | 'network' | 'bluetooth' | 'browser';
+
+export interface PrinterSettings {
+  isConnected: boolean;
+  connectionType: PrinterConnectionType;
+  printerName?: string;
+  vendorId?: number;
+  productId?: number;
+  ipAddress?: string;
+  port?: number;
+  paperWidth: ReceiptWidth;
+  autoCut: boolean;
+  openDrawerOnCashPayment: boolean;
+}
+
+// Default receipt settings
+export const DEFAULT_RECEIPT_SETTINGS: ReceiptSettings = {
+  logoTopUrl: '',
+  logoBottomUrl: '',
+  showLogoTop: true,
+  showLogoBottom: false,
+  
+  businessName: 'ABANGBOB',
+  businessTagline: 'Nasi Lemak & Burger',
+  businessAddress: '',
+  businessPhone: '',
+  
+  headerText: '',
+  footerText: 'Terima kasih!\nSila datang lagi',
+  customMessage: '',
+  
+  instagram: '@abangbob.bn',
+  facebook: '',
+  tiktok: '',
+  whatsapp: '',
+  showSocialMedia: true,
+  
+  qrCodeUrl: '',
+  showQrCode: false,
+  qrCodeLabel: 'Scan untuk feedback',
+  
+  showCustomerName: true,
+  showCustomerPhone: false,
+  
+  autoPrint: false,
+  printKitchenSlip: true,
+  openCashDrawer: true,
+  receiptWidth: '80mm',
+};
+
+export const DEFAULT_PRINTER_SETTINGS: PrinterSettings = {
+  isConnected: false,
+  connectionType: 'browser',
+  paperWidth: '80mm',
+  autoCut: true,
+  openDrawerOnCashPayment: true,
+};
 
 // ==================== KPI & GAMIFICATION TYPES ====================
 

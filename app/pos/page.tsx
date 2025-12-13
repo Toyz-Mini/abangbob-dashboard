@@ -1,12 +1,14 @@
 'use client';
 
-import { useState, useRef, useMemo } from 'react';
+import { useState, useRef, useMemo, useEffect } from 'react';
 import MainLayout from '@/components/MainLayout';
 import { useOrders, useMenu } from '@/lib/store';
 import { useTranslation } from '@/lib/contexts/LanguageContext';
-import { CartItem, Order, MenuItem, SelectedModifier } from '@/lib/types';
+import { CartItem, Order, MenuItem, SelectedModifier, ReceiptSettings, DEFAULT_RECEIPT_SETTINGS } from '@/lib/types';
 import { getUpsellSuggestions } from '@/lib/menu-data';
-import { UtensilsCrossed, Sandwich, Coffee, History, Printer, Clock, ChefHat, CheckCircle, ShoppingBag, Plus, Minus, X, Sparkles, AlertTriangle } from 'lucide-react';
+import { thermalPrinter, loadReceiptSettings } from '@/lib/services';
+import ReceiptPreview from '@/components/ReceiptPreview';
+import { UtensilsCrossed, Sandwich, Coffee, History, Printer, Clock, ChefHat, CheckCircle, ShoppingBag, Plus, Minus, X, Sparkles, AlertTriangle, User, DollarSign, CreditCard, QrCode, Wallet } from 'lucide-react';
 import Modal from '@/components/Modal';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import StatCard from '@/components/StatCard';
@@ -21,12 +23,21 @@ export default function POSPage() {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [cart, setCart] = useState<CartItem[]>([]);
   const [modalType, setModalType] = useState<ModalType>(null);
+  const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('+673');
   const [orderType, setOrderType] = useState<'takeaway' | 'gomamam'>('takeaway');
+  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card' | 'qr' | 'ewallet'>('cash');
   const [isProcessing, setIsProcessing] = useState(false);
   const [lastOrder, setLastOrder] = useState<Order | null>(null);
   const [discountPercent, setDiscountPercent] = useState(0);
+  const [receiptSettings, setReceiptSettings] = useState<ReceiptSettings>(DEFAULT_RECEIPT_SETTINGS);
   const receiptRef = useRef<HTMLDivElement>(null);
+
+  // Load receipt settings on mount
+  useEffect(() => {
+    const settings = loadReceiptSettings();
+    setReceiptSettings(settings);
+  }, []);
 
   // Modifier selection state
   const [selectedItemForModifiers, setSelectedItemForModifiers] = useState<MenuItem | null>(null);
@@ -211,60 +222,55 @@ export default function POSPage() {
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1500));
 
-    // Create order
+    // Create order with customer name and payment method
     const newOrder = addOrder({
       items: cart,
       total: cartTotal,
+      customerName: customerName || undefined,
       customerPhone,
       orderType,
+      paymentMethod,
       status: 'pending',
       createdAt: new Date().toISOString(),
     });
 
     setLastOrder(newOrder);
     
+    // Auto-print if enabled
+    if (receiptSettings.autoPrint && newOrder) {
+      handlePrintReceipt(newOrder);
+    }
+
+    // Open cash drawer for cash payments
+    if (receiptSettings.openCashDrawer && paymentMethod === 'cash' && thermalPrinter.isConnected()) {
+      try {
+        await thermalPrinter.openCashDrawer();
+      } catch (error) {
+        console.error('Failed to open cash drawer:', error);
+      }
+    }
+    
     // Reset cart and modals
     setCart([]);
     setModalType('receipt');
+    setCustomerName('');
     setCustomerPhone('+673');
+    setPaymentMethod('cash');
     setDiscountPercent(0);
     setIsProcessing(false);
   };
 
-  const handlePrintReceipt = () => {
-    if (receiptRef.current) {
-      const printContent = receiptRef.current.innerHTML;
-      const printWindow = window.open('', '_blank');
-      if (printWindow) {
-        printWindow.document.write(`
-          <html>
-            <head>
-              <title>Resit - ${lastOrder?.orderNumber}</title>
-              <style>
-                body {
-                  font-family: 'Courier New', monospace;
-                  width: 80mm;
-                  margin: 0 auto;
-                  padding: 10px;
-                  font-size: 12px;
-                }
-                .header { text-align: center; margin-bottom: 10px; }
-                .header h2 { margin: 0; font-size: 16px; }
-                .divider { border-top: 1px dashed #000; margin: 8px 0; }
-                .item { display: flex; justify-content: space-between; margin: 4px 0; }
-                .total { font-weight: bold; font-size: 14px; }
-                .footer { text-align: center; margin-top: 10px; font-size: 10px; }
-                .modifier { font-size: 10px; color: #666; padding-left: 10px; }
-              </style>
-            </head>
-            <body>
-              ${printContent}
-            </body>
-          </html>
-        `);
-        printWindow.document.close();
-        printWindow.print();
-      }
+  const handlePrintReceipt = async (orderToPrint?: Order) => {
+    const order = orderToPrint || lastOrder;
+    if (!order) return;
+
+    try {
+      // Use thermal printer if connected, otherwise use browser print
+      await thermalPrinter.print(order, receiptSettings);
+    } catch (error) {
+      console.error('Print error:', error);
+      // Fallback to browser print
+      thermalPrinter.printWithBrowser(order, receiptSettings);
     }
   };
 
@@ -877,6 +883,24 @@ export default function POSPage() {
             </div>
           </div>
 
+          {/* Customer Name - Optional for personalization */}
+          <div className="form-group">
+            <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <User size={16} />
+              Nama Pelanggan
+            </label>
+            <input
+              type="text"
+              className="form-input"
+              value={customerName}
+              onChange={(e) => setCustomerName(e.target.value)}
+              placeholder="Masukkan nama (optional)"
+            />
+            <small style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>
+              Untuk personalize receipt dengan nama pelanggan
+            </small>
+          </div>
+
           <div className="form-group">
             <label className="form-label">Nombor Telefon *</label>
             <input
@@ -890,6 +914,49 @@ export default function POSPage() {
             <small style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>
               Wajib untuk checkout (Default: Brunei +673)
             </small>
+          </div>
+
+          {/* Payment Method Selection */}
+          <div className="form-group">
+            <label className="form-label">Kaedah Pembayaran *</label>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem' }}>
+              <button
+                type="button"
+                onClick={() => setPaymentMethod('cash')}
+                className={`btn ${paymentMethod === 'cash' ? 'btn-primary' : 'btn-outline'}`}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
+              >
+                <DollarSign size={18} />
+                Tunai
+              </button>
+              <button
+                type="button"
+                onClick={() => setPaymentMethod('card')}
+                className={`btn ${paymentMethod === 'card' ? 'btn-primary' : 'btn-outline'}`}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
+              >
+                <CreditCard size={18} />
+                Kad
+              </button>
+              <button
+                type="button"
+                onClick={() => setPaymentMethod('qr')}
+                className={`btn ${paymentMethod === 'qr' ? 'btn-primary' : 'btn-outline'}`}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
+              >
+                <QrCode size={18} />
+                QR Code
+              </button>
+              <button
+                type="button"
+                onClick={() => setPaymentMethod('ewallet')}
+                className={`btn ${paymentMethod === 'ewallet' ? 'btn-primary' : 'btn-outline'}`}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
+              >
+                <Wallet size={18} />
+                E-Wallet
+              </button>
+            </div>
           </div>
 
           <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1.5rem' }}>
@@ -913,7 +980,7 @@ export default function POSPage() {
                   Memproses...
                 </>
               ) : (
-                'Bayar'
+                `Bayar BND ${cartTotal.toFixed(2)}`
               )}
             </button>
           </div>
@@ -924,7 +991,7 @@ export default function POSPage() {
           isOpen={modalType === 'receipt'}
           onClose={() => setModalType(null)}
           title="Pesanan Berjaya!"
-          maxWidth="400px"
+          maxWidth="450px"
         >
           {lastOrder && (
             <>
@@ -942,65 +1009,32 @@ export default function POSPage() {
                   <CheckCircle size={30} color="var(--success)" />
                 </div>
                 <div style={{ fontSize: '1.5rem', fontWeight: 700 }}>{lastOrder.orderNumber}</div>
+                {lastOrder.customerName && (
+                  <div style={{ fontSize: '1rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
+                    Pelanggan: {lastOrder.customerName}
+                  </div>
+                )}
               </div>
 
-              {/* Receipt Content */}
+              {/* Receipt Preview */}
               <div 
                 ref={receiptRef}
                 style={{ 
-                  background: 'var(--gray-50)', 
+                  background: '#e5e5e5', 
                   padding: '1rem', 
                   borderRadius: 'var(--radius-md)',
-                  fontFamily: 'monospace',
-                  fontSize: '0.875rem'
+                  display: 'flex',
+                  justifyContent: 'center',
+                  maxHeight: '350px',
+                  overflow: 'auto',
                 }}
               >
-                <div className="header" style={{ textAlign: 'center', marginBottom: '1rem' }}>
-                  <h2 style={{ margin: 0, fontSize: '1.1rem' }}>ABANGBOB</h2>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Nasi Lemak & Burger</div>
-                </div>
-                
-                <div className="divider" style={{ borderTop: '1px dashed var(--gray-300)', margin: '0.75rem 0' }} />
-                
-                <div style={{ marginBottom: '0.5rem' }}>
-                  <strong>No: {lastOrder.orderNumber}</strong>
-                </div>
-                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
-                  {new Date(lastOrder.createdAt).toLocaleString('ms-MY')}
-                </div>
-                <div style={{ marginBottom: '0.5rem' }}>
-                  {lastOrder.orderType === 'takeaway' ? 'Takeaway' : 'GoMamam'}
-                </div>
-                
-                <div className="divider" style={{ borderTop: '1px dashed var(--gray-300)', margin: '0.75rem 0' }} />
-                
-                {lastOrder.items.map((item, idx) => (
-                  <div key={idx} style={{ marginBottom: '0.5rem' }}>
-                    <div className="item" style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span>{item.quantity}x {item.name}</span>
-                      <span>BND {(item.itemTotal * item.quantity).toFixed(2)}</span>
-                    </div>
-                    {item.selectedModifiers.length > 0 && (
-                      <div style={{ paddingLeft: '1rem', fontSize: '0.7rem', color: 'var(--text-secondary)' }}>
-                        {item.selectedModifiers.map((mod, i) => (
-                          <div key={i}>+ {mod.optionName}</div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                ))}
-                
-                <div className="divider" style={{ borderTop: '1px dashed var(--gray-300)', margin: '0.75rem 0' }} />
-                
-                <div className="total" style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700 }}>
-                  <span>JUMLAH</span>
-                  <span>BND {lastOrder.total.toFixed(2)}</span>
-                </div>
-                
-                <div className="footer" style={{ textAlign: 'center', marginTop: '1rem', fontSize: '0.7rem', color: 'var(--text-secondary)' }}>
-                  <div>Terima kasih!</div>
-                  <div>Sila datang lagi</div>
-                </div>
+                <ReceiptPreview 
+                  settings={receiptSettings}
+                  sampleOrder={lastOrder}
+                  width={receiptSettings.receiptWidth}
+                  scale={0.85}
+                />
               </div>
 
               <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1.5rem' }}>
@@ -1012,13 +1046,28 @@ export default function POSPage() {
                   Tutup
                 </button>
                 <button
-                  onClick={handlePrintReceipt}
+                  onClick={() => handlePrintReceipt()}
                   className="btn btn-primary"
-                  style={{ flex: 1 }}
+                  style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
                 >
                   <Printer size={18} />
                   Cetak Resit
                 </button>
+              </div>
+
+              {/* Printer Status Indicator */}
+              <div style={{ 
+                marginTop: '1rem', 
+                padding: '0.5rem 0.75rem',
+                background: thermalPrinter.isConnected() ? '#d1fae5' : 'var(--gray-100)',
+                borderRadius: 'var(--radius-md)',
+                fontSize: '0.75rem',
+                textAlign: 'center',
+                color: thermalPrinter.isConnected() ? '#059669' : 'var(--text-secondary)',
+              }}>
+                {thermalPrinter.isConnected() 
+                  ? '✓ Thermal printer disambung - cetak terus ke printer'
+                  : 'Tiada thermal printer - akan cetak melalui browser'}
               </div>
             </>
           )}
