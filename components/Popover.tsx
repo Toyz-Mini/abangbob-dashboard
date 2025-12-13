@@ -72,31 +72,31 @@ export default function Popover({
   }, []);
 
   // Calculate position class
-  const getPositionStyle = () => {
-    const alignStyles: Record<string, Record<string, string>> = {
+  const getPositionStyle = (): React.CSSProperties => {
+    const alignStyles: Record<string, Record<string, React.CSSProperties>> = {
       top: {
-        start: 'left: 0; transform: none;',
-        center: 'left: 50%; transform: translateX(-50%);',
-        end: 'right: 0; transform: none;',
+        start: { left: 0, transform: 'none' },
+        center: { left: '50%', transform: 'translateX(-50%)' },
+        end: { right: 0, transform: 'none' },
       },
       bottom: {
-        start: 'left: 0; transform: none;',
-        center: 'left: 50%; transform: translateX(-50%);',
-        end: 'right: 0; transform: none;',
+        start: { left: 0, transform: 'none' },
+        center: { left: '50%', transform: 'translateX(-50%)' },
+        end: { right: 0, transform: 'none' },
       },
       left: {
-        start: 'top: 0; transform: none;',
-        center: 'top: 50%; transform: translateY(-50%);',
-        end: 'bottom: 0; transform: none;',
+        start: { top: 0, transform: 'none' },
+        center: { top: '50%', transform: 'translateY(-50%)' },
+        end: { bottom: 0, transform: 'none' },
       },
       right: {
-        start: 'top: 0; transform: none;',
-        center: 'top: 50%; transform: translateY(-50%);',
-        end: 'bottom: 0; transform: none;',
+        start: { top: 0, transform: 'none' },
+        center: { top: '50%', transform: 'translateY(-50%)' },
+        end: { bottom: 0, transform: 'none' },
       },
     };
 
-    return alignStyles[position]?.[align] || '';
+    return alignStyles[position]?.[align] || {};
   };
 
   return (
@@ -116,7 +116,7 @@ export default function Popover({
         <div
           ref={popoverRef}
           className={`popover popover-${position} ${className}`}
-          style={{ cssText: getPositionStyle() }}
+          style={getPositionStyle()}
           role="dialog"
           aria-modal="false"
         >
