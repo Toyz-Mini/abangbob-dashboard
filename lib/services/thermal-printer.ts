@@ -3,6 +3,42 @@
 
 import { ReceiptSettings, Order, PrinterSettings, DEFAULT_PRINTER_SETTINGS } from '@/lib/types';
 
+// Web Serial API type declarations (not included in default TypeScript)
+declare global {
+  interface Navigator {
+    serial: Serial;
+  }
+
+  interface Serial {
+    requestPort(options?: SerialPortRequestOptions): Promise<SerialPortType>;
+    getPorts(): Promise<SerialPortType[]>;
+  }
+
+  interface SerialPortRequestOptions {
+    filters?: SerialPortFilter[];
+  }
+
+  interface SerialPortFilter {
+    usbVendorId?: number;
+    usbProductId?: number;
+  }
+
+  interface SerialPortType {
+    open(options: SerialOptions): Promise<void>;
+    close(): Promise<void>;
+    readable: ReadableStream<Uint8Array> | null;
+    writable: WritableStream<Uint8Array> | null;
+  }
+
+  interface SerialOptions {
+    baudRate: number;
+    dataBits?: number;
+    stopBits?: number;
+    parity?: 'none' | 'even' | 'odd';
+    flowControl?: 'none' | 'hardware';
+  }
+}
+
 // ==================== ESC/POS COMMANDS ====================
 
 const ESC = 0x1B;
@@ -78,7 +114,7 @@ export const ESCPOS = {
 
 export interface ThermalPrinterConnection {
   type: 'serial' | 'usb';
-  port?: SerialPort;
+  port?: SerialPortType;
   device?: USBDevice;
   writer?: WritableStreamDefaultWriter<Uint8Array>;
   reader?: ReadableStreamDefaultReader<Uint8Array>;
