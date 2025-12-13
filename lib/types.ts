@@ -7,6 +7,7 @@ export interface MenuItem {
   name: string;
   category: string;
   price: number;
+  cost?: number; // Cost per unit for profit calculation
   image?: string;
   description?: string;
   ingredients?: string[]; // For inventory tracking
