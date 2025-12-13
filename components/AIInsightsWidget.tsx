@@ -126,10 +126,10 @@ export default function AIInsightsWidget({ compact = false }: AIInsightsWidgetPr
             <strong>~BND {forecastSummary.nextDayForecast.predictedRevenue.toFixed(0)}</strong>
           </div>
         )}
-        {forecastSummary?.criticalItems.length > 0 && (
+        {(forecastSummary?.criticalItems?.length ?? 0) > 0 && (
           <div className="ai-alert-mini">
             <AlertTriangle size={12} />
-            <span>{forecastSummary.criticalItems.length} item kritikal</span>
+            <span>{forecastSummary?.criticalItems?.length} item kritikal</span>
           </div>
         )}
       </div>
