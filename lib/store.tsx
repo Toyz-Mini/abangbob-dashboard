@@ -1,0 +1,1996 @@
+'use client';
+
+import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
+import { StockItem, StaffProfile, AttendanceRecord, Order, ProductionLog, DeliveryOrder, Expense, DailyCashFlow, Customer, Supplier, PurchaseOrder, Recipe, Shift, ScheduleEntry, Promotion, Notification, MenuItem, ModifierGroup, ModifierOption, StaffKPI, LeaveRecord, TrainingRecord, OTRecord, CustomerReview, KPIMetrics, ChecklistItemTemplate, ChecklistCompletion, LeaveBalance, LeaveRequest, ClaimRequest, StaffRequest, Announcement } from './types';
+import { MOCK_STOCK } from './inventory-data';
+import { MOCK_STAFF, MOCK_ATTENDANCE, MOCK_PAYROLL } from './hr-data';
+import { MOCK_PRODUCTION_LOGS, MOCK_OIL_TRACKERS } from './production-data';
+import { MOCK_DELIVERY_ORDERS } from './delivery-data';
+import { MOCK_EXPENSES, MOCK_CASH_FLOWS } from './finance-data';
+import { MOCK_MENU } from './menu-data';
+import { MOCK_STAFF_KPI, MOCK_LEAVE_RECORDS, MOCK_TRAINING_RECORDS, MOCK_OT_RECORDS, MOCK_CUSTOMER_REVIEWS, calculateOverallScore, calculateBonus, DEFAULT_KPI_CONFIG } from './kpi-data';
+import { MOCK_CHECKLIST_TEMPLATES, MOCK_CHECKLIST_COMPLETIONS, MOCK_LEAVE_BALANCES, MOCK_LEAVE_REQUESTS, MOCK_CLAIM_REQUESTS, MOCK_STAFF_REQUESTS, MOCK_ANNOUNCEMENTS, MOCK_SHIFTS, MOCK_SCHEDULES } from './staff-portal-data';
+
+// Storage keys
+const STORAGE_KEYS = {
+  INVENTORY: 'abangbob_inventory',
+  STAFF: 'abangbob_staff',
+  ATTENDANCE: 'abangbob_attendance',
+  ORDERS: 'abangbob_orders',
+  PRODUCTION_LOGS: 'abangbob_production_logs',
+  DELIVERY_ORDERS: 'abangbob_delivery_orders',
+  INVENTORY_LOGS: 'abangbob_inventory_logs',
+  EXPENSES: 'abangbob_expenses',
+  CASH_FLOWS: 'abangbob_cash_flows',
+  CUSTOMERS: 'abangbob_customers',
+  SUPPLIERS: 'abangbob_suppliers',
+  PURCHASE_ORDERS: 'abangbob_purchase_orders',
+  RECIPES: 'abangbob_recipes',
+  SHIFTS: 'abangbob_shifts',
+  SCHEDULES: 'abangbob_schedules',
+  PROMOTIONS: 'abangbob_promotions',
+  NOTIFICATIONS: 'abangbob_notifications',
+  MENU_ITEMS: 'abangbob_menu_items',
+  MODIFIER_GROUPS: 'abangbob_modifier_groups',
+  MODIFIER_OPTIONS: 'abangbob_modifier_options',
+  // KPI & Gamification
+  STAFF_KPI: 'abangbob_staff_kpi',
+  LEAVE_RECORDS: 'abangbob_leave_records',
+  TRAINING_RECORDS: 'abangbob_training_records',
+  OT_RECORDS: 'abangbob_ot_records',
+  CUSTOMER_REVIEWS: 'abangbob_customer_reviews',
+  // Staff Portal
+  CHECKLIST_TEMPLATES: 'abangbob_checklist_templates',
+  CHECKLIST_COMPLETIONS: 'abangbob_checklist_completions',
+  LEAVE_BALANCES: 'abangbob_leave_balances',
+  LEAVE_REQUESTS: 'abangbob_leave_requests',
+  CLAIM_REQUESTS: 'abangbob_claim_requests',
+  STAFF_REQUESTS: 'abangbob_staff_requests',
+  ANNOUNCEMENTS: 'abangbob_announcements',
+};
+
+// Inventory log type for tracking stock changes
+export interface InventoryLog {
+  id: string;
+  stockItemId: string;
+  stockItemName: string;
+  type: 'in' | 'out' | 'adjustment' | 'initial';
+  quantity: number;
+  previousQuantity: number;
+  newQuantity: number;
+  reason: string;
+  createdAt: string;
+  createdBy?: string;
+}
+
+interface StoreState {
+  // Inventory
+  inventory: StockItem[];
+  inventoryLogs: InventoryLog[];
+  addStockItem: (item: Omit<StockItem, 'id'>) => void;
+  updateStockItem: (id: string, updates: Partial<StockItem>) => void;
+  deleteStockItem: (id: string) => void;
+  adjustStock: (id: string, quantity: number, type: 'in' | 'out', reason: string) => void;
+  
+  // Staff
+  staff: StaffProfile[];
+  attendance: AttendanceRecord[];
+  addStaff: (staffData: Omit<StaffProfile, 'id'>) => void;
+  updateStaff: (id: string, updates: Partial<StaffProfile>) => void;
+  deleteStaff: (id: string) => void;
+  clockIn: (staffId: string, pin: string) => { success: boolean; message: string };
+  clockOut: (staffId: string) => { success: boolean; message: string };
+  getStaffAttendanceToday: (staffId: string) => AttendanceRecord | undefined;
+  
+  // Orders
+  orders: Order[];
+  addOrder: (order: Omit<Order, 'id' | 'orderNumber'>) => Order;
+  updateOrderStatus: (orderId: string, status: Order['status'], staffId?: string) => void;
+  getTodayOrders: () => Order[];
+  
+  // Production Logs
+  productionLogs: ProductionLog[];
+  addProductionLog: (log: Omit<ProductionLog, 'id'>) => void;
+  
+  // Delivery Orders
+  deliveryOrders: DeliveryOrder[];
+  updateDeliveryStatus: (orderId: string, status: DeliveryOrder['status']) => void;
+  
+  // Finance
+  expenses: Expense[];
+  cashFlows: DailyCashFlow[];
+  addExpense: (expense: Omit<Expense, 'id' | 'createdAt'>) => void;
+  updateExpense: (id: string, updates: Partial<Expense>) => void;
+  deleteExpense: (id: string) => void;
+  updateCashFlow: (date: string, data: Partial<DailyCashFlow>) => void;
+  getTodayCashFlow: () => DailyCashFlow | undefined;
+  getMonthlyExpenses: (month: string) => Expense[];
+  getMonthlyRevenue: (month: string) => number;
+  
+  // Customers
+  customers: Customer[];
+  addCustomer: (customer: Omit<Customer, 'id' | 'createdAt' | 'loyaltyPoints' | 'totalSpent' | 'totalOrders' | 'segment'>) => Customer;
+  updateCustomer: (id: string, updates: Partial<Customer>) => void;
+  addLoyaltyPoints: (customerId: string, points: number, orderId?: string) => void;
+  redeemLoyaltyPoints: (customerId: string, points: number) => boolean;
+  
+  // Suppliers
+  suppliers: Supplier[];
+  purchaseOrders: PurchaseOrder[];
+  addSupplier: (supplier: Omit<Supplier, 'id' | 'createdAt' | 'rating'>) => void;
+  updateSupplier: (id: string, updates: Partial<Supplier>) => void;
+  deleteSupplier: (id: string) => void;
+  addPurchaseOrder: (po: Omit<PurchaseOrder, 'id' | 'poNumber' | 'createdAt' | 'updatedAt'>) => PurchaseOrder;
+  updatePurchaseOrderStatus: (id: string, status: PurchaseOrder['status']) => void;
+  
+  // Recipes
+  recipes: Recipe[];
+  addRecipe: (recipe: Omit<Recipe, 'id' | 'createdAt' | 'updatedAt' | 'totalCost' | 'profitMargin'>) => void;
+  updateRecipe: (id: string, updates: Partial<Recipe>) => void;
+  deleteRecipe: (id: string) => void;
+  
+  // Shifts & Schedules
+  shifts: Shift[];
+  schedules: ScheduleEntry[];
+  addShift: (shift: Omit<Shift, 'id'>) => void;
+  updateShift: (id: string, updates: Partial<Shift>) => void;
+  deleteShift: (id: string) => void;
+  addScheduleEntry: (entry: Omit<ScheduleEntry, 'id'>) => void;
+  updateScheduleEntry: (id: string, updates: Partial<ScheduleEntry>) => void;
+  deleteScheduleEntry: (id: string) => void;
+  getWeekSchedule: (startDate: string) => ScheduleEntry[];
+  
+  // Promotions
+  promotions: Promotion[];
+  addPromotion: (promo: Omit<Promotion, 'id' | 'createdAt' | 'usageCount'>) => void;
+  updatePromotion: (id: string, updates: Partial<Promotion>) => void;
+  deletePromotion: (id: string) => void;
+  validatePromoCode: (code: string) => Promotion | null;
+  
+  // Notifications
+  notifications: Notification[];
+  addNotification: (notification: Omit<Notification, 'id' | 'createdAt' | 'isRead'>) => void;
+  markNotificationRead: (id: string) => void;
+  markAllNotificationsRead: () => void;
+  deleteNotification: (id: string) => void;
+  getUnreadCount: () => number;
+  
+  // Menu Items
+  menuItems: MenuItem[];
+  addMenuItem: (item: Omit<MenuItem, 'id'>) => void;
+  updateMenuItem: (id: string, updates: Partial<MenuItem>) => void;
+  deleteMenuItem: (id: string) => void;
+  toggleMenuItemAvailability: (id: string) => void;
+  getMenuCategories: () => string[];
+  
+  // Modifier Groups
+  modifierGroups: ModifierGroup[];
+  addModifierGroup: (group: Omit<ModifierGroup, 'id'>) => void;
+  updateModifierGroup: (id: string, updates: Partial<ModifierGroup>) => void;
+  deleteModifierGroup: (id: string) => void;
+  
+  // Modifier Options
+  modifierOptions: ModifierOption[];
+  addModifierOption: (option: Omit<ModifierOption, 'id'>) => void;
+  updateModifierOption: (id: string, updates: Partial<ModifierOption>) => void;
+  deleteModifierOption: (id: string) => void;
+  getOptionsForGroup: (groupId: string) => ModifierOption[];
+  
+  // KPI & Gamification
+  staffKPI: StaffKPI[];
+  leaveRecords: LeaveRecord[];
+  trainingRecords: TrainingRecord[];
+  otRecords: OTRecord[];
+  customerReviews: CustomerReview[];
+  getStaffKPI: (staffId: string, period?: string) => StaffKPI | undefined;
+  getStaffKPIHistory: (staffId: string) => StaffKPI[];
+  updateStaffKPI: (staffId: string, period: string, metrics: Partial<KPIMetrics>) => void;
+  recalculateKPIRankings: (period: string) => void;
+  getKPILeaderboard: (period?: string) => StaffKPI[];
+  addLeaveRecord: (leave: Omit<LeaveRecord, 'id' | 'createdAt'>) => void;
+  updateLeaveRecord: (id: string, updates: Partial<LeaveRecord>) => void;
+  addTrainingRecord: (training: Omit<TrainingRecord, 'id'>) => void;
+  updateTrainingRecord: (id: string, updates: Partial<TrainingRecord>) => void;
+  addOTRecord: (ot: Omit<OTRecord, 'id' | 'createdAt'>) => void;
+  updateOTRecord: (id: string, updates: Partial<OTRecord>) => void;
+  addCustomerReview: (review: Omit<CustomerReview, 'id' | 'createdAt'>) => void;
+  getStaffReviews: (staffId: string) => CustomerReview[];
+  getStaffBonus: (staffId: string, period?: string) => number;
+  
+  // Staff Portal - Checklist
+  checklistTemplates: ChecklistItemTemplate[];
+  checklistCompletions: ChecklistCompletion[];
+  addChecklistTemplate: (template: Omit<ChecklistItemTemplate, 'id' | 'createdAt'>) => void;
+  updateChecklistTemplate: (id: string, updates: Partial<ChecklistItemTemplate>) => void;
+  deleteChecklistTemplate: (id: string) => void;
+  getChecklistTemplatesByType: (type: 'opening' | 'closing') => ChecklistItemTemplate[];
+  startChecklist: (type: 'opening' | 'closing', staffId: string, staffName: string, shiftId: string) => ChecklistCompletion;
+  updateChecklistItem: (completionId: string, templateId: string, updates: Partial<ChecklistCompletion['items'][0]>) => void;
+  completeChecklist: (completionId: string) => void;
+  getTodayChecklist: (type: 'opening' | 'closing') => ChecklistCompletion | undefined;
+  
+  // Staff Portal - Leave
+  leaveBalances: LeaveBalance[];
+  leaveRequests: LeaveRequest[];
+  getLeaveBalance: (staffId: string, year?: number) => LeaveBalance | undefined;
+  addLeaveRequest: (request: Omit<LeaveRequest, 'id' | 'createdAt'>) => void;
+  updateLeaveRequest: (id: string, updates: Partial<LeaveRequest>) => void;
+  approveLeaveRequest: (id: string, approverId: string, approverName: string) => void;
+  rejectLeaveRequest: (id: string, approverId: string, approverName: string, reason: string) => void;
+  getStaffLeaveRequests: (staffId: string) => LeaveRequest[];
+  getPendingLeaveRequests: () => LeaveRequest[];
+  
+  // Staff Portal - Claims
+  claimRequests: ClaimRequest[];
+  addClaimRequest: (claim: Omit<ClaimRequest, 'id' | 'createdAt'>) => void;
+  updateClaimRequest: (id: string, updates: Partial<ClaimRequest>) => void;
+  approveClaimRequest: (id: string, approverId: string, approverName: string) => void;
+  rejectClaimRequest: (id: string, approverId: string, approverName: string, reason: string) => void;
+  markClaimAsPaid: (id: string) => void;
+  getStaffClaimRequests: (staffId: string) => ClaimRequest[];
+  getPendingClaimRequests: () => ClaimRequest[];
+  
+  // Staff Portal - General Requests
+  staffRequests: StaffRequest[];
+  addStaffRequest: (request: Omit<StaffRequest, 'id' | 'createdAt'>) => void;
+  updateStaffRequest: (id: string, updates: Partial<StaffRequest>) => void;
+  completeStaffRequest: (id: string, responseNote?: string) => void;
+  rejectStaffRequest: (id: string, responseNote: string) => void;
+  getStaffRequestsByStaff: (staffId: string) => StaffRequest[];
+  getPendingStaffRequests: () => StaffRequest[];
+  
+  // Staff Portal - Announcements
+  announcements: Announcement[];
+  addAnnouncement: (announcement: Omit<Announcement, 'id' | 'createdAt'>) => void;
+  updateAnnouncement: (id: string, updates: Partial<Announcement>) => void;
+  deleteAnnouncement: (id: string) => void;
+  getActiveAnnouncements: (role?: 'Manager' | 'Staff') => Announcement[];
+  
+  // Utility
+  isInitialized: boolean;
+}
+
+const StoreContext = createContext<StoreState | null>(null);
+
+// Helper to safely access localStorage
+const getFromStorage = <T,>(key: string, fallback: T): T => {
+  if (typeof window === 'undefined') return fallback;
+  try {
+    const item = localStorage.getItem(key);
+    return item ? JSON.parse(item) : fallback;
+  } catch {
+    return fallback;
+  }
+};
+
+const setToStorage = <T,>(key: string, value: T): void => {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch (error) {
+    console.error('Error saving to localStorage:', error);
+  }
+};
+
+export function StoreProvider({ children }: { children: ReactNode }) {
+  const [isInitialized, setIsInitialized] = useState(false);
+  
+  // Inventory state
+  const [inventory, setInventory] = useState<StockItem[]>([]);
+  const [inventoryLogs, setInventoryLogs] = useState<InventoryLog[]>([]);
+  
+  // Staff state
+  const [staff, setStaff] = useState<StaffProfile[]>([]);
+  const [attendance, setAttendance] = useState<AttendanceRecord[]>([]);
+  
+  // Orders state
+  const [orders, setOrders] = useState<Order[]>([]);
+  
+  // Production logs state
+  const [productionLogs, setProductionLogs] = useState<ProductionLog[]>([]);
+  
+  // Delivery orders state
+  const [deliveryOrders, setDeliveryOrders] = useState<DeliveryOrder[]>([]);
+  
+  // Finance state
+  const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [cashFlows, setCashFlows] = useState<DailyCashFlow[]>([]);
+  
+  // Customer state
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  
+  // Supplier state
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>([]);
+  
+  // Recipe state
+  const [recipes, setRecipes] = useState<Recipe[]>([]);
+  
+  // Shift & Schedule state
+  const [shifts, setShifts] = useState<Shift[]>([]);
+  const [schedules, setSchedules] = useState<ScheduleEntry[]>([]);
+  
+  // Promotion state
+  const [promotions, setPromotions] = useState<Promotion[]>([]);
+  
+  // Notification state
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  
+  // Menu state
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  const [modifierGroups, setModifierGroups] = useState<ModifierGroup[]>([]);
+  const [modifierOptions, setModifierOptions] = useState<ModifierOption[]>([]);
+  
+  // KPI & Gamification state
+  const [staffKPI, setStaffKPI] = useState<StaffKPI[]>([]);
+  const [leaveRecords, setLeaveRecords] = useState<LeaveRecord[]>([]);
+  const [trainingRecords, setTrainingRecords] = useState<TrainingRecord[]>([]);
+  const [otRecords, setOTRecords] = useState<OTRecord[]>([]);
+  const [customerReviews, setCustomerReviews] = useState<CustomerReview[]>([]);
+  
+  // Staff Portal state
+  const [checklistTemplates, setChecklistTemplates] = useState<ChecklistItemTemplate[]>([]);
+  const [checklistCompletions, setChecklistCompletions] = useState<ChecklistCompletion[]>([]);
+  const [leaveBalances, setLeaveBalances] = useState<LeaveBalance[]>([]);
+  const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>([]);
+  const [claimRequests, setClaimRequests] = useState<ClaimRequest[]>([]);
+  const [staffRequests, setStaffRequests] = useState<StaffRequest[]>([]);
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+
+  // Initialize from localStorage on mount
+  useEffect(() => {
+    setInventory(getFromStorage(STORAGE_KEYS.INVENTORY, MOCK_STOCK));
+    setInventoryLogs(getFromStorage(STORAGE_KEYS.INVENTORY_LOGS, []));
+    setStaff(getFromStorage(STORAGE_KEYS.STAFF, MOCK_STAFF));
+    setAttendance(getFromStorage(STORAGE_KEYS.ATTENDANCE, MOCK_ATTENDANCE));
+    setOrders(getFromStorage(STORAGE_KEYS.ORDERS, []));
+    setProductionLogs(getFromStorage(STORAGE_KEYS.PRODUCTION_LOGS, MOCK_PRODUCTION_LOGS));
+    setDeliveryOrders(getFromStorage(STORAGE_KEYS.DELIVERY_ORDERS, MOCK_DELIVERY_ORDERS));
+    setExpenses(getFromStorage(STORAGE_KEYS.EXPENSES, MOCK_EXPENSES));
+    setCashFlows(getFromStorage(STORAGE_KEYS.CASH_FLOWS, MOCK_CASH_FLOWS));
+    setCustomers(getFromStorage(STORAGE_KEYS.CUSTOMERS, []));
+    setSuppliers(getFromStorage(STORAGE_KEYS.SUPPLIERS, []));
+    setPurchaseOrders(getFromStorage(STORAGE_KEYS.PURCHASE_ORDERS, []));
+    setRecipes(getFromStorage(STORAGE_KEYS.RECIPES, []));
+    setShifts(getFromStorage(STORAGE_KEYS.SHIFTS, MOCK_SHIFTS));
+    setSchedules(getFromStorage(STORAGE_KEYS.SCHEDULES, MOCK_SCHEDULES));
+    setPromotions(getFromStorage(STORAGE_KEYS.PROMOTIONS, []));
+    setNotifications(getFromStorage(STORAGE_KEYS.NOTIFICATIONS, []));
+    // Initialize menu items with defaults from MOCK_MENU (adding new fields)
+    const defaultMenuItems: MenuItem[] = MOCK_MENU.map(item => ({
+      ...item,
+      isAvailable: true,
+      modifierGroupIds: [],
+    }));
+    setMenuItems(getFromStorage(STORAGE_KEYS.MENU_ITEMS, defaultMenuItems));
+    setModifierGroups(getFromStorage(STORAGE_KEYS.MODIFIER_GROUPS, []));
+    setModifierOptions(getFromStorage(STORAGE_KEYS.MODIFIER_OPTIONS, []));
+    // Initialize KPI data
+    setStaffKPI(getFromStorage(STORAGE_KEYS.STAFF_KPI, MOCK_STAFF_KPI));
+    setLeaveRecords(getFromStorage(STORAGE_KEYS.LEAVE_RECORDS, MOCK_LEAVE_RECORDS));
+    setTrainingRecords(getFromStorage(STORAGE_KEYS.TRAINING_RECORDS, MOCK_TRAINING_RECORDS));
+    setOTRecords(getFromStorage(STORAGE_KEYS.OT_RECORDS, MOCK_OT_RECORDS));
+    setCustomerReviews(getFromStorage(STORAGE_KEYS.CUSTOMER_REVIEWS, MOCK_CUSTOMER_REVIEWS));
+    // Initialize Staff Portal data
+    setChecklistTemplates(getFromStorage(STORAGE_KEYS.CHECKLIST_TEMPLATES, MOCK_CHECKLIST_TEMPLATES));
+    setChecklistCompletions(getFromStorage(STORAGE_KEYS.CHECKLIST_COMPLETIONS, MOCK_CHECKLIST_COMPLETIONS));
+    setLeaveBalances(getFromStorage(STORAGE_KEYS.LEAVE_BALANCES, MOCK_LEAVE_BALANCES));
+    setLeaveRequests(getFromStorage(STORAGE_KEYS.LEAVE_REQUESTS, MOCK_LEAVE_REQUESTS));
+    setClaimRequests(getFromStorage(STORAGE_KEYS.CLAIM_REQUESTS, MOCK_CLAIM_REQUESTS));
+    setStaffRequests(getFromStorage(STORAGE_KEYS.STAFF_REQUESTS, MOCK_STAFF_REQUESTS));
+    setAnnouncements(getFromStorage(STORAGE_KEYS.ANNOUNCEMENTS, MOCK_ANNOUNCEMENTS));
+    setIsInitialized(true);
+  }, []);
+
+  // Persist to localStorage when state changes
+  useEffect(() => {
+    if (isInitialized) {
+      setToStorage(STORAGE_KEYS.INVENTORY, inventory);
+    }
+  }, [inventory, isInitialized]);
+
+  useEffect(() => {
+    if (isInitialized) {
+      setToStorage(STORAGE_KEYS.INVENTORY_LOGS, inventoryLogs);
+    }
+  }, [inventoryLogs, isInitialized]);
+
+  useEffect(() => {
+    if (isInitialized) {
+      setToStorage(STORAGE_KEYS.STAFF, staff);
+    }
+  }, [staff, isInitialized]);
+
+  useEffect(() => {
+    if (isInitialized) {
+      setToStorage(STORAGE_KEYS.ATTENDANCE, attendance);
+    }
+  }, [attendance, isInitialized]);
+
+  useEffect(() => {
+    if (isInitialized) {
+      setToStorage(STORAGE_KEYS.ORDERS, orders);
+    }
+  }, [orders, isInitialized]);
+
+  useEffect(() => {
+    if (isInitialized) {
+      setToStorage(STORAGE_KEYS.PRODUCTION_LOGS, productionLogs);
+    }
+  }, [productionLogs, isInitialized]);
+
+  useEffect(() => {
+    if (isInitialized) {
+      setToStorage(STORAGE_KEYS.DELIVERY_ORDERS, deliveryOrders);
+    }
+  }, [deliveryOrders, isInitialized]);
+
+  useEffect(() => {
+    if (isInitialized) {
+      setToStorage(STORAGE_KEYS.EXPENSES, expenses);
+    }
+  }, [expenses, isInitialized]);
+
+  useEffect(() => {
+    if (isInitialized) {
+      setToStorage(STORAGE_KEYS.CASH_FLOWS, cashFlows);
+    }
+  }, [cashFlows, isInitialized]);
+
+  useEffect(() => {
+    if (isInitialized) {
+      setToStorage(STORAGE_KEYS.CUSTOMERS, customers);
+    }
+  }, [customers, isInitialized]);
+
+  useEffect(() => {
+    if (isInitialized) {
+      setToStorage(STORAGE_KEYS.SUPPLIERS, suppliers);
+    }
+  }, [suppliers, isInitialized]);
+
+  useEffect(() => {
+    if (isInitialized) {
+      setToStorage(STORAGE_KEYS.PURCHASE_ORDERS, purchaseOrders);
+    }
+  }, [purchaseOrders, isInitialized]);
+
+  useEffect(() => {
+    if (isInitialized) {
+      setToStorage(STORAGE_KEYS.RECIPES, recipes);
+    }
+  }, [recipes, isInitialized]);
+
+  useEffect(() => {
+    if (isInitialized) {
+      setToStorage(STORAGE_KEYS.SHIFTS, shifts);
+    }
+  }, [shifts, isInitialized]);
+
+  useEffect(() => {
+    if (isInitialized) {
+      setToStorage(STORAGE_KEYS.SCHEDULES, schedules);
+    }
+  }, [schedules, isInitialized]);
+
+  useEffect(() => {
+    if (isInitialized) {
+      setToStorage(STORAGE_KEYS.PROMOTIONS, promotions);
+    }
+  }, [promotions, isInitialized]);
+
+  useEffect(() => {
+    if (isInitialized) {
+      setToStorage(STORAGE_KEYS.NOTIFICATIONS, notifications);
+    }
+  }, [notifications, isInitialized]);
+
+  useEffect(() => {
+    if (isInitialized) {
+      setToStorage(STORAGE_KEYS.MENU_ITEMS, menuItems);
+    }
+  }, [menuItems, isInitialized]);
+
+  useEffect(() => {
+    if (isInitialized) {
+      setToStorage(STORAGE_KEYS.MODIFIER_GROUPS, modifierGroups);
+    }
+  }, [modifierGroups, isInitialized]);
+
+  useEffect(() => {
+    if (isInitialized) {
+      setToStorage(STORAGE_KEYS.MODIFIER_OPTIONS, modifierOptions);
+    }
+  }, [modifierOptions, isInitialized]);
+
+  // KPI persistence
+  useEffect(() => {
+    if (isInitialized) {
+      setToStorage(STORAGE_KEYS.STAFF_KPI, staffKPI);
+    }
+  }, [staffKPI, isInitialized]);
+
+  useEffect(() => {
+    if (isInitialized) {
+      setToStorage(STORAGE_KEYS.LEAVE_RECORDS, leaveRecords);
+    }
+  }, [leaveRecords, isInitialized]);
+
+  useEffect(() => {
+    if (isInitialized) {
+      setToStorage(STORAGE_KEYS.TRAINING_RECORDS, trainingRecords);
+    }
+  }, [trainingRecords, isInitialized]);
+
+  useEffect(() => {
+    if (isInitialized) {
+      setToStorage(STORAGE_KEYS.OT_RECORDS, otRecords);
+    }
+  }, [otRecords, isInitialized]);
+
+  useEffect(() => {
+    if (isInitialized) {
+      setToStorage(STORAGE_KEYS.CUSTOMER_REVIEWS, customerReviews);
+    }
+  }, [customerReviews, isInitialized]);
+
+  // Staff Portal persistence
+  useEffect(() => {
+    if (isInitialized) {
+      setToStorage(STORAGE_KEYS.CHECKLIST_TEMPLATES, checklistTemplates);
+    }
+  }, [checklistTemplates, isInitialized]);
+
+  useEffect(() => {
+    if (isInitialized) {
+      setToStorage(STORAGE_KEYS.CHECKLIST_COMPLETIONS, checklistCompletions);
+    }
+  }, [checklistCompletions, isInitialized]);
+
+  useEffect(() => {
+    if (isInitialized) {
+      setToStorage(STORAGE_KEYS.LEAVE_BALANCES, leaveBalances);
+    }
+  }, [leaveBalances, isInitialized]);
+
+  useEffect(() => {
+    if (isInitialized) {
+      setToStorage(STORAGE_KEYS.LEAVE_REQUESTS, leaveRequests);
+    }
+  }, [leaveRequests, isInitialized]);
+
+  useEffect(() => {
+    if (isInitialized) {
+      setToStorage(STORAGE_KEYS.CLAIM_REQUESTS, claimRequests);
+    }
+  }, [claimRequests, isInitialized]);
+
+  useEffect(() => {
+    if (isInitialized) {
+      setToStorage(STORAGE_KEYS.STAFF_REQUESTS, staffRequests);
+    }
+  }, [staffRequests, isInitialized]);
+
+  useEffect(() => {
+    if (isInitialized) {
+      setToStorage(STORAGE_KEYS.ANNOUNCEMENTS, announcements);
+    }
+  }, [announcements, isInitialized]);
+
+  // Inventory actions
+  const addStockItem = useCallback((item: Omit<StockItem, 'id'>) => {
+    const newItem: StockItem = {
+      ...item,
+      id: `stock_${Date.now()}`,
+    };
+    setInventory(prev => [...prev, newItem]);
+    
+    // Add initial log
+    const log: InventoryLog = {
+      id: `log_${Date.now()}`,
+      stockItemId: newItem.id,
+      stockItemName: newItem.name,
+      type: 'initial',
+      quantity: newItem.currentQuantity,
+      previousQuantity: 0,
+      newQuantity: newItem.currentQuantity,
+      reason: 'Stok baru ditambah',
+      createdAt: new Date().toISOString(),
+    };
+    setInventoryLogs(prev => [log, ...prev]);
+  }, []);
+
+  const updateStockItem = useCallback((id: string, updates: Partial<StockItem>) => {
+    setInventory(prev => prev.map(item => 
+      item.id === id ? { ...item, ...updates } : item
+    ));
+  }, []);
+
+  const deleteStockItem = useCallback((id: string) => {
+    setInventory(prev => prev.filter(item => item.id !== id));
+  }, []);
+
+  const adjustStock = useCallback((id: string, quantity: number, type: 'in' | 'out', reason: string) => {
+    setInventory(prev => {
+      const item = prev.find(i => i.id === id);
+      if (!item) return prev;
+      
+      const previousQuantity = item.currentQuantity;
+      const newQuantity = type === 'in' 
+        ? previousQuantity + quantity 
+        : Math.max(0, previousQuantity - quantity);
+      
+      // Add log
+      const log: InventoryLog = {
+        id: `log_${Date.now()}`,
+        stockItemId: id,
+        stockItemName: item.name,
+        type,
+        quantity,
+        previousQuantity,
+        newQuantity,
+        reason,
+        createdAt: new Date().toISOString(),
+      };
+      setInventoryLogs(prevLogs => [log, ...prevLogs]);
+      
+      return prev.map(i => 
+        i.id === id ? { ...i, currentQuantity: newQuantity } : i
+      );
+    });
+  }, []);
+
+  // Staff actions
+  const addStaff = useCallback((staffData: Omit<StaffProfile, 'id'>) => {
+    const newStaff: StaffProfile = {
+      ...staffData,
+      id: `staff_${Date.now()}`,
+    };
+    setStaff(prev => [...prev, newStaff]);
+  }, []);
+
+  const updateStaff = useCallback((id: string, updates: Partial<StaffProfile>) => {
+    setStaff(prev => prev.map(s => 
+      s.id === id ? { ...s, ...updates } : s
+    ));
+  }, []);
+
+  const deleteStaff = useCallback((id: string) => {
+    setStaff(prev => prev.filter(s => s.id !== id));
+  }, []);
+
+  const getStaffAttendanceToday = useCallback((staffId: string): AttendanceRecord | undefined => {
+    const today = new Date().toISOString().split('T')[0];
+    return attendance.find(a => a.staffId === staffId && a.date === today);
+  }, [attendance]);
+
+  const clockIn = useCallback((staffId: string, pin: string): { success: boolean; message: string } => {
+    const staffMember = staff.find(s => s.id === staffId);
+    if (!staffMember) {
+      return { success: false, message: 'Staf tidak dijumpai' };
+    }
+    
+    if (staffMember.pin !== pin) {
+      return { success: false, message: 'PIN salah' };
+    }
+    
+    if (staffMember.status !== 'active') {
+      return { success: false, message: 'Staf tidak aktif' };
+    }
+    
+    const today = new Date().toISOString().split('T')[0];
+    const existingRecord = attendance.find(a => a.staffId === staffId && a.date === today);
+    
+    if (existingRecord && existingRecord.clockInTime && !existingRecord.clockOutTime) {
+      return { success: false, message: 'Sudah clock in hari ini' };
+    }
+    
+    const now = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+    
+    const newRecord: AttendanceRecord = {
+      id: `att_${Date.now()}`,
+      staffId,
+      date: today,
+      clockInTime: now,
+      clockOutTime: undefined,
+      breakDuration: 0,
+    };
+    
+    setAttendance(prev => [...prev, newRecord]);
+    return { success: true, message: `Clock in berjaya pada ${now}` };
+  }, [staff, attendance]);
+
+  const clockOut = useCallback((staffId: string): { success: boolean; message: string } => {
+    const today = new Date().toISOString().split('T')[0];
+    const record = attendance.find(a => a.staffId === staffId && a.date === today && a.clockInTime && !a.clockOutTime);
+    
+    if (!record) {
+      return { success: false, message: 'Tiada rekod clock in hari ini' };
+    }
+    
+    const now = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+    
+    setAttendance(prev => prev.map(a => 
+      a.id === record.id ? { ...a, clockOutTime: now } : a
+    ));
+    
+    return { success: true, message: `Clock out berjaya pada ${now}` };
+  }, [attendance]);
+
+  // Order actions
+  const addOrder = useCallback((orderData: Omit<Order, 'id' | 'orderNumber'>): Order => {
+    const timestamp = Date.now();
+    const newOrder: Order = {
+      ...orderData,
+      id: `order_${timestamp}`,
+      orderNumber: `ORD-${timestamp.toString().slice(-6)}`,
+    };
+    setOrders(prev => [newOrder, ...prev]);
+    return newOrder;
+  }, []);
+
+  const updateOrderStatus = useCallback((orderId: string, status: Order['status'], staffId?: string) => {
+    setOrders(prev => prev.map(order => {
+      if (order.id !== orderId) return order;
+      
+      const updates: Partial<Order> = { status };
+      const now = new Date().toISOString();
+      
+      // Record timestamps based on status change
+      if (status === 'preparing') {
+        updates.preparingStartedAt = now;
+        if (staffId) updates.preparedByStaffId = staffId;
+      } else if (status === 'ready') {
+        updates.readyAt = now;
+        // Keep preparedByStaffId if already set, or set it now
+        if (staffId && !order.preparedByStaffId) updates.preparedByStaffId = staffId;
+      }
+      
+      return { ...order, ...updates };
+    }));
+  }, []);
+
+  const getTodayOrders = useCallback((): Order[] => {
+    const today = new Date().toISOString().split('T')[0];
+    return orders.filter(order => order.createdAt.startsWith(today));
+  }, [orders]);
+
+  // Production log actions
+  const addProductionLog = useCallback((log: Omit<ProductionLog, 'id'>) => {
+    const newLog: ProductionLog = {
+      ...log,
+      id: `prod_${Date.now()}`,
+    };
+    setProductionLogs(prev => [newLog, ...prev]);
+  }, []);
+
+  // Delivery order actions
+  const updateDeliveryStatus = useCallback((orderId: string, status: DeliveryOrder['status']) => {
+    setDeliveryOrders(prev => prev.map(order => 
+      order.id === orderId ? { ...order, status } : order
+    ));
+  }, []);
+
+  // Finance actions
+  const addExpense = useCallback((expense: Omit<Expense, 'id' | 'createdAt'>) => {
+    const newExpense: Expense = {
+      ...expense,
+      id: `exp_${Date.now()}`,
+      createdAt: new Date().toISOString(),
+    };
+    setExpenses(prev => [newExpense, ...prev]);
+  }, []);
+
+  const updateExpense = useCallback((id: string, updates: Partial<Expense>) => {
+    setExpenses(prev => prev.map(e => e.id === id ? { ...e, ...updates } : e));
+  }, []);
+
+  const deleteExpense = useCallback((id: string) => {
+    setExpenses(prev => prev.filter(e => e.id !== id));
+  }, []);
+
+  const updateCashFlow = useCallback((date: string, data: Partial<DailyCashFlow>) => {
+    setCashFlows(prev => {
+      const existing = prev.find(cf => cf.date === date);
+      if (existing) {
+        return prev.map(cf => cf.date === date ? { ...cf, ...data } : cf);
+      } else {
+        const newCf: DailyCashFlow = {
+          id: `cf_${Date.now()}`,
+          date,
+          openingCash: 0,
+          salesCash: 0,
+          salesCard: 0,
+          salesEwallet: 0,
+          expensesCash: 0,
+          closingCash: 0,
+          ...data,
+        };
+        return [newCf, ...prev];
+      }
+    });
+  }, []);
+
+  const getTodayCashFlow = useCallback((): DailyCashFlow | undefined => {
+    const today = new Date().toISOString().split('T')[0];
+    return cashFlows.find(cf => cf.date === today);
+  }, [cashFlows]);
+
+  const getMonthlyExpenses = useCallback((month: string): Expense[] => {
+    return expenses.filter(e => e.date.startsWith(month));
+  }, [expenses]);
+
+  const getMonthlyRevenue = useCallback((month: string): number => {
+    return orders
+      .filter(o => o.createdAt.startsWith(month) && o.status === 'completed')
+      .reduce((sum, o) => sum + o.total, 0);
+  }, [orders]);
+
+  // Customer actions
+  const addCustomer = useCallback((customerData: Omit<Customer, 'id' | 'createdAt' | 'loyaltyPoints' | 'totalSpent' | 'totalOrders' | 'segment'>): Customer => {
+    const newCustomer: Customer = {
+      ...customerData,
+      id: `cust_${Date.now()}`,
+      loyaltyPoints: 0,
+      totalSpent: 0,
+      totalOrders: 0,
+      segment: 'new',
+      createdAt: new Date().toISOString(),
+    };
+    setCustomers(prev => [newCustomer, ...prev]);
+    return newCustomer;
+  }, []);
+
+  const updateCustomer = useCallback((id: string, updates: Partial<Customer>) => {
+    setCustomers(prev => prev.map(c => c.id === id ? { ...c, ...updates } : c));
+  }, []);
+
+  const addLoyaltyPoints = useCallback((customerId: string, points: number) => {
+    setCustomers(prev => prev.map(c => {
+      if (c.id === customerId) {
+        const newPoints = c.loyaltyPoints + points;
+        const newSegment = newPoints >= 500 ? 'vip' : newPoints >= 100 ? 'regular' : 'new';
+        return { ...c, loyaltyPoints: newPoints, segment: newSegment };
+      }
+      return c;
+    }));
+  }, []);
+
+  const redeemLoyaltyPoints = useCallback((customerId: string, points: number): boolean => {
+    const customer = customers.find(c => c.id === customerId);
+    if (!customer || customer.loyaltyPoints < points) return false;
+    setCustomers(prev => prev.map(c => 
+      c.id === customerId ? { ...c, loyaltyPoints: c.loyaltyPoints - points } : c
+    ));
+    return true;
+  }, [customers]);
+
+  // Supplier actions
+  const addSupplier = useCallback((supplierData: Omit<Supplier, 'id' | 'createdAt' | 'rating'>) => {
+    const newSupplier: Supplier = {
+      ...supplierData,
+      id: `sup_${Date.now()}`,
+      rating: 3,
+      createdAt: new Date().toISOString(),
+    };
+    setSuppliers(prev => [newSupplier, ...prev]);
+  }, []);
+
+  const updateSupplier = useCallback((id: string, updates: Partial<Supplier>) => {
+    setSuppliers(prev => prev.map(s => s.id === id ? { ...s, ...updates } : s));
+  }, []);
+
+  const deleteSupplier = useCallback((id: string) => {
+    setSuppliers(prev => prev.filter(s => s.id !== id));
+  }, []);
+
+  const addPurchaseOrder = useCallback((poData: Omit<PurchaseOrder, 'id' | 'poNumber' | 'createdAt' | 'updatedAt'>): PurchaseOrder => {
+    const timestamp = Date.now();
+    const newPO: PurchaseOrder = {
+      ...poData,
+      id: `po_${timestamp}`,
+      poNumber: `PO-${timestamp.toString().slice(-6)}`,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    setPurchaseOrders(prev => [newPO, ...prev]);
+    return newPO;
+  }, []);
+
+  const updatePurchaseOrderStatus = useCallback((id: string, status: PurchaseOrder['status']) => {
+    setPurchaseOrders(prev => prev.map(po => 
+      po.id === id ? { ...po, status, updatedAt: new Date().toISOString() } : po
+    ));
+  }, []);
+
+  // Recipe actions
+  const addRecipe = useCallback((recipeData: Omit<Recipe, 'id' | 'createdAt' | 'updatedAt' | 'totalCost' | 'profitMargin'>) => {
+    const totalCost = recipeData.ingredients.reduce((sum, ing) => sum + ing.totalCost, 0);
+    const profitMargin = recipeData.sellingPrice > 0 
+      ? ((recipeData.sellingPrice - totalCost) / recipeData.sellingPrice) * 100 
+      : 0;
+    const newRecipe: Recipe = {
+      ...recipeData,
+      id: `recipe_${Date.now()}`,
+      totalCost,
+      profitMargin,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    setRecipes(prev => [newRecipe, ...prev]);
+  }, []);
+
+  const updateRecipe = useCallback((id: string, updates: Partial<Recipe>) => {
+    setRecipes(prev => prev.map(r => r.id === id ? { ...r, ...updates, updatedAt: new Date().toISOString() } : r));
+  }, []);
+
+  const deleteRecipe = useCallback((id: string) => {
+    setRecipes(prev => prev.filter(r => r.id !== id));
+  }, []);
+
+  // Shift & Schedule actions
+  const addShift = useCallback((shiftData: Omit<Shift, 'id'>) => {
+    const newShift: Shift = { ...shiftData, id: `shift_${Date.now()}` };
+    setShifts(prev => [...prev, newShift]);
+  }, []);
+
+  const updateShift = useCallback((id: string, updates: Partial<Shift>) => {
+    setShifts(prev => prev.map(s => s.id === id ? { ...s, ...updates } : s));
+  }, []);
+
+  const deleteShift = useCallback((id: string) => {
+    setShifts(prev => prev.filter(s => s.id !== id));
+  }, []);
+
+  const addScheduleEntry = useCallback((entryData: Omit<ScheduleEntry, 'id'>) => {
+    const newEntry: ScheduleEntry = { ...entryData, id: `sched_${Date.now()}` };
+    setSchedules(prev => [...prev, newEntry]);
+  }, []);
+
+  const updateScheduleEntry = useCallback((id: string, updates: Partial<ScheduleEntry>) => {
+    setSchedules(prev => prev.map(s => s.id === id ? { ...s, ...updates } : s));
+  }, []);
+
+  const deleteScheduleEntry = useCallback((id: string) => {
+    setSchedules(prev => prev.filter(s => s.id !== id));
+  }, []);
+
+  const getWeekSchedule = useCallback((startDate: string): ScheduleEntry[] => {
+    const start = new Date(startDate);
+    const end = new Date(start);
+    end.setDate(end.getDate() + 7);
+    return schedules.filter(s => {
+      const date = new Date(s.date);
+      return date >= start && date < end;
+    });
+  }, [schedules]);
+
+  // Promotion actions
+  const addPromotion = useCallback((promoData: Omit<Promotion, 'id' | 'createdAt' | 'usageCount'>) => {
+    const newPromo: Promotion = {
+      ...promoData,
+      id: `promo_${Date.now()}`,
+      usageCount: 0,
+      createdAt: new Date().toISOString(),
+    };
+    setPromotions(prev => [newPromo, ...prev]);
+  }, []);
+
+  const updatePromotion = useCallback((id: string, updates: Partial<Promotion>) => {
+    setPromotions(prev => prev.map(p => p.id === id ? { ...p, ...updates } : p));
+  }, []);
+
+  const deletePromotion = useCallback((id: string) => {
+    setPromotions(prev => prev.filter(p => p.id !== id));
+  }, []);
+
+  const validatePromoCode = useCallback((code: string): Promotion | null => {
+    const now = new Date();
+    const promo = promotions.find(p => 
+      p.promoCode?.toLowerCase() === code.toLowerCase() &&
+      p.status === 'active' &&
+      new Date(p.startDate) <= now &&
+      new Date(p.endDate) >= now &&
+      (!p.usageLimit || p.usageCount < p.usageLimit)
+    );
+    return promo || null;
+  }, [promotions]);
+
+  // Notification actions
+  const addNotification = useCallback((notifData: Omit<Notification, 'id' | 'createdAt' | 'isRead'>) => {
+    const newNotif: Notification = {
+      ...notifData,
+      id: `notif_${Date.now()}`,
+      isRead: false,
+      createdAt: new Date().toISOString(),
+    };
+    setNotifications(prev => [newNotif, ...prev]);
+  }, []);
+
+  const markNotificationRead = useCallback((id: string) => {
+    setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
+  }, []);
+
+  const markAllNotificationsRead = useCallback(() => {
+    setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+  }, []);
+
+  const deleteNotification = useCallback((id: string) => {
+    setNotifications(prev => prev.filter(n => n.id !== id));
+  }, []);
+
+  const getUnreadCount = useCallback((): number => {
+    return notifications.filter(n => !n.isRead).length;
+  }, [notifications]);
+
+  // Menu Item actions
+  const addMenuItem = useCallback((item: Omit<MenuItem, 'id'>) => {
+    const newItem: MenuItem = {
+      ...item,
+      id: `menu_${Date.now()}`,
+    };
+    setMenuItems(prev => [...prev, newItem]);
+  }, []);
+
+  const updateMenuItem = useCallback((id: string, updates: Partial<MenuItem>) => {
+    setMenuItems(prev => prev.map(item => 
+      item.id === id ? { ...item, ...updates } : item
+    ));
+  }, []);
+
+  const deleteMenuItem = useCallback((id: string) => {
+    setMenuItems(prev => prev.filter(item => item.id !== id));
+  }, []);
+
+  const toggleMenuItemAvailability = useCallback((id: string) => {
+    setMenuItems(prev => prev.map(item => 
+      item.id === id ? { ...item, isAvailable: !item.isAvailable } : item
+    ));
+  }, []);
+
+  const getMenuCategories = useCallback((): string[] => {
+    const categories = new Set(menuItems.map(item => item.category));
+    return Array.from(categories);
+  }, [menuItems]);
+
+  // Modifier Group actions
+  const addModifierGroup = useCallback((group: Omit<ModifierGroup, 'id'>) => {
+    const newGroup: ModifierGroup = {
+      ...group,
+      id: `modgroup_${Date.now()}`,
+    };
+    setModifierGroups(prev => [...prev, newGroup]);
+  }, []);
+
+  const updateModifierGroup = useCallback((id: string, updates: Partial<ModifierGroup>) => {
+    setModifierGroups(prev => prev.map(group => 
+      group.id === id ? { ...group, ...updates } : group
+    ));
+  }, []);
+
+  const deleteModifierGroup = useCallback((id: string) => {
+    // Delete the group
+    setModifierGroups(prev => prev.filter(group => group.id !== id));
+    // Delete all options in this group
+    setModifierOptions(prev => prev.filter(opt => opt.groupId !== id));
+    // Remove this group from all menu items
+    setMenuItems(prev => prev.map(item => ({
+      ...item,
+      modifierGroupIds: item.modifierGroupIds.filter(gid => gid !== id)
+    })));
+  }, []);
+
+  // Modifier Option actions
+  const addModifierOption = useCallback((option: Omit<ModifierOption, 'id'>) => {
+    const newOption: ModifierOption = {
+      ...option,
+      id: `modopt_${Date.now()}`,
+    };
+    setModifierOptions(prev => [...prev, newOption]);
+  }, []);
+
+  const updateModifierOption = useCallback((id: string, updates: Partial<ModifierOption>) => {
+    setModifierOptions(prev => prev.map(opt => 
+      opt.id === id ? { ...opt, ...updates } : opt
+    ));
+  }, []);
+
+  const deleteModifierOption = useCallback((id: string) => {
+    setModifierOptions(prev => prev.filter(opt => opt.id !== id));
+  }, []);
+
+  const getOptionsForGroup = useCallback((groupId: string): ModifierOption[] => {
+    return modifierOptions.filter(opt => opt.groupId === groupId);
+  }, [modifierOptions]);
+
+  // KPI & Gamification actions
+  const getStaffKPI = useCallback((staffId: string, period?: string): StaffKPI | undefined => {
+    const currentPeriod = period || new Date().toISOString().slice(0, 7);
+    return staffKPI.find(k => k.staffId === staffId && k.period === currentPeriod);
+  }, [staffKPI]);
+
+  const getStaffKPIHistory = useCallback((staffId: string): StaffKPI[] => {
+    return staffKPI.filter(k => k.staffId === staffId).sort((a, b) => b.period.localeCompare(a.period));
+  }, [staffKPI]);
+
+  const updateStaffKPI = useCallback((staffId: string, period: string, metrics: Partial<KPIMetrics>) => {
+    setStaffKPI(prev => {
+      const existing = prev.find(k => k.staffId === staffId && k.period === period);
+      if (existing) {
+        const updatedMetrics = { ...existing.metrics, ...metrics };
+        const overallScore = calculateOverallScore(updatedMetrics);
+        const bonusAmount = calculateBonus(overallScore);
+        return prev.map(k => 
+          k.id === existing.id 
+            ? { ...k, metrics: updatedMetrics, overallScore, bonusAmount, updatedAt: new Date().toISOString() }
+            : k
+        );
+      } else {
+        const defaultMetrics: KPIMetrics = {
+          mealPrepTime: 0,
+          attendance: 0,
+          emergencyLeave: 100,
+          upselling: 0,
+          customerRating: 0,
+          wasteReduction: 0,
+          trainingComplete: 0,
+          otWillingness: 0,
+          ...metrics,
+        };
+        const overallScore = calculateOverallScore(defaultMetrics);
+        const bonusAmount = calculateBonus(overallScore);
+        const newKPI: StaffKPI = {
+          id: `kpi_${Date.now()}`,
+          staffId,
+          period,
+          metrics: defaultMetrics,
+          overallScore,
+          bonusAmount,
+          rank: prev.filter(k => k.period === period).length + 1,
+          updatedAt: new Date().toISOString(),
+        };
+        return [...prev, newKPI];
+      }
+    });
+  }, []);
+
+  const recalculateKPIRankings = useCallback((period: string) => {
+    setStaffKPI(prev => {
+      const periodKPIs = prev.filter(k => k.period === period);
+      const sorted = [...periodKPIs].sort((a, b) => b.overallScore - a.overallScore);
+      const rankings = new Map(sorted.map((k, idx) => [k.id, idx + 1]));
+      return prev.map(k => 
+        k.period === period ? { ...k, rank: rankings.get(k.id) || k.rank } : k
+      );
+    });
+  }, []);
+
+  const getKPILeaderboard = useCallback((period?: string): StaffKPI[] => {
+    const currentPeriod = period || new Date().toISOString().slice(0, 7);
+    return staffKPI
+      .filter(k => k.period === currentPeriod)
+      .sort((a, b) => a.rank - b.rank);
+  }, [staffKPI]);
+
+  const addLeaveRecord = useCallback((leave: Omit<LeaveRecord, 'id' | 'createdAt'>) => {
+    const newLeave: LeaveRecord = {
+      ...leave,
+      id: `leave_${Date.now()}`,
+      createdAt: new Date().toISOString(),
+    };
+    setLeaveRecords(prev => [newLeave, ...prev]);
+  }, []);
+
+  const updateLeaveRecord = useCallback((id: string, updates: Partial<LeaveRecord>) => {
+    setLeaveRecords(prev => prev.map(l => l.id === id ? { ...l, ...updates } : l));
+  }, []);
+
+  const addTrainingRecord = useCallback((training: Omit<TrainingRecord, 'id'>) => {
+    const newTraining: TrainingRecord = {
+      ...training,
+      id: `train_${Date.now()}`,
+    };
+    setTrainingRecords(prev => [newTraining, ...prev]);
+  }, []);
+
+  const updateTrainingRecord = useCallback((id: string, updates: Partial<TrainingRecord>) => {
+    setTrainingRecords(prev => prev.map(t => t.id === id ? { ...t, ...updates } : t));
+  }, []);
+
+  const addOTRecord = useCallback((ot: Omit<OTRecord, 'id' | 'createdAt'>) => {
+    const newOT: OTRecord = {
+      ...ot,
+      id: `ot_${Date.now()}`,
+      createdAt: new Date().toISOString(),
+    };
+    setOTRecords(prev => [newOT, ...prev]);
+  }, []);
+
+  const updateOTRecord = useCallback((id: string, updates: Partial<OTRecord>) => {
+    setOTRecords(prev => prev.map(o => o.id === id ? { ...o, ...updates } : o));
+  }, []);
+
+  const addCustomerReview = useCallback((review: Omit<CustomerReview, 'id' | 'createdAt'>) => {
+    const newReview: CustomerReview = {
+      ...review,
+      id: `review_${Date.now()}`,
+      createdAt: new Date().toISOString(),
+    };
+    setCustomerReviews(prev => [newReview, ...prev]);
+  }, []);
+
+  const getStaffReviews = useCallback((staffId: string): CustomerReview[] => {
+    return customerReviews.filter(r => r.staffId === staffId);
+  }, [customerReviews]);
+
+  const getStaffBonus = useCallback((staffId: string, period?: string): number => {
+    const kpi = getStaffKPI(staffId, period);
+    return kpi?.bonusAmount || 0;
+  }, [getStaffKPI]);
+
+  // Staff Portal - Checklist actions
+  const addChecklistTemplate = useCallback((template: Omit<ChecklistItemTemplate, 'id' | 'createdAt'>) => {
+    const newTemplate: ChecklistItemTemplate = {
+      ...template,
+      id: `checklist_template_${Date.now()}`,
+      createdAt: new Date().toISOString(),
+    };
+    setChecklistTemplates(prev => [...prev, newTemplate]);
+  }, []);
+
+  const updateChecklistTemplate = useCallback((id: string, updates: Partial<ChecklistItemTemplate>) => {
+    setChecklistTemplates(prev => prev.map(t => t.id === id ? { ...t, ...updates } : t));
+  }, []);
+
+  const deleteChecklistTemplate = useCallback((id: string) => {
+    setChecklistTemplates(prev => prev.filter(t => t.id !== id));
+  }, []);
+
+  const getChecklistTemplatesByType = useCallback((type: 'opening' | 'closing'): ChecklistItemTemplate[] => {
+    return checklistTemplates
+      .filter(t => t.type === type && t.isActive)
+      .sort((a, b) => a.order - b.order);
+  }, [checklistTemplates]);
+
+  const startChecklist = useCallback((type: 'opening' | 'closing', staffId: string, staffName: string, shiftId: string): ChecklistCompletion => {
+    const templates = checklistTemplates.filter(t => t.type === type && t.isActive).sort((a, b) => a.order - b.order);
+    const newCompletion: ChecklistCompletion = {
+      id: `checklist_${Date.now()}`,
+      date: new Date().toISOString().split('T')[0],
+      type,
+      staffId,
+      staffName,
+      shiftId,
+      items: templates.map(t => ({
+        templateId: t.id,
+        title: t.title,
+        isCompleted: false,
+      })),
+      startedAt: new Date().toISOString(),
+      status: 'in_progress',
+    };
+    setChecklistCompletions(prev => [...prev, newCompletion]);
+    return newCompletion;
+  }, [checklistTemplates]);
+
+  const updateChecklistItem = useCallback((completionId: string, templateId: string, updates: Partial<ChecklistCompletion['items'][0]>) => {
+    setChecklistCompletions(prev => prev.map(c => {
+      if (c.id !== completionId) return c;
+      return {
+        ...c,
+        items: c.items.map(item => 
+          item.templateId === templateId ? { ...item, ...updates } : item
+        ),
+      };
+    }));
+  }, []);
+
+  const completeChecklist = useCallback((completionId: string) => {
+    setChecklistCompletions(prev => prev.map(c => {
+      if (c.id !== completionId) return c;
+      const allCompleted = c.items.every(item => item.isCompleted);
+      return {
+        ...c,
+        completedAt: new Date().toISOString(),
+        status: allCompleted ? 'completed' : 'incomplete',
+      };
+    }));
+  }, []);
+
+  const getTodayChecklist = useCallback((type: 'opening' | 'closing'): ChecklistCompletion | undefined => {
+    const today = new Date().toISOString().split('T')[0];
+    return checklistCompletions.find(c => c.date === today && c.type === type);
+  }, [checklistCompletions]);
+
+  // Staff Portal - Leave actions
+  const getLeaveBalance = useCallback((staffId: string, year?: number): LeaveBalance | undefined => {
+    const currentYear = year || new Date().getFullYear();
+    return leaveBalances.find(lb => lb.staffId === staffId && lb.year === currentYear);
+  }, [leaveBalances]);
+
+  const addLeaveRequest = useCallback((request: Omit<LeaveRequest, 'id' | 'createdAt'>) => {
+    const newRequest: LeaveRequest = {
+      ...request,
+      id: `leave_req_${Date.now()}`,
+      createdAt: new Date().toISOString(),
+    };
+    setLeaveRequests(prev => [newRequest, ...prev]);
+    // Update pending count in leave balance
+    setLeaveBalances(prev => prev.map(lb => {
+      if (lb.staffId !== request.staffId) return lb;
+      if (request.type === 'unpaid' || request.type === 'study') return lb;
+      const leaveType = request.type;
+      if (!lb[leaveType]) return lb;
+      return {
+        ...lb,
+        [leaveType]: {
+          ...lb[leaveType],
+          pending: (lb[leaveType] as { pending: number }).pending + request.duration,
+        },
+        updatedAt: new Date().toISOString(),
+      };
+    }));
+  }, []);
+
+  const updateLeaveRequest = useCallback((id: string, updates: Partial<LeaveRequest>) => {
+    setLeaveRequests(prev => prev.map(r => r.id === id ? { ...r, ...updates } : r));
+  }, []);
+
+  const approveLeaveRequest = useCallback((id: string, approverId: string, approverName: string) => {
+    setLeaveRequests(prev => prev.map(r => {
+      if (r.id !== id) return r;
+      return {
+        ...r,
+        status: 'approved' as const,
+        approvedBy: approverId,
+        approverName,
+        approvedAt: new Date().toISOString(),
+      };
+    }));
+    // Update leave balance
+    const request = leaveRequests.find(r => r.id === id);
+    if (request) {
+      setLeaveBalances(prev => prev.map(lb => {
+        if (lb.staffId !== request.staffId) return lb;
+        if (request.type === 'unpaid') {
+          return {
+            ...lb,
+            unpaid: { taken: lb.unpaid.taken + request.duration },
+            updatedAt: new Date().toISOString(),
+          };
+        }
+        if (request.type === 'study') return lb;
+        const leaveType = request.type;
+        if (!lb[leaveType]) return lb;
+        const current = lb[leaveType] as { entitled: number; taken: number; pending: number; balance: number };
+        return {
+          ...lb,
+          [leaveType]: {
+            ...current,
+            taken: current.taken + request.duration,
+            pending: Math.max(0, current.pending - request.duration),
+            balance: current.balance - request.duration,
+          },
+          updatedAt: new Date().toISOString(),
+        };
+      }));
+    }
+  }, [leaveRequests]);
+
+  const rejectLeaveRequest = useCallback((id: string, approverId: string, approverName: string, reason: string) => {
+    const request = leaveRequests.find(r => r.id === id);
+    setLeaveRequests(prev => prev.map(r => {
+      if (r.id !== id) return r;
+      return {
+        ...r,
+        status: 'rejected' as const,
+        approvedBy: approverId,
+        approverName,
+        approvedAt: new Date().toISOString(),
+        rejectionReason: reason,
+      };
+    }));
+    // Remove from pending in balance
+    if (request) {
+      setLeaveBalances(prev => prev.map(lb => {
+        if (lb.staffId !== request.staffId) return lb;
+        if (request.type === 'unpaid' || request.type === 'study') return lb;
+        const leaveType = request.type;
+        if (!lb[leaveType]) return lb;
+        return {
+          ...lb,
+          [leaveType]: {
+            ...lb[leaveType],
+            pending: Math.max(0, (lb[leaveType] as { pending: number }).pending - request.duration),
+          },
+          updatedAt: new Date().toISOString(),
+        };
+      }));
+    }
+  }, [leaveRequests]);
+
+  const getStaffLeaveRequests = useCallback((staffId: string): LeaveRequest[] => {
+    return leaveRequests.filter(r => r.staffId === staffId);
+  }, [leaveRequests]);
+
+  const getPendingLeaveRequests = useCallback((): LeaveRequest[] => {
+    return leaveRequests.filter(r => r.status === 'pending');
+  }, [leaveRequests]);
+
+  // Staff Portal - Claim actions
+  const addClaimRequest = useCallback((claim: Omit<ClaimRequest, 'id' | 'createdAt'>) => {
+    const newClaim: ClaimRequest = {
+      ...claim,
+      id: `claim_${Date.now()}`,
+      createdAt: new Date().toISOString(),
+    };
+    setClaimRequests(prev => [newClaim, ...prev]);
+  }, []);
+
+  const updateClaimRequest = useCallback((id: string, updates: Partial<ClaimRequest>) => {
+    setClaimRequests(prev => prev.map(c => c.id === id ? { ...c, ...updates } : c));
+  }, []);
+
+  const approveClaimRequest = useCallback((id: string, approverId: string, approverName: string) => {
+    setClaimRequests(prev => prev.map(c => {
+      if (c.id !== id) return c;
+      return {
+        ...c,
+        status: 'approved' as const,
+        approvedBy: approverId,
+        approverName,
+        approvedAt: new Date().toISOString(),
+      };
+    }));
+  }, []);
+
+  const rejectClaimRequest = useCallback((id: string, approverId: string, approverName: string, reason: string) => {
+    setClaimRequests(prev => prev.map(c => {
+      if (c.id !== id) return c;
+      return {
+        ...c,
+        status: 'rejected' as const,
+        approvedBy: approverId,
+        approverName,
+        approvedAt: new Date().toISOString(),
+        rejectionReason: reason,
+      };
+    }));
+  }, []);
+
+  const markClaimAsPaid = useCallback((id: string) => {
+    setClaimRequests(prev => prev.map(c => {
+      if (c.id !== id) return c;
+      return { ...c, status: 'paid' as const, paidAt: new Date().toISOString() };
+    }));
+  }, []);
+
+  const getStaffClaimRequests = useCallback((staffId: string): ClaimRequest[] => {
+    return claimRequests.filter(c => c.staffId === staffId);
+  }, [claimRequests]);
+
+  const getPendingClaimRequests = useCallback((): ClaimRequest[] => {
+    return claimRequests.filter(c => c.status === 'pending');
+  }, [claimRequests]);
+
+  // Staff Portal - Staff Request actions
+  const addStaffRequest = useCallback((request: Omit<StaffRequest, 'id' | 'createdAt'>) => {
+    const newRequest: StaffRequest = {
+      ...request,
+      id: `staff_req_${Date.now()}`,
+      createdAt: new Date().toISOString(),
+    };
+    setStaffRequests(prev => [newRequest, ...prev]);
+  }, []);
+
+  const updateStaffRequest = useCallback((id: string, updates: Partial<StaffRequest>) => {
+    setStaffRequests(prev => prev.map(r => r.id === id ? { ...r, ...updates } : r));
+  }, []);
+
+  const completeStaffRequest = useCallback((id: string, responseNote?: string) => {
+    setStaffRequests(prev => prev.map(r => {
+      if (r.id !== id) return r;
+      return {
+        ...r,
+        status: 'completed' as const,
+        responseNote,
+        completedAt: new Date().toISOString(),
+      };
+    }));
+  }, []);
+
+  const rejectStaffRequest = useCallback((id: string, responseNote: string) => {
+    setStaffRequests(prev => prev.map(r => {
+      if (r.id !== id) return r;
+      return {
+        ...r,
+        status: 'rejected' as const,
+        responseNote,
+        completedAt: new Date().toISOString(),
+      };
+    }));
+  }, []);
+
+  const getStaffRequestsByStaff = useCallback((staffId: string): StaffRequest[] => {
+    return staffRequests.filter(r => r.staffId === staffId);
+  }, [staffRequests]);
+
+  const getPendingStaffRequests = useCallback((): StaffRequest[] => {
+    return staffRequests.filter(r => r.status === 'pending');
+  }, [staffRequests]);
+
+  // Staff Portal - Announcement actions
+  const addAnnouncement = useCallback((announcement: Omit<Announcement, 'id' | 'createdAt'>) => {
+    const newAnnouncement: Announcement = {
+      ...announcement,
+      id: `ann_${Date.now()}`,
+      createdAt: new Date().toISOString(),
+    };
+    setAnnouncements(prev => [newAnnouncement, ...prev]);
+  }, []);
+
+  const updateAnnouncement = useCallback((id: string, updates: Partial<Announcement>) => {
+    setAnnouncements(prev => prev.map(a => a.id === id ? { ...a, ...updates } : a));
+  }, []);
+
+  const deleteAnnouncement = useCallback((id: string) => {
+    setAnnouncements(prev => prev.filter(a => a.id !== id));
+  }, []);
+
+  const getActiveAnnouncements = useCallback((role?: 'Manager' | 'Staff'): Announcement[] => {
+    const today = new Date().toISOString().split('T')[0];
+    return announcements.filter(a => {
+      if (!a.isActive) return false;
+      if (a.startDate > today) return false;
+      if (a.endDate && a.endDate < today) return false;
+      if (role && !a.targetRoles.includes(role)) return false;
+      return true;
+    });
+  }, [announcements]);
+
+  const value: StoreState = {
+    // Inventory
+    inventory,
+    inventoryLogs,
+    addStockItem,
+    updateStockItem,
+    deleteStockItem,
+    adjustStock,
+    
+    // Staff
+    staff,
+    attendance,
+    addStaff,
+    updateStaff,
+    deleteStaff,
+    clockIn,
+    clockOut,
+    getStaffAttendanceToday,
+    
+    // Orders
+    orders,
+    addOrder,
+    updateOrderStatus,
+    getTodayOrders,
+    
+    // Production Logs
+    productionLogs,
+    addProductionLog,
+    
+    // Delivery Orders
+    deliveryOrders,
+    updateDeliveryStatus,
+    
+    // Finance
+    expenses,
+    cashFlows,
+    addExpense,
+    updateExpense,
+    deleteExpense,
+    updateCashFlow,
+    getTodayCashFlow,
+    getMonthlyExpenses,
+    getMonthlyRevenue,
+    
+    // Customers
+    customers,
+    addCustomer,
+    updateCustomer,
+    addLoyaltyPoints,
+    redeemLoyaltyPoints,
+    
+    // Suppliers
+    suppliers,
+    purchaseOrders,
+    addSupplier,
+    updateSupplier,
+    deleteSupplier,
+    addPurchaseOrder,
+    updatePurchaseOrderStatus,
+    
+    // Recipes
+    recipes,
+    addRecipe,
+    updateRecipe,
+    deleteRecipe,
+    
+    // Shifts & Schedules
+    shifts,
+    schedules,
+    addShift,
+    updateShift,
+    deleteShift,
+    addScheduleEntry,
+    updateScheduleEntry,
+    deleteScheduleEntry,
+    getWeekSchedule,
+    
+    // Promotions
+    promotions,
+    addPromotion,
+    updatePromotion,
+    deletePromotion,
+    validatePromoCode,
+    
+    // Notifications
+    notifications,
+    addNotification,
+    markNotificationRead,
+    markAllNotificationsRead,
+    deleteNotification,
+    getUnreadCount,
+    
+    // Menu Items
+    menuItems,
+    addMenuItem,
+    updateMenuItem,
+    deleteMenuItem,
+    toggleMenuItemAvailability,
+    getMenuCategories,
+    
+    // Modifier Groups
+    modifierGroups,
+    addModifierGroup,
+    updateModifierGroup,
+    deleteModifierGroup,
+    
+    // Modifier Options
+    modifierOptions,
+    addModifierOption,
+    updateModifierOption,
+    deleteModifierOption,
+    getOptionsForGroup,
+    
+    // KPI & Gamification
+    staffKPI,
+    leaveRecords,
+    trainingRecords,
+    otRecords,
+    customerReviews,
+    getStaffKPI,
+    getStaffKPIHistory,
+    updateStaffKPI,
+    recalculateKPIRankings,
+    getKPILeaderboard,
+    addLeaveRecord,
+    updateLeaveRecord,
+    addTrainingRecord,
+    updateTrainingRecord,
+    addOTRecord,
+    updateOTRecord,
+    addCustomerReview,
+    getStaffReviews,
+    getStaffBonus,
+    
+    // Staff Portal - Checklist
+    checklistTemplates,
+    checklistCompletions,
+    addChecklistTemplate,
+    updateChecklistTemplate,
+    deleteChecklistTemplate,
+    getChecklistTemplatesByType,
+    startChecklist,
+    updateChecklistItem,
+    completeChecklist,
+    getTodayChecklist,
+    
+    // Staff Portal - Leave
+    leaveBalances,
+    leaveRequests,
+    getLeaveBalance,
+    addLeaveRequest,
+    updateLeaveRequest,
+    approveLeaveRequest,
+    rejectLeaveRequest,
+    getStaffLeaveRequests,
+    getPendingLeaveRequests,
+    
+    // Staff Portal - Claims
+    claimRequests,
+    addClaimRequest,
+    updateClaimRequest,
+    approveClaimRequest,
+    rejectClaimRequest,
+    markClaimAsPaid,
+    getStaffClaimRequests,
+    getPendingClaimRequests,
+    
+    // Staff Portal - General Requests
+    staffRequests,
+    addStaffRequest,
+    updateStaffRequest,
+    completeStaffRequest,
+    rejectStaffRequest,
+    getStaffRequestsByStaff,
+    getPendingStaffRequests,
+    
+    // Staff Portal - Announcements
+    announcements,
+    addAnnouncement,
+    updateAnnouncement,
+    deleteAnnouncement,
+    getActiveAnnouncements,
+    
+    // Utility
+    isInitialized,
+  };
+
+  return (
+    <StoreContext.Provider value={value}>
+      {children}
+    </StoreContext.Provider>
+  );
+}
+
+export function useStore() {
+  const context = useContext(StoreContext);
+  if (!context) {
+    throw new Error('useStore must be used within a StoreProvider');
+  }
+  return context;
+}
+
+// Helper hooks for specific modules
+export function useInventory() {
+  const store = useStore();
+  return {
+    inventory: store.inventory,
+    inventoryLogs: store.inventoryLogs,
+    addStockItem: store.addStockItem,
+    updateStockItem: store.updateStockItem,
+    deleteStockItem: store.deleteStockItem,
+    adjustStock: store.adjustStock,
+    isInitialized: store.isInitialized,
+  };
+}
+
+export function useStaff() {
+  const store = useStore();
+  return {
+    staff: store.staff,
+    attendance: store.attendance,
+    addStaff: store.addStaff,
+    updateStaff: store.updateStaff,
+    deleteStaff: store.deleteStaff,
+    clockIn: store.clockIn,
+    clockOut: store.clockOut,
+    getStaffAttendanceToday: store.getStaffAttendanceToday,
+    isInitialized: store.isInitialized,
+  };
+}
+
+export function useOrders() {
+  const store = useStore();
+  return {
+    orders: store.orders,
+    addOrder: store.addOrder,
+    updateOrderStatus: store.updateOrderStatus,
+    getTodayOrders: store.getTodayOrders,
+    isInitialized: store.isInitialized,
+  };
+}
+
+export function useFinance() {
+  const store = useStore();
+  return {
+    expenses: store.expenses,
+    cashFlows: store.cashFlows,
+    addExpense: store.addExpense,
+    updateExpense: store.updateExpense,
+    deleteExpense: store.deleteExpense,
+    updateCashFlow: store.updateCashFlow,
+    getTodayCashFlow: store.getTodayCashFlow,
+    getMonthlyExpenses: store.getMonthlyExpenses,
+    getMonthlyRevenue: store.getMonthlyRevenue,
+    orders: store.orders,
+    isInitialized: store.isInitialized,
+  };
+}
+
+export function useCustomers() {
+  const store = useStore();
+  return {
+    customers: store.customers,
+    addCustomer: store.addCustomer,
+    updateCustomer: store.updateCustomer,
+    addLoyaltyPoints: store.addLoyaltyPoints,
+    redeemLoyaltyPoints: store.redeemLoyaltyPoints,
+    isInitialized: store.isInitialized,
+  };
+}
+
+export function useSuppliers() {
+  const store = useStore();
+  return {
+    suppliers: store.suppliers,
+    purchaseOrders: store.purchaseOrders,
+    addSupplier: store.addSupplier,
+    updateSupplier: store.updateSupplier,
+    deleteSupplier: store.deleteSupplier,
+    addPurchaseOrder: store.addPurchaseOrder,
+    updatePurchaseOrderStatus: store.updatePurchaseOrderStatus,
+    inventory: store.inventory,
+    isInitialized: store.isInitialized,
+  };
+}
+
+export function useRecipes() {
+  const store = useStore();
+  return {
+    recipes: store.recipes,
+    addRecipe: store.addRecipe,
+    updateRecipe: store.updateRecipe,
+    deleteRecipe: store.deleteRecipe,
+    inventory: store.inventory,
+    isInitialized: store.isInitialized,
+  };
+}
+
+export function useSchedules() {
+  const store = useStore();
+  return {
+    shifts: store.shifts,
+    schedules: store.schedules,
+    staff: store.staff,
+    addShift: store.addShift,
+    updateShift: store.updateShift,
+    deleteShift: store.deleteShift,
+    addScheduleEntry: store.addScheduleEntry,
+    updateScheduleEntry: store.updateScheduleEntry,
+    deleteScheduleEntry: store.deleteScheduleEntry,
+    getWeekSchedule: store.getWeekSchedule,
+    isInitialized: store.isInitialized,
+  };
+}
+
+export function usePromotions() {
+  const store = useStore();
+  return {
+    promotions: store.promotions,
+    addPromotion: store.addPromotion,
+    updatePromotion: store.updatePromotion,
+    deletePromotion: store.deletePromotion,
+    validatePromoCode: store.validatePromoCode,
+    isInitialized: store.isInitialized,
+  };
+}
+
+export function useNotifications() {
+  const store = useStore();
+  return {
+    notifications: store.notifications,
+    addNotification: store.addNotification,
+    markNotificationRead: store.markNotificationRead,
+    markAllNotificationsRead: store.markAllNotificationsRead,
+    deleteNotification: store.deleteNotification,
+    getUnreadCount: store.getUnreadCount,
+    isInitialized: store.isInitialized,
+  };
+}
+
+export function useMenu() {
+  const store = useStore();
+  return {
+    menuItems: store.menuItems,
+    modifierGroups: store.modifierGroups,
+    modifierOptions: store.modifierOptions,
+    addMenuItem: store.addMenuItem,
+    updateMenuItem: store.updateMenuItem,
+    deleteMenuItem: store.deleteMenuItem,
+    toggleMenuItemAvailability: store.toggleMenuItemAvailability,
+    getMenuCategories: store.getMenuCategories,
+    addModifierGroup: store.addModifierGroup,
+    updateModifierGroup: store.updateModifierGroup,
+    deleteModifierGroup: store.deleteModifierGroup,
+    addModifierOption: store.addModifierOption,
+    updateModifierOption: store.updateModifierOption,
+    deleteModifierOption: store.deleteModifierOption,
+    getOptionsForGroup: store.getOptionsForGroup,
+    isInitialized: store.isInitialized,
+  };
+}
+
+export function useKPI() {
+  const store = useStore();
+  return {
+    staffKPI: store.staffKPI,
+    leaveRecords: store.leaveRecords,
+    trainingRecords: store.trainingRecords,
+    otRecords: store.otRecords,
+    customerReviews: store.customerReviews,
+    staff: store.staff,
+    getStaffKPI: store.getStaffKPI,
+    getStaffKPIHistory: store.getStaffKPIHistory,
+    updateStaffKPI: store.updateStaffKPI,
+    recalculateKPIRankings: store.recalculateKPIRankings,
+    getKPILeaderboard: store.getKPILeaderboard,
+    addLeaveRecord: store.addLeaveRecord,
+    updateLeaveRecord: store.updateLeaveRecord,
+    addTrainingRecord: store.addTrainingRecord,
+    updateTrainingRecord: store.updateTrainingRecord,
+    addOTRecord: store.addOTRecord,
+    updateOTRecord: store.updateOTRecord,
+    addCustomerReview: store.addCustomerReview,
+    getStaffReviews: store.getStaffReviews,
+    getStaffBonus: store.getStaffBonus,
+    isInitialized: store.isInitialized,
+  };
+}
+
+export function useStaffPortal() {
+  const store = useStore();
+  return {
+    // Checklist
+    checklistTemplates: store.checklistTemplates,
+    checklistCompletions: store.checklistCompletions,
+    addChecklistTemplate: store.addChecklistTemplate,
+    updateChecklistTemplate: store.updateChecklistTemplate,
+    deleteChecklistTemplate: store.deleteChecklistTemplate,
+    getChecklistTemplatesByType: store.getChecklistTemplatesByType,
+    startChecklist: store.startChecklist,
+    updateChecklistItem: store.updateChecklistItem,
+    completeChecklist: store.completeChecklist,
+    getTodayChecklist: store.getTodayChecklist,
+    // Leave
+    leaveBalances: store.leaveBalances,
+    leaveRequests: store.leaveRequests,
+    getLeaveBalance: store.getLeaveBalance,
+    addLeaveRequest: store.addLeaveRequest,
+    updateLeaveRequest: store.updateLeaveRequest,
+    approveLeaveRequest: store.approveLeaveRequest,
+    rejectLeaveRequest: store.rejectLeaveRequest,
+    getStaffLeaveRequests: store.getStaffLeaveRequests,
+    getPendingLeaveRequests: store.getPendingLeaveRequests,
+    // Claims
+    claimRequests: store.claimRequests,
+    addClaimRequest: store.addClaimRequest,
+    updateClaimRequest: store.updateClaimRequest,
+    approveClaimRequest: store.approveClaimRequest,
+    rejectClaimRequest: store.rejectClaimRequest,
+    markClaimAsPaid: store.markClaimAsPaid,
+    getStaffClaimRequests: store.getStaffClaimRequests,
+    getPendingClaimRequests: store.getPendingClaimRequests,
+    // Staff Requests
+    staffRequests: store.staffRequests,
+    addStaffRequest: store.addStaffRequest,
+    updateStaffRequest: store.updateStaffRequest,
+    completeStaffRequest: store.completeStaffRequest,
+    rejectStaffRequest: store.rejectStaffRequest,
+    getStaffRequestsByStaff: store.getStaffRequestsByStaff,
+    getPendingStaffRequests: store.getPendingStaffRequests,
+    // Announcements
+    announcements: store.announcements,
+    addAnnouncement: store.addAnnouncement,
+    updateAnnouncement: store.updateAnnouncement,
+    deleteAnnouncement: store.deleteAnnouncement,
+    getActiveAnnouncements: store.getActiveAnnouncements,
+    // Staff & Schedule (for reference)
+    staff: store.staff,
+    schedules: store.schedules,
+    shifts: store.shifts,
+    getWeekSchedule: store.getWeekSchedule,
+    // Utility
+    isInitialized: store.isInitialized,
+  };
+}
+

@@ -1,0 +1,16 @@
+{
+  "status": "commited",
+  "type": "frontend",
+  "scope": "codebase",
+  "localEndpoint": "http://localhost:3000",
+  "executionArgs": {
+    "projectName": "abangbob-dashboard",
+    "projectPath": "/Users/aliffmarwan/abangbob dashboard",
+    "testIds": [],
+    "additionalInstruction": "",
+    "envs": {
+      "API_KEY": "sk-user-HCiJCyw8mr0anb2hOV8BFC7uwKoWqZTs165zme5yubep5QjAe3_crnr9s0oOLgqyeLrDcHhh25MowQB_aAq4EBjtYjDxezr_yjyqDaHR2xAc8b-mpOWJeNqHjrrOoIxKnr4"
+    }
+  },
+  "proxy": "http://14aedb3e-ddd2-4afc-b898-e81f1291b2d0:rHneHE48W3cYkyP9GiEu73VwGuegL2Bx@tun.testsprite.com:8080"
+}

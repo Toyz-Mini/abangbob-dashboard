@@ -1,0 +1,804 @@
+// Core Type Definitions
+
+export type UserRole = 'admin' | 'manager' | 'staff';
+
+export interface MenuItem {
+  id: string;
+  name: string;
+  category: string;
+  price: number;
+  image?: string;
+  description?: string;
+  ingredients?: string[]; // For inventory tracking
+  isAvailable: boolean; // Sold out or available
+  modifierGroupIds: string[]; // List of modifier groups for this item
+}
+
+// ==================== MODIFIER TYPES ====================
+
+export interface ModifierGroup {
+  id: string;
+  name: string;           // "Pilih Sos", "Pilih Flavour"
+  isRequired: boolean;    // Wajib pilih?
+  allowMultiple: boolean; // Boleh pilih lebih dari satu?
+  minSelection: number;   // Minimum pilihan (0 jika optional)
+  maxSelection: number;   // Maximum pilihan
+}
+
+export interface ModifierOption {
+  id: string;
+  groupId: string;
+  name: string;           // "Extra Cheese"
+  extraPrice: number;     // 0 jika percuma, 1.00 jika +$1
+  isAvailable: boolean;
+}
+
+export interface SelectedModifier {
+  groupId: string;
+  groupName: string;
+  optionId: string;
+  optionName: string;
+  extraPrice: number;
+}
+
+export interface CartItem extends MenuItem {
+  quantity: number;
+  selectedModifiers: SelectedModifier[]; // Selected modifiers for this cart item
+  itemTotal: number; // Base price + modifier prices
+}
+
+export interface Order {
+  id: string;
+  orderNumber: string;
+  items: CartItem[];
+  total: number;
+  customerPhone: string;
+  orderType: 'takeaway' | 'gomamam';
+  status: 'pending' | 'preparing' | 'ready' | 'completed';
+  createdAt: string;
+  staffId?: string;
+  // Staff speed tracking timestamps
+  preparingStartedAt?: string;  // Bila staff mula prepare
+  readyAt?: string;             // Bila order siap
+  preparedByStaffId?: string;   // Staff mana yang prepare
+}
+
+export interface StockItem {
+  id: string;
+  name: string;
+  category: string;
+  currentQuantity: number;
+  minQuantity: number;
+  unit: string;
+  cost: number;
+  supplier?: string;
+}
+
+// ==================== STAFF PROFILE TYPES ====================
+
+export type Gender = 'male' | 'female';
+export type MaritalStatus = 'single' | 'married' | 'divorced' | 'widowed';
+export type EmploymentType = 'permanent' | 'contract' | 'part-time' | 'probation';
+export type SalaryType = 'monthly' | 'hourly' | 'daily';
+export type AccessLevel = 'admin' | 'manager' | 'staff';
+
+export interface EmergencyContact {
+  name: string;
+  relation: string;
+  phone: string;
+  address?: string;
+}
+
+export interface BankDetails {
+  bankName: string;
+  accountNumber: string;
+  accountName: string;
+}
+
+export interface StatutoryContributions {
+  // TAP - Tabung Amanah Pekerja (Brunei)
+  tapNumber?: string;
+  tapEmployeeRate?: number; // percentage
+  tapEmployerRate?: number; // percentage
+  // SCP - Supplemental Contribution Plan (Brunei)
+  scpNumber?: string;
+  scpEmployeeRate?: number;
+  scpEmployerRate?: number;
+  // For Malaysia compatibility
+  epfNumber?: string;
+  socsoNumber?: string;
+  eisNumber?: string;
+}
+
+export interface LeaveEntitlement {
+  annual: number;
+  medical: number;
+  emergency: number;
+  maternity: number;
+  paternity: number;
+  compassionate: number;
+  carryForwardDays: number;
+}
+
+export interface StaffPermissions {
+  canApproveLeave: boolean;
+  canApproveClaims: boolean;
+  canViewReports: boolean;
+  canManageStaff: boolean;
+  canAccessPOS: boolean;
+  canGiveDiscount: boolean;
+  maxDiscountPercent: number;
+  canVoidTransaction: boolean;
+  canAccessInventory: boolean;
+  canAccessFinance: boolean;
+  canAccessKDS: boolean;
+  canManageMenu: boolean;
+}
+
+export interface SchedulePreferences {
+  defaultShiftId?: string;
+  workDaysPerWeek: number;
+  preferredOffDays: number[]; // 0-6 (Sun-Sat)
+  maxOTHoursPerWeek: number;
+  isFlexibleSchedule: boolean;
+}
+
+export interface Allowance {
+  id: string;
+  name: string;
+  amount: number;
+  type: 'fixed' | 'percentage';
+}
+
+export interface Deduction {
+  id: string;
+  name: string;
+  amount: number;
+  type: 'fixed' | 'percentage';
+}
+
+export interface StaffDocument {
+  id: string;
+  type: 'ic_front' | 'ic_back' | 'contract' | 'resume' | 'offer_letter' | 'medical_report' | 'work_permit' | 'certificate' | 'other';
+  name: string;
+  url: string;
+  uploadedAt: string;
+  expiryDate?: string;
+}
+
+export interface StaffProfile {
+  id: string;
+  employeeNumber?: string;
+  
+  // === Personal Information ===
+  name: string;
+  icNumber?: string;
+  dateOfBirth?: string;
+  gender?: Gender;
+  nationality?: string;
+  religion?: string;
+  maritalStatus?: MaritalStatus;
+  address?: string;
+  email?: string;
+  phone: string;
+  profilePhotoUrl?: string;
+  
+  // === Employment Details ===
+  role: 'Manager' | 'Staff';
+  position?: string;
+  department?: string;
+  employmentType?: EmploymentType;
+  joinDate?: string;
+  contractEndDate?: string;
+  probationEndDate?: string;
+  reportingTo?: string;
+  workLocation?: string;
+  status: 'active' | 'on-leave' | 'terminated';
+  terminationDate?: string;
+  terminationReason?: string;
+  
+  // === Authentication ===
+  pin: string;
+  
+  // === Salary & Compensation ===
+  salaryType?: SalaryType;
+  baseSalary: number;
+  hourlyRate: number;
+  dailyRate?: number;
+  overtimeRate?: number; // multiplier e.g. 1.5, 2.0
+  allowances?: Allowance[];
+  fixedDeductions?: Deduction[];
+  paymentFrequency?: 'weekly' | 'biweekly' | 'monthly';
+  
+  // === Bank Details ===
+  bankDetails?: BankDetails;
+  
+  // === Statutory Contributions (TAP/SCP for Brunei) ===
+  statutoryContributions?: StatutoryContributions;
+  
+  // === Emergency Contact ===
+  emergencyContact?: EmergencyContact;
+  
+  // === Leave Entitlement ===
+  leaveEntitlement?: LeaveEntitlement;
+  
+  // === Permissions & Access ===
+  accessLevel?: AccessLevel;
+  permissions?: StaffPermissions;
+  
+  // === Schedule Preferences ===
+  schedulePreferences?: SchedulePreferences;
+  
+  // === Documents ===
+  documents?: StaffDocument[];
+  
+  // === Skills & Training ===
+  skills?: string[];
+  certifications?: string[];
+  
+  // === Additional Info ===
+  uniformSize?: string;
+  shoeSize?: string;
+  dietaryRestrictions?: string;
+  medicalConditions?: string;
+  bloodType?: string;
+  notes?: string;
+  
+  // === Performance ===
+  performanceBadges?: string[];
+  
+  // === Metadata ===
+  createdAt?: string;
+  updatedAt?: string;
+  
+  // === Legacy fields for backward compatibility ===
+  /** @deprecated Use statutoryContributions.epfNumber instead */
+  epf?: string;
+  /** @deprecated Use statutoryContributions.socsoNumber instead */
+  socso?: string;
+}
+
+export interface AttendanceRecord {
+  id: string;
+  staffId: string;
+  date: string;
+  clockInTime?: string;
+  clockOutTime?: string;
+  breakDuration: number; // in minutes
+  photoProofUrl?: string;
+}
+
+export interface PayrollEntry {
+  id: string;
+  staffId: string;
+  month: string;
+  totalHours: number;
+  otHours: number;
+  deductions: number;
+  finalPayout: number;
+  baseSalary: number;
+}
+
+export interface OilTracker {
+  fryerId: string;
+  name: string;
+  currentCycles: number;
+  cycleLimit: number;
+  lastChangedDate: string;
+  status: 'good' | 'warning' | 'critical';
+}
+
+export interface ProductionLog {
+  id: string;
+  date: string;
+  item: string;
+  quantityProduced: number;
+  wasteAmount: number;
+  notes?: string;
+}
+
+export interface DeliveryOrder {
+  id: string;
+  platform: 'Grab' | 'Panda' | 'Shopee';
+  customerName: string;
+  customerPhone: string;
+  items: CartItem[];
+  totalAmount: number;
+  status: 'new' | 'preparing' | 'ready' | 'picked_up';
+  driverName?: string;
+  driverPlate?: string;
+  createdAt: string;
+}
+
+// ==================== FINANCE TYPES ====================
+
+export type ExpenseCategory = 'rent' | 'utilities' | 'supplies' | 'wages' | 'marketing' | 'maintenance' | 'ingredients' | 'equipment' | 'other';
+export type PaymentMethod = 'cash' | 'bank' | 'card' | 'ewallet';
+
+export interface Expense {
+  id: string;
+  date: string;
+  category: ExpenseCategory;
+  amount: number;
+  description: string;
+  receiptUrl?: string;
+  paymentMethod: PaymentMethod;
+  vendor?: string;
+  createdAt: string;
+}
+
+export interface DailyCashFlow {
+  id: string;
+  date: string;
+  openingCash: number;
+  salesCash: number;
+  salesCard: number;
+  salesEwallet: number;
+  expensesCash: number;
+  closingCash: number;
+  notes?: string;
+  closedBy?: string;
+  closedAt?: string;
+}
+
+export interface ProfitLossReport {
+  period: string; // YYYY-MM format
+  revenue: {
+    posSales: number;
+    deliverySales: number;
+    otherIncome: number;
+    totalRevenue: number;
+  };
+  costOfGoodsSold: number;
+  grossProfit: number;
+  expenses: {
+    rent: number;
+    utilities: number;
+    wages: number;
+    marketing: number;
+    maintenance: number;
+    supplies: number;
+    other: number;
+    totalExpenses: number;
+  };
+  netProfit: number;
+  profitMargin: number;
+}
+
+// ==================== CUSTOMER TYPES ====================
+
+export interface Customer {
+  id: string;
+  name: string;
+  phone: string;
+  email?: string;
+  birthday?: string;
+  loyaltyPoints: number;
+  totalSpent: number;
+  totalOrders: number;
+  segment: 'new' | 'regular' | 'vip';
+  notes?: string;
+  createdAt: string;
+  lastOrderAt?: string;
+}
+
+export interface LoyaltyTransaction {
+  id: string;
+  customerId: string;
+  type: 'earn' | 'redeem';
+  points: number;
+  orderId?: string;
+  description: string;
+  createdAt: string;
+}
+
+// ==================== SUPPLIER TYPES ====================
+
+export interface Supplier {
+  id: string;
+  name: string;
+  contactPerson: string;
+  phone: string;
+  email?: string;
+  address?: string;
+  paymentTerms: 'cod' | 'net7' | 'net14' | 'net30';
+  leadTimeDays: number;
+  rating: number; // 1-5
+  status: 'active' | 'inactive';
+  notes?: string;
+  createdAt: string;
+}
+
+export interface PurchaseOrder {
+  id: string;
+  poNumber: string;
+  supplierId: string;
+  supplierName: string;
+  items: PurchaseOrderItem[];
+  subtotal: number;
+  tax: number;
+  total: number;
+  status: 'draft' | 'sent' | 'confirmed' | 'received' | 'cancelled';
+  expectedDelivery?: string;
+  actualDelivery?: string;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PurchaseOrderItem {
+  stockItemId: string;
+  stockItemName: string;
+  quantity: number;
+  unit: string;
+  unitPrice: number;
+  totalPrice: number;
+}
+
+// ==================== RECIPE TYPES ====================
+
+export interface Recipe {
+  id: string;
+  menuItemId: string;
+  menuItemName: string;
+  ingredients: RecipeIngredient[];
+  totalCost: number;
+  sellingPrice: number;
+  profitMargin: number;
+  instructions?: string;
+  prepTime: number; // minutes
+  yieldQuantity: number;
+  yieldUnit: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface RecipeIngredient {
+  stockItemId: string;
+  stockItemName: string;
+  quantity: number;
+  unit: string;
+  costPerUnit: number;
+  totalCost: number;
+}
+
+// ==================== SHIFT & SCHEDULE TYPES ====================
+
+export interface Shift {
+  id: string;
+  name: string;
+  startTime: string; // HH:mm
+  endTime: string; // HH:mm
+  breakDuration: number; // minutes
+  color: string;
+}
+
+export interface ScheduleEntry {
+  id: string;
+  staffId: string;
+  staffName: string;
+  shiftId: string;
+  shiftName: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  status: 'scheduled' | 'confirmed' | 'completed' | 'absent' | 'cancelled';
+  notes?: string;
+}
+
+// ==================== PROMOTION TYPES ====================
+
+export interface Promotion {
+  id: string;
+  name: string;
+  description?: string;
+  type: 'percentage' | 'fixed_amount' | 'bogo' | 'free_item';
+  value: number;
+  minPurchase?: number;
+  maxDiscount?: number;
+  promoCode?: string;
+  applicableItems: string[]; // menu item IDs, empty = all items
+  startDate: string;
+  endDate: string;
+  daysOfWeek?: number[]; // 0-6 (Sun-Sat)
+  startTime?: string; // HH:mm
+  endTime?: string; // HH:mm
+  usageLimit?: number;
+  usageCount: number;
+  status: 'active' | 'inactive' | 'expired';
+  createdAt: string;
+}
+
+// ==================== NOTIFICATION TYPES ====================
+
+export interface Notification {
+  id: string;
+  type: 'low_stock' | 'new_order' | 'equipment' | 'staff' | 'finance' | 'system';
+  priority: 'low' | 'medium' | 'high' | 'critical';
+  title: string;
+  message: string;
+  actionUrl?: string;
+  isRead: boolean;
+  createdAt: string;
+  expiresAt?: string;
+}
+
+// ==================== SETTINGS TYPES ====================
+
+export interface OutletSettings {
+  id: string;
+  name: string;
+  address: string;
+  phone: string;
+  email?: string;
+  operatingHours: {
+    dayOfWeek: number;
+    isOpen: boolean;
+    openTime: string;
+    closeTime: string;
+  }[];
+  taxRate: number;
+  currency: string;
+  timezone: string;
+  receiptHeader?: string;
+  receiptFooter?: string;
+  logoUrl?: string;
+}
+
+// ==================== KPI & GAMIFICATION TYPES ====================
+
+export type KPIMetricKey = 
+  | 'mealPrepTime'
+  | 'attendance'
+  | 'emergencyLeave'
+  | 'upselling'
+  | 'customerRating'
+  | 'wasteReduction'
+  | 'trainingComplete'
+  | 'otWillingness';
+
+export interface KPIMetrics {
+  mealPrepTime: number;      // 0-100 - Masa penyediaan makanan
+  attendance: number;         // 0-100 - Kehadiran on-time
+  emergencyLeave: number;     // 0-100 - Kurang emergency leave/MC
+  upselling: number;          // 0-100 - Upselling performance
+  customerRating: number;     // 0-100 - Rating dari customer
+  wasteReduction: number;     // 0-100 - Pengurangan pembaziran
+  trainingComplete: number;   // 0-100 - Training selesai
+  otWillingness: number;      // 0-100 - Sanggup kerja OT
+}
+
+export interface KPIMetricConfig {
+  key: KPIMetricKey;
+  label: string;
+  labelBM: string;
+  description: string;
+  weight: number;             // Weight for overall score calculation
+  icon: string;               // Icon name for display
+  color: string;              // Color for charts
+}
+
+export interface StaffKPI {
+  id: string;
+  staffId: string;
+  period: string;             // YYYY-MM format
+  metrics: KPIMetrics;
+  overallScore: number;       // 0-100 weighted average
+  bonusAmount: number;        // RM bonus based on score
+  rank: number;               // Ranking among all staff
+  updatedAt: string;
+}
+
+export interface KPIConfig {
+  baseBonus: number;          // Base bonus amount (RM)
+  metricsConfig: KPIMetricConfig[];
+}
+
+export interface LeaveRecord {
+  id: string;
+  staffId: string;
+  type: 'annual' | 'medical' | 'emergency' | 'unpaid';
+  startDate: string;
+  endDate: string;
+  reason?: string;
+  status: 'pending' | 'approved' | 'rejected';
+  createdAt: string;
+}
+
+export interface TrainingRecord {
+  id: string;
+  staffId: string;
+  name: string;
+  description?: string;
+  completedAt?: string;
+  status: 'pending' | 'in_progress' | 'completed';
+  certificateUrl?: string;
+}
+
+export interface OTRecord {
+  id: string;
+  staffId: string;
+  date: string;
+  requestedBy: string;
+  hoursRequested: number;
+  accepted: boolean;
+  reason?: string;
+  createdAt: string;
+}
+
+export interface CustomerReview {
+  id: string;
+  orderId: string;
+  staffId?: string;
+  rating: number;             // 1-5 stars
+  comment?: string;
+  createdAt: string;
+}
+
+// ==================== CHECKLIST TYPES ====================
+
+export interface ChecklistItemTemplate {
+  id: string;
+  type: 'opening' | 'closing';
+  title: string;
+  description?: string;
+  requirePhoto: boolean;
+  requireNotes: boolean;
+  order: number;
+  isActive: boolean;
+  createdAt: string;
+}
+
+export interface ChecklistCompletion {
+  id: string;
+  date: string;
+  type: 'opening' | 'closing';
+  staffId: string;
+  staffName: string;
+  shiftId: string;
+  items: ChecklistItemCompletion[];
+  startedAt: string;
+  completedAt?: string;
+  status: 'in_progress' | 'completed' | 'incomplete';
+  reviewedBy?: string;
+  reviewedAt?: string;
+  reviewNotes?: string;
+}
+
+export interface ChecklistItemCompletion {
+  templateId: string;
+  title: string;
+  isCompleted: boolean;
+  completedAt?: string;
+  photoUrl?: string;
+  notes?: string;
+}
+
+// ==================== ENHANCED LEAVE TYPES ====================
+
+export type LeaveType = 
+  | 'annual' 
+  | 'medical' 
+  | 'emergency' 
+  | 'unpaid' 
+  | 'maternity' 
+  | 'paternity' 
+  | 'compassionate'
+  | 'replacement'
+  | 'study';
+
+export interface LeaveBalance {
+  id: string;
+  staffId: string;
+  year: number;
+  annual: { entitled: number; taken: number; pending: number; balance: number };
+  medical: { entitled: number; taken: number; pending: number; balance: number };
+  emergency: { entitled: number; taken: number; pending: number; balance: number };
+  maternity: { entitled: number; taken: number; pending: number; balance: number };
+  paternity: { entitled: number; taken: number; pending: number; balance: number };
+  compassionate: { entitled: number; taken: number; pending: number; balance: number };
+  unpaid: { taken: number }; // no limit
+  replacement: { entitled: number; taken: number; pending: number; balance: number };
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface LeaveRequest {
+  id: string;
+  staffId: string;
+  staffName: string;
+  type: LeaveType;
+  startDate: string;
+  endDate: string;
+  duration: number; // days
+  isHalfDay: boolean;
+  halfDayType?: 'morning' | 'afternoon';
+  reason: string;
+  attachments?: string[];
+  status: 'pending' | 'approved' | 'rejected' | 'cancelled';
+  approvedBy?: string;
+  approverName?: string;
+  approvedAt?: string;
+  rejectionReason?: string;
+  createdAt: string;
+}
+
+// ==================== CLAIM TYPES ====================
+
+export type ClaimType = 
+  | 'medical'
+  | 'transport'
+  | 'meal'
+  | 'training'
+  | 'phone'
+  | 'uniform'
+  | 'equipment'
+  | 'other';
+
+export interface ClaimRequest {
+  id: string;
+  staffId: string;
+  staffName: string;
+  type: ClaimType;
+  amount: number;
+  description: string;
+  receiptUrls: string[];
+  claimDate: string;
+  status: 'pending' | 'approved' | 'rejected' | 'paid';
+  approvedBy?: string;
+  approverName?: string;
+  approvedAt?: string;
+  rejectionReason?: string;
+  paidAt?: string;
+  createdAt: string;
+}
+
+// ==================== STAFF REQUEST TYPES ====================
+
+export type RequestCategory = 
+  | 'shift_swap'
+  | 'off_day'
+  | 'ot_request'
+  | 'schedule_change'
+  | 'salary_advance'
+  | 'payslip'
+  | 'letter'
+  | 'training'
+  | 'equipment'
+  | 'complaint'
+  | 'resignation'
+  | 'bank_change'
+  | 'other';
+
+export interface StaffRequest {
+  id: string;
+  staffId: string;
+  staffName: string;
+  category: RequestCategory;
+  title: string;
+  description: string;
+  priority: 'low' | 'medium' | 'high';
+  attachments?: string[];
+  status: 'pending' | 'in_progress' | 'completed' | 'rejected';
+  assignedTo?: string;
+  assigneeName?: string;
+  responseNote?: string;
+  createdAt: string;
+  completedAt?: string;
+}
+
+// ==================== ANNOUNCEMENT TYPES ====================
+
+export interface Announcement {
+  id: string;
+  title: string;
+  message: string;
+  priority: 'low' | 'medium' | 'high';
+  targetRoles: ('Manager' | 'Staff')[];
+  isActive: boolean;
+  startDate: string;
+  endDate?: string;
+  createdBy: string;
+  createdAt: string;
+}
+

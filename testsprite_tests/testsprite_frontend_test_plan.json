@@ -1,0 +1,672 @@
+[
+  {
+    "id": "TC001",
+    "title": "Dashboard Real-time Data Accuracy",
+    "description": "Verify the main dashboard displays accurate and real-time sales, inventory, and staff attendance data, with correct low stock and attendance alerts.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Login as a business owner or manager."
+      },
+      {
+        "type": "action",
+        "description": "Navigate to the main dashboard page."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify sales summary numbers match the backend sales data."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify inventory levels display current stock accurately and trigger low stock alerts if applicable."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify staff attendance data and alerts are correct and up-to-date."
+      }
+    ]
+  },
+  {
+    "id": "TC002",
+    "title": "POS System Order Processing Complete Flow",
+    "description": "Validate POS system allows menu browsing, adding modifiers, managing cart, applying discounts, and processing orders for dine-in, takeaway, and delivery.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Open POS page."
+      },
+      {
+        "type": "action",
+        "description": "Browse menu categories and select items."
+      },
+      {
+        "type": "action",
+        "description": "Add available modifiers with quantity and price adjustments."
+      },
+      {
+        "type": "action",
+        "description": "Add items to cart and update quantities."
+      },
+      {
+        "type": "action",
+        "description": "Apply a valid discount code."
+      },
+      {
+        "type": "action",
+        "description": "Select order type: dine-in, takeaway, delivery."
+      },
+      {
+        "type": "action",
+        "description": "Enter valid phone number for delivery/takeaway orders."
+      },
+      {
+        "type": "action",
+        "description": "Complete payment and submit order."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify order appears in order queue with correct details and status."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify receipt printing option is available and prints correct details."
+      }
+    ]
+  },
+  {
+    "id": "TC003",
+    "title": "POS System Phone Number Validation",
+    "description": "Ensure the phone number input in POS validates Brunei phone number format and rejects invalid entries.",
+    "category": "error handling",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to POS order page."
+      },
+      {
+        "type": "action",
+        "description": "Select delivery order type."
+      },
+      {
+        "type": "action",
+        "description": "Enter invalid phone number formats (e.g., too short, letters included)."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify validation error message is displayed and order submission is blocked."
+      },
+      {
+        "type": "action",
+        "description": "Enter a valid Brunei phone number."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify error message disappears and order submission is allowed."
+      }
+    ]
+  },
+  {
+    "id": "TC004",
+    "title": "Menu Management CRUD Operations",
+    "description": "Verify creation, updating, toggling availability, and deletion of menu items, categories, and modifiers behave correctly.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to menu management page."
+      },
+      {
+        "type": "action",
+        "description": "Create a new menu category."
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm the new category appears in the list."
+      },
+      {
+        "type": "action",
+        "description": "Add a menu item with pricing and assign to the category."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the new menu item displays correctly."
+      },
+      {
+        "type": "action",
+        "description": "Add modifiers to the menu item ensuring modifier group rules are followed."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify modifiers appear and pricing updates correctly."
+      },
+      {
+        "type": "action",
+        "description": "Toggle availability status of menu item and category."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify unavailable items/categories do not appear in POS menu."
+      },
+      {
+        "type": "action",
+        "description": "Edit menu item pricing and save changes."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify new pricing is reflected in POS and orders."
+      },
+      {
+        "type": "action",
+        "description": "Delete created menu item and category."
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm these items no longer appear anywhere."
+      }
+    ]
+  },
+  {
+    "id": "TC005",
+    "title": "Kitchen Display System Order Status and Timer",
+    "description": "Validate kitchen staff can view orders, update preparation statuses, and timers track order preparation times accurately.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Place an order through POS system."
+      },
+      {
+        "type": "action",
+        "description": "Open Kitchen Display System page."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the new order appears in the preparation queue."
+      },
+      {
+        "type": "action",
+        "description": "Start timers for order items from the KDS."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify timers count upwards from start time."
+      },
+      {
+        "type": "action",
+        "description": "Update order item status to cooking, ready, and completed."
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm statuses update visually and reflect in the order system."
+      }
+    ]
+  },
+  {
+    "id": "TC006",
+    "title": "Inventory Management Stock Adjustment and Alerts",
+    "description": "Verify CRUD operations on stock items, recording adjustment reasons, and triggering low stock alerts.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to inventory management page."
+      },
+      {
+        "type": "action",
+        "description": "Create a new stock item with category and unit."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify new stock item is listed."
+      },
+      {
+        "type": "action",
+        "description": "Perform stock adjustments with valid reason selection."
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm adjustment history logs contain correct reason and amounts."
+      },
+      {
+        "type": "action",
+        "description": "Reduce stock below low stock threshold."
+      },
+      {
+        "type": "assertion",
+        "description": "Ensure low stock alert notifications appear."
+      },
+      {
+        "type": "action",
+        "description": "Delete test stock item."
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm item is removed from inventory list."
+      }
+    ]
+  },
+  {
+    "id": "TC007",
+    "title": "HR Module Staff Attendance with Photo Proof and PIN",
+    "description": "Verify staff clock-in and clock-out functionality with photo proof upload and PIN validation.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Login as a staff member."
+      },
+      {
+        "type": "action",
+        "description": "Navigate to time clock system."
+      },
+      {
+        "type": "action",
+        "description": "Clock in by entering valid PIN and upload photo proof."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify clock-in time is recorded accurately with photo proof saved."
+      },
+      {
+        "type": "action",
+        "description": "Attempt to clock in with invalid PIN."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify access denied message appears."
+      },
+      {
+        "type": "action",
+        "description": "Clock out similarly with valid PIN and photo."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify clock-out time is recorded."
+      }
+    ]
+  },
+  {
+    "id": "TC008",
+    "title": "HR Module Payroll with TAP/SCP Deductions",
+    "description": "Validate payroll calculations including salary, deductions, TAP/SCP statutory contributions, and accurate payslip generation.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Login as HR manager."
+      },
+      {
+        "type": "action",
+        "description": "Navigate to payroll management page."
+      },
+      {
+        "type": "action",
+        "description": "Process payroll for selected staff."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify salary calculation is accurate based on input data."
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm TAP and SCP deductions conform to Brunei statutory rules."
+      },
+      {
+        "type": "action",
+        "description": "Generate payslip for staff member."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify payslip includes correct salary, deductions, and net pay."
+      }
+    ]
+  },
+  {
+    "id": "TC009",
+    "title": "Staff Portal Leave Application and Approval Workflow",
+    "description": "Test staff can submit leave applications with balance verification and HR managers can approve or reject requests.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Login as staff."
+      },
+      {
+        "type": "action",
+        "description": "Navigate to leave application page."
+      },
+      {
+        "type": "action",
+        "description": "Apply for leave with valid dates and leave type."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify leave balance is checked and leave application submission succeeds if balance permits."
+      },
+      {
+        "type": "action",
+        "description": "Login as HR manager."
+      },
+      {
+        "type": "action",
+        "description": "Navigate to leave approvals dashboard."
+      },
+      {
+        "type": "action",
+        "description": "Approve or reject the submitted leave request."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify staff leave status updates accordingly and notifications sent."
+      }
+    ]
+  },
+  {
+    "id": "TC010",
+    "title": "Delivery Hub Multi-Platform Order Synchronization",
+    "description": "Validate orders from Grab, FoodPanda, and Shopee sync correctly to delivery hub with status updates and audio notifications.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Simulate incoming orders from Grab, FoodPanda, and Shopee."
+      },
+      {
+        "type": "action",
+        "description": "Open Delivery Hub page."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify all new orders are listed with correct platform and details."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify audio notification plays on new order arrival."
+      },
+      {
+        "type": "action",
+        "description": "Update delivery status of an order."
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm status update persists and reflects in sync service."
+      },
+      {
+        "type": "action",
+        "description": "Print delivery slip."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify printed slip contains correct order and delivery details."
+      }
+    ]
+  },
+  {
+    "id": "TC011",
+    "title": "Finance Module Expense Tracking and Reporting",
+    "description": "Ensure expenses can be added, daily cash flow tracked, and profit & loss reports generated accurately.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to finance module."
+      },
+      {
+        "type": "action",
+        "description": "Add new expense with category, amount, and date."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify expense appears in expense list."
+      },
+      {
+        "type": "action",
+        "description": "View daily cash flow dashboard."
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm cash flow numbers update with new expenses."
+      },
+      {
+        "type": "action",
+        "description": "Generate profit and loss report for a selected period."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify report data accuracy against input expenses and incomes."
+      }
+    ]
+  },
+  {
+    "id": "TC012",
+    "title": "Promotions Module Discount Application and Restrictions",
+    "description": "Test multiple discount types apply correctly respecting usage limits, date/time/day restrictions, and applicable items.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Create different promotions with discounts: percentage, fixed amount, buy-one-get-one."
+      },
+      {
+        "type": "action",
+        "description": "Set usage limits and active date/time ranges."
+      },
+      {
+        "type": "action",
+        "description": "Apply discounts during relevant POS orders."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify discounts apply correctly, usage limits are decremented, and discounts fail outside active periods."
+      },
+      {
+        "type": "action",
+        "description": "Attempt to use expired or exceeded-limit discounts."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify system blocks the discount application."
+      }
+    ]
+  },
+  {
+    "id": "TC013",
+    "title": "Internationalization UI Language Switching",
+    "description": "Validate all UI components correctly display text in English and Bahasa Melayu based on user language selection.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Login to application."
+      },
+      {
+        "type": "action",
+        "description": "Switch UI language to Bahasa Melayu."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify all labels, buttons, menus, and messages appear correctly translated."
+      },
+      {
+        "type": "action",
+        "description": "Switch UI language back to English."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify all UI text reverts correctly to English."
+      }
+    ]
+  },
+  {
+    "id": "TC014",
+    "title": "Progressive Web App Offline Functionality and Service Worker",
+    "description": "Ensure the app works offline with cached data, service worker registration, and prompts updates correctly.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Access app online to allow service worker to cache content."
+      },
+      {
+        "type": "action",
+        "description": "Disable network connection."
+      },
+      {
+        "type": "action",
+        "description": "Navigate through various app pages."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify content loads from cache without errors."
+      },
+      {
+        "type": "action",
+        "description": "Re-enable network connection."
+      },
+      {
+        "type": "action",
+        "description": "Trigger app update check."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify update prompt displays and user can apply update."
+      }
+    ]
+  },
+  {
+    "id": "TC015",
+    "title": "System Security: PIN and Role-Based Access Enforcement",
+    "description": "Validate that restricting module and action access by user role and PIN authentication works consistently.",
+    "category": "security",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Login as user with basic staff role."
+      },
+      {
+        "type": "action",
+        "description": "Attempt to access HR payroll and settings pages."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify access is denied."
+      },
+      {
+        "type": "action",
+        "description": "Attempt to clock in/out with incorrect PIN."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify authentication fails with error message."
+      },
+      {
+        "type": "action",
+        "description": "Login as admin user and verify full access."
+      }
+    ]
+  },
+  {
+    "id": "TC016",
+    "title": "Audit Log Records User Actions",
+    "description": "Ensure system audit log tracks critical user actions like login, data changes, approvals, and settings updates.",
+    "category": "security",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Perform actions such as login, staff profile update, leave approval, inventory adjustment."
+      },
+      {
+        "type": "action",
+        "description": "Navigate to audit log page."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify each action is recorded with user, timestamp, and action details."
+      }
+    ]
+  },
+  {
+    "id": "TC017",
+    "title": "Staff Portal Photo Proof Upload in Checklists",
+    "description": "Verify staff can upload photos when submitting daily opening and closing checklists and view upload history.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Login as staff."
+      },
+      {
+        "type": "action",
+        "description": "Navigate to checklist page."
+      },
+      {
+        "type": "action",
+        "description": "Complete checklist items and upload photo proof."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify photos upload successfully and checklist submission succeeds."
+      },
+      {
+        "type": "action",
+        "description": "Navigate to checklist history page."
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm checklist entries and photos are correctly displayed."
+      }
+    ]
+  },
+  {
+    "id": "TC018",
+    "title": "Shift Swap Requests and Approval",
+    "description": "Test staff can request shift swaps and HR or managers can approve or reject requests with notifications.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "StaffA requests a shift swap with StaffB."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify request is created and notified to StaffB."
+      },
+      {
+        "type": "action",
+        "description": "StaffB approves the swap request."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify schedule updates for both staff and notification sent."
+      },
+      {
+        "type": "action",
+        "description": "Attempt invalid swaps (e.g., same shift)."
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm system blocks invalid requests."
+      }
+    ]
+  }
+]

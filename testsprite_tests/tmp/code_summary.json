@@ -1,0 +1,264 @@
+{
+  "tech_stack": [
+    "TypeScript",
+    "Next.js 14 (App Router)",
+    "React 18",
+    "Recharts (charting library)",
+    "Lucide React (icons)",
+    "CSS (custom styling)",
+    "PWA (Progressive Web App)"
+  ],
+  "features": [
+    {
+      "name": "Main Dashboard",
+      "description": "Central dashboard displaying sales summary, order stats, low stock alerts, staff attendance, charts for sales trend, inventory levels, and staff attendance. Provides quick actions to navigate to key modules.",
+      "files": ["app/page.tsx", "components/MainLayout.tsx", "components/StatCard.tsx", "components/ChartCard.tsx"]
+    },
+    {
+      "name": "POS System",
+      "description": "Point of Sale system for order management, cart management, payment processing with support for takeaway and GoMamam order types.",
+      "files": ["app/pos/page.tsx"]
+    },
+    {
+      "name": "Order Display",
+      "description": "Order display screen showing current order queue and status updates.",
+      "files": ["app/order-display/page.tsx", "app/order/page.tsx"]
+    },
+    {
+      "name": "Kitchen Display System (KDS)",
+      "description": "Kitchen display for staff to view and manage orders in preparation with timer functionality.",
+      "files": ["app/kds/page.tsx", "components/OrderTimer.tsx"]
+    },
+    {
+      "name": "Inventory Management",
+      "description": "Stock tracking system with low stock alerts, stock items management, category filtering, and reorder functionality.",
+      "files": ["app/inventory/page.tsx", "lib/inventory-data.ts", "components/charts/InventoryLevelChart.tsx"]
+    },
+    {
+      "name": "Menu Management",
+      "description": "Menu item management with categories, pricing, modifiers, and availability status.",
+      "files": ["app/menu-management/page.tsx", "app/menu/[tableId]/page.tsx", "lib/menu-data.ts"]
+    },
+    {
+      "name": "HR Dashboard",
+      "description": "Human resources main dashboard for staff management overview.",
+      "files": ["app/hr/page.tsx", "lib/hr-data.ts"]
+    },
+    {
+      "name": "Staff Management",
+      "description": "Complete staff profile management including personal details, employment info, salary, bank details, documents, and permissions.",
+      "files": ["app/hr/staff/page.tsx", "app/hr/staff/new/page.tsx"]
+    },
+    {
+      "name": "Time Clock System",
+      "description": "Staff clock-in/clock-out system with photo proof support and attendance tracking.",
+      "files": ["app/hr/timeclock/page.tsx"]
+    },
+    {
+      "name": "Staff Schedule Management",
+      "description": "Shift scheduling system with shift templates, weekly schedule view, and staff assignment.",
+      "files": ["app/hr/schedule/page.tsx"]
+    },
+    {
+      "name": "Payroll Management",
+      "description": "Payroll processing with salary calculation, deductions, TAP/SCP contributions (Brunei), and payslip generation.",
+      "files": ["app/hr/payroll/page.tsx"]
+    },
+    {
+      "name": "Leave Calendar",
+      "description": "Calendar view of staff leave with visual scheduling.",
+      "files": ["app/hr/leave-calendar/page.tsx"]
+    },
+    {
+      "name": "HR Approvals",
+      "description": "Approval workflow for leave requests, claims, and other staff requests.",
+      "files": ["app/hr/approvals/page.tsx"]
+    },
+    {
+      "name": "Staff KPI System",
+      "description": "Key Performance Indicator tracking with metrics like meal prep time, attendance, upselling, customer rating, and bonus calculation.",
+      "files": ["app/hr/kpi/page.tsx", "app/hr/kpi/[staffId]/page.tsx", "lib/kpi-data.ts"]
+    },
+    {
+      "name": "Checklist Configuration",
+      "description": "Opening and closing checklist template management for daily operations.",
+      "files": ["app/hr/checklist-config/page.tsx"]
+    },
+    {
+      "name": "Staff Portal",
+      "description": "Self-service portal for staff to view their profile, schedules, payslips, and submit requests.",
+      "files": ["app/staff-portal/page.tsx", "components/StaffPortalNav.tsx"]
+    },
+    {
+      "name": "Staff Checklist",
+      "description": "Daily opening/closing checklist completion by staff with photo proof support.",
+      "files": ["app/staff-portal/checklist/page.tsx", "app/staff-portal/checklist/history/page.tsx"]
+    },
+    {
+      "name": "Leave Application",
+      "description": "Staff leave application system with balance tracking and approval workflow.",
+      "files": ["app/staff-portal/leave/page.tsx", "app/staff-portal/leave/apply/page.tsx"]
+    },
+    {
+      "name": "Claims Management",
+      "description": "Staff expense claims submission and tracking.",
+      "files": ["app/staff-portal/claims/page.tsx", "app/staff-portal/claims/new/page.tsx"]
+    },
+    {
+      "name": "Payslip Viewer",
+      "description": "Staff payslip viewing and download functionality.",
+      "files": ["app/staff-portal/payslip/page.tsx"]
+    },
+    {
+      "name": "Staff Profile",
+      "description": "Staff self-service profile viewing and editing.",
+      "files": ["app/staff-portal/profile/page.tsx"]
+    },
+    {
+      "name": "Staff Requests",
+      "description": "General request submission system for various HR-related requests.",
+      "files": ["app/staff-portal/requests/page.tsx"]
+    },
+    {
+      "name": "Staff Schedule View",
+      "description": "Staff personal schedule viewing.",
+      "files": ["app/staff-portal/schedule/page.tsx"]
+    },
+    {
+      "name": "Shift Swap",
+      "description": "Shift swapping functionality between staff members.",
+      "files": ["app/staff-portal/swap-shift/page.tsx"]
+    },
+    {
+      "name": "Staff Training",
+      "description": "Training module tracking and completion for staff development.",
+      "files": ["app/staff-portal/training/page.tsx"]
+    },
+    {
+      "name": "Delivery Hub",
+      "description": "Centralized delivery order management integrating Grab, Panda, and Shopee platforms.",
+      "files": ["app/delivery/page.tsx", "lib/delivery-data.ts"]
+    },
+    {
+      "name": "Production Management",
+      "description": "Production logging, oil tracker for fryers, and waste tracking.",
+      "files": ["app/production/page.tsx", "lib/production-data.ts"]
+    },
+    {
+      "name": "Finance Management",
+      "description": "Financial dashboard with expense tracking, cash flow management, and profit/loss reporting.",
+      "files": ["app/finance/page.tsx", "lib/finance-data.ts"]
+    },
+    {
+      "name": "Customer Management",
+      "description": "Customer database with loyalty points, segmentation, and order history.",
+      "files": ["app/customers/page.tsx"]
+    },
+    {
+      "name": "Supplier Management",
+      "description": "Supplier database and purchase order management.",
+      "files": ["app/suppliers/page.tsx"]
+    },
+    {
+      "name": "Recipe Management",
+      "description": "Recipe database with ingredient costing and profit margin calculation.",
+      "files": ["app/recipes/page.tsx"]
+    },
+    {
+      "name": "Promotions",
+      "description": "Promotion and discount management with various promotion types.",
+      "files": ["app/promotions/page.tsx"]
+    },
+    {
+      "name": "Table Management",
+      "description": "Table layout and status management for dine-in operations.",
+      "files": ["app/tables/page.tsx"]
+    },
+    {
+      "name": "Analytics",
+      "description": "Business analytics with sales trends, performance metrics, and reporting.",
+      "files": ["app/analytics/page.tsx", "lib/sales-data.ts"]
+    },
+    {
+      "name": "Audit Log",
+      "description": "System audit logging for tracking user actions and changes.",
+      "files": ["app/audit-log/page.tsx", "lib/audit-data.ts"]
+    },
+    {
+      "name": "Notifications",
+      "description": "Notification center for system alerts, low stock warnings, and staff notifications.",
+      "files": ["app/notifications/page.tsx", "components/staff-portal/NotificationCenter.tsx"]
+    },
+    {
+      "name": "Settings",
+      "description": "System and outlet settings configuration.",
+      "files": ["app/settings/page.tsx"]
+    },
+    {
+      "name": "Charts",
+      "description": "Reusable chart components for data visualization using Recharts.",
+      "files": ["components/charts/SalesTrendChart.tsx", "components/charts/InventoryLevelChart.tsx", "components/charts/StaffAttendanceChart.tsx"]
+    },
+    {
+      "name": "UI Components",
+      "description": "Reusable UI components including modals, dialogs, forms, tables, navigation, and more.",
+      "files": ["components/Modal.tsx", "components/ConfirmDialog.tsx", "components/DataTable.tsx", "components/FormField.tsx", "components/Tabs.tsx", "components/Sheet.tsx", "components/Popover.tsx", "components/Tooltip.tsx"]
+    },
+    {
+      "name": "Navigation",
+      "description": "Application navigation components including sidebar, top nav, bottom nav, and command palette.",
+      "files": ["components/Sidebar.tsx", "components/TopNav.tsx", "components/BottomNav.tsx", "components/CommandPalette.tsx", "components/Breadcrumb.tsx"]
+    },
+    {
+      "name": "Staff Portal Components",
+      "description": "Specialized components for staff portal including achievement badges, birthday banner, mood check-in, and emergency SOS.",
+      "files": ["components/staff-portal/AchievementBadge.tsx", "components/staff-portal/BirthdayBanner.tsx", "components/staff-portal/MoodCheckIn.tsx", "components/staff-portal/EmergencySOS.tsx", "components/staff-portal/TeamTodayWidget.tsx"]
+    },
+    {
+      "name": "State Management",
+      "description": "Global state management with React hooks for orders, inventory, staff, and application state.",
+      "files": ["lib/store.tsx"]
+    },
+    {
+      "name": "Context Providers",
+      "description": "React context providers for theme, language/i18n, toast notifications, keyboard shortcuts, and sound.",
+      "files": ["lib/contexts/ThemeContext.tsx", "lib/contexts/LanguageContext.tsx", "lib/contexts/ToastContext.tsx", "lib/contexts/EnhancedToastContext.tsx", "lib/contexts/KeyboardShortcutsContext.tsx", "lib/contexts/SoundContext.tsx"]
+    },
+    {
+      "name": "Export Services",
+      "description": "Services for exporting data to Excel and PDF formats.",
+      "files": ["lib/services/excel-export.ts", "lib/services/pdf-generator.ts"]
+    },
+    {
+      "name": "WhatsApp Integration",
+      "description": "WhatsApp messaging integration service.",
+      "files": ["lib/services/whatsapp.ts"]
+    },
+    {
+      "name": "Realtime Service",
+      "description": "Real-time data synchronization service.",
+      "files": ["lib/services/realtime.ts"]
+    },
+    {
+      "name": "Forecasting",
+      "description": "Business forecasting and prediction service.",
+      "files": ["lib/services/forecasting.ts"]
+    },
+    {
+      "name": "Multi-Outlet Support",
+      "description": "Multi-outlet management functionality.",
+      "files": ["lib/services/multi-outlet.ts"]
+    },
+    {
+      "name": "Internationalization",
+      "description": "Multi-language support with English and Malay translations.",
+      "files": ["lib/i18n/en.json", "lib/i18n/ms.json"]
+    },
+    {
+      "name": "PWA Support",
+      "description": "Progressive Web App with service worker, offline indicator, and app manifest.",
+      "files": ["public/manifest.json", "public/sw.js", "components/ServiceWorkerRegistration.tsx", "components/OfflineIndicator.tsx"]
+    }
+  ]
+}
+
