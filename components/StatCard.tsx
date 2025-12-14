@@ -8,7 +8,7 @@ interface StatCardProps {
   change?: string;
   changeType?: 'positive' | 'negative' | 'neutral' | 'warning';
   icon?: LucideIcon;
-  gradient?: 'primary' | 'success' | 'warning' | 'info' | 'none';
+  gradient?: 'primary' | 'success' | 'warning' | 'info' | 'coral' | 'sunset' | 'peach' | 'amber' | 'none';
   sparkline?: number[];
 }
 

@@ -347,7 +347,7 @@ export default function DeliveryHubPage() {
             change="siap untuk pickup"
             changeType={readyOrders.length > 0 ? "positive" : "neutral"}
             icon={CheckCircle}
-            gradient="success"
+            gradient="peach"
           />
           <StatCard
             label="Completed Today"

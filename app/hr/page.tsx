@@ -192,7 +192,7 @@ export default function HRDashboardPage() {
             change="On duty sekarang"
             changeType="positive"
             icon={Clock}
-            gradient="success"
+            gradient="coral"
           />
           <StatCard
             label="Sudah Clock Out"
@@ -200,7 +200,7 @@ export default function HRDashboardPage() {
             change="Selesai hari ini"
             changeType="neutral"
             icon={CheckCircle}
-            gradient="success"
+            gradient="peach"
           />
           <StatCard
             label="Belum Clock In"

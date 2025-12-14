@@ -172,7 +172,7 @@ export default function AuditLogPage() {
             change="rekod baharu"
             changeType="positive"
             icon={Plus}
-            gradient="success"
+            gradient="coral"
           />
           <StatCard
             label="Kemaskini"

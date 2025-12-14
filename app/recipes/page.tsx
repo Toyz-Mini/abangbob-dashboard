@@ -311,7 +311,7 @@ export default function RecipesPage() {
             change="keuntungan tinggi"
             changeType="positive"
             icon={Star}
-            gradient="success"
+            gradient="amber"
           />
           <StatCard
             label="Low Margin (<30%)"

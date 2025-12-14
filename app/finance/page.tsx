@@ -312,7 +312,7 @@ export default function FinancePage() {
             change="pendapatan keseluruhan"
             changeType="positive"
             icon={TrendingUp}
-            gradient="success"
+            gradient="sunset"
           />
           <StatCard
             label="Perbelanjaan Bulan Ini"

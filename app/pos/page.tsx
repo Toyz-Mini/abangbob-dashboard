@@ -451,7 +451,7 @@ export default function POSPage() {
             change={readyOrders.length > 0 ? t('pos.readyForPickup') : t('pos.noneReady')}
             changeType={readyOrders.length > 0 ? "positive" : "neutral"}
             icon={CheckCircle}
-            gradient="success"
+            gradient="peach"
           />
         </div>
 

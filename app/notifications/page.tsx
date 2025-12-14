@@ -270,7 +270,7 @@ export default function NotificationsPage() {
             change="notifikasi baharu"
             changeType="neutral"
             icon={Clock}
-            gradient="success"
+            gradient="coral"
           />
           <StatCard
             label="Jumlah"

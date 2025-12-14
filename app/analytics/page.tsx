@@ -511,7 +511,7 @@ export default function AnalyticsPage() {
             change={`${previousPeriodComparison.revenueChange >= 0 ? '+' : ''}${previousPeriodComparison.revenueChange.toFixed(1)}% dari tempoh sebelum`}
             changeType={previousPeriodComparison.revenueChange >= 0 ? "positive" : "negative"}
             icon={DollarSign}
-            gradient="success"
+            gradient="sunset"
           />
           <StatCard
             label="Jumlah Pesanan"

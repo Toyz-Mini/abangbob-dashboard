@@ -199,7 +199,7 @@ export default function ProductionPage() {
             change="unit hari ini"
             changeType="positive"
             icon={CheckCircle}
-            gradient="success"
+            gradient="peach"
           />
           <StatCard
             label="Unit Pembaziran"

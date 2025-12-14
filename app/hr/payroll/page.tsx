@@ -257,7 +257,7 @@ export default function PayrollPage() {
             change={`Bonus KPI: BND ${summary.totalKPIBonus.toFixed(2)}`}
             changeType={summary.totalKPIBonus > 0 ? "positive" : "neutral"}
             icon={DollarSign}
-            gradient="success"
+            gradient="sunset"
           />
         </div>
 

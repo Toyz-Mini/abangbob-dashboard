@@ -298,7 +298,7 @@ export default function PromotionsPage() {
             change="sedang berjalan"
             changeType="positive"
             icon={CheckCircle}
-            gradient="success"
+            gradient="peach"
           />
           <StatCard
             label="Penggunaan"

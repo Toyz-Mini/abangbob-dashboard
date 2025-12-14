@@ -274,7 +274,7 @@ export default function OrderHistoryPage() {
             label="Pesanan Selesai"
             value={stats.completedOrders}
             icon={CheckCircle}
-            gradient="success"
+            gradient="peach"
           />
           <StatCard
             label="Void / Refund"

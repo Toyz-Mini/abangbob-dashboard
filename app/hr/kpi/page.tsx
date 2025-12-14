@@ -115,7 +115,7 @@ export default function KPIDashboardPage() {
             change="dengan data KPI"
             changeType="neutral"
             icon={Users}
-            gradient="success"
+            gradient="coral"
           />
           <StatCard
             label="Jumlah Bonus"

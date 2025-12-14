@@ -41,8 +41,8 @@ export default function EquipmentPage() {
     isInitialized 
   } = useEquipment();
   
-  const { user } = useAuth();
-  const isManager = user?.role === 'Admin' || user?.role === 'Manager';
+  const { user, currentStaff } = useAuth();
+  const isManager = currentStaff?.role === 'Admin' || currentStaff?.role === 'Manager';
   const currentUserName = user?.user_metadata?.name || 'Staff';
 
   const [activeTab, setActiveTab] = useState<TabType>('fryers');

@@ -111,7 +111,7 @@ export default function DashboardPage() {
             change={pendingOrders > 0 ? `${pendingOrders} ${t('dashboard.pending')}` : t('dashboard.allCompleted')}
             changeType={pendingOrders > 0 ? "neutral" : "positive"}
             icon={ShoppingCart}
-            gradient="success"
+            gradient="coral"
             sparkline={[8, 10, 9, 12, 11, 13, ordersToday]}
           />
 
@@ -130,7 +130,7 @@ export default function DashboardPage() {
             change={`${language === 'en' ? 'from' : 'dari'} ${activeStaff.length} ${language === 'en' ? 'active' : 'aktif'}`}
             changeType="neutral"
             icon={Users}
-            gradient="success"
+            gradient="sunset"
           />
         </div>
 

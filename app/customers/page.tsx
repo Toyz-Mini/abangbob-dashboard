@@ -266,7 +266,7 @@ export default function CustomersPage() {
             change="total spent"
             changeType="positive"
             icon={TrendingUp}
-            gradient="success"
+            gradient="sunset"
           />
         </div>
 
