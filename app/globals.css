@@ -1,15 +1,15 @@
 :root {
-  /* Color Palette - Premium F&B Theme (Warm Teal) */
-  --primary: #0d9488;
-  --primary-dark: #0f766e;
-  --primary-light: #14b8a6;
-  --primary-50: #f0fdfa;
-  --primary-100: #ccfbf1;
-  --secondary: #f97316;
-  --secondary-dark: #ea580c;
-  --secondary-light: #fb923c;
-  --accent: #8b5cf6;
-  --accent-light: #a78bfa;
+  /* Color Palette - Abang Bob Brand (Merah + Cream) */
+  --primary: #CC1512;
+  --primary-dark: #A50F0F;
+  --primary-light: #E53935;
+  --primary-50: #FEF2F2;
+  --primary-100: #FEE2E2;
+  --secondary: #D4A574;
+  --secondary-dark: #B8956A;
+  --secondary-light: #E4C4A0;
+  --accent: #8B5A2B;
+  --accent-light: #A67C52;
   --danger: #e11d48;
   --danger-light: #fb7185;
   --warning: #eab308;
@@ -17,18 +17,18 @@
   --success: #059669;
   --success-light: #34d399;
   
-  /* Gradients - Distinctive F&B Theme */
-  --gradient-primary: linear-gradient(135deg, #0d9488 0%, #0891b2 100%);
-  --gradient-secondary: linear-gradient(135deg, #f97316 0%, #fb923c 100%);
+  /* Gradients - Abang Bob Brand */
+  --gradient-primary: linear-gradient(135deg, #CC1512 0%, #E53935 100%);
+  --gradient-secondary: linear-gradient(135deg, #D4A574 0%, #E4C4A0 100%);
   --gradient-success: linear-gradient(135deg, #059669 0%, #10b981 100%);
   --gradient-warning: linear-gradient(135deg, #eab308 0%, #f59e0b 100%);
-  --gradient-accent: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%);
+  --gradient-accent: linear-gradient(135deg, #8B5A2B 0%, #A67C52 100%);
   --gradient-coral: linear-gradient(135deg, #f43f5e 0%, #fb7185 100%);
   --gradient-ocean: linear-gradient(135deg, #0891b2 0%, #22d3ee 100%);
   --gradient-sunset: linear-gradient(135deg, #f97316 0%, #fbbf24 100%);
   
-  /* Neutral Colors - Light Mode */
-  --gray-50: #f9fafb;
+  /* Neutral Colors - Light Mode (Cream tones) */
+  --gray-50: #FDF8F3;
   --gray-100: #f3f4f6;
   --gray-200: #e5e7eb;
   --gray-300: #d1d5db;
@@ -77,7 +77,7 @@
   --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 10px 10px -5px rgb(0 0 0 / 0.04);
   --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.25);
   --shadow-inner: inset 0 2px 4px 0 rgb(0 0 0 / 0.06);
-  --shadow-colored: 0 10px 15px -3px rgba(13, 148, 136, 0.3);
+  --shadow-colored: 0 10px 15px -3px rgba(204, 21, 18, 0.3);
   
   /* Sidebar */
   --sidebar-width: 260px;
@@ -133,8 +133,8 @@
 /* Dark mode background gradient */
 [data-theme="dark"] .main-content {
   background: 
-    radial-gradient(ellipse at 100% 0%, rgba(13, 148, 136, 0.06) 0%, transparent 50%),
-    radial-gradient(ellipse at 0% 100%, rgba(249, 115, 22, 0.04) 0%, transparent 50%),
+    radial-gradient(ellipse at 100% 0%, rgba(204, 21, 18, 0.06) 0%, transparent 50%),
+    radial-gradient(ellipse at 0% 100%, rgba(212, 165, 116, 0.04) 0%, transparent 50%),
     var(--bg-secondary);
 }
 
@@ -242,6 +242,16 @@ body {
 .sidebar.closed .nav-logo {
   font-size: 1.75rem;
   padding-bottom: var(--spacing-md);
+}
+
+.sidebar-logo-img {
+  width: 32px;
+  height: auto;
+  object-fit: contain;
+}
+
+.sidebar.closed .sidebar-logo-img {
+  width: 40px;
 }
 
 .nav-container {
@@ -1925,6 +1935,18 @@ body {
   align-items: center;
   gap: 1rem;
   flex: 1;
+}
+
+.topnav-logo {
+  height: 28px;
+  width: auto;
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .topnav-logo {
+    display: block;
+  }
 }
 
 .top-nav-right {
@@ -8507,22 +8529,23 @@ body {
 }
 
 .login-logo {
-  width: 80px;
-  height: 80px;
+  width: 200px;
   margin: 0 auto 1rem;
-  background: linear-gradient(135deg, var(--primary), #8b5cf6);
-  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
-  box-shadow: 0 10px 40px rgba(20, 184, 166, 0.3);
+}
+
+.login-logo-img {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
 }
 
 .login-header h1 {
   font-size: 1.5rem;
   font-weight: 800;
-  background: linear-gradient(135deg, var(--primary), #8b5cf6);
+  background: linear-gradient(135deg, var(--primary), var(--accent));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;

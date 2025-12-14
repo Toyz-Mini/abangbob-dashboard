@@ -70,6 +70,13 @@ export default function TopNav({ onMenuClick }: TopNavProps) {
           <Menu size={24} />
         </button>
 
+        {/* Logo untuk mobile */}
+        <img 
+          src="/logo.png" 
+          alt="Abang Bob" 
+          className="topnav-logo"
+        />
+
         {/* Search Bar */}
         <div className="search-container">
           <Search size={18} className="search-icon" />

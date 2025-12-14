@@ -9,7 +9,6 @@ import {
   Lock, 
   Eye, 
   EyeOff, 
-  ChefHat,
   Loader2,
   KeyRound,
   Users,
@@ -115,7 +114,11 @@ export default function LoginPage() {
         {/* Header */}
         <div className="login-header">
           <div className="login-logo">
-            <ChefHat size={48} />
+            <img 
+              src="/logo.png" 
+              alt="Abang Bob" 
+              className="login-logo-img"
+            />
           </div>
           <h1>AbangBob Dashboard</h1>
           <p>Sistem Pengurusan F&B</p>

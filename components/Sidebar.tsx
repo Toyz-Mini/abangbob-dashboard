@@ -13,7 +13,6 @@ import {
   Users, 
   Factory, 
   Truck, 
-  UtensilsCrossed,
   DollarSign,
   BarChart3,
   UserCheck,
@@ -161,7 +160,11 @@ const Sidebar = forwardRef<HTMLElement, SidebarProps>(({ isOpen, onMouseEnter, o
       onClick={onClick}
     >
       <div className="nav-logo">
-        <UtensilsCrossed size={24} />
+        <img 
+          src="/logo.png" 
+          alt="Abang Bob" 
+          className="sidebar-logo-img"
+        />
         {isOpen && <span>{t('app.name')}</span>}
       </div>
       <nav className="nav-container">
