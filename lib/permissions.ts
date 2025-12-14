@@ -15,6 +15,7 @@ export type PermissionCategory =
   | 'delivery'
   | 'inventory'
   | 'production'
+  | 'equipment'
   | 'recipes'
   | 'suppliers'
   | 'hr'
@@ -57,6 +58,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     { category: 'delivery', actions: ['view', 'create', 'edit', 'delete'] },
     { category: 'inventory', actions: ['view', 'create', 'edit', 'delete', 'export'] },
     { category: 'production', actions: ['view', 'create', 'edit', 'delete'] },
+    { category: 'equipment', actions: ['view', 'create', 'edit', 'delete', 'approve'] },
     { category: 'recipes', actions: ['view', 'create', 'edit', 'delete'] },
     { category: 'suppliers', actions: ['view', 'create', 'edit', 'delete'] },
     { category: 'hr', actions: ['view', 'create', 'edit', 'delete', 'export'] },
@@ -89,6 +91,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     { category: 'delivery', actions: ['view', 'create', 'edit'] },
     { category: 'inventory', actions: ['view', 'create', 'edit', 'export'] },
     { category: 'production', actions: ['view', 'create', 'edit'] },
+    { category: 'equipment', actions: ['view', 'create', 'edit', 'approve'] },
     { category: 'recipes', actions: ['view', 'create', 'edit'] },
     { category: 'suppliers', actions: ['view', 'create', 'edit'] },
     { category: 'hr', actions: ['view', 'edit'] },
@@ -119,6 +122,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     { category: 'delivery', actions: ['view'] },
     { category: 'inventory', actions: ['view'] },
     { category: 'production', actions: ['view', 'create'] },
+    { category: 'equipment', actions: ['view', 'create'] },
     { category: 'recipes', actions: ['view'] },
     { category: 'timeclock', actions: ['view', 'create'] },
     { category: 'schedule', actions: ['view'] },
@@ -160,6 +164,7 @@ export const NAV_VISIBILITY: Record<string, UserRole[]> = {
   // Inventory & Production
   '/inventory': ['Admin', 'Manager', 'Staff'],
   '/production': ['Admin', 'Manager', 'Staff'],
+  '/equipment': ['Admin', 'Manager', 'Staff'],
   '/recipes': ['Admin', 'Manager', 'Staff'],
   '/suppliers': ['Admin', 'Manager'],
   

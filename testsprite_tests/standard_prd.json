@@ -4,101 +4,119 @@
     "date": "2025-12-10",
     "prepared_by": "Software Development Manager"
   },
-  "product_overview": "AbangBob Dashboard is a comprehensive, centralized Food & Beverage management platform tailored for Brunei's F&B industry. It integrates POS, Inventory, HR, Finance, Delivery, and Marketing functions into a unified progressive web application, optimized for mobile and offline usage with bilingual support and Brunei-specific statutory compliance.",
+  "product_overview": "AbangBob Dashboard is a centralized, progressive web app platform tailored for food and beverage businesses in Brunei, integrating operational management modules such as POS, inventory, HR, finance, delivery, and marketing into a single unified system with offline-first capabilities and localization for Brunei standards.",
   "core_goals": [
-    "Provide a unified dashboard for real-time operational insights across sales, inventory, staff attendance, and order management.",
-    "Deliver a robust POS system accommodating dine-in, takeaway, and delivery with order tracking and receipt printing.",
-    "Enable comprehensive staff management including profiles, attendance with photo proof, payroll processing, leave, claims, schedules, and KPIs.",
-    "Facilitate inventory control with low stock alerts, stock adjustment history, and supplier integration.",
-    "Offer a staff self-service portal for personal schedules, checklists, leave applications, claims, payslips, and shift swaps.",
-    "Manage multi-platform delivery orders via a centralized hub with status management and audio notifications.",
-    "Provide analytics and reporting features including sales trends, profit & loss, expense tracking, and audit logging.",
-    "Support progressive web app features for offline use, push notifications, and app-like experience.",
-    "Ensure Brunei-local compliance including currency support, TAP/SCP statutory contributions, and bilingual English/Malay interface."
+    "Provide a unified platform for all essential F&B business operations including sales, inventory, human resources, finance, and delivery management.",
+    "Ensure compliance with Bruneian statutory requirements such as TAP and SCP contributions and support BND currency.",
+    "Offer an offline-first progressive web app experience with local storage for persistence without backend dependency.",
+    "Support bilingual interface in English and Bahasa Melayu for broader accessibility.",
+    "Deliver mobile-responsive and tablet-optimized user experiences for ease of use in operational environments.",
+    "Enable detailed analytics, reporting, and audit logging for business insight and security.",
+    "Implement role-based access control and secure authentication tailored to operational roles."
   ],
   "key_features": [
-    "Main Dashboard summarizing sales, orders, inventory levels, and staff attendance with charts and alerts.",
-    "POS System with menu browsing, cart/modifier management, discounts, forced upselling, order queue management, and phone validation.",
-    "Menu Management with category, pricing, modifier configuration and availability toggles.",
-    "Kitchen Display System for real-time order preparation tracking with timers.",
-    "Inventory Management including stock CRUD, category/unit filtering, adjustment logging, low stock alerts, and supplier links.",
-    "HR Module encompassing staff profiles, attendance clock in/out with PIN and photo proof, payroll with statutory calculations, KPI tracking, schedules, leave and claim approvals, and checklist template configuration.",
-    "Staff Portal providing schedule views, checklists with photo proof, leave/claim requests, payslip access, profile editing, training modules, and shift swaps.",
-    "Delivery Hub consolidating Grab, FoodPanda, and Shopee orders with status boards, driver info, delivery slip printing, and platform status.",
-    "Finance Module for expense tracking, daily cash flow, payment method tracking, and profit & loss reporting.",
+    "Comprehensive Dashboard showing real-time sales, order statuses, inventory alerts, staff attendance, and trend charts.",
+    "Robust POS System with menu browsing, cart management, modifier selections, discounts, order queues, and receipt printing.",
+    "Full Menu Management with CRUD operations on items, categories, modifiers, and pricing controls.",
+    "Kitchen Display System for real-time order preparation status tracking with timers and notifications.",
+    "Inventory Management featuring stock tracking, minimum stock alerts, adjustment logging, and supplier integration.",
+    "Human Resources Module with staff profiles, PIN-based clock-in/out, KPI scoring and leaderboard, payroll generation with Brunei statutory deductions, shift scheduling, and leave/claim approval workflows.",
+    "Employee Self-Service Staff Portal for schedules, checklists with photo proofs, leave requests, claims, training, payslip views, and profile management.",
+    "Multi-platform Delivery Hub aggregating orders from popular services with kanban board, notifications, and slip printing.",
+    "Finance Module with expense tracking, cash flow management, categorized expenses, and profit & loss reporting.",
     "Customer CRM with loyalty points, segmentation, order history, and birthday tracking.",
-    "Promotions management supporting multiple discount types, usage limits, and time/day restrictions.",
-    "Production module with oil tracking for fryers, production logs, and waste tracking.",
-    "Rich UI Components and Navigation with sidebar, top/bottom nav, modal dialogs, data tables, forms, and charts using Recharts.",
-    "Services for WhatsApp messaging integration, PDF and Excel data exports, realtime sync, forecasting, and multi-outlet support.",
-    "PWA features including service worker, offline caching, app manifest with shortcuts, and update handling.",
-    "Internationalization supporting English and Bahasa Melayu with context-managed translations."
+    "Promotions Module supporting various discount schemes with usage and time restrictions.",
+    "Production Module tracking fryer oil usage, cycles, change dates, and waste.",
+    "Recipes and Supplier Management with costing and order workflows.",
+    "Advanced Analytics dashboards for business intelligence and performance insights.",
+    "Notification Center for managing alerts and announcements.",
+    "System Settings including receipt design, business info, language and theme preferences.",
+    "Support for internationalization with English and Bahasa Melayu languages.",
+    "Progressive Web App capabilities with offline support, service workers, and installability.",
+    "WhatsApp integration for messaging receipts, notifications, alerts, and summaries.",
+    "Export services generating PDF and Excel reports for orders, inventory, attendance, and expenses."
   ],
   "user_flow_summary": [
-    "Business owners and managers log in to view the main dashboard showing sales summaries, stock alerts, and staff attendance for quick operational insights.",
-    "Staff use the POS system to select menu items, add modifiers, apply discounts, and process payments for takeaway or delivery orders.",
-    "Kitchen staff interact with the Kitchen Display System to view and update order statuses with timers ensuring timely preparation.",
-    "HR managers manage staff profiles, assign shifts, approve leave and claims, process payroll, and monitor staff KPIs via detailed views and dashboards.",
-    "Employees access the Staff Portal to check schedules, complete daily checklists with photo proof, apply for leave, submit claims, view payslips, and request shift swaps.",
-    "Inventory managers adjust stock, monitor low stock alerts, reorder supplies, and review adjustment histories to maintain stock balance.",
-    "Delivery personnel and managers track multi-platform orders on the Delivery Hub, progressing order statuses and printing delivery slips as needed.",
-    "Finance teams monitor expenses, daily cash flow, and generate profit & loss reports for financial oversight.",
-    "Marketing teams manage customers, configure promotions, and analyze customer segments and order history to optimize sales.",
-    "System administrators configure system settings, view audit logs, and monitor notifications for system health and security."
+    "User logs in via PIN-based authentication with role-based access control determining interface views.",
+    "Managers access Dashboard for real-time business overview and navigate to modules such as HR, Inventory, Finance, and Approvals.",
+    "Staff use the Staff Portal to view schedules, submit leave and claims, complete checklists, and view payslips.",
+    "Point of Sale operators select menu items, configure modifiers, apply discounts, enter customer info with phone validation, and process orders generating receipts and updating order queue status.",
+    "Kitchen staff view real-time orders on the Kitchen Display System updating statuses through stages from pending to completed with timers and audio alerts.",
+    "Inventory managers perform stock adjustments with reason logging, monitor low stock alerts, and associate stock with suppliers.",
+    "HR managers manage staff profiles, track attendance via PIN and photo, score KPIs, generate payroll reports complying with Brunei regulations, and approve leave and claims.",
+    "Delivery staff manage aggregated delivery orders from multiple platforms via a kanban-style board and print delivery slips.",
+    "Finance staff track daily expenses, manage cash flow, and generate profit & loss statements.",
+    "Marketing teams create and manage customer profiles, loyalty programs, and promotions with restrictions and usage limits.",
+    "System admins configure settings such as language, theme, receipts, and business info, and monitor audit logs and notifications."
   ],
   "validation_criteria": [
-    "Dashboard correctly displays real-time sales, inventory, and staff attendance metrics with accurate alerts.",
-    "POS system handles menu browsing, modifier logic, cart operations, discount validations, and order status transitions flawlessly.",
-    "Menu Management allows accurate CRUD operations and enforces modifier group rules and pricing updates.",
-    "HR module correctly records staff attendance with photo proof, processes payroll including statutory contributions, and enforces role-based permissions.",
-    "Staff Portal features enable staff to view and edit accurate personal data, submit leave and claims, complete checklists with photos, and view payslips securely.",
-    "Inventory adjustments are logged with proper reasons, stock levels update accordingly, and low stock alerts trigger timely notifications.",
-    "Delivery Hub synchronizes orders from supported platforms, correctly updates statuses, and triggers audio notifications for new orders.",
-    "Finance module records expenses correctly, tracks daily cash flows, and generates accurate financial reports.",
-    "Promotion rules apply discounts correctly respecting usage limits, date/time restrictions, and applicable items.",
-    "All components respect language selections and display correct translations for supported languages.",
-    "PWA features ensure offline accessibility, service worker registration, and prompt updates function as intended.",
-    "System security measures enforce PIN-based and role-based access correctly and validate input formats consistently."
+    "Dashboards accurately display real-time sales, inventory, staff attendance, and alerts with no stale data.",
+    "POS order processing correctly validates modifiers, discounts (0-20%), phone number formats, and order types with accurate receipt generation.",
+    "Menu management allows seamless CRUD operations with modifier groups enforcing required and optional selections and price adjustments.",
+    "Attendance clock-in/out functions correctly with PIN and photo verification; KPI scoring reflects accurate metrics and leaderboard rankings.",
+    "Inventory updates correctly reflect stock quantities, adjustment reasons are logged, and alerts trigger when minimum quantities reach thresholds.",
+    "Delivery orders from supported platforms appear correctly on the kanban board with status updates and audio notifications triggered upon new orders.",
+    "Finance records accurately capture expenses, cash flow balances, and generate reliable profit & loss reports.",
+    "Customer CRM segments customers based on loyalty points and tracks order history and birthdays correctly.",
+    "Promotion codes enforce restriction rules on date ranges, usage limits, and applicable items with proper discount application.",
+    "PWA features including offline caching and service worker registration work seamlessly with install prompts.",
+    "Authentication enforces role-based UI access; PIN validation and session management maintain security.",
+    "WhatsApp messaging functions send correct formatted messages for receipts, stock alerts, and summaries.",
+    "Exported reports (PDF, Excel, CSV) reflect accurate and complete data for the relevant modules.",
+    "Internationalization toggles between English and Bahasa Melayu with consistent translation coverage.",
+    "Theme management allows smooth dark/light mode toggling with persisted preferences."
   ],
   "code_summary": {
     "tech_stack": [
       "TypeScript",
       "Next.js 14 (App Router)",
       "React 18",
-      "Recharts (charting library)",
-      "Lucide React (icons)",
-      "CSS (custom styling)",
-      "PWA (Progressive Web App)"
+      "Supabase (Auth & Database)",
+      "Recharts (Data Visualization)",
+      "Lucide React (Icons)",
+      "date-fns (Date Handling)",
+      "CSS Variables (Styling)",
+      "PWA (Progressive Web App)",
+      "LocalStorage (Offline Persistence)"
     ],
     "features": [
       {
-        "name": "Main Dashboard",
-        "description": "Central dashboard displaying sales summary, order stats, low stock alerts, staff attendance, charts for sales trend, inventory levels, and staff attendance. Provides quick actions to navigate to key modules.",
+        "name": "Dashboard",
+        "description": "Main dashboard showing real-time sales summary, order counts, low stock alerts, staff attendance status, sales trend charts, and quick action buttons for navigation",
         "files": [
           "app/page.tsx",
-          "components/MainLayout.tsx",
           "components/StatCard.tsx",
-          "components/ChartCard.tsx"
+          "components/ChartCard.tsx",
+          "components/charts/SalesTrendChart.tsx",
+          "components/charts/InventoryLevelChart.tsx",
+          "components/charts/StaffAttendanceChart.tsx",
+          "components/AIInsightsWidget.tsx"
         ]
       },
       {
         "name": "POS System",
-        "description": "Point of Sale system for order management, cart management, payment processing with support for takeaway and GoMamam order types.",
+        "description": "Point of Sale system with menu display, cart management, modifier selection, forced drink upselling, discount application (0-20%), order types (takeaway/GoMamam), phone validation (+673 Brunei format), receipt printing, and order queue management",
         "files": [
-          "app/pos/page.tsx"
+          "app/pos/page.tsx",
+          "components/ReceiptPreview.tsx",
+          "lib/types.ts",
+          "lib/menu-data.ts",
+          "lib/services/receipt-generator.ts",
+          "lib/services/thermal-printer.ts"
         ]
       },
       {
-        "name": "Order Display",
-        "description": "Order display screen showing current order queue and status updates.",
+        "name": "Menu Management",
+        "description": "CRUD operations for menu items, category management, modifier group configuration with required/optional options, extra pricing for modifiers, and item availability toggle",
         "files": [
-          "app/order-display/page.tsx",
-          "app/order/page.tsx"
+          "app/menu-management/page.tsx",
+          "lib/menu-data.ts",
+          "lib/types.ts"
         ]
       },
       {
-        "name": "Kitchen Display System (KDS)",
-        "description": "Kitchen display for staff to view and manage orders in preparation with timer functionality.",
+        "name": "Kitchen Display System",
+        "description": "Real-time order display for kitchen staff with status updates (pending → preparing → ready → completed), order timers, and audio notifications",
         "files": [
           "app/kds/page.tsx",
           "components/OrderTimer.tsx"
@@ -106,233 +124,122 @@
       },
       {
         "name": "Inventory Management",
-        "description": "Stock tracking system with low stock alerts, stock items management, category filtering, and reorder functionality.",
+        "description": "Stock item management with categories (Protein, Staple, Condiment, etc.), unit tracking, minimum quantity alerts, stock adjustments with reason logging, and supplier association",
         "files": [
           "app/inventory/page.tsx",
           "lib/inventory-data.ts",
-          "components/charts/InventoryLevelChart.tsx"
+          "lib/types.ts"
         ]
       },
       {
-        "name": "Menu Management",
-        "description": "Menu item management with categories, pricing, modifiers, and availability status.",
-        "files": [
-          "app/menu-management/page.tsx",
-          "app/menu/[tableId]/page.tsx",
-          "lib/menu-data.ts"
-        ]
-      },
-      {
-        "name": "HR Dashboard",
-        "description": "Human resources main dashboard for staff management overview.",
+        "name": "HR Management",
+        "description": "Staff profile management, attendance tracking with PIN and photo verification, KPI scoring system with tier rankings (S/A/B/C/D), payroll generation with TAP/SCP statutory deductions for Brunei, shift scheduling, and leave/claim approvals",
         "files": [
           "app/hr/page.tsx",
-          "lib/hr-data.ts"
-        ]
-      },
-      {
-        "name": "Staff Management",
-        "description": "Complete staff profile management including personal details, employment info, salary, bank details, documents, and permissions.",
-        "files": [
           "app/hr/staff/page.tsx",
-          "app/hr/staff/new/page.tsx"
-        ]
-      },
-      {
-        "name": "Time Clock System",
-        "description": "Staff clock-in/clock-out system with photo proof support and attendance tracking.",
-        "files": [
-          "app/hr/timeclock/page.tsx"
-        ]
-      },
-      {
-        "name": "Staff Schedule Management",
-        "description": "Shift scheduling system with shift templates, weekly schedule view, and staff assignment.",
-        "files": [
-          "app/hr/schedule/page.tsx"
-        ]
-      },
-      {
-        "name": "Payroll Management",
-        "description": "Payroll processing with salary calculation, deductions, TAP/SCP contributions (Brunei), and payslip generation.",
-        "files": [
-          "app/hr/payroll/page.tsx"
-        ]
-      },
-      {
-        "name": "Leave Calendar",
-        "description": "Calendar view of staff leave with visual scheduling.",
-        "files": [
-          "app/hr/leave-calendar/page.tsx"
-        ]
-      },
-      {
-        "name": "HR Approvals",
-        "description": "Approval workflow for leave requests, claims, and other staff requests.",
-        "files": [
-          "app/hr/approvals/page.tsx"
-        ]
-      },
-      {
-        "name": "Staff KPI System",
-        "description": "Key Performance Indicator tracking with metrics like meal prep time, attendance, upselling, customer rating, and bonus calculation.",
-        "files": [
+          "app/hr/staff/new/page.tsx",
+          "app/hr/timeclock/page.tsx",
           "app/hr/kpi/page.tsx",
-          "app/hr/kpi/[staffId]/page.tsx",
+          "app/hr/payroll/page.tsx",
+          "app/hr/schedule/page.tsx",
+          "app/hr/approvals/page.tsx",
+          "app/hr/leave-calendar/page.tsx",
+          "app/hr/checklist-config/page.tsx",
+          "lib/hr-data.ts",
           "lib/kpi-data.ts"
         ]
       },
       {
-        "name": "Checklist Configuration",
-        "description": "Opening and closing checklist template management for daily operations.",
-        "files": [
-          "app/hr/checklist-config/page.tsx"
-        ]
-      },
-      {
         "name": "Staff Portal",
-        "description": "Self-service portal for staff to view their profile, schedules, payslips, and submit requests.",
+        "description": "Employee self-service portal with personal schedule viewing, opening/closing checklists with photo proof, leave application and balance tracking, expense claims submission, payslip viewing, profile management, training modules, and shift swap requests",
         "files": [
           "app/staff-portal/page.tsx",
-          "components/StaffPortalNav.tsx"
-        ]
-      },
-      {
-        "name": "Staff Checklist",
-        "description": "Daily opening/closing checklist completion by staff with photo proof support.",
-        "files": [
+          "app/staff-portal/schedule/page.tsx",
           "app/staff-portal/checklist/page.tsx",
-          "app/staff-portal/checklist/history/page.tsx"
-        ]
-      },
-      {
-        "name": "Leave Application",
-        "description": "Staff leave application system with balance tracking and approval workflow.",
-        "files": [
           "app/staff-portal/leave/page.tsx",
-          "app/staff-portal/leave/apply/page.tsx"
-        ]
-      },
-      {
-        "name": "Claims Management",
-        "description": "Staff expense claims submission and tracking.",
-        "files": [
+          "app/staff-portal/leave/apply/page.tsx",
           "app/staff-portal/claims/page.tsx",
-          "app/staff-portal/claims/new/page.tsx"
-        ]
-      },
-      {
-        "name": "Payslip Viewer",
-        "description": "Staff payslip viewing and download functionality.",
-        "files": [
-          "app/staff-portal/payslip/page.tsx"
-        ]
-      },
-      {
-        "name": "Staff Profile",
-        "description": "Staff self-service profile viewing and editing.",
-        "files": [
-          "app/staff-portal/profile/page.tsx"
-        ]
-      },
-      {
-        "name": "Staff Requests",
-        "description": "General request submission system for various HR-related requests.",
-        "files": [
-          "app/staff-portal/requests/page.tsx"
-        ]
-      },
-      {
-        "name": "Staff Schedule View",
-        "description": "Staff personal schedule viewing.",
-        "files": [
-          "app/staff-portal/schedule/page.tsx"
-        ]
-      },
-      {
-        "name": "Shift Swap",
-        "description": "Shift swapping functionality between staff members.",
-        "files": [
-          "app/staff-portal/swap-shift/page.tsx"
-        ]
-      },
-      {
-        "name": "Staff Training",
-        "description": "Training module tracking and completion for staff development.",
-        "files": [
-          "app/staff-portal/training/page.tsx"
+          "app/staff-portal/claims/new/page.tsx",
+          "app/staff-portal/payslip/page.tsx",
+          "app/staff-portal/profile/page.tsx",
+          "app/staff-portal/training/page.tsx",
+          "app/staff-portal/swap-shift/page.tsx",
+          "components/staff-portal/EmergencySOS.tsx",
+          "components/staff-portal/MoodCheckIn.tsx",
+          "lib/staff-portal-data.ts"
         ]
       },
       {
         "name": "Delivery Hub",
-        "description": "Centralized delivery order management integrating Grab, Panda, and Shopee platforms.",
+        "description": "Multi-platform delivery order aggregation from Grab, FoodPanda, and Shopee with kanban-style order board, status progression, audio notifications, delivery slip printing, and driver information display",
         "files": [
           "app/delivery/page.tsx",
           "lib/delivery-data.ts"
         ]
       },
       {
-        "name": "Production Management",
-        "description": "Production logging, oil tracker for fryers, and waste tracking.",
+        "name": "Finance Module",
+        "description": "Expense tracking with categorization (rent, utilities, supplies, wages, etc.), daily cash flow management with opening/closing balances, and profit & loss report generation",
+        "files": [
+          "app/finance/page.tsx",
+          "lib/finance-data.ts",
+          "lib/types.ts"
+        ]
+      },
+      {
+        "name": "Customer CRM",
+        "description": "Customer database with loyalty points system, customer segmentation (new/regular/VIP), order history tracking, and birthday tracking",
+        "files": [
+          "app/customers/page.tsx",
+          "lib/types.ts"
+        ]
+      },
+      {
+        "name": "Promotions",
+        "description": "Promo code creation with discount types (percentage, fixed, BOGO, free item), date range validity, usage limits, applicable item selection, and day/time restrictions",
+        "files": [
+          "app/promotions/page.tsx",
+          "lib/types.ts"
+        ]
+      },
+      {
+        "name": "Production Module",
+        "description": "Oil tracker for fryers with cycle counting, change date tracking, production logs, and waste tracking",
         "files": [
           "app/production/page.tsx",
           "lib/production-data.ts"
         ]
       },
       {
-        "name": "Finance Management",
-        "description": "Financial dashboard with expense tracking, cash flow management, and profit/loss reporting.",
+        "name": "Recipe Management",
+        "description": "Recipe definitions with ingredient costing and profit margin calculations",
         "files": [
-          "app/finance/page.tsx",
-          "lib/finance-data.ts"
-        ]
-      },
-      {
-        "name": "Customer Management",
-        "description": "Customer database with loyalty points, segmentation, and order history.",
-        "files": [
-          "app/customers/page.tsx"
+          "app/recipes/page.tsx",
+          "lib/types.ts"
         ]
       },
       {
         "name": "Supplier Management",
-        "description": "Supplier database and purchase order management.",
+        "description": "Supplier profiles and purchase order management",
         "files": [
-          "app/suppliers/page.tsx"
-        ]
-      },
-      {
-        "name": "Recipe Management",
-        "description": "Recipe database with ingredient costing and profit margin calculation.",
-        "files": [
-          "app/recipes/page.tsx"
-        ]
-      },
-      {
-        "name": "Promotions",
-        "description": "Promotion and discount management with various promotion types.",
-        "files": [
-          "app/promotions/page.tsx"
-        ]
-      },
-      {
-        "name": "Table Management",
-        "description": "Table layout and status management for dine-in operations.",
-        "files": [
-          "app/tables/page.tsx"
+          "app/suppliers/page.tsx",
+          "lib/types.ts"
         ]
       },
       {
         "name": "Analytics",
-        "description": "Business analytics with sales trends, performance metrics, and reporting.",
+        "description": "Business intelligence dashboards with sales analytics, performance metrics, and reporting",
         "files": [
           "app/analytics/page.tsx",
-          "lib/sales-data.ts"
+          "lib/sales-data.ts",
+          "components/charts/PerformanceMatrix.tsx",
+          "components/charts/ProfitMarginChart.tsx",
+          "components/charts/TimeHeatmap.tsx"
         ]
       },
       {
         "name": "Audit Log",
-        "description": "System audit logging for tracking user actions and changes.",
+        "description": "Records critical user actions for compliance and security tracking",
         "files": [
           "app/audit-log/page.tsx",
           "lib/audit-data.ts"
@@ -340,7 +247,7 @@
       },
       {
         "name": "Notifications",
-        "description": "Notification center for system alerts, low stock warnings, and staff notifications.",
+        "description": "Notification center for alerts, announcements, and system messages",
         "files": [
           "app/notifications/page.tsx",
           "components/staff-portal/NotificationCenter.tsx"
@@ -348,127 +255,62 @@
       },
       {
         "name": "Settings",
-        "description": "System and outlet settings configuration.",
+        "description": "System configuration including receipt designer, business info, language settings, and theme customization",
         "files": [
-          "app/settings/page.tsx"
-        ]
-      },
-      {
-        "name": "Charts",
-        "description": "Reusable chart components for data visualization using Recharts.",
-        "files": [
-          "components/charts/SalesTrendChart.tsx",
-          "components/charts/InventoryLevelChart.tsx",
-          "components/charts/StaffAttendanceChart.tsx"
-        ]
-      },
-      {
-        "name": "UI Components",
-        "description": "Reusable UI components including modals, dialogs, forms, tables, navigation, and more.",
-        "files": [
-          "components/Modal.tsx",
-          "components/ConfirmDialog.tsx",
-          "components/DataTable.tsx",
-          "components/FormField.tsx",
-          "components/Tabs.tsx",
-          "components/Sheet.tsx",
-          "components/Popover.tsx",
-          "components/Tooltip.tsx"
-        ]
-      },
-      {
-        "name": "Navigation",
-        "description": "Application navigation components including sidebar, top nav, bottom nav, and command palette.",
-        "files": [
-          "components/Sidebar.tsx",
-          "components/TopNav.tsx",
-          "components/BottomNav.tsx",
-          "components/CommandPalette.tsx",
-          "components/Breadcrumb.tsx"
-        ]
-      },
-      {
-        "name": "Staff Portal Components",
-        "description": "Specialized components for staff portal including achievement badges, birthday banner, mood check-in, and emergency SOS.",
-        "files": [
-          "components/staff-portal/AchievementBadge.tsx",
-          "components/staff-portal/BirthdayBanner.tsx",
-          "components/staff-portal/MoodCheckIn.tsx",
-          "components/staff-portal/EmergencySOS.tsx",
-          "components/staff-portal/TeamTodayWidget.tsx"
-        ]
-      },
-      {
-        "name": "State Management",
-        "description": "Global state management with React hooks for orders, inventory, staff, and application state.",
-        "files": [
-          "lib/store.tsx"
-        ]
-      },
-      {
-        "name": "Context Providers",
-        "description": "React context providers for theme, language/i18n, toast notifications, keyboard shortcuts, and sound.",
-        "files": [
-          "lib/contexts/ThemeContext.tsx",
-          "lib/contexts/LanguageContext.tsx",
-          "lib/contexts/ToastContext.tsx",
-          "lib/contexts/EnhancedToastContext.tsx",
-          "lib/contexts/KeyboardShortcutsContext.tsx",
-          "lib/contexts/SoundContext.tsx"
-        ]
-      },
-      {
-        "name": "Export Services",
-        "description": "Services for exporting data to Excel and PDF formats.",
-        "files": [
-          "lib/services/excel-export.ts",
-          "lib/services/pdf-generator.ts"
-        ]
-      },
-      {
-        "name": "WhatsApp Integration",
-        "description": "WhatsApp messaging integration service.",
-        "files": [
-          "lib/services/whatsapp.ts"
-        ]
-      },
-      {
-        "name": "Realtime Service",
-        "description": "Real-time data synchronization service.",
-        "files": [
-          "lib/services/realtime.ts"
-        ]
-      },
-      {
-        "name": "Forecasting",
-        "description": "Business forecasting and prediction service.",
-        "files": [
-          "lib/services/forecasting.ts"
-        ]
-      },
-      {
-        "name": "Multi-Outlet Support",
-        "description": "Multi-outlet management functionality.",
-        "files": [
-          "lib/services/multi-outlet.ts"
+          "app/settings/page.tsx",
+          "components/ReceiptDesigner.tsx",
+          "components/LogoUpload.tsx"
         ]
       },
       {
         "name": "Internationalization",
-        "description": "Multi-language support with English and Malay translations.",
+        "description": "Multi-language support with English and Bahasa Melayu translations",
         "files": [
+          "lib/contexts/LanguageContext.tsx",
           "lib/i18n/en.json",
           "lib/i18n/ms.json"
         ]
       },
       {
-        "name": "PWA Support",
-        "description": "Progressive Web App with service worker, offline indicator, and app manifest.",
+        "name": "Theme Management",
+        "description": "Dark/light mode toggle with persistence",
+        "files": [
+          "lib/contexts/ThemeContext.tsx",
+          "components/staff-portal/DarkModeToggle.tsx"
+        ]
+      },
+      {
+        "name": "PWA Features",
+        "description": "Progressive Web App with offline caching, service worker registration, and installability",
         "files": [
           "public/manifest.json",
           "public/sw.js",
           "components/ServiceWorkerRegistration.tsx",
           "components/OfflineIndicator.tsx"
+        ]
+      },
+      {
+        "name": "WhatsApp Integration",
+        "description": "WhatsApp messaging for order receipts, order ready notifications, low stock alerts, and daily summaries",
+        "files": [
+          "lib/services/whatsapp.ts"
+        ]
+      },
+      {
+        "name": "Export Services",
+        "description": "PDF report generation and Excel/CSV export for orders, inventory, attendance, and expenses",
+        "files": [
+          "lib/services/pdf-generator.ts",
+          "lib/services/excel-export.ts"
+        ]
+      },
+      {
+        "name": "Authentication",
+        "description": "PIN-based authentication for clock in/out and role-based access control (Manager/Staff)",
+        "files": [
+          "lib/contexts/AuthContext.tsx",
+          "lib/supabase/auth.ts",
+          "app/login/page.tsx"
         ]
       }
     ]

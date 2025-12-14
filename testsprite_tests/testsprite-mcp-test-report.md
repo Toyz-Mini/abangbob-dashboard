@@ -1,377 +1,266 @@
-
-# TestSprite AI Testing Report (MCP)
+# TestSprite AI Testing Report
 
 ---
 
-## 1️⃣ Document Metadata
-- **Project Name:** abangbob-dashboard (AbangBob F&B Management System)
-- **Date:** 2025-12-13
+## 1. Document Metadata
+- **Project Name:** abangbob-dashboard
+- **Date:** 2025-12-14
 - **Prepared by:** TestSprite AI Team
-- **Total Tests:** 18
-- **Passed:** 4 (22.22%)
-- **Failed:** 14 (77.78%)
+- **Test Environment:** Next.js 14 Dev Server on localhost:3000
+- **Test Type:** Frontend E2E Testing
+- **Test Scope:** Full Codebase
 
 ---
 
-## 2️⃣ Executive Summary
+## 2. Executive Summary
 
-The AbangBob Dashboard underwent comprehensive automated testing covering 18 test cases across major system modules. While core functionality shows promise, several critical issues were identified:
+### Overall Results
 
-### 🔴 Critical Issues
-1. **Authentication System** - Multiple tests failed due to 401 Unauthorized errors when attempting to access API routes
-2. **UI/UX Bugs** - Several modal and popup issues preventing proper workflow completion
+| Metric | Value |
+|--------|-------|
+| Total Tests Executed | 20 |
+| Tests Passed | 0 |
+| Tests Failed | 20 |
+| Pass Rate | 0% |
+| Root Cause | Infrastructure Issue - Dev Server Not Serving Pages |
 
-### 🟢 Working Features
-1. POS Phone Number Validation
-2. Inventory Management (Stock Adjustments & Alerts)
-3. HR Time Clock System (Photo Proof & PIN)
-4. PWA Offline Functionality
+### Critical Finding
 
----
+**All 20 tests failed due to the same root cause:** The Next.js development server was experiencing issues during test execution, returning 404 errors for essential JavaScript chunks (`main-app.js`, `app-pages-internals.js`) and displaying the error message "missing required error components, refreshing...".
 
-## 3️⃣ Requirement Validation Summary
-
-### Requirement: Dashboard & Analytics
-- **Description:** Main dashboard with real-time sales, inventory, and staff attendance data
-
-#### Test TC001
-- **Test Name:** Dashboard Real-time Data Accuracy
-- **Test Code:** [TC001_Dashboard_Real_time_Data_Accuracy.py](./TC001_Dashboard_Real_time_Data_Accuracy.py)
-- **Test Error:** Authentication failure - 401 Unauthorized when accessing API endpoints
-- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/d7640e46-068d-40dc-9728-39ee6c542cc8/923bf049-bdbe-407c-879a-8d457d4a3806
-- **Status:** ❌ Failed
-- **Severity:** HIGH
-- **Analysis / Findings:** The dashboard API routes appear to require authentication that was not properly configured during testing. The frontend renders correctly but cannot fetch real-time data without valid auth tokens.
+This is a **blocking infrastructure issue** that prevents any functional testing until resolved.
 
 ---
 
-### Requirement: POS System
-- **Description:** Point of Sale system for order management, cart, modifiers, and payment processing
+## 3. Requirement Validation Summary
 
-#### Test TC002
-- **Test Name:** POS System Order Processing Complete Flow
-- **Test Code:** [TC002_POS_System_Order_Processing_Complete_Flow.py](./TC002_POS_System_Order_Processing_Complete_Flow.py)
-- **Test Error:** Teh Ais drink modifier not appearing in add drinks modal after clicking 'Tambah' button
-- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/d7640e46-068d-40dc-9728-39ee6c542cc8/8af2611b-661e-41ed-bb08-9b5ad83053af
-- **Status:** ❌ Failed
-- **Severity:** HIGH
-- **Analysis / Findings:** UI bug detected in the POS modifier selection flow. The modal for adding drinks/modifiers does not properly display available options. This blocks complete order processing workflow. Recommend investigating the modifier modal component and its data fetching logic.
+### REQ-01: Dashboard & Real-Time Data
+
+| Test ID | Test Name | Status | Link |
+|---------|-----------|--------|------|
+| TC001 | Dashboard Real-Time Data Accuracy | ❌ Failed | [View](https://www.testsprite.com/dashboard/mcp/tests/8780f9c2-7b94-4c49-80a3-f7cd806e7784/e6f1d4f9-7dff-404b-8dd0-6e79891748fb) |
+
+**Analysis:** Dashboard page could not load due to 404 errors on critical JS resources. Unable to verify sales summary, order counts, inventory alerts, or staff attendance display.
 
 ---
 
-#### Test TC003
-- **Test Name:** POS System Phone Number Validation
-- **Test Code:** [TC003_POS_System_Phone_Number_Validation.py](./TC003_POS_System_Phone_Number_Validation.py)
-- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/d7640e46-068d-40dc-9728-39ee6c542cc8/80c36253-8728-46e3-a472-e85902cfc0d4
-- **Status:** ✅ Passed
-- **Severity:** LOW
-- **Analysis / Findings:** Phone number validation for Brunei format works correctly. Invalid phone numbers are properly rejected with appropriate error messages, and valid numbers allow order submission.
+### REQ-02: POS System
+
+| Test ID | Test Name | Status | Link |
+|---------|-----------|--------|------|
+| TC002 | POS Order Processing with Valid Inputs | ❌ Failed | [View](https://www.testsprite.com/dashboard/mcp/tests/8780f9c2-7b94-4c49-80a3-f7cd806e7784/3fec6e84-bfcb-4839-96f9-5d09a82e602c) |
+| TC003 | POS Order Processing with Invalid Inputs | ❌ Failed | [View](https://www.testsprite.com/dashboard/mcp/tests/8780f9c2-7b94-4c49-80a3-f7cd806e7784/8b53b8c3-edf2-48d5-a4dc-31494f071bc2) |
+
+**Analysis:** POS system page at `/pos` was inaccessible. Unable to verify menu display, cart operations, modifier selection, forced drink upselling, discount application, phone validation, or receipt printing.
 
 ---
 
-### Requirement: Menu Management
-- **Description:** CRUD operations for menu items, categories, and modifiers
+### REQ-03: Menu Management
 
-#### Test TC004
-- **Test Name:** Menu Management CRUD Operations
-- **Test Code:** [TC004_Menu_Management_CRUD_Operations.py](./TC004_Menu_Management_CRUD_Operations.py)
-- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/d7640e46-068d-40dc-9728-39ee6c542cc8/841c706d-22f6-438a-bf0e-c16e09a9c786
-- **Status:** ❌ Failed
-- **Severity:** MEDIUM
-- **Analysis / Findings:** Menu management CRUD operations encountered issues during testing. Further investigation needed to determine specific failure points in create, update, toggle availability, or delete operations.
+| Test ID | Test Name | Status | Link |
+|---------|-----------|--------|------|
+| TC004 | Menu Management CRUD Operations | ❌ Failed | [View](https://www.testsprite.com/dashboard/mcp/tests/8780f9c2-7b94-4c49-80a3-f7cd806e7784/29de6b18-0818-44c0-885d-7715de7e7305) |
+
+**Analysis:** Menu management page at `/menu-management` could not be accessed. Unable to verify CRUD operations for menu items, categories, and modifier groups.
 
 ---
 
-### Requirement: Kitchen Display System (KDS)
-- **Description:** Order queue display for kitchen staff with timer and status management
+### REQ-04: Kitchen Display System (KDS)
 
-#### Test TC005
-- **Test Name:** Kitchen Display System Order Status and Timer
-- **Test Code:** [TC005_Kitchen_Display_System_Order_Status_and_Timer.py](./TC005_Kitchen_Display_System_Order_Status_and_Timer.py)
-- **Test Error:** Authentication failure - 401 Unauthorized blocking access to kitchen display features
-- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/d7640e46-068d-40dc-9728-39ee6c542cc8/6c49a2c0-ce93-40d0-91c2-26e784616897
-- **Status:** ❌ Failed
-- **Severity:** HIGH
-- **Analysis / Findings:** KDS functionality could not be tested due to authentication issues. The system appears to require staff login before accessing kitchen display features. Recommend configuring test credentials or implementing guest/demo mode for testing.
+| Test ID | Test Name | Status | Link |
+|---------|-----------|--------|------|
+| TC005 | Kitchen Display System Order Status Flow | ❌ Failed | [View](https://www.testsprite.com/dashboard/mcp/tests/8780f9c2-7b94-4c49-80a3-f7cd806e7784/84e8eb1e-389c-41fa-bf9e-9e3f01fc7018) |
+
+**Analysis:** KDS page at `/kds` was not accessible. Unable to verify order status flow, timers, or audio notifications.
 
 ---
 
-### Requirement: Inventory Management
-- **Description:** Stock tracking, adjustments, low stock alerts, and supplier management
+### REQ-05: Inventory Management
 
-#### Test TC006
-- **Test Name:** Inventory Management Stock Adjustment and Alerts
-- **Test Code:** [TC006_Inventory_Management_Stock_Adjustment_and_Alerts.py](./TC006_Inventory_Management_Stock_Adjustment_and_Alerts.py)
-- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/d7640e46-068d-40dc-9728-39ee6c542cc8/219f86c5-99c6-4da2-8bb0-36c3d856a50b
-- **Status:** ✅ Passed
-- **Severity:** LOW
-- **Analysis / Findings:** Inventory management works correctly. Stock items can be created, adjusted with proper reason logging, and low stock alerts trigger appropriately when quantity falls below threshold. Delete operations also work as expected.
+| Test ID | Test Name | Status | Link |
+|---------|-----------|--------|------|
+| TC006 | Inventory Stock Adjustments and Alerts | ❌ Failed | [View](https://www.testsprite.com/dashboard/mcp/tests/8780f9c2-7b94-4c49-80a3-f7cd806e7784/cc148cbb-4fce-48cf-b346-c85a9816eaa3) |
+
+**Analysis:** Inventory page at `/inventory` could not load. Unable to verify stock adjustments, reason logging, minimum stock alerts, or supplier associations.
 
 ---
 
-### Requirement: HR Module - Attendance
-- **Description:** Staff clock-in/out with photo proof and PIN authentication
+### REQ-06: HR Management & Attendance
 
-#### Test TC007
-- **Test Name:** HR Module Staff Attendance with Photo Proof and PIN
-- **Test Code:** [TC007_HR_Module_Staff_Attendance_with_Photo_Proof_and_PIN.py](./TC007_HR_Module_Staff_Attendance_with_Photo_Proof_and_PIN.py)
-- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/d7640e46-068d-40dc-9728-39ee6c542cc8/06c86498-5995-42b2-913b-654af51733a9
-- **Status:** ✅ Passed
-- **Severity:** LOW
-- **Analysis / Findings:** Time clock system works correctly. Staff can clock in/out using PIN authentication with photo proof upload. Invalid PIN attempts are properly rejected. Attendance times are accurately recorded.
+| Test ID | Test Name | Status | Link |
+|---------|-----------|--------|------|
+| TC007 | HR Attendance Clock-In/Out with PIN and Photo | ❌ Failed | [View](https://www.testsprite.com/dashboard/mcp/tests/8780f9c2-7b94-4c49-80a3-f7cd806e7784/8f2f0fc5-40db-46da-ba89-d1313188f3fb) |
+| TC008 | HR KPI Scoring and Leaderboard Accuracy | ❌ Failed | [View](https://www.testsprite.com/dashboard/mcp/tests/8780f9c2-7b94-4c49-80a3-f7cd806e7784/df9dd539-8b7a-44cb-8af7-f21daebc67c3) |
+| TC009 | Payroll Generation with Brunei Statutory Deductions | ❌ Failed | [View](https://www.testsprite.com/dashboard/mcp/tests/8780f9c2-7b94-4c49-80a3-f7cd806e7784/74fa43ec-1800-4f54-a88f-5acb0846bee2) |
 
----
-
-### Requirement: HR Module - Payroll
-- **Description:** Payroll processing with TAP/SCP statutory deductions (Brunei)
-
-#### Test TC008
-- **Test Name:** HR Module Payroll with TAP/SCP Deductions
-- **Test Code:** [TC008_HR_Module_Payroll_with_TAPSCP_Deductions.py](./TC008_HR_Module_Payroll_with_TAPSCP_Deductions.py)
-- **Test Error:** Navigation issue prevented completing payslip verification for some staff members
-- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/d7640e46-068d-40dc-9728-39ee6c542cc8/72a0f423-ae66-4704-b7a0-fa229b0a3f72
-- **Status:** ❌ Failed
-- **Severity:** MEDIUM
-- **Analysis / Findings:** Payroll calculations for salary, deductions, and TAP/SCP contributions are mostly working correctly. However, a navigation bug prevented complete verification of payslip generation for all staff. Recommend fixing navigation flow in payroll detail view.
+**Analysis:** HR module pages at `/hr/*` were inaccessible. Unable to verify PIN-based clock in/out, photo verification, KPI scoring with tier rankings, or payroll with TAP/SCP deductions.
 
 ---
 
-### Requirement: Staff Portal - Leave Management
-- **Description:** Leave application submission and approval workflow
+### REQ-07: Staff Portal
 
-#### Test TC009
-- **Test Name:** Staff Portal Leave Application and Approval Workflow
-- **Test Code:** [TC009_Staff_Portal_Leave_Application_and_Approval_Workflow.py](./TC009_Staff_Portal_Leave_Application_and_Approval_Workflow.py)
-- **Test Error:** Repeated login failures with 401 Unauthorized errors
-- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/d7640e46-068d-40dc-9728-39ee6c542cc8/4189d536-b6d2-488a-a7e5-e560772a9fd6
-- **Status:** ❌ Failed
-- **Severity:** HIGH
-- **Analysis / Findings:** Leave application workflow could not be tested due to authentication failures. Both login and registration attempts failed with 401/409 errors. This suggests the authentication system may not be properly configured or the API endpoints may be misconfigured.
+| Test ID | Test Name | Status | Link |
+|---------|-----------|--------|------|
+| TC010 | Employee Self-Service Portal Functionalities | ❌ Failed | [View](https://www.testsprite.com/dashboard/mcp/tests/8780f9c2-7b94-4c49-80a3-f7cd806e7784/12f2d6f3-1861-4fd5-baf1-48c9c95aba12) |
+
+**Analysis:** Staff portal at `/staff-portal` could not load. Unable to verify schedule viewing, checklist completion, leave requests, claims submission, or profile management.
 
 ---
 
-### Requirement: Delivery Hub Integration
-- **Description:** Multi-platform delivery order sync (Grab, FoodPanda, Shopee)
+### REQ-08: Delivery Hub
 
-#### Test TC010
-- **Test Name:** Delivery Hub Multi-Platform Order Synchronization
-- **Test Code:** [TC010_Delivery_Hub_Multi_Platform_Order_Synchronization.py](./TC010_Delivery_Hub_Multi_Platform_Order_Synchronization.py)
-- **Test Error:** UI bug - clicking 'Ready' button for one order opens delivery slip popup for a different order
-- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/d7640e46-068d-40dc-9728-39ee6c542cc8/4e265ec9-69c6-4aa2-9d23-9e174d28c6e5
-- **Status:** ❌ Failed
-- **Severity:** CRITICAL
-- **Analysis / Findings:** Critical UI bug detected in Delivery Hub. The 'Ready' button click handler appears to reference incorrect order data, causing wrong delivery slip to appear. This could lead to incorrect order fulfillment. Recommend urgent fix of order ID binding in delivery status update component.
+| Test ID | Test Name | Status | Link |
+|---------|-----------|--------|------|
+| TC011 | Delivery Hub Order Aggregation and Kanban Operations | ❌ Failed | [View](https://www.testsprite.com/dashboard/mcp/tests/8780f9c2-7b94-4c49-80a3-f7cd806e7784/0439d8ff-f82a-4b5c-833d-3449857b6dd9) |
+
+**Analysis:** Delivery hub at `/delivery` was inaccessible. Unable to verify multi-platform order aggregation from Grab, FoodPanda, Shopee, or kanban board operations.
 
 ---
 
-### Requirement: Finance Module
-- **Description:** Expense tracking, daily cash flow, and profit/loss reporting
+### REQ-09: Finance Module
 
-#### Test TC011
-- **Test Name:** Finance Module Expense Tracking and Reporting
-- **Test Code:** [TC011_Finance_Module_Expense_Tracking_and_Reporting.py](./TC011_Finance_Module_Expense_Tracking_and_Reporting.py)
-- **Test Error:** Authentication failure - 401 Unauthorized
-- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/d7640e46-068d-40dc-9728-39ee6c542cc8/24883311-048d-4662-bf36-020d769ca060
-- **Status:** ❌ Failed
-- **Severity:** HIGH
-- **Analysis / Findings:** Finance module could not be tested due to authentication issues. Finance features require manager/admin access which was blocked by auth failures.
+| Test ID | Test Name | Status | Link |
+|---------|-----------|--------|------|
+| TC012 | Finance Module Expense Tracking and Reports | ❌ Failed | [View](https://www.testsprite.com/dashboard/mcp/tests/8780f9c2-7b94-4c49-80a3-f7cd806e7784/0377cb29-5d04-4ed3-82c8-a9e7ebfe8b8e) |
+
+**Analysis:** Finance page at `/finance` could not load. Unable to verify expense tracking, cash flow management, or P&L reports.
 
 ---
 
-### Requirement: Promotions Module
-- **Description:** Discount management with percentage, fixed amount, and BOGO promotions
+### REQ-10: Customer CRM
 
-#### Test TC012
-- **Test Name:** Promotions Module Discount Application and Restrictions
-- **Test Code:** [TC012_Promotions_Module_Discount_Application_and_Restrictions.py](./TC012_Promotions_Module_Discount_Application_and_Restrictions.py)
-- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/d7640e46-068d-40dc-9728-39ee6c542cc8/f4ba7cbf-eabb-45bd-8bb6-4c2a628e27e0
-- **Status:** ❌ Failed
-- **Severity:** MEDIUM
-- **Analysis / Findings:** Promotions testing failed. Unable to verify discount application logic, usage limits, or date/time restrictions. Further investigation needed.
+| Test ID | Test Name | Status | Link |
+|---------|-----------|--------|------|
+| TC013 | Customer CRM Loyalty Points and Segmentation | ❌ Failed | [View](https://www.testsprite.com/dashboard/mcp/tests/8780f9c2-7b94-4c49-80a3-f7cd806e7784/e689ffd1-7d42-4d4f-ac57-cf35ab029594) |
+
+**Analysis:** Customer page at `/customers` was inaccessible. Unable to verify loyalty points, customer segmentation, order history, or birthday tracking.
 
 ---
 
-### Requirement: Internationalization (i18n)
-- **Description:** Multi-language support (English and Bahasa Melayu)
+### REQ-11: Promotions
 
-#### Test TC013
-- **Test Name:** Internationalization UI Language Switching
-- **Test Code:** [TC013_Internationalization_UI_Language_Switching.py](./TC013_Internationalization_UI_Language_Switching.py)
-- **Test Error:** Authentication failures preventing access to test language switching
-- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/d7640e46-068d-40dc-9728-39ee6c542cc8/95820dd6-a49a-4e97-baac-07547d89b4c6
-- **Status:** ❌ Failed
-- **Severity:** MEDIUM
-- **Analysis / Findings:** Language switching could not be verified due to authentication blocks. The i18n context and translations exist in the codebase but functional testing was blocked.
+| Test ID | Test Name | Status | Link |
+|---------|-----------|--------|------|
+| TC014 | Promotion Codes with Restrictions and Discount Applications | ❌ Failed | [View](https://www.testsprite.com/dashboard/mcp/tests/8780f9c2-7b94-4c49-80a3-f7cd806e7784/2b6a240e-2f54-40fd-911a-bde68a401d3c) |
+
+**Analysis:** Promotions page at `/promotions` could not load. Unable to verify promo codes, discount types, time validity, or usage limits.
 
 ---
 
-### Requirement: PWA & Offline Support
-- **Description:** Progressive Web App with service worker and offline caching
+### REQ-12: PWA Features
 
-#### Test TC014
-- **Test Name:** Progressive Web App Offline Functionality and Service Worker
-- **Test Code:** [TC014_Progressive_Web_App_Offline_Functionality_and_Service_Worker.py](./TC014_Progressive_Web_App_Offline_Functionality_and_Service_Worker.py)
-- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/d7640e46-068d-40dc-9728-39ee6c542cc8/b9514f4f-d5d5-4f29-8e1f-aae70efd8f13
-- **Status:** ✅ Passed
-- **Severity:** LOW
-- **Analysis / Findings:** PWA functionality works correctly. Service worker registration succeeds, content is cached, and the app loads from cache when offline. Update prompts display correctly when new versions are available.
+| Test ID | Test Name | Status | Link |
+|---------|-----------|--------|------|
+| TC015 | PWA Offline Support and Service Worker Functionality | ❌ Failed | [View](https://www.testsprite.com/dashboard/mcp/tests/8780f9c2-7b94-4c49-80a3-f7cd806e7784/dcbbd4f7-ec5c-437c-8d80-979dae95a82a) |
+
+**Analysis:** App could not load to test PWA capabilities. Unable to verify service worker registration, offline caching, or install prompts.
 
 ---
 
-### Requirement: Security & Access Control
-- **Description:** PIN authentication and role-based access enforcement
+### REQ-13: Authentication & Security
 
-#### Test TC015
-- **Test Name:** System Security: PIN and Role-Based Access Enforcement
-- **Test Code:** [TC015_System_Security_PIN_and_Role_Based_Access_Enforcement.py](./TC015_System_Security_PIN_and_Role_Based_Access_Enforcement.py)
-- **Test Error:** Login failures preventing access control testing
-- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/d7640e46-068d-40dc-9728-39ee6c542cc8/2cf288ca-6303-4f87-8794-b49226b3053c
-- **Status:** ❌ Failed
-- **Severity:** HIGH
-- **Analysis / Findings:** Role-based access could not be verified due to authentication issues. While the authentication itself is blocking access (potentially correctly), the test credentials provided were invalid.
+| Test ID | Test Name | Status | Link |
+|---------|-----------|--------|------|
+| TC016 | Authentication and Role-Based Access Control | ❌ Failed | [View](https://www.testsprite.com/dashboard/mcp/tests/8780f9c2-7b94-4c49-80a3-f7cd806e7784/beaea969-0c05-4de2-b857-224a6d5614b7) |
+
+**Analysis:** Login page at `/login` was inaccessible. Unable to verify PIN-based authentication or role-based UI access control.
 
 ---
 
-### Requirement: Audit & Logging
-- **Description:** System audit log for tracking user actions
+### REQ-14: Integrations
 
-#### Test TC016
-- **Test Name:** Audit Log Records User Actions
-- **Test Code:** [TC016_Audit_Log_Records_User_Actions.py](./TC016_Audit_Log_Records_User_Actions.py)
-- **Test Error:** Persistent login failures preventing audit log verification
-- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/d7640e46-068d-40dc-9728-39ee6c542cc8/7e5d85c2-eb94-4b36-8575-0704d8d3fde5
-- **Status:** ❌ Failed
-- **Severity:** MEDIUM
-- **Analysis / Findings:** Audit logging could not be tested due to authentication blocks. The audit-data.ts module exists and appears functional but could not be validated.
+| Test ID | Test Name | Status | Link |
+|---------|-----------|--------|------|
+| TC017 | WhatsApp Messaging Integration for Notifications | ❌ Failed | [View](https://www.testsprite.com/dashboard/mcp/tests/8780f9c2-7b94-4c49-80a3-f7cd806e7784/05694aad-e8dd-4869-8a15-598ce18c6ed0) |
+| TC018 | Export Services Generate Accurate Reports | ❌ Failed | [View](https://www.testsprite.com/dashboard/mcp/tests/8780f9c2-7b94-4c49-80a3-f7cd806e7784/97f17ae2-c50b-4868-8132-35cf64e28c3c) |
+
+**Analysis:** Application could not load to test integrations. Unable to verify WhatsApp messaging, PDF generation, or Excel exports.
 
 ---
 
-### Requirement: Staff Portal - Checklists
-- **Description:** Daily opening/closing checklists with photo proof
+### REQ-15: Internationalization & Theme
 
-#### Test TC017
-- **Test Name:** Staff Portal Photo Proof Upload in Checklists
-- **Test Code:** [TC017_Staff_Portal_Photo_Proof_Upload_in_Checklists.py](./TC017_Staff_Portal_Photo_Proof_Upload_in_Checklists.py)
-- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/d7640e46-068d-40dc-9728-39ee6c542cc8/90761c95-2c8f-4be1-924a-96c1a9c09aaf
-- **Status:** ❌ Failed
-- **Severity:** MEDIUM
-- **Analysis / Findings:** Checklist photo upload testing failed. Unable to complete checklist submission workflow. May be related to authentication or file upload handling issues.
+| Test ID | Test Name | Status | Link |
+|---------|-----------|--------|------|
+| TC019 | Internationalization Toggle Functionality | ❌ Failed | [View](https://www.testsprite.com/dashboard/mcp/tests/8780f9c2-7b94-4c49-80a3-f7cd806e7784/29d7b130-8933-44b8-ae43-aafc1c8f32a4) |
+| TC020 | Theme Management Dark/Light Mode Toggling and Persistence | ❌ Failed | [View](https://www.testsprite.com/dashboard/mcp/tests/8780f9c2-7b94-4c49-80a3-f7cd806e7784/74683e03-db6f-4c61-b26a-78d7bc990400) |
+
+**Analysis:** Settings pages were inaccessible. Unable to verify language toggle (English/Bahasa Melayu) or theme persistence.
 
 ---
 
-### Requirement: Staff Portal - Shift Management
-- **Description:** Shift swap requests between staff members
+## 4. Coverage & Matching Metrics
 
-#### Test TC018
-- **Test Name:** Shift Swap Requests and Approval
-- **Test Code:** [TC018_Shift_Swap_Requests_and_Approval.py](./TC018_Shift_Swap_Requests_and_Approval.py)
-- **Test Error:** UI bug - shift date selection not working in shift swap request modal
-- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/d7640e46-068d-40dc-9728-39ee6c542cc8/759b16c1-38a1-40ff-a1dc-441a993a0a21
-- **Status:** ❌ Failed
-- **Severity:** HIGH
-- **Analysis / Findings:** Critical UI bug in shift swap modal. The date picker for selecting shift dates is not functioning, preventing staff from creating swap requests. Recommend fixing date picker component binding or validation logic.
-
----
-
-## 4️⃣ Coverage & Matching Metrics
-
-- **22.22%** of tests passed (4 out of 18)
-
-| Requirement               | Total Tests | ✅ Passed | ❌ Failed |
-|---------------------------|-------------|-----------|-----------|
-| Dashboard & Analytics     | 1           | 0         | 1         |
-| POS System                | 2           | 1         | 1         |
-| Menu Management           | 1           | 0         | 1         |
-| Kitchen Display System    | 1           | 0         | 1         |
-| Inventory Management      | 1           | 1         | 0         |
-| HR - Attendance           | 1           | 1         | 0         |
-| HR - Payroll              | 1           | 0         | 1         |
-| Staff Portal - Leave      | 1           | 0         | 1         |
-| Delivery Hub              | 1           | 0         | 1         |
-| Finance Module            | 1           | 0         | 1         |
-| Promotions                | 1           | 0         | 1         |
-| Internationalization      | 1           | 0         | 1         |
-| PWA & Offline             | 1           | 1         | 0         |
-| Security & Access         | 1           | 0         | 1         |
-| Audit & Logging           | 1           | 0         | 1         |
-| Staff Portal - Checklists | 1           | 0         | 1         |
-| Staff Portal - Shifts     | 1           | 0         | 1         |
-| **TOTAL**                 | **18**      | **4**     | **14**    |
+| Requirement | Total Tests | Passed | Failed |
+|-------------|-------------|--------|--------|
+| Dashboard & Real-Time Data | 1 | 0 | 1 |
+| POS System | 2 | 0 | 2 |
+| Menu Management | 1 | 0 | 1 |
+| Kitchen Display System | 1 | 0 | 1 |
+| Inventory Management | 1 | 0 | 1 |
+| HR Management & Attendance | 3 | 0 | 3 |
+| Staff Portal | 1 | 0 | 1 |
+| Delivery Hub | 1 | 0 | 1 |
+| Finance Module | 1 | 0 | 1 |
+| Customer CRM | 1 | 0 | 1 |
+| Promotions | 1 | 0 | 1 |
+| PWA Features | 1 | 0 | 1 |
+| Authentication & Security | 1 | 0 | 1 |
+| Integrations | 2 | 0 | 2 |
+| Internationalization & Theme | 2 | 0 | 2 |
+| **TOTAL** | **20** | **0** | **20** |
 
 ---
 
-## 5️⃣ Key Gaps / Risks
+## 5. Key Gaps / Risks
 
-### 🔴 Critical Issues (Immediate Action Required)
+### Critical Issue: Development Server Instability
 
-1. **Authentication System Misconfiguration**
-   - 8 out of 14 failed tests were due to 401 Unauthorized errors
-   - API routes at `/api/auth/login` and `/api/auth/register` returning errors
-   - **Risk:** System may be unusable for new users or during auth token expiry
-   - **Recommendation:** Review authentication middleware, ensure test credentials are configured, or implement demo/guest mode
+1. **404 Errors on JS Chunks**: The Next.js development server was returning 404 errors for critical JavaScript files:
+   - `/_next/static/chunks/main-app.js`
+   - `/_next/static/chunks/app-pages-internals.js`
 
-2. **Delivery Hub Order Binding Bug (TC010)**
-   - 'Ready' button clicks open wrong order's delivery slip
-   - **Risk:** Critical - could cause incorrect order fulfillment
-   - **Recommendation:** Fix order ID binding in DeliveryHub component immediately
+2. **Error Message Display**: All pages showed "missing required error components, refreshing..." preventing any user interaction.
 
-3. **Shift Swap Date Picker Non-Functional (TC018)**
-   - Staff cannot select dates in shift swap modal
-   - **Risk:** High - blocks entire shift swap workflow
-   - **Recommendation:** Debug date picker component and its state management
+3. **Root Cause Analysis**: 
+   - The server may have been in an unstable state during test execution
+   - There are known missing module issues in `components/onboarding/TourProvider.tsx`:
+     - `./TourOverlay` module not found
+     - `./TourTooltip` module not found
+   - These missing imports cause the Next.js error boundary to fail
 
-### 🟡 Medium Priority Issues
+### Recommended Actions
 
-4. **POS Modifier Modal Bug (TC002)**
-   - Drinks/modifiers not appearing after 'Tambah' button click
-   - **Risk:** Incomplete orders, customer dissatisfaction
-   - **Recommendation:** Review modifier modal data fetching and rendering logic
+1. **Fix Missing Modules (High Priority)**:
+   - Create `components/onboarding/TourOverlay.tsx`
+   - Create `components/onboarding/TourTooltip.tsx`
+   - Or remove the imports if the onboarding tour feature is not needed
 
-5. **Payroll Navigation Issue (TC008)**
-   - Cannot navigate to all staff payslip details
-   - **Risk:** Payroll processing delays
-   - **Recommendation:** Fix navigation flow in payroll detail component
+2. **Restart Dev Server Before Testing**:
+   - Stop and restart the Next.js dev server before running TestSprite tests
+   - Wait for full compilation before initiating tests
 
-### 🟢 Tested & Working
+3. **Clean Next.js Cache**:
+   ```bash
+   rm -rf .next
+   npm run dev
+   ```
 
-- ✅ Phone number validation (Brunei format)
-- ✅ Inventory stock management and alerts
-- ✅ HR time clock with photo proof and PIN
-- ✅ PWA offline functionality and service worker
+4. **Re-run TestSprite Tests** after fixing the infrastructure issues
 
 ---
 
-## 6️⃣ Recommendations
+## 6. Next Steps
 
-### Short-term (This Sprint)
-1. Fix authentication system - ensure API endpoints work correctly
-2. Resolve Delivery Hub order binding bug
-3. Fix shift swap date picker
-
-### Medium-term (Next Sprint)
-1. Add test credentials or demo mode for automated testing
-2. Fix POS modifier modal issue
-3. Improve payroll navigation flow
-
-### Long-term
-1. Implement comprehensive E2E test suite with proper auth fixtures
-2. Add visual regression testing for UI components
-3. Set up CI/CD pipeline with automated test execution
+1. Fix the missing TourOverlay and TourTooltip components
+2. Clear the `.next` cache directory
+3. Restart the development server
+4. Wait for successful compilation (verify no 404 errors in terminal)
+5. Re-run TestSprite full checkup with:
+   ```
+   testsprite_rerun_tests
+   ```
 
 ---
 
-## 7️⃣ Test Artifacts
-
-All test code files are available in the `testsprite_tests/` directory:
-- Test plan: `testsprite_frontend_test_plan.json`
-- Code summary: `tmp/code_summary.json`
-- Individual test files: `TC001_*.py` through `TC018_*.py`
-
-For detailed test visualizations and recordings, visit the TestSprite dashboard links provided for each test case.
-
----
-
-**Report Generated:** 2025-12-13  
-**Testing Framework:** TestSprite AI MCP  
-**Project:** AbangBob Dashboard - F&B Management System
-
+*Report generated by TestSprite AI on 2025-12-14*

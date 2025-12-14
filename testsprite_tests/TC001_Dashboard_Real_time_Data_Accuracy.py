@@ -46,11 +46,16 @@ async def run_test():
                 pass
         
         # Interact with the page elements to simulate user flow
+        # -> Try to reload the page or check for alternative navigation or troubleshooting options.
+        await page.goto('http://localhost:3000/', timeout=10000)
+        await asyncio.sleep(3)
+        
+
         # --> Assertions to verify final state
         try:
-            await expect(page.locator('text=Dashboard Overview Complete').first).to_be_visible(timeout=30000)
+            await expect(page.locator('text=Data is completely outdated and inaccurate').first).to_be_visible(timeout=1000)
         except AssertionError:
-            raise AssertionError('Test case failed: The main dashboard did not display accurate and real-time sales, inventory, and staff attendance data, including correct low stock and attendance alerts as required by the test plan.')
+            raise AssertionError('Test case failed: The dashboard does not display accurate and real-time sales summary, order counts, inventory alerts, staff attendance, or sales trend charts as required by the test plan.')
         await asyncio.sleep(5)
     
     finally:

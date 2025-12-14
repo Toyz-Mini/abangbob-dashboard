@@ -455,3 +455,4 @@ export type Expense = Tables<'expenses'>;
 export type Outlet = Tables<'outlets'>;
 export type AuditLog = Tables<'audit_logs'>;
 
+

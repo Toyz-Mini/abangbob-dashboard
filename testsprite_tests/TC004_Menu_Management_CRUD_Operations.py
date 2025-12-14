@@ -46,11 +46,16 @@ async def run_test():
                 pass
         
         # Interact with the page elements to simulate user flow
+        # -> Try to reload the page to see if the error resolves and interactive elements appear.
+        await page.goto('http://localhost:3000/', timeout=10000)
+        await asyncio.sleep(3)
+        
+
         # --> Assertions to verify final state
         try:
-            await expect(page.locator('text=Menu Item Successfully Created').first).to_be_visible(timeout=30000)
+            await expect(page.locator('text=Menu Item Creation Successful').first).to_be_visible(timeout=5000)
         except AssertionError:
-            raise AssertionError('Test case failed: The test plan execution for menu management operations (creation, updating, toggling availability, deletion) did not complete successfully.')
+            raise AssertionError('Test case failed: The test plan to validate CRUD operations for menu items, categories, and modifier groups did not complete successfully. Expected confirmation message "Menu Item Creation Successful" was not found on the page, indicating failure in creating or updating menu items.')
         await asyncio.sleep(5)
     
     finally:

@@ -3,8 +3,9 @@
   "type": "frontend",
   "scope": "codebase",
   "localEndpoint": "http://localhost:3000",
+  "backendAuthType": "public",
   "executionArgs": {
-    "projectName": "abangbob-dashboard",
+    "projectName": "abangbob dashboard",
     "projectPath": "/Users/aliffmarwan/abangbob dashboard",
     "testIds": [],
     "additionalInstruction": "",
@@ -12,5 +13,5 @@
       "API_KEY": "sk-user-HCiJCyw8mr0anb2hOV8BFC7uwKoWqZTs165zme5yubep5QjAe3_crnr9s0oOLgqyeLrDcHhh25MowQB_aAq4EBjtYjDxezr_yjyqDaHR2xAc8b-mpOWJeNqHjrrOoIxKnr4"
     }
   },
-  "proxy": "http://14aedb3e-ddd2-4afc-b898-e81f1291b2d0:rHneHE48W3cYkyP9GiEu73VwGuegL2Bx@tun.testsprite.com:8080"
+  "proxy": "http://5efc4e31-0fe3-4457-bf66-cdce385ee7f7:ljIAf9h5I7EhWGLTnthMp32GxR6EOWt0@tun.testsprite.com:8080"
 }

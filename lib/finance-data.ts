@@ -132,3 +132,4 @@ export function getCategoryColor(category: ExpenseCategory): string {
   return EXPENSE_CATEGORIES.find(c => c.value === category)?.color || '#6b7280';
 }
 
+

@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import MainLayout from '@/components/MainLayout';
 import { useMenu } from '@/lib/store';
 import { MenuItem, ModifierGroup, ModifierOption } from '@/lib/types';
@@ -28,6 +29,10 @@ type ModalType = 'add-menu' | 'edit-menu' | 'delete-menu' | 'add-group' | 'edit-
 const MENU_CATEGORIES = ['Nasi Lemak', 'Burger', 'Minuman', 'Sides', 'Dessert'];
 
 export default function MenuManagementPage() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  
   const { 
     menuItems, 
     modifierGroups, 
@@ -54,6 +59,51 @@ export default function MenuManagementPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('All');
+
+  // Initialize from URL params on mount
+  useEffect(() => {
+    const search = searchParams.get('search') || '';
+    const category = searchParams.get('category') || 'All';
+    const tab = searchParams.get('tab') as TabType || 'menu';
+    
+    setSearchTerm(search);
+    setFilterCategory(category);
+    if (['menu', 'groups', 'options'].includes(tab)) {
+      setActiveTab(tab);
+    }
+  }, [searchParams]);
+
+  // Update URL when filters change
+  const updateUrlParams = (params: { search?: string; category?: string; tab?: string }) => {
+    const newParams = new URLSearchParams(searchParams.toString());
+    
+    Object.entries(params).forEach(([key, value]) => {
+      if (value && value !== 'All' && value !== '' && value !== 'menu') {
+        newParams.set(key, value);
+      } else {
+        newParams.delete(key);
+      }
+    });
+    
+    const newUrl = newParams.toString() ? `${pathname}?${newParams.toString()}` : pathname;
+    router.replace(newUrl, { scroll: false });
+  };
+
+  // Wrapped setters that also update URL
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+    updateUrlParams({ search: value, category: filterCategory, tab: activeTab });
+  };
+
+  const handleCategoryChange = (value: string) => {
+    setFilterCategory(value);
+    updateUrlParams({ search: searchTerm, category: value, tab: activeTab });
+  };
+
+  const handleTabChange = (value: TabType) => {
+    setActiveTab(value);
+    updateUrlParams({ search: searchTerm, category: filterCategory, tab: value });
+  };
 
   // Menu Item Form
   const [menuForm, setMenuForm] = useState({
@@ -375,21 +425,21 @@ export default function MenuManagementPage() {
         {/* Tabs */}
         <div style={{ marginBottom: '1.5rem', display: 'flex', gap: '0.5rem', borderBottom: '2px solid var(--gray-200)', paddingBottom: '0.5rem' }}>
           <button
-            onClick={() => setActiveTab('menu')}
+            onClick={() => handleTabChange('menu')}
             className={`btn btn-sm ${activeTab === 'menu' ? 'btn-primary' : 'btn-outline'}`}
           >
             <UtensilsCrossed size={16} />
             Menu Items ({menuItems.length})
           </button>
           <button
-            onClick={() => setActiveTab('groups')}
+            onClick={() => handleTabChange('groups')}
             className={`btn btn-sm ${activeTab === 'groups' ? 'btn-primary' : 'btn-outline'}`}
           >
             <Layers size={16} />
             Modifier Groups ({modifierGroups.length})
           </button>
           <button
-            onClick={() => setActiveTab('options')}
+            onClick={() => handleTabChange('options')}
             className={`btn btn-sm ${activeTab === 'options' ? 'btn-primary' : 'btn-outline'}`}
           >
             <Settings size={16} />
@@ -409,14 +459,14 @@ export default function MenuManagementPage() {
                     className="form-input"
                     placeholder="Cari menu..."
                     value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onChange={(e) => handleSearchChange(e.target.value)}
                     style={{ paddingLeft: '2rem', width: '200px' }}
                   />
                 </div>
                 <select
                   className="form-select"
                   value={filterCategory}
-                  onChange={(e) => setFilterCategory(e.target.value)}
+                  onChange={(e) => handleCategoryChange(e.target.value)}
                   style={{ width: 'auto' }}
                 >
                   {categories.map(cat => (

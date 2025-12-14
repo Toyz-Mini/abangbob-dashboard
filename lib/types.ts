@@ -291,7 +291,46 @@ export interface OilTracker {
   currentCycles: number;
   cycleLimit: number;
   lastChangedDate: string;
+  lastTopupDate?: string;
   status: 'good' | 'warning' | 'critical';
+  hasPendingRequest?: boolean;
+}
+
+export type OilActionType = 'change' | 'topup';
+export type OilRequestStatus = 'pending' | 'approved' | 'rejected';
+
+// Request dari staff (perlu approval)
+export interface OilChangeRequest {
+  id: string;
+  fryerId: string;
+  fryerName: string;
+  actionType: OilActionType;
+  requestedAt: string;
+  requestedBy: string;
+  previousCycles: number;
+  proposedCycles: number;
+  topupPercentage?: number;
+  photoUrl: string;
+  notes?: string;
+  status: OilRequestStatus;
+  reviewedAt?: string;
+  reviewedBy?: string;
+  rejectionReason?: string;
+}
+
+// History untuk tindakan yang sudah approved
+export interface OilActionHistory {
+  id: string;
+  fryerId: string;
+  fryerName: string;
+  actionType: OilActionType;
+  actionAt: string;
+  previousCycles: number;
+  newCycles: number;
+  topupPercentage?: number;
+  requestedBy: string;
+  approvedBy: string;
+  photoUrl: string;
 }
 
 export interface ProductionLog {

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Search, Bell, User, Menu, Sun, Moon, Volume2, VolumeX, Languages, Settings, LogOut, ChevronDown, Store } from 'lucide-react';
 import { useTheme } from '@/lib/contexts/ThemeContext';
 import { useSound } from '@/lib/contexts/SoundContext';
@@ -14,6 +15,7 @@ interface TopNavProps {
 }
 
 export default function TopNav({ onMenuClick }: TopNavProps) {
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
@@ -22,7 +24,7 @@ export default function TopNav({ onMenuClick }: TopNavProps) {
   const { settings, toggleSound, playSound } = useSound();
   const { language, toggleLanguage, t } = useLanguage();
   const { getUnreadCount } = useNotifications();
-  const { currentStaff, logoutStaff } = useAuth();
+  const { currentStaff, logoutStaff, signOut } = useAuth();
   
   const unreadCount = getUnreadCount();
 
@@ -52,9 +54,13 @@ export default function TopNav({ onMenuClick }: TopNavProps) {
     playSound('notification');
   };
 
-  const handleLogout = () => {
-    logoutStaff();
+  const handleLogout = async () => {
     setIsUserMenuOpen(false);
+    // Clear both staff session and Supabase session
+    logoutStaff();
+    await signOut();
+    // Redirect to login page
+    router.push('/login');
   };
 
   return (

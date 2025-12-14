@@ -48,9 +48,9 @@ async def run_test():
         # Interact with the page elements to simulate user flow
         # --> Assertions to verify final state
         try:
-            await expect(page.locator('text=Unexpected Revenue Surge').first).to_be_visible(timeout=30000)
+            await expect(page.locator('text=Unexpected Revenue Surplus Detected').first).to_be_visible(timeout=30000)
         except AssertionError:
-            raise AssertionError('Test case failed: The test plan execution did not complete successfully. Expenses addition, cash flow tracking, or profit & loss report generation did not pass as expected.')
+            raise AssertionError('Test case failed: The test plan execution for adding expenses, categorizing them, monitoring cash flow, and generating profit & loss reports did not complete successfully.')
         await asyncio.sleep(5)
     
     finally:

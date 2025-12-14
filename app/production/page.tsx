@@ -1,11 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import Link from 'next/link';
 import MainLayout from '@/components/MainLayout';
-import { MOCK_OIL_TRACKERS, addFryingCycles } from '@/lib/production-data';
 import { useStore } from '@/lib/store';
-import { OilTracker, ProductionLog } from '@/lib/types';
-import { AlertTriangle, Plus, Trash2, Package, CheckCircle } from 'lucide-react';
+import { Plus, Trash2, Package, CheckCircle, Wrench, ArrowRight } from 'lucide-react';
 import Modal from '@/components/Modal';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import StatCard from '@/components/StatCard';
@@ -33,7 +32,6 @@ const WASTE_REASONS = [
 
 export default function ProductionPage() {
   const { productionLogs, addProductionLog, isInitialized } = useStore();
-  const [oilTrackers, setOilTrackers] = useState<OilTracker[]>(MOCK_OIL_TRACKERS);
   const [showAddLogModal, setShowAddLogModal] = useState(false);
   const [showWasteModal, setShowWasteModal] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -54,35 +52,6 @@ export default function ProductionPage() {
     reason: WASTE_REASONS[0],
     customReason: '',
   });
-
-  const handleChangeOil = (fryerId: string) => {
-    setOilTrackers(prev => prev.map(tracker => 
-      tracker.fryerId === fryerId 
-        ? { ...tracker, currentCycles: 0, lastChangedDate: new Date().toISOString().split('T')[0], status: 'good' as const }
-        : tracker
-    ));
-    alert('Minyak berjaya ditukar! Counter reset.');
-  };
-
-  const handleAddCycles = (fryerId: string, quantity: number) => {
-    const updated = addFryingCycles(fryerId, quantity);
-    if (updated) {
-      setOilTrackers(prev => prev.map(t => t.fryerId === fryerId ? updated : t));
-    }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'good': return 'var(--success)';
-      case 'warning': return 'var(--warning)';
-      case 'critical': return 'var(--danger)';
-      default: return 'var(--gray-400)';
-    }
-  };
-
-  const getStatusPercentage = (tracker: OilTracker) => {
-    return Math.min((tracker.currentCycles / tracker.cycleLimit) * 100, 100);
-  };
 
   const handleAddProductionLog = async () => {
     if (logForm.quantityProduced <= 0) {
@@ -182,93 +151,37 @@ export default function ProductionPage() {
           </div>
         </div>
 
-        {/* Equipment Health Cards */}
-        <div style={{ marginBottom: '2rem' }}>
-          <h2 style={{ fontSize: '1.5rem', fontWeight: 600, marginBottom: '1rem' }}>
-            Equipment Health - Oil Tracker
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3" style={{ gap: '1.5rem' }}>
-            {oilTrackers.map(tracker => {
-              const percentage = getStatusPercentage(tracker);
-              const statusColor = getStatusColor(tracker.status);
-              
-              return (
-                <div key={tracker.fryerId} className="card">
-                  <div style={{ marginBottom: '1rem' }}>
-                    <div style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.5rem' }}>
-                      {tracker.name}
-                    </div>
-                    <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
-                      Last changed: {tracker.lastChangedDate}
-                    </div>
-                  </div>
-
-                  {/* Gauge */}
-                  <div style={{ marginBottom: '1rem' }}>
-                    <div style={{
-                      width: '100%',
-                      height: '20px',
-                      background: 'var(--gray-200)',
-                      borderRadius: 'var(--radius-md)',
-                      overflow: 'hidden',
-                      position: 'relative'
-                    }}>
-                      <div style={{
-                        width: `${percentage}%`,
-                        height: '100%',
-                        background: statusColor,
-                        transition: 'all 0.3s'
-                      }} />
-                    </div>
-                    <div style={{ 
-                      display: 'flex', 
-                      justifyContent: 'space-between', 
-                      marginTop: '0.5rem',
-                      fontSize: '0.875rem',
-                      color: 'var(--text-secondary)'
-                    }}>
-                      <span>{tracker.currentCycles} / {tracker.cycleLimit}</span>
-                      <span>{Math.round(percentage)}%</span>
-                    </div>
-                  </div>
-
-                  <div style={{ marginBottom: '1rem' }}>
-                    <span className={`badge ${
-                      tracker.status === 'good' ? 'badge-success' :
-                      tracker.status === 'warning' ? 'badge-warning' : 'badge-danger'
-                    }`}>
-                      {tracker.status === 'good' ? 'Baik' : 
-                       tracker.status === 'warning' ? 'Awas' : 'Kritikal'}
-                    </span>
-                  </div>
-
-                  {tracker.status === 'critical' && (
-                    <div className="alert alert-danger" style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <AlertTriangle size={20} />
-                      Minyak perlu ditukar segera!
-                    </div>
-                  )}
-
-                  <div style={{ display: 'flex', gap: '0.5rem' }}>
-                    <button
-                      onClick={() => handleChangeOil(tracker.fryerId)}
-                      className="btn btn-primary btn-sm"
-                      style={{ flex: 1 }}
-                    >
-                      Tukar Minyak
-                    </button>
-                    <button
-                      onClick={() => handleAddCycles(tracker.fryerId, 50)}
-                      className="btn btn-outline btn-sm"
-                    >
-                      +50 Test
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
+        {/* Equipment Health Link */}
+        <Link href="/equipment" style={{ textDecoration: 'none' }}>
+          <div className="card" style={{ 
+            marginBottom: '2rem', 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'space-between',
+            cursor: 'pointer',
+            transition: 'all 0.2s',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <div style={{ 
+                background: 'var(--primary)', 
+                color: 'white', 
+                padding: '1rem', 
+                borderRadius: 'var(--radius-md)' 
+              }}>
+                <Wrench size={24} />
+              </div>
+              <div>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '0.25rem' }}>
+                  Equipment Health - Oil Tracker
+                </h3>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
+                  Pantau dan uruskan status minyak fryer
+                </p>
+              </div>
+            </div>
+            <ArrowRight size={24} style={{ color: 'var(--text-secondary)' }} />
           </div>
-        </div>
+        </Link>
 
         {/* Daily Stats */}
         <div className="content-grid cols-3 mb-lg">

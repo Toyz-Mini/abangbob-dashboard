@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
-import { StockItem, StaffProfile, AttendanceRecord, Order, ProductionLog, DeliveryOrder, Expense, DailyCashFlow, Customer, Supplier, PurchaseOrder, Recipe, Shift, ScheduleEntry, Promotion, Notification, MenuItem, ModifierGroup, ModifierOption, StaffKPI, LeaveRecord, TrainingRecord, OTRecord, CustomerReview, KPIMetrics, ChecklistItemTemplate, ChecklistCompletion, LeaveBalance, LeaveRequest, ClaimRequest, StaffRequest, Announcement, OrderHistoryItem, VoidRefundRequest, VoidRefundType, OrderHistoryFilters, RefundItem } from './types';
+import { StockItem, StaffProfile, AttendanceRecord, Order, ProductionLog, DeliveryOrder, Expense, DailyCashFlow, Customer, Supplier, PurchaseOrder, Recipe, Shift, ScheduleEntry, Promotion, Notification, MenuItem, ModifierGroup, ModifierOption, StaffKPI, LeaveRecord, TrainingRecord, OTRecord, CustomerReview, KPIMetrics, ChecklistItemTemplate, ChecklistCompletion, LeaveBalance, LeaveRequest, ClaimRequest, StaffRequest, Announcement, OrderHistoryItem, VoidRefundRequest, VoidRefundType, OrderHistoryFilters, RefundItem, OilTracker, OilChangeRequest, OilActionHistory, OilActionType } from './types';
 import { MOCK_ORDER_HISTORY, MOCK_VOID_REFUND_REQUESTS, ORDER_HISTORY_STORAGE_KEYS } from './order-history-data';
 import { MOCK_STOCK } from './inventory-data';
 import { MOCK_STAFF, MOCK_ATTENDANCE, MOCK_PAYROLL } from './hr-data';
@@ -51,6 +51,10 @@ const STORAGE_KEYS = {
   // Order History & Void/Refund
   ORDER_HISTORY: 'abangbob_order_history',
   VOID_REFUND_REQUESTS: 'abangbob_void_refund_requests',
+  // Oil Tracker / Equipment
+  OIL_TRACKERS: 'abangbob_oil_trackers',
+  OIL_CHANGE_REQUESTS: 'abangbob_oil_change_requests',
+  OIL_ACTION_HISTORY: 'abangbob_oil_action_history',
 };
 
 // Inventory log type for tracking stock changes
@@ -263,6 +267,20 @@ interface StoreState {
   getVoidRefundRequestsByStaff: (staffId: string) => VoidRefundRequest[];
   getPendingVoidRefundCount: () => number;
   
+  // Oil Tracker / Equipment
+  oilTrackers: OilTracker[];
+  oilChangeRequests: OilChangeRequest[];
+  oilActionHistory: OilActionHistory[];
+  addOilTracker: (tracker: Omit<OilTracker, 'fryerId'>) => void;
+  updateOilTracker: (fryerId: string, updates: Partial<OilTracker>) => void;
+  deleteOilTracker: (fryerId: string) => void;
+  submitOilRequest: (fryerId: string, actionType: OilActionType, photoUrl: string, requestedBy: string, requestedByName: string, topupPercentage?: number, notes?: string) => { success: boolean; error?: string };
+  approveOilRequest: (requestId: string, approvedBy: string, approvedByName: string) => { success: boolean; error?: string };
+  rejectOilRequest: (requestId: string, rejectedBy: string, rejectedByName: string, reason: string) => void;
+  getPendingOilRequests: () => OilChangeRequest[];
+  getOilRequestsByStaff: (staffId: string) => OilChangeRequest[];
+  getPendingOilRequestCount: () => number;
+  
   // Utility
   isInitialized: boolean;
 }
@@ -357,6 +375,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   // Order History & Void/Refund state
   const [orderHistory, setOrderHistory] = useState<OrderHistoryItem[]>([]);
   const [voidRefundRequests, setVoidRefundRequests] = useState<VoidRefundRequest[]>([]);
+  
+  // Oil Tracker / Equipment state
+  const [oilTrackers, setOilTrackers] = useState<OilTracker[]>([]);
+  const [oilChangeRequests, setOilChangeRequests] = useState<OilChangeRequest[]>([]);
+  const [oilActionHistory, setOilActionHistory] = useState<OilActionHistory[]>([]);
 
   // Initialize from localStorage on mount
   useEffect(() => {
@@ -403,6 +426,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     // Order History & Void/Refund
     setOrderHistory(getFromStorage(STORAGE_KEYS.ORDER_HISTORY, MOCK_ORDER_HISTORY));
     setVoidRefundRequests(getFromStorage(STORAGE_KEYS.VOID_REFUND_REQUESTS, MOCK_VOID_REFUND_REQUESTS));
+    // Oil Tracker / Equipment
+    setOilTrackers(getFromStorage(STORAGE_KEYS.OIL_TRACKERS, MOCK_OIL_TRACKERS));
+    setOilChangeRequests(getFromStorage(STORAGE_KEYS.OIL_CHANGE_REQUESTS, []));
+    setOilActionHistory(getFromStorage(STORAGE_KEYS.OIL_ACTION_HISTORY, []));
     setIsInitialized(true);
   }, []);
 
@@ -612,6 +639,24 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       setToStorage(STORAGE_KEYS.VOID_REFUND_REQUESTS, voidRefundRequests);
     }
   }, [voidRefundRequests, isInitialized]);
+
+  useEffect(() => {
+    if (isInitialized) {
+      setToStorage(STORAGE_KEYS.OIL_TRACKERS, oilTrackers);
+    }
+  }, [oilTrackers, isInitialized]);
+
+  useEffect(() => {
+    if (isInitialized) {
+      setToStorage(STORAGE_KEYS.OIL_CHANGE_REQUESTS, oilChangeRequests);
+    }
+  }, [oilChangeRequests, isInitialized]);
+
+  useEffect(() => {
+    if (isInitialized) {
+      setToStorage(STORAGE_KEYS.OIL_ACTION_HISTORY, oilActionHistory);
+    }
+  }, [oilActionHistory, isInitialized]);
 
   // Inventory actions
   const addStockItem = useCallback((item: Omit<StockItem, 'id'>) => {
@@ -1878,6 +1923,186 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     return voidRefundRequests.filter(r => r.status === 'pending').length;
   }, [voidRefundRequests]);
 
+  // ==================== OIL TRACKER / EQUIPMENT FUNCTIONS ====================
+
+  const addOilTracker = useCallback((tracker: Omit<OilTracker, 'fryerId'>) => {
+    const newTracker: OilTracker = {
+      ...tracker,
+      fryerId: `fryer_${Date.now()}`,
+    };
+    setOilTrackers(prev => [...prev, newTracker]);
+  }, []);
+
+  const updateOilTracker = useCallback((fryerId: string, updates: Partial<OilTracker>) => {
+    setOilTrackers(prev => prev.map(t => 
+      t.fryerId === fryerId ? { ...t, ...updates } : t
+    ));
+  }, []);
+
+  const deleteOilTracker = useCallback((fryerId: string) => {
+    setOilTrackers(prev => prev.filter(t => t.fryerId !== fryerId));
+  }, []);
+
+  const updateOilTrackerStatus = (tracker: OilTracker): OilTracker => {
+    const percentage = (tracker.currentCycles / tracker.cycleLimit) * 100;
+    let status: 'good' | 'warning' | 'critical' = 'good';
+    if (percentage >= 100) {
+      status = 'critical';
+    } else if (percentage >= 80) {
+      status = 'warning';
+    }
+    return { ...tracker, status };
+  };
+
+  const submitOilRequest = useCallback((
+    fryerId: string,
+    actionType: OilActionType,
+    photoUrl: string,
+    requestedBy: string,
+    requestedByName: string,
+    topupPercentage?: number,
+    notes?: string
+  ): { success: boolean; error?: string } => {
+    const tracker = oilTrackers.find(t => t.fryerId === fryerId);
+    if (!tracker) {
+      return { success: false, error: 'Fryer not found' };
+    }
+
+    if (tracker.hasPendingRequest) {
+      return { success: false, error: 'Fryer already has a pending request' };
+    }
+
+    const previousCycles = tracker.currentCycles;
+    let proposedCycles = 0;
+    
+    if (actionType === 'topup' && topupPercentage) {
+      // Reduce cycles by the percentage
+      proposedCycles = Math.round(previousCycles * (1 - topupPercentage / 100));
+    }
+
+    const newRequest: OilChangeRequest = {
+      id: `oil_req_${Date.now()}`,
+      fryerId,
+      fryerName: tracker.name,
+      actionType,
+      requestedAt: new Date().toISOString(),
+      requestedBy: requestedByName,
+      previousCycles,
+      proposedCycles,
+      topupPercentage,
+      photoUrl,
+      notes,
+      status: 'pending',
+    };
+
+    setOilChangeRequests(prev => [...prev, newRequest]);
+    setOilTrackers(prev => prev.map(t => 
+      t.fryerId === fryerId ? { ...t, hasPendingRequest: true } : t
+    ));
+
+    return { success: true };
+  }, [oilTrackers]);
+
+  const approveOilRequest = useCallback((
+    requestId: string,
+    approvedBy: string,
+    approvedByName: string
+  ): { success: boolean; error?: string } => {
+    const request = oilChangeRequests.find(r => r.id === requestId);
+    if (!request) {
+      return { success: false, error: 'Request not found' };
+    }
+
+    if (request.status !== 'pending') {
+      return { success: false, error: 'Request is not pending' };
+    }
+
+    const now = new Date().toISOString();
+    const today = now.split('T')[0];
+
+    // Update request status
+    setOilChangeRequests(prev => prev.map(r => 
+      r.id === requestId
+        ? { ...r, status: 'approved' as const, reviewedAt: now, reviewedBy: approvedByName }
+        : r
+    ));
+
+    // Update oil tracker
+    setOilTrackers(prev => prev.map(t => {
+      if (t.fryerId !== request.fryerId) return t;
+      
+      const updated = {
+        ...t,
+        currentCycles: request.proposedCycles,
+        hasPendingRequest: false,
+        ...(request.actionType === 'change' 
+          ? { lastChangedDate: today }
+          : { lastTopupDate: today }
+        ),
+      };
+      return updateOilTrackerStatus(updated);
+    }));
+
+    // Add to history
+    const historyEntry: OilActionHistory = {
+      id: `oil_hist_${Date.now()}`,
+      fryerId: request.fryerId,
+      fryerName: request.fryerName,
+      actionType: request.actionType,
+      actionAt: now,
+      previousCycles: request.previousCycles,
+      newCycles: request.proposedCycles,
+      topupPercentage: request.topupPercentage,
+      requestedBy: request.requestedBy,
+      approvedBy: approvedByName,
+      photoUrl: request.photoUrl,
+    };
+    setOilActionHistory(prev => [historyEntry, ...prev]);
+
+    return { success: true };
+  }, [oilChangeRequests]);
+
+  const rejectOilRequest = useCallback((
+    requestId: string,
+    rejectedBy: string,
+    rejectedByName: string,
+    reason: string
+  ): void => {
+    const request = oilChangeRequests.find(r => r.id === requestId);
+    if (!request) return;
+
+    setOilChangeRequests(prev => prev.map(r => 
+      r.id === requestId
+        ? { 
+            ...r, 
+            status: 'rejected' as const, 
+            reviewedAt: new Date().toISOString(), 
+            reviewedBy: rejectedByName,
+            rejectionReason: reason 
+          }
+        : r
+    ));
+
+    // Remove pending flag from tracker
+    setOilTrackers(prev => prev.map(t => 
+      t.fryerId === request.fryerId ? { ...t, hasPendingRequest: false } : t
+    ));
+  }, [oilChangeRequests]);
+
+  const getPendingOilRequests = useCallback((): OilChangeRequest[] => {
+    return oilChangeRequests.filter(r => r.status === 'pending')
+      .sort((a, b) => new Date(b.requestedAt).getTime() - new Date(a.requestedAt).getTime());
+  }, [oilChangeRequests]);
+
+  const getOilRequestsByStaff = useCallback((staffName: string): OilChangeRequest[] => {
+    return oilChangeRequests.filter(r => r.requestedBy === staffName)
+      .sort((a, b) => new Date(b.requestedAt).getTime() - new Date(a.requestedAt).getTime());
+  }, [oilChangeRequests]);
+
+  const getPendingOilRequestCount = useCallback((): number => {
+    return oilChangeRequests.filter(r => r.status === 'pending').length;
+  }, [oilChangeRequests]);
+
   const value: StoreState = {
     // Inventory
     inventory,
@@ -2073,6 +2298,20 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     getPendingVoidRefundRequests,
     getVoidRefundRequestsByStaff,
     getPendingVoidRefundCount,
+    
+    // Oil Tracker / Equipment
+    oilTrackers,
+    oilChangeRequests,
+    oilActionHistory,
+    addOilTracker,
+    updateOilTracker,
+    deleteOilTracker,
+    submitOilRequest,
+    approveOilRequest,
+    rejectOilRequest,
+    getPendingOilRequests,
+    getOilRequestsByStaff,
+    getPendingOilRequestCount,
     
     // Utility
     isInitialized,
@@ -2364,3 +2603,27 @@ export function useOrderHistory() {
   };
 }
 
+export function useEquipment() {
+  const store = useStore();
+  return {
+    // Oil Trackers
+    oilTrackers: store.oilTrackers,
+    oilChangeRequests: store.oilChangeRequests,
+    oilActionHistory: store.oilActionHistory,
+    addOilTracker: store.addOilTracker,
+    updateOilTracker: store.updateOilTracker,
+    deleteOilTracker: store.deleteOilTracker,
+    submitOilRequest: store.submitOilRequest,
+    approveOilRequest: store.approveOilRequest,
+    rejectOilRequest: store.rejectOilRequest,
+    getPendingOilRequests: store.getPendingOilRequests,
+    getOilRequestsByStaff: store.getOilRequestsByStaff,
+    getPendingOilRequestCount: store.getPendingOilRequestCount,
+    
+    // Related data
+    staff: store.staff,
+    
+    // Utility
+    isInitialized: store.isInitialized,
+  };
+}

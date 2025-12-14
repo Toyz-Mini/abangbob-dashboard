@@ -4,8 +4,8 @@
 ---
 
 ## 1️⃣ Document Metadata
-- **Project Name:** abangbob-dashboard
-- **Date:** 2025-12-13
+- **Project Name:** abangbob dashboard
+- **Date:** 2025-12-14
 - **Prepared by:** TestSprite AI Team
 
 ---
@@ -13,32 +13,91 @@
 ## 2️⃣ Requirement Validation Summary
 
 #### Test TC001
-- **Test Name:** Dashboard Real-time Data Accuracy
-- **Test Code:** [TC001_Dashboard_Real_time_Data_Accuracy.py](./TC001_Dashboard_Real_time_Data_Accuracy.py)
-- **Test Error:** 
+- **Test Name:** Dashboard Real-Time Data Accuracy
+- **Test Code:** [TC001_Dashboard_Real_Time_Data_Accuracy.py](./TC001_Dashboard_Real_Time_Data_Accuracy.py)
+- **Test Error:** The dashboard page cannot be accessed due to a persistent error message and missing required components. Therefore, the task to verify the dashboard data cannot be completed.
 Browser Console Logs:
-[WARNING] The resource http://localhost:3000/_next/static/css/app/layout.css?v=1765631320604 was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally. (at http://localhost:3000/:0:0)
-- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/91367df2-b195-44d7-bd61-cfbdcb33b8df/634ff1f0-1d6a-4384-94d1-dfc14407295a
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/8780f9c2-7b94-4c49-80a3-f7cd806e7784/e6f1d4f9-7dff-404b-8dd0-6e79891748fb
 - **Status:** ❌ Failed
 - **Analysis / Findings:** {{TODO:AI_ANALYSIS}}.
 ---
 
 #### Test TC002
-- **Test Name:** POS System Order Processing Complete Flow
-- **Test Code:** [TC002_POS_System_Order_Processing_Complete_Flow.py](./TC002_POS_System_Order_Processing_Complete_Flow.py)
-- **Test Error:** Testing stopped due to critical issue: Receipt printing functionality is inaccessible. Clicking 'Cetak Resit' redirects to Delivery Hub screen instead of showing receipt print option. All other POS functionalities tested successfully except this. Please fix this issue to complete testing.
-- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/91367df2-b195-44d7-bd61-cfbdcb33b8df/e963a0b1-6b0e-4205-84d6-4cd613741095
+- **Test Name:** POS Order Processing with Valid Inputs
+- **Test Code:** [TC002_POS_Order_Processing_with_Valid_Inputs.py](./TC002_POS_Order_Processing_with_Valid_Inputs.py)
+- **Test Error:** The POS page at http://localhost:3000/ consistently shows the error message 'missing required error components, refreshing...' and does not load any interactive elements. This prevents logging in as POS Operator and performing any order processing tests. The issue has been reported. Task cannot proceed further and is now completed.
+Browser Console Logs:
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/8780f9c2-7b94-4c49-80a3-f7cd806e7784/3fec6e84-bfcb-4839-96f9-5d09a82e602c
 - **Status:** ❌ Failed
 - **Analysis / Findings:** {{TODO:AI_ANALYSIS}}.
 ---
 
 #### Test TC003
-- **Test Name:** POS System Phone Number Validation
-- **Test Code:** [TC003_POS_System_Phone_Number_Validation.py](./TC003_POS_System_Phone_Number_Validation.py)
-- **Test Error:** 
+- **Test Name:** POS Order Processing with Invalid Inputs
+- **Test Code:** [TC003_POS_Order_Processing_with_Invalid_Inputs.py](./TC003_POS_Order_Processing_with_Invalid_Inputs.py)
+- **Test Error:** The POS system page at http://localhost:3000/ is not loading required components and shows a persistent error message 'missing required error components, refreshing...'. This prevents any interaction or testing of order validation including modifier selection, discount limits, and phone number format. The issue has been reported and testing cannot proceed until it is fixed.
 Browser Console Logs:
-[WARNING] The resource http://localhost:3000/_next/static/css/app/layout.css?v=1765631320603 was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally. (at http://localhost:3000/:0:0)
-- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/91367df2-b195-44d7-bd61-cfbdcb33b8df/fafca53f-06db-4a07-9c09-8c63f4737e4f
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/8780f9c2-7b94-4c49-80a3-f7cd806e7784/8b53b8c3-edf2-48d5-a4dc-31494f071bc2
 - **Status:** ❌ Failed
 - **Analysis / Findings:** {{TODO:AI_ANALYSIS}}.
 ---
@@ -46,139 +105,491 @@ Browser Console Logs:
 #### Test TC004
 - **Test Name:** Menu Management CRUD Operations
 - **Test Code:** [TC004_Menu_Management_CRUD_Operations.py](./TC004_Menu_Management_CRUD_Operations.py)
-- **Test Error:** 
+- **Test Error:** The application page shows a persistent error message 'missing required error components, refreshing...' with no interactive elements available to proceed. This blocks all further actions including login and navigation to Menu Management. Unable to validate CRUD operations for menu items, categories, and modifier groups due to this error. Task stopped.
 Browser Console Logs:
-[WARNING] The resource http://localhost:3000/_next/static/css/app/layout.css?v=1765631320616 was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally. (at http://localhost:3000/:0:0)
-- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/91367df2-b195-44d7-bd61-cfbdcb33b8df/c5c31597-5a20-418e-968b-86ee8f38d4aa
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/8780f9c2-7b94-4c49-80a3-f7cd806e7784/29de6b18-0818-44c0-885d-7715de7e7305
 - **Status:** ❌ Failed
 - **Analysis / Findings:** {{TODO:AI_ANALYSIS}}.
 ---
 
 #### Test TC005
-- **Test Name:** Kitchen Display System Order Status and Timer
-- **Test Code:** [TC005_Kitchen_Display_System_Order_Status_and_Timer.py](./TC005_Kitchen_Display_System_Order_Status_and_Timer.py)
-- **Test Error:** 
+- **Test Name:** Kitchen Display System Order Status Flow
+- **Test Code:** [TC005_Kitchen_Display_System_Order_Status_Flow.py](./TC005_Kitchen_Display_System_Order_Status_Flow.py)
+- **Test Error:** The task to verify order flow through statuses with timers and audio notifications could not be completed because the application page at http://localhost:3000/ shows a persistent error message 'missing required error components, refreshing...' and does not load the necessary interface for testing. The issue has been reported. Please resolve the application error and retry the test.
 Browser Console Logs:
-[ERROR] Failed to load resource: the server responded with a status of 503 () (at http://localhost:3000/_next/static/chunks/main-app.js?v=1765631297845:0:0)
-- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/91367df2-b195-44d7-bd61-cfbdcb33b8df/46fa10c5-cc56-45a9-892f-50e3f69c6108
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/8780f9c2-7b94-4c49-80a3-f7cd806e7784/84e8eb1e-389c-41fa-bf9e-9e3f01fc7018
 - **Status:** ❌ Failed
 - **Analysis / Findings:** {{TODO:AI_ANALYSIS}}.
 ---
 
 #### Test TC006
-- **Test Name:** Inventory Management Stock Adjustment and Alerts
-- **Test Code:** [TC006_Inventory_Management_Stock_Adjustment_and_Alerts.py](./TC006_Inventory_Management_Stock_Adjustment_and_Alerts.py)
-- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/91367df2-b195-44d7-bd61-cfbdcb33b8df/1299e66f-b174-4d08-9148-55d05ffae488
-- **Status:** ✅ Passed
+- **Test Name:** Inventory Stock Adjustments and Alerts
+- **Test Code:** [TC006_Inventory_Stock_Adjustments_and_Alerts.py](./TC006_Inventory_Stock_Adjustments_and_Alerts.py)
+- **Test Error:** The test for stock adjustments with logging of reasons, minimum stock alerts, and supplier association could not be completed due to a persistent application error message 'missing required error components, refreshing...'. This error prevented any interaction or further testing steps. The issue has been reported. Please resolve the application error and retry the test.
+Browser Console Logs:
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/8780f9c2-7b94-4c49-80a3-f7cd806e7784/cc148cbb-4fce-48cf-b346-c85a9816eaa3
+- **Status:** ❌ Failed
 - **Analysis / Findings:** {{TODO:AI_ANALYSIS}}.
 ---
 
 #### Test TC007
-- **Test Name:** HR Module Staff Attendance with Photo Proof and PIN
-- **Test Code:** [TC007_HR_Module_Staff_Attendance_with_Photo_Proof_and_PIN.py](./TC007_HR_Module_Staff_Attendance_with_Photo_Proof_and_PIN.py)
-- **Test Error:** The staff clock-in and clock-out functionality was tested with valid PIN entry, but no photo proof upload option or confirmation messages were found. The system does not validate PIN with photo proof upload as required. Reporting this issue and stopping the task.
-- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/91367df2-b195-44d7-bd61-cfbdcb33b8df/03e391d4-f2de-4700-80a5-f16606ff742d
+- **Test Name:** HR Attendance Clock-In/Out with PIN and Photo Verification
+- **Test Code:** [TC007_HR_Attendance_Clock_InOut_with_PIN_and_Photo_Verification.py](./TC007_HR_Attendance_Clock_InOut_with_PIN_and_Photo_Verification.py)
+- **Test Error:** The task to ensure staff can clock in and out with valid PIN and photo verification could not be completed due to a persistent website error message 'missing required error components, refreshing...'. This error prevented logging in, navigating to the HR timeclock page, entering PIN, capturing photo, and submitting clock-in/out requests. The issue has been reported. Task stopped.
+Browser Console Logs:
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/8780f9c2-7b94-4c49-80a3-f7cd806e7784/8f2f0fc5-40db-46da-ba89-d1313188f3fb
 - **Status:** ❌ Failed
 - **Analysis / Findings:** {{TODO:AI_ANALYSIS}}.
 ---
 
 #### Test TC008
-- **Test Name:** HR Module Payroll with TAP/SCP Deductions
-- **Test Code:** [TC008_HR_Module_Payroll_with_TAPSCP_Deductions.py](./TC008_HR_Module_Payroll_with_TAPSCP_Deductions.py)
-- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/91367df2-b195-44d7-bd61-cfbdcb33b8df/ecb98ec3-da22-475f-ab58-b77d9c1c31fe
-- **Status:** ✅ Passed
+- **Test Name:** HR KPI Scoring and Leaderboard Accuracy
+- **Test Code:** [TC008_HR_KPI_Scoring_and_Leaderboard_Accuracy.py](./TC008_HR_KPI_Scoring_and_Leaderboard_Accuracy.py)
+- **Test Error:** The application at http://localhost:3000/ shows a persistent error message 'missing required error components, refreshing...' which blocks all interactions. Due to this, I could not perform the login, navigate to the KPI scoring page, input or update KPI metrics, or verify the leaderboard rankings. The issue has been reported. Task cannot be completed further.
+Browser Console Logs:
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/8780f9c2-7b94-4c49-80a3-f7cd806e7784/df9dd539-8b7a-44cb-8af7-f21daebc67c3
+- **Status:** ❌ Failed
 - **Analysis / Findings:** {{TODO:AI_ANALYSIS}}.
 ---
 
 #### Test TC009
-- **Test Name:** Staff Portal Leave Application and Approval Workflow
-- **Test Code:** [TC009_Staff_Portal_Leave_Application_and_Approval_Workflow.py](./TC009_Staff_Portal_Leave_Application_and_Approval_Workflow.py)
-- **Test Error:** Testing stopped due to missing leave application page. The 'Kalendar Cuti' menu link leads to a 404 error page, preventing further test steps for leave application submission and approval. Please fix the missing page issue to continue testing.
+- **Test Name:** Payroll Generation with Brunei Statutory Deductions
+- **Test Code:** [TC009_Payroll_Generation_with_Brunei_Statutory_Deductions.py](./TC009_Payroll_Generation_with_Brunei_Statutory_Deductions.py)
+- **Test Error:** Unable to proceed with payroll verification task due to persistent page error preventing access to the system. Please resolve the website issue and retry.
 Browser Console Logs:
-[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/hr/leave-calendar?_rsc=n0m8b:0:0)
-[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/hr/leave-calendar:0:0)
-- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/91367df2-b195-44d7-bd61-cfbdcb33b8df/380d7ee7-5785-44c7-a8d7-551c0704c644
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/8780f9c2-7b94-4c49-80a3-f7cd806e7784/74fa43ec-1800-4f54-a88f-5acb0846bee2
 - **Status:** ❌ Failed
 - **Analysis / Findings:** {{TODO:AI_ANALYSIS}}.
 ---
 
 #### Test TC010
-- **Test Name:** Delivery Hub Multi-Platform Order Synchronization
-- **Test Code:** [TC010_Delivery_Hub_Multi_Platform_Order_Synchronization.py](./TC010_Delivery_Hub_Multi_Platform_Order_Synchronization.py)
-- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/91367df2-b195-44d7-bd61-cfbdcb33b8df/cdd9dc61-4650-485c-beb4-680f27c8a50f
+- **Test Name:** Employee Self-Service Portal Functionalities
+- **Test Code:** [TC010_Employee_Self_Service_Portal_Functionalities.py](./TC010_Employee_Self_Service_Portal_Functionalities.py)
+- **Test Error:** Unable to proceed with the staff portal testing due to persistent error message and lack of interactive elements on the initial page. The issue prevents login and all subsequent steps. Please resolve the portal error to continue testing.
+Browser Console Logs:
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/8780f9c2-7b94-4c49-80a3-f7cd806e7784/12f2d6f3-1861-4fd5-baf1-48c9c95aba12
 - **Status:** ❌ Failed
 - **Analysis / Findings:** {{TODO:AI_ANALYSIS}}.
 ---
 
 #### Test TC011
-- **Test Name:** Finance Module Expense Tracking and Reporting
-- **Test Code:** [TC011_Finance_Module_Expense_Tracking_and_Reporting.py](./TC011_Finance_Module_Expense_Tracking_and_Reporting.py)
-- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/91367df2-b195-44d7-bd61-cfbdcb33b8df/2ae1f154-bdb2-4f5f-bf09-ba9eaa48050f
+- **Test Name:** Delivery Hub Order Aggregation and Kanban Operations
+- **Test Code:** [TC011_Delivery_Hub_Order_Aggregation_and_Kanban_Operations.py](./TC011_Delivery_Hub_Order_Aggregation_and_Kanban_Operations.py)
+- **Test Error:** The testing task to verify delivery orders from Grab, FoodPanda, and Shopee on the kanban board could not be completed due to a persistent error on the Delivery Hub page ('missing required error components, refreshing...'). This error prevented login, order verification, status updates, audio notifications, and delivery slip printing. The issue was reported. Please fix the page error and retry the testing process.
+Browser Console Logs:
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/8780f9c2-7b94-4c49-80a3-f7cd806e7784/0439d8ff-f82a-4b5c-833d-3449857b6dd9
 - **Status:** ❌ Failed
 - **Analysis / Findings:** {{TODO:AI_ANALYSIS}}.
 ---
 
 #### Test TC012
-- **Test Name:** Promotions Module Discount Application and Restrictions
-- **Test Code:** [TC012_Promotions_Module_Discount_Application_and_Restrictions.py](./TC012_Promotions_Module_Discount_Application_and_Restrictions.py)
-- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/91367df2-b195-44d7-bd61-cfbdcb33b8df/28dd26c2-1502-4453-ab27-80d6e6539823
-- **Status:** ✅ Passed
+- **Test Name:** Finance Module Expense Tracking and Reports
+- **Test Code:** [TC012_Finance_Module_Expense_Tracking_and_Reports.py](./TC012_Finance_Module_Expense_Tracking_and_Reports.py)
+- **Test Error:** The testing task for expense entry, daily cash flow management, and profit & loss report generation could not be completed due to a persistent website error message 'missing required error components, refreshing...'. This error prevented any interaction with the site, including login, navigation, and data entry. The issue was reported and no further testing was possible. Please resolve the website error and retry the testing process.
+Browser Console Logs:
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/8780f9c2-7b94-4c49-80a3-f7cd806e7784/0377cb29-5d04-4ed3-82c8-a9e7ebfe8b8e
+- **Status:** ❌ Failed
 - **Analysis / Findings:** {{TODO:AI_ANALYSIS}}.
 ---
 
 #### Test TC013
-- **Test Name:** Internationalization UI Language Switching
-- **Test Code:** [TC013_Internationalization_UI_Language_Switching.py](./TC013_Internationalization_UI_Language_Switching.py)
-- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/91367df2-b195-44d7-bd61-cfbdcb33b8df/6512c342-1076-4c39-975b-14cda07cd97d
-- **Status:** ✅ Passed
+- **Test Name:** Customer CRM Loyalty Points and Segmentation
+- **Test Code:** [TC013_Customer_CRM_Loyalty_Points_and_Segmentation.py](./TC013_Customer_CRM_Loyalty_Points_and_Segmentation.py)
+- **Test Error:** The application at http://localhost:3000/ is not loading correctly and shows the message 'missing required error components, refreshing...'. This prevents logging in, navigating to the Customer CRM page, adding orders, verifying loyalty points, customer segmentation, order history, and birthday tracking. The task cannot be completed due to this issue.
+Browser Console Logs:
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/8780f9c2-7b94-4c49-80a3-f7cd806e7784/e689ffd1-7d42-4d4f-ac57-cf35ab029594
+- **Status:** ❌ Failed
 - **Analysis / Findings:** {{TODO:AI_ANALYSIS}}.
 ---
 
 #### Test TC014
-- **Test Name:** Progressive Web App Offline Functionality and Service Worker
-- **Test Code:** [TC014_Progressive_Web_App_Offline_Functionality_and_Service_Worker.py](./TC014_Progressive_Web_App_Offline_Functionality_and_Service_Worker.py)
-- **Test Error:** The app was accessed online and multiple key pages (Dashboard, POS, Inventori) were visited to allow the service worker to cache content. However, the network connection was not disabled to simulate offline mode, so it was not possible to verify that content loads correctly from cache without errors. Additionally, the update prompt after re-enabling network connection was not tested. Therefore, the task to ensure the app works offline with cached data, service worker registration, and update prompts correctly is not fully completed.
-- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/91367df2-b195-44d7-bd61-cfbdcb33b8df/2093e06b-f8b1-40e1-80a5-402b589a7e30
+- **Test Name:** Promotion Codes with Restrictions and Discount Applications
+- **Test Code:** [TC014_Promotion_Codes_with_Restrictions_and_Discount_Applications.py](./TC014_Promotion_Codes_with_Restrictions_and_Discount_Applications.py)
+- **Test Error:** The task to ensure promotion codes enforce time validity, usage limits, applicable item restrictions, and apply discounts properly could not be completed due to a persistent website error message 'missing required error components, refreshing...'. This error blocked access to login and marketing dashboard features necessary for testing. The issue was reported. Further testing requires the site to be fixed and accessible.
+Browser Console Logs:
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/8780f9c2-7b94-4c49-80a3-f7cd806e7784/2b6a240e-2f54-40fd-911a-bde68a401d3c
 - **Status:** ❌ Failed
 - **Analysis / Findings:** {{TODO:AI_ANALYSIS}}.
 ---
 
 #### Test TC015
-- **Test Name:** System Security: PIN and Role-Based Access Enforcement
-- **Test Code:** [TC015_System_Security_PIN_and_Role_Based_Access_Enforcement.py](./TC015_System_Security_PIN_and_Role_Based_Access_Enforcement.py)
-- **Test Error:** Testing stopped due to logout functionality failure. Unable to log out Admin user to test access restrictions and PIN authentication for other roles. Please fix logout issue to proceed.
-- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/91367df2-b195-44d7-bd61-cfbdcb33b8df/8cc62e4f-2a57-49e0-a23d-bb993ca9eb7c
+- **Test Name:** PWA Offline Support and Service Worker Functionality
+- **Test Code:** [TC015_PWA_Offline_Support_and_Service_Worker_Functionality.py](./TC015_PWA_Offline_Support_and_Service_Worker_Functionality.py)
+- **Test Error:** The app at http://localhost:3000 could not be tested for PWA capabilities due to an error page showing 'missing required error components, refreshing...'. No service worker registration was detected, and the app did not load properly to proceed with offline caching or install prompt testing. The issue has been reported.
+Browser Console Logs:
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/8780f9c2-7b94-4c49-80a3-f7cd806e7784/dcbbd4f7-ec5c-437c-8d80-979dae95a82a
 - **Status:** ❌ Failed
 - **Analysis / Findings:** {{TODO:AI_ANALYSIS}}.
 ---
 
 #### Test TC016
-- **Test Name:** Audit Log Records User Actions
-- **Test Code:** [TC016_Audit_Log_Records_User_Actions.py](./TC016_Audit_Log_Records_User_Actions.py)
-- **Test Error:** Audit log testing cannot proceed due to multiple 404 errors on critical user action pages. Reported the issue and stopped further testing.
+- **Test Name:** Authentication and Role-Based Access Control
+- **Test Code:** [TC016_Authentication_and_Role_Based_Access_Control.py](./TC016_Authentication_and_Role_Based_Access_Control.py)
+- **Test Error:** The application at http://localhost:3000 is showing a persistent error message 'missing required error components, refreshing...' which prevents any interaction with the login page. Therefore, the PIN-based authentication and role-based UI access tests could not be performed. The issue has been reported. Task is now complete.
 Browser Console Logs:
-[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/staff-portal/profile?_rsc=yoi5o:0:0)
-[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/staff-portal/profile:0:0)
-[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/hr/approvals?_rsc=77yha:0:0)
-[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/hr/approvals:0:0)
-- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/91367df2-b195-44d7-bd61-cfbdcb33b8df/6f76beb4-7bed-47ce-87b1-ccb2035a4dd6
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/8780f9c2-7b94-4c49-80a3-f7cd806e7784/beaea969-0c05-4de2-b857-224a6d5614b7
 - **Status:** ❌ Failed
 - **Analysis / Findings:** {{TODO:AI_ANALYSIS}}.
 ---
 
 #### Test TC017
-- **Test Name:** Staff Portal Photo Proof Upload in Checklists
-- **Test Code:** [TC017_Staff_Portal_Photo_Proof_Upload_in_Checklists.py](./TC017_Staff_Portal_Photo_Proof_Upload_in_Checklists.py)
-- **Test Error:** Stopped testing due to inability to start the opening checklist. The 'Mula Checklist' button does not function as expected, blocking further test steps including photo upload and history verification.
-- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/91367df2-b195-44d7-bd61-cfbdcb33b8df/1a6c7b96-b088-4376-993f-9ad3b8b8bbfd
+- **Test Name:** WhatsApp Messaging Integration for Notifications
+- **Test Code:** [TC017_WhatsApp_Messaging_Integration_for_Notifications.py](./TC017_WhatsApp_Messaging_Integration_for_Notifications.py)
+- **Test Error:** Test cannot proceed due to missing required error components on the main page, blocking all interactions needed to trigger and validate WhatsApp messages for order receipts, order ready alerts, low stock warnings, and daily summaries.
+Browser Console Logs:
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/8780f9c2-7b94-4c49-80a3-f7cd806e7784/05694aad-e8dd-4869-8a15-598ce18c6ed0
 - **Status:** ❌ Failed
 - **Analysis / Findings:** {{TODO:AI_ANALYSIS}}.
 ---
 
 #### Test TC018
-- **Test Name:** Shift Swap Requests and Approval
-- **Test Code:** [TC018_Shift_Swap_Requests_and_Approval.py](./TC018_Shift_Swap_Requests_and_Approval.py)
-- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/91367df2-b195-44d7-bd61-cfbdcb33b8df/f00a95ed-7f51-4029-b520-83c966fdee36
+- **Test Name:** Export Services Generate Accurate Reports
+- **Test Code:** [TC018_Export_Services_Generate_Accurate_Reports.py](./TC018_Export_Services_Generate_Accurate_Reports.py)
+- **Test Error:** Cannot proceed with export validation task because the main page is not loading required components and shows an error message preventing any interaction or export functionality access.
+Browser Console Logs:
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/8780f9c2-7b94-4c49-80a3-f7cd806e7784/97f17ae2-c50b-4868-8132-35cf64e28c3c
+- **Status:** ❌ Failed
+- **Analysis / Findings:** {{TODO:AI_ANALYSIS}}.
+---
+
+#### Test TC019
+- **Test Name:** Internationalization Toggle Functionality
+- **Test Code:** [TC019_Internationalization_Toggle_Functionality.py](./TC019_Internationalization_Toggle_Functionality.py)
+- **Test Error:** The task to check language toggle between English and Bahasa Melayu could not be completed because the application page at http://localhost:3000/ failed to load properly. The page shows a persistent error message 'missing required error components, refreshing...' and no interactive elements are available to perform the required UI language consistency checks. The issue has been reported. Task stopped.
+Browser Console Logs:
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/8780f9c2-7b94-4c49-80a3-f7cd806e7784/29d7b130-8933-44b8-ae43-aafc1c8f32a4
+- **Status:** ❌ Failed
+- **Analysis / Findings:** {{TODO:AI_ANALYSIS}}.
+---
+
+#### Test TC020
+- **Test Name:** Theme Management Dark/Light Mode Toggling and Persistence
+- **Test Code:** [TC020_Theme_Management_DarkLight_Mode_Toggling_and_Persistence.py](./TC020_Theme_Management_DarkLight_Mode_Toggling_and_Persistence.py)
+- **Test Error:** The testing task for toggling between dark and light themes could not be completed due to a persistent error message on the main page stating 'missing required error components, refreshing...'. This prevented access to login and theme toggle functionality. The issue has been reported. Task ended with failure to complete the test steps.
+Browser Console Logs:
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+[ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) (at http://localhost:3000/:0:0)
+- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/8780f9c2-7b94-4c49-80a3-f7cd806e7784/74683e03-db6f-4c61-b26a-78d7bc990400
 - **Status:** ❌ Failed
 - **Analysis / Findings:** {{TODO:AI_ANALYSIS}}.
 ---
@@ -186,7 +597,7 @@ Browser Console Logs:
 
 ## 3️⃣ Coverage & Matching Metrics
 
-- **22.22** of tests passed
+- **0.00** of tests passed
 
 | Requirement        | Total Tests | ✅ Passed | ❌ Failed  |
 |--------------------|-------------|-----------|------------|

@@ -484,3 +484,4 @@ export function calculateCustomerRatingScore(avgRating: number): number {
   return Math.round((avgRating / 5) * 100);
 }
 
+

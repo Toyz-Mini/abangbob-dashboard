@@ -31,6 +31,7 @@ import {
   ClipboardCheck,
   HelpCircle,
   History,
+  Wrench,
   type LucideIcon
 } from 'lucide-react';
 
@@ -77,6 +78,7 @@ const navGroupsConfig: NavGroup[] = [
     items: [
       { href: '/inventory', labelKey: 'nav.inventory', icon: Package, tourId: 'inventory' },
       { href: '/production', labelKey: 'nav.production', icon: Factory, tourId: 'production' },
+      { href: '/equipment', labelKey: 'nav.equipment', icon: Wrench, tourId: 'equipment' },
       { href: '/recipes', labelKey: 'nav.recipes', icon: ChefHat, tourId: 'recipes' },
       { href: '/suppliers', labelKey: 'nav.suppliers', icon: Boxes, tourId: 'suppliers' },
     ]

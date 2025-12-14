@@ -159,3 +159,4 @@ export function SimpleTabs({ tabs, defaultTab, variant, onChange, className }: S
   );
 }
 
+
