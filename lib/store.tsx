@@ -10,7 +10,7 @@ import { MOCK_DELIVERY_ORDERS } from './delivery-data';
 import { MOCK_EXPENSES, MOCK_CASH_FLOWS } from './finance-data';
 import { MOCK_MENU } from './menu-data';
 import { MOCK_STAFF_KPI, MOCK_LEAVE_RECORDS, MOCK_TRAINING_RECORDS, MOCK_OT_RECORDS, MOCK_CUSTOMER_REVIEWS, calculateOverallScore, calculateBonus, DEFAULT_KPI_CONFIG } from './kpi-data';
-import { MOCK_CHECKLIST_TEMPLATES, MOCK_CHECKLIST_COMPLETIONS, MOCK_LEAVE_BALANCES, MOCK_LEAVE_REQUESTS, MOCK_CLAIM_REQUESTS, MOCK_STAFF_REQUESTS, MOCK_ANNOUNCEMENTS, MOCK_SHIFTS, MOCK_SCHEDULES } from './staff-portal-data';
+import { MOCK_CHECKLIST_TEMPLATES, MOCK_CHECKLIST_COMPLETIONS, MOCK_LEAVE_BALANCES, MOCK_LEAVE_REQUESTS, MOCK_CLAIM_REQUESTS, MOCK_STAFF_REQUESTS, MOCK_ANNOUNCEMENTS, MOCK_SHIFTS, MOCK_SCHEDULES, generateMockSchedules } from './staff-portal-data';
 import * as SupabaseSync from './supabase-sync';
 
 // Storage keys
@@ -406,7 +406,26 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       setPurchaseOrders(getFromStorage(STORAGE_KEYS.PURCHASE_ORDERS, []));
       setRecipes(getFromStorage(STORAGE_KEYS.RECIPES, []));
       setShifts(getFromStorage(STORAGE_KEYS.SHIFTS, MOCK_SHIFTS));
-      setSchedules(getFromStorage(STORAGE_KEYS.SCHEDULES, MOCK_SCHEDULES));
+      
+      // Load schedules and check if they need refreshing
+      const loadedSchedules = getFromStorage(STORAGE_KEYS.SCHEDULES, MOCK_SCHEDULES);
+      const today = new Date().toISOString().split('T')[0];
+      const hasToday = loadedSchedules.some((s: ScheduleEntry) => s.date === today);
+      
+      // If schedules don't include today, they're stale - regenerate
+      if (!hasToday && loadedSchedules.length > 0) {
+        console.log('[Schedule Refresh] Stale schedules detected, regenerating...');
+        const freshSchedules = generateMockSchedules();
+        setSchedules(freshSchedules);
+        // Save immediately to localStorage
+        setToStorage(STORAGE_KEYS.SCHEDULES, freshSchedules);
+      } else {
+        setSchedules(loadedSchedules);
+        if (hasToday) {
+          console.log('[Schedule Refresh] Schedules are up to date, includes today');
+        }
+      }
+      
       setPromotions(getFromStorage(STORAGE_KEYS.PROMOTIONS, []));
       setNotifications(getFromStorage(STORAGE_KEYS.NOTIFICATIONS, []));
       setModifierGroups(getFromStorage(STORAGE_KEYS.MODIFIER_GROUPS, []));
@@ -417,6 +436,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       setOTRecords(getFromStorage(STORAGE_KEYS.OT_RECORDS, MOCK_OT_RECORDS));
       setCustomerReviews(getFromStorage(STORAGE_KEYS.CUSTOMER_REVIEWS, MOCK_CUSTOMER_REVIEWS));
       setChecklistTemplates(getFromStorage(STORAGE_KEYS.CHECKLIST_TEMPLATES, MOCK_CHECKLIST_TEMPLATES));
+      
+      // Debug: Log checklist templates count
+      const templates = getFromStorage(STORAGE_KEYS.CHECKLIST_TEMPLATES, MOCK_CHECKLIST_TEMPLATES);
+      console.log(`[Data Init] Loaded ${templates.length} checklist templates`);
+      
       setChecklistCompletions(getFromStorage(STORAGE_KEYS.CHECKLIST_COMPLETIONS, MOCK_CHECKLIST_COMPLETIONS));
       setLeaveBalances(getFromStorage(STORAGE_KEYS.LEAVE_BALANCES, MOCK_LEAVE_BALANCES));
       setLeaveRequests(getFromStorage(STORAGE_KEYS.LEAVE_REQUESTS, MOCK_LEAVE_REQUESTS));

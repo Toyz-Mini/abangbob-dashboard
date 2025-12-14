@@ -271,8 +271,8 @@ const generateFutureDate = (daysFromNow: number): string => {
   return date.toISOString().split('T')[0];
 };
 
-// Generate schedules for the next 14 days for all staff
-const generateMockSchedules = (): ScheduleEntry[] => {
+// Generate schedules for today and the next 14 days for all staff (15 days total)
+export const generateMockSchedules = (): ScheduleEntry[] => {
   const schedules: ScheduleEntry[] = [];
   const staffMembers = [
     { id: '1', name: 'Ahmad Bin Hassan' },
@@ -281,8 +281,8 @@ const generateMockSchedules = (): ScheduleEntry[] => {
     { id: '4', name: 'Fatimah Binti Omar' },
   ];
   
-  // Pattern: rotate shifts among staff
-  for (let day = 1; day <= 14; day++) {
+  // Pattern: rotate shifts among staff (including today as day 0)
+  for (let day = 0; day <= 14; day++) {
     const date = generateFutureDate(day);
     
     staffMembers.forEach((staff, index) => {
