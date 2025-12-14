@@ -356,7 +356,12 @@ export default function AnalyticsPage() {
       }
       
       if (data.length > 0) {
-        exportToCSV(data, filename, { columns });
+        exportToCSV({
+          filename,
+          columns,
+          data,
+          includeTimestamp: false,
+        });
         showToast('Data berjaya dieksport ke CSV', 'success');
       } else {
         showToast('Tiada data untuk dieksport', 'warning');
