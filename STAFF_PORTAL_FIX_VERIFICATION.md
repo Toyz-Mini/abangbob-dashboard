@@ -166,3 +166,5 @@ If Staff Portal still shows empty:
 - [ ] Staff Portal shows shift info (needs manual testing)
 - [ ] My Schedule shows today highlighted (needs manual testing)
 - [ ] Checklist shows templates and works (needs manual testing)
+
+

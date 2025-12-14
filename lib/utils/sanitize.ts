@@ -198,3 +198,5 @@ export function logSecurityEvent(type: string, input: string, context?: string):
   // In production, you might want to send this to a logging service
   // For now, we just log in development
 }
+
+

@@ -199,3 +199,5 @@ export default function ProfitMarginChart({ data, showTrend = true }: ProfitMarg
 }
 
 
+
+

@@ -30,6 +30,7 @@ export interface Database {
           join_date: string | null;
           profile_photo_url: string | null;
           outlet_id: string | null;
+          extended_data: Json;
         };
         Insert: {
           id?: string;
@@ -47,6 +48,7 @@ export interface Database {
           join_date?: string | null;
           profile_photo_url?: string | null;
           outlet_id?: string | null;
+          extended_data?: Json;
         };
         Update: {
           id?: string;
@@ -64,6 +66,7 @@ export interface Database {
           join_date?: string | null;
           profile_photo_url?: string | null;
           outlet_id?: string | null;
+          extended_data?: Json;
         };
       };
       // Attendance records
@@ -270,6 +273,75 @@ export interface Database {
           outlet_id?: string | null;
         };
       };
+      // Modifier groups
+      modifier_groups: {
+        Row: {
+          id: string;
+          created_at: string;
+          updated_at: string;
+          name: string;
+          is_required: boolean;
+          allow_multiple: boolean;
+          min_selection: number;
+          max_selection: number;
+          outlet_id: string | null;
+        };
+        Insert: {
+          id: string;
+          created_at?: string;
+          updated_at?: string;
+          name: string;
+          is_required?: boolean;
+          allow_multiple?: boolean;
+          min_selection?: number;
+          max_selection?: number;
+          outlet_id?: string | null;
+        };
+        Update: {
+          id?: string;
+          created_at?: string;
+          updated_at?: string;
+          name?: string;
+          is_required?: boolean;
+          allow_multiple?: boolean;
+          min_selection?: number;
+          max_selection?: number;
+          outlet_id?: string | null;
+        };
+      };
+      // Modifier options
+      modifier_options: {
+        Row: {
+          id: string;
+          created_at: string;
+          updated_at: string;
+          group_id: string;
+          name: string;
+          extra_price: number;
+          is_available: boolean;
+          outlet_id: string | null;
+        };
+        Insert: {
+          id: string;
+          created_at?: string;
+          updated_at?: string;
+          group_id: string;
+          name: string;
+          extra_price?: number;
+          is_available?: boolean;
+          outlet_id?: string | null;
+        };
+        Update: {
+          id?: string;
+          created_at?: string;
+          updated_at?: string;
+          group_id?: string;
+          name?: string;
+          extra_price?: number;
+          is_available?: boolean;
+          outlet_id?: string | null;
+        };
+      };
       // Customers
       customers: {
         Row: {
@@ -450,9 +522,13 @@ export type Attendance = Tables<'attendance'>;
 export type Inventory = Tables<'inventory'>;
 export type Order = Tables<'orders'>;
 export type MenuItem = Tables<'menu_items'>;
+export type ModifierGroup = Tables<'modifier_groups'>;
+export type ModifierOption = Tables<'modifier_options'>;
 export type Customer = Tables<'customers'>;
 export type Expense = Tables<'expenses'>;
 export type Outlet = Tables<'outlets'>;
 export type AuditLog = Tables<'audit_logs'>;
+
+
 
 

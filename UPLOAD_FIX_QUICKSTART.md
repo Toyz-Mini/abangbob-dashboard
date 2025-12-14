@@ -175,3 +175,5 @@ Check full documentation: `UPLOAD_FIX_SUMMARY.md`
 **🎉 Upload logo sekarang sudah berfungsi dengan baik!**
 
 Sama ada dengan atau tanpa Supabase, sistem akan ensure logo anda tersimpan dengan selamat.
+
+

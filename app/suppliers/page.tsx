@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react';
 import MainLayout from '@/components/MainLayout';
 import { useSuppliers } from '@/lib/store';
-import { Supplier, PurchaseOrder, PurchaseOrderItem } from '@/lib/types';
+import { Supplier, PurchaseOrder, PurchaseOrderItem, SupplierAccountNumber } from '@/lib/types';
 import Modal from '@/components/Modal';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { 
@@ -19,7 +19,9 @@ import {
   ShoppingCart,
   AlertTriangle,
   CheckCircle,
-  Send
+  Send,
+  CreditCard,
+  X
 } from 'lucide-react';
 
 type ModalType = 'add-supplier' | 'edit-supplier' | 'delete-supplier' | 'create-po' | 'view-po' | null;
@@ -59,6 +61,7 @@ export default function SuppliersPage() {
     phone: '',
     email: '',
     address: '',
+    accountNumbers: [] as SupplierAccountNumber[],
     paymentTerms: 'cod' as 'cod' | 'net7' | 'net14' | 'net30',
     leadTimeDays: 1,
     status: 'active' as 'active' | 'inactive',
@@ -95,6 +98,7 @@ export default function SuppliersPage() {
       phone: '',
       email: '',
       address: '',
+      accountNumbers: [],
       paymentTerms: 'cod',
       leadTimeDays: 1,
       status: 'active',
@@ -111,6 +115,7 @@ export default function SuppliersPage() {
       phone: supplier.phone,
       email: supplier.email || '',
       address: supplier.address || '',
+      accountNumbers: supplier.accountNumbers || [],
       paymentTerms: supplier.paymentTerms,
       leadTimeDays: supplier.leadTimeDays,
       status: supplier.status,
@@ -161,6 +166,7 @@ export default function SuppliersPage() {
       phone: supplierForm.phone.trim(),
       email: supplierForm.email.trim() || undefined,
       address: supplierForm.address.trim() || undefined,
+      accountNumbers: supplierForm.accountNumbers.length > 0 ? supplierForm.accountNumbers : undefined,
       paymentTerms: supplierForm.paymentTerms,
       leadTimeDays: supplierForm.leadTimeDays,
       status: supplierForm.status,
@@ -182,6 +188,7 @@ export default function SuppliersPage() {
       phone: supplierForm.phone.trim(),
       email: supplierForm.email.trim() || undefined,
       address: supplierForm.address.trim() || undefined,
+      accountNumbers: supplierForm.accountNumbers.length > 0 ? supplierForm.accountNumbers : undefined,
       paymentTerms: supplierForm.paymentTerms,
       leadTimeDays: supplierForm.leadTimeDays,
       status: supplierForm.status,
@@ -411,6 +418,19 @@ export default function SuppliersPage() {
                     }}>
                       <div><strong>Contact:</strong> {supplier.contactPerson}</div>
                       <div><strong>Terms:</strong> {PAYMENT_TERMS.find(t => t.value === supplier.paymentTerms)?.label}</div>
+                      {supplier.accountNumbers && supplier.accountNumbers.length > 0 && (
+                        <div style={{ marginTop: '0.5rem', paddingTop: '0.5rem', borderTop: '1px solid var(--gray-200)' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', marginBottom: '0.25rem' }}>
+                            <CreditCard size={12} color="var(--text-secondary)" />
+                            <strong>Bank Accounts:</strong>
+                          </div>
+                          {supplier.accountNumbers.map((acc, idx) => (
+                            <div key={idx} style={{ fontSize: '0.8rem', marginLeft: '1rem', color: 'var(--text-secondary)' }}>
+                              {acc.bankName}: {acc.accountNumber}
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
 
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
@@ -697,6 +717,112 @@ export default function SuppliersPage() {
             </div>
           </div>
 
+          {/* Account Numbers Section */}
+          <div className="form-group">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+              <label className="form-label" style={{ marginBottom: 0 }}>Bank Account Numbers</label>
+              <button
+                type="button"
+                className="btn btn-sm btn-outline"
+                onClick={() => {
+                  setSupplierForm(prev => ({
+                    ...prev,
+                    accountNumbers: [...prev.accountNumbers, { bankName: '', accountNumber: '', accountName: '' }]
+                  }));
+                }}
+              >
+                <Plus size={14} />
+                Add Account
+              </button>
+            </div>
+            {supplierForm.accountNumbers.length > 0 && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                {supplierForm.accountNumbers.map((account, index) => (
+                  <div key={index} style={{ 
+                    padding: '0.75rem', 
+                    border: '1px solid var(--gray-200)', 
+                    borderRadius: 'var(--radius-sm)',
+                    position: 'relative'
+                  }}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSupplierForm(prev => ({
+                          ...prev,
+                          accountNumbers: prev.accountNumbers.filter((_, i) => i !== index)
+                        }));
+                      }}
+                      style={{
+                        position: 'absolute',
+                        top: '0.5rem',
+                        right: '0.5rem',
+                        background: 'var(--gray-100)',
+                        border: 'none',
+                        borderRadius: '50%',
+                        width: '24px',
+                        height: '24px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        cursor: 'pointer',
+                        color: 'var(--danger)'
+                      }}
+                    >
+                      <X size={14} />
+                    </button>
+                    <div className="grid grid-cols-2" style={{ gap: '0.5rem', marginBottom: '0.5rem' }}>
+                      <input
+                        type="text"
+                        className="form-input"
+                        placeholder="Bank Name (e.g., BIBD, Baiduri)"
+                        value={account.bankName}
+                        onChange={(e) => {
+                          setSupplierForm(prev => ({
+                            ...prev,
+                            accountNumbers: prev.accountNumbers.map((acc, i) => 
+                              i === index ? { ...acc, bankName: e.target.value } : acc
+                            )
+                          }));
+                        }}
+                        style={{ fontSize: '0.875rem' }}
+                      />
+                      <input
+                        type="text"
+                        className="form-input"
+                        placeholder="Account Number"
+                        value={account.accountNumber}
+                        onChange={(e) => {
+                          setSupplierForm(prev => ({
+                            ...prev,
+                            accountNumbers: prev.accountNumbers.map((acc, i) => 
+                              i === index ? { ...acc, accountNumber: e.target.value } : acc
+                            )
+                          }));
+                        }}
+                        style={{ fontSize: '0.875rem' }}
+                      />
+                    </div>
+                    <input
+                      type="text"
+                      className="form-input"
+                      placeholder="Account Name (optional)"
+                      value={account.accountName || ''}
+                      onChange={(e) => {
+                        setSupplierForm(prev => ({
+                          ...prev,
+                          accountNumbers: prev.accountNumbers.map((acc, i) => 
+                            i === index ? { ...acc, accountName: e.target.value } : acc
+                          )
+                        }));
+                      }}
+                      style={{ fontSize: '0.875rem' }}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
           <div className="form-group">
             <label className="form-label">Nota</label>
             <textarea
@@ -958,5 +1084,7 @@ export default function SuppliersPage() {
     </MainLayout>
   );
 }
+
+
 
 

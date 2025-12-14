@@ -150,6 +150,96 @@ export async function loadMenuItemsFromSupabase() {
   }
 }
 
+// ============ MODIFIER GROUPS SYNC ============
+
+export async function syncAddModifierGroup(group: any) {
+  if (!isSupabaseSyncEnabled()) return null;
+  
+  try {
+    return await ops.insertModifierGroup(group);
+  } catch (error) {
+    console.error('Failed to sync modifier group to Supabase:', error);
+    return null;
+  }
+}
+
+export async function syncUpdateModifierGroup(id: string, updates: any) {
+  if (!isSupabaseSyncEnabled()) return null;
+  
+  try {
+    return await ops.updateModifierGroup(id, updates);
+  } catch (error) {
+    console.error('Failed to update modifier group in Supabase:', error);
+    return null;
+  }
+}
+
+export async function syncDeleteModifierGroup(id: string) {
+  if (!isSupabaseSyncEnabled()) return;
+  
+  try {
+    await ops.deleteModifierGroup(id);
+  } catch (error) {
+    console.error('Failed to delete modifier group from Supabase:', error);
+  }
+}
+
+export async function loadModifierGroupsFromSupabase() {
+  if (!isSupabaseSyncEnabled()) return [];
+  
+  try {
+    return await ops.fetchModifierGroups();
+  } catch (error) {
+    console.error('Failed to load modifier groups from Supabase:', error);
+    return [];
+  }
+}
+
+// ============ MODIFIER OPTIONS SYNC ============
+
+export async function syncAddModifierOption(option: any) {
+  if (!isSupabaseSyncEnabled()) return null;
+  
+  try {
+    return await ops.insertModifierOption(option);
+  } catch (error) {
+    console.error('Failed to sync modifier option to Supabase:', error);
+    return null;
+  }
+}
+
+export async function syncUpdateModifierOption(id: string, updates: any) {
+  if (!isSupabaseSyncEnabled()) return null;
+  
+  try {
+    return await ops.updateModifierOption(id, updates);
+  } catch (error) {
+    console.error('Failed to update modifier option in Supabase:', error);
+    return null;
+  }
+}
+
+export async function syncDeleteModifierOption(id: string) {
+  if (!isSupabaseSyncEnabled()) return;
+  
+  try {
+    await ops.deleteModifierOption(id);
+  } catch (error) {
+    console.error('Failed to delete modifier option from Supabase:', error);
+  }
+}
+
+export async function loadModifierOptionsFromSupabase() {
+  if (!isSupabaseSyncEnabled()) return [];
+  
+  try {
+    return await ops.fetchModifierOptions();
+  } catch (error) {
+    console.error('Failed to load modifier options from Supabase:', error);
+    return [];
+  }
+}
+
 // ============ ORDERS SYNC ============
 
 export async function syncAddOrder(order: any) {
@@ -300,51 +390,1132 @@ export async function loadAttendanceFromSupabase(startDate?: string, endDate?: s
   }
 }
 
+// ============ SUPPLIERS SYNC ============
+
+export async function syncAddSupplier(supplier: any) {
+  if (!isSupabaseSyncEnabled()) return null;
+  
+  try {
+    return await ops.insertSupplier(supplier);
+  } catch (error) {
+    console.error('Failed to sync supplier to Supabase:', error);
+    return null;
+  }
+}
+
+export async function syncUpdateSupplier(id: string, updates: any) {
+  if (!isSupabaseSyncEnabled()) return null;
+  
+  try {
+    return await ops.updateSupplier(id, updates);
+  } catch (error) {
+    console.error('Failed to update supplier in Supabase:', error);
+    return null;
+  }
+}
+
+export async function syncDeleteSupplier(id: string) {
+  if (!isSupabaseSyncEnabled()) return;
+  
+  try {
+    await ops.deleteSupplier(id);
+  } catch (error) {
+    console.error('Failed to delete supplier from Supabase:', error);
+  }
+}
+
+export async function loadSuppliersFromSupabase() {
+  if (!isSupabaseSyncEnabled()) return [];
+  
+  try {
+    return await ops.fetchSuppliers();
+  } catch (error) {
+    console.error('Failed to load suppliers from Supabase:', error);
+    return [];
+  }
+}
+
+// ============ PURCHASE ORDERS SYNC ============
+
+export async function syncAddPurchaseOrder(po: any) {
+  if (!isSupabaseSyncEnabled()) return null;
+  
+  try {
+    return await ops.insertPurchaseOrder(po);
+  } catch (error) {
+    console.error('Failed to sync purchase order to Supabase:', error);
+    return null;
+  }
+}
+
+export async function syncUpdatePurchaseOrder(id: string, updates: any) {
+  if (!isSupabaseSyncEnabled()) return null;
+  
+  try {
+    return await ops.updatePurchaseOrder(id, updates);
+  } catch (error) {
+    console.error('Failed to update purchase order in Supabase:', error);
+    return null;
+  }
+}
+
+export async function loadPurchaseOrdersFromSupabase() {
+  if (!isSupabaseSyncEnabled()) return [];
+  
+  try {
+    return await ops.fetchPurchaseOrders();
+  } catch (error) {
+    console.error('Failed to load purchase orders from Supabase:', error);
+    return [];
+  }
+}
+
+// ============ INVENTORY LOGS SYNC ============
+
+export async function syncAddInventoryLog(log: any) {
+  if (!isSupabaseSyncEnabled()) return null;
+  
+  try {
+    return await ops.insertInventoryLog(log);
+  } catch (error) {
+    console.error('Failed to sync inventory log to Supabase:', error);
+    return null;
+  }
+}
+
+export async function loadInventoryLogsFromSupabase(stockItemId?: string) {
+  if (!isSupabaseSyncEnabled()) return [];
+  
+  try {
+    return await ops.fetchInventoryLogs(stockItemId);
+  } catch (error) {
+    console.error('Failed to load inventory logs from Supabase:', error);
+    return [];
+  }
+}
+
+// ============ RECIPES SYNC ============
+
+export async function syncAddRecipe(recipe: any) {
+  if (!isSupabaseSyncEnabled()) return null;
+  
+  try {
+    return await ops.insertRecipe(recipe);
+  } catch (error) {
+    console.error('Failed to sync recipe to Supabase:', error);
+    return null;
+  }
+}
+
+export async function syncUpdateRecipe(id: string, updates: any) {
+  if (!isSupabaseSyncEnabled()) return null;
+  
+  try {
+    return await ops.updateRecipe(id, updates);
+  } catch (error) {
+    console.error('Failed to update recipe in Supabase:', error);
+    return null;
+  }
+}
+
+export async function syncDeleteRecipe(id: string) {
+  if (!isSupabaseSyncEnabled()) return;
+  
+  try {
+    await ops.deleteRecipe(id);
+  } catch (error) {
+    console.error('Failed to delete recipe from Supabase:', error);
+  }
+}
+
+export async function loadRecipesFromSupabase() {
+  if (!isSupabaseSyncEnabled()) return [];
+  
+  try {
+    return await ops.fetchRecipes();
+  } catch (error) {
+    console.error('Failed to load recipes from Supabase:', error);
+    return [];
+  }
+}
+
+// ============ SHIFTS SYNC ============
+
+export async function syncAddShift(shift: any) {
+  if (!isSupabaseSyncEnabled()) return null;
+  
+  try {
+    return await ops.insertShift(shift);
+  } catch (error) {
+    console.error('Failed to sync shift to Supabase:', error);
+    return null;
+  }
+}
+
+export async function syncUpdateShift(id: string, updates: any) {
+  if (!isSupabaseSyncEnabled()) return null;
+  
+  try {
+    return await ops.updateShift(id, updates);
+  } catch (error) {
+    console.error('Failed to update shift in Supabase:', error);
+    return null;
+  }
+}
+
+export async function syncDeleteShift(id: string) {
+  if (!isSupabaseSyncEnabled()) return;
+  
+  try {
+    await ops.deleteShift(id);
+  } catch (error) {
+    console.error('Failed to delete shift from Supabase:', error);
+  }
+}
+
+export async function loadShiftsFromSupabase() {
+  if (!isSupabaseSyncEnabled()) return [];
+  
+  try {
+    return await ops.fetchShifts();
+  } catch (error) {
+    console.error('Failed to load shifts from Supabase:', error);
+    return [];
+  }
+}
+
+// ============ SCHEDULES SYNC ============
+
+export async function syncAddScheduleEntry(entry: any) {
+  if (!isSupabaseSyncEnabled()) return null;
+  
+  try {
+    return await ops.insertScheduleEntry(entry);
+  } catch (error) {
+    console.error('Failed to sync schedule entry to Supabase:', error);
+    return null;
+  }
+}
+
+export async function syncUpdateScheduleEntry(id: string, updates: any) {
+  if (!isSupabaseSyncEnabled()) return null;
+  
+  try {
+    return await ops.updateScheduleEntry(id, updates);
+  } catch (error) {
+    console.error('Failed to update schedule entry in Supabase:', error);
+    return null;
+  }
+}
+
+export async function syncDeleteScheduleEntry(id: string) {
+  if (!isSupabaseSyncEnabled()) return;
+  
+  try {
+    await ops.deleteScheduleEntry(id);
+  } catch (error) {
+    console.error('Failed to delete schedule entry from Supabase:', error);
+  }
+}
+
+export async function loadSchedulesFromSupabase(startDate?: string, endDate?: string) {
+  if (!isSupabaseSyncEnabled()) return [];
+  
+  try {
+    return await ops.fetchScheduleEntries(startDate, endDate);
+  } catch (error) {
+    console.error('Failed to load schedules from Supabase:', error);
+    return [];
+  }
+}
+
+// ============ PROMOTIONS SYNC ============
+
+export async function syncAddPromotion(promotion: any) {
+  if (!isSupabaseSyncEnabled()) return null;
+  
+  try {
+    return await ops.insertPromotion(promotion);
+  } catch (error) {
+    console.error('Failed to sync promotion to Supabase:', error);
+    return null;
+  }
+}
+
+export async function syncUpdatePromotion(id: string, updates: any) {
+  if (!isSupabaseSyncEnabled()) return null;
+  
+  try {
+    return await ops.updatePromotion(id, updates);
+  } catch (error) {
+    console.error('Failed to update promotion in Supabase:', error);
+    return null;
+  }
+}
+
+export async function syncDeletePromotion(id: string) {
+  if (!isSupabaseSyncEnabled()) return;
+  
+  try {
+    await ops.deletePromotion(id);
+  } catch (error) {
+    console.error('Failed to delete promotion from Supabase:', error);
+  }
+}
+
+export async function loadPromotionsFromSupabase() {
+  if (!isSupabaseSyncEnabled()) return [];
+  
+  try {
+    return await ops.fetchPromotions();
+  } catch (error) {
+    console.error('Failed to load promotions from Supabase:', error);
+    return [];
+  }
+}
+
+// ============ NOTIFICATIONS SYNC ============
+
+export async function syncAddNotification(notification: any) {
+  if (!isSupabaseSyncEnabled()) return null;
+  
+  try {
+    return await ops.insertNotification(notification);
+  } catch (error) {
+    console.error('Failed to sync notification to Supabase:', error);
+    return null;
+  }
+}
+
+export async function syncUpdateNotification(id: string, updates: any) {
+  if (!isSupabaseSyncEnabled()) return null;
+  
+  try {
+    return await ops.updateNotification(id, updates);
+  } catch (error) {
+    console.error('Failed to update notification in Supabase:', error);
+    return null;
+  }
+}
+
+export async function syncDeleteNotification(id: string) {
+  if (!isSupabaseSyncEnabled()) return;
+  
+  try {
+    await ops.deleteNotification(id);
+  } catch (error) {
+    console.error('Failed to delete notification from Supabase:', error);
+  }
+}
+
+export async function loadNotificationsFromSupabase() {
+  if (!isSupabaseSyncEnabled()) return [];
+  
+  try {
+    return await ops.fetchNotifications();
+  } catch (error) {
+    console.error('Failed to load notifications from Supabase:', error);
+    return [];
+  }
+}
+
+// ============ PRODUCTION LOGS SYNC ============
+
+export async function syncAddProductionLog(log: any) {
+  if (!isSupabaseSyncEnabled()) return null;
+  
+  try {
+    return await ops.insertProductionLog(log);
+  } catch (error) {
+    console.error('Failed to sync production log to Supabase:', error);
+    return null;
+  }
+}
+
+export async function loadProductionLogsFromSupabase() {
+  if (!isSupabaseSyncEnabled()) return [];
+  
+  try {
+    return await ops.fetchProductionLogs();
+  } catch (error) {
+    console.error('Failed to load production logs from Supabase:', error);
+    return [];
+  }
+}
+
+// ============ DELIVERY ORDERS SYNC ============
+
+export async function syncAddDeliveryOrder(order: any) {
+  if (!isSupabaseSyncEnabled()) return null;
+  
+  try {
+    return await ops.insertDeliveryOrder(order);
+  } catch (error) {
+    console.error('Failed to sync delivery order to Supabase:', error);
+    return null;
+  }
+}
+
+export async function syncUpdateDeliveryOrder(id: string, updates: any) {
+  if (!isSupabaseSyncEnabled()) return null;
+  
+  try {
+    return await ops.updateDeliveryOrder(id, updates);
+  } catch (error) {
+    console.error('Failed to update delivery order in Supabase:', error);
+    return null;
+  }
+}
+
+export async function loadDeliveryOrdersFromSupabase() {
+  if (!isSupabaseSyncEnabled()) return [];
+  
+  try {
+    return await ops.fetchDeliveryOrders();
+  } catch (error) {
+    console.error('Failed to load delivery orders from Supabase:', error);
+    return [];
+  }
+}
+
+// ============ CASH FLOWS SYNC ============
+
+export async function syncAddCashFlow(cashFlow: any) {
+  if (!isSupabaseSyncEnabled()) return null;
+  
+  try {
+    return await ops.insertCashFlow(cashFlow);
+  } catch (error) {
+    console.error('Failed to sync cash flow to Supabase:', error);
+    return null;
+  }
+}
+
+export async function syncUpdateCashFlow(id: string, updates: any) {
+  if (!isSupabaseSyncEnabled()) return null;
+  
+  try {
+    return await ops.updateCashFlow(id, updates);
+  } catch (error) {
+    console.error('Failed to update cash flow in Supabase:', error);
+    return null;
+  }
+}
+
+export async function loadCashFlowsFromSupabase() {
+  if (!isSupabaseSyncEnabled()) return [];
+  
+  try {
+    return await ops.fetchCashFlows();
+  } catch (error) {
+    console.error('Failed to load cash flows from Supabase:', error);
+    return [];
+  }
+}
+
+// ============ STAFF KPI SYNC ============
+
+export async function syncUpsertStaffKPI(kpi: any) {
+  if (!isSupabaseSyncEnabled()) return null;
+  
+  try {
+    return await ops.upsertStaffKPI(kpi);
+  } catch (error) {
+    console.error('Failed to sync staff KPI to Supabase:', error);
+    return null;
+  }
+}
+
+export async function loadStaffKPIFromSupabase(staffId?: string, period?: string) {
+  if (!isSupabaseSyncEnabled()) return [];
+  
+  try {
+    return await ops.fetchStaffKPI(staffId, period);
+  } catch (error) {
+    console.error('Failed to load staff KPI from Supabase:', error);
+    return [];
+  }
+}
+
+// ============ LEAVE RECORDS SYNC ============
+
+export async function syncAddLeaveRecord(record: any) {
+  if (!isSupabaseSyncEnabled()) return null;
+  
+  try {
+    return await ops.insertLeaveRecord(record);
+  } catch (error) {
+    console.error('Failed to sync leave record to Supabase:', error);
+    return null;
+  }
+}
+
+export async function syncUpdateLeaveRecord(id: string, updates: any) {
+  if (!isSupabaseSyncEnabled()) return null;
+  
+  try {
+    return await ops.updateLeaveRecord(id, updates);
+  } catch (error) {
+    console.error('Failed to update leave record in Supabase:', error);
+    return null;
+  }
+}
+
+export async function loadLeaveRecordsFromSupabase(staffId?: string) {
+  if (!isSupabaseSyncEnabled()) return [];
+  
+  try {
+    return await ops.fetchLeaveRecords(staffId);
+  } catch (error) {
+    console.error('Failed to load leave records from Supabase:', error);
+    return [];
+  }
+}
+
+// ============ TRAINING RECORDS SYNC ============
+
+export async function syncAddTrainingRecord(record: any) {
+  if (!isSupabaseSyncEnabled()) return null;
+  
+  try {
+    return await ops.insertTrainingRecord(record);
+  } catch (error) {
+    console.error('Failed to sync training record to Supabase:', error);
+    return null;
+  }
+}
+
+export async function syncUpdateTrainingRecord(id: string, updates: any) {
+  if (!isSupabaseSyncEnabled()) return null;
+  
+  try {
+    return await ops.updateTrainingRecord(id, updates);
+  } catch (error) {
+    console.error('Failed to update training record in Supabase:', error);
+    return null;
+  }
+}
+
+export async function loadTrainingRecordsFromSupabase(staffId?: string) {
+  if (!isSupabaseSyncEnabled()) return [];
+  
+  try {
+    return await ops.fetchTrainingRecords(staffId);
+  } catch (error) {
+    console.error('Failed to load training records from Supabase:', error);
+    return [];
+  }
+}
+
+// ============ OT RECORDS SYNC ============
+
+export async function syncAddOTRecord(record: any) {
+  if (!isSupabaseSyncEnabled()) return null;
+  
+  try {
+    return await ops.insertOTRecord(record);
+  } catch (error) {
+    console.error('Failed to sync OT record to Supabase:', error);
+    return null;
+  }
+}
+
+export async function syncUpdateOTRecord(id: string, updates: any) {
+  if (!isSupabaseSyncEnabled()) return null;
+  
+  try {
+    return await ops.updateOTRecord(id, updates);
+  } catch (error) {
+    console.error('Failed to update OT record in Supabase:', error);
+    return null;
+  }
+}
+
+export async function loadOTRecordsFromSupabase(staffId?: string) {
+  if (!isSupabaseSyncEnabled()) return [];
+  
+  try {
+    return await ops.fetchOTRecords(staffId);
+  } catch (error) {
+    console.error('Failed to load OT records from Supabase:', error);
+    return [];
+  }
+}
+
+// ============ CUSTOMER REVIEWS SYNC ============
+
+export async function syncAddCustomerReview(review: any) {
+  if (!isSupabaseSyncEnabled()) return null;
+  
+  try {
+    return await ops.insertCustomerReview(review);
+  } catch (error) {
+    console.error('Failed to sync customer review to Supabase:', error);
+    return null;
+  }
+}
+
+export async function loadCustomerReviewsFromSupabase(staffId?: string) {
+  if (!isSupabaseSyncEnabled()) return [];
+  
+  try {
+    return await ops.fetchCustomerReviews(staffId);
+  } catch (error) {
+    console.error('Failed to load customer reviews from Supabase:', error);
+    return [];
+  }
+}
+
+// ============ CHECKLIST TEMPLATES SYNC ============
+
+export async function syncAddChecklistTemplate(template: any) {
+  if (!isSupabaseSyncEnabled()) return null;
+  
+  try {
+    return await ops.insertChecklistTemplate(template);
+  } catch (error) {
+    console.error('Failed to sync checklist template to Supabase:', error);
+    return null;
+  }
+}
+
+export async function syncUpdateChecklistTemplate(id: string, updates: any) {
+  if (!isSupabaseSyncEnabled()) return null;
+  
+  try {
+    return await ops.updateChecklistTemplate(id, updates);
+  } catch (error) {
+    console.error('Failed to update checklist template in Supabase:', error);
+    return null;
+  }
+}
+
+export async function syncDeleteChecklistTemplate(id: string) {
+  if (!isSupabaseSyncEnabled()) return;
+  
+  try {
+    await ops.deleteChecklistTemplate(id);
+  } catch (error) {
+    console.error('Failed to delete checklist template from Supabase:', error);
+  }
+}
+
+export async function loadChecklistTemplatesFromSupabase() {
+  if (!isSupabaseSyncEnabled()) return [];
+  
+  try {
+    return await ops.fetchChecklistTemplates();
+  } catch (error) {
+    console.error('Failed to load checklist templates from Supabase:', error);
+    return [];
+  }
+}
+
+// ============ CHECKLIST COMPLETIONS SYNC ============
+
+export async function syncAddChecklistCompletion(completion: any) {
+  if (!isSupabaseSyncEnabled()) return null;
+  
+  try {
+    return await ops.insertChecklistCompletion(completion);
+  } catch (error) {
+    console.error('Failed to sync checklist completion to Supabase:', error);
+    return null;
+  }
+}
+
+export async function syncUpdateChecklistCompletion(id: string, updates: any) {
+  if (!isSupabaseSyncEnabled()) return null;
+  
+  try {
+    return await ops.updateChecklistCompletion(id, updates);
+  } catch (error) {
+    console.error('Failed to update checklist completion in Supabase:', error);
+    return null;
+  }
+}
+
+export async function loadChecklistCompletionsFromSupabase() {
+  if (!isSupabaseSyncEnabled()) return [];
+  
+  try {
+    return await ops.fetchChecklistCompletions();
+  } catch (error) {
+    console.error('Failed to load checklist completions from Supabase:', error);
+    return [];
+  }
+}
+
+// ============ LEAVE BALANCES SYNC ============
+
+export async function syncUpsertLeaveBalance(balance: any) {
+  if (!isSupabaseSyncEnabled()) return null;
+  
+  try {
+    return await ops.upsertLeaveBalance(balance);
+  } catch (error) {
+    console.error('Failed to sync leave balance to Supabase:', error);
+    return null;
+  }
+}
+
+export async function loadLeaveBalancesFromSupabase() {
+  if (!isSupabaseSyncEnabled()) return [];
+  
+  try {
+    return await ops.fetchLeaveBalances();
+  } catch (error) {
+    console.error('Failed to load leave balances from Supabase:', error);
+    return [];
+  }
+}
+
+// ============ LEAVE REQUESTS SYNC ============
+
+export async function syncAddLeaveRequest(request: any) {
+  if (!isSupabaseSyncEnabled()) return null;
+  
+  try {
+    return await ops.insertLeaveRequest(request);
+  } catch (error) {
+    console.error('Failed to sync leave request to Supabase:', error);
+    return null;
+  }
+}
+
+export async function syncUpdateLeaveRequest(id: string, updates: any) {
+  if (!isSupabaseSyncEnabled()) return null;
+  
+  try {
+    return await ops.updateLeaveRequest(id, updates);
+  } catch (error) {
+    console.error('Failed to update leave request in Supabase:', error);
+    return null;
+  }
+}
+
+export async function loadLeaveRequestsFromSupabase(staffId?: string) {
+  if (!isSupabaseSyncEnabled()) return [];
+  
+  try {
+    return await ops.fetchLeaveRequests(staffId);
+  } catch (error) {
+    console.error('Failed to load leave requests from Supabase:', error);
+    return [];
+  }
+}
+
+// ============ CLAIM REQUESTS SYNC ============
+
+export async function syncAddClaimRequest(request: any) {
+  if (!isSupabaseSyncEnabled()) return null;
+  
+  try {
+    return await ops.insertClaimRequest(request);
+  } catch (error) {
+    console.error('Failed to sync claim request to Supabase:', error);
+    return null;
+  }
+}
+
+export async function syncUpdateClaimRequest(id: string, updates: any) {
+  if (!isSupabaseSyncEnabled()) return null;
+  
+  try {
+    return await ops.updateClaimRequest(id, updates);
+  } catch (error) {
+    console.error('Failed to update claim request in Supabase:', error);
+    return null;
+  }
+}
+
+export async function loadClaimRequestsFromSupabase(staffId?: string) {
+  if (!isSupabaseSyncEnabled()) return [];
+  
+  try {
+    return await ops.fetchClaimRequests(staffId);
+  } catch (error) {
+    console.error('Failed to load claim requests from Supabase:', error);
+    return [];
+  }
+}
+
+// ============ STAFF REQUESTS SYNC ============
+
+export async function syncAddStaffRequest(request: any) {
+  if (!isSupabaseSyncEnabled()) return null;
+  
+  try {
+    return await ops.insertStaffRequest(request);
+  } catch (error) {
+    console.error('Failed to sync staff request to Supabase:', error);
+    return null;
+  }
+}
+
+export async function syncUpdateStaffRequest(id: string, updates: any) {
+  if (!isSupabaseSyncEnabled()) return null;
+  
+  try {
+    return await ops.updateStaffRequest(id, updates);
+  } catch (error) {
+    console.error('Failed to update staff request in Supabase:', error);
+    return null;
+  }
+}
+
+export async function loadStaffRequestsFromSupabase(staffId?: string) {
+  if (!isSupabaseSyncEnabled()) return [];
+  
+  try {
+    return await ops.fetchStaffRequests(staffId);
+  } catch (error) {
+    console.error('Failed to load staff requests from Supabase:', error);
+    return [];
+  }
+}
+
+// ============ ANNOUNCEMENTS SYNC ============
+
+export async function syncAddAnnouncement(announcement: any) {
+  if (!isSupabaseSyncEnabled()) return null;
+  
+  try {
+    return await ops.insertAnnouncement(announcement);
+  } catch (error) {
+    console.error('Failed to sync announcement to Supabase:', error);
+    return null;
+  }
+}
+
+export async function syncUpdateAnnouncement(id: string, updates: any) {
+  if (!isSupabaseSyncEnabled()) return null;
+  
+  try {
+    return await ops.updateAnnouncement(id, updates);
+  } catch (error) {
+    console.error('Failed to update announcement in Supabase:', error);
+    return null;
+  }
+}
+
+export async function syncDeleteAnnouncement(id: string) {
+  if (!isSupabaseSyncEnabled()) return;
+  
+  try {
+    await ops.deleteAnnouncement(id);
+  } catch (error) {
+    console.error('Failed to delete announcement from Supabase:', error);
+  }
+}
+
+export async function loadAnnouncementsFromSupabase() {
+  if (!isSupabaseSyncEnabled()) return [];
+  
+  try {
+    return await ops.fetchAnnouncements();
+  } catch (error) {
+    console.error('Failed to load announcements from Supabase:', error);
+    return [];
+  }
+}
+
+// ============ OIL TRACKERS SYNC ============
+
+export async function syncAddOilTracker(tracker: any) {
+  if (!isSupabaseSyncEnabled()) return null;
+  
+  try {
+    return await ops.insertOilTracker(tracker);
+  } catch (error) {
+    console.error('Failed to sync oil tracker to Supabase:', error);
+    return null;
+  }
+}
+
+export async function syncUpdateOilTracker(fryerId: string, updates: any) {
+  if (!isSupabaseSyncEnabled()) return null;
+  
+  try {
+    return await ops.updateOilTracker(fryerId, updates);
+  } catch (error) {
+    console.error('Failed to update oil tracker in Supabase:', error);
+    return null;
+  }
+}
+
+export async function syncDeleteOilTracker(fryerId: string) {
+  if (!isSupabaseSyncEnabled()) return;
+  
+  try {
+    await ops.deleteOilTracker(fryerId);
+  } catch (error) {
+    console.error('Failed to delete oil tracker from Supabase:', error);
+  }
+}
+
+export async function loadOilTrackersFromSupabase() {
+  if (!isSupabaseSyncEnabled()) return [];
+  
+  try {
+    return await ops.fetchOilTrackers();
+  } catch (error) {
+    console.error('Failed to load oil trackers from Supabase:', error);
+    return [];
+  }
+}
+
+// ============ OIL CHANGE REQUESTS SYNC ============
+
+export async function syncAddOilChangeRequest(request: any) {
+  if (!isSupabaseSyncEnabled()) return null;
+  
+  try {
+    return await ops.insertOilChangeRequest(request);
+  } catch (error) {
+    console.error('Failed to sync oil change request to Supabase:', error);
+    return null;
+  }
+}
+
+export async function syncUpdateOilChangeRequest(id: string, updates: any) {
+  if (!isSupabaseSyncEnabled()) return null;
+  
+  try {
+    return await ops.updateOilChangeRequest(id, updates);
+  } catch (error) {
+    console.error('Failed to update oil change request in Supabase:', error);
+    return null;
+  }
+}
+
+export async function loadOilChangeRequestsFromSupabase(status?: string) {
+  if (!isSupabaseSyncEnabled()) return [];
+  
+  try {
+    return await ops.fetchOilChangeRequests(status);
+  } catch (error) {
+    console.error('Failed to load oil change requests from Supabase:', error);
+    return [];
+  }
+}
+
+// ============ OIL ACTION HISTORY SYNC ============
+
+export async function syncAddOilActionHistory(history: any) {
+  if (!isSupabaseSyncEnabled()) return null;
+  
+  try {
+    return await ops.insertOilActionHistory(history);
+  } catch (error) {
+    console.error('Failed to sync oil action history to Supabase:', error);
+    return null;
+  }
+}
+
+export async function loadOilActionHistoryFromSupabase(fryerId?: string) {
+  if (!isSupabaseSyncEnabled()) return [];
+  
+  try {
+    return await ops.fetchOilActionHistory(fryerId);
+  } catch (error) {
+    console.error('Failed to load oil action history from Supabase:', error);
+    return [];
+  }
+}
+
 // ============ INITIAL LOAD ALL DATA ============
 
 export async function loadAllDataFromSupabase() {
   if (!isSupabaseSyncEnabled()) {
     return {
       inventory: [],
+      inventoryLogs: [],
       staff: [],
       menuItems: [],
+      modifierGroups: [],
+      modifierOptions: [],
       orders: [],
       customers: [],
       expenses: [],
       attendance: [],
+      suppliers: [],
+      purchaseOrders: [],
+      recipes: [],
+      shifts: [],
+      schedules: [],
+      promotions: [],
+      notifications: [],
+      productionLogs: [],
+      deliveryOrders: [],
+      cashFlows: [],
+      staffKPI: [],
+      leaveRecords: [],
+      trainingRecords: [],
+      otRecords: [],
+      customerReviews: [],
+      checklistTemplates: [],
+      checklistCompletions: [],
+      leaveBalances: [],
+      leaveRequests: [],
+      claimRequests: [],
+      staffRequests: [],
+      announcements: [],
+      oilTrackers: [],
+      oilChangeRequests: [],
+      oilActionHistory: [],
     };
   }
 
   try {
-    const [inventory, staff, menuItems, orders, customers, expenses, attendance] = await Promise.all([
+    const [
+      inventory,
+      staff,
+      menuItems,
+      modifierGroups,
+      modifierOptions,
+      orders,
+      customers,
+      expenses,
+      attendance,
+      suppliers,
+      purchaseOrders,
+      recipes,
+      shifts,
+      schedules,
+      promotions,
+      notifications,
+      productionLogs,
+      deliveryOrders,
+      cashFlows,
+      staffKPI,
+      leaveRecords,
+      trainingRecords,
+      otRecords,
+      customerReviews,
+      checklistTemplates,
+      checklistCompletions,
+      leaveBalances,
+      leaveRequests,
+      claimRequests,
+      staffRequests,
+      announcements,
+      oilTrackers,
+      oilChangeRequests,
+      oilActionHistory,
+    ] = await Promise.all([
       ops.fetchInventory(),
       ops.fetchStaff(),
       ops.fetchMenuItems(),
-      ops.fetchOrders(100), // Last 100 orders
+      ops.fetchModifierGroups(),
+      ops.fetchModifierOptions(),
+      ops.fetchOrders(100),
       ops.fetchCustomers(),
       ops.fetchExpenses(),
       ops.fetchAttendance(),
+      ops.fetchSuppliers(),
+      ops.fetchPurchaseOrders(),
+      ops.fetchRecipes(),
+      ops.fetchShifts(),
+      ops.fetchScheduleEntries(),
+      ops.fetchPromotions(),
+      ops.fetchNotifications(),
+      ops.fetchProductionLogs(),
+      ops.fetchDeliveryOrders(),
+      ops.fetchCashFlows(),
+      ops.fetchStaffKPI(),
+      ops.fetchLeaveRecords(),
+      ops.fetchTrainingRecords(),
+      ops.fetchOTRecords(),
+      ops.fetchCustomerReviews(),
+      ops.fetchChecklistTemplates(),
+      ops.fetchChecklistCompletions(),
+      ops.fetchLeaveBalances(),
+      ops.fetchLeaveRequests(),
+      ops.fetchClaimRequests(),
+      ops.fetchStaffRequests(),
+      ops.fetchAnnouncements(),
+      ops.fetchOilTrackers(),
+      ops.fetchOilChangeRequests(),
+      ops.fetchOilActionHistory(),
     ]);
 
     return {
       inventory,
       staff,
       menuItems,
+      modifierGroups,
+      modifierOptions,
       orders,
       customers,
       expenses,
       attendance,
+      suppliers,
+      purchaseOrders,
+      recipes,
+      shifts,
+      schedules,
+      promotions,
+      notifications,
+      productionLogs,
+      deliveryOrders,
+      cashFlows,
+      staffKPI,
+      leaveRecords,
+      trainingRecords,
+      otRecords,
+      customerReviews,
+      checklistTemplates,
+      checklistCompletions,
+      leaveBalances,
+      leaveRequests,
+      claimRequests,
+      staffRequests,
+      announcements,
+      oilTrackers,
+      oilChangeRequests,
+      oilActionHistory,
     };
   } catch (error) {
     console.error('Failed to load data from Supabase:', error);
     return {
       inventory: [],
+      inventoryLogs: [],
       staff: [],
       menuItems: [],
+      modifierGroups: [],
+      modifierOptions: [],
       orders: [],
       customers: [],
       expenses: [],
       attendance: [],
+      suppliers: [],
+      purchaseOrders: [],
+      recipes: [],
+      shifts: [],
+      schedules: [],
+      promotions: [],
+      notifications: [],
+      productionLogs: [],
+      deliveryOrders: [],
+      cashFlows: [],
+      staffKPI: [],
+      leaveRecords: [],
+      trainingRecords: [],
+      otRecords: [],
+      customerReviews: [],
+      checklistTemplates: [],
+      checklistCompletions: [],
+      leaveBalances: [],
+      leaveRequests: [],
+      claimRequests: [],
+      staffRequests: [],
+      announcements: [],
+      oilTrackers: [],
+      oilChangeRequests: [],
+      oilActionHistory: [],
     };
   }
 }
+
+

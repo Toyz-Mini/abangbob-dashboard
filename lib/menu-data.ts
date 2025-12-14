@@ -1,4 +1,78 @@
-import { MenuItem } from './types';
+import { MenuItem, ModifierGroup, ModifierOption } from './types';
+
+// ==================== MODIFIER GROUPS ====================
+
+export const MOCK_MODIFIER_GROUPS: ModifierGroup[] = [
+  {
+    id: 'modgroup_size_tenders',
+    name: 'Pilih Saiz Tenders',
+    isRequired: true,
+    allowMultiple: false,
+    minSelection: 1,
+    maxSelection: 1,
+  },
+  {
+    id: 'modgroup_flavour',
+    name: 'Pilih Flavour',
+    isRequired: true,
+    allowMultiple: false,
+    minSelection: 1,
+    maxSelection: 1,
+  },
+  {
+    id: 'modgroup_addon_sauce',
+    name: 'Add On Sauce',
+    isRequired: false,
+    allowMultiple: false,
+    minSelection: 0,
+    maxSelection: 1,
+  },
+];
+
+// ==================== MODIFIER OPTIONS ====================
+
+export const MOCK_MODIFIER_OPTIONS: ModifierOption[] = [
+  // Size options for Chicken Tenders XL
+  {
+    id: 'modopt_tenders_3pcs',
+    groupId: 'modgroup_size_tenders',
+    name: '3 pieces',
+    extraPrice: 0.00,
+    isAvailable: true,
+  },
+  {
+    id: 'modopt_tenders_6pcs',
+    groupId: 'modgroup_size_tenders',
+    name: '6 pieces',
+    extraPrice: 4.00,
+    isAvailable: true,
+  },
+  // Flavour options
+  {
+    id: 'modopt_flavour_original',
+    groupId: 'modgroup_flavour',
+    name: 'Original',
+    extraPrice: 0.00,
+    isAvailable: true,
+  },
+  {
+    id: 'modopt_flavour_spicy',
+    groupId: 'modgroup_flavour',
+    name: 'Spicy',
+    extraPrice: 0.00,
+    isAvailable: true,
+  },
+  // Add-on sauce
+  {
+    id: 'modopt_extra_sauce',
+    groupId: 'modgroup_addon_sauce',
+    name: 'Extra Sauce',
+    extraPrice: 1.00,
+    isAvailable: true,
+  },
+];
+
+// ==================== MENU ITEMS ====================
 
 export const MOCK_MENU: MenuItem[] = [
   // Nasi Lemak Category
@@ -105,6 +179,71 @@ export const MOCK_MENU: MenuItem[] = [
     ingredients: ['milo', 'susu', 'ais'],
     isAvailable: true,
     modifierGroupIds: [],
+  },
+  
+  // Alacart Category
+  {
+    id: '11',
+    name: 'Chicken Tenders XL',
+    category: 'Alacart',
+    price: 5.90,
+    description: 'Crispy chicken tenders with free garlic mayo sauce',
+    isAvailable: true,
+    modifierGroupIds: ['modgroup_size_tenders'],
+  },
+  {
+    id: '12',
+    name: 'Chicken Crispy Wrap',
+    category: 'Alacart',
+    price: 2.90,
+    description: 'Crispy chicken wrap with fresh vegetables',
+    isAvailable: true,
+    modifierGroupIds: ['modgroup_addon_sauce'],
+  },
+  {
+    id: '13',
+    name: 'Crispy Chicken Skin',
+    category: 'Alacart',
+    price: 2.00,
+    description: 'Crispy fried chicken skin',
+    isAvailable: true,
+    modifierGroupIds: ['modgroup_flavour', 'modgroup_addon_sauce'],
+  },
+  {
+    id: '14',
+    name: 'Ayam Gunting XXXL',
+    category: 'Alacart',
+    price: 5.90,
+    description: 'Extra large crispy fried chicken',
+    isAvailable: true,
+    modifierGroupIds: ['modgroup_flavour', 'modgroup_addon_sauce'],
+  },
+  {
+    id: '15',
+    name: 'Burger Crispy XXL',
+    category: 'Alacart',
+    price: 7.90,
+    description: 'Extra large crispy chicken burger with cheese',
+    isAvailable: true,
+    modifierGroupIds: ['modgroup_addon_sauce'],
+  },
+  {
+    id: '16',
+    name: 'Chicken Popcorn',
+    category: 'Alacart',
+    price: 3.50,
+    description: 'Bite-sized crispy chicken popcorn',
+    isAvailable: true,
+    modifierGroupIds: ['modgroup_flavour', 'modgroup_addon_sauce'],
+  },
+  {
+    id: '17',
+    name: 'Crispy Enoki',
+    category: 'Alacart',
+    price: 2.00,
+    description: 'Crispy fried enoki mushrooms',
+    isAvailable: true,
+    modifierGroupIds: ['modgroup_flavour', 'modgroup_addon_sauce'],
   },
 ];
 

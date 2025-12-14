@@ -4,12 +4,12 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import MainLayout from '@/components/MainLayout';
 import { useStaff } from '@/lib/store';
-import { 
-  StaffProfile, 
-  Gender, 
-  MaritalStatus, 
-  EmploymentType, 
-  SalaryType, 
+import {
+  StaffProfile,
+  Gender,
+  MaritalStatus,
+  EmploymentType,
+  SalaryType,
   AccessLevel,
   StaffPermissions,
   LeaveEntitlement,
@@ -20,8 +20,8 @@ import {
   Allowance,
   StaffDocument,
 } from '@/lib/types';
-import { 
-  getDefaultStaffProfile, 
+import {
+  getDefaultStaffProfile,
   generateEmployeeNumber,
   BRUNEI_BANKS,
   RELATION_OPTIONS,
@@ -30,16 +30,16 @@ import {
   DEPARTMENT_OPTIONS,
   POSITION_OPTIONS,
 } from '@/lib/hr-data';
-import { 
-  ArrowLeft, 
-  UserPlus, 
-  Eye, 
-  EyeOff, 
-  User, 
-  Briefcase, 
-  DollarSign, 
-  Calendar, 
-  Shield, 
+import {
+  ArrowLeft,
+  UserPlus,
+  Eye,
+  EyeOff,
+  User,
+  Briefcase,
+  DollarSign,
+  Calendar,
+  Shield,
   FileText,
   Settings,
   Plus,
@@ -47,6 +47,7 @@ import {
   Upload,
   X,
   Check,
+  Cloud,
 } from 'lucide-react';
 import Link from 'next/link';
 import LoadingSpinner from '@/components/LoadingSpinner';
@@ -75,9 +76,16 @@ export default function NewStaffPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [showPin, setShowPin] = useState(false);
   const [activeTab, setActiveTab] = useState<TabId>('personal');
-  
+  const [uploadedDocs, setUploadedDocs] = useState<Record<string, File | null>>({
+    ic_front: null,
+    ic_back: null,
+    contract: null,
+    resume: null,
+  });
+  const [dragOver, setDragOver] = useState<string | null>(null);
+
   const defaultProfile = getDefaultStaffProfile();
-  
+
   const [formData, setFormData] = useState<Partial<StaffProfile>>({
     ...defaultProfile,
     employeeNumber: generateEmployeeNumber(staff),
@@ -87,12 +95,18 @@ export default function NewStaffPage() {
     email: '',
     icNumber: '',
     dateOfBirth: '',
-    gender: undefined,
+    gender: 'male', // Default to male
     nationality: 'Bruneian',
     religion: 'Islam',
-    maritalStatus: undefined,
+    maritalStatus: 'single', // Default to single
     address: '',
     joinDate: new Date().toISOString().split('T')[0],
+    employmentType: 'probation', // Default to probation
+    salaryType: 'monthly', // Default to monthly
+    baseSalary: 800, // Default base salary
+    hourlyRate: 5.00, // Default hourly rate
+    overtimeRate: 1.5, // Default overtime rate
+    paymentFrequency: 'monthly', // Default payment frequency
     bankDetails: {
       bankName: '',
       accountNumber: '',
@@ -136,33 +150,33 @@ export default function NewStaffPage() {
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
-    
+
     // Required fields
     if (!formData.name?.trim()) {
       newErrors.name = 'Nama diperlukan';
     }
-    
+
     if (!formData.pin || formData.pin.length < 4) {
       newErrors.pin = 'PIN mesti 4 digit';
     } else if (!/^\d{4}$/.test(formData.pin)) {
       newErrors.pin = 'PIN mesti 4 digit nombor sahaja';
     }
-    
+
     if (!formData.phone || formData.phone.length < 8) {
       newErrors.phone = 'Nombor telefon diperlukan';
     }
-    
+
     if ((formData.baseSalary ?? 0) <= 0) {
       newErrors.baseSalary = 'Gaji asas mesti lebih dari 0';
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       // Switch to the tab with the first error
       if (errors.name || errors.pin || errors.phone) {
@@ -172,10 +186,10 @@ export default function NewStaffPage() {
       }
       return;
     }
-    
+
     setIsProcessing(true);
     await new Promise(resolve => setTimeout(resolve, 800));
-    
+
     const newStaff: Omit<StaffProfile, 'id'> = {
       employeeNumber: formData.employeeNumber,
       name: formData.name!.trim(),
@@ -189,7 +203,7 @@ export default function NewStaffPage() {
       email: formData.email || undefined,
       phone: formData.phone!.trim(),
       profilePhotoUrl: formData.profilePhotoUrl,
-      
+
       role: formData.role!,
       position: formData.position || undefined,
       department: formData.department || undefined,
@@ -200,9 +214,9 @@ export default function NewStaffPage() {
       reportingTo: formData.reportingTo || undefined,
       workLocation: formData.workLocation || undefined,
       status: formData.status!,
-      
+
       pin: formData.pin!,
-      
+
       salaryType: formData.salaryType,
       baseSalary: formData.baseSalary!,
       hourlyRate: formData.hourlyRate!,
@@ -211,32 +225,32 @@ export default function NewStaffPage() {
       allowances: formData.allowances,
       fixedDeductions: formData.fixedDeductions,
       paymentFrequency: formData.paymentFrequency,
-      
+
       bankDetails: formData.bankDetails?.bankName ? formData.bankDetails : undefined,
       statutoryContributions: formData.statutoryContributions,
       emergencyContact: formData.emergencyContact?.name ? formData.emergencyContact : undefined,
       leaveEntitlement: formData.leaveEntitlement,
-      
+
       accessLevel: formData.accessLevel,
       permissions: formData.permissions,
       schedulePreferences: formData.schedulePreferences,
-      
+
       documents: formData.documents,
       skills: formData.skills,
       certifications: formData.certifications,
-      
+
       uniformSize: formData.uniformSize || undefined,
       shoeSize: formData.shoeSize || undefined,
       dietaryRestrictions: formData.dietaryRestrictions || undefined,
       medicalConditions: formData.medicalConditions || undefined,
       bloodType: formData.bloodType || undefined,
       notes: formData.notes || undefined,
-      
+
       performanceBadges: [],
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
-    
+
     addStaff(newStaff);
     router.push('/hr/staff');
   };
@@ -262,7 +276,7 @@ export default function NewStaffPage() {
   };
 
   const updateAllowance = (id: string, field: keyof Allowance, value: unknown) => {
-    updateForm('allowances', (formData.allowances || []).map(a => 
+    updateForm('allowances', (formData.allowances || []).map(a =>
       a.id === id ? { ...a, [field]: value } : a
     ));
   };
@@ -291,7 +305,7 @@ export default function NewStaffPage() {
   const renderPersonalTab = () => (
     <div className="form-section">
       <h3 className="section-title">Maklumat Peribadi</h3>
-      
+
       <div className="form-group">
         <label className="form-label">Nama Penuh *</label>
         <input
@@ -312,7 +326,7 @@ export default function NewStaffPage() {
             className="form-input"
             value={formData.icNumber || ''}
             onChange={(e) => updateForm('icNumber', e.target.value)}
-            placeholder="01-123456"
+            placeholder="00-123456"
           />
         </div>
 
@@ -323,6 +337,7 @@ export default function NewStaffPage() {
             className="form-input"
             value={formData.dateOfBirth || ''}
             onChange={(e) => updateForm('dateOfBirth', e.target.value)}
+            placeholder="dd/mm/yyyy"
           />
         </div>
       </div>
@@ -753,7 +768,7 @@ export default function NewStaffPage() {
             <Plus size={14} /> Tambah Elaun
           </button>
         </div>
-        
+
         {(formData.allowances || []).map((allowance) => (
           <div key={allowance.id} style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem', alignItems: 'center' }}>
             <input
@@ -1202,79 +1217,185 @@ export default function NewStaffPage() {
     </div>
   );
 
-  const renderDocumentsTab = () => (
-    <div className="form-section">
-      <h3 className="section-title">Muat Naik Dokumen</h3>
-      <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginBottom: '1.5rem' }}>
-        Muat naik gambar IC, kontrak kerja, dan dokumen lain yang berkaitan.
-      </p>
+  const renderDocumentsTab = () => {
+    const handleFileSelect = (docType: string, file: File | null) => {
+      setUploadedDocs(prev => ({ ...prev, [docType]: file }));
+    };
 
-      <div className="document-upload-grid">
-        <div className="document-upload-card">
-          <div className="document-upload-icon">
-            <Upload size={32} />
-          </div>
-          <div className="document-upload-label">IC Depan</div>
-          <button type="button" className="btn btn-outline btn-sm">
-            Pilih Fail
-          </button>
-          <p style={{ fontSize: '0.75rem', color: 'var(--text-light)', marginTop: '0.5rem' }}>
-            JPG, PNG atau PDF
-          </p>
+    const handleDragOver = (e: React.DragEvent, docType: string) => {
+      e.preventDefault();
+      setDragOver(docType);
+    };
+
+    const handleDragLeave = (e: React.DragEvent) => {
+      e.preventDefault();
+      setDragOver(null);
+    };
+
+    const handleDrop = (e: React.DragEvent, docType: string) => {
+      e.preventDefault();
+      setDragOver(null);
+
+      const file = e.dataTransfer.files[0];
+      if (file) {
+        // Validate file type
+        const validTypes = docType === 'contract' || docType === 'resume'
+          ? ['application/pdf']
+          : ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'application/pdf'];
+
+        if (!validTypes.includes(file.type)) {
+          alert('Jenis fail tidak sah. Sila pilih fail yang betul.');
+          return;
+        }
+
+        // Validate file size (5MB)
+        if (file.size > 5 * 1024 * 1024) {
+          alert('Fail terlalu besar. Maksimum 5MB.');
+          return;
+        }
+
+        handleFileSelect(docType, file);
+      }
+    };
+
+    const formatFileSize = (bytes: number) => {
+      if (bytes < 1024) return bytes + ' B';
+      if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+      return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    };
+
+    const documentTypes = [
+      { id: 'ic_front', label: 'IC Depan', accept: 'image/*,application/pdf', hint: 'JPG, PNG atau PDF (Max 5MB)' },
+      { id: 'ic_back', label: 'IC Belakang', accept: 'image/*,application/pdf', hint: 'JPG, PNG atau PDF (Max 5MB)' },
+      { id: 'contract', label: 'Surat Kontrak', accept: 'application/pdf', hint: 'PDF sahaja (Max 5MB)' },
+      { id: 'resume', label: 'Resume/CV', accept: 'application/pdf', hint: 'PDF sahaja (Max 5MB)' },
+    ];
+
+    return (
+      <div className="form-section">
+        <h3 className="section-title">Muat Naik Dokumen</h3>
+        <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginBottom: '1.5rem' }}>
+          Klik atau seret fail untuk muat naik. Dokumen akan disimpan dengan selamat.
+        </p>
+
+        <div className="document-upload-grid-modern">
+          {documentTypes.map((docType) => {
+            const file = uploadedDocs[docType.id as keyof typeof uploadedDocs];
+            const isDragging = dragOver === docType.id;
+            const hasFile = !!file;
+
+            return (
+              <div
+                key={docType.id}
+                className={`doc-upload-card ${isDragging ? 'dragging' : ''} ${hasFile ? 'has-file' : ''}`}
+                onDragOver={(e) => handleDragOver(e, docType.id)}
+                onDragLeave={handleDragLeave}
+                onDrop={(e) => handleDrop(e, docType.id)}
+              >
+                <div className="doc-card-header">
+                  <h4 className="doc-label">{docType.label}</h4>
+                  {hasFile && (
+                    <button
+                      type="button"
+                      className="doc-delete-btn"
+                      onClick={() => handleFileSelect(docType.id, null)}
+                      title="Padam"
+                    >
+                      <X size={16} />
+                    </button>
+                  )}
+                </div>
+
+                <div className="doc-upload-area">
+                  {hasFile ? (
+                    <>
+                      <div className="doc-preview">
+                        {file!.type.startsWith('image/') ? (
+                          <div className="doc-image-preview">
+                            <img
+                              src={URL.createObjectURL(file!)}
+                              alt={docType.label}
+                              onLoad={(e) => URL.revokeObjectURL((e.target as HTMLImageElement).src)}
+                            />
+                          </div>
+                        ) : (
+                          <div className="doc-file-icon">
+                            <FileText size={48} />
+                          </div>
+                        )}
+                      </div>
+                      <div className="doc-file-info">
+                        <Check size={16} className="doc-check-icon" />
+                        <p className="doc-filename">{file!.name}</p>
+                        <p className="doc-filesize">{formatFileSize(file!.size)}</p>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="doc-upload-icon">
+                        <Upload size={40} />
+                      </div>
+                      <p className="doc-upload-text">
+                        Seret & lepas atau klik untuk pilih
+                      </p>
+                      <p className="doc-upload-hint">{docType.hint}</p>
+                    </>
+                  )}
+                </div>
+
+                <input
+                  type="file"
+                  id={`file-${docType.id}`}
+                  accept={docType.accept}
+                  style={{ display: 'none' }}
+                  onChange={(e) => {
+                    const selectedFile = e.target.files?.[0];
+                    if (selectedFile) {
+                      // Validate file size
+                      if (selectedFile.size > 5 * 1024 * 1024) {
+                        alert('Fail terlalu besar. Maksimum 5MB.');
+                        e.target.value = '';
+                        return;
+                      }
+                      handleFileSelect(docType.id, selectedFile);
+                    }
+                  }}
+                />
+
+                {!hasFile && (
+                  <button
+                    type="button"
+                    className="btn btn-outline btn-sm doc-browse-btn"
+                    onClick={() => document.getElementById(`file-${docType.id}`)?.click()}
+                  >
+                    Pilih Fail
+                  </button>
+                )}
+              </div>
+            );
+          })}
         </div>
 
-        <div className="document-upload-card">
-          <div className="document-upload-icon">
-            <Upload size={32} />
-          </div>
-          <div className="document-upload-label">IC Belakang</div>
-          <button type="button" className="btn btn-outline btn-sm">
-            Pilih Fail
-          </button>
-          <p style={{ fontSize: '0.75rem', color: 'var(--text-light)', marginTop: '0.5rem' }}>
-            JPG, PNG atau PDF
+        <div style={{
+          background: 'linear-gradient(135deg, var(--primary-light) 0%, var(--gray-100) 100%)',
+          padding: '1rem 1.25rem',
+          borderRadius: 'var(--radius-md)',
+          marginTop: '1.5rem',
+          fontSize: '0.875rem',
+          color: 'var(--text-secondary)',
+          border: '1px solid var(--primary-light)'
+        }}>
+          <p style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <Cloud size={16} style={{ color: 'var(--primary)' }} />
+            <strong>Dokumen akan disimpan ke Supabase Storage</strong>
           </p>
-        </div>
-
-        <div className="document-upload-card">
-          <div className="document-upload-icon">
-            <Upload size={32} />
-          </div>
-          <div className="document-upload-label">Surat Kontrak</div>
-          <button type="button" className="btn btn-outline btn-sm">
-            Pilih Fail
-          </button>
-          <p style={{ fontSize: '0.75rem', color: 'var(--text-light)', marginTop: '0.5rem' }}>
-            PDF sahaja
-          </p>
-        </div>
-
-        <div className="document-upload-card">
-          <div className="document-upload-icon">
-            <Upload size={32} />
-          </div>
-          <div className="document-upload-label">Resume/CV</div>
-          <button type="button" className="btn btn-outline btn-sm">
-            Pilih Fail
-          </button>
-          <p style={{ fontSize: '0.75rem', color: 'var(--text-light)', marginTop: '0.5rem' }}>
-            PDF sahaja
+          <p style={{ marginTop: '0.5rem', fontSize: '0.8rem' }}>
+            Semua dokumen yang dimuat naik akan disimpan dengan selamat dan boleh diakses kemudian.
           </p>
         </div>
       </div>
-
-      <div style={{ 
-        background: 'var(--gray-100)', 
-        padding: '1rem', 
-        borderRadius: 'var(--radius-md)', 
-        marginTop: '1.5rem',
-        fontSize: '0.875rem',
-        color: 'var(--text-secondary)'
-      }}>
-        <p><strong>Nota:</strong> Untuk muat naik dokumen sebenar, sila gunakan sistem penyimpanan fail syarikat atau hubungi IT.</p>
-      </div>
-    </div>
-  );
+    );
+  };
 
   const renderOtherTab = () => (
     <div className="form-section">
@@ -1574,35 +1695,188 @@ export default function NewStaffPage() {
           accent-color: var(--primary);
         }
 
-        .document-upload-grid {
+        /* Modern Document Upload Styles */
+        .document-upload-grid-modern {
           display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-          gap: 1rem;
+          grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+          gap: 1.25rem;
         }
 
-        .document-upload-card {
-          background: var(--gray-50);
-          border: 2px dashed var(--gray-300);
+        .doc-upload-card {
+          background: var(--white);
+          border: 2px solid var(--gray-200);
           border-radius: var(--radius-lg);
+          padding: 1.25rem;
+          transition: all 0.3s ease;
+          position: relative;
+          overflow: hidden;
+        }
+
+        .doc-upload-card::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          height: 4px;
+          background: linear-gradient(90deg, var(--primary), var(--primary-dark));
+          opacity: 0;
+          transition: opacity 0.3s ease;
+        }
+
+        .doc-upload-card:hover::before,
+        .doc-upload-card.has-file::before {
+          opacity: 1;
+        }
+
+        .doc-upload-card.dragging {
+          border-color: var(--primary);
+          background: var(--primary-light);
+          transform: scale(1.02);
+          box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .doc-upload-card.has-file {
+          border-color: var(--success);
+          background: var(--gray-50);
+        }
+
+        .doc-card-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 1rem;
+        }
+
+        .doc-label {
+          font-weight: 600;
+          font-size: 0.95rem;
+          color: var(--text);
+          margin: 0;
+        }
+
+        .doc-delete-btn {
+          background: var(--danger-light);
+          color: var(--danger);
+          border: none;
+          padding: 0.375rem;
+          border-radius: var(--radius-sm);
+          cursor: pointer;
+          transition: all 0.2s ease;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .doc-delete-btn:hover {
+          background: var(--danger);
+          color: var(--white);
+          transform: rotate(90deg);
+        }
+
+        .doc-upload-area {
+          background: var(--gray-50);
+          border-radius: var(--radius-md);
           padding: 1.5rem;
           text-align: center;
+          min-height: 180px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          gap: 0.75rem;
           transition: all 0.2s ease;
         }
 
-        .document-upload-card:hover {
-          border-color: var(--primary);
-          background: var(--primary-light);
+        .doc-upload-card.dragging .doc-upload-area {
+          background: var(--white);
         }
 
-        .document-upload-icon {
+        .doc-upload-card.has-file .doc-upload-area {
+          background: var(--white);
+          border: 1px solid var(--success-light);
+        }
+
+        .doc-upload-icon {
           color: var(--text-light);
-          margin-bottom: 0.75rem;
+          animation: float 3s ease-in-out infinite;
         }
 
-        .document-upload-label {
-          font-weight: 600;
-          margin-bottom: 0.75rem;
+        @keyframes float {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-10px); }
+        }
+
+        .doc-upload-text {
           font-size: 0.875rem;
+          color: var(--text-secondary);
+          font-weight: 500;
+          margin: 0;
+        }
+
+        .doc-upload-hint {
+          font-size: 0.75rem;
+          color: var(--text-light);
+          margin: 0;
+        }
+
+        .doc-preview {
+          width: 100%;
+          margin-bottom: 0.5rem;
+        }
+
+        .doc-image-preview {
+          width: 100%;
+          height: 120px;
+          border-radius: var(--radius-md);
+          overflow: hidden;
+          background: var(--gray-100);
+        }
+
+        .doc-image-preview img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+
+        .doc-file-icon {
+          color: var(--primary);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 1rem;
+        }
+
+        .doc-file-info {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 0.25rem;
+        }
+
+        .doc-check-icon {
+          color: var(--success);
+          margin-bottom: 0.25rem;
+        }
+
+        .doc-filename {
+          font-size: 0.85rem;
+          font-weight: 600;
+          color: var(--text);
+          margin: 0;
+          word-break: break-all;
+          text-align: center;
+        }
+
+        .doc-filesize {
+          font-size: 0.75rem;
+          color: var(--text-secondary);
+          margin: 0;
+        }
+
+        .doc-browse-btn {
+          margin-top: 0.75rem;
+          width: 100%;
         }
       `}</style>
     </MainLayout>

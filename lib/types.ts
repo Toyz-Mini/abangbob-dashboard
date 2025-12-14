@@ -439,6 +439,12 @@ export interface LoyaltyTransaction {
 
 // ==================== SUPPLIER TYPES ====================
 
+export interface SupplierAccountNumber {
+  bankName: string;
+  accountNumber: string;
+  accountName?: string;
+}
+
 export interface Supplier {
   id: string;
   name: string;
@@ -446,6 +452,7 @@ export interface Supplier {
   phone: string;
   email?: string;
   address?: string;
+  accountNumbers?: SupplierAccountNumber[];
   paymentTerms: 'cod' | 'net7' | 'net14' | 'net30';
   leadTimeDays: number;
   rating: number; // 1-5

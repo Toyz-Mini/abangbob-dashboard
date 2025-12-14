@@ -72,12 +72,14 @@ CREATE TABLE IF NOT EXISTS public.staff (
   employment_type TEXT DEFAULT 'full-time' CHECK (employment_type IN ('full-time', 'part-time', 'contract')),
   join_date DATE,
   profile_photo_url TEXT,
-  outlet_id UUID REFERENCES public.outlets(id) ON DELETE SET NULL
+  outlet_id UUID REFERENCES public.outlets(id) ON DELETE SET NULL,
+  extended_data JSONB DEFAULT '{}'::jsonb
 );
 
 -- Create index for faster lookups
 CREATE INDEX IF NOT EXISTS idx_staff_outlet ON public.staff(outlet_id);
 CREATE INDEX IF NOT EXISTS idx_staff_status ON public.staff(status);
+CREATE INDEX IF NOT EXISTS idx_staff_extended_data ON public.staff USING gin(extended_data);
 
 -- ========================================
 -- ATTENDANCE TABLE
@@ -119,6 +121,40 @@ CREATE TABLE IF NOT EXISTS public.inventory (
 
 CREATE INDEX IF NOT EXISTS idx_inventory_outlet ON public.inventory(outlet_id);
 CREATE INDEX IF NOT EXISTS idx_inventory_category ON public.inventory(category);
+
+-- ========================================
+-- MODIFIER GROUPS TABLE
+-- ========================================
+CREATE TABLE IF NOT EXISTS public.modifier_groups (
+  id TEXT PRIMARY KEY,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  name TEXT NOT NULL,
+  is_required BOOLEAN DEFAULT false,
+  allow_multiple BOOLEAN DEFAULT false,
+  min_selection INTEGER DEFAULT 0,
+  max_selection INTEGER DEFAULT 1,
+  outlet_id UUID REFERENCES public.outlets(id) ON DELETE SET NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_modifier_groups_outlet ON public.modifier_groups(outlet_id);
+
+-- ========================================
+-- MODIFIER OPTIONS TABLE
+-- ========================================
+CREATE TABLE IF NOT EXISTS public.modifier_options (
+  id TEXT PRIMARY KEY,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  group_id TEXT NOT NULL REFERENCES public.modifier_groups(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  extra_price DECIMAL(10,2) DEFAULT 0,
+  is_available BOOLEAN DEFAULT true,
+  outlet_id UUID REFERENCES public.outlets(id) ON DELETE SET NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_modifier_options_group ON public.modifier_options(group_id);
+CREATE INDEX IF NOT EXISTS idx_modifier_options_outlet ON public.modifier_options(outlet_id);
 
 -- ========================================
 -- MENU ITEMS TABLE
@@ -328,6 +364,8 @@ ALTER TABLE public.outlets ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.staff ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.attendance ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.inventory ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.modifier_groups ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.modifier_options ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.menu_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.customers ENABLE ROW LEVEL SECURITY;
@@ -354,6 +392,14 @@ CREATE POLICY "Staff can manage inventory" ON public.inventory FOR ALL USING (tr
 -- Menu items policies
 CREATE POLICY "Anyone can view menu items" ON public.menu_items FOR SELECT USING (true);
 CREATE POLICY "Managers can manage menu items" ON public.menu_items FOR ALL USING (true);
+
+-- Modifier groups policies
+CREATE POLICY "Anyone can view modifier groups" ON public.modifier_groups FOR SELECT USING (true);
+CREATE POLICY "Managers can manage modifier groups" ON public.modifier_groups FOR ALL USING (true);
+
+-- Modifier options policies
+CREATE POLICY "Anyone can view modifier options" ON public.modifier_options FOR SELECT USING (true);
+CREATE POLICY "Managers can manage modifier options" ON public.modifier_options FOR ALL USING (true);
 
 -- Orders policies
 CREATE POLICY "Anyone can view orders" ON public.orders FOR SELECT USING (true);
@@ -403,6 +449,9 @@ ALTER PUBLICATION supabase_realtime ADD TABLE public.orders;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.inventory;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.attendance;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.staff;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.modifier_groups;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.modifier_options;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.menu_items;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.void_refund_requests;
 
 -- ========================================
@@ -426,6 +475,12 @@ CREATE TRIGGER update_staff_updated_at BEFORE UPDATE ON public.staff
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 CREATE TRIGGER update_inventory_updated_at BEFORE UPDATE ON public.inventory
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_modifier_groups_updated_at BEFORE UPDATE ON public.modifier_groups
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_modifier_options_updated_at BEFORE UPDATE ON public.modifier_options
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 CREATE TRIGGER update_menu_items_updated_at BEFORE UPDATE ON public.menu_items

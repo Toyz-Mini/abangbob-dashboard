@@ -8,7 +8,7 @@ import { MOCK_STAFF, MOCK_ATTENDANCE, MOCK_PAYROLL } from './hr-data';
 import { MOCK_PRODUCTION_LOGS, MOCK_OIL_TRACKERS } from './production-data';
 import { MOCK_DELIVERY_ORDERS } from './delivery-data';
 import { MOCK_EXPENSES, MOCK_CASH_FLOWS } from './finance-data';
-import { MOCK_MENU } from './menu-data';
+import { MOCK_MENU, MOCK_MODIFIER_GROUPS, MOCK_MODIFIER_OPTIONS } from './menu-data';
 import { MOCK_STAFF_KPI, MOCK_LEAVE_RECORDS, MOCK_TRAINING_RECORDS, MOCK_OT_RECORDS, MOCK_CUSTOMER_REVIEWS, calculateOverallScore, calculateBonus, DEFAULT_KPI_CONFIG } from './kpi-data';
 import { MOCK_CHECKLIST_TEMPLATES, MOCK_CHECKLIST_COMPLETIONS, MOCK_LEAVE_BALANCES, MOCK_LEAVE_REQUESTS, MOCK_CLAIM_REQUESTS, MOCK_STAFF_REQUESTS, MOCK_ANNOUNCEMENTS, MOCK_SHIFTS, MOCK_SCHEDULES, generateMockSchedules } from './staff-portal-data';
 import * as SupabaseSync from './supabase-sync';
@@ -80,7 +80,7 @@ interface StoreState {
   updateStockItem: (id: string, updates: Partial<StockItem>) => void;
   deleteStockItem: (id: string) => void;
   adjustStock: (id: string, quantity: number, type: 'in' | 'out', reason: string) => void;
-  
+
   // Staff
   staff: StaffProfile[];
   attendance: AttendanceRecord[];
@@ -90,21 +90,21 @@ interface StoreState {
   clockIn: (staffId: string, pin: string) => { success: boolean; message: string };
   clockOut: (staffId: string) => { success: boolean; message: string };
   getStaffAttendanceToday: (staffId: string) => AttendanceRecord | undefined;
-  
+
   // Orders
   orders: Order[];
   addOrder: (order: Omit<Order, 'id' | 'orderNumber'>) => Promise<Order>;
   updateOrderStatus: (orderId: string, status: Order['status'], staffId?: string) => void;
   getTodayOrders: () => Order[];
-  
+
   // Production Logs
   productionLogs: ProductionLog[];
   addProductionLog: (log: Omit<ProductionLog, 'id'>) => void;
-  
+
   // Delivery Orders
   deliveryOrders: DeliveryOrder[];
   updateDeliveryStatus: (orderId: string, status: DeliveryOrder['status']) => void;
-  
+
   // Finance
   expenses: Expense[];
   cashFlows: DailyCashFlow[];
@@ -115,29 +115,29 @@ interface StoreState {
   getTodayCashFlow: () => DailyCashFlow | undefined;
   getMonthlyExpenses: (month: string) => Expense[];
   getMonthlyRevenue: (month: string) => number;
-  
+
   // Customers
   customers: Customer[];
   addCustomer: (customer: Omit<Customer, 'id' | 'createdAt' | 'loyaltyPoints' | 'totalSpent' | 'totalOrders' | 'segment'>) => Promise<Customer>;
   updateCustomer: (id: string, updates: Partial<Customer>) => void;
   addLoyaltyPoints: (customerId: string, points: number, orderId?: string) => void;
   redeemLoyaltyPoints: (customerId: string, points: number) => boolean;
-  
+
   // Suppliers
   suppliers: Supplier[];
   purchaseOrders: PurchaseOrder[];
   addSupplier: (supplier: Omit<Supplier, 'id' | 'createdAt' | 'rating'>) => void;
   updateSupplier: (id: string, updates: Partial<Supplier>) => void;
   deleteSupplier: (id: string) => void;
-  addPurchaseOrder: (po: Omit<PurchaseOrder, 'id' | 'poNumber' | 'createdAt' | 'updatedAt'>) => PurchaseOrder;
+  addPurchaseOrder: (po: Omit<PurchaseOrder, 'id' | 'poNumber' | 'createdAt' | 'updatedAt'>) => Promise<PurchaseOrder>;
   updatePurchaseOrderStatus: (id: string, status: PurchaseOrder['status']) => void;
-  
+
   // Recipes
   recipes: Recipe[];
   addRecipe: (recipe: Omit<Recipe, 'id' | 'createdAt' | 'updatedAt' | 'totalCost' | 'profitMargin'>) => void;
   updateRecipe: (id: string, updates: Partial<Recipe>) => void;
   deleteRecipe: (id: string) => void;
-  
+
   // Shifts & Schedules
   shifts: Shift[];
   schedules: ScheduleEntry[];
@@ -148,14 +148,14 @@ interface StoreState {
   updateScheduleEntry: (id: string, updates: Partial<ScheduleEntry>) => void;
   deleteScheduleEntry: (id: string) => void;
   getWeekSchedule: (startDate: string) => ScheduleEntry[];
-  
+
   // Promotions
   promotions: Promotion[];
   addPromotion: (promo: Omit<Promotion, 'id' | 'createdAt' | 'usageCount'>) => void;
   updatePromotion: (id: string, updates: Partial<Promotion>) => void;
   deletePromotion: (id: string) => void;
   validatePromoCode: (code: string) => Promotion | null;
-  
+
   // Notifications
   notifications: Notification[];
   addNotification: (notification: Omit<Notification, 'id' | 'createdAt' | 'isRead'>) => void;
@@ -163,7 +163,7 @@ interface StoreState {
   markAllNotificationsRead: () => void;
   deleteNotification: (id: string) => void;
   getUnreadCount: () => number;
-  
+
   // Menu Items
   menuItems: MenuItem[];
   addMenuItem: (item: Omit<MenuItem, 'id'>) => void;
@@ -171,20 +171,20 @@ interface StoreState {
   deleteMenuItem: (id: string) => void;
   toggleMenuItemAvailability: (id: string) => void;
   getMenuCategories: () => string[];
-  
+
   // Modifier Groups
   modifierGroups: ModifierGroup[];
   addModifierGroup: (group: Omit<ModifierGroup, 'id'>) => void;
   updateModifierGroup: (id: string, updates: Partial<ModifierGroup>) => void;
   deleteModifierGroup: (id: string) => void;
-  
+
   // Modifier Options
   modifierOptions: ModifierOption[];
   addModifierOption: (option: Omit<ModifierOption, 'id'>) => void;
   updateModifierOption: (id: string, updates: Partial<ModifierOption>) => void;
   deleteModifierOption: (id: string) => void;
   getOptionsForGroup: (groupId: string) => ModifierOption[];
-  
+
   // KPI & Gamification
   staffKPI: StaffKPI[];
   leaveRecords: LeaveRecord[];
@@ -205,7 +205,7 @@ interface StoreState {
   addCustomerReview: (review: Omit<CustomerReview, 'id' | 'createdAt'>) => void;
   getStaffReviews: (staffId: string) => CustomerReview[];
   getStaffBonus: (staffId: string, period?: string) => number;
-  
+
   // Staff Portal - Checklist
   checklistTemplates: ChecklistItemTemplate[];
   checklistCompletions: ChecklistCompletion[];
@@ -217,7 +217,7 @@ interface StoreState {
   updateChecklistItem: (completionId: string, templateId: string, updates: Partial<ChecklistCompletion['items'][0]>) => void;
   completeChecklist: (completionId: string) => void;
   getTodayChecklist: (type: 'opening' | 'closing') => ChecklistCompletion | undefined;
-  
+
   // Staff Portal - Leave
   leaveBalances: LeaveBalance[];
   leaveRequests: LeaveRequest[];
@@ -228,7 +228,7 @@ interface StoreState {
   rejectLeaveRequest: (id: string, approverId: string, approverName: string, reason: string) => void;
   getStaffLeaveRequests: (staffId: string) => LeaveRequest[];
   getPendingLeaveRequests: () => LeaveRequest[];
-  
+
   // Staff Portal - Claims
   claimRequests: ClaimRequest[];
   addClaimRequest: (claim: Omit<ClaimRequest, 'id' | 'createdAt'>) => void;
@@ -238,7 +238,7 @@ interface StoreState {
   markClaimAsPaid: (id: string) => void;
   getStaffClaimRequests: (staffId: string) => ClaimRequest[];
   getPendingClaimRequests: () => ClaimRequest[];
-  
+
   // Staff Portal - General Requests
   staffRequests: StaffRequest[];
   addStaffRequest: (request: Omit<StaffRequest, 'id' | 'createdAt'>) => void;
@@ -247,14 +247,14 @@ interface StoreState {
   rejectStaffRequest: (id: string, responseNote: string) => void;
   getStaffRequestsByStaff: (staffId: string) => StaffRequest[];
   getPendingStaffRequests: () => StaffRequest[];
-  
+
   // Staff Portal - Announcements
   announcements: Announcement[];
   addAnnouncement: (announcement: Omit<Announcement, 'id' | 'createdAt'>) => void;
   updateAnnouncement: (id: string, updates: Partial<Announcement>) => void;
   deleteAnnouncement: (id: string) => void;
   getActiveAnnouncements: (role?: 'Manager' | 'Staff') => Announcement[];
-  
+
   // Order History & Void/Refund
   orderHistory: OrderHistoryItem[];
   voidRefundRequests: VoidRefundRequest[];
@@ -267,7 +267,7 @@ interface StoreState {
   getPendingVoidRefundRequests: () => VoidRefundRequest[];
   getVoidRefundRequestsByStaff: (staffId: string) => VoidRefundRequest[];
   getPendingVoidRefundCount: () => number;
-  
+
   // Oil Tracker / Equipment
   oilTrackers: OilTracker[];
   oilChangeRequests: OilChangeRequest[];
@@ -281,7 +281,7 @@ interface StoreState {
   getPendingOilRequests: () => OilChangeRequest[];
   getOilRequestsByStaff: (staffId: string) => OilChangeRequest[];
   getPendingOilRequestCount: () => number;
-  
+
   // Utility
   isInitialized: boolean;
 }
@@ -310,60 +310,60 @@ const setToStorage = <T,>(key: string, value: T): void => {
 
 export function StoreProvider({ children }: { children: ReactNode }) {
   const [isInitialized, setIsInitialized] = useState(false);
-  
+
   // Inventory state
   const [inventory, setInventory] = useState<StockItem[]>([]);
   const [inventoryLogs, setInventoryLogs] = useState<InventoryLog[]>([]);
-  
+
   // Staff state
   const [staff, setStaff] = useState<StaffProfile[]>([]);
   const [attendance, setAttendance] = useState<AttendanceRecord[]>([]);
-  
+
   // Orders state
   const [orders, setOrders] = useState<Order[]>([]);
-  
+
   // Production logs state
   const [productionLogs, setProductionLogs] = useState<ProductionLog[]>([]);
-  
+
   // Delivery orders state
   const [deliveryOrders, setDeliveryOrders] = useState<DeliveryOrder[]>([]);
-  
+
   // Finance state
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [cashFlows, setCashFlows] = useState<DailyCashFlow[]>([]);
-  
+
   // Customer state
   const [customers, setCustomers] = useState<Customer[]>([]);
-  
+
   // Supplier state
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>([]);
-  
+
   // Recipe state
   const [recipes, setRecipes] = useState<Recipe[]>([]);
-  
+
   // Shift & Schedule state
   const [shifts, setShifts] = useState<Shift[]>([]);
   const [schedules, setSchedules] = useState<ScheduleEntry[]>([]);
-  
+
   // Promotion state
   const [promotions, setPromotions] = useState<Promotion[]>([]);
-  
+
   // Notification state
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  
+
   // Menu state
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [modifierGroups, setModifierGroups] = useState<ModifierGroup[]>([]);
   const [modifierOptions, setModifierOptions] = useState<ModifierOption[]>([]);
-  
+
   // KPI & Gamification state
   const [staffKPI, setStaffKPI] = useState<StaffKPI[]>([]);
   const [leaveRecords, setLeaveRecords] = useState<LeaveRecord[]>([]);
   const [trainingRecords, setTrainingRecords] = useState<TrainingRecord[]>([]);
   const [otRecords, setOTRecords] = useState<OTRecord[]>([]);
   const [customerReviews, setCustomerReviews] = useState<CustomerReview[]>([]);
-  
+
   // Staff Portal state
   const [checklistTemplates, setChecklistTemplates] = useState<ChecklistItemTemplate[]>([]);
   const [checklistCompletions, setChecklistCompletions] = useState<ChecklistCompletion[]>([]);
@@ -372,11 +372,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [claimRequests, setClaimRequests] = useState<ClaimRequest[]>([]);
   const [staffRequests, setStaffRequests] = useState<StaffRequest[]>([]);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
-  
+
   // Order History & Void/Refund state
   const [orderHistory, setOrderHistory] = useState<OrderHistoryItem[]>([]);
   const [voidRefundRequests, setVoidRefundRequests] = useState<VoidRefundRequest[]>([]);
-  
+
   // Oil Tracker / Equipment state
   const [oilTrackers, setOilTrackers] = useState<OilTracker[]>([]);
   const [oilChangeRequests, setOilChangeRequests] = useState<OilChangeRequest[]>([]);
@@ -387,75 +387,80 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     const initializeData = async () => {
       // Try to load from Supabase first
       const supabaseData = await SupabaseSync.loadAllDataFromSupabase();
-      
+
       // Set data from Supabase if available, otherwise fallback to localStorage
+      // Core data
       setInventory(supabaseData.inventory.length > 0 ? supabaseData.inventory : getFromStorage(STORAGE_KEYS.INVENTORY, MOCK_STOCK));
       setStaff(supabaseData.staff.length > 0 ? supabaseData.staff : getFromStorage(STORAGE_KEYS.STAFF, MOCK_STAFF));
       setMenuItems(supabaseData.menuItems.length > 0 ? supabaseData.menuItems : getFromStorage(STORAGE_KEYS.MENU_ITEMS, MOCK_MENU.map(item => ({ ...item, isAvailable: true, modifierGroupIds: [] }))));
+      setModifierGroups(supabaseData.modifierGroups.length > 0 ? supabaseData.modifierGroups : getFromStorage(STORAGE_KEYS.MODIFIER_GROUPS, MOCK_MODIFIER_GROUPS));
+      setModifierOptions(supabaseData.modifierOptions.length > 0 ? supabaseData.modifierOptions : getFromStorage(STORAGE_KEYS.MODIFIER_OPTIONS, MOCK_MODIFIER_OPTIONS));
       setOrders(supabaseData.orders.length > 0 ? supabaseData.orders : getFromStorage(STORAGE_KEYS.ORDERS, []));
       setCustomers(supabaseData.customers.length > 0 ? supabaseData.customers : getFromStorage(STORAGE_KEYS.CUSTOMERS, []));
       setExpenses(supabaseData.expenses.length > 0 ? supabaseData.expenses : getFromStorage(STORAGE_KEYS.EXPENSES, MOCK_EXPENSES));
       setAttendance(supabaseData.attendance.length > 0 ? supabaseData.attendance : getFromStorage(STORAGE_KEYS.ATTENDANCE, MOCK_ATTENDANCE));
-      
-      // Load remaining data from localStorage (not yet in Supabase)
-      setInventoryLogs(getFromStorage(STORAGE_KEYS.INVENTORY_LOGS, []));
-      setProductionLogs(getFromStorage(STORAGE_KEYS.PRODUCTION_LOGS, MOCK_PRODUCTION_LOGS));
-      setDeliveryOrders(getFromStorage(STORAGE_KEYS.DELIVERY_ORDERS, MOCK_DELIVERY_ORDERS));
-      setCashFlows(getFromStorage(STORAGE_KEYS.CASH_FLOWS, MOCK_CASH_FLOWS));
-      setSuppliers(getFromStorage(STORAGE_KEYS.SUPPLIERS, []));
-      setPurchaseOrders(getFromStorage(STORAGE_KEYS.PURCHASE_ORDERS, []));
-      setRecipes(getFromStorage(STORAGE_KEYS.RECIPES, []));
-      setShifts(getFromStorage(STORAGE_KEYS.SHIFTS, MOCK_SHIFTS));
-      
-      // Load schedules and check if they need refreshing
-      const loadedSchedules = getFromStorage(STORAGE_KEYS.SCHEDULES, MOCK_SCHEDULES);
-      const today = new Date().toISOString().split('T')[0];
-      const hasToday = loadedSchedules.some((s: ScheduleEntry) => s.date === today);
-      
-      // If schedules don't include today, they're stale - regenerate
-      if (!hasToday && loadedSchedules.length > 0) {
-        console.log('[Schedule Refresh] Stale schedules detected, regenerating...');
-        const freshSchedules = generateMockSchedules();
-        setSchedules(freshSchedules);
-        // Save immediately to localStorage
-        setToStorage(STORAGE_KEYS.SCHEDULES, freshSchedules);
+      setSuppliers(supabaseData.suppliers.length > 0 ? supabaseData.suppliers : getFromStorage(STORAGE_KEYS.SUPPLIERS, []));
+      setPurchaseOrders(supabaseData.purchaseOrders.length > 0 ? supabaseData.purchaseOrders : getFromStorage(STORAGE_KEYS.PURCHASE_ORDERS, []));
+
+      // Extended data - now also from Supabase
+      setInventoryLogs(getFromStorage(STORAGE_KEYS.INVENTORY_LOGS, [])); // TODO: Add to Supabase later
+      setProductionLogs(supabaseData.productionLogs?.length > 0 ? supabaseData.productionLogs : getFromStorage(STORAGE_KEYS.PRODUCTION_LOGS, MOCK_PRODUCTION_LOGS));
+      setDeliveryOrders(supabaseData.deliveryOrders?.length > 0 ? supabaseData.deliveryOrders : getFromStorage(STORAGE_KEYS.DELIVERY_ORDERS, MOCK_DELIVERY_ORDERS));
+      setCashFlows(supabaseData.cashFlows?.length > 0 ? supabaseData.cashFlows : getFromStorage(STORAGE_KEYS.CASH_FLOWS, MOCK_CASH_FLOWS));
+      setRecipes(supabaseData.recipes?.length > 0 ? supabaseData.recipes : getFromStorage(STORAGE_KEYS.RECIPES, []));
+      setShifts(supabaseData.shifts?.length > 0 ? supabaseData.shifts : getFromStorage(STORAGE_KEYS.SHIFTS, MOCK_SHIFTS));
+
+      // Load schedules from Supabase or check if local needs refreshing
+      const supabaseSchedules = supabaseData.schedules || [];
+      if (supabaseSchedules.length > 0) {
+        setSchedules(supabaseSchedules);
       } else {
-        setSchedules(loadedSchedules);
-        if (hasToday) {
-          console.log('[Schedule Refresh] Schedules are up to date, includes today');
+        const loadedSchedules = getFromStorage(STORAGE_KEYS.SCHEDULES, MOCK_SCHEDULES);
+        const today = new Date().toISOString().split('T')[0];
+        const hasToday = loadedSchedules.some((s: ScheduleEntry) => s.date === today);
+
+        if (!hasToday && loadedSchedules.length > 0) {
+          console.log('[Schedule Refresh] Stale schedules detected, regenerating...');
+          const freshSchedules = generateMockSchedules();
+          setSchedules(freshSchedules);
+          setToStorage(STORAGE_KEYS.SCHEDULES, freshSchedules);
+        } else {
+          setSchedules(loadedSchedules);
         }
       }
-      
-      setPromotions(getFromStorage(STORAGE_KEYS.PROMOTIONS, []));
-      setNotifications(getFromStorage(STORAGE_KEYS.NOTIFICATIONS, []));
-      setModifierGroups(getFromStorage(STORAGE_KEYS.MODIFIER_GROUPS, []));
-      setModifierOptions(getFromStorage(STORAGE_KEYS.MODIFIER_OPTIONS, []));
-      setStaffKPI(getFromStorage(STORAGE_KEYS.STAFF_KPI, MOCK_STAFF_KPI));
-      setLeaveRecords(getFromStorage(STORAGE_KEYS.LEAVE_RECORDS, MOCK_LEAVE_RECORDS));
-      setTrainingRecords(getFromStorage(STORAGE_KEYS.TRAINING_RECORDS, MOCK_TRAINING_RECORDS));
-      setOTRecords(getFromStorage(STORAGE_KEYS.OT_RECORDS, MOCK_OT_RECORDS));
-      setCustomerReviews(getFromStorage(STORAGE_KEYS.CUSTOMER_REVIEWS, MOCK_CUSTOMER_REVIEWS));
-      setChecklistTemplates(getFromStorage(STORAGE_KEYS.CHECKLIST_TEMPLATES, MOCK_CHECKLIST_TEMPLATES));
-      
-      // Debug: Log checklist templates count
-      const templates = getFromStorage(STORAGE_KEYS.CHECKLIST_TEMPLATES, MOCK_CHECKLIST_TEMPLATES);
-      console.log(`[Data Init] Loaded ${templates.length} checklist templates`);
-      
-      setChecklistCompletions(getFromStorage(STORAGE_KEYS.CHECKLIST_COMPLETIONS, MOCK_CHECKLIST_COMPLETIONS));
-      setLeaveBalances(getFromStorage(STORAGE_KEYS.LEAVE_BALANCES, MOCK_LEAVE_BALANCES));
-      setLeaveRequests(getFromStorage(STORAGE_KEYS.LEAVE_REQUESTS, MOCK_LEAVE_REQUESTS));
-      setClaimRequests(getFromStorage(STORAGE_KEYS.CLAIM_REQUESTS, MOCK_CLAIM_REQUESTS));
-      setStaffRequests(getFromStorage(STORAGE_KEYS.STAFF_REQUESTS, MOCK_STAFF_REQUESTS));
-      setAnnouncements(getFromStorage(STORAGE_KEYS.ANNOUNCEMENTS, MOCK_ANNOUNCEMENTS));
+
+      setPromotions(supabaseData.promotions?.length > 0 ? supabaseData.promotions : getFromStorage(STORAGE_KEYS.PROMOTIONS, []));
+      setNotifications(supabaseData.notifications?.length > 0 ? supabaseData.notifications : getFromStorage(STORAGE_KEYS.NOTIFICATIONS, []));
+
+      // KPI & Gamification
+      setStaffKPI(supabaseData.staffKPI?.length > 0 ? supabaseData.staffKPI : getFromStorage(STORAGE_KEYS.STAFF_KPI, MOCK_STAFF_KPI));
+      setLeaveRecords(supabaseData.leaveRecords?.length > 0 ? supabaseData.leaveRecords : getFromStorage(STORAGE_KEYS.LEAVE_RECORDS, MOCK_LEAVE_RECORDS));
+      setTrainingRecords(supabaseData.trainingRecords?.length > 0 ? supabaseData.trainingRecords : getFromStorage(STORAGE_KEYS.TRAINING_RECORDS, MOCK_TRAINING_RECORDS));
+      setOTRecords(supabaseData.otRecords?.length > 0 ? supabaseData.otRecords : getFromStorage(STORAGE_KEYS.OT_RECORDS, MOCK_OT_RECORDS));
+      setCustomerReviews(supabaseData.customerReviews?.length > 0 ? supabaseData.customerReviews : getFromStorage(STORAGE_KEYS.CUSTOMER_REVIEWS, MOCK_CUSTOMER_REVIEWS));
+
+      // Staff Portal
+      setChecklistTemplates(supabaseData.checklistTemplates?.length > 0 ? supabaseData.checklistTemplates : getFromStorage(STORAGE_KEYS.CHECKLIST_TEMPLATES, MOCK_CHECKLIST_TEMPLATES));
+      setChecklistCompletions(supabaseData.checklistCompletions?.length > 0 ? supabaseData.checklistCompletions : getFromStorage(STORAGE_KEYS.CHECKLIST_COMPLETIONS, MOCK_CHECKLIST_COMPLETIONS));
+      setLeaveBalances(supabaseData.leaveBalances?.length > 0 ? supabaseData.leaveBalances : getFromStorage(STORAGE_KEYS.LEAVE_BALANCES, MOCK_LEAVE_BALANCES));
+      setLeaveRequests(supabaseData.leaveRequests?.length > 0 ? supabaseData.leaveRequests : getFromStorage(STORAGE_KEYS.LEAVE_REQUESTS, MOCK_LEAVE_REQUESTS));
+      setClaimRequests(supabaseData.claimRequests?.length > 0 ? supabaseData.claimRequests : getFromStorage(STORAGE_KEYS.CLAIM_REQUESTS, MOCK_CLAIM_REQUESTS));
+      setStaffRequests(supabaseData.staffRequests?.length > 0 ? supabaseData.staffRequests : getFromStorage(STORAGE_KEYS.STAFF_REQUESTS, MOCK_STAFF_REQUESTS));
+      setAnnouncements(supabaseData.announcements?.length > 0 ? supabaseData.announcements : getFromStorage(STORAGE_KEYS.ANNOUNCEMENTS, MOCK_ANNOUNCEMENTS));
+
+      // Order History (void refund uses orders table)
       setOrderHistory(getFromStorage(STORAGE_KEYS.ORDER_HISTORY, MOCK_ORDER_HISTORY));
       setVoidRefundRequests(getFromStorage(STORAGE_KEYS.VOID_REFUND_REQUESTS, MOCK_VOID_REFUND_REQUESTS));
-      setOilTrackers(getFromStorage(STORAGE_KEYS.OIL_TRACKERS, MOCK_OIL_TRACKERS));
-      setOilChangeRequests(getFromStorage(STORAGE_KEYS.OIL_CHANGE_REQUESTS, []));
-      setOilActionHistory(getFromStorage(STORAGE_KEYS.OIL_ACTION_HISTORY, []));
-      
+
+      // Oil Trackers / Equipment
+      setOilTrackers(supabaseData.oilTrackers?.length > 0 ? supabaseData.oilTrackers : getFromStorage(STORAGE_KEYS.OIL_TRACKERS, MOCK_OIL_TRACKERS));
+      setOilChangeRequests(supabaseData.oilChangeRequests?.length > 0 ? supabaseData.oilChangeRequests : getFromStorage(STORAGE_KEYS.OIL_CHANGE_REQUESTS, []));
+      setOilActionHistory(supabaseData.oilActionHistory?.length > 0 ? supabaseData.oilActionHistory : getFromStorage(STORAGE_KEYS.OIL_ACTION_HISTORY, []));
+
+      console.log('[Data Init] All data loaded from Supabase with localStorage fallback');
       setIsInitialized(true);
     };
-    
+
     initializeData();
   }, []);
 
@@ -690,7 +695,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       ...item,
       id: `stock_${Date.now()}`,
     };
-    
+
     // Sync to Supabase
     try {
       const supabaseItem = await SupabaseSync.syncAddStockItem(newItem);
@@ -701,9 +706,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error('Failed to sync to Supabase, saving locally:', error);
     }
-    
+
     setInventory(prev => [...prev, newItem]);
-    
+
     // Add initial log
     const log: InventoryLog = {
       id: `log_${Date.now()}`,
@@ -726,8 +731,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error('Failed to sync update to Supabase:', error);
     }
-    
-    setInventory(prev => prev.map(item => 
+
+    setInventory(prev => prev.map(item =>
       item.id === id ? { ...item, ...updates } : item
     ));
   }, []);
@@ -739,7 +744,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error('Failed to sync delete to Supabase:', error);
     }
-    
+
     setInventory(prev => prev.filter(item => item.id !== id));
   }, []);
 
@@ -747,12 +752,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     setInventory(prev => {
       const item = prev.find(i => i.id === id);
       if (!item) return prev;
-      
+
       const previousQuantity = item.currentQuantity;
-      const newQuantity = type === 'in' 
-        ? previousQuantity + quantity 
+      const newQuantity = type === 'in'
+        ? previousQuantity + quantity
         : Math.max(0, previousQuantity - quantity);
-      
+
       // Add log
       const log: InventoryLog = {
         id: `log_${Date.now()}`,
@@ -766,8 +771,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         createdAt: new Date().toISOString(),
       };
       setInventoryLogs(prevLogs => [log, ...prevLogs]);
-      
-      return prev.map(i => 
+
+      return prev.map(i =>
         i.id === id ? { ...i, currentQuantity: newQuantity } : i
       );
     });
@@ -779,7 +784,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       ...staffData,
       id: `staff_${Date.now()}`,
     };
-    
+
     // Sync to Supabase
     try {
       const supabaseStaff = await SupabaseSync.syncAddStaff(newStaff);
@@ -789,7 +794,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error('Failed to sync staff to Supabase:', error);
     }
-    
+
     setStaff(prev => [...prev, newStaff]);
   }, []);
 
@@ -800,8 +805,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error('Failed to sync staff update to Supabase:', error);
     }
-    
-    setStaff(prev => prev.map(s => 
+
+    setStaff(prev => prev.map(s =>
       s.id === id ? { ...s, ...updates } : s
     ));
   }, []);
@@ -813,7 +818,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error('Failed to sync staff delete to Supabase:', error);
     }
-    
+
     setStaff(prev => prev.filter(s => s.id !== id));
   }, []);
 
@@ -827,24 +832,24 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     if (!staffMember) {
       return { success: false, message: 'Staf tidak dijumpai' };
     }
-    
+
     if (staffMember.pin !== pin) {
       return { success: false, message: 'PIN salah' };
     }
-    
+
     if (staffMember.status !== 'active') {
       return { success: false, message: 'Staf tidak aktif' };
     }
-    
+
     const today = new Date().toISOString().split('T')[0];
     const existingRecord = attendance.find(a => a.staffId === staffId && a.date === today);
-    
+
     if (existingRecord && existingRecord.clockInTime && !existingRecord.clockOutTime) {
       return { success: false, message: 'Sudah clock in hari ini' };
     }
-    
+
     const now = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
-    
+
     const newRecord: AttendanceRecord = {
       id: `att_${Date.now()}`,
       staffId,
@@ -853,7 +858,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       clockOutTime: undefined,
       breakDuration: 0,
     };
-    
+
     setAttendance(prev => [...prev, newRecord]);
     return { success: true, message: `Clock in berjaya pada ${now}` };
   }, [staff, attendance]);
@@ -861,17 +866,17 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const clockOut = useCallback((staffId: string): { success: boolean; message: string } => {
     const today = new Date().toISOString().split('T')[0];
     const record = attendance.find(a => a.staffId === staffId && a.date === today && a.clockInTime && !a.clockOutTime);
-    
+
     if (!record) {
       return { success: false, message: 'Tiada rekod clock in hari ini' };
     }
-    
+
     const now = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
-    
-    setAttendance(prev => prev.map(a => 
+
+    setAttendance(prev => prev.map(a =>
       a.id === record.id ? { ...a, clockOutTime: now } : a
     ));
-    
+
     return { success: true, message: `Clock out berjaya pada ${now}` };
   }, [attendance]);
 
@@ -883,7 +888,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       id: `order_${timestamp}`,
       orderNumber: `ORD-${timestamp.toString().slice(-6)}`,
     };
-    
+
     // Sync to Supabase
     try {
       const supabaseOrder = await SupabaseSync.syncAddOrder(newOrder);
@@ -893,7 +898,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error('Failed to sync order to Supabase:', error);
     }
-    
+
     setOrders(prev => [newOrder, ...prev]);
     return newOrder;
   }, []);
@@ -901,10 +906,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const updateOrderStatus = useCallback(async (orderId: string, status: Order['status'], staffId?: string) => {
     setOrders(prev => prev.map(order => {
       if (order.id !== orderId) return order;
-      
+
       const updates: Partial<Order> = { status };
       const now = new Date().toISOString();
-      
+
       // Record timestamps based on status change
       if (status === 'preparing') {
         updates.preparingStartedAt = now;
@@ -914,12 +919,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         // Keep preparedByStaffId if already set, or set it now
         if (staffId && !order.preparedByStaffId) updates.preparedByStaffId = staffId;
       }
-      
+
       // Sync to Supabase
       SupabaseSync.syncUpdateOrder(orderId, updates).catch(error => {
         console.error('Failed to sync order update to Supabase:', error);
       });
-      
+
       return { ...order, ...updates };
     }));
   }, []);
@@ -940,7 +945,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   // Delivery order actions
   const updateDeliveryStatus = useCallback((orderId: string, status: DeliveryOrder['status']) => {
-    setDeliveryOrders(prev => prev.map(order => 
+    setDeliveryOrders(prev => prev.map(order =>
       order.id === orderId ? { ...order, status } : order
     ));
   }, []);
@@ -952,7 +957,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       id: `exp_${Date.now()}`,
       createdAt: new Date().toISOString(),
     };
-    
+
     // Sync to Supabase
     try {
       const supabaseExpense = await SupabaseSync.syncAddExpense(newExpense);
@@ -962,7 +967,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error('Failed to sync expense to Supabase:', error);
     }
-    
+
     setExpenses(prev => [newExpense, ...prev]);
   }, []);
 
@@ -973,7 +978,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error('Failed to sync expense update to Supabase:', error);
     }
-    
+
     setExpenses(prev => prev.map(e => e.id === id ? { ...e, ...updates } : e));
   }, []);
 
@@ -984,7 +989,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error('Failed to sync expense delete to Supabase:', error);
     }
-    
+
     setExpenses(prev => prev.filter(e => e.id !== id));
   }, []);
 
@@ -1036,7 +1041,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       segment: 'new',
       createdAt: new Date().toISOString(),
     };
-    
+
     // Sync to Supabase
     try {
       const supabaseCustomer = await SupabaseSync.syncAddCustomer(newCustomer);
@@ -1046,7 +1051,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error('Failed to sync customer to Supabase:', error);
     }
-    
+
     setCustomers(prev => [newCustomer, ...prev]);
     return newCustomer;
   }, []);
@@ -1058,7 +1063,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error('Failed to sync customer update to Supabase:', error);
     }
-    
+
     setCustomers(prev => prev.map(c => c.id === id ? { ...c, ...updates } : c));
   }, []);
 
@@ -1076,32 +1081,46 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const redeemLoyaltyPoints = useCallback((customerId: string, points: number): boolean => {
     const customer = customers.find(c => c.id === customerId);
     if (!customer || customer.loyaltyPoints < points) return false;
-    setCustomers(prev => prev.map(c => 
+    setCustomers(prev => prev.map(c =>
       c.id === customerId ? { ...c, loyaltyPoints: c.loyaltyPoints - points } : c
     ));
     return true;
   }, [customers]);
 
   // Supplier actions
-  const addSupplier = useCallback((supplierData: Omit<Supplier, 'id' | 'createdAt' | 'rating'>) => {
+  const addSupplier = useCallback(async (supplierData: Omit<Supplier, 'id' | 'createdAt' | 'rating'>) => {
     const newSupplier: Supplier = {
       ...supplierData,
       id: `sup_${Date.now()}`,
       rating: 3,
       createdAt: new Date().toISOString(),
     };
-    setSuppliers(prev => [newSupplier, ...prev]);
+
+    // Sync to Supabase first
+    const syncedSupplier = await SupabaseSync.syncAddSupplier(newSupplier);
+
+    // If Supabase sync succeeded, use the returned data (with proper UUID), otherwise use local data
+    const finalSupplier = syncedSupplier || newSupplier;
+    setSuppliers(prev => [finalSupplier, ...prev]);
   }, []);
 
-  const updateSupplier = useCallback((id: string, updates: Partial<Supplier>) => {
+  const updateSupplier = useCallback(async (id: string, updates: Partial<Supplier>) => {
+    // Sync to Supabase
+    await SupabaseSync.syncUpdateSupplier(id, updates);
+
+    // Update local state
     setSuppliers(prev => prev.map(s => s.id === id ? { ...s, ...updates } : s));
   }, []);
 
-  const deleteSupplier = useCallback((id: string) => {
+  const deleteSupplier = useCallback(async (id: string) => {
+    // Sync to Supabase
+    await SupabaseSync.syncDeleteSupplier(id);
+
+    // Update local state
     setSuppliers(prev => prev.filter(s => s.id !== id));
   }, []);
 
-  const addPurchaseOrder = useCallback((poData: Omit<PurchaseOrder, 'id' | 'poNumber' | 'createdAt' | 'updatedAt'>): PurchaseOrder => {
+  const addPurchaseOrder = useCallback(async (poData: Omit<PurchaseOrder, 'id' | 'poNumber' | 'createdAt' | 'updatedAt'>): Promise<PurchaseOrder> => {
     const timestamp = Date.now();
     const newPO: PurchaseOrder = {
       ...poData,
@@ -1110,21 +1129,33 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
-    setPurchaseOrders(prev => [newPO, ...prev]);
-    return newPO;
+
+    // Sync to Supabase first
+    const syncedPO = await SupabaseSync.syncAddPurchaseOrder(newPO);
+
+    // If Supabase sync succeeded, use the returned data, otherwise use local data
+    const finalPO = syncedPO || newPO;
+    setPurchaseOrders(prev => [finalPO, ...prev]);
+    return finalPO;
   }, []);
 
-  const updatePurchaseOrderStatus = useCallback((id: string, status: PurchaseOrder['status']) => {
-    setPurchaseOrders(prev => prev.map(po => 
-      po.id === id ? { ...po, status, updatedAt: new Date().toISOString() } : po
+  const updatePurchaseOrderStatus = useCallback(async (id: string, status: PurchaseOrder['status']) => {
+    const updates = { status, updatedAt: new Date().toISOString() };
+
+    // Sync to Supabase
+    await SupabaseSync.syncUpdatePurchaseOrder(id, updates);
+
+    // Update local state
+    setPurchaseOrders(prev => prev.map(po =>
+      po.id === id ? { ...po, ...updates } : po
     ));
   }, []);
 
   // Recipe actions
   const addRecipe = useCallback((recipeData: Omit<Recipe, 'id' | 'createdAt' | 'updatedAt' | 'totalCost' | 'profitMargin'>) => {
     const totalCost = recipeData.ingredients.reduce((sum, ing) => sum + ing.totalCost, 0);
-    const profitMargin = recipeData.sellingPrice > 0 
-      ? ((recipeData.sellingPrice - totalCost) / recipeData.sellingPrice) * 100 
+    const profitMargin = recipeData.sellingPrice > 0
+      ? ((recipeData.sellingPrice - totalCost) / recipeData.sellingPrice) * 100
       : 0;
     const newRecipe: Recipe = {
       ...recipeData,
@@ -1203,7 +1234,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   const validatePromoCode = useCallback((code: string): Promotion | null => {
     const now = new Date();
-    const promo = promotions.find(p => 
+    const promo = promotions.find(p =>
       p.promoCode?.toLowerCase() === code.toLowerCase() &&
       p.status === 'active' &&
       new Date(p.startDate) <= now &&
@@ -1246,7 +1277,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       ...item,
       id: `menu_${Date.now()}`,
     };
-    
+
     // Sync to Supabase
     try {
       const supabaseItem = await SupabaseSync.syncAddMenuItem(newItem);
@@ -1256,7 +1287,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error('Failed to sync menu item to Supabase:', error);
     }
-    
+
     setMenuItems(prev => [...prev, newItem]);
   }, []);
 
@@ -1267,8 +1298,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error('Failed to sync menu item update to Supabase:', error);
     }
-    
-    setMenuItems(prev => prev.map(item => 
+
+    setMenuItems(prev => prev.map(item =>
       item.id === id ? { ...item, ...updates } : item
     ));
   }, []);
@@ -1280,12 +1311,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error('Failed to sync menu item delete to Supabase:', error);
     }
-    
+
     setMenuItems(prev => prev.filter(item => item.id !== id));
   }, []);
 
   const toggleMenuItemAvailability = useCallback((id: string) => {
-    setMenuItems(prev => prev.map(item => 
+    setMenuItems(prev => prev.map(item =>
       item.id === id ? { ...item, isAvailable: !item.isAvailable } : item
     ));
   }, []);
@@ -1296,21 +1327,27 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, [menuItems]);
 
   // Modifier Group actions
-  const addModifierGroup = useCallback((group: Omit<ModifierGroup, 'id'>) => {
+  const addModifierGroup = useCallback(async (group: Omit<ModifierGroup, 'id'>) => {
     const newGroup: ModifierGroup = {
       ...group,
       id: `modgroup_${Date.now()}`,
     };
     setModifierGroups(prev => [...prev, newGroup]);
+
+    // Sync to Supabase
+    await SupabaseSync.syncAddModifierGroup(newGroup);
   }, []);
 
-  const updateModifierGroup = useCallback((id: string, updates: Partial<ModifierGroup>) => {
-    setModifierGroups(prev => prev.map(group => 
+  const updateModifierGroup = useCallback(async (id: string, updates: Partial<ModifierGroup>) => {
+    setModifierGroups(prev => prev.map(group =>
       group.id === id ? { ...group, ...updates } : group
     ));
+
+    // Sync to Supabase
+    await SupabaseSync.syncUpdateModifierGroup(id, updates);
   }, []);
 
-  const deleteModifierGroup = useCallback((id: string) => {
+  const deleteModifierGroup = useCallback(async (id: string) => {
     // Delete the group
     setModifierGroups(prev => prev.filter(group => group.id !== id));
     // Delete all options in this group
@@ -1320,25 +1357,37 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       ...item,
       modifierGroupIds: item.modifierGroupIds.filter(gid => gid !== id)
     })));
+
+    // Sync to Supabase
+    await SupabaseSync.syncDeleteModifierGroup(id);
   }, []);
 
   // Modifier Option actions
-  const addModifierOption = useCallback((option: Omit<ModifierOption, 'id'>) => {
+  const addModifierOption = useCallback(async (option: Omit<ModifierOption, 'id'>) => {
     const newOption: ModifierOption = {
       ...option,
       id: `modopt_${Date.now()}`,
     };
     setModifierOptions(prev => [...prev, newOption]);
+
+    // Sync to Supabase
+    await SupabaseSync.syncAddModifierOption(newOption);
   }, []);
 
-  const updateModifierOption = useCallback((id: string, updates: Partial<ModifierOption>) => {
-    setModifierOptions(prev => prev.map(opt => 
+  const updateModifierOption = useCallback(async (id: string, updates: Partial<ModifierOption>) => {
+    setModifierOptions(prev => prev.map(opt =>
       opt.id === id ? { ...opt, ...updates } : opt
     ));
+
+    // Sync to Supabase
+    await SupabaseSync.syncUpdateModifierOption(id, updates);
   }, []);
 
-  const deleteModifierOption = useCallback((id: string) => {
+  const deleteModifierOption = useCallback(async (id: string) => {
     setModifierOptions(prev => prev.filter(opt => opt.id !== id));
+
+    // Sync to Supabase
+    await SupabaseSync.syncDeleteModifierOption(id);
   }, []);
 
   const getOptionsForGroup = useCallback((groupId: string): ModifierOption[] => {
@@ -1362,8 +1411,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         const updatedMetrics = { ...existing.metrics, ...metrics };
         const overallScore = calculateOverallScore(updatedMetrics);
         const bonusAmount = calculateBonus(overallScore);
-        return prev.map(k => 
-          k.id === existing.id 
+        return prev.map(k =>
+          k.id === existing.id
             ? { ...k, metrics: updatedMetrics, overallScore, bonusAmount, updatedAt: new Date().toISOString() }
             : k
         );
@@ -1401,7 +1450,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       const periodKPIs = prev.filter(k => k.period === period);
       const sorted = [...periodKPIs].sort((a, b) => b.overallScore - a.overallScore);
       const rankings = new Map(sorted.map((k, idx) => [k.id, idx + 1]));
-      return prev.map(k => 
+      return prev.map(k =>
         k.period === period ? { ...k, rank: rankings.get(k.id) || k.rank } : k
       );
     });
@@ -1520,7 +1569,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       if (c.id !== completionId) return c;
       return {
         ...c,
-        items: c.items.map(item => 
+        items: c.items.map(item =>
           item.templateId === templateId ? { ...item, ...updates } : item
         ),
       };
@@ -1791,10 +1840,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, [announcements]);
 
   // ==================== ORDER HISTORY & VOID/REFUND FUNCTIONS ====================
-  
+
   const getOrderHistory = useCallback((filters?: Partial<OrderHistoryFilters>): OrderHistoryItem[] => {
     let result = [...orderHistory];
-    
+
     if (filters) {
       // Filter by date range
       if (filters.dateRange?.start) {
@@ -1803,43 +1852,43 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       if (filters.dateRange?.end) {
         result = result.filter(o => o.createdAt <= filters.dateRange!.end + 'T23:59:59');
       }
-      
+
       // Filter by status
       if (filters.status && filters.status !== 'all') {
         result = result.filter(o => {
-          if (filters.status === 'voided' || filters.status === 'refunded' || 
-              filters.status === 'partial_refund' || filters.status === 'pending_void' || 
-              filters.status === 'pending_refund') {
+          if (filters.status === 'voided' || filters.status === 'refunded' ||
+            filters.status === 'partial_refund' || filters.status === 'pending_void' ||
+            filters.status === 'pending_refund') {
             return o.voidRefundStatus === filters.status;
           }
           return o.status === filters.status;
         });
       }
-      
+
       // Filter by payment method
       if (filters.paymentMethod && filters.paymentMethod !== 'all') {
         result = result.filter(o => o.paymentMethod === filters.paymentMethod);
       }
-      
+
       // Filter by order type
       if (filters.orderType && filters.orderType !== 'all') {
         result = result.filter(o => o.orderType === filters.orderType);
       }
-      
+
       // Filter by outlet
       if (filters.outletId && filters.outletId !== 'all') {
         result = result.filter(o => o.outletId === filters.outletId);
       }
-      
+
       // Filter by staff
       if (filters.staffId && filters.staffId !== 'all') {
         result = result.filter(o => o.cashierId === filters.staffId);
       }
-      
+
       // Search query
       if (filters.searchQuery) {
         const query = filters.searchQuery.toLowerCase();
-        result = result.filter(o => 
+        result = result.filter(o =>
           o.orderNumber.toLowerCase().includes(query) ||
           o.customerName?.toLowerCase().includes(query) ||
           o.cashierName?.toLowerCase().includes(query) ||
@@ -1847,7 +1896,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         );
       }
     }
-    
+
     // Sort by date descending
     return result.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }, [orderHistory]);
@@ -1857,20 +1906,20 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, [orderHistory]);
 
   const requestVoid = useCallback((
-    orderId: string, 
-    reason: string, 
-    requestedBy: string, 
+    orderId: string,
+    reason: string,
+    requestedBy: string,
     requestedByName: string
   ): { success: boolean; error?: string } => {
     const order = orderHistory.find(o => o.id === orderId);
     if (!order) {
       return { success: false, error: 'Order not found' };
     }
-    
+
     if (order.voidRefundStatus !== 'none') {
       return { success: false, error: 'Order already has a pending or completed void/refund request' };
     }
-    
+
     const newRequest: VoidRefundRequest = {
       id: `req_${Date.now()}`,
       orderId,
@@ -1886,22 +1935,22 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       inventoryReversed: false,
       createdAt: new Date().toISOString(),
     };
-    
+
     setVoidRefundRequests(prev => [...prev, newRequest]);
-    setOrderHistory(prev => prev.map(o => 
-      o.id === orderId 
+    setOrderHistory(prev => prev.map(o =>
+      o.id === orderId
         ? { ...o, voidRefundStatus: 'pending_void' as const, pendingRequest: newRequest }
         : o
     ));
-    
+
     return { success: true };
   }, [orderHistory]);
 
   const requestRefund = useCallback((
-    orderId: string, 
-    amount: number, 
-    reason: string, 
-    requestedBy: string, 
+    orderId: string,
+    amount: number,
+    reason: string,
+    requestedBy: string,
     requestedByName: string,
     items?: RefundItem[]
   ): { success: boolean; error?: string } => {
@@ -1909,13 +1958,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     if (!order) {
       return { success: false, error: 'Order not found' };
     }
-    
+
     if (order.voidRefundStatus !== 'none') {
       return { success: false, error: 'Order already has a pending or completed void/refund request' };
     }
-    
+
     const isPartial = items && items.length > 0 && amount < order.total;
-    
+
     const newRequest: VoidRefundRequest = {
       id: `req_${Date.now()}`,
       orderId,
@@ -1932,82 +1981,82 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       inventoryReversed: false,
       createdAt: new Date().toISOString(),
     };
-    
+
     setVoidRefundRequests(prev => [...prev, newRequest]);
-    setOrderHistory(prev => prev.map(o => 
-      o.id === orderId 
+    setOrderHistory(prev => prev.map(o =>
+      o.id === orderId
         ? { ...o, voidRefundStatus: 'pending_refund' as const, pendingRequest: newRequest }
         : o
     ));
-    
+
     return { success: true };
   }, [orderHistory]);
 
   const approveVoidRefund = useCallback((
-    requestId: string, 
-    approvedBy: string, 
+    requestId: string,
+    approvedBy: string,
     approvedByName: string
   ): { success: boolean; error?: string } => {
     const request = voidRefundRequests.find(r => r.id === requestId);
     if (!request) {
       return { success: false, error: 'Request not found' };
     }
-    
+
     if (request.status !== 'pending') {
       return { success: false, error: 'Request is not pending' };
     }
-    
+
     const order = orderHistory.find(o => o.id === request.orderId);
     if (!order) {
       return { success: false, error: 'Order not found' };
     }
-    
+
     const now = new Date().toISOString();
     const reversalAmount = request.amount || order.total;
-    
+
     // Update request status
-    setVoidRefundRequests(prev => prev.map(r => 
-      r.id === requestId 
-        ? { 
-            ...r, 
-            status: 'approved' as const, 
-            approvedBy, 
-            approvedByName, 
-            approvedAt: now,
-            salesReversed: true,
-            inventoryReversed: true,
-            reversalDetails: {
-              salesDeducted: reversalAmount,
-              inventoryItems: order.items.map(item => ({
-                itemId: item.id,
-                itemName: item.name,
-                quantity: item.quantity
-              }))
-            }
+    setVoidRefundRequests(prev => prev.map(r =>
+      r.id === requestId
+        ? {
+          ...r,
+          status: 'approved' as const,
+          approvedBy,
+          approvedByName,
+          approvedAt: now,
+          salesReversed: true,
+          inventoryReversed: true,
+          reversalDetails: {
+            salesDeducted: reversalAmount,
+            inventoryItems: order.items.map(item => ({
+              itemId: item.id,
+              itemName: item.name,
+              quantity: item.quantity
+            }))
           }
+        }
         : r
     ));
-    
+
     // Update order status
-    const newStatus = request.type === 'void' ? 'voided' : 
-                      request.type === 'partial_refund' ? 'partial_refund' : 'refunded';
-    
-    setOrderHistory(prev => prev.map(o => 
-      o.id === request.orderId 
-        ? { 
-            ...o, 
-            voidRefundStatus: newStatus as any,
-            refundAmount: reversalAmount,
-            refundReason: request.reason,
-            ...(request.type === 'void' 
-              ? { voidedAt: now, voidedBy: approvedBy, voidedByName: approvedByName }
-              : { refundedAt: now, refundedBy: approvedBy, refundedByName: approvedByName }
-            ),
-            pendingRequest: undefined
-          }
+    const newStatus = request.type === 'void' ? 'voided' :
+      request.type === 'partial_refund' ? 'partial_refund' : 'refunded';
+
+    setOrderHistory(prev => prev.map(o =>
+      o.id === request.orderId
+        ? {
+          ...o,
+          voidRefundStatus: newStatus as any,
+          refundAmount: reversalAmount,
+          refundReason: request.reason,
+          ...(request.type === 'void'
+            ? { voidedAt: now, voidedBy: approvedBy, voidedByName: approvedByName }
+            : { refundedAt: now, refundedBy: approvedBy, refundedByName: approvedByName }
+          ),
+          pendingRequest: undefined
+        }
         : o
     ));
-    
+
     // Reverse sales - update cash flow
     const today = new Date().toISOString().split('T')[0];
     const existingCashFlow = cashFlows.find(cf => cf.date === today);
@@ -2026,7 +2075,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         return cf;
       }));
     }
-    
+
     // Reverse inventory - add stock back
     const itemsToReverse = request.itemsToRefund || order.items.map(item => ({
       itemId: item.id,
@@ -2034,37 +2083,37 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       quantity: item.quantity,
       amount: item.itemTotal * item.quantity
     }));
-    
+
     // Note: In a real implementation, we would look up inventory mappings
     // and call adjustStock for each inventory item
-    
+
     return { success: true };
   }, [voidRefundRequests, orderHistory, cashFlows]);
 
   const rejectVoidRefund = useCallback((
-    requestId: string, 
-    rejectedBy: string, 
-    rejectedByName: string, 
+    requestId: string,
+    rejectedBy: string,
+    rejectedByName: string,
     reason: string
   ): void => {
     const request = voidRefundRequests.find(r => r.id === requestId);
     if (!request) return;
-    
-    setVoidRefundRequests(prev => prev.map(r => 
-      r.id === requestId 
-        ? { 
-            ...r, 
-            status: 'rejected' as const, 
-            approvedBy: rejectedBy, 
-            approvedByName: rejectedByName, 
-            approvedAt: new Date().toISOString(),
-            rejectionReason: reason
-          }
+
+    setVoidRefundRequests(prev => prev.map(r =>
+      r.id === requestId
+        ? {
+          ...r,
+          status: 'rejected' as const,
+          approvedBy: rejectedBy,
+          approvedByName: rejectedByName,
+          approvedAt: new Date().toISOString(),
+          rejectionReason: reason
+        }
         : r
     ));
-    
-    setOrderHistory(prev => prev.map(o => 
-      o.id === request.orderId 
+
+    setOrderHistory(prev => prev.map(o =>
+      o.id === request.orderId
         ? { ...o, voidRefundStatus: 'none' as const, pendingRequest: undefined }
         : o
     ));
@@ -2095,7 +2144,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const updateOilTracker = useCallback((fryerId: string, updates: Partial<OilTracker>) => {
-    setOilTrackers(prev => prev.map(t => 
+    setOilTrackers(prev => prev.map(t =>
       t.fryerId === fryerId ? { ...t, ...updates } : t
     ));
   }, []);
@@ -2135,7 +2184,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
     const previousCycles = tracker.currentCycles;
     let proposedCycles = 0;
-    
+
     if (actionType === 'topup' && topupPercentage) {
       // Reduce cycles by the percentage
       proposedCycles = Math.round(previousCycles * (1 - topupPercentage / 100));
@@ -2157,7 +2206,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     };
 
     setOilChangeRequests(prev => [...prev, newRequest]);
-    setOilTrackers(prev => prev.map(t => 
+    setOilTrackers(prev => prev.map(t =>
       t.fryerId === fryerId ? { ...t, hasPendingRequest: true } : t
     ));
 
@@ -2182,7 +2231,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     const today = now.split('T')[0];
 
     // Update request status
-    setOilChangeRequests(prev => prev.map(r => 
+    setOilChangeRequests(prev => prev.map(r =>
       r.id === requestId
         ? { ...r, status: 'approved' as const, reviewedAt: now, reviewedBy: approvedByName }
         : r
@@ -2191,12 +2240,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     // Update oil tracker
     setOilTrackers(prev => prev.map(t => {
       if (t.fryerId !== request.fryerId) return t;
-      
+
       const updated = {
         ...t,
         currentCycles: request.proposedCycles,
         hasPendingRequest: false,
-        ...(request.actionType === 'change' 
+        ...(request.actionType === 'change'
           ? { lastChangedDate: today }
           : { lastTopupDate: today }
         ),
@@ -2232,20 +2281,20 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     const request = oilChangeRequests.find(r => r.id === requestId);
     if (!request) return;
 
-    setOilChangeRequests(prev => prev.map(r => 
+    setOilChangeRequests(prev => prev.map(r =>
       r.id === requestId
-        ? { 
-            ...r, 
-            status: 'rejected' as const, 
-            reviewedAt: new Date().toISOString(), 
-            reviewedBy: rejectedByName,
-            rejectionReason: reason 
-          }
+        ? {
+          ...r,
+          status: 'rejected' as const,
+          reviewedAt: new Date().toISOString(),
+          reviewedBy: rejectedByName,
+          rejectionReason: reason
+        }
         : r
     ));
 
     // Remove pending flag from tracker
-    setOilTrackers(prev => prev.map(t => 
+    setOilTrackers(prev => prev.map(t =>
       t.fryerId === request.fryerId ? { ...t, hasPendingRequest: false } : t
     ));
   }, [oilChangeRequests]);
@@ -2272,7 +2321,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     updateStockItem,
     deleteStockItem,
     adjustStock,
-    
+
     // Staff
     staff,
     attendance,
@@ -2282,21 +2331,21 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     clockIn,
     clockOut,
     getStaffAttendanceToday,
-    
+
     // Orders
     orders,
     addOrder,
     updateOrderStatus,
     getTodayOrders,
-    
+
     // Production Logs
     productionLogs,
     addProductionLog,
-    
+
     // Delivery Orders
     deliveryOrders,
     updateDeliveryStatus,
-    
+
     // Finance
     expenses,
     cashFlows,
@@ -2307,14 +2356,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     getTodayCashFlow,
     getMonthlyExpenses,
     getMonthlyRevenue,
-    
+
     // Customers
     customers,
     addCustomer,
     updateCustomer,
     addLoyaltyPoints,
     redeemLoyaltyPoints,
-    
+
     // Suppliers
     suppliers,
     purchaseOrders,
@@ -2323,13 +2372,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     deleteSupplier,
     addPurchaseOrder,
     updatePurchaseOrderStatus,
-    
+
     // Recipes
     recipes,
     addRecipe,
     updateRecipe,
     deleteRecipe,
-    
+
     // Shifts & Schedules
     shifts,
     schedules,
@@ -2340,14 +2389,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     updateScheduleEntry,
     deleteScheduleEntry,
     getWeekSchedule,
-    
+
     // Promotions
     promotions,
     addPromotion,
     updatePromotion,
     deletePromotion,
     validatePromoCode,
-    
+
     // Notifications
     notifications,
     addNotification,
@@ -2355,7 +2404,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     markAllNotificationsRead,
     deleteNotification,
     getUnreadCount,
-    
+
     // Menu Items
     menuItems,
     addMenuItem,
@@ -2363,20 +2412,20 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     deleteMenuItem,
     toggleMenuItemAvailability,
     getMenuCategories,
-    
+
     // Modifier Groups
     modifierGroups,
     addModifierGroup,
     updateModifierGroup,
     deleteModifierGroup,
-    
+
     // Modifier Options
     modifierOptions,
     addModifierOption,
     updateModifierOption,
     deleteModifierOption,
     getOptionsForGroup,
-    
+
     // KPI & Gamification
     staffKPI,
     leaveRecords,
@@ -2397,7 +2446,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     addCustomerReview,
     getStaffReviews,
     getStaffBonus,
-    
+
     // Staff Portal - Checklist
     checklistTemplates,
     checklistCompletions,
@@ -2409,7 +2458,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     updateChecklistItem,
     completeChecklist,
     getTodayChecklist,
-    
+
     // Staff Portal - Leave
     leaveBalances,
     leaveRequests,
@@ -2420,7 +2469,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     rejectLeaveRequest,
     getStaffLeaveRequests,
     getPendingLeaveRequests,
-    
+
     // Staff Portal - Claims
     claimRequests,
     addClaimRequest,
@@ -2430,7 +2479,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     markClaimAsPaid,
     getStaffClaimRequests,
     getPendingClaimRequests,
-    
+
     // Staff Portal - General Requests
     staffRequests,
     addStaffRequest,
@@ -2439,14 +2488,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     rejectStaffRequest,
     getStaffRequestsByStaff,
     getPendingStaffRequests,
-    
+
     // Staff Portal - Announcements
     announcements,
     addAnnouncement,
     updateAnnouncement,
     deleteAnnouncement,
     getActiveAnnouncements,
-    
+
     // Order History & Void/Refund
     orderHistory,
     voidRefundRequests,
@@ -2459,7 +2508,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     getPendingVoidRefundRequests,
     getVoidRefundRequestsByStaff,
     getPendingVoidRefundCount,
-    
+
     // Oil Tracker / Equipment
     oilTrackers,
     oilChangeRequests,
@@ -2473,7 +2522,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     getPendingOilRequests,
     getOilRequestsByStaff,
     getPendingOilRequestCount,
-    
+
     // Utility
     isInitialized,
   };
@@ -2744,7 +2793,7 @@ export function useOrderHistory() {
     orderHistory: store.orderHistory,
     getOrderHistory: store.getOrderHistory,
     getOrderById: store.getOrderById,
-    
+
     // Void/Refund Requests
     voidRefundRequests: store.voidRefundRequests,
     requestVoid: store.requestVoid,
@@ -2754,11 +2803,11 @@ export function useOrderHistory() {
     getPendingVoidRefundRequests: store.getPendingVoidRefundRequests,
     getVoidRefundRequestsByStaff: store.getVoidRefundRequestsByStaff,
     getPendingVoidRefundCount: store.getPendingVoidRefundCount,
-    
+
     // Related data
     staff: store.staff,
     orders: store.orders,
-    
+
     // Utility
     isInitialized: store.isInitialized,
   };
@@ -2780,10 +2829,10 @@ export function useEquipment() {
     getPendingOilRequests: store.getPendingOilRequests,
     getOilRequestsByStaff: store.getOilRequestsByStaff,
     getPendingOilRequestCount: store.getPendingOilRequestCount,
-    
+
     // Related data
     staff: store.staff,
-    
+
     // Utility
     isInitialized: store.isInitialized,
   };

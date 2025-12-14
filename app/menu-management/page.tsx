@@ -26,7 +26,7 @@ import {
 type TabType = 'menu' | 'groups' | 'options';
 type ModalType = 'add-menu' | 'edit-menu' | 'delete-menu' | 'add-group' | 'edit-group' | 'delete-group' | 'add-option' | 'edit-option' | 'delete-option' | null;
 
-const MENU_CATEGORIES = ['Nasi Lemak', 'Burger', 'Minuman', 'Sides', 'Dessert'];
+const MENU_CATEGORIES = ['Nasi Lemak', 'Burger', 'Minuman', 'Sides', 'Dessert', 'Alacart'];
 
 export default function MenuManagementPage() {
   const router = useRouter();

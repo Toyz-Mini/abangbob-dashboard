@@ -796,3 +796,5 @@ VALUES ('outlet-logos', 'outlet-logos', true);`
     </div>
   );
 }
+
+

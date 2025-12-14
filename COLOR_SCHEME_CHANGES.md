@@ -123,3 +123,5 @@ All gradient classes include proper white text colors and icon styling that work
 **Color scheme**: Warm & energetic, aligned with Abang Bob branding  
 
 The dashboard now features a cohesive, warm color palette that eliminates confusion with generic "success" colors and provides better visual hierarchy and brand alignment.
+
+
