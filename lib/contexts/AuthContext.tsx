@@ -318,6 +318,50 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem(STAFF_SESSION_KEY);
   }, []);
 
+  // Offline PIN login (defined before loginWithPin since it's used there)
+  const loginWithPinOffline = useCallback((staffId: string, pin: string) => {
+    try {
+      const staffData = localStorage.getItem('abangbob_staff');
+      if (!staffData) {
+        recordFailedAttempt();
+        return { success: false, error: 'Staff data not available', errorKey: AUTH_ERROR_KEYS.STAFF_DATA_NOT_AVAILABLE };
+      }
+
+      const staffList = JSON.parse(staffData);
+      const staff = staffList.find((s: any) => s.id === staffId && s.pin === pin);
+
+      if (!staff) {
+        recordFailedAttempt();
+        const remaining = loginAttemptsRemaining - 1;
+        const errorMsg = remaining > 0 
+          ? `ID atau PIN tidak sah. ${remaining} percubaan lagi sebelum dikunci.`
+          : 'ID atau PIN tidak sah.';
+        return { success: false, error: errorMsg, errorKey: AUTH_ERROR_KEYS.INVALID_CREDENTIALS };
+      }
+
+      if (staff.status !== 'active') {
+        return { success: false, error: 'Staff account not active', errorKey: AUTH_ERROR_KEYS.STAFF_NOT_ACTIVE };
+      }
+
+      const staffProfile: StaffProfile = {
+        id: staff.id,
+        name: staff.name,
+        email: staff.email || null,
+        role: staff.role,
+        status: staff.status,
+        outlet_id: null,
+      };
+
+      clearLockoutOnSuccess();
+      setCurrentStaff(staffProfile);
+      localStorage.setItem(STAFF_SESSION_KEY, JSON.stringify(staffProfile));
+      return { success: true };
+    } catch {
+      recordFailedAttempt();
+      return { success: false, error: 'Login error', errorKey: AUTH_ERROR_KEYS.LOGIN_ERROR };
+    }
+  }, [loginAttemptsRemaining, recordFailedAttempt, clearLockoutOnSuccess]);
+
   // Login with PIN (for staff)
   const loginWithPin = useCallback(async (staffId: string, pin: string) => {
     // Check if locked out
@@ -374,50 +418,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Offline mode
     return loginWithPinOffline(staffId, pin);
   }, [isLocked, lockoutRemainingTime, clearLockoutOnSuccess, loginWithPinOffline]);
-
-  // Offline PIN login
-  const loginWithPinOffline = useCallback((staffId: string, pin: string) => {
-    try {
-      const staffData = localStorage.getItem('abangbob_staff');
-      if (!staffData) {
-        recordFailedAttempt();
-        return { success: false, error: 'Staff data not available', errorKey: AUTH_ERROR_KEYS.STAFF_DATA_NOT_AVAILABLE };
-      }
-
-      const staffList = JSON.parse(staffData);
-      const staff = staffList.find((s: any) => s.id === staffId && s.pin === pin);
-
-      if (!staff) {
-        recordFailedAttempt();
-        const remaining = loginAttemptsRemaining - 1;
-        const errorMsg = remaining > 0 
-          ? `ID atau PIN tidak sah. ${remaining} percubaan lagi sebelum dikunci.`
-          : 'ID atau PIN tidak sah.';
-        return { success: false, error: errorMsg, errorKey: AUTH_ERROR_KEYS.INVALID_CREDENTIALS };
-      }
-
-      if (staff.status !== 'active') {
-        return { success: false, error: 'Staff account not active', errorKey: AUTH_ERROR_KEYS.STAFF_NOT_ACTIVE };
-      }
-
-      const staffProfile: StaffProfile = {
-        id: staff.id,
-        name: staff.name,
-        email: staff.email || null,
-        role: staff.role,
-        status: staff.status,
-        outlet_id: null,
-      };
-
-      clearLockoutOnSuccess();
-      setCurrentStaff(staffProfile);
-      localStorage.setItem(STAFF_SESSION_KEY, JSON.stringify(staffProfile));
-      return { success: true };
-    } catch {
-      recordFailedAttempt();
-      return { success: false, error: 'Login error', errorKey: AUTH_ERROR_KEYS.LOGIN_ERROR };
-    }
-  }, [loginAttemptsRemaining, recordFailedAttempt, clearLockoutOnSuccess]);
 
   // Logout staff
   const logoutStaff = useCallback(() => {

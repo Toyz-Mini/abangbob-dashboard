@@ -1081,7 +1081,7 @@ export default function POSPage() {
               Batal
             </button>
             <button
-              onClick={proceedToPayment}
+              onClick={() => proceedToPayment()}
               className={`btn btn-primary ${isProcessing ? 'loading' : ''}`}
               style={{ flex: 1 }}
               disabled={isProcessing}
