@@ -298,17 +298,21 @@ export default function AnalyticsPage() {
         // Export menu performance
         data = menuPerformance.map(item => ({
           name: item.name,
-          totalSold: item.totalSold,
+          category: item.category,
+          quantity: item.quantity,
           revenue: item.revenue,
-          avgRating: item.avgRating,
-          profitMargin: item.profitMargin,
+          cost: item.cost,
+          profit: item.revenue - item.cost,
+          margin: item.revenue > 0 ? ((item.revenue - item.cost) / item.revenue * 100).toFixed(1) : '0',
         }));
         columns = [
           { key: 'name', label: 'Menu' },
-          { key: 'totalSold', label: 'Total Terjual' },
+          { key: 'category', label: 'Kategori' },
+          { key: 'quantity', label: 'Total Terjual' },
           { key: 'revenue', label: 'Hasil (BND)', format: 'currency' },
-          { key: 'avgRating', label: 'Rating' },
-          { key: 'profitMargin', label: 'Margin (%)' },
+          { key: 'cost', label: 'Kos (BND)', format: 'currency' },
+          { key: 'profit', label: 'Untung (BND)', format: 'currency' },
+          { key: 'margin', label: 'Margin (%)' },
         ];
         filename = `menu_performance_${dateRange}_${new Date().toISOString().split('T')[0]}`;
       } else if (activeTab === 'staff') {
@@ -316,26 +320,30 @@ export default function AnalyticsPage() {
         data = staffProductivity.map(s => ({
           name: s.name,
           role: s.role,
-          ordersHandled: s.ordersHandled,
-          avgRating: s.avgRating,
-          revenue: s.revenue,
+          hoursWorked: s.hoursWorked,
+          ordersProcessed: s.ordersProcessed,
+          avgOrderTime: s.avgOrderTime.toFixed(1),
+          rating: s.rating.toFixed(1),
+          efficiency: s.efficiency.toFixed(0),
         }));
         columns = [
           { key: 'name', label: 'Nama' },
           { key: 'role', label: 'Jawatan' },
-          { key: 'ordersHandled', label: 'Pesanan' },
-          { key: 'avgRating', label: 'Rating' },
-          { key: 'revenue', label: 'Hasil (BND)', format: 'currency' },
+          { key: 'hoursWorked', label: 'Jam Bekerja' },
+          { key: 'ordersProcessed', label: 'Pesanan' },
+          { key: 'avgOrderTime', label: 'Masa Purata (min)' },
+          { key: 'rating', label: 'Rating' },
+          { key: 'efficiency', label: 'Efisiensi (%)' },
         ];
         filename = `staff_productivity_${dateRange}_${new Date().toISOString().split('T')[0]}`;
       } else if (activeTab === 'profit') {
         // Export profit margins
-        data = profitMarginData.map(day => ({
+        data = profitData.map(day => ({
           date: day.date,
           revenue: day.revenue,
           cost: day.cost,
           profit: day.profit,
-          margin: day.margin,
+          margin: day.margin.toFixed(1),
         }));
         columns = [
           { key: 'date', label: 'Tarikh' },
@@ -359,7 +367,7 @@ export default function AnalyticsPage() {
     } finally {
       setIsExporting(false);
     }
-  }, [activeTab, dailySalesTrend, menuPerformance, staffProductivity, profitMarginData, dateRange, showToast]);
+  }, [activeTab, dailySalesTrend, menuPerformance, staffProductivity, profitData, dateRange, showToast]);
 
   const handleExportPDF = useCallback(() => {
     try {
