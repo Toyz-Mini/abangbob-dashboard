@@ -1,6 +1,23 @@
 # AbangBob Dashboard - F&B Centralized Management System
 
+> **🎉 NEW: Full Supabase Integration!** Your data is now automatically saved to the cloud and synced across devices.  
+> **Quick Start**: Visit `/setup` to migrate your data to Supabase in 5 minutes!
+
 Satu "Centralized Dashboard" untuk perniagaan makanan yang menggabungkan fungsi POS, Inventori, HR, dan Akaun.
+
+## ✨ What's New
+
+**Data Protection & Cloud Sync** (December 2024)
+- ✅ Automatic cloud backup to Supabase
+- ✅ Multi-device real-time synchronization  
+- ✅ Offline support with localStorage fallback
+- ✅ Zero data loss on browser clear
+- ✅ Easy migration wizard at `/setup`
+
+**Quick Links:**
+- 📘 [Quick Reference Guide](./QUICK_REFERENCE.md) - Get started in 5 min
+- 📗 [Complete Integration Guide](./docs/SUPABASE_INTEGRATION_COMPLETE.md) - Full details
+- 📙 [Original Setup Guide](./docs/SUPABASE_SETUP.md) - Manual setup
 
 ## Tech Stack
 - **Framework**: Next.js 14 (React)

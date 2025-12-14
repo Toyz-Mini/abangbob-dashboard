@@ -11,6 +11,7 @@ import { MOCK_EXPENSES, MOCK_CASH_FLOWS } from './finance-data';
 import { MOCK_MENU } from './menu-data';
 import { MOCK_STAFF_KPI, MOCK_LEAVE_RECORDS, MOCK_TRAINING_RECORDS, MOCK_OT_RECORDS, MOCK_CUSTOMER_REVIEWS, calculateOverallScore, calculateBonus, DEFAULT_KPI_CONFIG } from './kpi-data';
 import { MOCK_CHECKLIST_TEMPLATES, MOCK_CHECKLIST_COMPLETIONS, MOCK_LEAVE_BALANCES, MOCK_LEAVE_REQUESTS, MOCK_CLAIM_REQUESTS, MOCK_STAFF_REQUESTS, MOCK_ANNOUNCEMENTS, MOCK_SHIFTS, MOCK_SCHEDULES } from './staff-portal-data';
+import * as SupabaseSync from './supabase-sync';
 
 // Storage keys
 const STORAGE_KEYS = {
@@ -381,56 +382,57 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [oilChangeRequests, setOilChangeRequests] = useState<OilChangeRequest[]>([]);
   const [oilActionHistory, setOilActionHistory] = useState<OilActionHistory[]>([]);
 
-  // Initialize from localStorage on mount
+  // Initialize from Supabase first, fallback to localStorage
   useEffect(() => {
-    setInventory(getFromStorage(STORAGE_KEYS.INVENTORY, MOCK_STOCK));
-    setInventoryLogs(getFromStorage(STORAGE_KEYS.INVENTORY_LOGS, []));
-    setStaff(getFromStorage(STORAGE_KEYS.STAFF, MOCK_STAFF));
-    setAttendance(getFromStorage(STORAGE_KEYS.ATTENDANCE, MOCK_ATTENDANCE));
-    setOrders(getFromStorage(STORAGE_KEYS.ORDERS, []));
-    setProductionLogs(getFromStorage(STORAGE_KEYS.PRODUCTION_LOGS, MOCK_PRODUCTION_LOGS));
-    setDeliveryOrders(getFromStorage(STORAGE_KEYS.DELIVERY_ORDERS, MOCK_DELIVERY_ORDERS));
-    setExpenses(getFromStorage(STORAGE_KEYS.EXPENSES, MOCK_EXPENSES));
-    setCashFlows(getFromStorage(STORAGE_KEYS.CASH_FLOWS, MOCK_CASH_FLOWS));
-    setCustomers(getFromStorage(STORAGE_KEYS.CUSTOMERS, []));
-    setSuppliers(getFromStorage(STORAGE_KEYS.SUPPLIERS, []));
-    setPurchaseOrders(getFromStorage(STORAGE_KEYS.PURCHASE_ORDERS, []));
-    setRecipes(getFromStorage(STORAGE_KEYS.RECIPES, []));
-    setShifts(getFromStorage(STORAGE_KEYS.SHIFTS, MOCK_SHIFTS));
-    setSchedules(getFromStorage(STORAGE_KEYS.SCHEDULES, MOCK_SCHEDULES));
-    setPromotions(getFromStorage(STORAGE_KEYS.PROMOTIONS, []));
-    setNotifications(getFromStorage(STORAGE_KEYS.NOTIFICATIONS, []));
-    // Initialize menu items with defaults from MOCK_MENU (adding new fields)
-    const defaultMenuItems: MenuItem[] = MOCK_MENU.map(item => ({
-      ...item,
-      isAvailable: true,
-      modifierGroupIds: [],
-    }));
-    setMenuItems(getFromStorage(STORAGE_KEYS.MENU_ITEMS, defaultMenuItems));
-    setModifierGroups(getFromStorage(STORAGE_KEYS.MODIFIER_GROUPS, []));
-    setModifierOptions(getFromStorage(STORAGE_KEYS.MODIFIER_OPTIONS, []));
-    // Initialize KPI data
-    setStaffKPI(getFromStorage(STORAGE_KEYS.STAFF_KPI, MOCK_STAFF_KPI));
-    setLeaveRecords(getFromStorage(STORAGE_KEYS.LEAVE_RECORDS, MOCK_LEAVE_RECORDS));
-    setTrainingRecords(getFromStorage(STORAGE_KEYS.TRAINING_RECORDS, MOCK_TRAINING_RECORDS));
-    setOTRecords(getFromStorage(STORAGE_KEYS.OT_RECORDS, MOCK_OT_RECORDS));
-    setCustomerReviews(getFromStorage(STORAGE_KEYS.CUSTOMER_REVIEWS, MOCK_CUSTOMER_REVIEWS));
-    // Initialize Staff Portal data
-    setChecklistTemplates(getFromStorage(STORAGE_KEYS.CHECKLIST_TEMPLATES, MOCK_CHECKLIST_TEMPLATES));
-    setChecklistCompletions(getFromStorage(STORAGE_KEYS.CHECKLIST_COMPLETIONS, MOCK_CHECKLIST_COMPLETIONS));
-    setLeaveBalances(getFromStorage(STORAGE_KEYS.LEAVE_BALANCES, MOCK_LEAVE_BALANCES));
-    setLeaveRequests(getFromStorage(STORAGE_KEYS.LEAVE_REQUESTS, MOCK_LEAVE_REQUESTS));
-    setClaimRequests(getFromStorage(STORAGE_KEYS.CLAIM_REQUESTS, MOCK_CLAIM_REQUESTS));
-    setStaffRequests(getFromStorage(STORAGE_KEYS.STAFF_REQUESTS, MOCK_STAFF_REQUESTS));
-    setAnnouncements(getFromStorage(STORAGE_KEYS.ANNOUNCEMENTS, MOCK_ANNOUNCEMENTS));
-    // Order History & Void/Refund
-    setOrderHistory(getFromStorage(STORAGE_KEYS.ORDER_HISTORY, MOCK_ORDER_HISTORY));
-    setVoidRefundRequests(getFromStorage(STORAGE_KEYS.VOID_REFUND_REQUESTS, MOCK_VOID_REFUND_REQUESTS));
-    // Oil Tracker / Equipment
-    setOilTrackers(getFromStorage(STORAGE_KEYS.OIL_TRACKERS, MOCK_OIL_TRACKERS));
-    setOilChangeRequests(getFromStorage(STORAGE_KEYS.OIL_CHANGE_REQUESTS, []));
-    setOilActionHistory(getFromStorage(STORAGE_KEYS.OIL_ACTION_HISTORY, []));
-    setIsInitialized(true);
+    const initializeData = async () => {
+      // Try to load from Supabase first
+      const supabaseData = await SupabaseSync.loadAllDataFromSupabase();
+      
+      // Set data from Supabase if available, otherwise fallback to localStorage
+      setInventory(supabaseData.inventory.length > 0 ? supabaseData.inventory : getFromStorage(STORAGE_KEYS.INVENTORY, MOCK_STOCK));
+      setStaff(supabaseData.staff.length > 0 ? supabaseData.staff : getFromStorage(STORAGE_KEYS.STAFF, MOCK_STAFF));
+      setMenuItems(supabaseData.menuItems.length > 0 ? supabaseData.menuItems : getFromStorage(STORAGE_KEYS.MENU_ITEMS, MOCK_MENU.map(item => ({ ...item, isAvailable: true, modifierGroupIds: [] }))));
+      setOrders(supabaseData.orders.length > 0 ? supabaseData.orders : getFromStorage(STORAGE_KEYS.ORDERS, []));
+      setCustomers(supabaseData.customers.length > 0 ? supabaseData.customers : getFromStorage(STORAGE_KEYS.CUSTOMERS, []));
+      setExpenses(supabaseData.expenses.length > 0 ? supabaseData.expenses : getFromStorage(STORAGE_KEYS.EXPENSES, MOCK_EXPENSES));
+      setAttendance(supabaseData.attendance.length > 0 ? supabaseData.attendance : getFromStorage(STORAGE_KEYS.ATTENDANCE, MOCK_ATTENDANCE));
+      
+      // Load remaining data from localStorage (not yet in Supabase)
+      setInventoryLogs(getFromStorage(STORAGE_KEYS.INVENTORY_LOGS, []));
+      setProductionLogs(getFromStorage(STORAGE_KEYS.PRODUCTION_LOGS, MOCK_PRODUCTION_LOGS));
+      setDeliveryOrders(getFromStorage(STORAGE_KEYS.DELIVERY_ORDERS, MOCK_DELIVERY_ORDERS));
+      setCashFlows(getFromStorage(STORAGE_KEYS.CASH_FLOWS, MOCK_CASH_FLOWS));
+      setSuppliers(getFromStorage(STORAGE_KEYS.SUPPLIERS, []));
+      setPurchaseOrders(getFromStorage(STORAGE_KEYS.PURCHASE_ORDERS, []));
+      setRecipes(getFromStorage(STORAGE_KEYS.RECIPES, []));
+      setShifts(getFromStorage(STORAGE_KEYS.SHIFTS, MOCK_SHIFTS));
+      setSchedules(getFromStorage(STORAGE_KEYS.SCHEDULES, MOCK_SCHEDULES));
+      setPromotions(getFromStorage(STORAGE_KEYS.PROMOTIONS, []));
+      setNotifications(getFromStorage(STORAGE_KEYS.NOTIFICATIONS, []));
+      setModifierGroups(getFromStorage(STORAGE_KEYS.MODIFIER_GROUPS, []));
+      setModifierOptions(getFromStorage(STORAGE_KEYS.MODIFIER_OPTIONS, []));
+      setStaffKPI(getFromStorage(STORAGE_KEYS.STAFF_KPI, MOCK_STAFF_KPI));
+      setLeaveRecords(getFromStorage(STORAGE_KEYS.LEAVE_RECORDS, MOCK_LEAVE_RECORDS));
+      setTrainingRecords(getFromStorage(STORAGE_KEYS.TRAINING_RECORDS, MOCK_TRAINING_RECORDS));
+      setOTRecords(getFromStorage(STORAGE_KEYS.OT_RECORDS, MOCK_OT_RECORDS));
+      setCustomerReviews(getFromStorage(STORAGE_KEYS.CUSTOMER_REVIEWS, MOCK_CUSTOMER_REVIEWS));
+      setChecklistTemplates(getFromStorage(STORAGE_KEYS.CHECKLIST_TEMPLATES, MOCK_CHECKLIST_TEMPLATES));
+      setChecklistCompletions(getFromStorage(STORAGE_KEYS.CHECKLIST_COMPLETIONS, MOCK_CHECKLIST_COMPLETIONS));
+      setLeaveBalances(getFromStorage(STORAGE_KEYS.LEAVE_BALANCES, MOCK_LEAVE_BALANCES));
+      setLeaveRequests(getFromStorage(STORAGE_KEYS.LEAVE_REQUESTS, MOCK_LEAVE_REQUESTS));
+      setClaimRequests(getFromStorage(STORAGE_KEYS.CLAIM_REQUESTS, MOCK_CLAIM_REQUESTS));
+      setStaffRequests(getFromStorage(STORAGE_KEYS.STAFF_REQUESTS, MOCK_STAFF_REQUESTS));
+      setAnnouncements(getFromStorage(STORAGE_KEYS.ANNOUNCEMENTS, MOCK_ANNOUNCEMENTS));
+      setOrderHistory(getFromStorage(STORAGE_KEYS.ORDER_HISTORY, MOCK_ORDER_HISTORY));
+      setVoidRefundRequests(getFromStorage(STORAGE_KEYS.VOID_REFUND_REQUESTS, MOCK_VOID_REFUND_REQUESTS));
+      setOilTrackers(getFromStorage(STORAGE_KEYS.OIL_TRACKERS, MOCK_OIL_TRACKERS));
+      setOilChangeRequests(getFromStorage(STORAGE_KEYS.OIL_CHANGE_REQUESTS, []));
+      setOilActionHistory(getFromStorage(STORAGE_KEYS.OIL_ACTION_HISTORY, []));
+      
+      setIsInitialized(true);
+    };
+    
+    initializeData();
   }, []);
 
   // Persist to localStorage when state changes
@@ -659,11 +661,23 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, [oilActionHistory, isInitialized]);
 
   // Inventory actions
-  const addStockItem = useCallback((item: Omit<StockItem, 'id'>) => {
+  const addStockItem = useCallback(async (item: Omit<StockItem, 'id'>) => {
     const newItem: StockItem = {
       ...item,
       id: `stock_${Date.now()}`,
     };
+    
+    // Sync to Supabase
+    try {
+      const supabaseItem = await SupabaseSync.syncAddStockItem(newItem);
+      if (supabaseItem && supabaseItem.id) {
+        // Use Supabase-generated ID if available
+        newItem.id = supabaseItem.id;
+      }
+    } catch (error) {
+      console.error('Failed to sync to Supabase, saving locally:', error);
+    }
+    
     setInventory(prev => [...prev, newItem]);
     
     // Add initial log
@@ -681,13 +695,27 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     setInventoryLogs(prev => [log, ...prev]);
   }, []);
 
-  const updateStockItem = useCallback((id: string, updates: Partial<StockItem>) => {
+  const updateStockItem = useCallback(async (id: string, updates: Partial<StockItem>) => {
+    // Sync to Supabase
+    try {
+      await SupabaseSync.syncUpdateStockItem(id, updates);
+    } catch (error) {
+      console.error('Failed to sync update to Supabase:', error);
+    }
+    
     setInventory(prev => prev.map(item => 
       item.id === id ? { ...item, ...updates } : item
     ));
   }, []);
 
-  const deleteStockItem = useCallback((id: string) => {
+  const deleteStockItem = useCallback(async (id: string) => {
+    // Sync to Supabase
+    try {
+      await SupabaseSync.syncDeleteStockItem(id);
+    } catch (error) {
+      console.error('Failed to sync delete to Supabase:', error);
+    }
+    
     setInventory(prev => prev.filter(item => item.id !== id));
   }, []);
 
@@ -722,21 +750,46 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // Staff actions
-  const addStaff = useCallback((staffData: Omit<StaffProfile, 'id'>) => {
+  const addStaff = useCallback(async (staffData: Omit<StaffProfile, 'id'>) => {
     const newStaff: StaffProfile = {
       ...staffData,
       id: `staff_${Date.now()}`,
     };
+    
+    // Sync to Supabase
+    try {
+      const supabaseStaff = await SupabaseSync.syncAddStaff(newStaff);
+      if (supabaseStaff && supabaseStaff.id) {
+        newStaff.id = supabaseStaff.id;
+      }
+    } catch (error) {
+      console.error('Failed to sync staff to Supabase:', error);
+    }
+    
     setStaff(prev => [...prev, newStaff]);
   }, []);
 
-  const updateStaff = useCallback((id: string, updates: Partial<StaffProfile>) => {
+  const updateStaff = useCallback(async (id: string, updates: Partial<StaffProfile>) => {
+    // Sync to Supabase
+    try {
+      await SupabaseSync.syncUpdateStaff(id, updates);
+    } catch (error) {
+      console.error('Failed to sync staff update to Supabase:', error);
+    }
+    
     setStaff(prev => prev.map(s => 
       s.id === id ? { ...s, ...updates } : s
     ));
   }, []);
 
-  const deleteStaff = useCallback((id: string) => {
+  const deleteStaff = useCallback(async (id: string) => {
+    // Sync to Supabase
+    try {
+      await SupabaseSync.syncDeleteStaff(id);
+    } catch (error) {
+      console.error('Failed to sync staff delete to Supabase:', error);
+    }
+    
     setStaff(prev => prev.filter(s => s.id !== id));
   }, []);
 
@@ -799,18 +852,29 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, [attendance]);
 
   // Order actions
-  const addOrder = useCallback((orderData: Omit<Order, 'id' | 'orderNumber'>): Order => {
+  const addOrder = useCallback(async (orderData: Omit<Order, 'id' | 'orderNumber'>): Promise<Order> => {
     const timestamp = Date.now();
     const newOrder: Order = {
       ...orderData,
       id: `order_${timestamp}`,
       orderNumber: `ORD-${timestamp.toString().slice(-6)}`,
     };
+    
+    // Sync to Supabase
+    try {
+      const supabaseOrder = await SupabaseSync.syncAddOrder(newOrder);
+      if (supabaseOrder && supabaseOrder.id) {
+        newOrder.id = supabaseOrder.id;
+      }
+    } catch (error) {
+      console.error('Failed to sync order to Supabase:', error);
+    }
+    
     setOrders(prev => [newOrder, ...prev]);
     return newOrder;
   }, []);
 
-  const updateOrderStatus = useCallback((orderId: string, status: Order['status'], staffId?: string) => {
+  const updateOrderStatus = useCallback(async (orderId: string, status: Order['status'], staffId?: string) => {
     setOrders(prev => prev.map(order => {
       if (order.id !== orderId) return order;
       
@@ -826,6 +890,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         // Keep preparedByStaffId if already set, or set it now
         if (staffId && !order.preparedByStaffId) updates.preparedByStaffId = staffId;
       }
+      
+      // Sync to Supabase
+      SupabaseSync.syncUpdateOrder(orderId, updates).catch(error => {
+        console.error('Failed to sync order update to Supabase:', error);
+      });
       
       return { ...order, ...updates };
     }));
@@ -853,20 +922,45 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // Finance actions
-  const addExpense = useCallback((expense: Omit<Expense, 'id' | 'createdAt'>) => {
+  const addExpense = useCallback(async (expense: Omit<Expense, 'id' | 'createdAt'>) => {
     const newExpense: Expense = {
       ...expense,
       id: `exp_${Date.now()}`,
       createdAt: new Date().toISOString(),
     };
+    
+    // Sync to Supabase
+    try {
+      const supabaseExpense = await SupabaseSync.syncAddExpense(newExpense);
+      if (supabaseExpense && supabaseExpense.id) {
+        newExpense.id = supabaseExpense.id;
+      }
+    } catch (error) {
+      console.error('Failed to sync expense to Supabase:', error);
+    }
+    
     setExpenses(prev => [newExpense, ...prev]);
   }, []);
 
-  const updateExpense = useCallback((id: string, updates: Partial<Expense>) => {
+  const updateExpense = useCallback(async (id: string, updates: Partial<Expense>) => {
+    // Sync to Supabase
+    try {
+      await SupabaseSync.syncUpdateExpense(id, updates);
+    } catch (error) {
+      console.error('Failed to sync expense update to Supabase:', error);
+    }
+    
     setExpenses(prev => prev.map(e => e.id === id ? { ...e, ...updates } : e));
   }, []);
 
-  const deleteExpense = useCallback((id: string) => {
+  const deleteExpense = useCallback(async (id: string) => {
+    // Sync to Supabase
+    try {
+      await SupabaseSync.syncDeleteExpense(id);
+    } catch (error) {
+      console.error('Failed to sync expense delete to Supabase:', error);
+    }
+    
     setExpenses(prev => prev.filter(e => e.id !== id));
   }, []);
 
@@ -908,7 +1002,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, [orders]);
 
   // Customer actions
-  const addCustomer = useCallback((customerData: Omit<Customer, 'id' | 'createdAt' | 'loyaltyPoints' | 'totalSpent' | 'totalOrders' | 'segment'>): Customer => {
+  const addCustomer = useCallback(async (customerData: Omit<Customer, 'id' | 'createdAt' | 'loyaltyPoints' | 'totalSpent' | 'totalOrders' | 'segment'>): Promise<Customer> => {
     const newCustomer: Customer = {
       ...customerData,
       id: `cust_${Date.now()}`,
@@ -918,11 +1012,29 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       segment: 'new',
       createdAt: new Date().toISOString(),
     };
+    
+    // Sync to Supabase
+    try {
+      const supabaseCustomer = await SupabaseSync.syncAddCustomer(newCustomer);
+      if (supabaseCustomer && supabaseCustomer.id) {
+        newCustomer.id = supabaseCustomer.id;
+      }
+    } catch (error) {
+      console.error('Failed to sync customer to Supabase:', error);
+    }
+    
     setCustomers(prev => [newCustomer, ...prev]);
     return newCustomer;
   }, []);
 
-  const updateCustomer = useCallback((id: string, updates: Partial<Customer>) => {
+  const updateCustomer = useCallback(async (id: string, updates: Partial<Customer>) => {
+    // Sync to Supabase
+    try {
+      await SupabaseSync.syncUpdateCustomer(id, updates);
+    } catch (error) {
+      console.error('Failed to sync customer update to Supabase:', error);
+    }
+    
     setCustomers(prev => prev.map(c => c.id === id ? { ...c, ...updates } : c));
   }, []);
 
@@ -1105,21 +1217,46 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, [notifications]);
 
   // Menu Item actions
-  const addMenuItem = useCallback((item: Omit<MenuItem, 'id'>) => {
+  const addMenuItem = useCallback(async (item: Omit<MenuItem, 'id'>) => {
     const newItem: MenuItem = {
       ...item,
       id: `menu_${Date.now()}`,
     };
+    
+    // Sync to Supabase
+    try {
+      const supabaseItem = await SupabaseSync.syncAddMenuItem(newItem);
+      if (supabaseItem && supabaseItem.id) {
+        newItem.id = supabaseItem.id;
+      }
+    } catch (error) {
+      console.error('Failed to sync menu item to Supabase:', error);
+    }
+    
     setMenuItems(prev => [...prev, newItem]);
   }, []);
 
-  const updateMenuItem = useCallback((id: string, updates: Partial<MenuItem>) => {
+  const updateMenuItem = useCallback(async (id: string, updates: Partial<MenuItem>) => {
+    // Sync to Supabase
+    try {
+      await SupabaseSync.syncUpdateMenuItem(id, updates);
+    } catch (error) {
+      console.error('Failed to sync menu item update to Supabase:', error);
+    }
+    
     setMenuItems(prev => prev.map(item => 
       item.id === id ? { ...item, ...updates } : item
     ));
   }, []);
 
-  const deleteMenuItem = useCallback((id: string) => {
+  const deleteMenuItem = useCallback(async (id: string) => {
+    // Sync to Supabase
+    try {
+      await SupabaseSync.syncDeleteMenuItem(id);
+    } catch (error) {
+      console.error('Failed to sync menu item delete to Supabase:', error);
+    }
+    
     setMenuItems(prev => prev.filter(item => item.id !== id));
   }, []);
 
