@@ -10,6 +10,7 @@ import DataMigration from '@/components/DataMigration';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import LogoUpload from '@/components/LogoUpload';
 import ReceiptDesigner from '@/components/ReceiptDesigner';
+import SupabaseSetupChecker from '@/components/SupabaseSetupChecker';
 import { ReceiptSettings, PrinterSettings, DEFAULT_RECEIPT_SETTINGS, DEFAULT_PRINTER_SETTINGS } from '@/lib/types';
 import { thermalPrinter, loadReceiptSettings, saveReceiptSettings } from '@/lib/services';
 import { 
@@ -1376,6 +1377,18 @@ export default function SettingsPage() {
             {/* Supabase & Cloud Settings */}
             {activeSection === 'supabase' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                {/* Storage Setup Checker */}
+                <div className="card">
+                  <div className="card-header">
+                    <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <Cloud size={20} />
+                      Supabase Storage Configuration
+                    </div>
+                    <div className="card-subtitle">Check dan setup storage untuk upload logo dan dokumen</div>
+                  </div>
+                  <SupabaseSetupChecker />
+                </div>
+
                 {/* Connection Status */}
                 <div className="card">
                   <div className="card-header">

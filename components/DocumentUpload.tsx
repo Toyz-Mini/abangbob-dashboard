@@ -11,9 +11,12 @@ import {
   X,
   Check,
   AlertCircle,
+  Cloud,
+  HardDrive,
 } from 'lucide-react';
 import { StaffDocument } from '@/lib/types';
 import Modal from './Modal';
+import { uploadFile } from '@/lib/supabase/storage-utils';
 
 type DocumentType = StaffDocument['type'];
 
@@ -277,6 +280,11 @@ export default function DocumentUpload({ documents, onUpload, onDelete, readonly
   const [uploadName, setUploadName] = useState('');
   const [uploadUrl, setUploadUrl] = useState('');
   const [uploadExpiry, setUploadExpiry] = useState('');
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewFileUrl, setPreviewFileUrl] = useState<string | null>(null);
+  const [storageMode, setStorageMode] = useState<'supabase' | 'local' | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const requiredDocTypes: DocumentType[] = ['ic_front', 'ic_back', 'contract', 'resume'];
@@ -295,6 +303,10 @@ export default function DocumentUpload({ documents, onUpload, onDelete, readonly
     setUploadName(DOCUMENT_TYPE_LABELS[type]);
     setUploadUrl('');
     setUploadExpiry('');
+    setSelectedFile(null);
+    setPreviewFileUrl(null);
+    setUploadError(null);
+    setStorageMode(null);
     setShowUploadModal(true);
   };
 
@@ -303,22 +315,71 @@ export default function DocumentUpload({ documents, onUpload, onDelete, readonly
     setShowPreviewModal(true);
   };
 
-  const handleSubmitUpload = () => {
-    if (!uploadName.trim()) return;
+  const handleFileSelect = (file: File | null) => {
+    if (!file) return;
+
+    setSelectedFile(file);
+    setUploadError(null);
     
-    // In a real app, this would upload to a server
-    // For demo, we'll use a placeholder URL
-    onUpload({
-      type: selectedType,
-      name: uploadName.trim(),
-      url: uploadUrl || `/uploads/${selectedType}_${Date.now()}.pdf`,
-      expiryDate: uploadExpiry || undefined,
-    });
-    
-    setShowUploadModal(false);
-    setUploadName('');
-    setUploadUrl('');
-    setUploadExpiry('');
+    // Create preview
+    const preview = URL.createObjectURL(file);
+    setPreviewFileUrl(preview);
+  };
+
+  const handleSubmitUpload = async () => {
+    if (!uploadName.trim() || !selectedFile) {
+      setUploadError('Sila pilih fail dan masukkan nama dokumen');
+      return;
+    }
+
+    setIsUploading(true);
+    setUploadError(null);
+
+    try {
+      // Upload file using storage utils
+      const result = await uploadFile(selectedFile, {
+        bucket: 'staff-documents',
+        folder: 'documents',
+        maxSize: 5 * 1024 * 1024, // 5MB
+        allowedTypes: [
+          'image/jpeg',
+          'image/png',
+          'image/webp',
+          'image/gif',
+          'application/pdf',
+        ],
+      });
+
+      if (!result.success) {
+        setUploadError(result.error || 'Gagal memuat naik fail');
+        setIsUploading(false);
+        return;
+      }
+
+      setStorageMode(result.isLocal ? 'local' : 'supabase');
+
+      // Create document object
+      onUpload({
+        name: uploadName.trim(),
+        type: selectedType,
+        url: result.url!,
+        expiryDate: uploadExpiry || undefined,
+      });
+
+      // Clean up and close
+      if (previewFileUrl) {
+        URL.revokeObjectURL(previewFileUrl);
+      }
+      setShowUploadModal(false);
+      setSelectedFile(null);
+      setPreviewFileUrl(null);
+      setUploadName('');
+      setUploadExpiry('');
+    } catch (error: any) {
+      setUploadError(error.message || 'Ralat tidak dijangka');
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   return (
@@ -441,23 +502,95 @@ export default function DocumentUpload({ documents, onUpload, onDelete, readonly
             className="file-upload-zone"
             onClick={() => fileInputRef.current?.click()}
           >
-            <Upload size={32} color="var(--text-light)" />
-            <p>Klik atau seret fail ke sini</p>
-            <span>JPG, PNG, atau PDF (maksimum 5MB)</span>
+            {previewFileUrl ? (
+              <div className="file-preview">
+                {selectedFile?.type.startsWith('image/') ? (
+                  <img src={previewFileUrl} alt="Preview" style={{ maxWidth: '100%', maxHeight: '200px', borderRadius: 'var(--radius-md)' }} />
+                ) : (
+                  <>
+                    <FileText size={48} color="var(--primary)" />
+                    <p style={{ margin: '0.5rem 0', fontWeight: 600 }}>{selectedFile?.name}</p>
+                  </>
+                )}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedFile(null);
+                    setPreviewFileUrl(null);
+                    if (fileInputRef.current) {
+                      fileInputRef.current.value = '';
+                    }
+                  }}
+                  style={{
+                    marginTop: '0.5rem',
+                    padding: '0.375rem 0.75rem',
+                    background: 'var(--danger)',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: 'var(--radius-md)',
+                    cursor: 'pointer',
+                    fontSize: '0.8rem',
+                  }}
+                >
+                  Buang
+                </button>
+              </div>
+            ) : (
+              <>
+                <Upload size={32} color="var(--text-light)" />
+                <p>Klik atau seret fail ke sini</p>
+                <span>JPG, PNG, atau PDF (maksimum 5MB)</span>
+              </>
+            )}
           </div>
           <input
             ref={fileInputRef}
             type="file"
             accept="image/*,.pdf"
             style={{ display: 'none' }}
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) {
-                // In real app, upload file and get URL
-                setUploadUrl(URL.createObjectURL(file));
-              }
-            }}
+            onChange={(e) => handleFileSelect(e.target.files?.[0] || null)}
           />
+          
+          {storageMode && (
+            <div style={{ 
+              marginTop: '0.5rem', 
+              fontSize: '0.75rem', 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '0.375rem',
+              color: 'var(--text-secondary)'
+            }}>
+              {storageMode === 'supabase' ? (
+                <>
+                  <Cloud size={12} />
+                  <span>Disimpan di cloud</span>
+                </>
+              ) : (
+                <>
+                  <HardDrive size={12} />
+                  <span>Disimpan secara local</span>
+                </>
+              )}
+            </div>
+          )}
+
+          {uploadError && (
+            <div style={{
+              marginTop: '0.5rem',
+              padding: '0.5rem',
+              background: '#fee2e2',
+              color: '#dc2626',
+              borderRadius: 'var(--radius-md)',
+              fontSize: '0.8rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.375rem',
+            }}>
+              <AlertCircle size={14} />
+              {uploadError}
+            </div>
+          )}
         </div>
 
         {(selectedType === 'work_permit' || selectedType === 'certificate') && (
@@ -486,10 +619,26 @@ export default function DocumentUpload({ documents, onUpload, onDelete, readonly
             className="btn btn-primary"
             onClick={handleSubmitUpload}
             style={{ flex: 1 }}
-            disabled={!uploadName.trim()}
+            disabled={!uploadName.trim() || !selectedFile || isUploading}
           >
-            <Upload size={16} />
-            Muat Naik
+            {isUploading ? (
+              <>
+                <div className="upload-spinner" style={{
+                  width: '14px',
+                  height: '14px',
+                  border: '2px solid white',
+                  borderTopColor: 'transparent',
+                  borderRadius: '50%',
+                  animation: 'spin 1s linear infinite'
+                }} />
+                Memuat naik...
+              </>
+            ) : (
+              <>
+                <Upload size={16} />
+                Muat Naik
+              </>
+            )}
           </button>
         </div>
       </Modal>
@@ -630,11 +779,24 @@ export default function DocumentUpload({ documents, onUpload, onDelete, readonly
           cursor: pointer;
           transition: all 0.2s ease;
           text-align: center;
+          min-height: 200px;
         }
 
         .file-upload-zone:hover {
           border-color: var(--primary);
           background: var(--primary-light);
+        }
+
+        .file-preview {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          text-align: center;
+          width: 100%;
+        }
+
+        @keyframes spin {
+          to { transform: rotate(360deg); }
         }
 
         .file-upload-zone p {

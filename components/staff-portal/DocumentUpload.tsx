@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { Upload, X, File, Image, CheckCircle, AlertCircle } from 'lucide-react';
+import { Upload, X, File, Image, CheckCircle, AlertCircle, Cloud, HardDrive } from 'lucide-react';
+import { uploadFile } from '@/lib/supabase/storage-utils';
 
 interface UploadedFile {
   id: string;
@@ -9,6 +10,8 @@ interface UploadedFile {
   size: number;
   type: string;
   preview?: string;
+  url?: string;
+  isLocal?: boolean;
 }
 
 interface DocumentUploadProps {
@@ -18,6 +21,8 @@ interface DocumentUploadProps {
   multiple?: boolean;
   onUpload?: (files: UploadedFile[]) => void;
   hint?: string;
+  bucket?: string;
+  folder?: string;
 }
 
 export default function DocumentUpload({
@@ -26,11 +31,14 @@ export default function DocumentUpload({
   maxSize = 5,
   multiple = false,
   onUpload,
-  hint
+  hint,
+  bucket = 'staff-documents',
+  folder = 'portal'
 }: DocumentUploadProps) {
   const [files, setFiles] = useState<UploadedFile[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const formatFileSize = (bytes: number) => {
@@ -39,38 +47,57 @@ export default function DocumentUpload({
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
-  const processFile = (file: File): UploadedFile | null => {
+  const processFile = async (file: File): Promise<UploadedFile | null> => {
     // Check size
     if (file.size > maxSize * 1024 * 1024) {
       setError(`Saiz fail melebihi ${maxSize}MB`);
       return null;
     }
 
-    const uploadedFile: UploadedFile = {
-      id: Math.random().toString(36).substr(2, 9),
-      name: file.name,
-      size: file.size,
-      type: file.type,
-    };
+    setIsUploading(true);
+    
+    try {
+      // Upload file using storage utils
+      const result = await uploadFile(file, {
+        bucket,
+        folder,
+        maxSize: maxSize * 1024 * 1024,
+        allowedTypes: accept.split(',').map(t => t.trim()),
+      });
 
-    // Create preview for images
-    if (file.type.startsWith('image/')) {
-      uploadedFile.preview = URL.createObjectURL(file);
+      const uploadedFile: UploadedFile = {
+        id: Math.random().toString(36).substr(2, 9),
+        name: file.name,
+        size: file.size,
+        type: file.type,
+        url: result.url,
+        isLocal: result.isLocal,
+      };
+
+      // Create preview for images
+      if (file.type.startsWith('image/') && result.url) {
+        uploadedFile.preview = result.url;
+      }
+
+      return uploadedFile;
+    } catch (error: any) {
+      setError(error.message || 'Gagal memuat naik fail');
+      return null;
+    } finally {
+      setIsUploading(false);
     }
-
-    return uploadedFile;
   };
 
-  const handleFiles = (fileList: FileList) => {
+  const handleFiles = async (fileList: FileList) => {
     setError(null);
     const newFiles: UploadedFile[] = [];
 
-    Array.from(fileList).forEach(file => {
-      const processed = processFile(file);
+    for (const file of Array.from(fileList)) {
+      const processed = await processFile(file);
       if (processed) {
         newFiles.push(processed);
       }
-    });
+    }
 
     if (newFiles.length > 0) {
       const updatedFiles = multiple ? [...files, ...newFiles] : newFiles;
@@ -120,7 +147,7 @@ export default function DocumentUpload({
       {label && <label className="form-label">{label}</label>}
       
       <div
-        className={`upload-dropzone ${isDragging ? 'dragging' : ''} ${error ? 'error' : ''}`}
+        className={`upload-dropzone ${isDragging ? 'dragging' : ''} ${error ? 'error' : ''} ${isUploading ? 'uploading' : ''}`}
         onClick={handleClick}
         onDrop={handleDrop}
         onDragOver={handleDragOver}
@@ -133,13 +160,20 @@ export default function DocumentUpload({
           multiple={multiple}
           onChange={handleInputChange}
           hidden
+          disabled={isUploading}
         />
         
         <div className="upload-icon">
-          <Upload size={28} />
+          {isUploading ? (
+            <div className="upload-spinner" />
+          ) : (
+            <Upload size={28} />
+          )}
         </div>
         <div className="upload-text">
-          <span className="upload-primary">Klik atau seret fail ke sini</span>
+          <span className="upload-primary">
+            {isUploading ? 'Memuat naik...' : 'Klik atau seret fail ke sini'}
+          </span>
           <span className="upload-secondary">
             {accept.includes('image') && accept.includes('pdf') 
               ? 'Gambar atau PDF' 
@@ -175,7 +209,30 @@ export default function DocumentUpload({
               )}
               <div className="file-info">
                 <span className="file-name">{file.name}</span>
-                <span className="file-size">{formatFileSize(file.size)}</span>
+                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                  <span className="file-size">{formatFileSize(file.size)}</span>
+                  {file.isLocal !== undefined && (
+                    <span style={{ 
+                      fontSize: '0.7rem', 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: '0.25rem',
+                      color: 'var(--text-secondary)'
+                    }}>
+                      {file.isLocal ? (
+                        <>
+                          <HardDrive size={10} />
+                          <span>Local</span>
+                        </>
+                      ) : (
+                        <>
+                          <Cloud size={10} />
+                          <span>Cloud</span>
+                        </>
+                      )}
+                    </span>
+                  )}
+                </div>
               </div>
               <button 
                 className="file-remove"
