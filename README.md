@@ -6,7 +6,8 @@ Satu "Centralized Dashboard" untuk perniagaan makanan yang menggabungkan fungsi 
 - **Framework**: Next.js 14 (React)
 - **Language**: TypeScript
 - **Styling**: Vanilla CSS
-- **Database**: Mock Data (LocalStorage ready for Supabase integration)
+- **Database**: Supabase (PostgreSQL with real-time capabilities)
+- **Authentication**: Supabase Auth + PIN-based staff login
 
 ## Features
 
@@ -28,16 +29,50 @@ Satu "Centralized Dashboard" untuk perniagaan makanan yang menggabungkan fungsi 
 
 ## Getting Started
 
+### 1. Install Dependencies
 ```bash
-# Install dependencies
 npm install
+```
 
-# Run development server
+### 2. Setup Supabase (Required)
+
+Follow the complete setup guide: [`docs/SUPABASE_SETUP.md`](docs/SUPABASE_SETUP.md)
+
+Quick steps:
+1. Create Supabase project at https://supabase.com
+2. Create `.env.local` with your Supabase credentials:
+   ```env
+   NEXT_PUBLIC_SUPABASE_URL=your-project-url
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+   ```
+3. Run database schema: `lib/supabase/schema.sql`
+4. Seed test users: `lib/supabase/seed-test-users.sql`
+
+### 3. Run Development Server
+```bash
 npm run dev
-
-# Build for production
-npm run build
 ```
 
 Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+## 🔐 Test Users
+
+For testing all features, use these pre-configured accounts:
+
+| Role | Login Method | Email | Password | PIN |
+|------|-------------|--------|----------|-----|
+| **Admin** | Email | `admin@abangbob.com` | `Admin123!` | `1234` |
+| **Manager** | Email | `manager@abangbob.com` | `Manager123!` | `2345` |
+| **Staff** | PIN | - | - | `3456` |
+
+**Quick Reference**: See [`TEST_CREDENTIALS.md`](TEST_CREDENTIALS.md)  
+**Setup Guide**: See [`docs/TEST_USERS_SETUP.md`](docs/TEST_USERS_SETUP.md)
+
+### Testing Different Roles
+
+1. **Admin Login**: Click "Login Admin" → Enter admin credentials
+2. **Manager Login**: Click "Login Admin" → Enter manager credentials  
+3. **Staff Login**: Click "Login Staf" → Select "Staff Ahmad" → Enter PIN `3456`
+
+Each role has different permissions - try accessing various modules to see role-based access control in action!
 

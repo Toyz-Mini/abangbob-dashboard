@@ -63,11 +63,31 @@ This will install the Supabase packages:
 - `@supabase/supabase-js` - Supabase JavaScript client
 - `@supabase/ssr` - Server-side rendering utilities
 
-## Step 6: Restart Development Server
+## Step 6: Seed Test Users (Recommended)
+
+To start testing immediately with pre-configured users:
+
+1. Go to **SQL Editor** in your Supabase dashboard
+2. Click "New Query"
+3. Copy the contents of `lib/supabase/seed-test-users.sql`
+4. Paste and click "Run"
+5. Follow the complete setup guide: [`TEST_USERS_SETUP.md`](./TEST_USERS_SETUP.md)
+
+This will create:
+- **1 Admin user** (email: `admin@abangbob.com`, password: `Admin123!`)
+- **1 Manager user** (email: `manager@abangbob.com`, password: `Manager123!`)
+- **1 Staff user** (PIN: `3456`)
+- Sample menu items, inventory, and orders
+
+**Important:** Admin and Manager email login requires creating Supabase Auth users manually. See detailed instructions in [`TEST_USERS_SETUP.md`](./TEST_USERS_SETUP.md).
+
+## Step 7: Restart Development Server
 
 ```bash
 npm run dev
 ```
+
+You can now login with the test users and explore all features!
 
 ## Features Enabled by Supabase
 
@@ -103,6 +123,29 @@ When Supabase is not configured, the app will:
 1. Show a warning in the console
 2. Fall back to localStorage for data persistence
 3. Disable real-time features
+
+## Test Users & Sample Data
+
+### Quick Start with Test Users
+
+For testing and development, use the pre-configured test users:
+
+**Admin Login:**
+- Email: `admin@abangbob.com`
+- Password: `Admin123!`
+- Full access to all features
+
+**Manager Login:**
+- Email: `manager@abangbob.com`
+- Password: `Manager123!`
+- Access to operations, reports, approvals (no Settings)
+
+**Staff Login (PIN):**
+- Select "Staff Ahmad" from login screen
+- PIN: `3456`
+- Limited access to POS, KDS, and Staff Portal
+
+For complete setup instructions and troubleshooting, see [`TEST_USERS_SETUP.md`](./TEST_USERS_SETUP.md).
 
 ## Migrating Existing Data
 
