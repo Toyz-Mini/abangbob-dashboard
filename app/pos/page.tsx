@@ -289,7 +289,7 @@ export default function POSPage() {
       markTransactionSubmitted(transactionId);
 
       // Create order with customer name and payment method
-      const newOrder = addOrder({
+      const newOrder = await addOrder({
         items: cart,
         total: cartTotal,
         customerName: customerName || undefined,

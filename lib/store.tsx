@@ -93,7 +93,7 @@ interface StoreState {
   
   // Orders
   orders: Order[];
-  addOrder: (order: Omit<Order, 'id' | 'orderNumber'>) => Order;
+  addOrder: (order: Omit<Order, 'id' | 'orderNumber'>) => Promise<Order>;
   updateOrderStatus: (orderId: string, status: Order['status'], staffId?: string) => void;
   getTodayOrders: () => Order[];
   
@@ -118,7 +118,7 @@ interface StoreState {
   
   // Customers
   customers: Customer[];
-  addCustomer: (customer: Omit<Customer, 'id' | 'createdAt' | 'loyaltyPoints' | 'totalSpent' | 'totalOrders' | 'segment'>) => Customer;
+  addCustomer: (customer: Omit<Customer, 'id' | 'createdAt' | 'loyaltyPoints' | 'totalSpent' | 'totalOrders' | 'segment'>) => Promise<Customer>;
   updateCustomer: (id: string, updates: Partial<Customer>) => void;
   addLoyaltyPoints: (customerId: string, points: number, orderId?: string) => void;
   redeemLoyaltyPoints: (customerId: string, points: number) => boolean;

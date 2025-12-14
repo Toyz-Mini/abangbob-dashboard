@@ -148,7 +148,7 @@ export default function CustomersPage() {
     setIsProcessing(true);
     await new Promise(resolve => setTimeout(resolve, 500));
 
-    addCustomer({
+    await addCustomer({
       name: formData.name.trim(),
       phone: formData.phone.trim(),
       email: formData.email.trim() || undefined,
