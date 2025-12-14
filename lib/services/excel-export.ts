@@ -216,6 +216,113 @@ export function exportAttendance(attendance: Array<{
   });
 }
 
+// Export order history
+export function exportOrderHistory(orders: Array<{
+  orderNumber: string;
+  createdAt: string;
+  customerName?: string;
+  cashierName?: string;
+  orderType: string;
+  paymentMethod?: string;
+  total: number;
+  status: string;
+  voidRefundStatus?: string;
+  refundAmount?: number;
+}>): void {
+  exportToCSV({
+    filename: 'sejarah-pesanan',
+    columns: [
+      { key: 'orderNumber', label: 'No. Pesanan' },
+      { key: 'createdAt', label: 'Tarikh/Masa', format: 'datetime' },
+      { key: 'customerName', label: 'Pelanggan' },
+      { key: 'cashierName', label: 'Cashier' },
+      { key: 'orderType', label: 'Jenis' },
+      { key: 'paymentMethod', label: 'Pembayaran' },
+      { key: 'total', label: 'Jumlah (BND)', format: 'currency' },
+      { key: 'status', label: 'Status' },
+      { key: 'voidRefundStatus', label: 'Void/Refund' },
+      { key: 'refundAmount', label: 'Refund (BND)', format: 'currency' },
+    ],
+    data: orders.map(o => ({
+      ...o,
+      customerName: o.customerName || 'Walk-in',
+      cashierName: o.cashierName || '-',
+      paymentMethod: o.paymentMethod || '-',
+      voidRefundStatus: o.voidRefundStatus || 'none',
+      refundAmount: o.refundAmount || 0,
+    })),
+  });
+}
+
+// Export void/refund report
+export function exportVoidRefundReport(requests: Array<{
+  orderNumber: string;
+  type: string;
+  amount?: number;
+  reason: string;
+  requestedByName: string;
+  requestedAt: string;
+  status: string;
+  approvedByName?: string;
+  approvedAt?: string;
+  rejectionReason?: string;
+}>): void {
+  exportToCSV({
+    filename: 'laporan-void-refund',
+    columns: [
+      { key: 'orderNumber', label: 'No. Pesanan' },
+      { key: 'type', label: 'Jenis' },
+      { key: 'amount', label: 'Jumlah (BND)', format: 'currency' },
+      { key: 'reason', label: 'Sebab' },
+      { key: 'requestedByName', label: 'Diminta Oleh' },
+      { key: 'requestedAt', label: 'Tarikh Minta', format: 'datetime' },
+      { key: 'status', label: 'Status' },
+      { key: 'approvedByName', label: 'Diluluskan Oleh' },
+      { key: 'approvedAt', label: 'Tarikh Lulus', format: 'datetime' },
+      { key: 'rejectionReason', label: 'Sebab Tolak' },
+    ],
+    data: requests,
+  });
+}
+
+// Export daily sales summary
+export function exportDailySalesSummary(data: {
+  date: string;
+  totalOrders: number;
+  completedOrders: number;
+  cancelledOrders: number;
+  voidedOrders: number;
+  refundedOrders: number;
+  grossSales: number;
+  refundAmount: number;
+  netSales: number;
+  cashSales: number;
+  cardSales: number;
+  ewalletSales: number;
+}): void {
+  exportToCSV({
+    filename: `jualan-harian-${data.date}`,
+    columns: [
+      { key: 'label', label: 'Metrik' },
+      { key: 'value', label: 'Nilai' },
+    ],
+    data: [
+      { label: 'Tarikh', value: data.date },
+      { label: 'Jumlah Pesanan', value: data.totalOrders },
+      { label: 'Pesanan Selesai', value: data.completedOrders },
+      { label: 'Pesanan Dibatalkan', value: data.cancelledOrders },
+      { label: 'Pesanan Void', value: data.voidedOrders },
+      { label: 'Pesanan Refund', value: data.refundedOrders },
+      { label: 'Jualan Kasar (BND)', value: data.grossSales.toFixed(2) },
+      { label: 'Jumlah Refund (BND)', value: data.refundAmount.toFixed(2) },
+      { label: 'Jualan Bersih (BND)', value: data.netSales.toFixed(2) },
+      { label: 'Jualan Tunai (BND)', value: data.cashSales.toFixed(2) },
+      { label: 'Jualan Kad (BND)', value: data.cardSales.toFixed(2) },
+      { label: 'Jualan E-Wallet (BND)', value: data.ewalletSales.toFixed(2) },
+    ],
+  });
+}
+
 // Export all data as a single JSON backup
 export function exportAllData(data: Record<string, unknown>): void {
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });

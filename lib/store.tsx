@@ -1,7 +1,8 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
-import { StockItem, StaffProfile, AttendanceRecord, Order, ProductionLog, DeliveryOrder, Expense, DailyCashFlow, Customer, Supplier, PurchaseOrder, Recipe, Shift, ScheduleEntry, Promotion, Notification, MenuItem, ModifierGroup, ModifierOption, StaffKPI, LeaveRecord, TrainingRecord, OTRecord, CustomerReview, KPIMetrics, ChecklistItemTemplate, ChecklistCompletion, LeaveBalance, LeaveRequest, ClaimRequest, StaffRequest, Announcement } from './types';
+import { StockItem, StaffProfile, AttendanceRecord, Order, ProductionLog, DeliveryOrder, Expense, DailyCashFlow, Customer, Supplier, PurchaseOrder, Recipe, Shift, ScheduleEntry, Promotion, Notification, MenuItem, ModifierGroup, ModifierOption, StaffKPI, LeaveRecord, TrainingRecord, OTRecord, CustomerReview, KPIMetrics, ChecklistItemTemplate, ChecklistCompletion, LeaveBalance, LeaveRequest, ClaimRequest, StaffRequest, Announcement, OrderHistoryItem, VoidRefundRequest, VoidRefundType, OrderHistoryFilters, RefundItem } from './types';
+import { MOCK_ORDER_HISTORY, MOCK_VOID_REFUND_REQUESTS, ORDER_HISTORY_STORAGE_KEYS } from './order-history-data';
 import { MOCK_STOCK } from './inventory-data';
 import { MOCK_STAFF, MOCK_ATTENDANCE, MOCK_PAYROLL } from './hr-data';
 import { MOCK_PRODUCTION_LOGS, MOCK_OIL_TRACKERS } from './production-data';
@@ -47,6 +48,9 @@ const STORAGE_KEYS = {
   CLAIM_REQUESTS: 'abangbob_claim_requests',
   STAFF_REQUESTS: 'abangbob_staff_requests',
   ANNOUNCEMENTS: 'abangbob_announcements',
+  // Order History & Void/Refund
+  ORDER_HISTORY: 'abangbob_order_history',
+  VOID_REFUND_REQUESTS: 'abangbob_void_refund_requests',
 };
 
 // Inventory log type for tracking stock changes
@@ -246,6 +250,19 @@ interface StoreState {
   deleteAnnouncement: (id: string) => void;
   getActiveAnnouncements: (role?: 'Manager' | 'Staff') => Announcement[];
   
+  // Order History & Void/Refund
+  orderHistory: OrderHistoryItem[];
+  voidRefundRequests: VoidRefundRequest[];
+  getOrderHistory: (filters?: Partial<OrderHistoryFilters>) => OrderHistoryItem[];
+  getOrderById: (orderId: string) => OrderHistoryItem | undefined;
+  requestVoid: (orderId: string, reason: string, requestedBy: string, requestedByName: string) => { success: boolean; error?: string };
+  requestRefund: (orderId: string, amount: number, reason: string, requestedBy: string, requestedByName: string, items?: RefundItem[]) => { success: boolean; error?: string };
+  approveVoidRefund: (requestId: string, approvedBy: string, approvedByName: string) => { success: boolean; error?: string };
+  rejectVoidRefund: (requestId: string, rejectedBy: string, rejectedByName: string, reason: string) => void;
+  getPendingVoidRefundRequests: () => VoidRefundRequest[];
+  getVoidRefundRequestsByStaff: (staffId: string) => VoidRefundRequest[];
+  getPendingVoidRefundCount: () => number;
+  
   // Utility
   isInitialized: boolean;
 }
@@ -336,6 +353,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [claimRequests, setClaimRequests] = useState<ClaimRequest[]>([]);
   const [staffRequests, setStaffRequests] = useState<StaffRequest[]>([]);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  
+  // Order History & Void/Refund state
+  const [orderHistory, setOrderHistory] = useState<OrderHistoryItem[]>([]);
+  const [voidRefundRequests, setVoidRefundRequests] = useState<VoidRefundRequest[]>([]);
 
   // Initialize from localStorage on mount
   useEffect(() => {
@@ -379,6 +400,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     setClaimRequests(getFromStorage(STORAGE_KEYS.CLAIM_REQUESTS, MOCK_CLAIM_REQUESTS));
     setStaffRequests(getFromStorage(STORAGE_KEYS.STAFF_REQUESTS, MOCK_STAFF_REQUESTS));
     setAnnouncements(getFromStorage(STORAGE_KEYS.ANNOUNCEMENTS, MOCK_ANNOUNCEMENTS));
+    // Order History & Void/Refund
+    setOrderHistory(getFromStorage(STORAGE_KEYS.ORDER_HISTORY, MOCK_ORDER_HISTORY));
+    setVoidRefundRequests(getFromStorage(STORAGE_KEYS.VOID_REFUND_REQUESTS, MOCK_VOID_REFUND_REQUESTS));
     setIsInitialized(true);
   }, []);
 
@@ -576,6 +600,18 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       setToStorage(STORAGE_KEYS.ANNOUNCEMENTS, announcements);
     }
   }, [announcements, isInitialized]);
+
+  useEffect(() => {
+    if (isInitialized) {
+      setToStorage(STORAGE_KEYS.ORDER_HISTORY, orderHistory);
+    }
+  }, [orderHistory, isInitialized]);
+
+  useEffect(() => {
+    if (isInitialized) {
+      setToStorage(STORAGE_KEYS.VOID_REFUND_REQUESTS, voidRefundRequests);
+    }
+  }, [voidRefundRequests, isInitialized]);
 
   // Inventory actions
   const addStockItem = useCallback((item: Omit<StockItem, 'id'>) => {
@@ -1548,6 +1584,300 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     });
   }, [announcements]);
 
+  // ==================== ORDER HISTORY & VOID/REFUND FUNCTIONS ====================
+  
+  const getOrderHistory = useCallback((filters?: Partial<OrderHistoryFilters>): OrderHistoryItem[] => {
+    let result = [...orderHistory];
+    
+    if (filters) {
+      // Filter by date range
+      if (filters.dateRange?.start) {
+        result = result.filter(o => o.createdAt >= filters.dateRange!.start);
+      }
+      if (filters.dateRange?.end) {
+        result = result.filter(o => o.createdAt <= filters.dateRange!.end + 'T23:59:59');
+      }
+      
+      // Filter by status
+      if (filters.status && filters.status !== 'all') {
+        result = result.filter(o => {
+          if (filters.status === 'voided' || filters.status === 'refunded' || 
+              filters.status === 'partial_refund' || filters.status === 'pending_void' || 
+              filters.status === 'pending_refund') {
+            return o.voidRefundStatus === filters.status;
+          }
+          return o.status === filters.status;
+        });
+      }
+      
+      // Filter by payment method
+      if (filters.paymentMethod && filters.paymentMethod !== 'all') {
+        result = result.filter(o => o.paymentMethod === filters.paymentMethod);
+      }
+      
+      // Filter by order type
+      if (filters.orderType && filters.orderType !== 'all') {
+        result = result.filter(o => o.orderType === filters.orderType);
+      }
+      
+      // Filter by outlet
+      if (filters.outletId && filters.outletId !== 'all') {
+        result = result.filter(o => o.outletId === filters.outletId);
+      }
+      
+      // Filter by staff
+      if (filters.staffId && filters.staffId !== 'all') {
+        result = result.filter(o => o.cashierId === filters.staffId);
+      }
+      
+      // Search query
+      if (filters.searchQuery) {
+        const query = filters.searchQuery.toLowerCase();
+        result = result.filter(o => 
+          o.orderNumber.toLowerCase().includes(query) ||
+          o.customerName?.toLowerCase().includes(query) ||
+          o.cashierName?.toLowerCase().includes(query) ||
+          o.customerPhone?.includes(query)
+        );
+      }
+    }
+    
+    // Sort by date descending
+    return result.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }, [orderHistory]);
+
+  const getOrderById = useCallback((orderId: string): OrderHistoryItem | undefined => {
+    return orderHistory.find(o => o.id === orderId);
+  }, [orderHistory]);
+
+  const requestVoid = useCallback((
+    orderId: string, 
+    reason: string, 
+    requestedBy: string, 
+    requestedByName: string
+  ): { success: boolean; error?: string } => {
+    const order = orderHistory.find(o => o.id === orderId);
+    if (!order) {
+      return { success: false, error: 'Order not found' };
+    }
+    
+    if (order.voidRefundStatus !== 'none') {
+      return { success: false, error: 'Order already has a pending or completed void/refund request' };
+    }
+    
+    const newRequest: VoidRefundRequest = {
+      id: `req_${Date.now()}`,
+      orderId,
+      orderNumber: order.orderNumber,
+      type: 'void',
+      reason,
+      amount: order.total,
+      requestedBy,
+      requestedByName,
+      requestedAt: new Date().toISOString(),
+      status: 'pending',
+      salesReversed: false,
+      inventoryReversed: false,
+      createdAt: new Date().toISOString(),
+    };
+    
+    setVoidRefundRequests(prev => [...prev, newRequest]);
+    setOrderHistory(prev => prev.map(o => 
+      o.id === orderId 
+        ? { ...o, voidRefundStatus: 'pending_void' as const, pendingRequest: newRequest }
+        : o
+    ));
+    
+    return { success: true };
+  }, [orderHistory]);
+
+  const requestRefund = useCallback((
+    orderId: string, 
+    amount: number, 
+    reason: string, 
+    requestedBy: string, 
+    requestedByName: string,
+    items?: RefundItem[]
+  ): { success: boolean; error?: string } => {
+    const order = orderHistory.find(o => o.id === orderId);
+    if (!order) {
+      return { success: false, error: 'Order not found' };
+    }
+    
+    if (order.voidRefundStatus !== 'none') {
+      return { success: false, error: 'Order already has a pending or completed void/refund request' };
+    }
+    
+    const isPartial = items && items.length > 0 && amount < order.total;
+    
+    const newRequest: VoidRefundRequest = {
+      id: `req_${Date.now()}`,
+      orderId,
+      orderNumber: order.orderNumber,
+      type: isPartial ? 'partial_refund' : 'refund',
+      reason,
+      amount,
+      itemsToRefund: items,
+      requestedBy,
+      requestedByName,
+      requestedAt: new Date().toISOString(),
+      status: 'pending',
+      salesReversed: false,
+      inventoryReversed: false,
+      createdAt: new Date().toISOString(),
+    };
+    
+    setVoidRefundRequests(prev => [...prev, newRequest]);
+    setOrderHistory(prev => prev.map(o => 
+      o.id === orderId 
+        ? { ...o, voidRefundStatus: 'pending_refund' as const, pendingRequest: newRequest }
+        : o
+    ));
+    
+    return { success: true };
+  }, [orderHistory]);
+
+  const approveVoidRefund = useCallback((
+    requestId: string, 
+    approvedBy: string, 
+    approvedByName: string
+  ): { success: boolean; error?: string } => {
+    const request = voidRefundRequests.find(r => r.id === requestId);
+    if (!request) {
+      return { success: false, error: 'Request not found' };
+    }
+    
+    if (request.status !== 'pending') {
+      return { success: false, error: 'Request is not pending' };
+    }
+    
+    const order = orderHistory.find(o => o.id === request.orderId);
+    if (!order) {
+      return { success: false, error: 'Order not found' };
+    }
+    
+    const now = new Date().toISOString();
+    const reversalAmount = request.amount || order.total;
+    
+    // Update request status
+    setVoidRefundRequests(prev => prev.map(r => 
+      r.id === requestId 
+        ? { 
+            ...r, 
+            status: 'approved' as const, 
+            approvedBy, 
+            approvedByName, 
+            approvedAt: now,
+            salesReversed: true,
+            inventoryReversed: true,
+            reversalDetails: {
+              salesDeducted: reversalAmount,
+              inventoryItems: order.items.map(item => ({
+                itemId: item.id,
+                itemName: item.name,
+                quantity: item.quantity
+              }))
+            }
+          }
+        : r
+    ));
+    
+    // Update order status
+    const newStatus = request.type === 'void' ? 'voided' : 
+                      request.type === 'partial_refund' ? 'partial_refund' : 'refunded';
+    
+    setOrderHistory(prev => prev.map(o => 
+      o.id === request.orderId 
+        ? { 
+            ...o, 
+            voidRefundStatus: newStatus as any,
+            refundAmount: reversalAmount,
+            refundReason: request.reason,
+            ...(request.type === 'void' 
+              ? { voidedAt: now, voidedBy: approvedBy, voidedByName: approvedByName }
+              : { refundedAt: now, refundedBy: approvedBy, refundedByName: approvedByName }
+            ),
+            pendingRequest: undefined
+          }
+        : o
+    ));
+    
+    // Reverse sales - update cash flow
+    const today = new Date().toISOString().split('T')[0];
+    const existingCashFlow = cashFlows.find(cf => cf.date === today);
+    if (existingCashFlow && order.paymentMethod) {
+      const method = order.paymentMethod;
+      setCashFlows(prev => prev.map(cf => {
+        if (cf.date === today) {
+          if (method === 'cash') {
+            return { ...cf, salesCash: Math.max(0, cf.salesCash - reversalAmount) };
+          } else if (method === 'card') {
+            return { ...cf, salesCard: Math.max(0, cf.salesCard - reversalAmount) };
+          } else {
+            return { ...cf, salesEwallet: Math.max(0, cf.salesEwallet - reversalAmount) };
+          }
+        }
+        return cf;
+      }));
+    }
+    
+    // Reverse inventory - add stock back
+    const itemsToReverse = request.itemsToRefund || order.items.map(item => ({
+      itemId: item.id,
+      itemName: item.name,
+      quantity: item.quantity,
+      amount: item.itemTotal * item.quantity
+    }));
+    
+    // Note: In a real implementation, we would look up inventory mappings
+    // and call adjustStock for each inventory item
+    
+    return { success: true };
+  }, [voidRefundRequests, orderHistory, cashFlows]);
+
+  const rejectVoidRefund = useCallback((
+    requestId: string, 
+    rejectedBy: string, 
+    rejectedByName: string, 
+    reason: string
+  ): void => {
+    const request = voidRefundRequests.find(r => r.id === requestId);
+    if (!request) return;
+    
+    setVoidRefundRequests(prev => prev.map(r => 
+      r.id === requestId 
+        ? { 
+            ...r, 
+            status: 'rejected' as const, 
+            approvedBy: rejectedBy, 
+            approvedByName: rejectedByName, 
+            approvedAt: new Date().toISOString(),
+            rejectionReason: reason
+          }
+        : r
+    ));
+    
+    setOrderHistory(prev => prev.map(o => 
+      o.id === request.orderId 
+        ? { ...o, voidRefundStatus: 'none' as const, pendingRequest: undefined }
+        : o
+    ));
+  }, [voidRefundRequests]);
+
+  const getPendingVoidRefundRequests = useCallback((): VoidRefundRequest[] => {
+    return voidRefundRequests.filter(r => r.status === 'pending')
+      .sort((a, b) => new Date(b.requestedAt).getTime() - new Date(a.requestedAt).getTime());
+  }, [voidRefundRequests]);
+
+  const getVoidRefundRequestsByStaff = useCallback((staffId: string): VoidRefundRequest[] => {
+    return voidRefundRequests.filter(r => r.requestedBy === staffId)
+      .sort((a, b) => new Date(b.requestedAt).getTime() - new Date(a.requestedAt).getTime());
+  }, [voidRefundRequests]);
+
+  const getPendingVoidRefundCount = useCallback((): number => {
+    return voidRefundRequests.filter(r => r.status === 'pending').length;
+  }, [voidRefundRequests]);
+
   const value: StoreState = {
     // Inventory
     inventory,
@@ -1730,6 +2060,19 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     updateAnnouncement,
     deleteAnnouncement,
     getActiveAnnouncements,
+    
+    // Order History & Void/Refund
+    orderHistory,
+    voidRefundRequests,
+    getOrderHistory,
+    getOrderById,
+    requestVoid,
+    requestRefund,
+    approveVoidRefund,
+    rejectVoidRefund,
+    getPendingVoidRefundRequests,
+    getVoidRefundRequestsByStaff,
+    getPendingVoidRefundCount,
     
     // Utility
     isInitialized,
@@ -1989,6 +2332,33 @@ export function useStaffPortal() {
     schedules: store.schedules,
     shifts: store.shifts,
     getWeekSchedule: store.getWeekSchedule,
+    // Utility
+    isInitialized: store.isInitialized,
+  };
+}
+
+export function useOrderHistory() {
+  const store = useStore();
+  return {
+    // Order History
+    orderHistory: store.orderHistory,
+    getOrderHistory: store.getOrderHistory,
+    getOrderById: store.getOrderById,
+    
+    // Void/Refund Requests
+    voidRefundRequests: store.voidRefundRequests,
+    requestVoid: store.requestVoid,
+    requestRefund: store.requestRefund,
+    approveVoidRefund: store.approveVoidRefund,
+    rejectVoidRefund: store.rejectVoidRefund,
+    getPendingVoidRefundRequests: store.getPendingVoidRefundRequests,
+    getVoidRefundRequestsByStaff: store.getVoidRefundRequestsByStaff,
+    getPendingVoidRefundCount: store.getPendingVoidRefundCount,
+    
+    // Related data
+    staff: store.staff,
+    orders: store.orders,
+    
     // Utility
     isInitialized: store.isInitialized,
   };

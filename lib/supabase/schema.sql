@@ -166,12 +166,99 @@ CREATE TABLE IF NOT EXISTS public.orders (
   prepared_by_staff_id UUID REFERENCES public.staff(id) ON DELETE SET NULL,
   preparing_started_at TIMESTAMPTZ,
   ready_at TIMESTAMPTZ,
-  outlet_id UUID REFERENCES public.outlets(id) ON DELETE SET NULL
+  outlet_id UUID REFERENCES public.outlets(id) ON DELETE SET NULL,
+  -- Order History & Void/Refund fields
+  cashier_id UUID REFERENCES public.staff(id) ON DELETE SET NULL,
+  void_refund_status TEXT DEFAULT 'none' CHECK (void_refund_status IN ('none', 'pending_void', 'pending_refund', 'voided', 'refunded', 'partial_refund')),
+  refund_amount DECIMAL(10,2) DEFAULT 0,
+  refund_reason TEXT,
+  refunded_at TIMESTAMPTZ,
+  refunded_by UUID REFERENCES public.staff(id) ON DELETE SET NULL,
+  voided_at TIMESTAMPTZ,
+  voided_by UUID REFERENCES public.staff(id) ON DELETE SET NULL,
+  is_synced_offline BOOLEAN DEFAULT false,
+  original_offline_id TEXT
 );
 
 CREATE INDEX IF NOT EXISTS idx_orders_outlet ON public.orders(outlet_id);
 CREATE INDEX IF NOT EXISTS idx_orders_status ON public.orders(status);
 CREATE INDEX IF NOT EXISTS idx_orders_created ON public.orders(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_orders_cashier ON public.orders(cashier_id);
+CREATE INDEX IF NOT EXISTS idx_orders_void_refund ON public.orders(void_refund_status);
+
+-- ========================================
+-- ORDER ITEMS TABLE (Granular item tracking)
+-- ========================================
+CREATE TABLE IF NOT EXISTS public.order_items (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  order_id UUID NOT NULL REFERENCES public.orders(id) ON DELETE CASCADE,
+  menu_item_id UUID REFERENCES public.menu_items(id) ON DELETE SET NULL,
+  name TEXT NOT NULL,
+  quantity INTEGER NOT NULL,
+  unit_price DECIMAL(10,2) NOT NULL,
+  subtotal DECIMAL(10,2) NOT NULL,
+  modifiers JSONB DEFAULT '[]'::jsonb,
+  is_refunded BOOLEAN DEFAULT false,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_order_items_order ON public.order_items(order_id);
+CREATE INDEX IF NOT EXISTS idx_order_items_menu_item ON public.order_items(menu_item_id);
+
+-- ========================================
+-- PAYMENTS TABLE (Payment tracking)
+-- ========================================
+CREATE TABLE IF NOT EXISTS public.payments (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  order_id UUID NOT NULL REFERENCES public.orders(id) ON DELETE CASCADE,
+  amount DECIMAL(10,2) NOT NULL,
+  method TEXT NOT NULL CHECK (method IN ('cash', 'card', 'qr', 'ewallet')),
+  status TEXT DEFAULT 'completed' CHECK (status IN ('completed', 'refunded', 'voided')),
+  reference_number TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_payments_order ON public.payments(order_id);
+CREATE INDEX IF NOT EXISTS idx_payments_status ON public.payments(status);
+
+-- ========================================
+-- VOID/REFUND REQUESTS TABLE (Approval Workflow)
+-- ========================================
+CREATE TABLE IF NOT EXISTS public.void_refund_requests (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  
+  -- Request details
+  order_id UUID NOT NULL REFERENCES public.orders(id) ON DELETE CASCADE,
+  order_number TEXT NOT NULL,
+  type TEXT NOT NULL CHECK (type IN ('void', 'refund', 'partial_refund')),
+  reason TEXT NOT NULL,
+  amount DECIMAL(10,2), -- For refunds, the amount to refund (null for void)
+  items_to_refund JSONB DEFAULT '[]'::jsonb, -- For partial refund: [{itemId, quantity, amount}]
+  
+  -- Requester
+  requested_by UUID NOT NULL REFERENCES public.staff(id) ON DELETE SET NULL,
+  requested_by_name TEXT NOT NULL,
+  requested_at TIMESTAMPTZ DEFAULT NOW(),
+  
+  -- Approval
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected')),
+  approved_by UUID REFERENCES public.staff(id) ON DELETE SET NULL,
+  approved_by_name TEXT,
+  approved_at TIMESTAMPTZ,
+  rejection_reason TEXT,
+  
+  -- Reversal tracking
+  sales_reversed BOOLEAN DEFAULT false,
+  inventory_reversed BOOLEAN DEFAULT false,
+  reversal_details JSONB DEFAULT '{}'::jsonb
+);
+
+CREATE INDEX IF NOT EXISTS idx_void_refund_order ON public.void_refund_requests(order_id);
+CREATE INDEX IF NOT EXISTS idx_void_refund_status ON public.void_refund_requests(status);
+CREATE INDEX IF NOT EXISTS idx_void_refund_created ON public.void_refund_requests(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_void_refund_requested_by ON public.void_refund_requests(requested_by);
 
 -- ========================================
 -- CUSTOMERS TABLE
@@ -289,6 +376,24 @@ CREATE POLICY "Anyone can create audit logs" ON public.audit_logs FOR INSERT WIT
 CREATE POLICY "Anyone can view outlets" ON public.outlets FOR SELECT USING (true);
 CREATE POLICY "Admin can manage outlets" ON public.outlets FOR ALL USING (true);
 
+-- Order items policies
+ALTER TABLE public.order_items ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Anyone can view order items" ON public.order_items FOR SELECT USING (true);
+CREATE POLICY "Staff can create order items" ON public.order_items FOR INSERT WITH CHECK (true);
+CREATE POLICY "Staff can update order items" ON public.order_items FOR UPDATE USING (true);
+
+-- Payments policies
+ALTER TABLE public.payments ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Anyone can view payments" ON public.payments FOR SELECT USING (true);
+CREATE POLICY "Staff can create payments" ON public.payments FOR INSERT WITH CHECK (true);
+CREATE POLICY "Staff can update payments" ON public.payments FOR UPDATE USING (true);
+
+-- Void/Refund requests policies
+ALTER TABLE public.void_refund_requests ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Anyone can view void_refund_requests" ON public.void_refund_requests FOR SELECT USING (true);
+CREATE POLICY "Staff can create void_refund_requests" ON public.void_refund_requests FOR INSERT WITH CHECK (true);
+CREATE POLICY "Managers can update void_refund_requests" ON public.void_refund_requests FOR UPDATE USING (true);
+
 -- ========================================
 -- REALTIME SUBSCRIPTIONS
 -- ========================================
@@ -298,6 +403,7 @@ ALTER PUBLICATION supabase_realtime ADD TABLE public.orders;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.inventory;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.attendance;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.staff;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.void_refund_requests;
 
 -- ========================================
 -- TRIGGERS FOR UPDATED_AT
@@ -332,6 +438,9 @@ CREATE TRIGGER update_customers_updated_at BEFORE UPDATE ON public.customers
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 CREATE TRIGGER update_outlet_settings_updated_at BEFORE UPDATE ON public.outlet_settings
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_void_refund_requests_updated_at BEFORE UPDATE ON public.void_refund_requests
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- ========================================

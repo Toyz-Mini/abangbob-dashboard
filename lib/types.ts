@@ -53,10 +53,13 @@ export interface Order {
   orderNumber: string;
   items: CartItem[];
   total: number;
+  subtotal?: number;
+  discount?: number;
+  tax?: number;
   customerName?: string;        // Nama pelanggan untuk personalize receipt
-  customerPhone: string;
-  orderType: 'takeaway' | 'gomamam';
-  status: 'pending' | 'preparing' | 'ready' | 'completed';
+  customerPhone?: string;
+  orderType: 'takeaway' | 'gomamam' | 'dine-in' | 'delivery';
+  status: 'pending' | 'preparing' | 'ready' | 'completed' | 'cancelled';
   paymentMethod?: 'cash' | 'card' | 'qr' | 'ewallet';
   createdAt: string;
   staffId?: string;
@@ -907,6 +910,126 @@ export interface Announcement {
   startDate: string;
   endDate?: string;
   createdBy: string;
+  createdAt: string;
+}
+
+// ==================== ORDER HISTORY & VOID/REFUND TYPES ====================
+
+export type VoidRefundType = 'void' | 'refund' | 'partial_refund';
+export type VoidRefundRequestStatus = 'pending' | 'approved' | 'rejected';
+export type OrderVoidRefundStatus = 'none' | 'pending_void' | 'pending_refund' | 'voided' | 'refunded' | 'partial_refund';
+
+export interface RefundItem {
+  itemId: string;
+  itemName: string;
+  quantity: number;
+  amount: number;
+}
+
+export interface VoidRefundRequest {
+  id: string;
+  orderId: string;
+  orderNumber: string;
+  type: VoidRefundType;
+  reason: string;
+  amount?: number; // For refunds
+  itemsToRefund?: RefundItem[];
+  
+  // Requester info
+  requestedBy: string;
+  requestedByName: string;
+  requestedAt: string;
+  
+  // Approval info
+  status: VoidRefundRequestStatus;
+  approvedBy?: string;
+  approvedByName?: string;
+  approvedAt?: string;
+  rejectionReason?: string;
+  
+  // Reversal tracking
+  salesReversed: boolean;
+  inventoryReversed: boolean;
+  reversalDetails?: {
+    salesDeducted: number;
+    inventoryItems: { itemId: string; itemName: string; quantity: number }[];
+  };
+  
+  createdAt: string;
+  updatedAt?: string;
+}
+
+// Extended Order with history-specific fields
+export interface OrderHistoryItem extends Order {
+  cashierId?: string;
+  cashierName?: string;
+  outletId?: string;
+  outletName?: string;
+  
+  // Void/Refund status
+  voidRefundStatus: OrderVoidRefundStatus;
+  refundAmount?: number;
+  refundReason?: string;
+  refundedAt?: string;
+  refundedBy?: string;
+  refundedByName?: string;
+  voidedAt?: string;
+  voidedBy?: string;
+  voidedByName?: string;
+  
+  // Pending request (if any)
+  pendingRequest?: VoidRefundRequest;
+  
+  // Sync info
+  isSyncedOffline?: boolean;
+}
+
+// Order Status for history (extended)
+export type OrderHistoryStatus = 
+  | 'pending'
+  | 'preparing'
+  | 'ready'
+  | 'completed' 
+  | 'cancelled' 
+  | 'voided'
+  | 'refunded' 
+  | 'partial_refund'
+  | 'pending_void'
+  | 'pending_refund';
+
+// Filter state for order history
+export interface OrderHistoryFilters {
+  dateRange: { start: string; end: string };
+  status: OrderHistoryStatus | 'all';
+  paymentMethod: string | 'all';
+  orderType: string | 'all';
+  outletId: string | 'all';
+  staffId: string | 'all';
+  searchQuery: string;
+}
+
+// Order item for granular tracking
+export interface OrderItemRecord {
+  id: string;
+  orderId: string;
+  menuItemId?: string;
+  name: string;
+  quantity: number;
+  unitPrice: number;
+  subtotal: number;
+  modifiers: SelectedModifier[];
+  isRefunded: boolean;
+  createdAt: string;
+}
+
+// Payment record
+export interface PaymentRecord {
+  id: string;
+  orderId: string;
+  amount: number;
+  method: 'cash' | 'card' | 'qr' | 'ewallet';
+  status: 'completed' | 'refunded' | 'voided';
+  referenceNumber?: string;
   createdAt: string;
 }
 

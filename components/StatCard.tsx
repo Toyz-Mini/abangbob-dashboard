@@ -6,9 +6,9 @@ interface StatCardProps {
   label: string;
   value: string | number;
   change?: string;
-  changeType?: 'positive' | 'negative' | 'neutral';
+  changeType?: 'positive' | 'negative' | 'neutral' | 'warning';
   icon?: LucideIcon;
-  gradient?: 'primary' | 'success' | 'warning' | 'none';
+  gradient?: 'primary' | 'success' | 'warning' | 'info' | 'none';
   sparkline?: number[];
 }
 

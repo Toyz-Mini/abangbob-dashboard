@@ -4,6 +4,7 @@
   
   "nav.dashboard": "Dashboard",
   "nav.pos": "POS",
+  "nav.orderHistory": "Sejarah Pesanan",
   "nav.inventory": "Inventori",
   "nav.hr": "HR & Staf",
   "nav.production": "Production",

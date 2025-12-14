@@ -33,10 +33,12 @@ export type PermissionCategory =
   | 'settings'
   | 'notifications'
   | 'help'
-  | 'staff-portal';
+  | 'staff-portal'
+  | 'order-history'
+  | 'void-refund';
 
 // Action types
-export type ActionType = 'view' | 'create' | 'edit' | 'delete' | 'export' | 'approve';
+export type ActionType = 'view' | 'create' | 'edit' | 'delete' | 'export' | 'approve' | 'request';
 
 // Permission definition
 export interface Permission {
@@ -74,6 +76,8 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     { category: 'notifications', actions: ['view', 'edit'] },
     { category: 'help', actions: ['view'] },
     { category: 'staff-portal', actions: ['view', 'create', 'edit'] },
+    { category: 'order-history', actions: ['view', 'export'] },
+    { category: 'void-refund', actions: ['request', 'approve'] },
   ],
   
   Manager: [
@@ -103,6 +107,8 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     { category: 'notifications', actions: ['view'] },
     { category: 'help', actions: ['view'] },
     { category: 'staff-portal', actions: ['view', 'create', 'edit'] },
+    { category: 'order-history', actions: ['view', 'export'] },
+    { category: 'void-refund', actions: ['request', 'approve'] },
   ],
   
   Staff: [
@@ -121,6 +127,8 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     { category: 'notifications', actions: ['view'] },
     { category: 'help', actions: ['view'] },
     { category: 'staff-portal', actions: ['view', 'create', 'edit'] },
+    { category: 'order-history', actions: ['view'] }, // Staff can only view own orders
+    { category: 'void-refund', actions: ['request'] }, // Staff can request but not approve
   ],
 };
 
@@ -143,6 +151,7 @@ export const NAV_VISIBILITY: Record<string, UserRole[]> = {
   
   // Operations
   '/pos': ['Admin', 'Manager', 'Staff'],
+  '/order-history': ['Admin', 'Manager', 'Staff'],
   '/menu-management': ['Admin', 'Manager'],
   '/kds': ['Admin', 'Manager', 'Staff'],
   '/delivery': ['Admin', 'Manager', 'Staff'],
@@ -273,4 +282,36 @@ export function canExport(role: UserRole | null, category: PermissionCategory): 
 
 export function canApprove(role: UserRole | null, category: PermissionCategory): boolean {
   return hasPermission(role, category, 'approve');
+}
+
+export function canRequest(role: UserRole | null, category: PermissionCategory): boolean {
+  return hasPermission(role, category, 'request');
+}
+
+/**
+ * Check if role can approve void/refund requests
+ */
+export function canApproveVoidRefund(role: UserRole | null): boolean {
+  return hasPermission(role, 'void-refund', 'approve');
+}
+
+/**
+ * Check if role can request void/refund
+ */
+export function canRequestVoidRefund(role: UserRole | null): boolean {
+  return hasPermission(role, 'void-refund', 'request');
+}
+
+/**
+ * Check if role can view all orders (Admin/Manager) or only own orders (Staff)
+ */
+export function canViewAllOrders(role: UserRole | null): boolean {
+  return role === 'Admin' || role === 'Manager';
+}
+
+/**
+ * Check if role can view inventory impact in order history
+ */
+export function canViewInventoryImpact(role: UserRole | null): boolean {
+  return role === 'Admin' || role === 'Manager';
 }

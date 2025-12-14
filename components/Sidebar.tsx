@@ -30,6 +30,7 @@ import {
   Calendar,
   ClipboardCheck,
   HelpCircle,
+  History,
   type LucideIcon
 } from 'lucide-react';
 
@@ -65,6 +66,7 @@ const navGroupsConfig: NavGroup[] = [
     titleKey: 'nav.group.operations',
     items: [
       { href: '/pos', labelKey: 'nav.pos', icon: ShoppingCart, tourId: 'pos' },
+      { href: '/order-history', labelKey: 'nav.orderHistory', icon: History, tourId: 'order-history' },
       { href: '/menu-management', labelKey: 'nav.menu', icon: BookOpen, tourId: 'menu' },
       { href: '/kds', labelKey: 'nav.kds', icon: Monitor, tourId: 'kds' },
       { href: '/delivery', labelKey: 'nav.delivery', icon: Truck, tourId: 'delivery' },
