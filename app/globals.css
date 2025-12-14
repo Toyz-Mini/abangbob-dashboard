@@ -684,6 +684,40 @@ body {
   .page-title {
     font-size: 1.75rem;
   }
+  
+  /* Mobile checkout and form fixes */
+  .btn {
+    min-height: 44px; /* Touch-friendly tap target */
+    padding: 0.75rem 1rem;
+  }
+  
+  .btn-lg {
+    padding: 1rem 1.5rem;
+    font-size: 1rem;
+  }
+  
+  /* Ensure modal buttons are full width on mobile */
+  .modal-content .btn {
+    min-width: 100%;
+  }
+  
+  .modal-content > div:last-child {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  
+  /* Form inputs touch-friendly */
+  .form-input,
+  .form-select {
+    min-height: 44px;
+    font-size: 16px; /* Prevents iOS zoom */
+  }
+  
+  /* Stack grid layouts on mobile */
+  .grid.grid-cols-2,
+  .grid.grid-cols-3 {
+    grid-template-columns: 1fr !important;
+  }
 }
 
 /* Utility Classes */
@@ -1935,6 +1969,11 @@ body {
 
 .search-input::placeholder {
   color: var(--text-light);
+}
+
+/* Mobile Menu Button - hidden on desktop */
+.mobile-menu-btn {
+  display: none;
 }
 
 /* Icon Button */

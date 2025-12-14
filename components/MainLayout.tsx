@@ -65,6 +65,13 @@ export default function MainLayout({ children }: { children: ReactNode }) {
     }
   };
 
+  // Handle nav link click - close sidebar on mobile
+  const handleNavClick = () => {
+    if (window.innerWidth < 768) {
+      setIsSidebarOpen(false);
+    }
+  };
+
   // Ripple effect handler for buttons
   const handleRipple = useCallback((e: React.MouseEvent<HTMLElement>) => {
     const button = e.currentTarget;
@@ -126,6 +133,7 @@ export default function MainLayout({ children }: { children: ReactNode }) {
         isOpen={isSidebarOpen}
         onMouseEnter={handleSidebarMouseEnter}
         onClick={handleSidebarClick}
+        onNavClick={handleNavClick}
       />
       <TopNav onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)} />
       <main 

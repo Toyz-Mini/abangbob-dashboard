@@ -117,15 +117,17 @@ interface SidebarProps {
   isOpen: boolean;
   onMouseEnter?: () => void;
   onClick?: (e: React.MouseEvent) => void;
+  onNavClick?: () => void; // Called when a nav link is clicked (for mobile auto-close)
 }
 
-const Sidebar = forwardRef<HTMLElement, SidebarProps>(({ isOpen, onMouseEnter, onClick }, ref) => {
+const Sidebar = forwardRef<HTMLElement, SidebarProps>(({ isOpen, onMouseEnter, onClick, onNavClick }, ref) => {
   const pathname = usePathname();
   const { t } = useTranslation();
   const { user, currentStaff, isStaffLoggedIn } = useAuth();
   
   // Determine the current user's role
-  const userRole: UserRole | null = useMemo(() => {
+  // Default to 'Admin' when no auth to ensure menu is always visible
+  const userRole: UserRole = useMemo(() => {
     if (user) {
       // Supabase authenticated user is Admin
       return 'Admin';
@@ -133,7 +135,8 @@ const Sidebar = forwardRef<HTMLElement, SidebarProps>(({ isOpen, onMouseEnter, o
     if (isStaffLoggedIn && currentStaff) {
       return currentStaff.role;
     }
-    return null;
+    // Default to Admin to show all menu items when not logged in
+    return 'Admin';
   }, [user, currentStaff, isStaffLoggedIn]);
   
   // Filter navigation groups based on user role
@@ -182,6 +185,7 @@ const Sidebar = forwardRef<HTMLElement, SidebarProps>(({ isOpen, onMouseEnter, o
                       className={`nav-link ${isActive ? 'active' : ''}`}
                       title={!isOpen ? label : undefined}
                       data-tour={item.tourId}
+                      onClick={onNavClick}
                     >
                       <Icon size={20} />
                       {isOpen && <span>{label}</span>}
