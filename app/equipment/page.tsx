@@ -43,7 +43,7 @@ export default function EquipmentPage() {
   
   const { user } = useAuth();
   const isManager = user?.role === 'Admin' || user?.role === 'Manager';
-  const currentUserName = user?.name || 'Staff';
+  const currentUserName = user?.user_metadata?.name || 'Staff';
 
   const [activeTab, setActiveTab] = useState<TabType>('fryers');
   const [showAddFryerModal, setShowAddFryerModal] = useState(false);
