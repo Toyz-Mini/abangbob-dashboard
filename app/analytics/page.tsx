@@ -1,8 +1,16 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import MainLayout from '@/components/MainLayout';
 import { useStore } from '@/lib/store';
+import { useToast } from '@/lib/contexts/ToastContext';
+import { 
+  exportToCSV, 
+  printReport,
+  generateDailySalesReport,
+  generateInventoryReport,
+  type ExportColumn,
+} from '@/lib/services';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import StatCard from '@/components/StatCard';
 import TimeHeatmap from '@/components/charts/TimeHeatmap';
@@ -23,16 +31,20 @@ import {
   Activity,
   Grid3X3,
   Flame,
-  LineChart
+  LineChart,
+  Download,
+  FileText
 } from 'lucide-react';
 
 type AnalyticsTab = 'overview' | 'sales' | 'menu' | 'staff' | 'profit';
 
 export default function AnalyticsPage() {
   const { orders, productionLogs, inventory, staff, attendance, deliveryOrders, menuItems, isInitialized } = useStore();
+  const { showToast } = useToast();
   const [dateRange, setDateRange] = useState<'7d' | '30d' | '90d'>('30d');
   const [activeTab, setActiveTab] = useState<AnalyticsTab>('overview');
   const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7));
+  const [isExporting, setIsExporting] = useState(false);
 
   // Calculate date range
   const getDateRange = () => {
@@ -257,6 +269,134 @@ export default function AnalyticsPage() {
     return { lowStock: lowStock.length, criticalStock: criticalStock.length, totalValue };
   }, [inventory]);
 
+  // Export handlers
+  const handleExportCSV = useCallback(async () => {
+    setIsExporting(true);
+    
+    try {
+      // Prepare data based on active tab
+      let data: Record<string, unknown>[] = [];
+      let columns: ExportColumn[] = [];
+      let filename = '';
+      
+      if (activeTab === 'overview' || activeTab === 'sales') {
+        // Export sales data
+        data = dailySalesTrend.map(day => ({
+          date: day.date,
+          revenue: day.revenue,
+          orders: day.orders,
+          avgOrderValue: day.orders > 0 ? day.revenue / day.orders : 0,
+        }));
+        columns = [
+          { key: 'date', label: 'Tarikh' },
+          { key: 'revenue', label: 'Jualan (BND)', format: 'currency' },
+          { key: 'orders', label: 'Bilangan Pesanan' },
+          { key: 'avgOrderValue', label: 'Purata Pesanan', format: 'currency' },
+        ];
+        filename = `sales_analytics_${dateRange}_${new Date().toISOString().split('T')[0]}`;
+      } else if (activeTab === 'menu') {
+        // Export menu performance
+        data = menuPerformance.map(item => ({
+          name: item.name,
+          totalSold: item.totalSold,
+          revenue: item.revenue,
+          avgRating: item.avgRating,
+          profitMargin: item.profitMargin,
+        }));
+        columns = [
+          { key: 'name', label: 'Menu' },
+          { key: 'totalSold', label: 'Total Terjual' },
+          { key: 'revenue', label: 'Hasil (BND)', format: 'currency' },
+          { key: 'avgRating', label: 'Rating' },
+          { key: 'profitMargin', label: 'Margin (%)' },
+        ];
+        filename = `menu_performance_${dateRange}_${new Date().toISOString().split('T')[0]}`;
+      } else if (activeTab === 'staff') {
+        // Export staff productivity
+        data = staffProductivity.map(s => ({
+          name: s.name,
+          role: s.role,
+          ordersHandled: s.ordersHandled,
+          avgRating: s.avgRating,
+          revenue: s.revenue,
+        }));
+        columns = [
+          { key: 'name', label: 'Nama' },
+          { key: 'role', label: 'Jawatan' },
+          { key: 'ordersHandled', label: 'Pesanan' },
+          { key: 'avgRating', label: 'Rating' },
+          { key: 'revenue', label: 'Hasil (BND)', format: 'currency' },
+        ];
+        filename = `staff_productivity_${dateRange}_${new Date().toISOString().split('T')[0]}`;
+      } else if (activeTab === 'profit') {
+        // Export profit margins
+        data = profitMarginData.map(day => ({
+          date: day.date,
+          revenue: day.revenue,
+          cost: day.cost,
+          profit: day.profit,
+          margin: day.margin,
+        }));
+        columns = [
+          { key: 'date', label: 'Tarikh' },
+          { key: 'revenue', label: 'Hasil (BND)', format: 'currency' },
+          { key: 'cost', label: 'Kos (BND)', format: 'currency' },
+          { key: 'profit', label: 'Untung (BND)', format: 'currency' },
+          { key: 'margin', label: 'Margin (%)' },
+        ];
+        filename = `profit_margin_${dateRange}_${new Date().toISOString().split('T')[0]}`;
+      }
+      
+      if (data.length > 0) {
+        exportToCSV(data, filename, { columns });
+        showToast('Data berjaya dieksport ke CSV', 'success');
+      } else {
+        showToast('Tiada data untuk dieksport', 'warning');
+      }
+    } catch (error) {
+      console.error('Export error:', error);
+      showToast('Ralat semasa mengeksport data', 'error');
+    } finally {
+      setIsExporting(false);
+    }
+  }, [activeTab, dailySalesTrend, menuPerformance, staffProductivity, profitMarginData, dateRange, showToast]);
+
+  const handleExportPDF = useCallback(() => {
+    try {
+      if (activeTab === 'overview' || activeTab === 'sales') {
+        const report = generateDailySalesReport(
+          filteredOrders.map(o => ({
+            orderNumber: o.orderNumber,
+            items: o.items.map(i => ({ name: i.name, quantity: i.quantity, price: i.price })),
+            total: o.total,
+            orderType: o.orderType,
+            status: o.status,
+            createdAt: o.createdAt,
+          })),
+          `${dateRange === '7d' ? '7 Hari Lepas' : dateRange === '30d' ? '30 Hari Lepas' : '90 Hari Lepas'}`
+        );
+        printReport(report);
+        showToast('Laporan PDF dijana', 'success');
+      } else {
+        const report = generateInventoryReport(
+          inventory.map(i => ({
+            name: i.name,
+            category: i.category,
+            currentQuantity: i.currentQuantity,
+            minQuantity: i.minQuantity,
+            unit: i.unit,
+            cost: i.cost,
+          }))
+        );
+        printReport(report);
+        showToast('Laporan PDF dijana', 'success');
+      }
+    } catch (error) {
+      console.error('PDF export error:', error);
+      showToast('Ralat semasa menjana PDF', 'error');
+    }
+  }, [activeTab, filteredOrders, inventory, dateRange, showToast]);
+
   if (!isInitialized) {
     return (
       <MainLayout>
@@ -288,7 +428,30 @@ export default function AnalyticsPage() {
               Insights dan analisis untuk buat keputusan yang lebih baik
             </p>
           </div>
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+            {/* Export Buttons */}
+            <div style={{ display: 'flex', gap: '0.25rem', marginRight: '1rem' }}>
+              <button
+                onClick={handleExportCSV}
+                className="btn btn-sm btn-outline"
+                disabled={isExporting}
+                title="Export ke CSV"
+              >
+                <Download size={16} />
+                CSV
+              </button>
+              <button
+                onClick={handleExportPDF}
+                className="btn btn-sm btn-outline"
+                disabled={isExporting}
+                title="Export ke PDF"
+              >
+                <FileText size={16} />
+                PDF
+              </button>
+            </div>
+            
+            {/* Date Range Buttons */}
             <button
               onClick={() => setDateRange('7d')}
               className={`btn btn-sm ${dateRange === '7d' ? 'btn-primary' : 'btn-outline'}`}

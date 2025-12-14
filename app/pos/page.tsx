@@ -1,24 +1,36 @@
 'use client';
 
-import { useState, useRef, useMemo, useEffect } from 'react';
+import { useState, useRef, useMemo, useEffect, useCallback } from 'react';
 import MainLayout from '@/components/MainLayout';
-import { useOrders, useMenu } from '@/lib/store';
+import { useOrders, useMenu, useInventory } from '@/lib/store';
 import { useTranslation } from '@/lib/contexts/LanguageContext';
+import { useToast } from '@/lib/contexts/ToastContext';
 import { CartItem, Order, MenuItem, SelectedModifier, ReceiptSettings, DEFAULT_RECEIPT_SETTINGS } from '@/lib/types';
 import { getUpsellSuggestions } from '@/lib/menu-data';
-import { thermalPrinter, loadReceiptSettings } from '@/lib/services';
+import { 
+  thermalPrinter, 
+  loadReceiptSettings,
+  isOnline,
+  withRetry,
+  getNetworkErrorMessage,
+  generateTransactionId,
+  isTransactionSubmitted,
+  markTransactionSubmitted,
+} from '@/lib/services';
 import ReceiptPreview from '@/components/ReceiptPreview';
-import { UtensilsCrossed, Sandwich, Coffee, History, Printer, Clock, ChefHat, CheckCircle, ShoppingBag, Plus, Minus, X, Sparkles, AlertTriangle, User, DollarSign, CreditCard, QrCode, Wallet } from 'lucide-react';
+import { UtensilsCrossed, Sandwich, Coffee, History, Printer, Clock, ChefHat, CheckCircle, ShoppingBag, Plus, Minus, X, Sparkles, AlertTriangle, User, DollarSign, CreditCard, QrCode, Wallet, WifiOff, RefreshCw } from 'lucide-react';
 import Modal from '@/components/Modal';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import StatCard from '@/components/StatCard';
 
-type ModalType = 'upsell' | 'checkout' | 'receipt' | 'history' | 'queue' | 'modifiers' | null;
+type ModalType = 'upsell' | 'checkout' | 'receipt' | 'history' | 'queue' | 'modifiers' | 'network-error' | null;
 
 export default function POSPage() {
   const { orders, addOrder, updateOrderStatus, getTodayOrders, isInitialized } = useOrders();
   const { menuItems, modifierGroups, modifierOptions, getOptionsForGroup } = useMenu();
+  const { inventory, adjustStock } = useInventory();
   const { t, language } = useTranslation();
+  const { showToast } = useToast();
   
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -32,6 +44,11 @@ export default function POSPage() {
   const [discountPercent, setDiscountPercent] = useState(0);
   const [receiptSettings, setReceiptSettings] = useState<ReceiptSettings>(DEFAULT_RECEIPT_SETTINGS);
   const receiptRef = useRef<HTMLDivElement>(null);
+  
+  // Network recovery state
+  const [currentTransactionId, setCurrentTransactionId] = useState<string | null>(null);
+  const [networkError, setNetworkError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
 
   // Load receipt settings on mount
   useEffect(() => {
@@ -211,54 +228,149 @@ export default function POSPage() {
     setModalType('checkout');
   };
 
-  const proceedToPayment = async () => {
+  const proceedToPayment = async (retrying: boolean = false) => {
     if (!customerPhone || customerPhone.length < 8) {
-      alert('Sila masukkan nombor telefon yang sah (minimum 8 digit)');
+      showToast('Sila masukkan nombor telefon yang sah (minimum 8 digit)', 'error');
       return;
     }
 
+    // Check network connectivity
+    if (!isOnline()) {
+      setNetworkError('Tiada sambungan internet. Sila semak rangkaian anda.');
+      setModalType('network-error');
+      return;
+    }
+
+    // Generate or reuse transaction ID (for retry scenarios)
+    const transactionId = retrying && currentTransactionId 
+      ? currentTransactionId 
+      : generateTransactionId();
+    
+    // Check for duplicate submission
+    if (isTransactionSubmitted(transactionId)) {
+      showToast('Pesanan ini sudah diproses. Sila tunggu atau buat pesanan baru.', 'warning');
+      return;
+    }
+    
+    setCurrentTransactionId(transactionId);
     setIsProcessing(true);
+    setNetworkError(null);
 
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    try {
+      // Process payment with retry logic
+      const processOrder = async () => {
+        // Simulate API call with potential network issues
+        await new Promise((resolve, reject) => {
+          setTimeout(() => {
+            // Simulate occasional network failure for testing
+            // In production, this would be the actual API call
+            if (!isOnline()) {
+              reject(new Error('Network disconnected'));
+            } else {
+              resolve(true);
+            }
+          }, 1500);
+        });
+        
+        return true;
+      };
+      
+      // Use retry logic for the payment process
+      await withRetry(processOrder, {
+        maxRetries: 2,
+        baseDelay: 1000,
+        onRetry: (attempt) => {
+          setRetryCount(attempt);
+          showToast(`Cuba semula... (${attempt}/2)`, 'info');
+        },
+      });
 
-    // Create order with customer name and payment method
-    const newOrder = addOrder({
-      items: cart,
-      total: cartTotal,
-      customerName: customerName || undefined,
-      customerPhone,
-      orderType,
-      paymentMethod,
-      status: 'pending',
-      createdAt: new Date().toISOString(),
-    });
+      // Mark transaction as submitted to prevent duplicates
+      markTransactionSubmitted(transactionId);
 
-    setLastOrder(newOrder);
-    
-    // Auto-print if enabled
-    if (receiptSettings.autoPrint && newOrder) {
-      handlePrintReceipt(newOrder);
-    }
+      // Create order with customer name and payment method
+      const newOrder = addOrder({
+        items: cart,
+        total: cartTotal,
+        customerName: customerName || undefined,
+        customerPhone,
+        orderType,
+        paymentMethod,
+        status: 'pending',
+        createdAt: new Date().toISOString(),
+      });
 
-    // Open cash drawer for cash payments
-    if (receiptSettings.openCashDrawer && paymentMethod === 'cash' && thermalPrinter.isConnected()) {
-      try {
-        await thermalPrinter.openCashDrawer();
-      } catch (error) {
-        console.error('Failed to open cash drawer:', error);
+      // Decrement inventory based on sold items (simple mapping by category)
+      cart.forEach(item => {
+        // Find matching inventory items based on category keywords
+        const categoryToInventory: Record<string, string[]> = {
+          'Nasi Lemak': ['Nasi', 'Ayam', 'Telur', 'Sambal'],
+          'Burger': ['Roti Burger', 'Daging'],
+          'Minuman': ['Teh', 'Kopi', 'Milo', 'Gula'],
+        };
+        
+        const relatedItems = categoryToInventory[item.category] || [];
+        relatedItems.forEach(invName => {
+          const invItem = inventory.find(inv => 
+            inv.name.toLowerCase().includes(invName.toLowerCase())
+          );
+          if (invItem) {
+            adjustStock(invItem.id, item.quantity, 'out', `Jualan: ${item.name}`);
+          }
+        });
+      });
+
+      setLastOrder(newOrder);
+      
+      // Show success toast
+      showToast(`Pesanan ${newOrder.orderNumber} berjaya!`, 'success');
+      
+      // Auto-print if enabled
+      if (receiptSettings.autoPrint && newOrder) {
+        handlePrintReceipt(newOrder);
       }
+
+      // Open cash drawer for cash payments
+      if (receiptSettings.openCashDrawer && paymentMethod === 'cash' && thermalPrinter.isConnected()) {
+        try {
+          await thermalPrinter.openCashDrawer();
+        } catch (error) {
+          console.error('Failed to open cash drawer:', error);
+        }
+      }
+      
+      // Reset cart and modals
+      setCart([]);
+      setModalType('receipt');
+      setCustomerName('');
+      setCustomerPhone('+673');
+      setPaymentMethod('cash');
+      setDiscountPercent(0);
+      setCurrentTransactionId(null);
+      setRetryCount(0);
+    } catch (error) {
+      console.error('Payment error:', error);
+      const errorMessage = getNetworkErrorMessage(error);
+      setNetworkError(errorMessage);
+      setModalType('network-error');
+    } finally {
+      setIsProcessing(false);
     }
-    
-    // Reset cart and modals
-    setCart([]);
-    setModalType('receipt');
-    setCustomerName('');
-    setCustomerPhone('+673');
-    setPaymentMethod('cash');
-    setDiscountPercent(0);
-    setIsProcessing(false);
   };
+
+  // Retry payment after network error
+  const handleRetryPayment = useCallback(() => {
+    setModalType('checkout');
+    proceedToPayment(true);
+  }, [currentTransactionId]);
+
+  // Cancel payment and clear transaction
+  const handleCancelPayment = useCallback(() => {
+    setCurrentTransactionId(null);
+    setNetworkError(null);
+    setRetryCount(0);
+    setModalType(null);
+  }, []);
 
   const handlePrintReceipt = async (orderToPrint?: Order) => {
     const order = orderToPrint || lastOrder;
@@ -1306,6 +1418,93 @@ export default function POSPage() {
             </div>
             <button className="btn btn-outline" onClick={() => setModalType(null)}>
               Tutup
+            </button>
+          </div>
+        </Modal>
+
+        {/* Network Error Modal */}
+        <Modal
+          isOpen={modalType === 'network-error'}
+          onClose={handleCancelPayment}
+          title="Ralat Rangkaian"
+          maxWidth="400px"
+        >
+          <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+            <div style={{ 
+              width: '70px', 
+              height: '70px', 
+              background: '#fef3c7', 
+              borderRadius: '50%', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center',
+              margin: '0 auto 1rem'
+            }}>
+              <WifiOff size={35} color="#d97706" />
+            </div>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.5rem', color: 'var(--warning)' }}>
+              Masalah Sambungan
+            </h3>
+            <p style={{ color: 'var(--text-secondary)', marginBottom: '1rem' }}>
+              {networkError || 'Ralat rangkaian berlaku semasa memproses pembayaran.'}
+            </p>
+            
+            {retryCount > 0 && (
+              <div style={{ 
+                background: 'var(--gray-100)', 
+                padding: '0.75rem', 
+                borderRadius: 'var(--radius-md)',
+                marginBottom: '1rem',
+                fontSize: '0.875rem'
+              }}>
+                <AlertTriangle size={16} color="var(--warning)" style={{ marginRight: '0.5rem' }} />
+                Percubaan semula: {retryCount}/2
+              </div>
+            )}
+            
+            <div style={{ 
+              background: '#fef3c7', 
+              padding: '1rem', 
+              borderRadius: 'var(--radius-md)',
+              marginBottom: '1rem',
+              textAlign: 'left',
+              fontSize: '0.875rem',
+              color: '#92400e'
+            }}>
+              <strong>Apa yang boleh anda lakukan:</strong>
+              <ul style={{ marginTop: '0.5rem', paddingLeft: '1.25rem' }}>
+                <li>Semak sambungan internet anda</li>
+                <li>Cuba semula dalam beberapa saat</li>
+                <li>Jika masalah berterusan, hubungi sokongan</li>
+              </ul>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <button
+              onClick={handleCancelPayment}
+              className="btn btn-outline"
+              style={{ flex: 1 }}
+            >
+              Batal
+            </button>
+            <button
+              onClick={handleRetryPayment}
+              className="btn btn-primary"
+              style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
+              disabled={isProcessing}
+            >
+              {isProcessing ? (
+                <>
+                  <LoadingSpinner size="sm" />
+                  Cuba Semula...
+                </>
+              ) : (
+                <>
+                  <RefreshCw size={18} />
+                  Cuba Semula
+                </>
+              )}
             </button>
           </div>
         </Modal>

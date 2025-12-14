@@ -13,6 +13,17 @@ interface StaffProfile {
   outlet_id: string | null;
 }
 
+// Lockout configuration
+const MAX_LOGIN_ATTEMPTS = 5;
+const LOCKOUT_DURATION = 15 * 60 * 1000; // 15 minutes in milliseconds
+const LOGIN_ATTEMPTS_KEY = 'abangbob_login_attempts';
+const LOCKOUT_EXPIRY_KEY = 'abangbob_lockout_expiry';
+
+interface LoginAttempts {
+  count: number;
+  lastAttempt: number;
+}
+
 // Error keys that can be translated by consuming components
 export const AUTH_ERROR_KEYS = {
   SUPABASE_NOT_CONFIGURED: 'auth.supabaseNotConfigured',
@@ -21,6 +32,7 @@ export const AUTH_ERROR_KEYS = {
   STAFF_NOT_ACTIVE: 'auth.staffNotActive',
   STAFF_DATA_NOT_AVAILABLE: 'auth.staffDataNotAvailable',
   INVALID_CREDENTIALS: 'auth.invalidCredentials',
+  ACCOUNT_LOCKED: 'auth.accountLocked',
 } as const;
 
 interface AuthContextType {
@@ -46,11 +58,57 @@ interface AuthContextType {
   
   // Supabase status
   isSupabaseConnected: boolean;
+  
+  // Lockout status
+  isLocked: boolean;
+  lockoutRemainingTime: number;
+  loginAttemptsRemaining: number;
+  clearLockout: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
 const STAFF_SESSION_KEY = 'abangbob_current_staff';
+
+// Helper functions for lockout management
+function getLoginAttempts(): LoginAttempts {
+  if (typeof window === 'undefined') return { count: 0, lastAttempt: 0 };
+  
+  try {
+    const stored = localStorage.getItem(LOGIN_ATTEMPTS_KEY);
+    if (!stored) return { count: 0, lastAttempt: 0 };
+    return JSON.parse(stored);
+  } catch {
+    return { count: 0, lastAttempt: 0 };
+  }
+}
+
+function setLoginAttempts(attempts: LoginAttempts): void {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(LOGIN_ATTEMPTS_KEY, JSON.stringify(attempts));
+}
+
+function getLockoutExpiry(): number {
+  if (typeof window === 'undefined') return 0;
+  
+  try {
+    const stored = localStorage.getItem(LOCKOUT_EXPIRY_KEY);
+    return stored ? parseInt(stored, 10) : 0;
+  } catch {
+    return 0;
+  }
+}
+
+function setLockoutExpiry(expiry: number): void {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(LOCKOUT_EXPIRY_KEY, expiry.toString());
+}
+
+function clearLockoutStorage(): void {
+  if (typeof window === 'undefined') return;
+  localStorage.removeItem(LOGIN_ATTEMPTS_KEY);
+  localStorage.removeItem(LOCKOUT_EXPIRY_KEY);
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -58,9 +116,91 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [currentStaff, setCurrentStaff] = useState<StaffProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [isSupabaseConnected, setIsSupabaseConnected] = useState(false);
+  
+  // Lockout state
+  const [isLocked, setIsLocked] = useState(false);
+  const [lockoutRemainingTime, setLockoutRemainingTime] = useState(0);
+  const [loginAttemptsRemaining, setLoginAttemptsRemaining] = useState(MAX_LOGIN_ATTEMPTS);
+
+  // Check lockout status
+  const checkLockoutStatus = useCallback(() => {
+    const lockoutExpiry = getLockoutExpiry();
+    const now = Date.now();
+    
+    if (lockoutExpiry > now) {
+      setIsLocked(true);
+      setLockoutRemainingTime(Math.ceil((lockoutExpiry - now) / 1000));
+      setLoginAttemptsRemaining(0);
+    } else {
+      setIsLocked(false);
+      setLockoutRemainingTime(0);
+      
+      // If lockout expired, clear it
+      if (lockoutExpiry > 0) {
+        clearLockoutStorage();
+      }
+      
+      const attempts = getLoginAttempts();
+      setLoginAttemptsRemaining(MAX_LOGIN_ATTEMPTS - attempts.count);
+    }
+  }, []);
+
+  // Record failed login attempt
+  const recordFailedAttempt = useCallback(() => {
+    const attempts = getLoginAttempts();
+    const newCount = attempts.count + 1;
+    
+    setLoginAttempts({ count: newCount, lastAttempt: Date.now() });
+    
+    if (newCount >= MAX_LOGIN_ATTEMPTS) {
+      const lockoutExpiry = Date.now() + LOCKOUT_DURATION;
+      setLockoutExpiry(lockoutExpiry);
+      setIsLocked(true);
+      setLockoutRemainingTime(Math.ceil(LOCKOUT_DURATION / 1000));
+      setLoginAttemptsRemaining(0);
+    } else {
+      setLoginAttemptsRemaining(MAX_LOGIN_ATTEMPTS - newCount);
+    }
+  }, []);
+
+  // Clear lockout on successful login
+  const clearLockoutOnSuccess = useCallback(() => {
+    clearLockoutStorage();
+    setIsLocked(false);
+    setLockoutRemainingTime(0);
+    setLoginAttemptsRemaining(MAX_LOGIN_ATTEMPTS);
+  }, []);
+
+  // Manual clear lockout (for admin use)
+  const clearLockout = useCallback(() => {
+    clearLockoutStorage();
+    setIsLocked(false);
+    setLockoutRemainingTime(0);
+    setLoginAttemptsRemaining(MAX_LOGIN_ATTEMPTS);
+  }, []);
+
+  // Update lockout timer
+  useEffect(() => {
+    if (!isLocked || lockoutRemainingTime <= 0) return;
+    
+    const timer = setInterval(() => {
+      setLockoutRemainingTime(prev => {
+        if (prev <= 1) {
+          clearLockout();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    
+    return () => clearInterval(timer);
+  }, [isLocked, lockoutRemainingTime, clearLockout]);
 
   // Initialize auth state
   useEffect(() => {
+    // Check lockout status on mount
+    checkLockoutStatus();
+    
     const supabase = getSupabaseClient();
     
     if (!supabase) {
@@ -96,10 +236,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [checkLockoutStatus]);
 
   // Sign in with email
   const signInWithEmail = useCallback(async (email: string, password: string) => {
+    // Check if locked out
+    if (isLocked) {
+      const minutes = Math.ceil(lockoutRemainingTime / 60);
+      return { 
+        success: false, 
+        error: `Akaun dikunci. Sila cuba lagi dalam ${minutes} minit.`, 
+        errorKey: AUTH_ERROR_KEYS.ACCOUNT_LOCKED 
+      };
+    }
+    
     const supabase = getSupabaseClient();
     if (!supabase) {
       return { success: false, error: 'Supabase not configured', errorKey: AUTH_ERROR_KEYS.SUPABASE_NOT_CONFIGURED };
@@ -112,16 +262,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
 
       if (error) {
-        return { success: false, error: error.message };
+        recordFailedAttempt();
+        const remaining = loginAttemptsRemaining - 1;
+        const errorMsg = remaining > 0 
+          ? `${error.message}. ${remaining} percubaan lagi sebelum dikunci.`
+          : error.message;
+        return { success: false, error: errorMsg };
       }
 
+      clearLockoutOnSuccess();
       setSession(data.session);
       setUser(data.user);
       return { success: true };
     } catch (err) {
+      recordFailedAttempt();
       return { success: false, error: 'Login error', errorKey: AUTH_ERROR_KEYS.LOGIN_ERROR };
     }
-  }, []);
+  }, [isLocked, lockoutRemainingTime, loginAttemptsRemaining, recordFailedAttempt, clearLockoutOnSuccess]);
 
   // Sign up
   const signUp = useCallback(async (email: string, password: string, name: string) => {
@@ -163,6 +320,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Login with PIN (for staff)
   const loginWithPin = useCallback(async (staffId: string, pin: string) => {
+    // Check if locked out
+    if (isLocked) {
+      const minutes = Math.ceil(lockoutRemainingTime / 60);
+      return { 
+        success: false, 
+        error: `Akaun dikunci. Sila cuba lagi dalam ${minutes} minit.`, 
+        errorKey: AUTH_ERROR_KEYS.ACCOUNT_LOCKED 
+      };
+    }
+    
     const supabase = getSupabaseClient();
 
     // Try Supabase first
@@ -195,6 +362,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           outlet_id: staffData.outlet_id,
         };
 
+        clearLockoutOnSuccess();
         setCurrentStaff(staffProfile);
         localStorage.setItem(STAFF_SESSION_KEY, JSON.stringify(staffProfile));
         return { success: true };
@@ -205,13 +373,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // Offline mode
     return loginWithPinOffline(staffId, pin);
-  }, []);
+  }, [isLocked, lockoutRemainingTime, clearLockoutOnSuccess, loginWithPinOffline]);
 
   // Offline PIN login
-  const loginWithPinOffline = (staffId: string, pin: string) => {
+  const loginWithPinOffline = useCallback((staffId: string, pin: string) => {
     try {
       const staffData = localStorage.getItem('abangbob_staff');
       if (!staffData) {
+        recordFailedAttempt();
         return { success: false, error: 'Staff data not available', errorKey: AUTH_ERROR_KEYS.STAFF_DATA_NOT_AVAILABLE };
       }
 
@@ -219,7 +388,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const staff = staffList.find((s: any) => s.id === staffId && s.pin === pin);
 
       if (!staff) {
-        return { success: false, error: 'Invalid ID or PIN', errorKey: AUTH_ERROR_KEYS.INVALID_CREDENTIALS };
+        recordFailedAttempt();
+        const remaining = loginAttemptsRemaining - 1;
+        const errorMsg = remaining > 0 
+          ? `ID atau PIN tidak sah. ${remaining} percubaan lagi sebelum dikunci.`
+          : 'ID atau PIN tidak sah.';
+        return { success: false, error: errorMsg, errorKey: AUTH_ERROR_KEYS.INVALID_CREDENTIALS };
       }
 
       if (staff.status !== 'active') {
@@ -235,13 +409,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         outlet_id: null,
       };
 
+      clearLockoutOnSuccess();
       setCurrentStaff(staffProfile);
       localStorage.setItem(STAFF_SESSION_KEY, JSON.stringify(staffProfile));
       return { success: true };
     } catch {
+      recordFailedAttempt();
       return { success: false, error: 'Login error', errorKey: AUTH_ERROR_KEYS.LOGIN_ERROR };
     }
-  };
+  }, [loginAttemptsRemaining, recordFailedAttempt, clearLockoutOnSuccess]);
 
   // Logout staff
   const logoutStaff = useCallback(() => {
@@ -263,6 +439,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loginWithPin,
         logoutStaff,
         isSupabaseConnected,
+        isLocked,
+        lockoutRemainingTime,
+        loginAttemptsRemaining,
+        clearLockout,
       }}
     >
       {children}

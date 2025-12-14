@@ -323,3 +323,292 @@ export function generateExpenseReport(expenses: Array<{
   };
 }
 
+// Payslip PDF Generator
+export interface PayslipData {
+  staffName: string;
+  staffId?: string;
+  role: string;
+  period: string;
+  daysWorked: number;
+  regularHours: number;
+  otHours: number;
+  hourlyRate: number;
+  otRate: number;
+  regularPay: number;
+  otPay: number;
+  kpiScore?: number;
+  kpiBonus?: number;
+  grossPay: number;
+  deductions: {
+    tap: number;
+    scp: number;
+    advances?: number;
+    other?: number;
+  };
+  netPay: number;
+  bankDetails?: {
+    bankName: string;
+    accountNumber: string;
+  };
+}
+
+export function generatePayslipHTML(payslip: PayslipData): string {
+  const totalDeductions = payslip.deductions.tap + payslip.deductions.scp + 
+    (payslip.deductions.advances || 0) + (payslip.deductions.other || 0);
+
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="UTF-8">
+      <title>Payslip - ${payslip.staffName} - ${payslip.period}</title>
+      <style>
+        * {
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
+        }
+        body {
+          font-family: 'Courier New', monospace;
+          padding: 20px;
+          max-width: 400px;
+          margin: 0 auto;
+          background: white;
+          font-size: 12px;
+        }
+        .payslip {
+          border: 1px solid #333;
+          padding: 20px;
+        }
+        .header {
+          text-align: center;
+          border-bottom: 2px dashed #333;
+          padding-bottom: 15px;
+          margin-bottom: 15px;
+        }
+        .company-name {
+          font-size: 18px;
+          font-weight: bold;
+          margin-bottom: 5px;
+        }
+        .company-sub {
+          font-size: 10px;
+          color: #666;
+        }
+        .title {
+          font-size: 14px;
+          font-weight: bold;
+          margin-top: 10px;
+        }
+        .section {
+          margin-bottom: 15px;
+          padding-bottom: 10px;
+          border-bottom: 1px dashed #ccc;
+        }
+        .section-title {
+          font-weight: bold;
+          margin-bottom: 8px;
+          text-transform: uppercase;
+          font-size: 10px;
+          color: #666;
+        }
+        .row {
+          display: flex;
+          justify-content: space-between;
+          margin-bottom: 4px;
+        }
+        .row.indent {
+          padding-left: 15px;
+          font-size: 11px;
+          color: #666;
+        }
+        .row.total {
+          font-weight: bold;
+          border-top: 1px solid #333;
+          padding-top: 5px;
+          margin-top: 5px;
+        }
+        .earnings {
+          color: #059669;
+        }
+        .deduction {
+          color: #dc2626;
+        }
+        .net-pay {
+          background: #d1fae5;
+          padding: 10px;
+          text-align: center;
+          font-size: 16px;
+          font-weight: bold;
+          color: #059669;
+          border-radius: 4px;
+          margin: 15px 0;
+        }
+        .net-pay-label {
+          font-size: 10px;
+          color: #333;
+          font-weight: normal;
+        }
+        .kpi-bonus {
+          background: #fef3c7;
+          padding: 8px;
+          border-radius: 4px;
+          margin-bottom: 10px;
+        }
+        .footer {
+          text-align: center;
+          font-size: 10px;
+          color: #999;
+          margin-top: 15px;
+          padding-top: 10px;
+          border-top: 1px dashed #ccc;
+        }
+        @media print {
+          body { padding: 0; }
+          .payslip { border: none; }
+        }
+      </style>
+    </head>
+    <body>
+      <div class="payslip">
+        <div class="header">
+          <div class="company-name">ABANGBOB</div>
+          <div class="company-sub">Nasi Lemak & Burger</div>
+          <div class="title">SLIP GAJI</div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">Maklumat Pekerja</div>
+          <div class="row">
+            <span>Nama</span>
+            <span>${payslip.staffName}</span>
+          </div>
+          <div class="row">
+            <span>Jawatan</span>
+            <span>${payslip.role}</span>
+          </div>
+          <div class="row">
+            <span>Tempoh</span>
+            <span>${payslip.period}</span>
+          </div>
+          <div class="row">
+            <span>Hari Bekerja</span>
+            <span>${payslip.daysWorked} hari</span>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">Pendapatan</div>
+          <div class="row earnings">
+            <span>Gaji Biasa (${payslip.regularHours.toFixed(1)}h × BND ${payslip.hourlyRate.toFixed(2)})</span>
+            <span>BND ${payslip.regularPay.toFixed(2)}</span>
+          </div>
+          ${payslip.otHours > 0 ? `
+          <div class="row earnings">
+            <span>OT (${payslip.otHours.toFixed(1)}h × BND ${(payslip.hourlyRate * payslip.otRate).toFixed(2)})</span>
+            <span>BND ${payslip.otPay.toFixed(2)}</span>
+          </div>
+          ` : ''}
+          ${payslip.kpiBonus && payslip.kpiBonus > 0 ? `
+          <div class="kpi-bonus">
+            <div class="row">
+              <span>🏆 Bonus KPI (${payslip.kpiScore}%)</span>
+              <span>+ BND ${payslip.kpiBonus.toFixed(2)}</span>
+            </div>
+          </div>
+          ` : ''}
+          <div class="row total">
+            <span>Jumlah Pendapatan</span>
+            <span>BND ${payslip.grossPay.toFixed(2)}</span>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">Potongan</div>
+          <div class="row deduction">
+            <span>TAP</span>
+            <span>- BND ${payslip.deductions.tap.toFixed(2)}</span>
+          </div>
+          <div class="row deduction">
+            <span>SCP</span>
+            <span>- BND ${payslip.deductions.scp.toFixed(2)}</span>
+          </div>
+          ${payslip.deductions.advances && payslip.deductions.advances > 0 ? `
+          <div class="row deduction">
+            <span>Pendahuluan</span>
+            <span>- BND ${payslip.deductions.advances.toFixed(2)}</span>
+          </div>
+          ` : ''}
+          ${payslip.deductions.other && payslip.deductions.other > 0 ? `
+          <div class="row deduction">
+            <span>Lain-lain</span>
+            <span>- BND ${payslip.deductions.other.toFixed(2)}</span>
+          </div>
+          ` : ''}
+          <div class="row total">
+            <span>Jumlah Potongan</span>
+            <span class="deduction">- BND ${totalDeductions.toFixed(2)}</span>
+          </div>
+        </div>
+
+        <div class="net-pay">
+          <div class="net-pay-label">GAJI BERSIH</div>
+          BND ${payslip.netPay.toFixed(2)}
+        </div>
+
+        ${payslip.bankDetails ? `
+        <div class="section" style="border-bottom: none;">
+          <div class="section-title">Maklumat Bank</div>
+          <div class="row">
+            <span>Bank</span>
+            <span>${payslip.bankDetails.bankName}</span>
+          </div>
+          <div class="row">
+            <span>No. Akaun</span>
+            <span>${payslip.bankDetails.accountNumber}</span>
+          </div>
+        </div>
+        ` : ''}
+
+        <div class="footer">
+          <p>Dijana pada: ${new Date().toLocaleString('ms-MY')}</p>
+          <p>© ${new Date().getFullYear()} AbangBob Dashboard</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+}
+
+export function printPayslip(payslip: PayslipData): void {
+  const html = generatePayslipHTML(payslip);
+  const printWindow = window.open('', '_blank');
+  
+  if (printWindow) {
+    printWindow.document.write(html);
+    printWindow.document.close();
+    
+    printWindow.onload = () => {
+      printWindow.print();
+    };
+  }
+}
+
+export function downloadPayslipPDF(payslip: PayslipData): void {
+  const html = generatePayslipHTML(payslip);
+  const printWindow = window.open('', '_blank');
+  
+  if (printWindow) {
+    printWindow.document.write(html);
+    printWindow.document.close();
+    
+    // Set title for PDF filename
+    printWindow.document.title = `Payslip_${payslip.staffName.replace(/\s+/g, '_')}_${payslip.period.replace(/\s+/g, '_')}`;
+    
+    printWindow.onload = () => {
+      // Trigger print dialog (user can save as PDF)
+      printWindow.print();
+    };
+  }
+}
+

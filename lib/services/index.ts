@@ -8,8 +8,11 @@ export {
   generateInventoryReport,
   generateStaffAttendanceReport,
   generateExpenseReport,
+  generatePayslipHTML,
+  printPayslip,
+  downloadPayslipPDF,
 } from './pdf-generator';
-export type { ReportData } from './pdf-generator';
+export type { ReportData, PayslipData } from './pdf-generator';
 
 // Excel Export
 export {
@@ -93,4 +96,25 @@ export {
   getPaymentMethodLabel,
 } from './receipt-generator';
 export type { ReceiptLine, ReceiptData } from './receipt-generator';
+
+// Network Utilities
+export {
+  isOnline,
+  NetworkError,
+  withRetry,
+  fetchWithTimeout,
+  saveDraft,
+  loadDraft,
+  clearDraft,
+  getNetworkErrorMessage,
+  safeApiCall,
+  isRetryableError,
+  debounceAsync,
+  requestQueue,
+  generateTransactionId,
+  isTransactionSubmitted,
+  markTransactionSubmitted,
+  clearTransaction,
+} from './network';
+export type { ApiResult } from './network';
 

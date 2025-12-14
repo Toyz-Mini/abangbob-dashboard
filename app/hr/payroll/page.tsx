@@ -7,6 +7,7 @@ import { StaffProfile, AttendanceRecord } from '@/lib/types';
 import Modal from '@/components/Modal';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { getRankTier, getScoreColor } from '@/lib/kpi-data';
+import { downloadPayslipPDF, type PayslipData } from '@/lib/services';
 import Link from 'next/link';
 import { 
   DollarSign, 
@@ -151,6 +152,38 @@ export default function PayrollPage() {
 
   const handlePrintPayslip = () => {
     window.print();
+  };
+
+  // Convert PayrollEntry to PayslipData for PDF generation
+  const convertToPayslipData = (entry: PayrollEntry): PayslipData => ({
+    staffName: entry.staffName,
+    staffId: entry.staffId,
+    role: entry.role,
+    period: getMonthName(selectedMonth),
+    daysWorked: entry.daysWorked,
+    regularHours: entry.regularHours,
+    otHours: entry.otHours,
+    hourlyRate: entry.hourlyRate,
+    otRate: otRate,
+    regularPay: entry.regularPay,
+    otPay: entry.otPay,
+    kpiScore: entry.kpiScore,
+    kpiBonus: entry.kpiBonus,
+    grossPay: entry.grossPay,
+    deductions: {
+      tap: entry.deductions.epf,
+      scp: entry.deductions.socso,
+      advances: entry.deductions.advances,
+      other: entry.deductions.other,
+    },
+    netPay: entry.netPay,
+  });
+
+  const handleDownloadPDF = () => {
+    if (selectedPayroll) {
+      const payslipData = convertToPayslipData(selectedPayroll);
+      downloadPayslipPDF(payslipData);
+    }
   };
 
   const getMonthName = (monthStr: string) => {
@@ -536,6 +569,14 @@ export default function PayrollPage() {
                   style={{ flex: 1 }}
                 >
                   Tutup
+                </button>
+                <button
+                  className="btn btn-secondary"
+                  onClick={handleDownloadPDF}
+                  style={{ flex: 1 }}
+                >
+                  <Download size={18} />
+                  PDF
                 </button>
                 <button
                   className="btn btn-primary"

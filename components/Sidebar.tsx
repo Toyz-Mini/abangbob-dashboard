@@ -4,6 +4,8 @@ import { forwardRef, useMemo } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTranslation } from '@/lib/contexts/LanguageContext';
+import { useAuth } from '@/lib/contexts/AuthContext';
+import { canViewNavItem, type UserRole } from '@/lib/permissions';
 import { 
   LayoutDashboard, 
   ShoppingCart, 
@@ -120,6 +122,29 @@ interface SidebarProps {
 const Sidebar = forwardRef<HTMLElement, SidebarProps>(({ isOpen, onMouseEnter, onClick }, ref) => {
   const pathname = usePathname();
   const { t } = useTranslation();
+  const { user, currentStaff, isStaffLoggedIn } = useAuth();
+  
+  // Determine the current user's role
+  const userRole: UserRole | null = useMemo(() => {
+    if (user) {
+      // Supabase authenticated user is Admin
+      return 'Admin';
+    }
+    if (isStaffLoggedIn && currentStaff) {
+      return currentStaff.role;
+    }
+    return null;
+  }, [user, currentStaff, isStaffLoggedIn]);
+  
+  // Filter navigation groups based on user role
+  const filteredNavGroups = useMemo(() => {
+    return navGroupsConfig
+      .map(group => ({
+        ...group,
+        items: group.items.filter(item => canViewNavItem(userRole, item.href)),
+      }))
+      .filter(group => group.items.length > 0);
+  }, [userRole]);
   
   return (
     <aside 
@@ -133,7 +158,7 @@ const Sidebar = forwardRef<HTMLElement, SidebarProps>(({ isOpen, onMouseEnter, o
         {isOpen && <span>{t('app.name')}</span>}
       </div>
       <nav className="nav-container">
-        {navGroupsConfig.map((group, groupIndex) => (
+        {filteredNavGroups.map((group, groupIndex) => (
           <div key={group.titleKey} className="nav-group">
             {isOpen && (
               <div className="nav-group-title">
