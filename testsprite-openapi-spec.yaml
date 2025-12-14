@@ -1,0 +1,441 @@
+openapi: 3.0.0
+info:
+  title: AbangBob Dashboard API
+  description: F&B Centralized Management System - Supabase REST API
+  version: 1.0.0
+  contact:
+    name: AbangBob Dashboard
+    url: https://abangbob-dashboard.vercel.app
+
+servers:
+  - url: https://gmkeiqficpsfiwhqchup.supabase.co/rest/v1
+    description: Supabase Production Server
+
+security:
+  - ApiKeyAuth: []
+  - BearerAuth: []
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: apikey
+      description: Supabase anon/public key
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Supabase JWT token (same as apikey)
+
+  schemas:
+    MenuItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        category:
+          type: string
+        price:
+          type: number
+          format: decimal
+        cost:
+          type: number
+          format: decimal
+        available:
+          type: boolean
+        image_url:
+          type: string
+        modifiers:
+          type: array
+          items:
+            type: object
+        created_at:
+          type: string
+          format: date-time
+
+    Order:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        order_number:
+          type: string
+        items:
+          type: array
+          items:
+            type: object
+        subtotal:
+          type: number
+        discount:
+          type: number
+        tax:
+          type: number
+        total:
+          type: number
+        status:
+          type: string
+          enum: [pending, preparing, ready, completed, cancelled]
+        payment_method:
+          type: string
+        customer_id:
+          type: string
+          format: uuid
+        created_at:
+          type: string
+          format: date-time
+
+    Staff:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+        role:
+          type: string
+          enum: [admin, manager, staff]
+        pin:
+          type: string
+          pattern: '^\d{4,6}$'
+        position:
+          type: string
+        hourly_rate:
+          type: number
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+
+    Inventory:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        quantity:
+          type: number
+        unit:
+          type: string
+        min_stock:
+          type: number
+        cost_per_unit:
+          type: number
+        supplier_id:
+          type: string
+          format: uuid
+        last_restocked:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+
+    Customer:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        phone:
+          type: string
+        email:
+          type: string
+          format: email
+        address:
+          type: string
+        loyalty_points:
+          type: integer
+        total_spent:
+          type: number
+        created_at:
+          type: string
+          format: date-time
+
+    Attendance:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        staff_id:
+          type: string
+          format: uuid
+        date:
+          type: string
+          format: date
+        clock_in_time:
+          type: string
+          format: time
+        clock_out_time:
+          type: string
+          format: time
+        work_hours:
+          type: number
+        photo_proof_url:
+          type: string
+        notes:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    Expense:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        category:
+          type: string
+        amount:
+          type: number
+        date:
+          type: string
+          format: date
+        description:
+          type: string
+        receipt_url:
+          type: string
+        approved_by:
+          type: string
+          format: uuid
+        created_at:
+          type: string
+          format: date-time
+
+paths:
+  /menu_items:
+    get:
+      summary: Get all menu items
+      tags: [Menu]
+      responses:
+        '200':
+          description: List of menu items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MenuItem'
+    post:
+      summary: Create a new menu item
+      tags: [Menu]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MenuItem'
+      responses:
+        '201':
+          description: Menu item created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MenuItem'
+
+  /menu_items?id=eq.{id}:
+    patch:
+      summary: Update menu item
+      tags: [Menu]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MenuItem'
+      responses:
+        '200':
+          description: Menu item updated
+    delete:
+      summary: Delete menu item
+      tags: [Menu]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Menu item deleted
+
+  /orders:
+    get:
+      summary: Get all orders
+      tags: [Orders]
+      responses:
+        '200':
+          description: List of orders
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Order'
+    post:
+      summary: Create a new order
+      tags: [Orders]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Order'
+      responses:
+        '201':
+          description: Order created
+
+  /staff:
+    get:
+      summary: Get all staff members
+      tags: [Staff]
+      responses:
+        '200':
+          description: List of staff
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Staff'
+    post:
+      summary: Create a new staff member
+      tags: [Staff]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Staff'
+      responses:
+        '201':
+          description: Staff member created
+
+  /inventory:
+    get:
+      summary: Get all inventory items
+      tags: [Inventory]
+      responses:
+        '200':
+          description: List of inventory items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Inventory'
+    post:
+      summary: Add new inventory item
+      tags: [Inventory]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Inventory'
+      responses:
+        '201':
+          description: Inventory item added
+
+  /customers:
+    get:
+      summary: Get all customers
+      tags: [Customers]
+      responses:
+        '200':
+          description: List of customers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Customer'
+    post:
+      summary: Register new customer
+      tags: [Customers]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Customer'
+      responses:
+        '201':
+          description: Customer registered
+
+  /attendance:
+    get:
+      summary: Get attendance records
+      tags: [Attendance]
+      responses:
+        '200':
+          description: List of attendance records
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Attendance'
+    post:
+      summary: Clock in (create attendance record)
+      tags: [Attendance]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Attendance'
+      responses:
+        '201':
+          description: Clock in successful
+
+  /expenses:
+    get:
+      summary: Get all expenses
+      tags: [Expenses]
+      responses:
+        '200':
+          description: List of expenses
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Expense'
+    post:
+      summary: Create new expense
+      tags: [Expenses]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Expense'
+      responses:
+        '201':
+          description: Expense created

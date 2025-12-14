@@ -1,0 +1,305 @@
+# TestSprite - Example Postman Collection
+
+For quick testing with Postman or similar tools.
+
+```json
+{
+  "info": {
+    "name": "AbangBob Dashboard API",
+    "description": "API collection for TestSprite testing",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "apikey",
+    "apikey": [
+      {
+        "key": "value",
+        "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdta2VpcWZpY3BzZml3aHFjaHVwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU2Mjc1MDgsImV4cCI6MjA4MTIwMzUwOH0.yUsDxYw3c8vtSWew_ACiLYAYJHRwDz0X9EgQAPuwTts",
+        "type": "string"
+      },
+      {
+        "key": "key",
+        "value": "apikey",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "Frontend Pages",
+      "item": [
+        {
+          "name": "Login Page",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "https://abangbob-dashboard.vercel.app/login",
+              "protocol": "https",
+              "host": ["abangbob-dashboard", "vercel", "app"],
+              "path": ["login"]
+            }
+          }
+        },
+        {
+          "name": "Dashboard",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "https://abangbob-dashboard.vercel.app/",
+              "protocol": "https",
+              "host": ["abangbob-dashboard", "vercel", "app"],
+              "path": [""]
+            }
+          }
+        },
+        {
+          "name": "POS System",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "https://abangbob-dashboard.vercel.app/pos",
+              "protocol": "https",
+              "host": ["abangbob-dashboard", "vercel", "app"],
+              "path": ["pos"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Supabase - Menu Items",
+      "item": [
+        {
+          "name": "Get All Menu Items",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "apikey",
+                "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdta2VpcWZpY3BzZml3aHFjaHVwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU2Mjc1MDgsImV4cCI6MjA4MTIwMzUwOH0.yUsDxYw3c8vtSWew_ACiLYAYJHRwDz0X9EgQAPuwTts"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdta2VpcWZpY3BzZml3aHFjaHVwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU2Mjc1MDgsImV4cCI6MjA4MTIwMzUwOH0.yUsDxYw3c8vtSWew_ACiLYAYJHRwDz0X9EgQAPuwTts"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "https://gmkeiqficpsfiwhqchup.supabase.co/rest/v1/menu_items",
+              "protocol": "https",
+              "host": ["gmkeiqficpsfiwhqchup", "supabase", "co"],
+              "path": ["rest", "v1", "menu_items"]
+            }
+          }
+        },
+        {
+          "name": "Create Menu Item",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "apikey",
+                "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdta2VpcWZpY3BzZml3aHFjaHVwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU2Mjc1MDgsImV4cCI6MjA4MTIwMzUwOH0.yUsDxYw3c8vtSWew_ACiLYAYJHRwDz0X9EgQAPuwTts"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdta2VpcWZpY3BzZml3aHFjaHVwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU2Mjc1MDgsImV4cCI6MjA4MTIwMzUwOH0.yUsDxYw3c8vtSWew_ACiLYAYJHRwDz0X9EgQAPuwTts"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Nasi Katok\",\n  \"category\": \"Main Course\",\n  \"price\": 2.50,\n  \"cost\": 1.20,\n  \"available\": true\n}"
+            },
+            "url": {
+              "raw": "https://gmkeiqficpsfiwhqchup.supabase.co/rest/v1/menu_items",
+              "protocol": "https",
+              "host": ["gmkeiqficpsfiwhqchup", "supabase", "co"],
+              "path": ["rest", "v1", "menu_items"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Supabase - Orders",
+      "item": [
+        {
+          "name": "Get All Orders",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "apikey",
+                "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdta2VpcWZpY3BzZml3aHFjaHVwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU2Mjc1MDgsImV4cCI6MjA4MTIwMzUwOH0.yUsDxYw3c8vtSWew_ACiLYAYJHRwDz0X9EgQAPuwTts"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdta2VpcWZpY3BzZml3aHFjaHVwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU2Mjc1MDgsImV4cCI6MjA4MTIwMzUwOH0.yUsDxYw3c8vtSWew_ACiLYAYJHRwDz0X9EgQAPuwTts"
+              }
+            ],
+            "url": {
+              "raw": "https://gmkeiqficpsfiwhqchup.supabase.co/rest/v1/orders",
+              "protocol": "https",
+              "host": ["gmkeiqficpsfiwhqchup", "supabase", "co"],
+              "path": ["rest", "v1", "orders"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Supabase - Staff",
+      "item": [
+        {
+          "name": "Get All Staff",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "apikey",
+                "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdta2VpcWZpY3BzZml3aHFjaHVwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU2Mjc1MDgsImV4cCI6MjA4MTIwMzUwOH0.yUsDxYw3c8vtSWew_ACiLYAYJHRwDz0X9EgQAPuwTts"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdta2VpcWZpY3BzZml3aHFjaHVwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU2Mjc1MDgsImV4cCI6MjA4MTIwMzUwOH0.yUsDxYw3c8vtSWew_ACiLYAYJHRwDz0X9EgQAPuwTts"
+              }
+            ],
+            "url": {
+              "raw": "https://gmkeiqficpsfiwhqchup.supabase.co/rest/v1/staff",
+              "protocol": "https",
+              "host": ["gmkeiqficpsfiwhqchup", "supabase", "co"],
+              "path": ["rest", "v1", "staff"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Supabase - Inventory",
+      "item": [
+        {
+          "name": "Get All Inventory",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "apikey",
+                "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdta2VpcWZpY3BzZml3aHFjaHVwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU2Mjc1MDgsImV4cCI6MjA4MTIwMzUwOH0.yUsDxYw3c8vtSWew_ACiLYAYJHRwDz0X9EgQAPuwTts"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdta2VpcWZpY3BzZml3aHFjaHVwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU2Mjc1MDgsImV4cCI6MjA4MTIwMzUwOH0.yUsDxYw3c8vtSWew_ACiLYAYJHRwDz0X9EgQAPuwTts"
+              }
+            ],
+            "url": {
+              "raw": "https://gmkeiqficpsfiwhqchup.supabase.co/rest/v1/inventory",
+              "protocol": "https",
+              "host": ["gmkeiqficpsfiwhqchup", "supabase", "co"],
+              "path": ["rest", "v1", "inventory"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Supabase - Customers",
+      "item": [
+        {
+          "name": "Get All Customers",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "apikey",
+                "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdta2VpcWZpY3BzZml3aHFjaHVwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU2Mjc1MDgsImV4cCI6MjA4MTIwMzUwOH0.yUsDxYw3c8vtSWew_ACiLYAYJHRwDz0X9EgQAPuwTts"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdta2VpcWZpY3BzZml3aHFjaHVwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU2Mjc1MDgsImV4cCI6MjA4MTIwMzUwOH0.yUsDxYw3c8vtSWew_ACiLYAYJHRwDz0X9EgQAPuwTts"
+              }
+            ],
+            "url": {
+              "raw": "https://gmkeiqficpsfiwhqchup.supabase.co/rest/v1/customers",
+              "protocol": "https",
+              "host": ["gmkeiqficpsfiwhqchup", "supabase", "co"],
+              "path": ["rest", "v1", "customers"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Supabase - Attendance",
+      "item": [
+        {
+          "name": "Get Attendance Records",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "apikey",
+                "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdta2VpcWZpY3BzZml3aHFjaHVwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU2Mjc1MDgsImV4cCI6MjA4MTIwMzUwOH0.yUsDxYw3c8vtSWew_ACiLYAYJHRwDz0X9EgQAPuwTts"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdta2VpcWZpY3BzZml3aHFjaHVwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU2Mjc1MDgsImV4cCI6MjA4MTIwMzUwOH0.yUsDxYw3c8vtSWew_ACiLYAYJHRwDz0X9EgQAPuwTts"
+              }
+            ],
+            "url": {
+              "raw": "https://gmkeiqficpsfiwhqchup.supabase.co/rest/v1/attendance",
+              "protocol": "https",
+              "host": ["gmkeiqficpsfiwhqchup", "supabase", "co"],
+              "path": ["rest", "v1", "attendance"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Supabase - Expenses",
+      "item": [
+        {
+          "name": "Get All Expenses",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "apikey",
+                "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdta2VpcWZpY3BzZml3aHFjaHVwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU2Mjc1MDgsImV4cCI6MjA4MTIwMzUwOH0.yUsDxYw3c8vtSWew_ACiLYAYJHRwDz0X9EgQAPuwTts"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdta2VpcWZpY3BzZml3aHFjaHVwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU2Mjc1MDgsImV4cCI6MjA4MTIwMzUwOH0.yUsDxYw3c8vtSWew_ACiLYAYJHRwDz0X9EgQAPuwTts"
+              }
+            ],
+            "url": {
+              "raw": "https://gmkeiqficpsfiwhqchup.supabase.co/rest/v1/expenses",
+              "protocol": "https",
+              "host": ["gmkeiqficpsfiwhqchup", "supabase", "co"],
+              "path": ["rest", "v1", "expenses"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
+```
+
+**Usage:**
+1. Copy this entire file
+2. Import into Postman: File > Import > Paste Raw Text
+3. Collection akan automatically setup dengan correct headers
+4. Click any request dan klik "Send" untuk test
+
+Alternative: Import `testsprite-openapi-spec.yaml` directly into Postman for automatic collection generation.

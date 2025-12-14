@@ -1,0 +1,395 @@
+{
+  "project_name": "AbangBob Dashboard",
+  "version": "1.0.0",
+  "description": "F&B Centralized Management System - API Documentation for TestSprite",
+  "deployment_url": "https://abangbob-dashboard.vercel.app",
+  "last_updated": "2024-12-14",
+  
+  "authentication": {
+    "type": "session-based",
+    "login_endpoint": "https://abangbob-dashboard.vercel.app/login",
+    "test_credentials": {
+      "admin": {
+        "email": "admin@abangbob.com",
+        "password": "Admin123!",
+        "permissions": "full_access"
+      },
+      "manager": {
+        "email": "manager@abangbob.com",
+        "password": "Manager123!",
+        "permissions": "operational_access"
+      },
+      "staff": {
+        "login_method": "PIN",
+        "pin": "3456",
+        "permissions": "limited_access"
+      }
+    }
+  },
+
+  "frontend_endpoints": [
+    {
+      "id": "login_page",
+      "name": "Login Page",
+      "url": "https://abangbob-dashboard.vercel.app/login",
+      "method": "GET/POST",
+      "auth_required": false,
+      "description": "Public login page for admin/manager authentication",
+      "test_scenarios": [
+        "Valid admin login redirects to dashboard",
+        "Invalid credentials show error message",
+        "Password validation enforced",
+        "Remember me functionality"
+      ]
+    },
+    {
+      "id": "dashboard",
+      "name": "Main Dashboard",
+      "url": "https://abangbob-dashboard.vercel.app/",
+      "method": "GET",
+      "auth_required": true,
+      "description": "Main dashboard with sales summary, alerts, and KPIs",
+      "test_scenarios": [
+        "Dashboard loads with correct data",
+        "Real-time updates working",
+        "Charts render correctly",
+        "Alert notifications display"
+      ]
+    },
+    {
+      "id": "pos_system",
+      "name": "POS System",
+      "url": "https://abangbob-dashboard.vercel.app/pos",
+      "method": "GET/POST",
+      "auth_required": true,
+      "description": "Point of Sale system for order processing",
+      "test_scenarios": [
+        "Menu items load correctly",
+        "Add items to cart",
+        "Apply discounts and modifiers",
+        "Calculate order total accurately",
+        "Complete checkout process",
+        "Payment validation"
+      ]
+    },
+    {
+      "id": "menu_management",
+      "name": "Menu Management",
+      "url": "https://abangbob-dashboard.vercel.app/menu-management",
+      "method": "GET/POST/PATCH/DELETE",
+      "auth_required": true,
+      "description": "CRUD operations for menu items and categories",
+      "test_scenarios": [
+        "View menu items list",
+        "Create new menu item",
+        "Edit existing item",
+        "Delete item",
+        "Category management",
+        "Image upload for items"
+      ]
+    },
+    {
+      "id": "staff_portal",
+      "name": "Staff Portal",
+      "url": "https://abangbob-dashboard.vercel.app/staff-portal",
+      "method": "GET",
+      "auth_required": true,
+      "auth_method": "PIN",
+      "description": "Self-service portal for staff members",
+      "test_scenarios": [
+        "PIN login works (3456)",
+        "View personal schedule",
+        "Apply for leave",
+        "Submit claims",
+        "Complete checklists",
+        "View payslips"
+      ]
+    },
+    {
+      "id": "hr_management",
+      "name": "HR Management",
+      "url": "https://abangbob-dashboard.vercel.app/hr",
+      "method": "GET/POST/PATCH/DELETE",
+      "auth_required": true,
+      "required_role": "manager_or_admin",
+      "description": "HR module for staff, attendance, and payroll",
+      "test_scenarios": [
+        "Staff CRUD operations",
+        "Clock in/out functionality",
+        "Attendance tracking",
+        "KPI monitoring",
+        "Payroll generation",
+        "Leave approvals"
+      ]
+    },
+    {
+      "id": "inventory",
+      "name": "Inventory Management",
+      "url": "https://abangbob-dashboard.vercel.app/inventory",
+      "method": "GET/POST/PATCH/DELETE",
+      "auth_required": true,
+      "description": "Inventory tracking and stock management",
+      "test_scenarios": [
+        "View stock levels",
+        "Add inventory items",
+        "Update quantities",
+        "Low stock alerts",
+        "Stock adjustments",
+        "Supplier management"
+      ]
+    }
+  ],
+
+  "supabase_api": {
+    "base_url": "https://gmkeiqficpsfiwhqchup.supabase.co/rest/v1",
+    "authentication": {
+      "type": "api_key",
+      "required_headers": {
+        "apikey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdta2VpcWZpY3BzZml3aHFjaHVwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU2Mjc1MDgsImV4cCI6MjA4MTIwMzUwOH0.yUsDxYw3c8vtSWew_ACiLYAYJHRwDz0X9EgQAPuwTts",
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdta2VpcWZpY3BzZml3aHFjaHVwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU2Mjc1MDgsImV4cCI6MjA4MTIwMzUwOH0.yUsDxYw3c8vtSWew_ACiLYAYJHRwDz0X9EgQAPuwTts",
+        "Content-Type": "application/json"
+      }
+    },
+    "endpoints": [
+      {
+        "id": "menu_items",
+        "name": "Menu Items",
+        "table": "menu_items",
+        "url": "https://gmkeiqficpsfiwhqchup.supabase.co/rest/v1/menu_items",
+        "methods": ["GET", "POST", "PATCH", "DELETE"],
+        "schema": {
+          "id": "uuid",
+          "name": "text",
+          "category": "text",
+          "price": "numeric",
+          "cost": "numeric",
+          "available": "boolean",
+          "image_url": "text",
+          "modifiers": "jsonb",
+          "created_at": "timestamptz"
+        },
+        "test_scenarios": [
+          "GET: Fetch all menu items",
+          "GET: Filter by category",
+          "POST: Create new menu item",
+          "PATCH: Update item price/availability",
+          "DELETE: Remove menu item"
+        ]
+      },
+      {
+        "id": "orders",
+        "name": "Orders",
+        "table": "orders",
+        "url": "https://gmkeiqficpsfiwhqchup.supabase.co/rest/v1/orders",
+        "methods": ["GET", "POST", "PATCH"],
+        "schema": {
+          "id": "uuid",
+          "order_number": "text",
+          "items": "jsonb",
+          "subtotal": "numeric",
+          "discount": "numeric",
+          "tax": "numeric",
+          "total": "numeric",
+          "status": "text",
+          "payment_method": "text",
+          "customer_id": "uuid",
+          "created_at": "timestamptz"
+        },
+        "test_scenarios": [
+          "GET: Fetch order history",
+          "GET: Filter by date range and status",
+          "POST: Create new order with items",
+          "PATCH: Update order status",
+          "Verify order total calculations"
+        ]
+      },
+      {
+        "id": "staff",
+        "name": "Staff",
+        "table": "staff",
+        "url": "https://gmkeiqficpsfiwhqchup.supabase.co/rest/v1/staff",
+        "methods": ["GET", "POST", "PATCH", "DELETE"],
+        "schema": {
+          "id": "uuid",
+          "name": "text",
+          "email": "text",
+          "phone": "text",
+          "role": "text",
+          "pin": "text",
+          "position": "text",
+          "hourly_rate": "numeric",
+          "is_active": "boolean",
+          "created_at": "timestamptz"
+        },
+        "test_scenarios": [
+          "GET: List all staff",
+          "GET: Filter by role",
+          "POST: Create new staff member",
+          "PATCH: Update staff details",
+          "DELETE: Remove staff",
+          "Verify PIN validation (4 digits)"
+        ]
+      },
+      {
+        "id": "inventory",
+        "name": "Inventory",
+        "table": "inventory",
+        "url": "https://gmkeiqficpsfiwhqchup.supabase.co/rest/v1/inventory",
+        "methods": ["GET", "POST", "PATCH", "DELETE"],
+        "schema": {
+          "id": "uuid",
+          "name": "text",
+          "quantity": "numeric",
+          "unit": "text",
+          "min_stock": "numeric",
+          "cost_per_unit": "numeric",
+          "supplier_id": "uuid",
+          "last_restocked": "timestamptz",
+          "created_at": "timestamptz"
+        },
+        "test_scenarios": [
+          "GET: Fetch all inventory items",
+          "GET: Filter by low stock (quantity < min_stock)",
+          "POST: Add new inventory item",
+          "PATCH: Update stock quantity",
+          "DELETE: Remove inventory item"
+        ]
+      },
+      {
+        "id": "customers",
+        "name": "Customers",
+        "table": "customers",
+        "url": "https://gmkeiqficpsfiwhqchup.supabase.co/rest/v1/customers",
+        "methods": ["GET", "POST", "PATCH", "DELETE"],
+        "schema": {
+          "id": "uuid",
+          "name": "text",
+          "phone": "text",
+          "email": "text",
+          "address": "text",
+          "loyalty_points": "integer",
+          "total_spent": "numeric",
+          "created_at": "timestamptz"
+        },
+        "test_scenarios": [
+          "GET: List all customers",
+          "GET: Search by phone number",
+          "POST: Register new customer",
+          "PATCH: Update loyalty points",
+          "Verify phone format (Brunei: +673XXXXXXX)"
+        ]
+      },
+      {
+        "id": "attendance",
+        "name": "Attendance",
+        "table": "attendance",
+        "url": "https://gmkeiqficpsfiwhqchup.supabase.co/rest/v1/attendance",
+        "methods": ["GET", "POST", "PATCH"],
+        "schema": {
+          "id": "uuid",
+          "staff_id": "uuid",
+          "date": "date",
+          "clock_in_time": "time",
+          "clock_out_time": "time",
+          "work_hours": "numeric",
+          "photo_proof_url": "text",
+          "notes": "text",
+          "created_at": "timestamptz"
+        },
+        "test_scenarios": [
+          "GET: Fetch attendance records",
+          "GET: Filter by date range",
+          "POST: Clock in (create record)",
+          "PATCH: Clock out (update record)",
+          "Verify work hours calculation"
+        ]
+      },
+      {
+        "id": "expenses",
+        "name": "Expenses",
+        "table": "expenses",
+        "url": "https://gmkeiqficpsfiwhqchup.supabase.co/rest/v1/expenses",
+        "methods": ["GET", "POST", "PATCH", "DELETE"],
+        "schema": {
+          "id": "uuid",
+          "category": "text",
+          "amount": "numeric",
+          "date": "date",
+          "description": "text",
+          "receipt_url": "text",
+          "approved_by": "uuid",
+          "created_at": "timestamptz"
+        },
+        "test_scenarios": [
+          "GET: Fetch all expenses",
+          "GET: Filter by category and date range",
+          "POST: Create new expense",
+          "PATCH: Update expense details",
+          "DELETE: Remove expense",
+          "Verify amount validation (positive numbers)"
+        ]
+      }
+    ]
+  },
+
+  "test_data_examples": {
+    "create_menu_item": {
+      "name": "Nasi Katok",
+      "category": "Main Course",
+      "price": 2.50,
+      "cost": 1.20,
+      "available": true,
+      "modifiers": [
+        {"name": "Extra Rice", "price": 0.50},
+        {"name": "Extra Sambal", "price": 0.30}
+      ]
+    },
+    "create_order": {
+      "order_number": "AB-001",
+      "items": [
+        {
+          "menu_item_id": "uuid-here",
+          "name": "Nasi Katok",
+          "quantity": 2,
+          "price": 2.50,
+          "modifiers": []
+        }
+      ],
+      "subtotal": 5.00,
+      "discount": 0,
+      "tax": 0,
+      "total": 5.00,
+      "status": "pending",
+      "payment_method": "cash"
+    },
+    "create_staff": {
+      "name": "Ahmad Ibrahim",
+      "email": "ahmad@test.com",
+      "phone": "+6738123456",
+      "role": "staff",
+      "pin": "1234",
+      "position": "Cashier",
+      "hourly_rate": 5.00,
+      "is_active": true
+    },
+    "create_customer": {
+      "name": "Siti Aminah",
+      "phone": "+6738765432",
+      "email": "siti@example.com",
+      "loyalty_points": 0,
+      "total_spent": 0
+    }
+  },
+
+  "notes": {
+    "currency": "BND (Brunei Dollar)",
+    "timezone": "Asia/Brunei (UTC+8)",
+    "locale": {
+      "languages": ["en", "ms"],
+      "default": "en"
+    },
+    "rate_limits": "None (development)",
+    "cors": "Enabled for all origins",
+    "real_time": "Supabase Realtime enabled for all tables"
+  }
+}
