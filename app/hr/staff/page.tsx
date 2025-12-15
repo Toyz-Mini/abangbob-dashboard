@@ -710,136 +710,108 @@ export default function StaffListPage() {
     if (!selectedStaff) return null;
     const age = calculateAge(selectedStaff.dateOfBirth);
 
+    const Card = ({ title, icon: Icon, children }: { title: string, icon: any, children: React.ReactNode }) => (
+      <div className="bg-white p-5 rounded-xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow duration-200 h-full">
+        <h4 className="flex items-center gap-2 text-base font-semibold text-slate-800 mb-4 pb-3 border-b border-slate-100">
+          <Icon size={18} className="text-secondary" /> {title}
+        </h4>
+        <div className="space-y-4">
+          {children}
+        </div>
+      </div>
+    );
+
+    const Item = ({ label, value, sub }: { label: string, value: string | number | undefined | null, sub?: string }) => (
+      <div>
+        <div className="text-xs uppercase tracking-wider text-slate-400 font-semibold mb-1">{label}</div>
+        <div className="text-sm font-medium text-slate-900 break-words">
+          {value || <span className="text-slate-300 italic">Tidak dinyatakan</span>}
+          {sub && <span className="text-slate-500 ml-1 text-xs">({sub})</span>}
+        </div>
+      </div>
+    );
+
     return (
-      <div className="detail-content">
-        <div className="detail-section">
-          <h4 className="detail-section-title">
-            <User size={16} /> Maklumat Peribadi
-          </h4>
-          <div className="detail-grid">
-            <div className="detail-item">
-              <span className="detail-label">No. IC</span>
-              <span className="detail-value">{selectedStaff.icNumber || '-'}</span>
-            </div>
-            <div className="detail-item">
-              <span className="detail-label">Tarikh Lahir</span>
-              <span className="detail-value">
-                {formatDate(selectedStaff.dateOfBirth)}
-                {age && <span style={{ color: 'var(--text-secondary)' }}> ({age} tahun)</span>}
-              </span>
-            </div>
-            <div className="detail-item">
-              <span className="detail-label">Jantina</span>
-              <span className="detail-value">{selectedStaff.gender === 'male' ? 'Lelaki' : selectedStaff.gender === 'female' ? 'Perempuan' : '-'}</span>
-            </div>
-            <div className="detail-item">
-              <span className="detail-label">Status Perkahwinan</span>
-              <span className="detail-value">
-                {selectedStaff.maritalStatus === 'single' ? 'Bujang' :
-                  selectedStaff.maritalStatus === 'married' ? 'Berkahwin' :
-                    selectedStaff.maritalStatus === 'divorced' ? 'Bercerai' :
-                      selectedStaff.maritalStatus === 'widowed' ? 'Balu/Duda' : '-'}
-              </span>
-            </div>
-            <div className="detail-item">
-              <span className="detail-label">Warganegara</span>
-              <span className="detail-value">{selectedStaff.nationality || '-'}</span>
-            </div>
-            <div className="detail-item">
-              <span className="detail-label">Agama</span>
-              <span className="detail-value">{selectedStaff.religion || '-'}</span>
-            </div>
-            <div className="detail-item">
-              <span className="detail-label">Jenis Darah</span>
-              <span className="detail-value">{selectedStaff.bloodType || '-'}</span>
-            </div>
+      <div className="detail-content bg-slate-50 p-6 -m-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {/* Personal Info Card */}
+          <div className="md:col-span-2 lg:col-span-1">
+            <Card title="Maklumat Peribadi" icon={User}>
+              <div className="grid grid-cols-2 gap-4">
+                <Item label="Nama Penuh" value={selectedStaff.name} />
+                <Item label="No. IC" value={selectedStaff.icNumber} />
+                <Item label="Tarikh Lahir" value={formatDate(selectedStaff.dateOfBirth)} sub={age ? `${age} tahun` : undefined} />
+                <Item label="Jantina" value={selectedStaff.gender === 'male' ? 'Lelaki' : selectedStaff.gender === 'female' ? 'Perempuan' : '-'} />
+                <Item label="Status" value={
+                  selectedStaff.maritalStatus === 'single' ? 'Bujang' :
+                    selectedStaff.maritalStatus === 'married' ? 'Berkahwin' :
+                      selectedStaff.maritalStatus === 'divorced' ? 'Bercerai' :
+                        selectedStaff.maritalStatus === 'widowed' ? 'Balu/Duda' : '-'
+                } />
+                <Item label="Warganegara" value={selectedStaff.nationality} />
+                <Item label="Agama" value={selectedStaff.religion} />
+                <Item label="Jenis Darah" value={selectedStaff.bloodType} />
+              </div>
+            </Card>
           </div>
-        </div>
 
-        <div className="detail-section">
-          <h4 className="detail-section-title">
-            <Phone size={16} /> Maklumat Perhubungan
-          </h4>
-          <div className="detail-grid">
-            <div className="detail-item">
-              <span className="detail-label">Telefon</span>
-              <span className="detail-value">{selectedStaff.phone}</span>
+          {/* Contact Info Card */}
+          <Card title="Hubungi" icon={Phone}>
+            <div className="space-y-4">
+              <Item label="Telefon" value={selectedStaff.phone} />
+              <Item label="Email" value={selectedStaff.email} />
+              <Item label="Alamat" value={selectedStaff.address} />
             </div>
-            <div className="detail-item">
-              <span className="detail-label">Email</span>
-              <span className="detail-value">{selectedStaff.email || '-'}</span>
-            </div>
-            <div className="detail-item full-width">
-              <span className="detail-label">Alamat</span>
-              <span className="detail-value">{selectedStaff.address || '-'}</span>
-            </div>
-          </div>
-        </div>
+          </Card>
 
-        <div className="detail-section">
-          <h4 className="detail-section-title">
-            <AlertCircle size={16} /> Kenalan Kecemasan
-          </h4>
-          <div className="detail-grid">
-            <div className="detail-item">
-              <span className="detail-label">Nama</span>
-              <span className="detail-value">{selectedStaff.emergencyContact?.name || '-'}</span>
+          {/* Emergency Contact Card */}
+          <Card title="Kecemasan" icon={AlertCircle}>
+            <div className="space-y-4">
+              <Item label="Nama" value={selectedStaff.emergencyContact?.name} />
+              <Item label="Hubungan" value={selectedStaff.emergencyContact?.relation} />
+              <Item label="Telefon" value={selectedStaff.emergencyContact?.phone} />
             </div>
-            <div className="detail-item">
-              <span className="detail-label">Hubungan</span>
-              <span className="detail-value">{selectedStaff.emergencyContact?.relation || '-'}</span>
-            </div>
-            <div className="detail-item">
-              <span className="detail-label">Telefon</span>
-              <span className="detail-value">{selectedStaff.emergencyContact?.phone || '-'}</span>
-            </div>
-          </div>
-        </div>
+          </Card>
 
-        <div className="detail-section">
-          <h4 className="detail-section-title">
-            <CreditCard size={16} /> Maklumat Bank
-          </h4>
-          <div className="detail-grid">
-            <div className="detail-item">
-              <span className="detail-label">Bank</span>
-              <span className="detail-value">{selectedStaff.bankDetails?.bankName || '-'}</span>
+          {/* Bank Info Card */}
+          <Card title="Bank" icon={CreditCard}>
+            <div className="space-y-4">
+              <Item label="Nama Bank" value={selectedStaff.bankDetails?.bankName} />
+              <Item label="No. Akaun" value={selectedStaff.bankDetails?.accountNumber} />
+              <Item label="Pemegang Akaun" value={selectedStaff.bankDetails?.accountName} />
             </div>
-            <div className="detail-item">
-              <span className="detail-label">No. Akaun</span>
-              <span className="detail-value">{selectedStaff.bankDetails?.accountNumber || '-'}</span>
-            </div>
-            <div className="detail-item">
-              <span className="detail-label">Nama Akaun</span>
-              <span className="detail-value">{selectedStaff.bankDetails?.accountName || '-'}</span>
-            </div>
-          </div>
-        </div>
+          </Card>
 
-        <div className="detail-section">
-          <h4 className="detail-section-title">
-            <Shield size={16} /> Caruman TAP/SCP
-          </h4>
-          <div className="detail-grid">
-            <div className="detail-item">
-              <span className="detail-label">No. TAP</span>
-              <span className="detail-value">{selectedStaff.statutoryContributions?.tapNumber || '-'}</span>
-            </div>
-            <div className="detail-item">
-              <span className="detail-label">No. SCP</span>
-              <span className="detail-value">{selectedStaff.statutoryContributions?.scpNumber || '-'}</span>
-            </div>
-            <div className="detail-item">
-              <span className="detail-label">Kadar TAP</span>
-              <span className="detail-value">
-                {selectedStaff.statutoryContributions?.tapEmployeeRate || 5}% (Pekerja) / {selectedStaff.statutoryContributions?.tapEmployerRate || 5}% (Majikan)
-              </span>
-            </div>
-            <div className="detail-item">
-              <span className="detail-label">Kadar SCP</span>
-              <span className="detail-value">
-                {selectedStaff.statutoryContributions?.scpEmployeeRate || 3.5}% (Pekerja) / {selectedStaff.statutoryContributions?.scpEmployerRate || 3.5}% (Majikan)
-              </span>
+          {/* TAP/SCP Card */}
+          <div className="md:col-span-2 lg:col-span-2">
+            <div className="bg-white p-5 rounded-xl border border-slate-100 shadow-sm h-full">
+              <h4 className="flex items-center gap-2 text-base font-semibold text-slate-800 mb-4 pb-3 border-b border-slate-100">
+                <Shield size={18} className="text-secondary" /> Caruman TAP/SCP
+              </h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div>
+                  <h5 className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-blue-500"></div> TAP (Tabung Amanah Pekerja)
+                  </h5>
+                  <div className="grid grid-cols-2 gap-4 pl-4 border-l-2 border-slate-100">
+                    <Item label="No. Ahli" value={selectedStaff.statutoryContributions?.tapNumber} />
+                    <div></div>
+                    <Item label="Caruman Pekerja" value={`${selectedStaff.statutoryContributions?.tapEmployeeRate || 5}%`} />
+                    <Item label="Caruman Majikan" value={`${selectedStaff.statutoryContributions?.tapEmployerRate || 5}%`} />
+                  </div>
+                </div>
+                <div>
+                  <h5 className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-purple-500"></div> SCP (Supp. Contrib. Pension)
+                  </h5>
+                  <div className="grid grid-cols-2 gap-4 pl-4 border-l-2 border-slate-100">
+                    <Item label="No. Ahli" value={selectedStaff.statutoryContributions?.scpNumber} />
+                    <div></div>
+                    <Item label="Caruman Pekerja" value={`${selectedStaff.statutoryContributions?.scpEmployeeRate || 3.5}%`} />
+                    <Item label="Caruman Majikan" value={`${selectedStaff.statutoryContributions?.scpEmployerRate || 3.5}%`} />
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -850,142 +822,116 @@ export default function StaffListPage() {
   const renderDetailEmployment = () => {
     if (!selectedStaff) return null;
 
+    const Card = ({ title, icon: Icon, children }: { title: string, icon: any, children: React.ReactNode }) => (
+      <div className="bg-white p-5 rounded-xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow duration-200 h-full">
+        <h4 className="flex items-center gap-2 text-base font-semibold text-slate-800 mb-4 pb-3 border-b border-slate-100">
+          <Icon size={18} className="text-secondary" /> {title}
+        </h4>
+        <div className="space-y-4">
+          {children}
+        </div>
+      </div>
+    );
+
+    const Item = ({ label, value, badge }: { label: string, value: string | number | undefined | null, badge?: string }) => (
+      <div>
+        <div className="text-xs uppercase tracking-wider text-slate-400 font-semibold mb-1">{label}</div>
+        <div className="text-sm font-medium text-slate-900 break-words flex items-center gap-2">
+          {value || <span className="text-slate-300 italic">Tidak dinyatakan</span>}
+          {badge && <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${badge === 'active' ? 'bg-green-100 text-green-700' :
+            badge === 'permanent' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700'
+            }`}>{badge}</span>}
+        </div>
+      </div>
+    );
+
     return (
-      <div className="detail-content">
-        <div className="detail-section">
-          <h4 className="detail-section-title">
-            <Briefcase size={16} /> Maklumat Pekerjaan
-          </h4>
-          <div className="detail-grid">
-            <div className="detail-item">
-              <span className="detail-label">No. Pekerja</span>
-              <span className="detail-value">{selectedStaff.employeeNumber || '-'}</span>
-            </div>
-            <div className="detail-item">
-              <span className="detail-label">Jawatan</span>
-              <span className="detail-value">{selectedStaff.role}</span>
-            </div>
-            <div className="detail-item">
-              <span className="detail-label">Posisi</span>
-              <span className="detail-value">{selectedStaff.position || '-'}</span>
-            </div>
-            <div className="detail-item">
-              <span className="detail-label">Jabatan</span>
-              <span className="detail-value">{selectedStaff.department || '-'}</span>
-            </div>
-            <div className="detail-item">
-              <span className="detail-label">Jenis Pekerjaan</span>
-              <span className="detail-value">
-                {selectedStaff.employmentType === 'permanent' ? 'Tetap' :
+      <div className="detail-content bg-slate-50 p-6 -m-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {/* Job Info Card */}
+          <Card title="Maklumat Pekerjaan" icon={Briefcase}>
+            <div className="space-y-4">
+              <Item label="No. Pekerja" value={selectedStaff.employeeNumber} />
+              <Item label="Jawatan" value={selectedStaff.role} />
+              <Item label="Posisi" value={selectedStaff.position} />
+              <Item label="Jabatan" value={selectedStaff.department} />
+              <Item label="Jenis Pekerjaan" value={
+                selectedStaff.employmentType === 'permanent' ? 'Tetap' :
                   selectedStaff.employmentType === 'contract' ? 'Kontrak' :
                     selectedStaff.employmentType === 'part-time' ? 'Separuh Masa' :
-                      selectedStaff.employmentType === 'probation' ? 'Percubaan' : '-'}
-              </span>
+                      selectedStaff.employmentType === 'probation' ? 'Percubaan' : '-'
+              } badge={selectedStaff.employmentType} />
+              <Item label="Lokasi Kerja" value={selectedStaff.workLocation} />
+              <Item label="Tarikh Mula" value={formatDate(selectedStaff.joinDate)} />
+              <Item label="Melaporkan Kepada" value={
+                selectedStaff.reportingTo ? staff.find(s => s.id === selectedStaff.reportingTo)?.name : '-'
+              } />
             </div>
-            <div className="detail-item">
-              <span className="detail-label">Lokasi Kerja</span>
-              <span className="detail-value">{selectedStaff.workLocation || '-'}</span>
-            </div>
-            <div className="detail-item">
-              <span className="detail-label">Tarikh Mula</span>
-              <span className="detail-value">{formatDate(selectedStaff.joinDate)}</span>
-            </div>
-            <div className="detail-item">
-              <span className="detail-label">Melaporkan Kepada</span>
-              <span className="detail-value">
-                {selectedStaff.reportingTo ? staff.find(s => s.id === selectedStaff.reportingTo)?.name : '-'}
-              </span>
-            </div>
-          </div>
-        </div>
+          </Card>
 
-        <div className="detail-section">
-          <h4 className="detail-section-title">
-            <DollarSign size={16} /> Maklumat Gaji
-          </h4>
-          <div className="detail-grid">
-            <div className="detail-item">
-              <span className="detail-label">Gaji Asas</span>
-              <span className="detail-value">BND {selectedStaff.baseSalary?.toLocaleString()}</span>
-            </div>
-            <div className="detail-item">
-              <span className="detail-label">Kadar Jam</span>
-              <span className="detail-value">BND {selectedStaff.hourlyRate}/jam</span>
-            </div>
-            <div className="detail-item">
-              <span className="detail-label">Kadar OT</span>
-              <span className="detail-value">{selectedStaff.overtimeRate || 1.5}x</span>
-            </div>
-            <div className="detail-item">
-              <span className="detail-label">Jenis Gaji</span>
-              <span className="detail-value">
-                {selectedStaff.salaryType === 'monthly' ? 'Bulanan' :
+          {/* Salary Info Card */}
+          <Card title="Maklumat Gaji" icon={DollarSign}>
+            <div className="space-y-4">
+              <Item label="Gaji Asas" value={selectedStaff.baseSalary ? `BND ${selectedStaff.baseSalary.toLocaleString()}` : '-'} />
+              <Item label="Kadar Jam" value={selectedStaff.hourlyRate ? `BND ${selectedStaff.hourlyRate}/jam` : '-'} />
+              <Item label="Kadar OT" value={`${selectedStaff.overtimeRate || 1.5}x`} />
+              <Item label="Jenis Gaji" value={
+                selectedStaff.salaryType === 'monthly' ? 'Bulanan' :
                   selectedStaff.salaryType === 'hourly' ? 'Per Jam' :
-                    selectedStaff.salaryType === 'daily' ? 'Harian' : 'Bulanan'}
-              </span>
+                    selectedStaff.salaryType === 'daily' ? 'Harian' : 'Bulanan'
+              } />
             </div>
-          </div>
-        </div>
+          </Card>
 
-        <div className="detail-section">
-          <h4 className="detail-section-title">
-            <Calendar size={16} /> Entitlement Cuti
-          </h4>
-          <div className="detail-grid">
-            <div className="detail-item">
-              <span className="detail-label">Cuti Tahunan</span>
-              <span className="detail-value">{selectedStaff.leaveEntitlement?.annual || 14} hari</span>
+          {/* Leave Entitlement Card */}
+          <Card title="Entitlement Cuti" icon={Calendar}>
+            <div className="grid grid-cols-2 gap-4">
+              <Item label="Tahunan" value={`${selectedStaff.leaveEntitlement?.annual || 14} hari`} />
+              <Item label="Sakit" value={`${selectedStaff.leaveEntitlement?.medical || 14} hari`} />
+              <Item label="Kecemasan" value={`${selectedStaff.leaveEntitlement?.emergency || 3} hari`} />
+              <Item label="Ehsan" value={`${selectedStaff.leaveEntitlement?.compassionate || 3} hari`} />
+              <Item label="Bersalin" value={`${selectedStaff.leaveEntitlement?.maternity || 105} hari`} />
+              <Item label="Paterniti" value={`${selectedStaff.leaveEntitlement?.paternity || 3} hari`} />
             </div>
-            <div className="detail-item">
-              <span className="detail-label">Cuti Sakit</span>
-              <span className="detail-value">{selectedStaff.leaveEntitlement?.medical || 14} hari</span>
-            </div>
-            <div className="detail-item">
-              <span className="detail-label">Cuti Kecemasan</span>
-              <span className="detail-value">{selectedStaff.leaveEntitlement?.emergency || 3} hari</span>
-            </div>
-            <div className="detail-item">
-              <span className="detail-label">Cuti Ehsan</span>
-              <span className="detail-value">{selectedStaff.leaveEntitlement?.compassionate || 3} hari</span>
-            </div>
-            <div className="detail-item">
-              <span className="detail-label">Cuti Bersalin</span>
-              <span className="detail-value">{selectedStaff.leaveEntitlement?.maternity || 105} hari</span>
-            </div>
-            <div className="detail-item">
-              <span className="detail-label">Cuti Paterniti</span>
-              <span className="detail-value">{selectedStaff.leaveEntitlement?.paternity || 3} hari</span>
-            </div>
-          </div>
-        </div>
+          </Card>
 
-        {(selectedStaff.skills?.length || selectedStaff.certifications?.length) ? (
-          <div className="detail-section">
-            <h4 className="detail-section-title">
-              <Award size={16} /> Kemahiran & Sijil
-            </h4>
-            {selectedStaff.skills?.length ? (
-              <div style={{ marginBottom: '1rem' }}>
-                <span className="detail-label">Kemahiran:</span>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '0.5rem' }}>
-                  {selectedStaff.skills.map(skill => (
-                    <span key={skill} className="badge badge-info">{skill}</span>
-                  ))}
+          {/* Skills & Certs Card (Full Width) */}
+          {(selectedStaff.skills?.length || selectedStaff.certifications?.length) ? (
+            <div className="md:col-span-2 lg:col-span-3">
+              <div className="bg-white p-5 rounded-xl border border-slate-100 shadow-sm h-full">
+                <h4 className="flex items-center gap-2 text-base font-semibold text-slate-800 mb-4 pb-3 border-b border-slate-100">
+                  <Award size={18} className="text-secondary" /> Kemahiran & Sijil
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {selectedStaff.skills?.length ? (
+                    <div>
+                      <div className="text-xs uppercase tracking-wider text-slate-400 font-semibold mb-2">Kemahiran</div>
+                      <div className="flex flex-wrap gap-2">
+                        {selectedStaff.skills.map(skill => (
+                          <span key={skill} className="px-3 py-1 bg-sky-50 text-sky-700 rounded-full text-sm font-medium border border-sky-100">
+                            {skill}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
+                  {selectedStaff.certifications?.length ? (
+                    <div>
+                      <div className="text-xs uppercase tracking-wider text-slate-400 font-semibold mb-2">Sijil</div>
+                      <div className="flex flex-wrap gap-2">
+                        {selectedStaff.certifications.map(cert => (
+                          <span key={cert} className="px-3 py-1 bg-emerald-50 text-emerald-700 rounded-full text-sm font-medium border border-emerald-100">
+                            {cert}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
                 </div>
               </div>
-            ) : null}
-            {selectedStaff.certifications?.length ? (
-              <div>
-                <span className="detail-label">Sijil:</span>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '0.5rem' }}>
-                  {selectedStaff.certifications.map(cert => (
-                    <span key={cert} className="badge badge-success">{cert}</span>
-                  ))}
-                </div>
-              </div>
-            ) : null}
-          </div>
-        ) : null}
+            </div>
+          ) : null}
+        </div>
       </div>
     );
   };
@@ -1008,57 +954,83 @@ export default function StaffListPage() {
       { key: 'canVoidTransaction', label: 'Void Transaksi' },
     ];
 
-    return (
-      <div className="detail-content">
-        <div className="detail-section">
-          <h4 className="detail-section-title">
-            <Shield size={16} /> Tahap Akses
-          </h4>
-          <div style={{ marginBottom: '1.5rem' }}>
-            <span className={`badge ${selectedStaff.accessLevel === 'admin' ? 'badge-danger' : selectedStaff.accessLevel === 'manager' ? 'badge-warning' : 'badge-info'}`} style={{ fontSize: '1rem', padding: '0.5rem 1rem' }}>
-              {selectedStaff.accessLevel === 'admin' ? 'Administrator' :
-                selectedStaff.accessLevel === 'manager' ? 'Manager' : 'Staff'}
-            </span>
-          </div>
+    const Card = ({ title, icon: Icon, children }: { title: string, icon: any, children: React.ReactNode }) => (
+      <div className="bg-white p-5 rounded-xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow duration-200 h-full">
+        <h4 className="flex items-center gap-2 text-base font-semibold text-slate-800 mb-4 pb-3 border-b border-slate-100">
+          <Icon size={18} className="text-secondary" /> {title}
+        </h4>
+        <div className="space-y-4">
+          {children}
         </div>
+      </div>
+    );
 
-        <div className="detail-section">
-          <h4 className="detail-section-title">
-            <Shield size={16} /> Kebenaran Khusus
-          </h4>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '0.75rem' }}>
-            {permissionsList.map(({ key, label }) => {
-              const hasPermission = permissions?.[key as keyof StaffPermissions] as boolean;
-              return (
-                <div
-                  key={key}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                    padding: '0.5rem 0.75rem',
-                    background: hasPermission ? 'var(--success-light)' : 'var(--gray-100)',
-                    borderRadius: 'var(--radius-md)',
-                    fontSize: '0.875rem',
-                  }}
-                >
-                  {hasPermission ? (
-                    <span style={{ color: 'var(--success)', display: 'flex' }}>✓</span>
-                  ) : (
-                    <span style={{ color: 'var(--text-light)' }}>✗</span>
-                  )}
-                  <span style={{ color: hasPermission ? 'var(--text-primary)' : 'var(--text-light)' }}>{label}</span>
-                </div>
-              );
-            })}
-          </div>
-
-          {permissions?.canGiveDiscount && (
-            <div style={{ marginTop: '1rem', padding: '0.75rem', background: 'var(--gray-50)', borderRadius: 'var(--radius-md)' }}>
-              <span className="detail-label">Had Diskaun Maksimum:</span>
-              <span style={{ fontWeight: 600, marginLeft: '0.5rem' }}>{permissions.maxDiscountPercent}%</span>
+    return (
+      <div className="detail-content bg-slate-50 p-6 -m-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Access Level Card */}
+          <Card title="Tahap Akses" icon={Shield}>
+            <div className="flex flex-col gap-4">
+              <div className="text-sm text-slate-600">
+                Tahap akses menentukan modul mana yang boleh dilihat oleh staf ini secara umum.
+              </div>
+              <div>
+                <div className="text-xs uppercase tracking-wider text-slate-400 font-semibold mb-2">Peranan Semasa</div>
+                <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${selectedStaff.accessLevel === 'admin' ? 'bg-red-50 text-red-700 border-red-100' :
+                    selectedStaff.accessLevel === 'manager' ? 'bg-amber-50 text-amber-700 border-amber-100' :
+                      'bg-blue-50 text-blue-700 border-blue-100'
+                  }`}>
+                  {selectedStaff.accessLevel === 'admin' ? 'Administrator' :
+                    selectedStaff.accessLevel === 'manager' ? 'Manager' : 'Staff'}
+                </span>
+              </div>
             </div>
-          )}
+          </Card>
+
+          {/* Special Permissions Card */}
+          <div className="md:col-span-2">
+            <div className="bg-white p-5 rounded-xl border border-slate-100 shadow-sm h-full">
+              <h4 className="flex items-center gap-2 text-base font-semibold text-slate-800 mb-4 pb-3 border-b border-slate-100">
+                <Lock size={18} className="text-secondary" /> Kebenaran Khusus
+              </h4>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                {permissionsList.map(({ key, label }) => {
+                  const hasPermission = permissions?.[key as keyof StaffPermissions] as boolean;
+                  return (
+                    <div
+                      key={key}
+                      className={`flex items-center gap-3 p-3 rounded-lg border transition-colors duration-200 ${hasPermission
+                          ? 'bg-green-50/50 border-green-100'
+                          : 'bg-gray-50 border-gray-100 opacity-60'
+                        }`}
+                    >
+                      <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 ${hasPermission ? 'bg-green-100 text-green-600' : 'bg-gray-200 text-gray-400'
+                        }`}>
+                        {hasPermission ? <span className="text-xs">✓</span> : <span className="text-[10px]">✕</span>}
+                      </div>
+                      <span className={`text-sm font-medium ${hasPermission ? 'text-green-800' : 'text-gray-500'
+                        }`}>
+                        {label}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {permissions?.canGiveDiscount && (
+                <div className="mt-6 p-4 bg-orange-50 border border-orange-100 rounded-lg flex items-center gap-3">
+                  <div className="p-2 bg-orange-100 text-orange-600 rounded-full">
+                    <DollarSign size={16} />
+                  </div>
+                  <div>
+                    <div className="text-xs uppercase tracking-wider text-orange-800 font-bold mb-0.5">Had Diskaun Maksimum</div>
+                    <div className="text-lg font-bold text-orange-900">{permissions.maxDiscountPercent}%</div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     );
