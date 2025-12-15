@@ -15,6 +15,7 @@ import TopProgressBar from '@/components/TopProgressBar';
 import OfflineIndicator from '@/components/OfflineIndicator';
 import { TourProvider } from '@/components/onboarding/TourProvider';
 import HelpButton from '@/components/onboarding/HelpButton';
+import SyncErrorNotifier from '@/components/SyncErrorNotifier';
 
 export default function Providers({ children }: { children: ReactNode }) {
   return (
@@ -23,6 +24,9 @@ export default function Providers({ children }: { children: ReactNode }) {
         <SoundProvider>
           <ToastProvider>
             <EnhancedToastProvider>
+              {/* Sync Error Notifier - bridges sync errors to toast notifications */}
+              <SyncErrorNotifier />
+              
               <OnlineStatusProvider>
                 <KeyboardShortcutsProvider>
                   <StoreProvider>

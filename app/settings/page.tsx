@@ -51,11 +51,252 @@ import {
   ToggleLeft,
   ToggleRight,
   Percent,
+  Activity,
+  XCircle,
 } from 'lucide-react';
+import SupabaseStatusIndicator from '@/components/SupabaseStatusIndicator';
+import { getDataSourceInfo, DataSource } from '@/lib/store';
+import { getSyncLogs, getSyncStats, clearSyncLogs, SyncLogEntry } from '@/lib/utils/sync-logger';
+import { checkSupabaseConnection } from '@/lib/supabase/client';
 
 type SettingSection = 'outlet' | 'operations' | 'receipt' | 'printer' | 'data' | 'notifications' | 'supabase' | 'payment' | 'tax' | 'appearance' | 'security';
 type PaymentModalType = 'add-payment' | 'edit-payment' | 'delete-payment' | null;
 type TaxModalType = 'add-tax' | 'edit-tax' | 'delete-tax' | null;
+
+// Sync Debug Section Component
+function SyncDebugSection() {
+  const [syncLogs, setSyncLogs] = useState<SyncLogEntry[]>([]);
+  const [syncStats, setSyncStats] = useState({ total: 0, success: 0, errors: 0, pending: 0, lastError: null as SyncLogEntry | null, lastSuccess: null as SyncLogEntry | null });
+  const [dataSource, setDataSource] = useState(getDataSourceInfo());
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [showAllLogs, setShowAllLogs] = useState(false);
+
+  useEffect(() => {
+    // Initial load
+    setSyncLogs(getSyncLogs());
+    setSyncStats(getSyncStats());
+    setDataSource(getDataSourceInfo());
+
+    // Refresh periodically
+    const interval = setInterval(() => {
+      setSyncLogs(getSyncLogs());
+      setSyncStats(getSyncStats());
+    }, 2000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleRefreshConnection = async () => {
+    setIsRefreshing(true);
+    await checkSupabaseConnection();
+    setDataSource(getDataSourceInfo());
+    setSyncStats(getSyncStats());
+    setIsRefreshing(false);
+  };
+
+  const handleClearLogs = () => {
+    clearSyncLogs();
+    setSyncLogs([]);
+    setSyncStats(getSyncStats());
+  };
+
+  const getDataSourceBadge = (source: DataSource) => {
+    switch (source) {
+      case 'supabase':
+        return <span className="badge badge-success">Supabase</span>;
+      case 'localStorage':
+        return <span className="badge badge-warning">Local</span>;
+      case 'mock':
+        return <span className="badge badge-info">Mock</span>;
+      default:
+        return <span className="badge">Unknown</span>;
+    }
+  };
+
+  return (
+    <div className="card">
+      <div className="card-header">
+        <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <Activity size={20} />
+          Sync Status & Debugging
+        </div>
+        <div className="card-subtitle">Monitor data synchronization and troubleshoot issues</div>
+      </div>
+
+      {/* Connection Status Indicator */}
+      <div style={{ marginBottom: '1.5rem' }}>
+        <SupabaseStatusIndicator showDetails />
+      </div>
+
+      {/* Data Source Info */}
+      <div style={{ marginBottom: '1.5rem' }}>
+        <h4 style={{ fontWeight: 600, marginBottom: '0.75rem', fontSize: '0.875rem' }}>
+          Data Sources (Last Load: {dataSource.lastLoadTime?.toLocaleTimeString() || 'Never'})
+        </h4>
+        <div className="grid grid-cols-3" style={{ gap: '0.5rem' }}>
+          <div style={{ padding: '0.5rem', background: 'var(--gray-100)', borderRadius: 'var(--radius-sm)' }}>
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Menu Items</div>
+            {getDataSourceBadge(dataSource.menuItems)}
+          </div>
+          <div style={{ padding: '0.5rem', background: 'var(--gray-100)', borderRadius: 'var(--radius-sm)' }}>
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Modifiers</div>
+            {getDataSourceBadge(dataSource.modifierGroups)}
+          </div>
+          <div style={{ padding: '0.5rem', background: 'var(--gray-100)', borderRadius: 'var(--radius-sm)' }}>
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Inventory</div>
+            {getDataSourceBadge(dataSource.inventory)}
+          </div>
+          <div style={{ padding: '0.5rem', background: 'var(--gray-100)', borderRadius: 'var(--radius-sm)' }}>
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Staff</div>
+            {getDataSourceBadge(dataSource.staff)}
+          </div>
+          <div style={{ padding: '0.5rem', background: 'var(--gray-100)', borderRadius: 'var(--radius-sm)' }}>
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Orders</div>
+            {getDataSourceBadge(dataSource.orders)}
+          </div>
+          <div style={{ padding: '0.5rem', background: 'var(--gray-100)', borderRadius: 'var(--radius-sm)' }}>
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Supabase</div>
+            <span className={`badge ${dataSource.supabaseConnected ? 'badge-success' : 'badge-danger'}`}>
+              {dataSource.supabaseConnected ? 'Connected' : 'Offline'}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Sync Statistics */}
+      <div style={{ marginBottom: '1.5rem' }}>
+        <h4 style={{ fontWeight: 600, marginBottom: '0.75rem', fontSize: '0.875rem' }}>Sync Statistics</h4>
+        <div className="grid grid-cols-4" style={{ gap: '0.5rem' }}>
+          <div style={{ padding: '0.75rem', background: 'var(--gray-100)', borderRadius: 'var(--radius-sm)', textAlign: 'center' }}>
+            <div style={{ fontSize: '1.25rem', fontWeight: 700 }}>{syncStats.total}</div>
+            <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Total Ops</div>
+          </div>
+          <div style={{ padding: '0.75rem', background: '#d1fae5', borderRadius: 'var(--radius-sm)', textAlign: 'center' }}>
+            <div style={{ fontSize: '1.25rem', fontWeight: 700, color: '#059669' }}>{syncStats.success}</div>
+            <div style={{ fontSize: '0.7rem', color: '#047857' }}>Success</div>
+          </div>
+          <div style={{ padding: '0.75rem', background: syncStats.errors > 0 ? '#fee2e2' : 'var(--gray-100)', borderRadius: 'var(--radius-sm)', textAlign: 'center' }}>
+            <div style={{ fontSize: '1.25rem', fontWeight: 700, color: syncStats.errors > 0 ? '#dc2626' : 'inherit' }}>{syncStats.errors}</div>
+            <div style={{ fontSize: '0.7rem', color: syncStats.errors > 0 ? '#b91c1c' : 'var(--text-secondary)' }}>Errors</div>
+          </div>
+          <div style={{ padding: '0.75rem', background: 'var(--gray-100)', borderRadius: 'var(--radius-sm)', textAlign: 'center' }}>
+            <div style={{ fontSize: '1.25rem', fontWeight: 700 }}>{syncStats.pending}</div>
+            <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Pending</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Recent Sync Logs */}
+      <div style={{ marginBottom: '1rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+          <h4 style={{ fontWeight: 600, fontSize: '0.875rem' }}>Recent Sync Operations</h4>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <button 
+              className="btn btn-sm btn-outline"
+              onClick={() => setShowAllLogs(!showAllLogs)}
+            >
+              {showAllLogs ? 'Show Less' : 'Show All'}
+            </button>
+            <button 
+              className="btn btn-sm btn-outline"
+              onClick={handleClearLogs}
+              disabled={syncLogs.length === 0}
+            >
+              <Trash2 size={14} />
+              Clear Logs
+            </button>
+          </div>
+        </div>
+        
+        {syncLogs.length > 0 ? (
+          <div style={{ 
+            maxHeight: showAllLogs ? '400px' : '200px', 
+            overflowY: 'auto',
+            border: '1px solid var(--gray-200)',
+            borderRadius: 'var(--radius-sm)',
+          }}>
+            {syncLogs.slice(0, showAllLogs ? 50 : 10).map((log) => (
+              <div 
+                key={log.id}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  padding: '0.5rem 0.75rem',
+                  borderBottom: '1px solid var(--gray-100)',
+                  fontSize: '0.75rem',
+                  background: log.status === 'error' ? 'rgba(239, 68, 68, 0.05)' : 'transparent',
+                }}
+              >
+                {log.status === 'success' && <CheckCircle size={14} color="#059669" />}
+                {log.status === 'error' && <XCircle size={14} color="#dc2626" />}
+                {log.status === 'pending' && <RefreshCw size={14} color="#3b82f6" className="animate-spin" />}
+                {log.status === 'retrying' && <RefreshCw size={14} color="#f59e0b" />}
+                
+                <span style={{ 
+                  fontWeight: 500,
+                  textTransform: 'uppercase',
+                  fontSize: '0.65rem',
+                  padding: '0.125rem 0.25rem',
+                  background: 'var(--gray-100)',
+                  borderRadius: '2px',
+                }}>
+                  {log.operation}
+                </span>
+                
+                <span style={{ color: 'var(--text-secondary)' }}>{log.entity}</span>
+                
+                {log.entityId && (
+                  <span style={{ color: 'var(--gray-400)', fontFamily: 'monospace', fontSize: '0.65rem' }}>
+                    {log.entityId.substring(0, 8)}...
+                  </span>
+                )}
+                
+                {log.error && (
+                  <span style={{ color: 'var(--danger)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {log.error}
+                  </span>
+                )}
+                
+                {log.durationMs !== undefined && (
+                  <span style={{ color: 'var(--gray-400)', marginLeft: 'auto' }}>
+                    {log.durationMs}ms
+                  </span>
+                )}
+                
+                <span style={{ color: 'var(--gray-400)', fontSize: '0.65rem' }}>
+                  {log.timestamp.toLocaleTimeString()}
+                </span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div style={{ 
+            padding: '2rem', 
+            textAlign: 'center', 
+            color: 'var(--text-secondary)',
+            background: 'var(--gray-50)',
+            borderRadius: 'var(--radius-sm)',
+          }}>
+            No sync operations recorded yet
+          </div>
+        )}
+      </div>
+
+      {/* Actions */}
+      <div style={{ display: 'flex', gap: '0.5rem' }}>
+        <button 
+          className="btn btn-outline"
+          onClick={handleRefreshConnection}
+          disabled={isRefreshing}
+        >
+          <RefreshCw size={16} className={isRefreshing ? 'animate-spin' : ''} />
+          Test Connection
+        </button>
+      </div>
+    </div>
+  );
+}
 
 export default function SettingsPage() {
   const { isInitialized } = useStore();
@@ -1573,6 +1814,9 @@ export default function SettingsPage() {
                     </div>
                   )}
                 </div>
+
+                {/* Sync Status & Debugging */}
+                <SyncDebugSection />
 
                 {/* Data Migration */}
                 <DataMigration />
