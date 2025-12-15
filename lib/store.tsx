@@ -612,8 +612,30 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
       // Menu Categories, Payment Methods, Tax Rates
       setMenuCategories(getFromStorage(STORAGE_KEYS.MENU_CATEGORIES, DEFAULT_MENU_CATEGORIES));
-      setPaymentMethods(getFromStorage(STORAGE_KEYS.PAYMENT_METHODS, DEFAULT_PAYMENT_METHODS));
-      setTaxRates(getFromStorage(STORAGE_KEYS.TAX_RATES, DEFAULT_TAX_RATES));
+
+      // Load Payment Methods from Supabase
+      if (supabaseConnected) {
+        const paymentMethodsResult = await PaymentTaxSync.getAllPaymentMethods();
+        if (paymentMethodsResult.success && paymentMethodsResult.data && paymentMethodsResult.data.length > 0) {
+          setPaymentMethods(paymentMethodsResult.data);
+        } else {
+          setPaymentMethods(getFromStorage(STORAGE_KEYS.PAYMENT_METHODS, DEFAULT_PAYMENT_METHODS));
+        }
+      } else {
+        setPaymentMethods(getFromStorage(STORAGE_KEYS.PAYMENT_METHODS, DEFAULT_PAYMENT_METHODS));
+      }
+
+      // Load Tax Rates from Supabase
+      if (supabaseConnected) {
+        const taxRatesResult = await PaymentTaxSync.getAllTaxRates();
+        if (taxRatesResult.success && taxRatesResult.data && taxRatesResult.data.length > 0) {
+          setTaxRates(taxRatesResult.data);
+        } else {
+          setTaxRates(getFromStorage(STORAGE_KEYS.TAX_RATES, DEFAULT_TAX_RATES));
+        }
+      } else {
+        setTaxRates(getFromStorage(STORAGE_KEYS.TAX_RATES, DEFAULT_TAX_RATES));
+      }
 
       // Log initialization summary
       const sourceInfo = supabaseConnected ? 'Supabase (primary)' : 'localStorage (offline mode)';
@@ -2595,28 +2617,70 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   // ==================== PAYMENT METHODS FUNCTIONS ====================
 
-  const addPaymentMethod = useCallback((method: Omit<PaymentMethodConfig, 'id' | 'createdAt'>) => {
+  const addPaymentMethod = useCallback(async (method: Omit<PaymentMethodConfig, 'id' | 'createdAt'>) => {
     const newMethod: PaymentMethodConfig = {
       ...method,
       id: `pm_${Date.now()}`,
       createdAt: new Date().toISOString(),
     };
+
+    // Try to sync to Supabase first
+    try {
+      const result = await PaymentTaxSync.addPaymentMethod(newMethod);
+      if (result.success && result.data) {
+        // Use Supabase data if successful
+        setPaymentMethods(prev => [...prev, result.data!]);
+        return;
+      }
+    } catch (error) {
+      console.error('[Payment Methods] Supabase sync failed, saving to localStorage:', error);
+    }
+
+    // Fallback to localStorage only
     setPaymentMethods(prev => [...prev, newMethod]);
   }, []);
 
-  const updatePaymentMethod = useCallback((id: string, updates: Partial<PaymentMethodConfig>) => {
+  const updatePaymentMethod = useCallback(async (id: string, updates: Partial<PaymentMethodConfig>) => {
+    // Try to sync to Supabase first
+    try {
+      const result = await PaymentTaxSync.updatePaymentMethod(id, updates);
+      if (result.success) {
+        // Update local state
+        setPaymentMethods(prev => prev.map(pm =>
+          pm.id === id ? { ...pm, ...updates } : pm
+        ));
+        return;
+      }
+    } catch (error) {
+      console.error('[Payment Methods] Supabase update failed, updating localStorage only:', error);
+    }
+
+    // Fallback: update localStorage only
     setPaymentMethods(prev => prev.map(pm =>
       pm.id === id ? { ...pm, ...updates } : pm
     ));
   }, []);
 
-  const deletePaymentMethod = useCallback((id: string) => {
+  const deletePaymentMethod = useCallback(async (id: string) => {
     // Prevent deletion of system payment methods
     const method = paymentMethods.find(pm => pm.id === id);
     if (method?.isSystem) {
       console.warn('Cannot delete system payment method');
       return;
     }
+
+    // Try to sync to Supabase first
+    try {
+      const result = await PaymentTaxSync.deletePaymentMethod(id);
+      if (result.success) {
+        setPaymentMethods(prev => prev.filter(pm => pm.id !== id));
+        return;
+      }
+    } catch (error) {
+      console.error('[Payment Methods] Supabase delete failed, deleting from localStorage only:', error);
+    }
+
+    // Fallback: delete from localStorage only
     setPaymentMethods(prev => prev.filter(pm => pm.id !== id));
   }, [paymentMethods]);
 
@@ -2628,20 +2692,55 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   // ==================== TAX RATES FUNCTIONS ====================
 
-  const addTaxRate = useCallback((rate: Omit<TaxRate, 'id' | 'createdAt'>) => {
+  const addTaxRate = useCallback(async (rate: Omit<TaxRate, 'id' | 'createdAt'>) => {
     const newRate: TaxRate = {
       ...rate,
       id: `tax_${Date.now()}`,
       createdAt: new Date().toISOString(),
     };
-    // If this is set as default, unset other defaults
+
+    // If this is set as default, unset other defaults first
     if (newRate.isDefault) {
       setTaxRates(prev => prev.map(r => ({ ...r, isDefault: false })));
     }
+
+    // Try to sync to Supabase first
+    try {
+      const result = await PaymentTaxSync.addTaxRate(newRate);
+      if (result.success && result.data) {
+        setTaxRates(prev => [...prev, result.data!]);
+        return;
+      }
+    } catch (error) {
+      console.error('[Tax Rates] Supabase sync failed, saving to localStorage:', error);
+    }
+
+    // Fallback to localStorage only
     setTaxRates(prev => [...prev, newRate]);
   }, []);
 
-  const updateTaxRate = useCallback((id: string, updates: Partial<TaxRate>) => {
+  const updateTaxRate = useCallback(async (id: string, updates: Partial<TaxRate>) => {
+    // Try to sync to Supabase first
+    try {
+      const result = await PaymentTaxSync.updateTaxRate(id, updates);
+      if (result.success) {
+        // Update local state
+        setTaxRates(prev => {
+          // If setting this as default, unset other defaults
+          if (updates.isDefault) {
+            return prev.map(r =>
+              r.id === id ? { ...r, ...updates } : { ...r, isDefault: false }
+            );
+          }
+          return prev.map(r => r.id === id ? { ...r, ...updates } : r);
+        });
+        return;
+      }
+    } catch (error) {
+      console.error('[Tax Rates] Supabase update failed, updating localStorage only:', error);
+    }
+
+    // Fallback: update localStorage only
     setTaxRates(prev => {
       // If setting this as default, unset other defaults
       if (updates.isDefault) {
@@ -2653,13 +2752,26 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  const deleteTaxRate = useCallback((id: string) => {
+  const deleteTaxRate = useCallback(async (id: string) => {
     const rate = taxRates.find(r => r.id === id);
     // Don't allow deleting the default tax rate
     if (rate?.isDefault) {
       console.warn('Cannot delete default tax rate');
       return;
     }
+
+    // Try to sync to Supabase first
+    try {
+      const result = await PaymentTaxSync.deleteTaxRate(id);
+      if (result.success) {
+        setTaxRates(prev => prev.filter(r => r.id !== id));
+        return;
+      }
+    } catch (error) {
+      console.error('[Tax Rates] Supabase delete failed, deleting from localStorage only:', error);
+    }
+
+    // Fallback: delete from localStorage only
     setTaxRates(prev => prev.filter(r => r.id !== id));
   }, [taxRates]);
 
