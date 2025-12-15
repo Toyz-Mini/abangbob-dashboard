@@ -252,6 +252,37 @@ body {
     /* Reset padding */
   }
 
+  /* Reduce main content padding on mobile */
+  .main-content {
+    padding: var(--spacing-md) !important;
+    /* Reduced from xl (2rem) to md (1rem) */
+    margin-left: 0 !important;
+    /* Ensure no margin on mobile */
+    width: 100%;
+  }
+
+  /* Reduce card padding on mobile */
+  .card,
+  .stat-card {
+    padding: var(--spacing-md) !important;
+  }
+
+  /* Utility to hide elements on mobile */
+  .hidden-mobile {
+    display: none !important;
+  }
+
+  /* Make simple grids 1 column on mobile */
+  .content-grid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-md);
+  }
+
+  /* Adjust sparkline height */
+  .sparkline {
+    height: 30px;
+  }
+
   /* Reset internal elements when "closed" on mobile (since it's hidden, we want it to look normal when it slides in) 
      Actually, when "closed" class is applied, it might trigger the mini-sidebar styles.
      We need to override those specific mini-sidebar styles inside the media query.

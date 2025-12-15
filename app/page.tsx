@@ -31,7 +31,7 @@ export default function DashboardPage() {
   const todayOrders = getTodayOrders();
   const salesToday = todayOrders.reduce((sum, o) => sum + o.total, 0);
   const ordersToday = todayOrders.length;
-  
+
   // Low stock items
   const lowStockItems = inventory.filter(item => item.currentQuantity <= item.minQuantity);
 
@@ -88,7 +88,7 @@ export default function DashboardPage() {
         <div className="page-header">
           <h1 className="page-title">{t('dashboard.title')}</h1>
           <p className="page-subtitle">
-            {currentTime.toLocaleDateString(dateLocale, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })} • 
+            {currentTime.toLocaleDateString(dateLocale, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })} •
             {t('dashboard.subtitle')}
           </p>
         </div>
@@ -174,7 +174,7 @@ export default function DashboardPage() {
             <div className="alert-content">
               <ChefHat size={20} />
               <span>
-                <strong>{pendingOrders + preparingOrders} {language === 'en' ? 'orders' : 'pesanan'}</strong> {t('dashboard.ordersInQueue')} 
+                <strong>{pendingOrders + preparingOrders} {language === 'en' ? 'orders' : 'pesanan'}</strong> {t('dashboard.ordersInQueue')}
                 ({pendingOrders} {t('dashboard.pending')}, {preparingOrders} {t('dashboard.preparing')})
               </span>
             </div>
@@ -211,28 +211,30 @@ export default function DashboardPage() {
             </div>
             {lowStockItems.length > 0 ? (
               <div>
-                <table className="table">
-                  <thead>
-                    <tr>
-                      <th>{language === 'en' ? 'Item' : 'Item'}</th>
-                      <th>{t('common.quantity')}</th>
-                      <th>{language === 'en' ? 'Minimum' : 'Minimum'}</th>
-                      <th>{t('common.status')}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {lowStockItems.slice(0, 5).map((item) => (
-                      <tr key={item.id}>
-                        <td className="font-semibold">{item.name}</td>
-                        <td>{item.currentQuantity} {item.unit}</td>
-                        <td>{item.minQuantity} {item.unit}</td>
-                        <td>
-                          <span className="badge badge-danger">{t('inventory.lowStock')}</span>
-                        </td>
+                <div className="table-responsive">
+                  <table className="table">
+                    <thead>
+                      <tr>
+                        <th>{language === 'en' ? 'Item' : 'Item'}</th>
+                        <th>{t('common.quantity')}</th>
+                        <th className="hidden-mobile">{language === 'en' ? 'Minimum' : 'Minimum'}</th>
+                        <th>{t('common.status')}</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {lowStockItems.slice(0, 5).map((item) => (
+                        <tr key={item.id}>
+                          <td className="font-semibold">{item.name}</td>
+                          <td>{item.currentQuantity} {item.unit}</td>
+                          <td className="hidden-mobile">{item.minQuantity} {item.unit}</td>
+                          <td>
+                            <span className="badge badge-danger">{t('inventory.lowStock')}</span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
                 <div className="mt-md">
                   <Link href="/inventory" className="btn btn-outline btn-sm">
                     {t('common.viewAll')} {t('nav.inventory')}
@@ -257,31 +259,33 @@ export default function DashboardPage() {
             </div>
             {onDutyStaff.length > 0 ? (
               <div>
-                <table className="table">
-                  <thead>
-                    <tr>
-                      <th>{t('common.name')}</th>
-                      <th>{t('hr.role')}</th>
-                      <th>{t('hr.clockIn')}</th>
-                      <th>{t('common.status')}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {onDutyStaff.map((staffMember) => {
-                      const record = getStaffAttendanceToday(staffMember.id);
-                      return (
-                        <tr key={staffMember.id}>
-                          <td className="font-semibold">{staffMember.name}</td>
-                          <td>{staffMember.role}</td>
-                          <td>{record?.clockInTime || '-'}</td>
-                          <td>
-                            <span className="badge badge-success">{t('hr.onDuty')}</span>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+                <div className="table-responsive">
+                  <table className="table">
+                    <thead>
+                      <tr>
+                        <th>{t('common.name')}</th>
+                        <th>{t('hr.role')}</th>
+                        <th className="hidden-mobile">{t('hr.clockIn')}</th>
+                        <th>{t('common.status')}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {onDutyStaff.map((staffMember) => {
+                        const record = getStaffAttendanceToday(staffMember.id);
+                        return (
+                          <tr key={staffMember.id}>
+                            <td className="font-semibold">{staffMember.name}</td>
+                            <td>{staffMember.role}</td>
+                            <td className="hidden-mobile">{record?.clockInTime || '-'}</td>
+                            <td>
+                              <span className="badge badge-success">{t('hr.onDuty')}</span>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
                 <div className="mt-md">
                   <Link href="/hr" className="btn btn-outline btn-sm">
                     {language === 'en' ? 'Manage HR' : 'Kelola HR'}
@@ -310,44 +314,45 @@ export default function DashboardPage() {
               </div>
               <div className="card-subtitle">{t('dashboard.last5Orders')}</div>
             </div>
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>{language === 'en' ? 'Order No.' : 'No. Pesanan'}</th>
-                  <th>{language === 'en' ? 'Items' : 'Item'}</th>
-                  <th>{t('common.total')}</th>
-                  <th>{language === 'en' ? 'Type' : 'Jenis'}</th>
-                  <th>{t('common.status')}</th>
-                  <th>{t('common.time')}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {todayOrders.slice(0, 5).map(order => (
-                  <tr key={order.id}>
-                    <td className="font-semibold">{order.orderNumber}</td>
-                    <td className="text-sm">
-                      {order.items.map(i => `${i.quantity}x ${i.name}`).join(', ').substring(0, 30)}...
-                    </td>
-                    <td className="font-semibold">BND {order.total.toFixed(2)}</td>
-                    <td>
-                      <span className="badge badge-info badge-sm">{order.orderType}</span>
-                    </td>
-                    <td>
-                      <span className={`badge badge-sm ${
-                        order.status === 'completed' ? 'badge-success' :
-                        order.status === 'ready' ? 'badge-success' :
-                        order.status === 'preparing' ? 'badge-info' : 'badge-warning'
-                      }`}>
-                        {order.status}
-                      </span>
-                    </td>
-                    <td className="text-sm text-secondary">
-                      {new Date(order.createdAt).toLocaleTimeString(dateLocale, { hour: '2-digit', minute: '2-digit' })}
-                    </td>
+            <div className="table-responsive">
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>{language === 'en' ? 'Order No.' : 'No. Pesanan'}</th>
+                    <th>{language === 'en' ? 'Items' : 'Item'}</th>
+                    <th>{t('common.total')}</th>
+                    <th className="hidden-mobile">{language === 'en' ? 'Type' : 'Jenis'}</th>
+                    <th>{t('common.status')}</th>
+                    <th className="hidden-mobile">{t('common.time')}</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {todayOrders.slice(0, 5).map(order => (
+                    <tr key={order.id}>
+                      <td className="font-semibold">{order.orderNumber}</td>
+                      <td className="text-sm">
+                        {order.items.map(i => `${i.quantity}x ${i.name}`).join(', ').substring(0, 30)}...
+                      </td>
+                      <td className="font-semibold">BND {order.total.toFixed(2)}</td>
+                      <td className="hidden-mobile">
+                        <span className="badge badge-info badge-sm">{order.orderType}</span>
+                      </td>
+                      <td>
+                        <span className={`badge badge-sm ${order.status === 'completed' ? 'badge-success' :
+                            order.status === 'ready' ? 'badge-success' :
+                              order.status === 'preparing' ? 'badge-info' : 'badge-warning'
+                          }`}>
+                          {order.status}
+                        </span>
+                      </td>
+                      <td className="text-sm text-secondary hidden-mobile">
+                        {new Date(order.createdAt).toLocaleTimeString(dateLocale, { hour: '2-digit', minute: '2-digit' })}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
             <div className="mt-md">
               <Link href="/pos" className="btn btn-outline btn-sm">
                 {t('common.viewAll')} {language === 'en' ? 'Orders' : 'Pesanan'}
