@@ -1,5 +1,3 @@
-'use client';
-
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import type { ReactNode } from 'react';
 import Sidebar from './Sidebar';
@@ -8,17 +6,43 @@ import Breadcrumb from './Breadcrumb';
 import CommandPalette, { useCommandPalette } from './CommandPalette';
 import BottomNav, { useBottomNav } from './BottomNav';
 import Sheet from './Sheet';
+// import { useTranslation } from '@/lib/contexts/LanguageContext'; // Removed as t is not strictly needed for basic labels or we can add it properly
+
 
 export default function MainLayout({ children }: { children: ReactNode }) {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  // Default to closed to prevent flash on mobile
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const sidebarRef = useRef<HTMLElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Open sidebar on mount if desktop
+  useEffect(() => {
+    if (window.innerWidth >= 768) {
+      setIsSidebarOpen(true);
+    }
+  }, []);
 
   // Command palette state
   const commandPalette = useCommandPalette();
 
   // Bottom nav more menu
   const bottomNav = useBottomNav();
+
+  // Import icons for the more menu
+  const {
+    Truck,
+    Factory,
+    ChefHat,
+    Boxes,
+    DollarSign,
+    UserCheck,
+    BarChart3,
+    Settings,
+    FileText,
+    Bell,
+    HelpCircle,
+    Monitor // Added Monitor icon
+  } = require('lucide-react');
 
   // Auto-close when clicking outside sidebar
   useEffect(() => {
@@ -34,6 +58,9 @@ export default function MainLayout({ children }: { children: ReactNode }) {
 
       // Close sidebar when clicking outside (only on desktop)
       if (window.innerWidth >= 768) {
+        setIsSidebarOpen(false);
+      } else {
+        // Also close on mobile if clicking outside (on overlay)
         setIsSidebarOpen(false);
       }
     };
@@ -70,6 +97,7 @@ export default function MainLayout({ children }: { children: ReactNode }) {
     const handleResize = () => {
       if (window.innerWidth >= 768) {
         document.body.classList.remove('mobile-sidebar-open');
+        if (!isSidebarOpen) setIsSidebarOpen(true); // Auto open on desktop
       } else if (isSidebarOpen) {
         document.body.classList.add('mobile-sidebar-open');
       }
@@ -183,34 +211,63 @@ export default function MainLayout({ children }: { children: ReactNode }) {
       <Sheet
         isOpen={bottomNav.isMoreOpen}
         onClose={bottomNav.closeMore}
-        title="More Options"
+        title="Menu Tambahan"
         position="bottom"
       >
-        <div className="stagger-list" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-          <a href="/delivery" className="btn btn-ghost" style={{ justifyContent: 'flex-start' }}>
-            Delivery Hub
-          </a>
-          <a href="/production" className="btn btn-ghost" style={{ justifyContent: 'flex-start' }}>
-            Production
-          </a>
-          <a href="/recipes" className="btn btn-ghost" style={{ justifyContent: 'flex-start' }}>
-            Recipes
-          </a>
-          <a href="/suppliers" className="btn btn-ghost" style={{ justifyContent: 'flex-start' }}>
-            Suppliers
-          </a>
-          <a href="/finance" className="btn btn-ghost" style={{ justifyContent: 'flex-start' }}>
-            Finance
-          </a>
-          <a href="/customers" className="btn btn-ghost" style={{ justifyContent: 'flex-start' }}>
-            Customers
-          </a>
-          <a href="/analytics" className="btn btn-ghost" style={{ justifyContent: 'flex-start' }}>
-            Analytics
-          </a>
-          <a href="/settings" className="btn btn-ghost" style={{ justifyContent: 'flex-start' }}>
-            Settings
-          </a>
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(4, 1fr)',
+          gap: '1rem',
+          padding: '0.5rem 0'
+        }}>
+          {[
+            { href: '/delivery', label: 'Delivery', icon: Truck, color: '#3b82f6' },
+            { href: '/production', label: 'Produksi', icon: Factory, color: '#f59e0b' },
+            { href: '/kds', label: 'KDS', icon: Monitor, color: '#10b981' },
+            { href: '/recipes', label: 'Resipi', icon: ChefHat, color: '#ec4899' },
+            { href: '/suppliers', label: 'Stok', icon: Boxes, color: '#8b5cf6' },
+            { href: '/finance', label: 'Kewangan', icon: DollarSign, color: '#059669' },
+            { href: '/customers', label: 'Pelanggan', icon: UserCheck, color: '#6366f1' },
+            { href: '/analytics', label: 'Analitik', icon: BarChart3, color: '#ef4444' },
+            { href: '/audit-log', label: 'Audit', icon: FileText, color: '#64748b' },
+            { href: '/notifications', label: 'Notifikasi', icon: Bell, color: '#eab308' },
+            { href: '/settings', label: 'Tetapan', icon: Settings, color: '#4b5563' },
+            { href: '/help', label: 'Bantuan', icon: HelpCircle, color: '#06b6d4' },
+          ].map((item, index) => (
+            <a
+              key={index}
+              href={item.href}
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.5rem',
+                textDecoration: 'none',
+                color: 'var(--text-primary)',
+              }}
+              onClick={bottomNav.closeMore}
+            >
+              <div style={{
+                width: '50px',
+                height: '50px',
+                borderRadius: '16px',
+                background: `${item.color}15`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: item.color,
+                transition: 'transform 0.2s',
+              }}
+                className="icon-btn-hover"
+              >
+                <item.icon size={24} />
+              </div>
+              <span style={{ fontSize: '0.7rem', fontWeight: 600, textAlign: 'center' }}>
+                {item.label}
+              </span>
+            </a>
+          ))}
         </div>
       </Sheet>
     </div>
