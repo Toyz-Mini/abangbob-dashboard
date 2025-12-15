@@ -11,6 +11,7 @@ import { useAuth } from '@/lib/contexts/AuthContext';
 import LogoUpload from '@/components/LogoUpload';
 import ReceiptDesigner from '@/components/ReceiptDesigner';
 import SupabaseSetupChecker from '@/components/SupabaseSetupChecker';
+import LocationSettings from '@/components/LocationSettings';
 import { ReceiptSettings, PrinterSettings, DEFAULT_RECEIPT_SETTINGS, DEFAULT_PRINTER_SETTINGS, PaymentMethodConfig, TaxRate } from '@/lib/types';
 import { thermalPrinter, loadReceiptSettings, saveReceiptSettings, loadReceiptSettingsFromSupabase } from '@/lib/services';
 import {
@@ -60,7 +61,7 @@ import { getSyncLogs, getSyncStats, clearSyncLogs, SyncLogEntry } from '@/lib/ut
 import { checkSupabaseConnection } from '@/lib/supabase/client';
 import { loadSettingsFromSupabase, saveSettingsToSupabase, loadSettingsFromLocalStorage } from '@/lib/supabase/settings-sync';
 
-type SettingSection = 'outlet' | 'operations' | 'receipt' | 'printer' | 'data' | 'notifications' | 'supabase' | 'payment' | 'tax' | 'appearance' | 'security';
+type SettingSection = 'outlet' | 'operations' | 'receipt' | 'printer' | 'data' | 'notifications' | 'supabase' | 'payment' | 'tax' | 'appearance' | 'security' | 'locations';
 type PaymentModalType = 'add-payment' | 'edit-payment' | 'delete-payment' | null;
 type TaxModalType = 'add-tax' | 'edit-tax' | 'delete-tax' | null;
 
@@ -593,6 +594,7 @@ export default function SettingsPage() {
     { id: 'printer', labelKey: 'Printer & Drawer', icon: Printer },
     { id: 'payment', labelKey: 'settings.paymentMethods', icon: CreditCard },
     { id: 'tax', labelKey: 'Cukai', icon: Percent },
+    { id: 'locations', labelKey: 'Lokasi Kehadiran', icon: MapPin },
     { id: 'appearance', labelKey: 'settings.appearance', icon: Palette },
     { id: 'security', labelKey: 'settings.security', icon: Lock },
     { id: 'notifications', labelKey: 'settings.notifications', icon: Bell },
@@ -1737,6 +1739,13 @@ export default function SettingsPage() {
                     />
                   </label>
                 </div>
+              </div>
+            )}
+
+            {/* Locations Settings */}
+            {activeSection === 'locations' && (
+              <div className="card">
+                <LocationSettings />
               </div>
             )}
 
