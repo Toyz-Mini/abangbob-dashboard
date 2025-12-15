@@ -1,79 +1,62 @@
 'use client';
 
-import { useCallback, useState } from 'react';
-import { GoogleMap, useJsApiLoader, Marker, Circle } from '@react-google-maps/api';
-import { MapPin, Loader2, Navigation } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { MapContainer, TileLayer, Marker, Circle, useMapEvents } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+import { Navigation, Loader2, MapPin } from 'lucide-react';
+
+// Fix Leaflet default marker icon issue in Next.js
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+    iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+    iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+});
 
 interface LocationMapPickerProps {
     latitude: number;
     longitude: number;
     radius: number;
     onLocationChange: (lat: number, lng: number) => void;
-    onRadiusChange?: (radius: number) => void;
 }
 
-const containerStyle = {
-    width: '100%',
-    height: '100%',
-    borderRadius: '12px',
-};
+// Custom marker icon (red)
+const redIcon = new L.Icon({
+    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowSize: [41, 41]
+});
 
-const mapOptions: google.maps.MapOptions = {
-    zoomControl: true,
-    streetViewControl: false,
-    fullscreenControl: true,
-    mapTypeControl: false,
-    styles: [
-        {
-            featureType: 'poi',
-            elementType: 'labels',
-            stylers: [{ visibility: 'off' }],
+// Component to handle map clicks
+function MapClickHandler({ onLocationChange }: { onLocationChange: (lat: number, lng: number) => void }) {
+    useMapEvents({
+        click(e) {
+            onLocationChange(e.latlng.lat, e.latlng.lng);
         },
-    ],
-};
+    });
+    return null;
+}
 
 export default function LocationMapPicker({
     latitude,
     longitude,
     radius,
     onLocationChange,
-    onRadiusChange,
 }: LocationMapPickerProps) {
-    const { isLoaded, loadError } = useJsApiLoader({
-        id: 'google-map-script',
-        googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '',
-    });
-
-    const [map, setMap] = useState<google.maps.Map | null>(null);
-    const [center, setCenter] = useState({ lat: latitude, lng: longitude });
-    const [markerPosition, setMarkerPosition] = useState({ lat: latitude, lng: longitude });
+    const [position, setPosition] = useState<[number, number]>([latitude || 4.9031, longitude || 114.9398]);
     const [gettingLocation, setGettingLocation] = useState(false);
+    const [mapReady, setMapReady] = useState(false);
+    const mapRef = useRef<L.Map | null>(null);
 
-    const onLoad = useCallback((map: google.maps.Map) => {
-        setMap(map);
-    }, []);
-
-    const onUnmount = useCallback(() => {
-        setMap(null);
-    }, []);
-
-    const handleMapClick = (e: google.maps.MapMouseEvent) => {
-        if (e.latLng) {
-            const lat = e.latLng.lat();
-            const lng = e.latLng.lng();
-            setMarkerPosition({ lat, lng });
-            onLocationChange(lat, lng);
+    useEffect(() => {
+        if (latitude && longitude) {
+            setPosition([latitude, longitude]);
         }
-    };
-
-    const handleMarkerDragEnd = (e: google.maps.MapMouseEvent) => {
-        if (e.latLng) {
-            const lat = e.latLng.lat();
-            const lng = e.latLng.lng();
-            setMarkerPosition({ lat, lng });
-            onLocationChange(lat, lng);
-        }
-    };
+    }, [latitude, longitude]);
 
     const getCurrentLocation = () => {
         setGettingLocation(true);
@@ -81,10 +64,13 @@ export default function LocationMapPicker({
             (position) => {
                 const lat = position.coords.latitude;
                 const lng = position.coords.longitude;
-                setCenter({ lat, lng });
-                setMarkerPosition({ lat, lng });
+                setPosition([lat, lng]);
                 onLocationChange(lat, lng);
-                map?.panTo({ lat, lng });
+
+                // Pan map to new location
+                if (mapRef.current) {
+                    mapRef.current.flyTo([lat, lng], 16);
+                }
                 setGettingLocation(false);
             },
             (error) => {
@@ -98,88 +84,79 @@ export default function LocationMapPicker({
         );
     };
 
-    const circleOptions: google.maps.CircleOptions = {
-        strokeColor: '#dc2626',
-        strokeOpacity: 0.8,
-        strokeWeight: 2,
-        fillColor: '#dc2626',
-        fillOpacity: 0.15,
-        clickable: false,
-        draggable: false,
-        editable: false,
-        visible: true,
-        radius: radius,
-        zIndex: 1,
+    const handleMarkerDrag = (e: L.DragEndEvent) => {
+        const marker = e.target;
+        const newPos = marker.getLatLng();
+        setPosition([newPos.lat, newPos.lng]);
+        onLocationChange(newPos.lat, newPos.lng);
     };
 
-    if (loadError) {
-        return (
-            <div className="flex items-center justify-center h-full bg-gray-100 dark:bg-gray-800 rounded-lg p-8">
-                <div className="text-center">
-                    <p className="text-red-600 dark:text-red-400 mb-2">Gagal memuatkan Google Maps</p>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                        Sila pastikan API key configured dengan betul
-                    </p>
-                </div>
-            </div>
-        );
-    }
-
-    if (!isLoaded) {
-        return (
-            <div className="flex items-center justify-center h-full bg-gray-100 dark:bg-gray-800 rounded-lg">
-                <div className="flex flex-col items-center gap-3">
-                    <Loader2 className="animate-spin text-primary" size={32} />
-                    <p className="text-sm text-gray-600 dark:text-gray-400">Memuatkan map...</p>
-                </div>
-            </div>
-        );
-    }
+    const handleMapClick = (lat: number, lng: number) => {
+        setPosition([lat, lng]);
+        onLocationChange(lat, lng);
+    };
 
     return (
-        <div className="relative h-full">
-            <GoogleMap
-                mapContainerStyle={containerStyle}
-                center={center}
+        <div className="relative h-full w-full">
+            {!mapReady && (
+                <div className="absolute inset-0 flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-lg z-10">
+                    <div className="flex flex-col items-center gap-3">
+                        <Loader2 className="animate-spin text-primary" size={32} />
+                        <p className="text-sm text-gray-600 dark:text-gray-400">Memuatkan map...</p>
+                    </div>
+                </div>
+            )}
+
+            <MapContainer
+                center={position}
                 zoom={16}
-                onLoad={onLoad}
-                onUnmount={onUnmount}
-                onClick={handleMapClick}
-                options={mapOptions}
+                style={{ height: '100%', width: '100%', borderRadius: '12px' }}
+                whenCreated={(map) => {
+                    mapRef.current = map;
+                    setMapReady(true);
+                }}
             >
-                {/* Marker */}
-                <Marker
-                    position={markerPosition}
-                    draggable={true}
-                    onDragEnd={handleMarkerDragEnd}
-                    icon={{
-                        path: google.maps.SymbolPath.CIRCLE,
-                        scale: 10,
-                        fillColor: '#dc2626',
-                        fillOpacity: 1,
-                        strokeColor: '#ffffff',
-                        strokeWeight: 3,
-                    }}
+                <TileLayer
+                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 />
 
-                {/* Radius Circle */}
-                <Circle
-                    center={markerPosition}
-                    options={circleOptions}
+                {/* Map click handler */}
+                <MapClickHandler onLocationChange={handleMapClick} />
+
+                {/* Draggable marker */}
+                <Marker
+                    position={position}
+                    draggable={true}
+                    eventHandlers={{
+                        dragend: handleMarkerDrag,
+                    }}
+                    icon={redIcon}
                 />
-            </GoogleMap>
+
+                {/* Radius circle */}
+                <Circle
+                    center={position}
+                    radius={radius}
+                    pathOptions={{
+                        color: '#dc2626',
+                        fillColor: '#dc2626',
+                        fillOpacity: 0.15,
+                        weight: 2,
+                    }}
+                />
+            </MapContainer>
 
             {/* Current Location Button */}
             <button
                 onClick={getCurrentLocation}
                 disabled={gettingLocation}
-                className="absolute top-4 right-4 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-lg shadow-lg hover:shadow-xl transition-all flex items-center gap-2"
-                style={{ zIndex: 1000 }}
+                className="absolute top-4 right-4 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-lg shadow-lg hover:shadow-xl transition-all flex items-center gap-2 z-[1000]"
             >
                 {gettingLocation ? (
                     <>
                         <Loader2 className="animate-spin" size={18} />
-                        <span className="text-sm">Getting location...</span>
+                        <span className="text-sm">Getting...</span>
                     </>
                 ) : (
                     <>
@@ -190,13 +167,13 @@ export default function LocationMapPicker({
             </button>
 
             {/* Info Box */}
-            <div className="absolute bottom-4 left-4 bg-white dark:bg-gray-800 px-4 py-3 rounded-lg shadow-lg" style={{ zIndex: 1000 }}>
+            <div className="absolute bottom-4 left-4 bg-white dark:bg-gray-800 px-4 py-3 rounded-lg shadow-lg z-[1000]">
                 <div className="flex items-center gap-2 text-sm">
                     <MapPin size={16} className="text-red-600" />
                     <div>
                         <div className="font-semibold">Koordinat Terpilih:</div>
                         <div className="text-gray-600 dark:text-gray-400 font-mono text-xs">
-                            {markerPosition.lat.toFixed(6)}, {markerPosition.lng.toFixed(6)}
+                            {position[0].toFixed(6)}, {position[1].toFixed(6)}
                         </div>
                     </div>
                 </div>
@@ -204,6 +181,44 @@ export default function LocationMapPicker({
                     ⭕ Radius: {radius}m
                 </div>
             </div>
+
+            {/* Leaflet CSS fix for dark mode */}
+            <style jsx global>{`
+        .leaflet-container {
+          background: rgb(243, 244, 246);
+        }
+        
+        .dark .leaflet-container {
+          background: rgb(31, 41, 55);
+        }
+
+        .leaflet-marker-icon {
+          filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+        }
+
+        .leaflet-control-zoom {
+          border: none !important;
+          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+        }
+
+        .leaflet-control-zoom a {
+          color: #374151 !important;
+          background-color: white !important;
+        }
+
+        .dark .leaflet-control-zoom a {
+          color: #d1d5db !important;
+          background-color: rgb(31, 41, 55) !important;
+        }
+
+        .leaflet-control-zoom a:hover {
+          background-color: rgb(243, 244, 246) !important;
+        }
+
+        .dark .leaflet-control-zoom a:hover {
+          background-color: rgb(55, 65, 81) !important;
+        }
+      `}</style>
         </div>
     );
 }
