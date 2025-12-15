@@ -1514,7 +1514,7 @@ export default function MenuManagementPage() {
             <button 
               className="btn btn-danger" 
               onClick={handleDeleteCategory} 
-              disabled={isProcessing || (selectedCategory && menuItems.filter(item => item.category === selectedCategory.name).length > 0)} 
+              disabled={isProcessing || !!(selectedCategory && menuItems.filter(item => item.category === selectedCategory.name).length > 0)} 
               style={{ flex: 1 }}
             >
               {isProcessing ? <LoadingSpinner size="sm" /> : 'Padam'}

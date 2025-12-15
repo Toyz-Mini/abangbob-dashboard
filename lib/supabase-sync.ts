@@ -1,11 +1,39 @@
 // Supabase Sync Layer
 // This module adds Supabase sync to critical store operations
+// Enhanced with error propagation, retry logic, and sync logging
 
-import { getSupabaseClient } from './supabase/client';
+import { getSupabaseClient, getConnectionState } from './supabase/client';
 import * as ops from './supabase/operations';
+import { 
+  logSyncSuccess, 
+  logSyncError, 
+  logSyncRetry,
+  withRetry,
+  SyncResult,
+  syncSuccess,
+  syncError,
+  SyncEntity,
+  SyncOperation
+} from './utils/sync-logger';
 
 // Flag to enable/disable Supabase sync
 let supabaseSyncEnabled = true;
+
+// Track pending sync operations for UI indicators
+let pendingSyncCount = 0;
+type PendingSyncListener = (count: number) => void;
+const pendingSyncListeners: Set<PendingSyncListener> = new Set();
+
+export function subscribeToPendingSyncCount(listener: PendingSyncListener): () => void {
+  pendingSyncListeners.add(listener);
+  listener(pendingSyncCount);
+  return () => pendingSyncListeners.delete(listener);
+}
+
+function updatePendingSyncCount(delta: number) {
+  pendingSyncCount = Math.max(0, pendingSyncCount + delta);
+  pendingSyncListeners.forEach(l => l(pendingSyncCount));
+}
 
 export function setSupabaseSyncEnabled(enabled: boolean) {
   supabaseSyncEnabled = enabled;
@@ -13,6 +41,59 @@ export function setSupabaseSyncEnabled(enabled: boolean) {
 
 export function isSupabaseSyncEnabled() {
   return supabaseSyncEnabled && !!getSupabaseClient();
+}
+
+// Check if we should attempt sync (connection is available)
+export function canSync(): boolean {
+  if (!isSupabaseSyncEnabled()) return false;
+  const state = getConnectionState();
+  return state.status === 'connected' || state.status === 'disconnected'; // Try even if disconnected
+}
+
+// Enhanced sync wrapper with retry and logging
+async function syncWithRetry<T>(
+  operation: () => Promise<T>,
+  entity: SyncEntity,
+  operationType: SyncOperation,
+  entityId?: string,
+  options: { maxRetries?: number; throwOnError?: boolean } = {}
+): Promise<SyncResult<T>> {
+  const { maxRetries = 2, throwOnError = false } = options;
+  
+  if (!isSupabaseSyncEnabled()) {
+    return syncError('Supabase sync is disabled');
+  }
+
+  updatePendingSyncCount(1);
+  const startTime = Date.now();
+
+  try {
+    const result = await withRetry(operation, {
+      maxRetries,
+      baseDelayMs: 1000,
+      onRetry: (attempt, error) => {
+        logSyncRetry(operationType, entity, attempt, entityId);
+      },
+    });
+
+    const durationMs = Date.now() - startTime;
+    logSyncSuccess(operationType, entity, entityId, durationMs);
+    updatePendingSyncCount(-1);
+    
+    return syncSuccess(result);
+  } catch (error) {
+    const durationMs = Date.now() - startTime;
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    
+    logSyncError(operationType, entity, error instanceof Error ? error : errorMessage, entityId, maxRetries, durationMs);
+    updatePendingSyncCount(-1);
+    
+    if (throwOnError) {
+      throw error;
+    }
+    
+    return syncError(errorMessage);
+  }
 }
 
 // ============ INVENTORY SYNC ============
