@@ -16,6 +16,19 @@ import { isSupabaseConfigured, getConnectionState, checkSupabaseConnection } fro
 import { logSyncError, logSyncSuccess } from './utils/sync-logger';
 import * as PaymentTaxSync from './supabase/payment-tax-sync';
 
+// Helper function to generate UUID for Supabase compatibility
+function generateUUID(): string {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  // Fallback for environments without crypto.randomUUID
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
+
 // Data source tracking for debugging
 export type DataSource = 'supabase' | 'localStorage' | 'mock' | 'unknown';
 
@@ -916,7 +929,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const addStockItem = useCallback(async (item: Omit<StockItem, 'id'>) => {
     const newItem: StockItem = {
       ...item,
-      id: `stock_${Date.now()}`,
+      id: generateUUID(),
     };
 
     // Sync to Supabase
@@ -934,7 +947,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
     // Add initial log
     const log: InventoryLog = {
-      id: `log_${Date.now()}`,
+      id: generateUUID(),
       stockItemId: newItem.id,
       stockItemName: newItem.name,
       type: 'initial',
@@ -983,7 +996,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
       // Add log
       const log: InventoryLog = {
-        id: `log_${Date.now()}`,
+        id: generateUUID(),
         stockItemId: id,
         stockItemName: item.name,
         type,
@@ -1005,7 +1018,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const addStaff = useCallback(async (staffData: Omit<StaffProfile, 'id'>) => {
     const newStaff: StaffProfile = {
       ...staffData,
-      id: `staff_${Date.now()}`,
+      id: generateUUID(),
     };
 
     // Sync to Supabase
@@ -1074,7 +1087,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     const now = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
 
     const newRecord: AttendanceRecord = {
-      id: `att_${Date.now()}`,
+      id: generateUUID(),
       staffId,
       date: today,
       clockInTime: now,
@@ -1106,14 +1119,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   // Order actions
   const addOrder = useCallback(async (orderData: Omit<Order, 'id' | 'orderNumber'>): Promise<Order> => {
     const timestamp = Date.now();
-    // Generate proper UUID for Supabase compatibility
-    const orderId = typeof crypto !== 'undefined' && crypto.randomUUID
-      ? crypto.randomUUID()
-      : `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
     const newOrder: Order = {
       ...orderData,
-      id: orderId,
+      id: generateUUID(),
       orderNumber: `ORD-${timestamp.toString().slice(-6)}`,
     };
 
@@ -1263,7 +1272,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const addProductionLog = useCallback((log: Omit<ProductionLog, 'id'>) => {
     const newLog: ProductionLog = {
       ...log,
-      id: `prod_${Date.now()}`,
+      id: generateUUID(),
     };
     setProductionLogs(prev => [newLog, ...prev]);
     // Sync to Supabase
@@ -1281,7 +1290,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const addExpense = useCallback(async (expense: Omit<Expense, 'id' | 'createdAt'>) => {
     const newExpense: Expense = {
       ...expense,
-      id: `exp_${Date.now()}`,
+      id: generateUUID(),
       createdAt: new Date().toISOString(),
     };
 
@@ -1327,7 +1336,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         return prev.map(cf => cf.date === date ? { ...cf, ...data } : cf);
       } else {
         const newCf: DailyCashFlow = {
-          id: `cf_${Date.now()}`,
+          id: generateUUID(),
           date,
           openingCash: 0,
           salesCash: 0,
@@ -1361,7 +1370,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const addCustomer = useCallback(async (customerData: Omit<Customer, 'id' | 'createdAt' | 'loyaltyPoints' | 'totalSpent' | 'totalOrders' | 'segment'>): Promise<Customer> => {
     const newCustomer: Customer = {
       ...customerData,
-      id: `cust_${Date.now()}`,
+      id: generateUUID(),
       loyaltyPoints: 0,
       totalSpent: 0,
       totalOrders: 0,
@@ -1418,7 +1427,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const addSupplier = useCallback(async (supplierData: Omit<Supplier, 'id' | 'createdAt' | 'rating'>) => {
     const newSupplier: Supplier = {
       ...supplierData,
-      id: `sup_${Date.now()}`,
+      id: generateUUID(),
       rating: 3,
       createdAt: new Date().toISOString(),
     };
@@ -1451,7 +1460,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     const timestamp = Date.now();
     const newPO: PurchaseOrder = {
       ...poData,
-      id: `po_${timestamp}`,
+      id: generateUUID(),
       poNumber: `PO-${timestamp.toString().slice(-6)}`,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -1486,7 +1495,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       : 0;
     const newRecipe: Recipe = {
       ...recipeData,
-      id: `recipe_${Date.now()}`,
+      id: generateUUID(),
       totalCost,
       profitMargin,
       createdAt: new Date().toISOString(),
@@ -1505,7 +1514,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   // Shift & Schedule actions
   const addShift = useCallback((shiftData: Omit<Shift, 'id'>) => {
-    const newShift: Shift = { ...shiftData, id: `shift_${Date.now()}` };
+    const newShift: Shift = { ...shiftData, id: generateUUID() };
     setShifts(prev => [...prev, newShift]);
     // Sync to Supabase
     SupabaseSync.syncAddShift(newShift);
@@ -1524,7 +1533,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const addScheduleEntry = useCallback((entryData: Omit<ScheduleEntry, 'id'>) => {
-    const newEntry: ScheduleEntry = { ...entryData, id: `sched_${Date.now()}` };
+    const newEntry: ScheduleEntry = { ...entryData, id: generateUUID() };
     setSchedules(prev => [...prev, newEntry]);
     // Sync to Supabase
     SupabaseSync.syncAddScheduleEntry(newEntry);
@@ -1556,7 +1565,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const addPromotion = useCallback((promoData: Omit<Promotion, 'id' | 'createdAt' | 'usageCount'>) => {
     const newPromo: Promotion = {
       ...promoData,
-      id: `promo_${Date.now()}`,
+      id: generateUUID(),
       usageCount: 0,
       createdAt: new Date().toISOString(),
     };
@@ -1587,7 +1596,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const addNotification = useCallback((notifData: Omit<Notification, 'id' | 'createdAt' | 'isRead'>) => {
     const newNotif: Notification = {
       ...notifData,
-      id: `notif_${Date.now()}`,
+      id: generateUUID(),
       isRead: false,
       createdAt: new Date().toISOString(),
     };
@@ -1614,7 +1623,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const addMenuItem = useCallback(async (item: Omit<MenuItem, 'id'>) => {
     const newItem: MenuItem = {
       ...item,
-      id: `menu_${Date.now()}`,
+      id: generateUUID(),
     };
 
     // Sync to Supabase
@@ -1694,7 +1703,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const addModifierGroup = useCallback(async (group: Omit<ModifierGroup, 'id'>) => {
     const newGroup: ModifierGroup = {
       ...group,
-      id: `modgroup_${Date.now()}`,
+      id: generateUUID(),
     };
     setModifierGroups(prev => [...prev, newGroup]);
 
@@ -1730,7 +1739,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const addModifierOption = useCallback(async (option: Omit<ModifierOption, 'id'>) => {
     const newOption: ModifierOption = {
       ...option,
-      id: `modopt_${Date.now()}`,
+      id: generateUUID(),
     };
     setModifierOptions(prev => [...prev, newOption]);
 
@@ -1795,7 +1804,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         const overallScore = calculateOverallScore(defaultMetrics);
         const bonusAmount = calculateBonus(overallScore);
         const newKPI: StaffKPI = {
-          id: `kpi_${Date.now()}`,
+          id: generateUUID(),
           staffId,
           period,
           metrics: defaultMetrics,
@@ -1830,7 +1839,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const addLeaveRecord = useCallback((leave: Omit<LeaveRecord, 'id' | 'createdAt'>) => {
     const newLeave: LeaveRecord = {
       ...leave,
-      id: `leave_${Date.now()}`,
+      id: generateUUID(),
       createdAt: new Date().toISOString(),
     };
     setLeaveRecords(prev => [newLeave, ...prev]);
@@ -1843,7 +1852,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const addTrainingRecord = useCallback((training: Omit<TrainingRecord, 'id'>) => {
     const newTraining: TrainingRecord = {
       ...training,
-      id: `train_${Date.now()}`,
+      id: generateUUID(),
     };
     setTrainingRecords(prev => [newTraining, ...prev]);
   }, []);
@@ -1855,7 +1864,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const addOTRecord = useCallback((ot: Omit<OTRecord, 'id' | 'createdAt'>) => {
     const newOT: OTRecord = {
       ...ot,
-      id: `ot_${Date.now()}`,
+      id: generateUUID(),
       createdAt: new Date().toISOString(),
     };
     setOTRecords(prev => [newOT, ...prev]);
@@ -1868,7 +1877,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const addCustomerReview = useCallback((review: Omit<CustomerReview, 'id' | 'createdAt'>) => {
     const newReview: CustomerReview = {
       ...review,
-      id: `review_${Date.now()}`,
+      id: generateUUID(),
       createdAt: new Date().toISOString(),
     };
     setCustomerReviews(prev => [newReview, ...prev]);
@@ -1887,7 +1896,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const addChecklistTemplate = useCallback((template: Omit<ChecklistItemTemplate, 'id' | 'createdAt'>) => {
     const newTemplate: ChecklistItemTemplate = {
       ...template,
-      id: `checklist_template_${Date.now()}`,
+      id: generateUUID(),
       createdAt: new Date().toISOString(),
     };
     setChecklistTemplates(prev => [...prev, newTemplate]);
@@ -1910,7 +1919,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const startChecklist = useCallback((type: 'opening' | 'closing', staffId: string, staffName: string, shiftId: string): ChecklistCompletion => {
     const templates = checklistTemplates.filter(t => t.type === type && t.isActive).sort((a, b) => a.order - b.order);
     const newCompletion: ChecklistCompletion = {
-      id: `checklist_${Date.now()}`,
+      id: generateUUID(),
       date: new Date().toISOString().split('T')[0],
       type,
       staffId,
@@ -1966,7 +1975,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const addLeaveRequest = useCallback((request: Omit<LeaveRequest, 'id' | 'createdAt'>) => {
     const newRequest: LeaveRequest = {
       ...request,
-      id: `leave_req_${Date.now()}`,
+      id: generateUUID(),
       createdAt: new Date().toISOString(),
     };
     setLeaveRequests(prev => [newRequest, ...prev]);
@@ -2080,7 +2089,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const addClaimRequest = useCallback((claim: Omit<ClaimRequest, 'id' | 'createdAt'>) => {
     const newClaim: ClaimRequest = {
       ...claim,
-      id: `claim_${Date.now()}`,
+      id: generateUUID(),
       createdAt: new Date().toISOString(),
     };
     setClaimRequests(prev => [newClaim, ...prev]);
@@ -2136,7 +2145,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const addStaffRequest = useCallback((request: Omit<StaffRequest, 'id' | 'createdAt'>) => {
     const newRequest: StaffRequest = {
       ...request,
-      id: `staff_req_${Date.now()}`,
+      id: generateUUID(),
       createdAt: new Date().toISOString(),
     };
     setStaffRequests(prev => [newRequest, ...prev]);
@@ -2182,7 +2191,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const addAnnouncement = useCallback((announcement: Omit<Announcement, 'id' | 'createdAt'>) => {
     const newAnnouncement: Announcement = {
       ...announcement,
-      id: `ann_${Date.now()}`,
+      id: generateUUID(),
       createdAt: new Date().toISOString(),
     };
     setAnnouncements(prev => [newAnnouncement, ...prev]);
@@ -2295,7 +2304,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }
 
     const newRequest: VoidRefundRequest = {
-      id: `req_${Date.now()}`,
+      id: generateUUID(),
       orderId,
       orderNumber: order.orderNumber,
       type: 'void',
@@ -2340,7 +2349,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     const isPartial = items && items.length > 0 && amount < order.total;
 
     const newRequest: VoidRefundRequest = {
-      id: `req_${Date.now()}`,
+      id: generateUUID(),
       orderId,
       orderNumber: order.orderNumber,
       type: isPartial ? 'partial_refund' : 'refund',
@@ -2571,7 +2580,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }
 
     const newRequest: OilChangeRequest = {
-      id: `oil_req_${Date.now()}`,
+      id: generateUUID(),
       fryerId,
       fryerName: tracker.name,
       actionType,
@@ -2638,7 +2647,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
     // Add to history
     const historyEntry: OilActionHistory = {
-      id: `oil_hist_${Date.now()}`,
+      id: generateUUID(),
       fryerId: request.fryerId,
       fryerName: request.fryerName,
       actionType: request.actionType,
@@ -2709,7 +2718,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const addMenuCategory = useCallback(async (category: Omit<MenuCategory, 'id' | 'createdAt'>) => {
     const newCategory: MenuCategory = {
       ...category,
-      id: `cat_${Date.now()}`,
+      id: generateUUID(),
       createdAt: new Date().toISOString(),
     };
 
@@ -2775,7 +2784,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const addPaymentMethod = useCallback(async (method: Omit<PaymentMethodConfig, 'id' | 'createdAt'>) => {
     const newMethod: PaymentMethodConfig = {
       ...method,
-      id: `pm_${Date.now()}`,
+      id: generateUUID(),
       createdAt: new Date().toISOString(),
     };
 
@@ -2850,7 +2859,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const addTaxRate = useCallback(async (rate: Omit<TaxRate, 'id' | 'createdAt'>) => {
     const newRate: TaxRate = {
       ...rate,
-      id: `tax_${Date.now()}`,
+      id: generateUUID(),
       createdAt: new Date().toISOString(),
     };
 
