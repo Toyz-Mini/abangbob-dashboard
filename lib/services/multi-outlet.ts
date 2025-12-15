@@ -1,6 +1,8 @@
 // Multi-Outlet Management Service
 // Foundation for managing multiple outlet locations
 
+import { getSupabaseClient } from '@/lib/supabase/client';
+
 export interface Outlet {
   id: string;
   name: string;
@@ -74,12 +76,12 @@ const DEFAULT_HQ_OUTLET: Outlet = {
 // Get all outlets
 export function getOutlets(): Outlet[] {
   if (typeof window === 'undefined') return [DEFAULT_HQ_OUTLET];
-  
+
   const stored = localStorage.getItem(OUTLETS_STORAGE_KEY);
   if (stored) {
     return JSON.parse(stored);
   }
-  
+
   // Initialize with HQ
   localStorage.setItem(OUTLETS_STORAGE_KEY, JSON.stringify([DEFAULT_HQ_OUTLET]));
   return [DEFAULT_HQ_OUTLET];
@@ -88,15 +90,15 @@ export function getOutlets(): Outlet[] {
 // Get current outlet
 export function getCurrentOutlet(): Outlet {
   if (typeof window === 'undefined') return DEFAULT_HQ_OUTLET;
-  
+
   const outlets = getOutlets();
   const currentId = localStorage.getItem(CURRENT_OUTLET_KEY);
-  
+
   if (currentId) {
     const current = outlets.find(o => o.id === currentId);
     if (current) return current;
   }
-  
+
   // Default to HQ or first outlet
   const hq = outlets.find(o => o.isHeadquarters);
   return hq || outlets[0] || DEFAULT_HQ_OUTLET;
@@ -110,17 +112,20 @@ export function setCurrentOutlet(outletId: string): void {
 // Add new outlet
 export function addOutlet(outlet: Omit<Outlet, 'id' | 'createdAt' | 'updatedAt'>): Outlet {
   const outlets = getOutlets();
-  
+
   const newOutlet: Outlet = {
     ...outlet,
     id: `outlet_${Date.now()}`,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
-  
+
   outlets.push(newOutlet);
   localStorage.setItem(OUTLETS_STORAGE_KEY, JSON.stringify(outlets));
-  
+
+  // Sync to Supabase
+  syncAddOutletToSupabase(newOutlet);
+
   return newOutlet;
 }
 
@@ -128,16 +133,20 @@ export function addOutlet(outlet: Omit<Outlet, 'id' | 'createdAt' | 'updatedAt'>
 export function updateOutlet(outletId: string, updates: Partial<Outlet>): Outlet | null {
   const outlets = getOutlets();
   const index = outlets.findIndex(o => o.id === outletId);
-  
+
   if (index === -1) return null;
-  
+
   outlets[index] = {
     ...outlets[index],
     ...updates,
     updatedAt: new Date().toISOString(),
   };
-  
+
   localStorage.setItem(OUTLETS_STORAGE_KEY, JSON.stringify(outlets));
+
+  // Sync to Supabase
+  syncUpdateOutletToSupabase(outletId, updates);
+
   return outlets[index];
 }
 
@@ -145,20 +154,90 @@ export function updateOutlet(outletId: string, updates: Partial<Outlet>): Outlet
 export function deleteOutlet(outletId: string): boolean {
   const outlets = getOutlets();
   const outlet = outlets.find(o => o.id === outletId);
-  
+
   // Cannot delete HQ
   if (outlet?.isHeadquarters) return false;
-  
+
   const filtered = outlets.filter(o => o.id !== outletId);
   localStorage.setItem(OUTLETS_STORAGE_KEY, JSON.stringify(filtered));
-  
+
+  // Sync to Supabase
+  syncDeleteOutletFromSupabase(outletId);
+
   // If deleted outlet was current, switch to HQ
   if (localStorage.getItem(CURRENT_OUTLET_KEY) === outletId) {
     const hq = filtered.find(o => o.isHeadquarters);
     if (hq) setCurrentOutlet(hq.id);
   }
-  
+
   return true;
+}
+
+// ==================== SUPABASE SYNC FUNCTIONS ====================
+
+async function syncAddOutletToSupabase(outlet: Outlet): Promise<void> {
+  const supabase = getSupabaseClient();
+  if (!supabase) return;
+
+  try {
+    await (supabase.from('outlets') as any).insert({
+      id: outlet.id,
+      name: outlet.name,
+      code: outlet.code,
+      address: outlet.address,
+      phone: outlet.phone,
+      email: outlet.email,
+      is_headquarters: outlet.isHeadquarters,
+      is_active: outlet.isActive,
+      timezone: outlet.timezone,
+      currency: outlet.currency,
+      operating_hours: outlet.operatingHours,
+      settings: outlet.settings,
+      created_at: outlet.createdAt,
+      updated_at: outlet.updatedAt,
+    });
+    console.log('[Outlet] Added to Supabase:', outlet.id);
+  } catch (error) {
+    console.error('[Outlet] Failed to add to Supabase:', error);
+  }
+}
+
+async function syncUpdateOutletToSupabase(outletId: string, updates: Partial<Outlet>): Promise<void> {
+  const supabase = getSupabaseClient();
+  if (!supabase) return;
+
+  try {
+    const snakeCaseUpdates: Record<string, any> = {};
+    if (updates.name) snakeCaseUpdates.name = updates.name;
+    if (updates.code) snakeCaseUpdates.code = updates.code;
+    if (updates.address) snakeCaseUpdates.address = updates.address;
+    if (updates.phone) snakeCaseUpdates.phone = updates.phone;
+    if (updates.email !== undefined) snakeCaseUpdates.email = updates.email;
+    if (updates.isHeadquarters !== undefined) snakeCaseUpdates.is_headquarters = updates.isHeadquarters;
+    if (updates.isActive !== undefined) snakeCaseUpdates.is_active = updates.isActive;
+    if (updates.timezone) snakeCaseUpdates.timezone = updates.timezone;
+    if (updates.currency) snakeCaseUpdates.currency = updates.currency;
+    if (updates.operatingHours) snakeCaseUpdates.operating_hours = updates.operatingHours;
+    if (updates.settings) snakeCaseUpdates.settings = updates.settings;
+    snakeCaseUpdates.updated_at = new Date().toISOString();
+
+    await (supabase.from('outlets') as any).update(snakeCaseUpdates).eq('id', outletId);
+    console.log('[Outlet] Updated in Supabase:', outletId);
+  } catch (error) {
+    console.error('[Outlet] Failed to update in Supabase:', error);
+  }
+}
+
+async function syncDeleteOutletFromSupabase(outletId: string): Promise<void> {
+  const supabase = getSupabaseClient();
+  if (!supabase) return;
+
+  try {
+    await (supabase.from('outlets') as any).delete().eq('id', outletId);
+    console.log('[Outlet] Deleted from Supabase:', outletId);
+  } catch (error) {
+    console.error('[Outlet] Failed to delete from Supabase:', error);
+  }
 }
 
 // Get outlet by ID
@@ -172,11 +251,11 @@ export function isOutletOpen(outlet: Outlet): boolean {
   const now = new Date();
   const dayOfWeek = now.getDay();
   const currentTime = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
-  
+
   const todayHours = outlet.operatingHours.find(h => h.dayOfWeek === dayOfWeek);
-  
+
   if (!todayHours || !todayHours.isOpen) return false;
-  
+
   return currentTime >= todayHours.openTime && currentTime <= todayHours.closeTime;
 }
 
@@ -189,11 +268,11 @@ export function generateHQDashboardStats(outletStats: OutletStats[]): {
   topItemsAcrossOutlets: { name: string; quantity: number; revenue: number }[];
 } {
   const outlets = getOutlets();
-  
+
   const totalSales = outletStats.reduce((sum, s) => sum + s.totalSales, 0);
   const totalOrders = outletStats.reduce((sum, s) => sum + s.totalOrders, 0);
   const averageOrderValue = totalOrders > 0 ? totalSales / totalOrders : 0;
-  
+
   // Aggregate performance by outlet
   const outletPerformance = outlets.map(outlet => {
     const stats = outletStats.filter(s => s.outletId === outlet.id);
@@ -204,7 +283,7 @@ export function generateHQDashboardStats(outletStats: OutletStats[]): {
       orders: stats.reduce((sum, s) => sum + s.totalOrders, 0),
     };
   }).sort((a, b) => b.sales - a.sales);
-  
+
   // Aggregate top items
   const itemsMap: Record<string, { name: string; quantity: number; revenue: number }> = {};
   outletStats.forEach(stat => {
@@ -216,11 +295,11 @@ export function generateHQDashboardStats(outletStats: OutletStats[]): {
       itemsMap[item.name].revenue += item.revenue;
     });
   });
-  
+
   const topItemsAcrossOutlets = Object.values(itemsMap)
     .sort((a, b) => b.revenue - a.revenue)
     .slice(0, 10);
-  
+
   return {
     totalSales,
     totalOrders,
