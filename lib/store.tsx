@@ -12,6 +12,37 @@ import { MOCK_MENU, MOCK_MODIFIER_GROUPS, MOCK_MODIFIER_OPTIONS } from './menu-d
 import { MOCK_STAFF_KPI, MOCK_LEAVE_RECORDS, MOCK_TRAINING_RECORDS, MOCK_OT_RECORDS, MOCK_CUSTOMER_REVIEWS, calculateOverallScore, calculateBonus, DEFAULT_KPI_CONFIG } from './kpi-data';
 import { MOCK_CHECKLIST_TEMPLATES, MOCK_CHECKLIST_COMPLETIONS, MOCK_LEAVE_BALANCES, MOCK_LEAVE_REQUESTS, MOCK_CLAIM_REQUESTS, MOCK_STAFF_REQUESTS, MOCK_ANNOUNCEMENTS, MOCK_SHIFTS, MOCK_SCHEDULES, generateMockSchedules } from './staff-portal-data';
 import * as SupabaseSync from './supabase-sync';
+import { isSupabaseConfigured, getConnectionState, checkSupabaseConnection } from './supabase/client';
+import { logSyncError, logSyncSuccess } from './utils/sync-logger';
+
+// Data source tracking for debugging
+export type DataSource = 'supabase' | 'localStorage' | 'mock' | 'unknown';
+
+interface DataSourceInfo {
+  menuItems: DataSource;
+  modifierGroups: DataSource;
+  modifierOptions: DataSource;
+  inventory: DataSource;
+  staff: DataSource;
+  orders: DataSource;
+  lastLoadTime: Date | null;
+  supabaseConnected: boolean;
+}
+
+let dataSourceInfo: DataSourceInfo = {
+  menuItems: 'unknown',
+  modifierGroups: 'unknown',
+  modifierOptions: 'unknown',
+  inventory: 'unknown',
+  staff: 'unknown',
+  orders: 'unknown',
+  lastLoadTime: null,
+  supabaseConnected: false,
+};
+
+export function getDataSourceInfo(): DataSourceInfo {
+  return { ...dataSourceInfo };
+}
 
 // Storage keys
 const STORAGE_KEYS = {
@@ -416,34 +447,124 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   // Initialize from Supabase first, fallback to localStorage
   useEffect(() => {
     const initializeData = async () => {
+      // Check if Supabase is configured
+      const supabaseConfigured = isSupabaseConfigured();
+      let supabaseConnected = false;
+      
+      if (supabaseConfigured) {
+        // Verify connection is actually working
+        const connectionCheck = await checkSupabaseConnection();
+        supabaseConnected = connectionCheck.connected;
+        
+        if (!supabaseConnected) {
+          console.warn('[Data Init] Supabase configured but connection failed:', connectionCheck.error);
+          logSyncError('initial_load', 'unknown', connectionCheck.error || 'Connection failed');
+        } else {
+          console.log('[Data Init] Supabase connection verified');
+        }
+      } else {
+        console.warn('[Data Init] Supabase not configured - using offline mode');
+      }
+
       // Try to load from Supabase first
       const supabaseData = await SupabaseSync.loadAllDataFromSupabase();
 
-      // Set data from Supabase if available, otherwise fallback to localStorage
-      // Core data
-      setInventory(supabaseData.inventory.length > 0 ? supabaseData.inventory : getFromStorage(STORAGE_KEYS.INVENTORY, MOCK_STOCK));
-      setStaff(supabaseData.staff.length > 0 ? supabaseData.staff : getFromStorage(STORAGE_KEYS.STAFF, MOCK_STAFF));
-      setMenuItems(supabaseData.menuItems.length > 0 ? supabaseData.menuItems : getFromStorage(STORAGE_KEYS.MENU_ITEMS, MOCK_MENU));
-      setModifierGroups(supabaseData.modifierGroups.length > 0 ? supabaseData.modifierGroups : getFromStorage(STORAGE_KEYS.MODIFIER_GROUPS, MOCK_MODIFIER_GROUPS));
-      setModifierOptions(supabaseData.modifierOptions.length > 0 ? supabaseData.modifierOptions : getFromStorage(STORAGE_KEYS.MODIFIER_OPTIONS, MOCK_MODIFIER_OPTIONS));
-      setOrders(supabaseData.orders.length > 0 ? supabaseData.orders : getFromStorage(STORAGE_KEYS.ORDERS, []));
-      setCustomers(supabaseData.customers.length > 0 ? supabaseData.customers : getFromStorage(STORAGE_KEYS.CUSTOMERS, []));
-      setExpenses(supabaseData.expenses.length > 0 ? supabaseData.expenses : getFromStorage(STORAGE_KEYS.EXPENSES, MOCK_EXPENSES));
-      setAttendance(supabaseData.attendance.length > 0 ? supabaseData.attendance : getFromStorage(STORAGE_KEYS.ATTENDANCE, MOCK_ATTENDANCE));
-      setSuppliers(supabaseData.suppliers.length > 0 ? supabaseData.suppliers : getFromStorage(STORAGE_KEYS.SUPPLIERS, []));
-      setPurchaseOrders(supabaseData.purchaseOrders.length > 0 ? supabaseData.purchaseOrders : getFromStorage(STORAGE_KEYS.PURCHASE_ORDERS, []));
+      // IMPORTANT: Improved fallback logic
+      // - If Supabase is connected and returns data (even empty), use it (trust the source)
+      // - If Supabase is NOT connected, prefer localStorage over mock data
+      // - Only use mock data for first-time installations (no localStorage data exists)
+      
+      // Helper function to determine data source
+      const getDataWithSource = <T,>(
+        supabaseArr: T[] | undefined,
+        storageKey: string,
+        mockData: T[],
+        entityName: string
+      ): { data: T[]; source: DataSource } => {
+        // If Supabase is connected, trust it even if empty (user may have deleted all items)
+        if (supabaseConnected && supabaseArr !== undefined) {
+          if (supabaseArr.length > 0) {
+            console.log(`[Data Init] ${entityName}: Loaded ${supabaseArr.length} items from Supabase`);
+            return { data: supabaseArr, source: 'supabase' };
+          }
+          // Supabase connected but empty - check if localStorage has data
+          const localData = getFromStorage<T[]>(storageKey, []);
+          if (localData.length > 0) {
+            // User has local data but Supabase is empty - this might be a migration scenario
+            console.log(`[Data Init] ${entityName}: Supabase empty, using ${localData.length} items from localStorage`);
+            return { data: localData, source: 'localStorage' };
+          }
+          // Both empty - return empty (not mock data!)
+          console.log(`[Data Init] ${entityName}: No data in Supabase or localStorage`);
+          return { data: [], source: 'supabase' };
+        }
+        
+        // Supabase not connected - try localStorage first
+        const localData = getFromStorage<T[]>(storageKey, []);
+        if (localData.length > 0) {
+          console.log(`[Data Init] ${entityName}: Loaded ${localData.length} items from localStorage (Supabase offline)`);
+          return { data: localData, source: 'localStorage' };
+        }
+        
+        // No localStorage data - check if this is first install (use mock) or data loss
+        // Only use mock data if localStorage is completely empty (first install scenario)
+        const hasAnyLocalData = typeof window !== 'undefined' && localStorage.getItem(storageKey) !== null;
+        if (!hasAnyLocalData && mockData.length > 0) {
+          console.log(`[Data Init] ${entityName}: First install - using ${mockData.length} mock items`);
+          return { data: mockData, source: 'mock' };
+        }
+        
+        console.log(`[Data Init] ${entityName}: No data available`);
+        return { data: [], source: 'localStorage' };
+      };
 
-      // Extended data - now also from Supabase
+      // Update data source tracking
+      dataSourceInfo.supabaseConnected = supabaseConnected;
+      dataSourceInfo.lastLoadTime = new Date();
+
+      // Core data with proper source tracking
+      const inventoryResult = getDataWithSource(supabaseData.inventory, STORAGE_KEYS.INVENTORY, MOCK_STOCK, 'Inventory');
+      setInventory(inventoryResult.data);
+      dataSourceInfo.inventory = inventoryResult.source;
+
+      const staffResult = getDataWithSource(supabaseData.staff, STORAGE_KEYS.STAFF, MOCK_STAFF, 'Staff');
+      setStaff(staffResult.data);
+      dataSourceInfo.staff = staffResult.source;
+
+      const menuResult = getDataWithSource(supabaseData.menuItems, STORAGE_KEYS.MENU_ITEMS, MOCK_MENU, 'Menu Items');
+      setMenuItems(menuResult.data);
+      dataSourceInfo.menuItems = menuResult.source;
+
+      const modGroupResult = getDataWithSource(supabaseData.modifierGroups, STORAGE_KEYS.MODIFIER_GROUPS, MOCK_MODIFIER_GROUPS, 'Modifier Groups');
+      setModifierGroups(modGroupResult.data);
+      dataSourceInfo.modifierGroups = modGroupResult.source;
+
+      const modOptResult = getDataWithSource(supabaseData.modifierOptions, STORAGE_KEYS.MODIFIER_OPTIONS, MOCK_MODIFIER_OPTIONS, 'Modifier Options');
+      setModifierOptions(modOptResult.data);
+      dataSourceInfo.modifierOptions = modOptResult.source;
+
+      const ordersResult = getDataWithSource(supabaseData.orders, STORAGE_KEYS.ORDERS, [], 'Orders');
+      setOrders(ordersResult.data);
+      dataSourceInfo.orders = ordersResult.source;
+
+      // Other core data (using simplified logic for non-critical entities)
+      setCustomers(supabaseConnected && supabaseData.customers?.length > 0 ? supabaseData.customers : getFromStorage(STORAGE_KEYS.CUSTOMERS, []));
+      setExpenses(supabaseConnected && supabaseData.expenses?.length > 0 ? supabaseData.expenses : getFromStorage(STORAGE_KEYS.EXPENSES, MOCK_EXPENSES));
+      setAttendance(supabaseConnected && supabaseData.attendance?.length > 0 ? supabaseData.attendance : getFromStorage(STORAGE_KEYS.ATTENDANCE, MOCK_ATTENDANCE));
+      setSuppliers(supabaseConnected && supabaseData.suppliers?.length > 0 ? supabaseData.suppliers : getFromStorage(STORAGE_KEYS.SUPPLIERS, []));
+      setPurchaseOrders(supabaseConnected && supabaseData.purchaseOrders?.length > 0 ? supabaseData.purchaseOrders : getFromStorage(STORAGE_KEYS.PURCHASE_ORDERS, []));
+
+      // Extended data - now also from Supabase (using supabaseConnected flag for consistency)
       setInventoryLogs(getFromStorage(STORAGE_KEYS.INVENTORY_LOGS, [])); // TODO: Add to Supabase later
-      setProductionLogs(supabaseData.productionLogs?.length > 0 ? supabaseData.productionLogs : getFromStorage(STORAGE_KEYS.PRODUCTION_LOGS, MOCK_PRODUCTION_LOGS));
-      setDeliveryOrders(supabaseData.deliveryOrders?.length > 0 ? supabaseData.deliveryOrders : getFromStorage(STORAGE_KEYS.DELIVERY_ORDERS, MOCK_DELIVERY_ORDERS));
-      setCashFlows(supabaseData.cashFlows?.length > 0 ? supabaseData.cashFlows : getFromStorage(STORAGE_KEYS.CASH_FLOWS, MOCK_CASH_FLOWS));
-      setRecipes(supabaseData.recipes?.length > 0 ? supabaseData.recipes : getFromStorage(STORAGE_KEYS.RECIPES, []));
-      setShifts(supabaseData.shifts?.length > 0 ? supabaseData.shifts : getFromStorage(STORAGE_KEYS.SHIFTS, MOCK_SHIFTS));
+      setProductionLogs(supabaseConnected && supabaseData.productionLogs?.length > 0 ? supabaseData.productionLogs : getFromStorage(STORAGE_KEYS.PRODUCTION_LOGS, MOCK_PRODUCTION_LOGS));
+      setDeliveryOrders(supabaseConnected && supabaseData.deliveryOrders?.length > 0 ? supabaseData.deliveryOrders : getFromStorage(STORAGE_KEYS.DELIVERY_ORDERS, MOCK_DELIVERY_ORDERS));
+      setCashFlows(supabaseConnected && supabaseData.cashFlows?.length > 0 ? supabaseData.cashFlows : getFromStorage(STORAGE_KEYS.CASH_FLOWS, MOCK_CASH_FLOWS));
+      setRecipes(supabaseConnected && supabaseData.recipes?.length > 0 ? supabaseData.recipes : getFromStorage(STORAGE_KEYS.RECIPES, []));
+      setShifts(supabaseConnected && supabaseData.shifts?.length > 0 ? supabaseData.shifts : getFromStorage(STORAGE_KEYS.SHIFTS, MOCK_SHIFTS));
 
       // Load schedules from Supabase or check if local needs refreshing
       const supabaseSchedules = supabaseData.schedules || [];
-      if (supabaseSchedules.length > 0) {
+      if (supabaseConnected && supabaseSchedules.length > 0) {
         setSchedules(supabaseSchedules);
       } else {
         const loadedSchedules = getFromStorage(STORAGE_KEYS.SCHEDULES, MOCK_SCHEDULES);
@@ -460,40 +581,48 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         }
       }
 
-      setPromotions(supabaseData.promotions?.length > 0 ? supabaseData.promotions : getFromStorage(STORAGE_KEYS.PROMOTIONS, []));
-      setNotifications(supabaseData.notifications?.length > 0 ? supabaseData.notifications : getFromStorage(STORAGE_KEYS.NOTIFICATIONS, []));
+      setPromotions(supabaseConnected && supabaseData.promotions?.length > 0 ? supabaseData.promotions : getFromStorage(STORAGE_KEYS.PROMOTIONS, []));
+      setNotifications(supabaseConnected && supabaseData.notifications?.length > 0 ? supabaseData.notifications : getFromStorage(STORAGE_KEYS.NOTIFICATIONS, []));
 
       // KPI & Gamification
-      setStaffKPI(supabaseData.staffKPI?.length > 0 ? supabaseData.staffKPI : getFromStorage(STORAGE_KEYS.STAFF_KPI, MOCK_STAFF_KPI));
-      setLeaveRecords(supabaseData.leaveRecords?.length > 0 ? supabaseData.leaveRecords : getFromStorage(STORAGE_KEYS.LEAVE_RECORDS, MOCK_LEAVE_RECORDS));
-      setTrainingRecords(supabaseData.trainingRecords?.length > 0 ? supabaseData.trainingRecords : getFromStorage(STORAGE_KEYS.TRAINING_RECORDS, MOCK_TRAINING_RECORDS));
-      setOTRecords(supabaseData.otRecords?.length > 0 ? supabaseData.otRecords : getFromStorage(STORAGE_KEYS.OT_RECORDS, MOCK_OT_RECORDS));
-      setCustomerReviews(supabaseData.customerReviews?.length > 0 ? supabaseData.customerReviews : getFromStorage(STORAGE_KEYS.CUSTOMER_REVIEWS, MOCK_CUSTOMER_REVIEWS));
+      setStaffKPI(supabaseConnected && supabaseData.staffKPI?.length > 0 ? supabaseData.staffKPI : getFromStorage(STORAGE_KEYS.STAFF_KPI, MOCK_STAFF_KPI));
+      setLeaveRecords(supabaseConnected && supabaseData.leaveRecords?.length > 0 ? supabaseData.leaveRecords : getFromStorage(STORAGE_KEYS.LEAVE_RECORDS, MOCK_LEAVE_RECORDS));
+      setTrainingRecords(supabaseConnected && supabaseData.trainingRecords?.length > 0 ? supabaseData.trainingRecords : getFromStorage(STORAGE_KEYS.TRAINING_RECORDS, MOCK_TRAINING_RECORDS));
+      setOTRecords(supabaseConnected && supabaseData.otRecords?.length > 0 ? supabaseData.otRecords : getFromStorage(STORAGE_KEYS.OT_RECORDS, MOCK_OT_RECORDS));
+      setCustomerReviews(supabaseConnected && supabaseData.customerReviews?.length > 0 ? supabaseData.customerReviews : getFromStorage(STORAGE_KEYS.CUSTOMER_REVIEWS, MOCK_CUSTOMER_REVIEWS));
 
       // Staff Portal
-      setChecklistTemplates(supabaseData.checklistTemplates?.length > 0 ? supabaseData.checklistTemplates : getFromStorage(STORAGE_KEYS.CHECKLIST_TEMPLATES, MOCK_CHECKLIST_TEMPLATES));
-      setChecklistCompletions(supabaseData.checklistCompletions?.length > 0 ? supabaseData.checklistCompletions : getFromStorage(STORAGE_KEYS.CHECKLIST_COMPLETIONS, MOCK_CHECKLIST_COMPLETIONS));
-      setLeaveBalances(supabaseData.leaveBalances?.length > 0 ? supabaseData.leaveBalances : getFromStorage(STORAGE_KEYS.LEAVE_BALANCES, MOCK_LEAVE_BALANCES));
-      setLeaveRequests(supabaseData.leaveRequests?.length > 0 ? supabaseData.leaveRequests : getFromStorage(STORAGE_KEYS.LEAVE_REQUESTS, MOCK_LEAVE_REQUESTS));
-      setClaimRequests(supabaseData.claimRequests?.length > 0 ? supabaseData.claimRequests : getFromStorage(STORAGE_KEYS.CLAIM_REQUESTS, MOCK_CLAIM_REQUESTS));
-      setStaffRequests(supabaseData.staffRequests?.length > 0 ? supabaseData.staffRequests : getFromStorage(STORAGE_KEYS.STAFF_REQUESTS, MOCK_STAFF_REQUESTS));
-      setAnnouncements(supabaseData.announcements?.length > 0 ? supabaseData.announcements : getFromStorage(STORAGE_KEYS.ANNOUNCEMENTS, MOCK_ANNOUNCEMENTS));
+      setChecklistTemplates(supabaseConnected && supabaseData.checklistTemplates?.length > 0 ? supabaseData.checklistTemplates : getFromStorage(STORAGE_KEYS.CHECKLIST_TEMPLATES, MOCK_CHECKLIST_TEMPLATES));
+      setChecklistCompletions(supabaseConnected && supabaseData.checklistCompletions?.length > 0 ? supabaseData.checklistCompletions : getFromStorage(STORAGE_KEYS.CHECKLIST_COMPLETIONS, MOCK_CHECKLIST_COMPLETIONS));
+      setLeaveBalances(supabaseConnected && supabaseData.leaveBalances?.length > 0 ? supabaseData.leaveBalances : getFromStorage(STORAGE_KEYS.LEAVE_BALANCES, MOCK_LEAVE_BALANCES));
+      setLeaveRequests(supabaseConnected && supabaseData.leaveRequests?.length > 0 ? supabaseData.leaveRequests : getFromStorage(STORAGE_KEYS.LEAVE_REQUESTS, MOCK_LEAVE_REQUESTS));
+      setClaimRequests(supabaseConnected && supabaseData.claimRequests?.length > 0 ? supabaseData.claimRequests : getFromStorage(STORAGE_KEYS.CLAIM_REQUESTS, MOCK_CLAIM_REQUESTS));
+      setStaffRequests(supabaseConnected && supabaseData.staffRequests?.length > 0 ? supabaseData.staffRequests : getFromStorage(STORAGE_KEYS.STAFF_REQUESTS, MOCK_STAFF_REQUESTS));
+      setAnnouncements(supabaseConnected && supabaseData.announcements?.length > 0 ? supabaseData.announcements : getFromStorage(STORAGE_KEYS.ANNOUNCEMENTS, MOCK_ANNOUNCEMENTS));
 
       // Order History (void refund uses orders table)
       setOrderHistory(getFromStorage(STORAGE_KEYS.ORDER_HISTORY, MOCK_ORDER_HISTORY));
       setVoidRefundRequests(getFromStorage(STORAGE_KEYS.VOID_REFUND_REQUESTS, MOCK_VOID_REFUND_REQUESTS));
 
       // Oil Trackers / Equipment
-      setOilTrackers(supabaseData.oilTrackers?.length > 0 ? supabaseData.oilTrackers : getFromStorage(STORAGE_KEYS.OIL_TRACKERS, MOCK_OIL_TRACKERS));
-      setOilChangeRequests(supabaseData.oilChangeRequests?.length > 0 ? supabaseData.oilChangeRequests : getFromStorage(STORAGE_KEYS.OIL_CHANGE_REQUESTS, []));
-      setOilActionHistory(supabaseData.oilActionHistory?.length > 0 ? supabaseData.oilActionHistory : getFromStorage(STORAGE_KEYS.OIL_ACTION_HISTORY, []));
+      setOilTrackers(supabaseConnected && supabaseData.oilTrackers?.length > 0 ? supabaseData.oilTrackers : getFromStorage(STORAGE_KEYS.OIL_TRACKERS, MOCK_OIL_TRACKERS));
+      setOilChangeRequests(supabaseConnected && supabaseData.oilChangeRequests?.length > 0 ? supabaseData.oilChangeRequests : getFromStorage(STORAGE_KEYS.OIL_CHANGE_REQUESTS, []));
+      setOilActionHistory(supabaseConnected && supabaseData.oilActionHistory?.length > 0 ? supabaseData.oilActionHistory : getFromStorage(STORAGE_KEYS.OIL_ACTION_HISTORY, []));
 
       // Menu Categories, Payment Methods, Tax Rates
       setMenuCategories(getFromStorage(STORAGE_KEYS.MENU_CATEGORIES, DEFAULT_MENU_CATEGORIES));
       setPaymentMethods(getFromStorage(STORAGE_KEYS.PAYMENT_METHODS, DEFAULT_PAYMENT_METHODS));
       setTaxRates(getFromStorage(STORAGE_KEYS.TAX_RATES, DEFAULT_TAX_RATES));
 
-      console.log('[Data Init] All data loaded from Supabase with localStorage fallback');
+      // Log initialization summary
+      const sourceInfo = supabaseConnected ? 'Supabase (primary)' : 'localStorage (offline mode)';
+      console.log(`[Data Init] Complete - Source: ${sourceInfo}`);
+      console.log('[Data Init] Data sources:', dataSourceInfo);
+      
+      if (supabaseConnected) {
+        logSyncSuccess('initial_load', 'unknown');
+      }
+      
       setIsInitialized(true);
     };
 
@@ -1337,9 +1466,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
     // Sync to Supabase
     try {
-      const supabaseItem = await SupabaseSync.syncAddMenuItem(newItem);
-      if (supabaseItem && supabaseItem.id) {
-        newItem.id = supabaseItem.id;
+      const result = await SupabaseSync.syncAddMenuItem(newItem);
+      if (result.success && result.data?.id) {
+        newItem.id = result.data.id;
       }
     } catch (error) {
       console.error('Failed to sync menu item to Supabase:', error);
@@ -1372,11 +1501,36 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     setMenuItems(prev => prev.filter(item => item.id !== id));
   }, []);
 
-  const toggleMenuItemAvailability = useCallback((id: string) => {
+  const toggleMenuItemAvailability = useCallback(async (id: string) => {
+    // Find current item to get the toggled value
+    const currentItem = menuItems.find(item => item.id === id);
+    if (!currentItem) return;
+    
+    const newAvailability = !currentItem.isAvailable;
+    
+    // Update local state first (optimistic update)
     setMenuItems(prev => prev.map(item =>
-      item.id === id ? { ...item, isAvailable: !item.isAvailable } : item
+      item.id === id ? { ...item, isAvailable: newAvailability } : item
     ));
-  }, []);
+
+    // Sync to Supabase
+    try {
+      const result = await SupabaseSync.syncUpdateMenuItem(id, { isAvailable: newAvailability });
+      if (!result.success) {
+        console.error('[Toggle Availability] Sync failed:', result.error);
+        // Rollback on failure
+        setMenuItems(prev => prev.map(item =>
+          item.id === id ? { ...item, isAvailable: !newAvailability } : item
+        ));
+      }
+    } catch (error) {
+      console.error('[Toggle Availability] Sync error:', error);
+      // Rollback on error
+      setMenuItems(prev => prev.map(item =>
+        item.id === id ? { ...item, isAvailable: !newAvailability } : item
+      ));
+    }
+  }, [menuItems]);
 
   const getMenuCategories = useCallback((): string[] => {
     const categories = new Set(menuItems.map(item => item.category));

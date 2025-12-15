@@ -188,137 +188,188 @@ export async function loadStaffFromSupabase() {
 
 // ============ MENU ITEMS SYNC ============
 
-export async function syncAddMenuItem(item: any) {
-  if (!isSupabaseSyncEnabled()) return null;
-  
-  try {
-    return await ops.insertMenuItem(item);
-  } catch (error) {
-    console.error('Failed to sync menu item to Supabase:', error);
-    return null;
-  }
+export async function syncAddMenuItem(item: any): Promise<SyncResult<any>> {
+  return syncWithRetry(
+    () => ops.insertMenuItem(item),
+    'menu_items',
+    'insert',
+    item.id
+  );
 }
 
-export async function syncUpdateMenuItem(id: string, updates: any) {
-  if (!isSupabaseSyncEnabled()) return null;
-  
-  try {
-    return await ops.updateMenuItem(id, updates);
-  } catch (error) {
-    console.error('Failed to update menu item in Supabase:', error);
-    return null;
-  }
+export async function syncUpdateMenuItem(id: string, updates: any): Promise<SyncResult<any>> {
+  return syncWithRetry(
+    () => ops.updateMenuItem(id, updates),
+    'menu_items',
+    'update',
+    id
+  );
 }
 
-export async function syncDeleteMenuItem(id: string) {
-  if (!isSupabaseSyncEnabled()) return;
-  
-  try {
-    await ops.deleteMenuItem(id);
-  } catch (error) {
-    console.error('Failed to delete menu item from Supabase:', error);
-  }
+export async function syncDeleteMenuItem(id: string): Promise<SyncResult<void>> {
+  return syncWithRetry(
+    () => ops.deleteMenuItem(id),
+    'menu_items',
+    'delete',
+    id
+  );
 }
 
-export async function loadMenuItemsFromSupabase() {
-  if (!isSupabaseSyncEnabled()) return [];
+export async function loadMenuItemsFromSupabase(): Promise<{ data: any[]; error: string | null }> {
+  const result = await syncWithRetry(
+    () => ops.fetchMenuItems(),
+    'menu_items',
+    'fetch'
+  );
   
-  try {
-    return await ops.fetchMenuItems();
-  } catch (error) {
-    console.error('Failed to load menu items from Supabase:', error);
-    return [];
-  }
+  return {
+    data: result.success ? result.data : [],
+    error: result.error,
+  };
+}
+
+// Legacy wrapper for backward compatibility - returns null on error
+export async function syncAddMenuItemLegacy(item: any) {
+  const result = await syncAddMenuItem(item);
+  return result.success ? result.data : null;
+}
+
+export async function syncUpdateMenuItemLegacy(id: string, updates: any) {
+  const result = await syncUpdateMenuItem(id, updates);
+  return result.success ? result.data : null;
+}
+
+export async function syncDeleteMenuItemLegacy(id: string) {
+  await syncDeleteMenuItem(id);
+}
+
+export async function loadMenuItemsFromSupabaseLegacy() {
+  const result = await loadMenuItemsFromSupabase();
+  return result.data;
 }
 
 // ============ MODIFIER GROUPS SYNC ============
 
-export async function syncAddModifierGroup(group: any) {
-  if (!isSupabaseSyncEnabled()) return null;
-  
-  try {
-    return await ops.insertModifierGroup(group);
-  } catch (error) {
-    console.error('Failed to sync modifier group to Supabase:', error);
-    return null;
-  }
+export async function syncAddModifierGroup(group: any): Promise<SyncResult<any>> {
+  return syncWithRetry(
+    () => ops.insertModifierGroup(group),
+    'modifier_groups',
+    'insert',
+    group.id
+  );
 }
 
-export async function syncUpdateModifierGroup(id: string, updates: any) {
-  if (!isSupabaseSyncEnabled()) return null;
-  
-  try {
-    return await ops.updateModifierGroup(id, updates);
-  } catch (error) {
-    console.error('Failed to update modifier group in Supabase:', error);
-    return null;
-  }
+export async function syncUpdateModifierGroup(id: string, updates: any): Promise<SyncResult<any>> {
+  return syncWithRetry(
+    () => ops.updateModifierGroup(id, updates),
+    'modifier_groups',
+    'update',
+    id
+  );
 }
 
-export async function syncDeleteModifierGroup(id: string) {
-  if (!isSupabaseSyncEnabled()) return;
-  
-  try {
-    await ops.deleteModifierGroup(id);
-  } catch (error) {
-    console.error('Failed to delete modifier group from Supabase:', error);
-  }
+export async function syncDeleteModifierGroup(id: string): Promise<SyncResult<void>> {
+  return syncWithRetry(
+    () => ops.deleteModifierGroup(id),
+    'modifier_groups',
+    'delete',
+    id
+  );
 }
 
-export async function loadModifierGroupsFromSupabase() {
-  if (!isSupabaseSyncEnabled()) return [];
+export async function loadModifierGroupsFromSupabase(): Promise<{ data: any[]; error: string | null }> {
+  const result = await syncWithRetry(
+    () => ops.fetchModifierGroups(),
+    'modifier_groups',
+    'fetch'
+  );
   
-  try {
-    return await ops.fetchModifierGroups();
-  } catch (error) {
-    console.error('Failed to load modifier groups from Supabase:', error);
-    return [];
-  }
+  return {
+    data: result.success ? result.data : [],
+    error: result.error,
+  };
+}
+
+// Legacy wrappers for backward compatibility
+export async function syncAddModifierGroupLegacy(group: any) {
+  const result = await syncAddModifierGroup(group);
+  return result.success ? result.data : null;
+}
+
+export async function syncUpdateModifierGroupLegacy(id: string, updates: any) {
+  const result = await syncUpdateModifierGroup(id, updates);
+  return result.success ? result.data : null;
+}
+
+export async function syncDeleteModifierGroupLegacy(id: string) {
+  await syncDeleteModifierGroup(id);
+}
+
+export async function loadModifierGroupsFromSupabaseLegacy() {
+  const result = await loadModifierGroupsFromSupabase();
+  return result.data;
 }
 
 // ============ MODIFIER OPTIONS SYNC ============
 
-export async function syncAddModifierOption(option: any) {
-  if (!isSupabaseSyncEnabled()) return null;
-  
-  try {
-    return await ops.insertModifierOption(option);
-  } catch (error) {
-    console.error('Failed to sync modifier option to Supabase:', error);
-    return null;
-  }
+export async function syncAddModifierOption(option: any): Promise<SyncResult<any>> {
+  return syncWithRetry(
+    () => ops.insertModifierOption(option),
+    'modifier_options',
+    'insert',
+    option.id
+  );
 }
 
-export async function syncUpdateModifierOption(id: string, updates: any) {
-  if (!isSupabaseSyncEnabled()) return null;
-  
-  try {
-    return await ops.updateModifierOption(id, updates);
-  } catch (error) {
-    console.error('Failed to update modifier option in Supabase:', error);
-    return null;
-  }
+export async function syncUpdateModifierOption(id: string, updates: any): Promise<SyncResult<any>> {
+  return syncWithRetry(
+    () => ops.updateModifierOption(id, updates),
+    'modifier_options',
+    'update',
+    id
+  );
 }
 
-export async function syncDeleteModifierOption(id: string) {
-  if (!isSupabaseSyncEnabled()) return;
-  
-  try {
-    await ops.deleteModifierOption(id);
-  } catch (error) {
-    console.error('Failed to delete modifier option from Supabase:', error);
-  }
+export async function syncDeleteModifierOption(id: string): Promise<SyncResult<void>> {
+  return syncWithRetry(
+    () => ops.deleteModifierOption(id),
+    'modifier_options',
+    'delete',
+    id
+  );
 }
 
-export async function loadModifierOptionsFromSupabase() {
-  if (!isSupabaseSyncEnabled()) return [];
+export async function loadModifierOptionsFromSupabase(): Promise<{ data: any[]; error: string | null }> {
+  const result = await syncWithRetry(
+    () => ops.fetchModifierOptions(),
+    'modifier_options',
+    'fetch'
+  );
   
-  try {
-    return await ops.fetchModifierOptions();
-  } catch (error) {
-    console.error('Failed to load modifier options from Supabase:', error);
-    return [];
-  }
+  return {
+    data: result.success ? result.data : [],
+    error: result.error,
+  };
+}
+
+// Legacy wrappers for backward compatibility
+export async function syncAddModifierOptionLegacy(option: any) {
+  const result = await syncAddModifierOption(option);
+  return result.success ? result.data : null;
+}
+
+export async function syncUpdateModifierOptionLegacy(id: string, updates: any) {
+  const result = await syncUpdateModifierOption(id, updates);
+  return result.success ? result.data : null;
+}
+
+export async function syncDeleteModifierOptionLegacy(id: string) {
+  await syncDeleteModifierOption(id);
+}
+
+export async function loadModifierOptionsFromSupabaseLegacy() {
+  const result = await loadModifierOptionsFromSupabase();
+  return result.data;
 }
 
 // ============ ORDERS SYNC ============

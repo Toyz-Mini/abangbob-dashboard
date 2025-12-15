@@ -191,7 +191,7 @@ export default function SettingsPage() {
     localStorage.setItem('abangbob_receipt_settings', JSON.stringify(receiptSettings));
     localStorage.setItem('abangbob_notification_settings', JSON.stringify(notificationSettings));
     localStorage.setItem('abangbob_social_media', JSON.stringify(socialMedia));
-    localStorage.setItem('abangbob_payment_settings', JSON.stringify(paymentSettings));
+    localStorage.setItem('abangbob_payment_settings', JSON.stringify(paymentMethods));
     localStorage.setItem('abangbob_appearance_settings', JSON.stringify(appearanceSettings));
     localStorage.setItem('abangbob_security_settings', JSON.stringify(securitySettings));
     
@@ -208,7 +208,7 @@ export default function SettingsPage() {
       receiptSettings,
       notificationSettings,
       socialMedia,
-      paymentSettings,
+      paymentMethods,
       appearanceSettings,
       securitySettings,
       // Would include all store data in real implementation
