@@ -1,6 +1,8 @@
 // WhatsApp Integration Service
 // Structure for WhatsApp Business API integration
 
+import { getSupabaseClient } from '@/lib/supabase/client';
+
 export interface WhatsAppConfig {
   apiKey?: string;
   phoneNumberId?: string;
@@ -34,36 +36,58 @@ export function isWhatsAppConfigured(): boolean {
   return config.isConfigured && !!config.apiKey && !!config.phoneNumberId;
 }
 
-// Get WhatsApp configuration from localStorage
+// Get WhatsApp configuration from localStorage (Supabase loaded on app init via Settings)
 export function getWhatsAppConfig(): WhatsAppConfig {
   if (typeof window === 'undefined') {
     return { isConfigured: false };
   }
-  
+
   const stored = localStorage.getItem('abangbob_whatsapp_config');
   if (stored) {
     return JSON.parse(stored);
   }
-  
+
   return { isConfigured: false };
 }
 
-// Save WhatsApp configuration
+// Save WhatsApp configuration to localStorage and Supabase
 export function saveWhatsAppConfig(config: Partial<WhatsAppConfig>): void {
   const current = getWhatsAppConfig();
-  const updated = { 
-    ...current, 
-    ...config, 
-    isConfigured: !!(config.apiKey && config.phoneNumberId) 
+  const updated = {
+    ...current,
+    ...config,
+    isConfigured: !!(config.apiKey && config.phoneNumberId)
   };
   localStorage.setItem('abangbob_whatsapp_config', JSON.stringify(updated));
+
+  // Also sync to Supabase app_settings table
+  syncWhatsAppConfigToSupabase(updated);
+}
+
+// Sync WhatsApp config to Supabase (async, fire and forget)
+async function syncWhatsAppConfigToSupabase(config: WhatsAppConfig): Promise<void> {
+  const supabase = getSupabaseClient();
+  if (!supabase) return;
+
+  try {
+    await (supabase.from('app_settings') as any).upsert({
+      setting_key: 'whatsapp_config',
+      setting_value: config,
+      updated_at: new Date().toISOString(),
+    }, {
+      onConflict: 'setting_key',
+    });
+    console.log('[WhatsApp] Config synced to Supabase');
+  } catch (error) {
+    console.error('[WhatsApp] Failed to sync config to Supabase:', error);
+  }
 }
 
 // Format phone number for WhatsApp API
 export function formatPhoneNumber(phone: string): string {
   // Remove all non-digit characters
   let digits = phone.replace(/\D/g, '');
-  
+
   // Add Brunei country code if not present
   if (digits.startsWith('673')) {
     // Already has country code
@@ -71,7 +95,7 @@ export function formatPhoneNumber(phone: string): string {
     // Brunei mobile number
     digits = '673' + digits;
   }
-  
+
   return digits;
 }
 
@@ -185,7 +209,7 @@ export async function sendWhatsAppMessage(message: WhatsAppMessage): Promise<{
   error?: string;
 }> {
   const config = getWhatsAppConfig();
-  
+
   if (!config.isConfigured) {
     return {
       success: false,

@@ -1,11 +1,11 @@
 // Receipt Generator Service
 // Builds receipt data structure and handles receipt-related operations
 
-import { 
-  Order, 
-  ReceiptSettings, 
+import {
+  Order,
+  ReceiptSettings,
   DEFAULT_RECEIPT_SETTINGS,
-  CartItem 
+  CartItem
 } from '@/lib/types';
 
 // ==================== RECEIPT DATA STRUCTURE ====================
@@ -35,7 +35,7 @@ export interface ReceiptData {
 // ==================== RECEIPT GENERATOR ====================
 
 export function generateReceiptData(
-  order: Order, 
+  order: Order,
   settings: Partial<ReceiptSettings> = {}
 ): ReceiptData {
   const mergedSettings: ReceiptSettings = {
@@ -52,28 +52,28 @@ export function generateReceiptData(
   }
 
   // Business Name
-  lines.push({ 
-    type: 'text', 
-    content: mergedSettings.businessName, 
-    align: 'center', 
+  lines.push({
+    type: 'text',
+    content: mergedSettings.businessName,
+    align: 'center',
     bold: true,
     doubleWidth: true,
   });
 
   // Tagline
   if (mergedSettings.businessTagline) {
-    lines.push({ 
-      type: 'text', 
-      content: mergedSettings.businessTagline, 
-      align: 'center' 
+    lines.push({
+      type: 'text',
+      content: mergedSettings.businessTagline,
+      align: 'center'
     });
   }
 
   // Address
   if (mergedSettings.businessAddress) {
-    lines.push({ 
-      type: 'text', 
-      content: mergedSettings.businessAddress, 
+    lines.push({
+      type: 'text',
+      content: mergedSettings.businessAddress,
       align: 'center',
       small: true,
     });
@@ -81,9 +81,9 @@ export function generateReceiptData(
 
   // Phone
   if (mergedSettings.businessPhone) {
-    lines.push({ 
-      type: 'text', 
-      content: `Tel: ${mergedSettings.businessPhone}`, 
+    lines.push({
+      type: 'text',
+      content: `Tel: ${mergedSettings.businessPhone}`,
       align: 'center',
       small: true,
     });
@@ -102,40 +102,40 @@ export function generateReceiptData(
   lines.push({ type: 'divider' });
 
   // Order Number
-  lines.push({ 
-    type: 'text', 
-    content: `No: ${order.orderNumber}`, 
-    bold: true 
+  lines.push({
+    type: 'text',
+    content: `No: ${order.orderNumber}`,
+    bold: true
   });
 
   // Date/Time
-  lines.push({ 
-    type: 'text', 
-    content: formatDateTime(order.createdAt), 
-    small: true 
+  lines.push({
+    type: 'text',
+    content: formatDateTime(order.createdAt),
+    small: true
   });
 
   // Customer Name
   if (mergedSettings.showCustomerName && order.customerName) {
-    lines.push({ 
-      type: 'text', 
-      content: `Pelanggan: ${order.customerName}` 
+    lines.push({
+      type: 'text',
+      content: `Pelanggan: ${order.customerName}`
     });
   }
 
   // Customer Phone
   if (mergedSettings.showCustomerPhone && order.customerPhone) {
-    lines.push({ 
-      type: 'text', 
+    lines.push({
+      type: 'text',
       content: `Tel: ${order.customerPhone}`,
       small: true,
     });
   }
 
   // Order Type
-  lines.push({ 
-    type: 'text', 
-    content: order.orderType === 'takeaway' ? 'Bungkus (Takeaway)' : 'GoMamam' 
+  lines.push({
+    type: 'text',
+    content: order.orderType === 'takeaway' ? 'Bungkus (Takeaway)' : 'GoMamam'
   });
 
   // Divider
@@ -144,8 +144,8 @@ export function generateReceiptData(
   // Items
   for (const item of order.items) {
     const itemTotal = (item.itemTotal * item.quantity).toFixed(2);
-    lines.push({ 
-      type: 'item', 
+    lines.push({
+      type: 'item',
       content: `${item.quantity}x ${item.name}`,
       rightContent: `BND ${itemTotal}`,
       modifiers: item.selectedModifiers?.map(m => `+ ${m.optionName}`),
@@ -157,16 +157,16 @@ export function generateReceiptData(
 
   // Subtotal
   const subtotal = calculateSubtotal(order.items);
-  lines.push({ 
-    type: 'item', 
+  lines.push({
+    type: 'item',
     content: 'Subtotal:',
     rightContent: `BND ${subtotal.toFixed(2)}`,
     small: true,
   });
 
   // Total
-  lines.push({ 
-    type: 'total', 
+  lines.push({
+    type: 'total',
     content: 'JUMLAH:',
     rightContent: `BND ${order.total.toFixed(2)}`,
     bold: true,
@@ -176,10 +176,10 @@ export function generateReceiptData(
   if (order.paymentMethod) {
     const paymentLabel = getPaymentMethodLabel(order.paymentMethod);
     lines.push({ type: 'spacer' });
-    lines.push({ 
-      type: 'text', 
-      content: `Bayar: ${paymentLabel}`, 
-      align: 'center' 
+    lines.push({
+      type: 'text',
+      content: `Bayar: ${paymentLabel}`,
+      align: 'center'
     });
   }
 
@@ -254,10 +254,10 @@ export function generateKitchenSlipData(order: Order): ReceiptLine[] {
   const lines: ReceiptLine[] = [];
 
   // Header
-  lines.push({ 
-    type: 'text', 
-    content: 'SLIP DAPUR', 
-    align: 'center', 
+  lines.push({
+    type: 'text',
+    content: 'SLIP DAPUR',
+    align: 'center',
     bold: true,
     doubleWidth: true,
   });
@@ -265,9 +265,9 @@ export function generateKitchenSlipData(order: Order): ReceiptLine[] {
   lines.push({ type: 'divider' });
 
   // Order Number (BIG)
-  lines.push({ 
-    type: 'text', 
-    content: order.orderNumber, 
+  lines.push({
+    type: 'text',
+    content: order.orderNumber,
     align: 'center',
     bold: true,
     doubleWidth: true,
@@ -275,26 +275,26 @@ export function generateKitchenSlipData(order: Order): ReceiptLine[] {
   });
 
   // Order Type
-  lines.push({ 
-    type: 'text', 
-    content: order.orderType === 'takeaway' ? '[ BUNGKUS ]' : '[ GOMAMAM ]', 
+  lines.push({
+    type: 'text',
+    content: order.orderType === 'takeaway' ? '[ BUNGKUS ]' : '[ GOMAMAM ]',
     align: 'center',
     bold: true,
   });
 
   // Customer Name
   if (order.customerName) {
-    lines.push({ 
-      type: 'text', 
+    lines.push({
+      type: 'text',
       content: `Pelanggan: ${order.customerName}`,
       align: 'center',
     });
   }
 
   // Time
-  lines.push({ 
-    type: 'text', 
-    content: formatTime(order.createdAt), 
+  lines.push({
+    type: 'text',
+    content: formatTime(order.createdAt),
     align: 'center',
     small: true,
   });
@@ -303,24 +303,24 @@ export function generateKitchenSlipData(order: Order): ReceiptLine[] {
 
   // Items (large)
   for (const item of order.items) {
-    lines.push({ 
-      type: 'text', 
+    lines.push({
+      type: 'text',
       content: `${item.quantity}x ${item.name}`,
       bold: true,
       doubleHeight: true,
     });
-    
+
     // Modifiers
     if (item.selectedModifiers?.length > 0) {
       for (const mod of item.selectedModifiers) {
-        lines.push({ 
-          type: 'text', 
+        lines.push({
+          type: 'text',
           content: `  → ${mod.optionName}`,
           bold: true,
         });
       }
     }
-    
+
     lines.push({ type: 'spacer' });
   }
 
@@ -328,9 +328,9 @@ export function generateKitchenSlipData(order: Order): ReceiptLine[] {
 
   // Total items count
   const totalItems = order.items.reduce((sum, item) => sum + item.quantity, 0);
-  lines.push({ 
-    type: 'text', 
-    content: `Total: ${totalItems} item${totalItems > 1 ? 's' : ''}`, 
+  lines.push({
+    type: 'text',
+    content: `Total: ${totalItems} item${totalItems > 1 ? 's' : ''}`,
     align: 'center',
     bold: true,
   });
@@ -375,12 +375,16 @@ function getPaymentMethodLabel(method: string): string {
 
 // ==================== RECEIPT STORAGE ====================
 
+import { getSupabaseClient } from '@/lib/supabase/client';
+
 const RECEIPT_SETTINGS_KEY = 'abangbob_receipt_settings';
 const PRINTER_SETTINGS_KEY = 'abangbob_printer_settings';
 
 export function saveReceiptSettings(settings: ReceiptSettings): void {
   if (typeof window !== 'undefined') {
     localStorage.setItem(RECEIPT_SETTINGS_KEY, JSON.stringify(settings));
+    // Sync to Supabase
+    syncReceiptSettingsToSupabase(settings);
   }
 }
 
@@ -401,6 +405,8 @@ export function loadReceiptSettings(): ReceiptSettings {
 export function savePrinterSettings(settings: object): void {
   if (typeof window !== 'undefined') {
     localStorage.setItem(PRINTER_SETTINGS_KEY, JSON.stringify(settings));
+    // Sync to Supabase
+    syncPrinterSettingsToSupabase(settings);
   }
 }
 
@@ -416,6 +422,44 @@ export function loadPrinterSettings(): object | null {
     }
   }
   return null;
+}
+
+// Sync receipt settings to Supabase (async, fire and forget)
+async function syncReceiptSettingsToSupabase(settings: ReceiptSettings): Promise<void> {
+  const supabase = getSupabaseClient();
+  if (!supabase) return;
+
+  try {
+    await (supabase.from('app_settings') as any).upsert({
+      setting_key: 'receipt_settings',
+      setting_value: settings,
+      updated_at: new Date().toISOString(),
+    }, {
+      onConflict: 'setting_key',
+    });
+    console.log('[Receipt] Settings synced to Supabase');
+  } catch (error) {
+    console.error('[Receipt] Failed to sync settings to Supabase:', error);
+  }
+}
+
+// Sync printer settings to Supabase (async, fire and forget)
+async function syncPrinterSettingsToSupabase(settings: object): Promise<void> {
+  const supabase = getSupabaseClient();
+  if (!supabase) return;
+
+  try {
+    await (supabase.from('app_settings') as any).upsert({
+      setting_key: 'printer_settings',
+      setting_value: settings,
+      updated_at: new Date().toISOString(),
+    }, {
+      onConflict: 'setting_key',
+    });
+    console.log('[Printer] Settings synced to Supabase');
+  } catch (error) {
+    console.error('[Printer] Failed to sync settings to Supabase:', error);
+  }
 }
 
 // ==================== EXPORTS ====================
