@@ -422,13 +422,20 @@ export default function SettingsPage() {
         if (supabaseSettings) {
           console.log('[Settings Page] Loaded settings from Supabase');
           setOutletSettings(supabaseSettings.outlet);
-          setOperatingHours(DAYS_OF_WEEK.map((day, idx) => ({
-            dayOfWeek: idx,
-            dayName: day,
-            isOpen: supabaseSettings.operatingHours[day]?.isOpen ?? !(supabaseSettings.operatingHours[day]?.closed) ?? (idx !== 0),
-            openTime: supabaseSettings.operatingHours[day]?.open ?? '08:00',
-            closeTime: supabaseSettings.operatingHours[day]?.close ?? '22:00',
-          })));
+          setOperatingHours(DAYS_OF_WEEK.map((day, idx) => {
+            const dayData = supabaseSettings.operatingHours[day];
+            let isOpen = idx !== 0; // Default: closed on Sunday
+            if (dayData) {
+              isOpen = dayData.isOpen !== undefined ? dayData.isOpen : !dayData.closed;
+            }
+            return {
+              dayOfWeek: idx,
+              dayName: day,
+              isOpen,
+              openTime: dayData?.open ?? '08:00',
+              closeTime: dayData?.close ?? '22:00',
+            };
+          }));
           setNotificationSettings(prev => ({
             ...prev,
             lowStockAlert: supabaseSettings.notification.lowStock,
