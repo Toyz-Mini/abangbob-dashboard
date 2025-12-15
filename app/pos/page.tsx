@@ -7,8 +7,8 @@ import { useTranslation } from '@/lib/contexts/LanguageContext';
 import { useToast } from '@/lib/contexts/ToastContext';
 import { CartItem, Order, MenuItem, SelectedModifier, ReceiptSettings, DEFAULT_RECEIPT_SETTINGS } from '@/lib/types';
 import { getUpsellSuggestions } from '@/lib/menu-data';
-import { 
-  thermalPrinter, 
+import {
+  thermalPrinter,
   loadReceiptSettings,
   isOnline,
   withRetry,
@@ -31,7 +31,7 @@ export default function POSPage() {
   const { inventory, adjustStock } = useInventory();
   const { t, language } = useTranslation();
   const { showToast } = useToast();
-  
+
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [cart, setCart] = useState<CartItem[]>([]);
   const [modalType, setModalType] = useState<ModalType>(null);
@@ -44,7 +44,7 @@ export default function POSPage() {
   const [discountPercent, setDiscountPercent] = useState(0);
   const [receiptSettings, setReceiptSettings] = useState<ReceiptSettings>(DEFAULT_RECEIPT_SETTINGS);
   const receiptRef = useRef<HTMLDivElement>(null);
-  
+
   // Network recovery state
   const [currentTransactionId, setCurrentTransactionId] = useState<string | null>(null);
   const [networkError, setNetworkError] = useState<string | null>(null);
@@ -71,8 +71,8 @@ export default function POSPage() {
     return ['All', ...Array.from(cats)];
   }, [availableMenuItems]);
 
-  const filteredMenu = selectedCategory === 'All' 
-    ? availableMenuItems 
+  const filteredMenu = selectedCategory === 'All'
+    ? availableMenuItems
     : availableMenuItems.filter(item => item.category === selectedCategory);
 
   // Get upsell suggestions based on cart items
@@ -97,23 +97,23 @@ export default function POSPage() {
   const addToCart = (item: MenuItem, selectedModifiers: SelectedModifier[]) => {
     const modifierTotal = selectedModifiers.reduce((sum, m) => sum + m.extraPrice, 0);
     const itemTotal = item.price + modifierTotal;
-    
+
     // Generate unique key for cart item (including modifiers)
     const modifierKey = selectedModifiers.map(m => m.optionId).sort().join('-');
     const cartItemId = `${item.id}_${modifierKey || 'no-mod'}`;
-    
+
     setCart(prev => {
-      const existing = prev.find(i => 
-        i.id === item.id && 
+      const existing = prev.find(i =>
+        i.id === item.id &&
         JSON.stringify(i.selectedModifiers) === JSON.stringify(selectedModifiers)
       );
-      
+
       if (existing) {
-        return prev.map(i => 
+        return prev.map(i =>
           i === existing ? { ...i, quantity: i.quantity + 1 } : i
         );
       }
-      
+
       const newCartItem: CartItem = {
         ...item,
         quantity: 1,
@@ -128,7 +128,7 @@ export default function POSPage() {
     if (quantity <= 0) {
       setCart(prev => prev.filter((_, i) => i !== index));
     } else {
-      setCart(prev => prev.map((item, i) => 
+      setCart(prev => prev.map((item, i) =>
         i === index ? { ...item, quantity } : item
       ));
     }
@@ -147,12 +147,12 @@ export default function POSPage() {
   const toggleModifierOption = (group: typeof modifierGroups[0], option: typeof modifierOptions[0]) => {
     setTempSelectedModifiers(prev => {
       const existingIndex = prev.findIndex(m => m.optionId === option.id);
-      
+
       if (existingIndex >= 0) {
         // Remove this option
         return prev.filter(m => m.optionId !== option.id);
       }
-      
+
       // Check if single select - remove other options from same group
       if (!group.allowMultiple) {
         const withoutGroupOptions = prev.filter(m => m.groupId !== group.id);
@@ -164,13 +164,13 @@ export default function POSPage() {
           extraPrice: option.extraPrice,
         }];
       }
-      
+
       // Multiple select - check max
       const groupOptionsCount = prev.filter(m => m.groupId === group.id).length;
       if (groupOptionsCount >= group.maxSelection) {
         return prev;
       }
-      
+
       return [...prev, {
         groupId: group.id,
         groupName: group.name,
@@ -184,30 +184,30 @@ export default function POSPage() {
   // Validate modifiers before adding to cart
   const validateModifiers = (): boolean => {
     if (!selectedItemForModifiers) return false;
-    
+
     for (const groupId of selectedItemForModifiers.modifierGroupIds) {
       const group = modifierGroups.find(g => g.id === groupId);
       if (!group) continue;
-      
+
       const selectedCount = tempSelectedModifiers.filter(m => m.groupId === groupId).length;
-      
+
       if (group.isRequired && selectedCount < group.minSelection) {
         return false;
       }
     }
-    
+
     return true;
   };
 
   // Add item with modifiers to cart
   const handleAddWithModifiers = () => {
     if (!selectedItemForModifiers) return;
-    
+
     if (!validateModifiers()) {
       alert('Sila pilih semua modifier yang wajib');
       return;
     }
-    
+
     addToCart(selectedItemForModifiers, tempSelectedModifiers);
     setModalType(null);
     setSelectedItemForModifiers(null);
@@ -216,15 +216,15 @@ export default function POSPage() {
 
   const handleCheckout = () => {
     if (cart.length === 0) return;
-    
+
     // Check for drinks (forced upsell)
     const hasDrink = cart.some(item => item.category === 'Minuman');
-    
+
     if (!hasDrink) {
       setModalType('upsell');
       return;
     }
-    
+
     setModalType('checkout');
   };
 
@@ -242,16 +242,16 @@ export default function POSPage() {
     }
 
     // Generate or reuse transaction ID (for retry scenarios)
-    const transactionId = retrying && currentTransactionId 
-      ? currentTransactionId 
+    const transactionId = retrying && currentTransactionId
+      ? currentTransactionId
       : generateTransactionId();
-    
+
     // Check for duplicate submission
     if (isTransactionSubmitted(transactionId)) {
       showToast('Pesanan ini sudah diproses. Sila tunggu atau buat pesanan baru.', 'warning');
       return;
     }
-    
+
     setCurrentTransactionId(transactionId);
     setIsProcessing(true);
     setNetworkError(null);
@@ -271,10 +271,10 @@ export default function POSPage() {
             }
           }, 1500);
         });
-        
+
         return true;
       };
-      
+
       // Use retry logic for the payment process
       await withRetry(processOrder, {
         maxRetries: 2,
@@ -308,10 +308,10 @@ export default function POSPage() {
           'Burger': ['Roti Burger', 'Daging'],
           'Minuman': ['Teh', 'Kopi', 'Milo', 'Gula'],
         };
-        
+
         const relatedItems = categoryToInventory[item.category] || [];
         relatedItems.forEach(invName => {
-          const invItem = inventory.find(inv => 
+          const invItem = inventory.find(inv =>
             inv.name.toLowerCase().includes(invName.toLowerCase())
           );
           if (invItem) {
@@ -321,10 +321,10 @@ export default function POSPage() {
       });
 
       setLastOrder(newOrder);
-      
+
       // Show success toast
       showToast(`Pesanan ${newOrder.orderNumber} berjaya!`, 'success');
-      
+
       // Auto-print if enabled
       if (receiptSettings.autoPrint && newOrder) {
         handlePrintReceipt(newOrder);
@@ -338,7 +338,7 @@ export default function POSPage() {
           console.error('Failed to open cash drawer:', error);
         }
       }
-      
+
       // Reset cart and modals
       setCart([]);
       setModalType('receipt');
@@ -488,10 +488,10 @@ export default function POSPage() {
                     e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
                   }}
                 >
-                  <div style={{ 
-                    width: '100%', 
-                    height: '100px', 
-                    background: 'var(--gray-100)', 
+                  <div style={{
+                    width: '100%',
+                    height: '100px',
+                    background: 'var(--gray-100)',
                     borderRadius: 'var(--radius-md)',
                     marginBottom: '0.75rem',
                     display: 'flex',
@@ -500,8 +500,8 @@ export default function POSPage() {
                     color: 'var(--primary)',
                     position: 'relative'
                   }}>
-                    {item.category === 'Nasi Lemak' ? <UtensilsCrossed size={40} /> : 
-                     item.category === 'Burger' ? <Sandwich size={40} /> : <Coffee size={40} />}
+                    {item.category === 'Nasi Lemak' ? <UtensilsCrossed size={40} /> :
+                      item.category === 'Burger' ? <Sandwich size={40} /> : <Coffee size={40} />}
                     {item.modifierGroupIds.length > 0 && (
                       <div style={{
                         position: 'absolute',
@@ -588,9 +588,9 @@ export default function POSPage() {
                           </div>
                           <button
                             onClick={() => removeFromCart(index)}
-                            style={{ 
-                              background: 'none', 
-                              border: 'none', 
+                            style={{
+                              background: 'none',
+                              border: 'none',
                               cursor: 'pointer',
                               color: 'var(--danger)',
                               padding: '0.25rem'
@@ -626,11 +626,11 @@ export default function POSPage() {
                   </div>
 
                   {/* Discount */}
-                  <div style={{ 
-                    padding: '0.75rem', 
-                    background: 'var(--gray-100)', 
-                    borderRadius: 'var(--radius-md)', 
-                    marginBottom: '1rem' 
+                  <div style={{
+                    padding: '0.75rem',
+                    background: 'var(--gray-100)',
+                    borderRadius: 'var(--radius-md)',
+                    marginBottom: '1rem'
                   }}>
                     <label style={{ fontSize: '0.875rem', fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>
                       Diskaun (%)
@@ -649,8 +649,8 @@ export default function POSPage() {
                     </div>
                   </div>
 
-                  <div style={{ 
-                    paddingTop: '1rem', 
+                  <div style={{
+                    paddingTop: '1rem',
                     borderTop: '2px solid var(--gray-300)',
                     marginTop: '0.5rem'
                   }}>
@@ -664,10 +664,10 @@ export default function POSPage() {
                         <span>-BND {discountAmount.toFixed(2)}</span>
                       </div>
                     )}
-                    <div style={{ 
-                      display: 'flex', 
-                      justifyContent: 'space-between', 
-                      fontSize: '1.25rem', 
+                    <div style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      fontSize: '1.25rem',
                       fontWeight: 700,
                       marginBottom: '1rem'
                     }}>
@@ -709,15 +709,15 @@ export default function POSPage() {
               {selectedItemForModifiers.modifierGroupIds.map(groupId => {
                 const group = modifierGroups.find(g => g.id === groupId);
                 if (!group) return null;
-                
+
                 const options = getOptionsForGroup(groupId).filter(opt => opt.isAvailable);
                 const selectedCount = tempSelectedModifiers.filter(m => m.groupId === groupId).length;
-                
+
                 return (
                   <div key={groupId} style={{ marginBottom: '1.5rem' }}>
-                    <div style={{ 
-                      display: 'flex', 
-                      justifyContent: 'space-between', 
+                    <div style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
                       alignItems: 'center',
                       marginBottom: '0.75rem'
                     }}>
@@ -733,7 +733,7 @@ export default function POSPage() {
                         {selectedCount}/{group.maxSelection}
                       </span>
                     </div>
-                    
+
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                       {options.map(option => {
                         const isSelected = tempSelectedModifiers.some(m => m.optionId === option.id);
@@ -754,9 +754,9 @@ export default function POSPage() {
                             }}
                           >
                             <span style={{ fontWeight: isSelected ? 600 : 400 }}>{option.name}</span>
-                            <span style={{ 
-                              fontWeight: 600, 
-                              color: option.extraPrice > 0 ? 'var(--success)' : 'var(--text-secondary)' 
+                            <span style={{
+                              fontWeight: 600,
+                              color: option.extraPrice > 0 ? 'var(--success)' : 'var(--text-secondary)'
                             }}>
                               {option.extraPrice > 0 ? `+BND ${option.extraPrice.toFixed(2)}` : 'Free'}
                             </span>
@@ -769,9 +769,9 @@ export default function POSPage() {
               })}
 
               {/* Total Preview */}
-              <div style={{ 
-                padding: '1rem', 
-                background: 'var(--gray-100)', 
+              <div style={{
+                padding: '1rem',
+                background: 'var(--gray-100)',
                 borderRadius: 'var(--radius-md)',
                 marginBottom: '1rem'
               }}>
@@ -785,10 +785,10 @@ export default function POSPage() {
                     <span>+BND {mod.extraPrice.toFixed(2)}</span>
                   </div>
                 ))}
-                <div style={{ 
-                  display: 'flex', 
-                  justifyContent: 'space-between', 
-                  fontWeight: 700, 
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  fontWeight: 700,
                   fontSize: '1.1rem',
                   paddingTop: '0.5rem',
                   borderTop: '1px dashed var(--gray-300)',
@@ -800,8 +800,8 @@ export default function POSPage() {
               </div>
 
               <div style={{ display: 'flex', gap: '0.5rem' }}>
-                <button 
-                  className="btn btn-outline" 
+                <button
+                  className="btn btn-outline"
                   onClick={() => {
                     setModalType(null);
                     setSelectedItemForModifiers(null);
@@ -810,8 +810,8 @@ export default function POSPage() {
                 >
                   Batal
                 </button>
-                <button 
-                  className="btn btn-primary" 
+                <button
+                  className="btn btn-primary"
                   onClick={handleAddWithModifiers}
                   disabled={!validateModifiers()}
                   style={{ flex: 1 }}
@@ -830,10 +830,10 @@ export default function POSPage() {
           title="Tambah Lagi?"
           maxWidth="550px"
         >
-          <div style={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            gap: '0.5rem', 
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
             marginBottom: '1.25rem',
             padding: '0.75rem 1rem',
             background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)',
@@ -845,9 +845,9 @@ export default function POSPage() {
           </div>
 
           {/* Product Grid */}
-          <div style={{ 
-            display: 'grid', 
-            gridTemplateColumns: 'repeat(2, 1fr)', 
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(2, 1fr)',
             gap: '0.75rem',
             marginBottom: '1.5rem'
           }}>
@@ -891,26 +891,26 @@ export default function POSPage() {
                 }}>
                   <Coffee size={28} />
                 </div>
-                
+
                 {/* Name */}
                 <div style={{ fontWeight: 600, fontSize: '0.95rem', marginBottom: '0.25rem' }}>
                   {item.name}
                 </div>
-                
+
                 {/* Price */}
-                <div style={{ 
-                  color: 'var(--primary)', 
-                  fontWeight: 700, 
+                <div style={{
+                  color: 'var(--primary)',
+                  fontWeight: 700,
                   fontSize: '1.1rem',
                   marginBottom: '0.75rem'
                 }}>
                   BND {item.price.toFixed(2)}
                 </div>
-                
+
                 {/* Add Button */}
                 <button
                   className="btn btn-primary btn-sm"
-                  style={{ 
+                  style={{
                     width: '100%',
                     display: 'flex',
                     alignItems: 'center',
@@ -1108,13 +1108,13 @@ export default function POSPage() {
           {lastOrder && (
             <>
               <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-                <div style={{ 
-                  width: '60px', 
-                  height: '60px', 
-                  background: '#d1fae5', 
-                  borderRadius: '50%', 
-                  display: 'flex', 
-                  alignItems: 'center', 
+                <div style={{
+                  width: '60px',
+                  height: '60px',
+                  background: '#d1fae5',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
                   justifyContent: 'center',
                   margin: '0 auto 1rem'
                 }}>
@@ -1129,11 +1129,11 @@ export default function POSPage() {
               </div>
 
               {/* Receipt Preview */}
-              <div 
+              <div
                 ref={receiptRef}
-                style={{ 
-                  background: '#e5e5e5', 
-                  padding: '1rem', 
+                style={{
+                  background: '#e5e5e5',
+                  padding: '1rem',
                   borderRadius: 'var(--radius-md)',
                   display: 'flex',
                   justifyContent: 'center',
@@ -1141,7 +1141,7 @@ export default function POSPage() {
                   overflow: 'auto',
                 }}
               >
-                <ReceiptPreview 
+                <ReceiptPreview
                   settings={receiptSettings}
                   sampleOrder={lastOrder}
                   width={receiptSettings.receiptWidth}
@@ -1168,8 +1168,8 @@ export default function POSPage() {
               </div>
 
               {/* Printer Status Indicator */}
-              <div style={{ 
-                marginTop: '1rem', 
+              <div style={{
+                marginTop: '1rem',
                 padding: '0.5rem 0.75rem',
                 background: thermalPrinter.isConnected() ? '#d1fae5' : 'var(--gray-100)',
                 borderRadius: 'var(--radius-md)',
@@ -1177,7 +1177,7 @@ export default function POSPage() {
                 textAlign: 'center',
                 color: thermalPrinter.isConnected() ? '#059669' : 'var(--text-secondary)',
               }}>
-                {thermalPrinter.isConnected() 
+                {thermalPrinter.isConnected()
                   ? '✓ Thermal printer disambung - cetak terus ke printer'
                   : 'Tiada thermal printer - akan cetak melalui browser'}
               </div>
@@ -1196,9 +1196,9 @@ export default function POSPage() {
           <div className="grid grid-cols-1 md:grid-cols-3" style={{ gap: '1rem' }}>
             {/* Pending */}
             <div>
-              <h4 style={{ 
-                fontSize: '1rem', 
-                fontWeight: 600, 
+              <h4 style={{
+                fontSize: '1rem',
+                fontWeight: 600,
                 marginBottom: '0.75rem',
                 display: 'flex',
                 alignItems: 'center',
@@ -1210,9 +1210,9 @@ export default function POSPage() {
               </h4>
               <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
                 {pendingOrders.map(order => (
-                  <div key={order.id} style={{ 
-                    background: '#fef3c7', 
-                    padding: '0.75rem', 
+                  <div key={order.id} style={{
+                    background: '#fef3c7',
+                    padding: '0.75rem',
                     borderRadius: 'var(--radius-md)',
                     marginBottom: '0.5rem'
                   }}>
@@ -1247,9 +1247,9 @@ export default function POSPage() {
 
             {/* Preparing */}
             <div>
-              <h4 style={{ 
-                fontSize: '1rem', 
-                fontWeight: 600, 
+              <h4 style={{
+                fontSize: '1rem',
+                fontWeight: 600,
                 marginBottom: '0.75rem',
                 display: 'flex',
                 alignItems: 'center',
@@ -1261,9 +1261,9 @@ export default function POSPage() {
               </h4>
               <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
                 {preparingOrders.map(order => (
-                  <div key={order.id} style={{ 
-                    background: '#dbeafe', 
-                    padding: '0.75rem', 
+                  <div key={order.id} style={{
+                    background: '#dbeafe',
+                    padding: '0.75rem',
                     borderRadius: 'var(--radius-md)',
                     marginBottom: '0.5rem'
                   }}>
@@ -1293,9 +1293,9 @@ export default function POSPage() {
 
             {/* Ready */}
             <div>
-              <h4 style={{ 
-                fontSize: '1rem', 
-                fontWeight: 600, 
+              <h4 style={{
+                fontSize: '1rem',
+                fontWeight: 600,
                 marginBottom: '0.75rem',
                 display: 'flex',
                 alignItems: 'center',
@@ -1307,9 +1307,9 @@ export default function POSPage() {
               </h4>
               <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
                 {readyOrders.map(order => (
-                  <div key={order.id} style={{ 
-                    background: '#d1fae5', 
-                    padding: '0.75rem', 
+                  <div key={order.id} style={{
+                    background: '#d1fae5',
+                    padding: '0.75rem',
                     borderRadius: 'var(--radius-md)',
                     marginBottom: '0.5rem'
                   }}>
@@ -1364,6 +1364,7 @@ export default function POSPage() {
                     <th>Jenis</th>
                     <th>Status</th>
                     <th>Masa</th>
+                    <th>Tindakan</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1380,16 +1381,25 @@ export default function POSPage() {
                         </span>
                       </td>
                       <td>
-                        <span className={`badge ${
-                          order.status === 'completed' ? 'badge-success' :
-                          order.status === 'ready' ? 'badge-success' :
-                          order.status === 'preparing' ? 'badge-info' : 'badge-warning'
-                        }`} style={{ fontSize: '0.7rem' }}>
+                        <span className={`badge ${order.status === 'completed' ? 'badge-success' :
+                            order.status === 'ready' ? 'badge-success' :
+                              order.status === 'preparing' ? 'badge-info' : 'badge-warning'
+                          }`} style={{ fontSize: '0.7rem' }}>
                           {order.status}
                         </span>
                       </td>
                       <td style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
                         {new Date(order.createdAt).toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit' })}
+                      </td>
+                      <td>
+                        <button
+                          onClick={() => handlePrintReceipt(order)}
+                          className="btn btn-sm btn-outline"
+                          style={{ padding: '0.25rem 0.5rem', minWidth: 'auto' }}
+                          title="Cetak Semula Resit"
+                        >
+                          <Printer size={14} />
+                        </button>
                       </td>
                     </tr>
                   ))}
@@ -1402,9 +1412,9 @@ export default function POSPage() {
             )}
           </div>
 
-          <div style={{ 
-            marginTop: '1.5rem', 
-            paddingTop: '1rem', 
+          <div style={{
+            marginTop: '1.5rem',
+            paddingTop: '1rem',
             borderTop: '1px solid var(--gray-200)',
             display: 'flex',
             justifyContent: 'space-between',
@@ -1430,13 +1440,13 @@ export default function POSPage() {
           maxWidth="400px"
         >
           <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-            <div style={{ 
-              width: '70px', 
-              height: '70px', 
-              background: '#fef3c7', 
-              borderRadius: '50%', 
-              display: 'flex', 
-              alignItems: 'center', 
+            <div style={{
+              width: '70px',
+              height: '70px',
+              background: '#fef3c7',
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
               justifyContent: 'center',
               margin: '0 auto 1rem'
             }}>
@@ -1448,11 +1458,11 @@ export default function POSPage() {
             <p style={{ color: 'var(--text-secondary)', marginBottom: '1rem' }}>
               {networkError || 'Ralat rangkaian berlaku semasa memproses pembayaran.'}
             </p>
-            
+
             {retryCount > 0 && (
-              <div style={{ 
-                background: 'var(--gray-100)', 
-                padding: '0.75rem', 
+              <div style={{
+                background: 'var(--gray-100)',
+                padding: '0.75rem',
                 borderRadius: 'var(--radius-md)',
                 marginBottom: '1rem',
                 fontSize: '0.875rem'
@@ -1461,10 +1471,10 @@ export default function POSPage() {
                 Percubaan semula: {retryCount}/2
               </div>
             )}
-            
-            <div style={{ 
-              background: '#fef3c7', 
-              padding: '1rem', 
+
+            <div style={{
+              background: '#fef3c7',
+              padding: '1rem',
               borderRadius: 'var(--radius-md)',
               marginBottom: '1rem',
               textAlign: 'left',
