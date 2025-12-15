@@ -1,17 +1,26 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { MapContainer, TileLayer, Marker, Circle, useMapEvents } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Circle, useMapEvents, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { Navigation, Loader2, MapPin } from 'lucide-react';
+import { Navigation, Loader2, MapPin, Crosshair } from 'lucide-react';
 
 // Fix Leaflet default marker icon issue in Next.js
 delete (L.Icon.Default.prototype as any)._getIconUrl;
-L.Icon.Default.mergeOptions({
-    iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-    iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+
+// Custom animated marker with premium design
+const customMarker = L.divIcon({
+    className: 'custom-marker',
+    html: `
+    <div class="marker-pin">
+      <div class="marker-pin-inner"></div>
+      <div class="marker-shadow"></div>
+    </div>
+  `,
+    iconSize: [40, 40],
+    iconAnchor: [20, 40],
+    popupAnchor: [0, -40],
 });
 
 interface LocationMapPickerProps {
@@ -21,21 +30,17 @@ interface LocationMapPickerProps {
     onLocationChange: (lat: number, lng: number) => void;
 }
 
-// Custom marker icon (red)
-const redIcon = new L.Icon({
-    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
-    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-    popupAnchor: [1, -34],
-    shadowSize: [41, 41]
-});
-
 // Component to handle map clicks
 function MapClickHandler({ onLocationChange }: { onLocationChange: (lat: number, lng: number) => void }) {
+    const map = useMap();
+
     useMapEvents({
         click(e) {
             onLocationChange(e.latlng.lat, e.latlng.lng);
+            // Smooth pan to clicked location
+            map.flyTo(e.latlng, map.getZoom(), {
+                duration: 0.5
+            });
         },
     });
     return null;
@@ -67,9 +72,11 @@ export default function LocationMapPicker({
                 setPosition([lat, lng]);
                 onLocationChange(lat, lng);
 
-                // Pan map to new location
+                // Smooth fly to new location
                 if (mapRef.current) {
-                    mapRef.current.flyTo([lat, lng], 16);
+                    mapRef.current.flyTo([lat, lng], 17, {
+                        duration: 1.5
+                    });
                 }
                 setGettingLocation(false);
             },
@@ -99,10 +106,15 @@ export default function LocationMapPicker({
     return (
         <div className="relative h-full w-full">
             {!mapReady && (
-                <div className="absolute inset-0 flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-lg z-10">
-                    <div className="flex flex-col items-center gap-3">
-                        <Loader2 className="animate-spin text-primary" size={32} />
-                        <p className="text-sm text-gray-600 dark:text-gray-400">Memuatkan map...</p>
+                <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-gray-900 to-gray-800 rounded-lg z-10">
+                    <div className="flex flex-col items-center gap-4">
+                        <div className="relative">
+                            <Loader2 className="animate-spin text-red-500" size={48} />
+                            <div className="absolute inset-0 animate-ping">
+                                <Loader2 className="text-red-500/30" size={48} />
+                            </div>
+                        </div>
+                        <p className="text-sm text-gray-300 font-medium">Memuatkan map...</p>
                     </div>
                 </div>
             )}
@@ -115,108 +127,201 @@ export default function LocationMapPicker({
                     mapRef.current = map;
                     setMapReady(true);
                 }}
+                zoomControl={false}
             >
+                {/* Dark Modern Tiles - CartoDB Dark Matter */}
                 <TileLayer
-                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> | <a href="https://carto.com/">CARTO</a>'
+                    url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+                    className="map-tiles"
                 />
 
                 {/* Map click handler */}
                 <MapClickHandler onLocationChange={handleMapClick} />
 
-                {/* Draggable marker */}
+                {/* Draggable marker with custom icon */}
                 <Marker
                     position={position}
                     draggable={true}
                     eventHandlers={{
                         dragend: handleMarkerDrag,
                     }}
-                    icon={redIcon}
+                    icon={customMarker}
                 />
 
-                {/* Radius circle */}
+                {/* Radius circle with glow effect */}
                 <Circle
                     center={position}
                     radius={radius}
                     pathOptions={{
-                        color: '#dc2626',
-                        fillColor: '#dc2626',
-                        fillOpacity: 0.15,
+                        color: '#ef4444',
+                        fillColor: '#ef4444',
+                        fillOpacity: 0.1,
                         weight: 2,
+                        opacity: 0.8,
                     }}
                 />
             </MapContainer>
 
-            {/* Current Location Button */}
-            <button
-                onClick={getCurrentLocation}
-                disabled={gettingLocation}
-                className="absolute top-4 right-4 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-lg shadow-lg hover:shadow-xl transition-all flex items-center gap-2 z-[1000]"
-            >
-                {gettingLocation ? (
-                    <>
-                        <Loader2 className="animate-spin" size={18} />
-                        <span className="text-sm">Getting...</span>
-                    </>
-                ) : (
-                    <>
-                        <Navigation size={18} />
-                        <span className="text-sm">Lokasi Semasa</span>
-                    </>
-                )}
-            </button>
+            {/* Premium Glassmorphic Controls */}
+            <div className="absolute top-4 right-4 flex flex-col gap-3 z-[1000]">
+                {/* Current Location Button */}
+                <button
+                    onClick={getCurrentLocation}
+                    disabled={gettingLocation}
+                    className="bg-white/10 dark:bg-gray-900/40 backdrop-blur-xl border border-white/20 dark:border-gray-700/50 text-white px-4 py-2.5 rounded-xl shadow-2xl hover:bg-white/20 dark:hover:bg-gray-800/60 transition-all duration-300 flex items-center gap-2 group disabled:opacity-50"
+                    style={{
+                        boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.37)'
+                    }}
+                >
+                    {gettingLocation ? (
+                        <>
+                            <Loader2 className="animate-spin text-red-400" size={18} />
+                            <span className="text-sm font-medium">Locating...</span>
+                        </>
+                    ) : (
+                        <>
+                            <Navigation className="text-red-400 group-hover:scale-110 transition-transform" size={18} />
+                            <span className="text-sm font-medium">My Location</span>
+                        </>
+                    )}
+                </button>
+            </div>
 
-            {/* Info Box */}
-            <div className="absolute bottom-4 left-4 bg-white dark:bg-gray-800 px-4 py-3 rounded-lg shadow-lg z-[1000]">
-                <div className="flex items-center gap-2 text-sm">
-                    <MapPin size={16} className="text-red-600" />
+            {/* Premium Info Box - Glassmorphism */}
+            <div className="absolute bottom-4 left-4 bg-white/10 dark:bg-gray-900/40 backdrop-blur-xl border border-white/20 dark:border-gray-700/50 px-5 py-4 rounded-xl shadow-2xl z-[1000]"
+                style={{
+                    boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.37)'
+                }}
+            >
+                <div className="flex items-start gap-3">
+                    <div className="p-2 bg-red-500/20 rounded-lg">
+                        <MapPin size={20} className="text-red-400" />
+                    </div>
                     <div>
-                        <div className="font-semibold">Koordinat Terpilih:</div>
-                        <div className="text-gray-600 dark:text-gray-400 font-mono text-xs">
+                        <div className="text-sm font-semibold text-white mb-1">Selected Location</div>
+                        <div className="text-gray-300 font-mono text-xs bg-black/20 px-2 py-1 rounded">
                             {position[0].toFixed(6)}, {position[1].toFixed(6)}
+                        </div>
+                        <div className="mt-2 flex items-center gap-2">
+                            <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+                            <span className="text-xs text-gray-400">Radius: {radius}m</span>
                         </div>
                     </div>
                 </div>
-                <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                    ⭕ Radius: {radius}m
-                </div>
             </div>
 
-            {/* Leaflet CSS fix for dark mode */}
+            {/* Crosshair Center Indicator */}
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none z-[999]">
+                <Crosshair className="text-red-500/30" size={32} />
+            </div>
+
+            {/* Premium Styling */}
             <style jsx global>{`
+        /* Map Container Dark Theme */
         .leaflet-container {
-          background: rgb(243, 244, 246);
+          background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+          font-family: inherit;
+        }
+
+        /* Hide default attribution for cleaner look */
+        .leaflet-control-attribution {
+          background: rgba(0, 0, 0, 0.3) !important;
+          backdrop-filter: blur(10px);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 8px;
+          padding: 2px 6px;
+          font-size: 10px;
+          color: rgba(255, 255, 255, 0.6);
         }
         
-        .dark .leaflet-container {
-          background: rgb(31, 41, 55);
+        .leaflet-control-attribution a {
+          color: #ef4444 !important;
         }
 
-        .leaflet-marker-icon {
-          filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+        /* Custom Marker Animation */
+        .custom-marker {
+          position: relative;
         }
 
+        .marker-pin {
+          width: 30px;
+          height: 30px;
+          border-radius: 50% 50% 50% 0;
+          background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+          position: absolute;
+          transform: rotate(-45deg);
+          left: 50%;
+          top: 50%;
+          margin: -20px 0 0 -15px;
+          animation: bounce 2s infinite;
+          box-shadow: 
+            0 0 0 4px rgba(239, 68, 68, 0.2),
+            0 4px 12px rgba(239, 68, 68, 0.4),
+            0 0 20px rgba(239, 68, 68, 0.3);
+        }
+
+        .marker-pin-inner {
+          width: 12px;
+          height: 12px;
+          border-radius: 50%;
+          background: white;
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          box-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
+        }
+
+        .marker-shadow {
+          width: 30px;
+          height: 30px;
+          background: radial-gradient(circle, rgba(0,0,0,0.3) 0%, transparent 70%);
+          position: absolute;
+          top: 35px;
+          left: 50%;
+          transform: translateX(-50%);
+          animation: shadowPulse 2s infinite;
+        }
+
+        @keyframes bounce {
+          0%, 100% {
+            transform: rotate(-45deg) translateY(0);
+          }
+          50% {
+            transform: rotate(-45deg) translateY(-10px);
+          }
+        }
+
+        @keyframes shadowPulse {
+          0%, 100% {
+            transform: translateX(-50%) scale(1);
+            opacity: 0.3;
+          }
+          50% {
+            transform: translateX(-50%) scale(1.2);
+            opacity: 0.1;
+          }
+        }
+
+        /* Map tiles darker for better contrast */
+        .map-tiles {
+          filter: brightness(0.8) contrast(1.1);
+        }
+
+        /* Custom zoom controls - hidden for cleaner look */
         .leaflet-control-zoom {
-          border: none !important;
-          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+          display: none;
         }
 
-        .leaflet-control-zoom a {
-          color: #374151 !important;
-          background-color: white !important;
+        /* Smooth transitions */
+        .leaflet-marker-icon {
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        .dark .leaflet-control-zoom a {
-          color: #d1d5db !important;
-          background-color: rgb(31, 41, 55) !important;
-        }
-
-        .leaflet-control-zoom a:hover {
-          background-color: rgb(243, 244, 246) !important;
-        }
-
-        .dark .leaflet-control-zoom a:hover {
-          background-color: rgb(55, 65, 81) !important;
+        /* Circle animation */
+        .leaflet-interactive {
+          filter: drop-shadow(0 0 10px rgba(239, 68, 68, 0.3));
         }
       `}</style>
         </div>
