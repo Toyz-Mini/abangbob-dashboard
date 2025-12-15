@@ -1,4 +1,4 @@
-import { supabase } from './client';
+import { getSupabaseClient } from './client';
 
 // =====================================================
 // TYPES
@@ -69,6 +69,9 @@ export function calculateDistance(
 // =====================================================
 
 export async function getAllowedLocations() {
+    const supabase = getSupabaseClient();
+    if (!supabase) return { success: false, error: 'Supabase not configured', data: null };
+
     const { data, error } = await supabase
         .from('allowed_locations')
         .select('*')
@@ -84,6 +87,9 @@ export async function getAllowedLocations() {
 }
 
 export async function addAllowedLocation(location: Omit<AllowedLocation, 'id' | 'created_at' | 'updated_at'>) {
+    const supabase = getSupabaseClient();
+    if (!supabase) return { success: false, error: 'Supabase not configured', data: null };
+
     const { data, error } = await supabase
         .from('allowed_locations')
         .insert([location])
@@ -99,6 +105,9 @@ export async function addAllowedLocation(location: Omit<AllowedLocation, 'id' | 
 }
 
 export async function updateAllowedLocation(id: string, updates: Partial<AllowedLocation>) {
+    const supabase = getSupabaseClient();
+    if (!supabase) return { success: false, error: 'Supabase not configured', data: null };
+
     const { data, error } = await supabase
         .from('allowed_locations')
         .update(updates)
@@ -115,6 +124,9 @@ export async function updateAllowedLocation(id: string, updates: Partial<Allowed
 }
 
 export async function deleteAllowedLocation(id: string) {
+    const supabase = getSupabaseClient();
+    if (!supabase) return { success: false, error: 'Supabase not configured' };
+
     const { error } = await supabase
         .from('allowed_locations')
         .update({ is_active: false })
@@ -133,6 +145,16 @@ export async function deleteAllowedLocation(id: string) {
 // =====================================================
 
 export async function verifyLocation(latitude: number, longitude: number) {
+    const supabase = getSupabaseClient();
+    if (!supabase) {
+        return {
+            verified: false,
+            nearest_location: null,
+            distance: null,
+            error: 'Supabase not configured',
+        };
+    }
+
     const { data: locations, error } = await supabase
         .from('allowed_locations')
         .select('*')
@@ -179,6 +201,9 @@ export async function verifyLocation(latitude: number, longitude: number) {
 // =====================================================
 
 export async function uploadAttendancePhoto(staffId: string, file: File): Promise<{ path: string | null; error: string | null }> {
+    const supabase = getSupabaseClient();
+    if (!supabase) return { path: null, error: 'Supabase not configured' };
+
     const fileExt = file.name.split('.').pop();
     const fileName = `${staffId}/${Date.now()}.${fileExt}`;
 
@@ -234,6 +259,15 @@ export async function clockIn(data: ClockInData) {
         }
 
         // 3. Create attendance record
+        const supabase = getSupabaseClient();
+        if (!supabase) {
+            return {
+                success: false,
+                error: 'Supabase not configured',
+                data: null,
+            };
+        }
+
         const attendance_data = {
             staff_id: data.staff_id,
             clock_in: new Date().toISOString(),
@@ -278,6 +312,9 @@ export async function clockIn(data: ClockInData) {
 }
 
 export async function clockOut(attendanceId: string) {
+    const supabase = getSupabaseClient();
+    if (!supabase) return { success: false, error: 'Supabase not configured', data: null };
+
     const { data, error } = await supabase
         .from('attendance')
         .update({ clock_out: new Date().toISOString() })
@@ -298,6 +335,9 @@ export async function clockOut(attendanceId: string) {
 // =====================================================
 
 export async function getTodayAttendance(staffId: string) {
+    const supabase = getSupabaseClient();
+    if (!supabase) return { success: false, error: 'Supabase not configured', data: null };
+
     const today = new Date().toISOString().split('T')[0];
 
     const { data, error } = await supabase
@@ -321,6 +361,9 @@ export async function getTodayAttendance(staffId: string) {
 }
 
 export async function getAttendanceHistory(staffId: string, limit = 30) {
+    const supabase = getSupabaseClient();
+    if (!supabase) return { success: false, error: 'Supabase not configured', data: null };
+
     const { data, error } = await supabase
         .from('attendance')
         .select(`
@@ -341,6 +384,9 @@ export async function getAttendanceHistory(staffId: string, limit = 30) {
 }
 
 export async function getAllAttendance(startDate?: string, endDate?: string) {
+    const supabase = getSupabaseClient();
+    if (!supabase) return { success: false, error: 'Supabase not configured', data: null };
+
     let query = supabase
         .from('attendance')
         .select(`

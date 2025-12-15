@@ -10064,7 +10064,6 @@ html {
   margin-bottom: 2rem;
   /* Ensure space at bottom for scrolling */
 }
-}
 
 @media (max-width: 480px) {
   .login-container {
