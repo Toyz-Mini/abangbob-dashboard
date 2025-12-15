@@ -132,6 +132,7 @@ interface StoreState {
   addOrder: (order: Omit<Order, 'id' | 'orderNumber'>) => Promise<Order>;
   updateOrderStatus: (orderId: string, status: Order['status'], staffId?: string) => void;
   getTodayOrders: () => Order[];
+  refreshOrders: () => Promise<void>;
 
   // Production Logs
   productionLogs: ProductionLog[];
@@ -1161,6 +1162,19 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     const today = new Date().toISOString().split('T')[0];
     return orders.filter(order => order.createdAt.startsWith(today));
   }, [orders]);
+
+  // Refresh orders from Supabase (for realtime sync)
+  const refreshOrders = useCallback(async () => {
+    try {
+      const supabaseOrders = await SupabaseSync.loadOrdersFromSupabase(500);
+      if (supabaseOrders && supabaseOrders.length > 0) {
+        setOrders(supabaseOrders);
+        console.log('[Realtime] Orders refreshed from Supabase:', supabaseOrders.length);
+      }
+    } catch (error) {
+      console.error('Failed to refresh orders from Supabase:', error);
+    }
+  }, []);
 
   // Production log actions
   const addProductionLog = useCallback((log: Omit<ProductionLog, 'id'>) => {
@@ -2865,6 +2879,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     addOrder,
     updateOrderStatus,
     getTodayOrders,
+    refreshOrders,
 
     // Production Logs
     productionLogs,
@@ -3128,6 +3143,7 @@ export function useOrders() {
     addOrder: store.addOrder,
     updateOrderStatus: store.updateOrderStatus,
     getTodayOrders: store.getTodayOrders,
+    refreshOrders: store.refreshOrders,
     isInitialized: store.isInitialized,
   };
 }

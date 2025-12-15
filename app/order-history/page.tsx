@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import MainLayout from '@/components/MainLayout';
 import DataTable, { Column } from '@/components/DataTable';
 import Modal from '@/components/Modal';
 import StatCard from '@/components/StatCard';
 import { useOrders, useOrderHistory } from '@/lib/store';
+import { useOrdersRealtime } from '@/lib/supabase/realtime-hooks';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { useTranslation } from '@/lib/contexts/LanguageContext';
 import { OrderHistoryItem, OrderHistoryFilters, VoidRefundRequest, Order } from '@/lib/types';
@@ -34,7 +35,7 @@ import {
 
 export default function OrderHistoryPage() {
   // Use orders from Supabase-synced store
-  const { orders, isInitialized: ordersInitialized } = useOrders();
+  const { orders, refreshOrders, isInitialized: ordersInitialized } = useOrders();
 
   // Keep void/refund functionality from orderHistory
   const {
@@ -47,6 +48,15 @@ export default function OrderHistoryPage() {
 
   const { currentStaff } = useAuth();
   const { t } = useTranslation();
+
+  // Handle realtime order changes - refresh when new orders come in
+  const handleOrderChange = useCallback(() => {
+    console.log('[Realtime] Order change detected, refreshing...');
+    refreshOrders();
+  }, [refreshOrders]);
+
+  // Subscribe to realtime order changes
+  useOrdersRealtime(handleOrderChange);
 
   // State
   const [selectedOrder, setSelectedOrder] = useState<OrderHistoryItem | null>(null);
