@@ -254,10 +254,12 @@ body {
 
   /* Reduce main content padding on mobile */
   .main-content {
-    padding: var(--spacing-md) !important;
-    /* Reduced from xl (2rem) to md (1rem) */
+    padding-top: var(--spacing-md) !important;
+    padding-left: var(--spacing-md) !important;
+    padding-right: var(--spacing-md) !important;
+    padding-bottom: calc(90px + env(safe-area-inset-bottom)) !important;
+    /* Increased for BottomNav */
     margin-left: 0 !important;
-    /* Ensure no margin on mobile */
     width: 100%;
   }
 
