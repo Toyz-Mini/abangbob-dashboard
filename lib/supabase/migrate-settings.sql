@@ -3,7 +3,34 @@
 -- This enables Settings page data to persist across deploys
 
 -- ========================================
--- UPDATE OUTLET_SETTINGS TABLE
+-- CREATE OUTLET_SETTINGS TABLE (if not exists)
+-- ========================================
+
+CREATE TABLE IF NOT EXISTS public.outlet_settings (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  outlet_id UUID UNIQUE,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  payment_methods JSONB DEFAULT '{"cash": true, "card": true, "qr": true, "ewallet": false}'::jsonb,
+  theme TEXT DEFAULT 'dark' CHECK (theme IN ('light', 'dark', 'auto')),
+  order_number_prefix TEXT DEFAULT 'AB',
+  delivery_enabled BOOLEAN DEFAULT false,
+  delivery_fee DECIMAL(10,2) DEFAULT 0,
+  min_order_amount DECIMAL(10,2) DEFAULT 0,
+  pin_min_length INTEGER DEFAULT 4,
+  require_clock_in_photo BOOLEAN DEFAULT true
+);
+
+CREATE INDEX IF NOT EXISTS idx_outlet_settings_outlet ON public.outlet_settings(outlet_id);
+
+ALTER TABLE public.outlet_settings ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Anyone can view outlet settings" ON public.outlet_settings;
+DROP POLICY IF EXISTS "Admin can manage outlet settings" ON public.outlet_settings;
+CREATE POLICY "Anyone can view outlet settings" ON public.outlet_settings FOR SELECT USING (true);
+CREATE POLICY "Admin can manage outlet settings" ON public.outlet_settings FOR ALL USING (true);
+
+-- ========================================
+-- ADD NEW COLUMNS FOR COMPREHENSIVE OUTLET SETTINGS
 -- ========================================
 
 -- Add new columns for comprehensive outlet settings
@@ -70,7 +97,8 @@ CREATE TABLE IF NOT EXISTS public.app_settings (
 CREATE INDEX IF NOT EXISTS idx_app_settings_key ON public.app_settings(setting_key);
 
 ALTER TABLE public.app_settings ENABLE ROW LEVEL SECURITY;
-CREATE POLICY IF NOT EXISTS "All access app_settings" ON public.app_settings FOR ALL USING (true);
+DROP POLICY IF EXISTS "All access app_settings" ON public.app_settings;
+CREATE POLICY "All access app_settings" ON public.app_settings FOR ALL USING (true);
 
 -- Insert default app settings
 INSERT INTO public.app_settings (setting_key, setting_value, description)
