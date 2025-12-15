@@ -4,7 +4,7 @@ import { useState, useMemo } from 'react';
 import MainLayout from '@/components/MainLayout';
 import { useFinance } from '@/lib/store';
 import { useTranslation } from '@/lib/contexts/LanguageContext';
-import { Expense, ExpenseCategory } from '@/lib/types';
+import { Expense, ExpenseCategory, PaymentMethod } from '@/lib/types';
 import { EXPENSE_CATEGORIES, PAYMENT_METHODS, getCategoryLabel, getCategoryColor } from '@/lib/finance-data';
 import Modal from '@/components/Modal';
 import LoadingSpinner from '@/components/LoadingSpinner';
@@ -58,7 +58,7 @@ export default function FinancePage() {
     category: 'ingredients' as ExpenseCategory,
     amount: 0,
     description: '',
-    paymentMethod: 'cash' as 'cash' | 'bank' | 'card' | 'ewallet',
+    paymentMethod: 'cash' as PaymentMethod,
     vendor: '',
   });
 
@@ -780,7 +780,7 @@ export default function FinancePage() {
               <select
                 className="form-select"
                 value={formData.paymentMethod}
-                onChange={(e) => setFormData(prev => ({ ...prev, paymentMethod: e.target.value as 'cash' | 'bank' | 'card' | 'ewallet' }))}
+                onChange={(e) => setFormData(prev => ({ ...prev, paymentMethod: e.target.value as PaymentMethod }))}
               >
                 {PAYMENT_METHODS.map(pm => (
                   <option key={pm.value} value={pm.value}>{pm.label}</option>
