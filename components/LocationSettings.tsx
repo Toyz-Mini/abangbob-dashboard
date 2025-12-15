@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Plus, MapPin, Edit2, Trash2, Save, X } from 'lucide-react';
-import LocationMapPicker from './LocationMapPicker';
+import dynamic from 'next/dynamic';
 import {
     getAllowedLocations,
     addAllowedLocation,
@@ -10,6 +10,16 @@ import {
     deleteAllowedLocation,
     type AllowedLocation,
 } from '@/lib/supabase/attendance-sync';
+
+// Dynamic import to prevent SSR issues with Leaflet (requires window)
+const LocationMapPicker = dynamic(() => import('./LocationMapPicker'), {
+    ssr: false,
+    loading: () => (
+        <div className="flex items-center justify-center h-full bg-gray-900 rounded-lg">
+            <p className="text-gray-400">Loading map...</p>
+        </div>
+    ),
+});
 
 interface LocationFormData {
     name: string;

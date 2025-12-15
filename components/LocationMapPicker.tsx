@@ -123,9 +123,11 @@ export default function LocationMapPicker({
                 center={position}
                 zoom={16}
                 style={{ height: '100%', width: '100%', borderRadius: '12px' }}
-                whenCreated={(map) => {
-                    mapRef.current = map;
-                    setMapReady(true);
+                ref={(mapInstance) => {
+                    if (mapInstance) {
+                        mapRef.current = mapInstance;
+                        setMapReady(true);
+                    }
                 }}
                 zoomControl={false}
             >
