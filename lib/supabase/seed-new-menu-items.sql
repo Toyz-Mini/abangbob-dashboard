@@ -19,39 +19,30 @@ ON CONFLICT (id) DO UPDATE SET
   name = EXCLUDED.name,
   extra_price = EXCLUDED.extra_price;
 
--- 3. Add Potato Bowl menu item
-INSERT INTO public.menu_items (name, category, description, price, is_available, modifier_group_ids)
+-- 3. Delete existing items if any (to avoid duplicates)
+DELETE FROM public.menu_items WHERE name IN ('Potato Bowl', 'Nashville Mozzarella Cheese');
+
+-- 4. Add Potato Bowl menu item
+INSERT INTO public.menu_items (name, category, description, price, is_available)
 VALUES (
   'Potato Bowl',
   'Alacart',
   'NEW! Creamy potato bowl with special mayo topping',
   3.50,
-  true,
-  ARRAY[]::TEXT[]
-)
-ON CONFLICT (name) DO UPDATE SET
-  category = EXCLUDED.category,
-  description = EXCLUDED.description,
-  price = EXCLUDED.price,
-  is_available = EXCLUDED.is_available,
-  modifier_group_ids = EXCLUDED.modifier_group_ids;
+  true
+);
 
--- 4. Add Nashville Mozzarella Cheese menu item
-INSERT INTO public.menu_items (name, category, description, price, is_available, modifier_group_ids)
+-- 5. Add Nashville Mozzarella Cheese menu item (without modifiers - link via Menu Management UI)
+INSERT INTO public.menu_items (name, category, description, price, is_available)
 VALUES (
   'Nashville Mozzarella Cheese',
   'Alacart',
   'Crispy Nashville-style mozzarella cheese sticks',
   3.90,
-  true,
-  ARRAY['modgroup_size_nashville']::TEXT[]
-)
-ON CONFLICT (name) DO UPDATE SET
-  category = EXCLUDED.category,
-  description = EXCLUDED.description,
-  price = EXCLUDED.price,
-  is_available = EXCLUDED.is_available,
-  modifier_group_ids = EXCLUDED.modifier_group_ids;
+  true
+);
 
 -- Done! New menu items added.
-SELECT 'Menu updated successfully!' as result;
+-- NOTE: To link Nashville with size modifier, go to Menu Management and edit the item
+SELECT 'Menu items added! Link Nashville with Pilih Saiz modifier via Menu Management UI' as result;
+
