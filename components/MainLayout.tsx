@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import type { ReactNode } from 'react';
 import Sidebar from './Sidebar';
@@ -7,8 +9,20 @@ import CommandPalette, { useCommandPalette } from './CommandPalette';
 import BottomNav, { useBottomNav } from './BottomNav';
 import Sheet from './Sheet';
 // import { useTranslation } from '@/lib/contexts/LanguageContext'; // Removed as t is not strictly needed for basic labels or we can add it properly
-import { useAuth } from '@/lib/contexts/AuthContext';
-import { canViewNavItem, type UserRole } from '@/lib/permissions';
+import {
+  Truck,
+  Factory,
+  ChefHat,
+  Boxes,
+  DollarSign,
+  UserCheck,
+  BarChart3,
+  Settings,
+  FileText,
+  Bell,
+  HelpCircle,
+  Monitor
+} from 'lucide-react';
 
 export default function MainLayout({ children }: { children: ReactNode }) {
   // Default to closed to prevent flash on mobile
@@ -16,15 +30,6 @@ export default function MainLayout({ children }: { children: ReactNode }) {
   const sidebarRef = useRef<HTMLElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const { user, currentStaff, isStaffLoggedIn } = useAuth();
-
-  // Determine role
-  const userRole: UserRole = React.useMemo(() => {
-    if (user) return 'Admin';
-    if (isStaffLoggedIn && currentStaff) return currentStaff.role;
-    // Default to 'Admin' for now to match Sidebar behavior, but ideally should be null
-    return 'Admin';
-  }, [user, isStaffLoggedIn, currentStaff]);
 
   // Open sidebar on mount if desktop
   useEffect(() => {
@@ -38,22 +43,6 @@ export default function MainLayout({ children }: { children: ReactNode }) {
 
   // Bottom nav more menu
   const bottomNav = useBottomNav();
-
-  // Import icons for the more menu
-  const {
-    Truck,
-    Factory,
-    ChefHat,
-    Boxes,
-    DollarSign,
-    UserCheck,
-    BarChart3,
-    Settings,
-    FileText,
-    Bell,
-    HelpCircle,
-    Monitor // Added Monitor icon
-  } = require('lucide-react');
 
   // Auto-close when clicking outside sidebar
   useEffect(() => {
@@ -245,7 +234,6 @@ export default function MainLayout({ children }: { children: ReactNode }) {
             { href: '/settings', label: 'Tetapan', icon: Settings, color: '#4b5563' },
             { href: '/help', label: 'Bantuan', icon: HelpCircle, color: '#06b6d4' },
           ]
-            .filter(item => canViewNavItem(userRole, item.href))
             .map((item, index) => (
               <a
                 key={index}
