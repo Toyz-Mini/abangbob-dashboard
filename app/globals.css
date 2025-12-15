@@ -2376,6 +2376,75 @@ html {
   }
 }
 
+/* ===================================================== 
+   PHASE 3: COMPONENT-LEVEL FIXES
+   ===================================================== */
+
+/* Table Scroll Indicators */
+.table-responsive {
+  position: relative;
+}
+
+@media (max-width: 768px) {
+
+  /* Visual hint for horizontal scrolling */
+  .table-responsive::after {
+    content: '→';
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    background: linear-gradient(to right, transparent, var(--bg-card) 20%);
+    padding: 1rem 1rem 1rem 2rem;
+    pointer-events: none;
+    font-size: 1.5rem;
+    color: var(--text-secondary);
+    opacity: 0.8;
+    transition: opacity 0.3s;
+    z-index: 5;
+  }
+
+  /* Better scrollbar visibility on mobile */
+  .table-responsive {
+    scrollbar-width: thin;
+    scrollbar-color: var(--primary) var(--gray-200);
+  }
+
+  /* Form Layout Fixes - Stack vertically */
+  .form-grid,
+  .form-row {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 1rem !important;
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .form-group label {
+    margin-bottom: 0.5rem;
+  }
+
+  /* Modal Overflow Fixes */
+  .modal-content,
+  [role="dialog"] {
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  .modal-header,
+  .dialog-header {
+    position: sticky;
+    top: 0;
+    background: var(--bg-card);
+    z-index: 10;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-color);
+  }
+}
+
 .search-input {
   width: 100%;
   padding: 0.75rem 1rem 0.75rem 2.5rem;
@@ -9902,6 +9971,14 @@ html {
 }
 
 /* Mobile Tweaks */
+/* Very small devices - single column staff grid */
+@media (max-width: 375px) {
+  .login-page .staff-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Mobile Tweaks */
 @media (max-width: 640px) {
   .login-container {
     padding: 1rem 1.25rem 2rem;
@@ -9945,40 +10022,48 @@ html {
     padding: 0.75rem 0.5rem;
     /* More compact */
   }
+}
 
-  .pin-pad {
-    gap: 0.5rem;
-    /* Tighter spacing */
-    margin-bottom: 1rem;
-    max-width: 240px;
-    /* More compact */
+/* Very small devices - single column staff grid */
+@media (max-width: 375px) {
+  .login-page .staff-grid {
+    grid-template-columns: 1fr;
   }
+}
 
-  .pin-key {
-    font-size: 1.1rem;
-    /* Slightly smaller */
-    width: 3rem;
-    /* Reduced from 3.5rem */
-    height: 3rem;
-    min-width: 44px;
-    /* Ensure tap target minimum */
-    min-height: 44px;
-  }
+.pin-pad {
+  gap: 0.5rem;
+  /* Tighter spacing */
+  margin-bottom: 1rem;
+  max-width: 240px;
+  /* More compact */
+}
 
-  .mode-icon {
-    width: 52px;
-    height: 52px;
-  }
+.pin-key {
+  font-size: 1.1rem;
+  /* Slightly smaller */
+  width: 3rem;
+  /* Reduced from 3.5rem */
+  height: 3rem;
+  min-width: 44px;
+  /* Ensure tap target minimum */
+  min-height: 44px;
+}
 
-  .mode-title {
-    font-size: 1rem;
-  }
+.mode-icon {
+  width: 52px;
+  height: 52px;
+}
 
-  .login-btn {
-    margin-top: 0.5rem;
-    margin-bottom: 2rem;
-    /* Ensure space at bottom for scrolling */
-  }
+.mode-title {
+  font-size: 1rem;
+}
+
+.login-btn {
+  margin-top: 0.5rem;
+  margin-bottom: 2rem;
+  /* Ensure space at bottom for scrolling */
+}
 }
 
 @media (max-width: 480px) {
