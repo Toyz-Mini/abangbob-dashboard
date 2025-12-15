@@ -139,7 +139,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
 // Navigation items that should be visible to each role
 export const NAV_VISIBILITY: Record<string, UserRole[]> = {
   // Main
-  '/': ['Admin', 'Manager'],
+  '/': ['Admin', 'Manager', 'Staff'],
 
   // Staff Portal - All
   '/staff-portal': ['Admin', 'Manager', 'Staff'],

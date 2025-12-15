@@ -21,7 +21,7 @@ import {
   FileText,
   Bell,
   HelpCircle,
-  Monitor
+  Tv
 } from 'lucide-react';
 
 export default function MainLayout({ children }: { children: ReactNode }) {
@@ -223,7 +223,7 @@ export default function MainLayout({ children }: { children: ReactNode }) {
           {[
             { href: '/delivery', label: 'Delivery', icon: Truck, color: '#3b82f6' },
             { href: '/production', label: 'Produksi', icon: Factory, color: '#f59e0b' },
-            { href: '/kds', label: 'KDS', icon: Monitor, color: '#10b981' },
+            { href: '/kds', label: 'KDS', icon: Tv, color: '#10b981' },
             { href: '/recipes', label: 'Resipi', icon: ChefHat, color: '#ec4899' },
             { href: '/suppliers', label: 'Stok', icon: Boxes, color: '#8b5cf6' },
             { href: '/finance', label: 'Kewangan', icon: DollarSign, color: '#059669' },

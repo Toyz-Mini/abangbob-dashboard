@@ -4,9 +4,7 @@ import { useEffect, useState } from 'react';
 import MainLayout from '@/components/MainLayout';
 import { useStore, useInventory, useStaff, useOrders } from '@/lib/store';
 import { useTranslation } from '@/lib/contexts/LanguageContext';
-import { useAuth } from '@/lib/contexts/AuthContext';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import StatCard from '@/components/StatCard';
 import ChartCard from '@/components/ChartCard';
 import SalesTrendChart from '@/components/charts/SalesTrendChart';
@@ -22,8 +20,6 @@ export default function DashboardPage() {
   const { staff, getStaffAttendanceToday } = useStaff();
   const { getTodayOrders } = useOrders();
   const { t, language } = useTranslation();
-  const { isStaffLoggedIn, currentStaff } = useAuth();
-  const router = useRouter();
   const [currentTime, setCurrentTime] = useState(new Date());
 
   // Update time every minute
@@ -31,13 +27,6 @@ export default function DashboardPage() {
     const timer = setInterval(() => setCurrentTime(new Date()), 60000);
     return () => clearInterval(timer);
   }, []);
-
-  // Redirect staff to staff portal
-  useEffect(() => {
-    if (isStaffLoggedIn && currentStaff?.role === 'Staff') {
-      router.replace('/staff-portal');
-    }
-  }, [isStaffLoggedIn, currentStaff, router]);
 
   const todayOrders = getTodayOrders();
   const salesToday = todayOrders.reduce((sum, o) => sum + o.total, 0);

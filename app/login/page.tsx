@@ -73,16 +73,7 @@ export default function LoginPage() {
     const result = await loginWithPin(selectedStaffId, pin);
 
     if (result.success) {
-      // Determine redirect path based on role
-      const staffMember = staff.find(s => s.id === selectedStaffId);
-
-      // If staff role, go to staff portal
-      // If admin/manager, go to main dashboard
-      if (staffMember?.role === 'Staff') {
-        router.push('/staff-portal');
-      } else {
-        router.push('/');
-      }
+      router.push('/');
     } else {
       setError(result.error || 'Login gagal');
     }
