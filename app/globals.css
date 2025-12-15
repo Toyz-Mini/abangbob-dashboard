@@ -91,6 +91,14 @@
   /* Scrollbar */
   --scrollbar-thumb: var(--gray-400);
   --scrollbar-track: var(--gray-100);
+
+  /* Mobile Spacing System (Phase 2) */
+  --mobile-padding-x: 1rem;
+  --mobile-padding-y: 1rem;
+  --mobile-section-gap: 1.5rem;
+  --mobile-header-spacing: 1.5rem;
+  --mobile-nav-height: 60px;
+  --mobile-safe-bottom: calc(var(--mobile-nav-height) + 1rem);
 }
 
 /* Dark Mode Variables */
@@ -2313,6 +2321,58 @@ body {
   /* Staff Header Compact */
   .staff-header {
     padding: 1rem !important;
+  }
+}
+
+/* ===================================================== 
+   PHASE 2: GLOBAL MOBILE FIXES
+   ===================================================== */
+
+/* Safe scroll padding for fixed bottom nav */
+html {
+  scroll-padding-bottom: var(--mobile-safe-bottom);
+}
+
+@media (max-width: 768px) {
+
+  /* Global consistent padding */
+  .main-content {
+    padding: var(--mobile-padding-y) var(--mobile-padding-x);
+    padding-bottom: var(--mobile-safe-bottom);
+  }
+
+  /* Ensure cards have consistent spacing */
+  .card {
+    padding: 1rem;
+    margin-bottom: var(--mobile-section-gap);
+  }
+
+  /* Minimum tap targets (Apple HIG + WCAG) */
+  button:not(.pin-key):not(.calendar-day),
+  input:not([type="checkbox"]):not([type="radio"]),
+  select,
+  .clickable,
+  .btn,
+  a.button {
+    min-height: 44px;
+  }
+
+  /* Icon buttons need minimum width too */
+  button.icon-only,
+  .icon-btn {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  /* Bottom navigation safe area for pages with fixed nav */
+  body.has-bottom-nav,
+  .has-bottom-nav {
+    padding-bottom: var(--mobile-nav-height);
+  }
+
+  /* Ensure header spacing is consistent */
+  .page-header {
+    margin-bottom: var(--mobile-header-spacing);
   }
 }
 
