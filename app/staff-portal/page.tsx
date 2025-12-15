@@ -3,16 +3,17 @@
 import { useState, useEffect, useMemo } from 'react';
 import MainLayout from '@/components/MainLayout';
 import { useStaffPortal, useStaff } from '@/lib/store';
+import { useAuth } from '@/lib/contexts/AuthContext';
 import { getLeaveTypeLabel, getStatusLabel, getStatusColor } from '@/lib/staff-portal-data';
 import Link from 'next/link';
 import LoadingSpinner from '@/components/LoadingSpinner';
-import { 
-  Clock, 
-  CheckSquare, 
-  Calendar, 
-  Plane, 
-  DollarSign, 
-  FileText, 
+import {
+  Clock,
+  CheckSquare,
+  Calendar,
+  Plane,
+  DollarSign,
+  FileText,
   Megaphone,
   TrendingUp,
   AlertCircle,
@@ -40,18 +41,16 @@ import {
   staffAchievements
 } from '@/components/staff-portal';
 
-// Demo: Using staff ID 2 (Siti Nurhaliza) as the logged-in user
-const CURRENT_STAFF_ID = '2';
 
 // Circular Progress Component
-function CircularProgress({ 
-  progress, 
-  size = 140, 
+function CircularProgress({
+  progress,
+  size = 140,
   strokeWidth = 8,
-  children 
-}: { 
-  progress: number; 
-  size?: number; 
+  children
+}: {
+  progress: number;
+  size?: number;
   strokeWidth?: number;
   children?: React.ReactNode;
 }) {
@@ -91,13 +90,13 @@ function CircularProgress({
 }
 
 // Leave Balance Ring Component
-function LeaveBalanceRing({ 
-  balance, 
-  total, 
+function LeaveBalanceRing({
+  balance,
+  total,
   type,
-  label 
-}: { 
-  balance: number; 
+  label
+}: {
+  balance: number;
   total: number;
   type: 'annual' | 'medical' | 'emergency' | 'unpaid';
   label: string;
@@ -139,15 +138,18 @@ function LeaveBalanceRing({
 }
 
 export default function StaffPortalPage() {
-  const { 
-    staff, 
-    attendance, 
+  // Get current logged-in staff from AuthContext
+  const { currentStaff: authStaff, isStaffLoggedIn, user } = useAuth();
+
+  const {
+    staff,
+    attendance,
     getStaffAttendanceToday,
     clockIn,
     clockOut,
-    isInitialized 
+    isInitialized
   } = useStaff();
-  
+
   const {
     getLeaveBalance,
     getStaffLeaveRequests,
@@ -164,15 +166,27 @@ export default function StaffPortalPage() {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
 
-  // Get current staff
-  const currentStaff = staff.find(s => s.id === CURRENT_STAFF_ID);
-  const todayAttendance = getStaffAttendanceToday(CURRENT_STAFF_ID);
+  // Get staff ID - prioritize PIN login, fall back to Supabase user
+  // If logged in as Admin via Supabase, use first available staff or show admin view
+  const staffId = authStaff?.id || user?.id || '';
+
+  // Get current staff profile from store (may have more data than authStaff)
+  const currentStaff = staff.find(s => s.id === staffId) || (authStaff ? {
+    id: authStaff.id,
+    name: authStaff.name,
+    role: authStaff.role,
+    email: authStaff.email || '',
+    status: authStaff.status,
+  } : null);
+
+  const todayAttendance = staffId ? getStaffAttendanceToday(staffId) : undefined;
 
   // Get today's schedule
   const today = new Date().toISOString().split('T')[0];
   const todaySchedule = useMemo(() => {
-    return schedules.find(s => s.staffId === CURRENT_STAFF_ID && s.date === today);
-  }, [schedules, today]);
+    if (!staffId) return null;
+    return schedules.find(s => s.staffId === staffId && s.date === today);
+  }, [schedules, today, staffId]);
 
   const currentShift = useMemo(() => {
     if (!todaySchedule) return null;
@@ -180,20 +194,21 @@ export default function StaffPortalPage() {
   }, [todaySchedule, shifts]);
 
   // Get leave balance
-  const leaveBalance = getLeaveBalance(CURRENT_STAFF_ID);
-  
+  const leaveBalance = getLeaveBalance(staffId);
+
   // Get pending requests
-  const leaveRequests = getStaffLeaveRequests(CURRENT_STAFF_ID);
-  const claimRequests = getStaffClaimRequests(CURRENT_STAFF_ID);
-  const staffRequests = getStaffRequestsByStaff(CURRENT_STAFF_ID);
-  
+  const leaveRequests = getStaffLeaveRequests(staffId);
+  const claimRequests = getStaffClaimRequests(staffId);
+  const staffRequests = getStaffRequestsByStaff(staffId);
+
   const pendingLeaveCount = leaveRequests.filter(r => r.status === 'pending').length;
   const pendingClaimCount = claimRequests.filter(r => r.status === 'pending').length;
   const pendingRequestCount = staffRequests.filter(r => r.status === 'pending').length;
   const totalPending = pendingLeaveCount + pendingClaimCount + pendingRequestCount;
 
-  // Get announcements
-  const announcements = getActiveAnnouncements(currentStaff?.role);
+  // Get announcements - handle 'Admin' role by treating as 'Manager'
+  const roleForAnnouncements = currentStaff?.role === 'Admin' ? 'Manager' : currentStaff?.role;
+  const announcements = getActiveAnnouncements(roleForAnnouncements);
 
   // Get today's checklist status
   const openingChecklist = getTodayChecklist('opening');
@@ -215,16 +230,16 @@ export default function StaffPortalPage() {
   // Calculate work progress
   const workProgress = useMemo(() => {
     if (!todayAttendance?.clockInTime || !currentShift) return 0;
-    
+
     const [inH, inM] = todayAttendance.clockInTime.split(':').map(Number);
     const [shiftEndH, shiftEndM] = currentShift.endTime.split(':').map(Number);
     const clockInMinutes = inH * 60 + inM;
     const shiftEndMinutes = shiftEndH * 60 + shiftEndM;
     const totalShiftMinutes = shiftEndMinutes - clockInMinutes;
-    
+
     const now = currentTime.getHours() * 60 + currentTime.getMinutes();
     const workedMinutes = now - clockInMinutes;
-    
+
     if (todayAttendance.clockOutTime) return 100;
     return Math.min(100, Math.max(0, (workedMinutes / totalShiftMinutes) * 100));
   }, [todayAttendance, currentShift, currentTime]);
@@ -232,10 +247,10 @@ export default function StaffPortalPage() {
   // Format worked time
   const workedTime = useMemo(() => {
     if (!todayAttendance?.clockInTime) return '0:00';
-    
+
     const [inH, inM] = todayAttendance.clockInTime.split(':').map(Number);
     const clockInMinutes = inH * 60 + inM;
-    
+
     let endMinutes: number;
     if (todayAttendance.clockOutTime) {
       const [outH, outM] = todayAttendance.clockOutTime.split(':').map(Number);
@@ -243,7 +258,7 @@ export default function StaffPortalPage() {
     } else {
       endMinutes = currentTime.getHours() * 60 + currentTime.getMinutes();
     }
-    
+
     const workedMinutes = Math.max(0, endMinutes - clockInMinutes);
     const hours = Math.floor(workedMinutes / 60);
     const mins = workedMinutes % 60;
@@ -259,17 +274,21 @@ export default function StaffPortalPage() {
   };
 
   const handleClockIn = async () => {
-    if (!currentStaff) return;
+    if (!currentStaff || !staffId) return;
     setIsClocking(true);
-    const result = clockIn(CURRENT_STAFF_ID, currentStaff.pin);
+    // Get pin from full staff profile if available
+    const fullStaff = staff.find(s => s.id === staffId);
+    const pin = fullStaff?.pin || '';
+    const result = clockIn(staffId, pin);
     setClockMessage(result.message);
     setTimeout(() => setClockMessage(''), 3000);
     setIsClocking(false);
   };
 
   const handleClockOut = async () => {
+    if (!staffId) return;
     setIsClocking(true);
-    const result = clockOut(CURRENT_STAFF_ID);
+    const result = clockOut(staffId);
     setClockMessage(result.message);
     setTimeout(() => setClockMessage(''), 3000);
     setIsClocking(false);
@@ -295,10 +314,10 @@ export default function StaffPortalPage() {
         <DarkModeToggle />
 
         {/* Mood Check-in */}
-        <MoodCheckIn staffId={CURRENT_STAFF_ID} staffName={currentStaff.name} />
+        <MoodCheckIn staffId={staffId} staffName={currentStaff.name} />
 
         {/* Birthday Banner */}
-        <BirthdayBanner currentStaffId={CURRENT_STAFF_ID} />
+        <BirthdayBanner currentStaffId={staffId} />
 
         {/* Header Section */}
         <div className="staff-header" style={{ marginBottom: '1.5rem' }}>
@@ -356,7 +375,7 @@ export default function StaffPortalPage() {
               <div className="clock-progress-time">{workedTime}</div>
               <div className="clock-progress-label">jam kerja</div>
             </CircularProgress>
-            
+
             {isClocking ? (
               <div style={{ display: 'flex', justifyContent: 'center', padding: '1rem' }}>
                 <LoadingSpinner size="sm" />
@@ -371,7 +390,7 @@ export default function StaffPortalPage() {
                 {isClockedIn ? 'Clock Out' : hasCompletedShift ? 'Shift Selesai' : 'Clock In'}
               </button>
             )}
-            
+
             {todayAttendance?.clockInTime && (
               <div style={{ marginTop: '0.75rem', fontSize: '0.75rem', color: 'var(--text-secondary)', textAlign: 'center' }}>
                 Masuk: {todayAttendance.clockInTime}
@@ -485,8 +504,8 @@ export default function StaffPortalPage() {
 
           {/* Team Today Widget */}
           <div>
-            <TeamTodayWidget currentStaffId={CURRENT_STAFF_ID} />
-            
+            <TeamTodayWidget currentStaffId={staffId} />
+
             {/* Recent Achievements */}
             {earnedAchievements.length > 0 && (
               <div className="card" style={{ marginTop: '1rem' }}>
@@ -520,7 +539,7 @@ export default function StaffPortalPage() {
             </div>
             <div className="staff-stagger" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
               {announcements.map(ann => (
-                <div 
+                <div
                   key={ann.id}
                   className={`staff-announcement ${ann.priority === 'high' ? 'high-priority' : ''}`}
                 >
@@ -548,34 +567,34 @@ export default function StaffPortalPage() {
                   Baki Cuti {new Date().getFullYear()}
                 </div>
               </div>
-              
+
               <div className="grid grid-cols-2" style={{ gap: '1rem' }}>
-                <LeaveBalanceRing 
-                  balance={leaveBalance.annual.balance} 
+                <LeaveBalanceRing
+                  balance={leaveBalance.annual.balance}
                   total={leaveBalance.annual.entitled}
                   type="annual"
                   label="Tahunan"
                 />
-                <LeaveBalanceRing 
-                  balance={leaveBalance.medical.balance} 
+                <LeaveBalanceRing
+                  balance={leaveBalance.medical.balance}
                   total={leaveBalance.medical.entitled}
                   type="medical"
                   label="Sakit"
                 />
-                <LeaveBalanceRing 
-                  balance={leaveBalance.emergency.balance} 
+                <LeaveBalanceRing
+                  balance={leaveBalance.emergency.balance}
                   total={leaveBalance.emergency.entitled}
                   type="emergency"
                   label="Kecemasan"
                 />
-                <LeaveBalanceRing 
-                  balance={leaveBalance.unpaid.taken} 
+                <LeaveBalanceRing
+                  balance={leaveBalance.unpaid.taken}
                   total={5}
                   type="unpaid"
                   label="Tanpa Gaji"
                 />
               </div>
-              
+
               <Link href="/staff-portal/leave" className="btn btn-outline btn-sm" style={{ marginTop: '1rem', width: '100%' }}>
                 Mohon Cuti <ChevronRight size={14} />
               </Link>
@@ -591,7 +610,7 @@ export default function StaffPortalPage() {
               </div>
               <div className="card-subtitle">{totalPending} menunggu kelulusan</div>
             </div>
-            
+
             {totalPending > 0 ? (
               <div className="staff-stagger" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                 {leaveRequests.filter(r => r.status === 'pending').slice(0, 3).map(req => (
@@ -609,7 +628,7 @@ export default function StaffPortalPage() {
                     </span>
                   </div>
                 ))}
-                
+
                 {pendingClaimCount > 0 && (
                   <div className="staff-info-row">
                     <div>
@@ -621,7 +640,7 @@ export default function StaffPortalPage() {
                     <span className="badge badge-warning" style={{ fontSize: '0.7rem' }}>Menunggu</span>
                   </div>
                 )}
-                
+
                 <Link href="/staff-portal/leave" className="btn btn-outline btn-sm" style={{ marginTop: '0.5rem' }}>
                   Lihat Semua <ChevronRight size={14} />
                 </Link>
@@ -637,11 +656,11 @@ export default function StaffPortalPage() {
 
         {/* Feedback Button */}
         <FeedbackButton onClick={() => setShowFeedbackModal(true)} />
-        
+
         {/* Feedback Modal */}
-        <FeedbackModal 
-          isOpen={showFeedbackModal} 
-          onClose={() => setShowFeedbackModal(false)} 
+        <FeedbackModal
+          isOpen={showFeedbackModal}
+          onClose={() => setShowFeedbackModal(false)}
           staffName={currentStaff.name}
         />
 
