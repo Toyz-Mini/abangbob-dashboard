@@ -179,6 +179,7 @@ export const NAV_VISIBILITY: Record<string, UserRole[]> = {
   '/hr/timeclock': ['Admin', 'Manager', 'Staff'],
   '/hr/leave-calendar': ['Admin', 'Manager', 'Staff'],
   '/hr/checklist-config': ['Admin', 'Manager'],
+  '/hr/refund-approvals': ['Admin', 'Manager'],
   '/finance': ['Admin', 'Manager'],
   
   // Marketing

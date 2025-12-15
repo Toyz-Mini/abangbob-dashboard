@@ -114,11 +114,98 @@ VALUES
 ON CONFLICT (id) DO NOTHING;
 
 -- ========================================
+-- LINK MENU ITEMS WITH MODIFIERS
+-- ========================================
+
+-- Update Chicken Tenders XL
+UPDATE public.menu_items 
+SET modifier_group_ids = ARRAY['modgroup_size_tenders']::TEXT[]
+WHERE name = 'Chicken Tenders XL';
+
+-- Update Chicken Crispy Wrap
+UPDATE public.menu_items 
+SET modifier_group_ids = ARRAY['modgroup_addon_sauce']::TEXT[]
+WHERE name = 'Chicken Crispy Wrap';
+
+-- Update Crispy Chicken Skin
+UPDATE public.menu_items 
+SET modifier_group_ids = ARRAY['modgroup_flavour', 'modgroup_addon_sauce']::TEXT[]
+WHERE name = 'Crispy Chicken Skin';
+
+-- Update Ayam Gunting XXXL
+UPDATE public.menu_items 
+SET modifier_group_ids = ARRAY['modgroup_flavour', 'modgroup_addon_sauce']::TEXT[]
+WHERE name = 'Ayam Gunting XXXL';
+
+-- Update Burger Crispy XXL
+UPDATE public.menu_items 
+SET modifier_group_ids = ARRAY['modgroup_addon_sauce']::TEXT[]
+WHERE name = 'Burger Crispy XXL';
+
+-- Update Chicken Popcorn
+UPDATE public.menu_items 
+SET modifier_group_ids = ARRAY['modgroup_flavour', 'modgroup_addon_sauce']::TEXT[]
+WHERE name = 'Chicken Popcorn';
+
+-- Update Crispy Enoki
+UPDATE public.menu_items 
+SET modifier_group_ids = ARRAY['modgroup_flavour', 'modgroup_addon_sauce']::TEXT[]
+WHERE name = 'Crispy Enoki';
+
+-- ========================================
+-- VERIFICATION & TESTING
+-- ========================================
+
+-- After running this migration, verify the setup:
+
+-- 1. Check modifier groups were created (should return 3 rows)
+-- SELECT * FROM public.modifier_groups ORDER BY name;
+
+-- 2. Check modifier options were created (should return 5 rows)
+-- SELECT mo.name as option_name, mo.extra_price, mg.name as group_name
+-- FROM public.modifier_options mo
+-- JOIN public.modifier_groups mg ON mo.group_id = mg.id
+-- ORDER BY mg.name, mo.name;
+
+-- 3. Check menu items were linked with modifiers (should show 7 Alacart items)
+-- SELECT name, category, price, modifier_group_ids 
+-- FROM public.menu_items 
+-- WHERE category = 'Alacart'
+-- ORDER BY name;
+
+-- 4. Detailed view - which products have which modifiers
+-- SELECT 
+--   name,
+--   price,
+--   CASE 
+--     WHEN 'modgroup_size_tenders' = ANY(modifier_group_ids) THEN '✓ Size Selection' 
+--     ELSE '' 
+--   END as has_size,
+--   CASE 
+--     WHEN 'modgroup_flavour' = ANY(modifier_group_ids) THEN '✓ Flavour Choice' 
+--     ELSE '' 
+--   END as has_flavour,
+--   CASE 
+--     WHEN 'modgroup_addon_sauce' = ANY(modifier_group_ids) THEN '✓ Add-on Sauce' 
+--     ELSE '' 
+--   END as has_sauce
+-- FROM public.menu_items
+-- WHERE category = 'Alacart'
+-- ORDER BY name;
+
+-- ========================================
 -- MIGRATION COMPLETE
 -- ========================================
 -- 
 -- Next steps:
 -- 1. Run this migration in your Supabase SQL Editor
--- 2. Verify tables and data were created successfully
--- 3. Your app will now sync modifier groups and options with Supabase
+-- 2. Uncomment and run the verification queries above to check
+-- 3. Verify menu items were linked with modifier groups
+-- 4. Clear localStorage in browser (DevTools > Application > Local Storage > Clear)
+-- 5. Restart your app with hard refresh (Cmd/Ctrl + Shift + R)
+-- 6. Test in POS:
+--    - Click "Chicken Tenders XL" → Modal should open with size selection
+--    - Click "Crispy Chicken Skin" → Modal should open with flavour + sauce
+--    - Click "Chicken Crispy Wrap" → Modal should open with optional sauce
+-- 7. Your app will now sync modifier groups and options with Supabase
 --

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTranslation } from '@/lib/contexts/LanguageContext';
 import { useAuth } from '@/lib/contexts/AuthContext';
+import { useOrderHistory } from '@/lib/store';
 import { canViewNavItem, type UserRole } from '@/lib/permissions';
 import { 
   LayoutDashboard, 
@@ -31,6 +32,7 @@ import {
   HelpCircle,
   History,
   Wrench,
+  RefreshCw,
   type LucideIcon
 } from 'lucide-react';
 
@@ -39,6 +41,7 @@ interface NavItem {
   labelKey: string;
   icon: LucideIcon;
   tourId?: string; // For interactive tour targeting
+  showBadge?: boolean; // For showing notification badges
 }
 
 interface NavGroup {
@@ -87,6 +90,7 @@ const navGroupsConfig: NavGroup[] = [
     items: [
       { href: '/hr', labelKey: 'nav.hr', icon: Users, tourId: 'hr' },
       { href: '/hr/approvals', labelKey: 'nav.approvals', icon: ClipboardCheck },
+      { href: '/hr/refund-approvals', labelKey: 'nav.refundApprovals', icon: RefreshCw, showBadge: true },
       { href: '/hr/leave-calendar', labelKey: 'nav.leaveCalendar', icon: Calendar, tourId: 'leave' },
       { href: '/hr/checklist-config', labelKey: 'nav.checklistConfig', icon: CheckSquare },
       { href: '/finance', labelKey: 'nav.finance', icon: DollarSign, tourId: 'finance' },
@@ -127,6 +131,10 @@ const Sidebar = forwardRef<HTMLElement, SidebarProps>(({ isOpen, onMouseEnter, o
   const pathname = usePathname();
   const { t } = useTranslation();
   const { user, currentStaff, isStaffLoggedIn } = useAuth();
+  const { getPendingVoidRefundCount } = useOrderHistory();
+  
+  // Get pending refund count for badge
+  const pendingRefundCount = getPendingVoidRefundCount();
   
   // Determine the current user's role
   // Default to 'Admin' when no auth to ensure menu is always visible
@@ -185,6 +193,8 @@ const Sidebar = forwardRef<HTMLElement, SidebarProps>(({ isOpen, onMouseEnter, o
                 
                 const Icon = item.icon;
                 const label = t(item.labelKey);
+                const badgeCount = item.showBadge ? pendingRefundCount : 0;
+                
                 return (
                   <li key={item.href} className="nav-item">
                     <Link
@@ -195,7 +205,25 @@ const Sidebar = forwardRef<HTMLElement, SidebarProps>(({ isOpen, onMouseEnter, o
                       onClick={onNavClick}
                     >
                       <Icon size={20} />
-                      {isOpen && <span>{label}</span>}
+                      {isOpen && (
+                        <>
+                          <span>{label}</span>
+                          {badgeCount > 0 && (
+                            <span 
+                              className="badge badge-warning" 
+                              style={{ 
+                                marginLeft: 'auto',
+                                fontSize: '0.7rem',
+                                padding: '0.125rem 0.375rem',
+                                borderRadius: 'var(--radius-full)',
+                                fontWeight: 600,
+                              }}
+                            >
+                              {badgeCount}
+                            </span>
+                          )}
+                        </>
+                      )}
                     </Link>
                   </li>
                 );

@@ -1,10 +1,24 @@
-// Supabase Data Operations
-// Helper functions for CRUD operations with Supabase
+/**
+ * Supabase Data Operations
+ * Helper functions for CRUD operations with Supabase
+ * 
+ * TECHNICAL NOTE: @ts-nocheck is used because:
+ * 1. The app uses camelCase for frontend data (e.g., menuItems, staffId)
+ * 2. Supabase database uses snake_case (e.g., menu_items, staff_id)
+ * 3. toSnakeCase/toCamelCase functions handle runtime conversion
+ * 4. TypeScript cannot verify this transformation at compile time
+ * 
+ * Future improvement: Generate typed wrappers for each table operation
+ * that use proper type assertions with Tables types defined below.
+ * 
+ * All @ts-ignore comments mark specific type conversion points.
+ */
 // @ts-nocheck
 
 import { getSupabaseClient } from './client';
 import type { Database } from './types';
 
+// Table types from Supabase schema - can be used for future typed operations
 type Tables = Database['public']['Tables'];
 
 // Transform camelCase to snake_case for Supabase

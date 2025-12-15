@@ -1,6 +1,7 @@
 import asyncio
 from playwright import async_api
 from playwright.async_api import expect
+from config import get_url, ADMIN_EMAIL, ADMIN_PASSWORD, NAVIGATION_TIMEOUT, DEFAULT_TIMEOUT
 
 async def run_test():
     pw = None
@@ -24,17 +25,17 @@ async def run_test():
         
         # Create a new browser context (like an incognito window)
         context = await browser.new_context()
-        context.set_default_timeout(5000)
+        context.set_default_timeout(DEFAULT_TIMEOUT)
         
         # Open a new page in the browser context
         page = await context.new_page()
         
-        # Navigate to your target URL and wait until the network request is committed
-        await page.goto("http://localhost:3000", wait_until="commit", timeout=10000)
+        # Navigate to production URL
+        await page.goto(get_url(), wait_until="commit", timeout=NAVIGATION_TIMEOUT)
         
         # Wait for the main page to reach DOMContentLoaded state (optional for stability)
         try:
-            await page.wait_for_load_state("domcontentloaded", timeout=3000)
+            await page.wait_for_load_state("domcontentloaded", timeout=5000)
         except async_api.Error:
             pass
         
@@ -45,22 +46,29 @@ async def run_test():
             except async_api.Error:
                 pass
         
-        # Interact with the page elements to simulate user flow
-        # -> Try to find a login link or button on the page or try a different approach to reach the login page
-        await page.mouse.wheel(0, await page.evaluate('() => window.innerHeight'))
+        # Navigate to login page
+        await page.goto(get_url('/login'), timeout=NAVIGATION_TIMEOUT)
+        await asyncio.sleep(2)
         
-
-        # -> Try to navigate to a known login URL or report issue if no login page is accessible
-        await page.goto('http://localhost:3000/login', timeout=10000)
-        await asyncio.sleep(3)
+        # Try to find email input and enter credentials
+        email_input = page.locator('input[type="email"], input[name="email"], input[placeholder*="email" i]').first
+        password_input = page.locator('input[type="password"]').first
         
-
-        # --> Assertions to verify final state
-        try:
-            await expect(page.locator('text=Access Denied: Invalid Role').first).to_be_visible(timeout=1000)
-        except AssertionError:
-            raise AssertionError("Test case failed: The test plan execution failed to verify successful login and correct role-based access. User was not redirected to the dashboard or the role-based menu/modules are incorrect.")
-        await asyncio.sleep(5)
+        if await email_input.count() > 0:
+            await email_input.fill(ADMIN_EMAIL)
+            await password_input.fill(ADMIN_PASSWORD)
+            
+            # Click login button
+            login_button = page.locator('button:has-text("Login"), button:has-text("Sign in"), button[type="submit"]').first
+            await login_button.click()
+            await asyncio.sleep(3)
+        
+        # Verify we're on dashboard or authenticated page
+        current_url = page.url
+        assert '/login' not in current_url or 'dashboard' in current_url.lower(), \
+            f"Login failed - still on login page or not redirected. Current URL: {current_url}"
+        
+        print("✅ Login test passed - user authenticated successfully")
     
     finally:
         if context:

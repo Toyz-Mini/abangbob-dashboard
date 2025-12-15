@@ -392,7 +392,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       // Core data
       setInventory(supabaseData.inventory.length > 0 ? supabaseData.inventory : getFromStorage(STORAGE_KEYS.INVENTORY, MOCK_STOCK));
       setStaff(supabaseData.staff.length > 0 ? supabaseData.staff : getFromStorage(STORAGE_KEYS.STAFF, MOCK_STAFF));
-      setMenuItems(supabaseData.menuItems.length > 0 ? supabaseData.menuItems : getFromStorage(STORAGE_KEYS.MENU_ITEMS, MOCK_MENU.map(item => ({ ...item, isAvailable: true, modifierGroupIds: [] }))));
+      setMenuItems(supabaseData.menuItems.length > 0 ? supabaseData.menuItems : getFromStorage(STORAGE_KEYS.MENU_ITEMS, MOCK_MENU));
       setModifierGroups(supabaseData.modifierGroups.length > 0 ? supabaseData.modifierGroups : getFromStorage(STORAGE_KEYS.MODIFIER_GROUPS, MOCK_MODIFIER_GROUPS));
       setModifierOptions(supabaseData.modifierOptions.length > 0 ? supabaseData.modifierOptions : getFromStorage(STORAGE_KEYS.MODIFIER_OPTIONS, MOCK_MODIFIER_OPTIONS));
       setOrders(supabaseData.orders.length > 0 ? supabaseData.orders : getFromStorage(STORAGE_KEYS.ORDERS, []));
