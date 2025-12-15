@@ -13,10 +13,10 @@ import ReceiptDesigner from '@/components/ReceiptDesigner';
 import SupabaseSetupChecker from '@/components/SupabaseSetupChecker';
 import { ReceiptSettings, PrinterSettings, DEFAULT_RECEIPT_SETTINGS, DEFAULT_PRINTER_SETTINGS, PaymentMethodConfig, TaxRate } from '@/lib/types';
 import { thermalPrinter, loadReceiptSettings, saveReceiptSettings } from '@/lib/services';
-import { 
-  Settings, 
-  Store, 
-  Clock, 
+import {
+  Settings,
+  Store,
+  Clock,
   Receipt,
   Download,
   Upload,
@@ -58,6 +58,7 @@ import SupabaseStatusIndicator from '@/components/SupabaseStatusIndicator';
 import { getDataSourceInfo, DataSource } from '@/lib/store';
 import { getSyncLogs, getSyncStats, clearSyncLogs, SyncLogEntry } from '@/lib/utils/sync-logger';
 import { checkSupabaseConnection } from '@/lib/supabase/client';
+import { loadSettingsFromSupabase, saveSettingsToSupabase, loadSettingsFromLocalStorage } from '@/lib/supabase/settings-sync';
 
 type SettingSection = 'outlet' | 'operations' | 'receipt' | 'printer' | 'data' | 'notifications' | 'supabase' | 'payment' | 'tax' | 'appearance' | 'security';
 type PaymentModalType = 'add-payment' | 'edit-payment' | 'delete-payment' | null;
@@ -191,13 +192,13 @@ function SyncDebugSection() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
           <h4 style={{ fontWeight: 600, fontSize: '0.875rem' }}>Recent Sync Operations</h4>
           <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <button 
+            <button
               className="btn btn-sm btn-outline"
               onClick={() => setShowAllLogs(!showAllLogs)}
             >
               {showAllLogs ? 'Show Less' : 'Show All'}
             </button>
-            <button 
+            <button
               className="btn btn-sm btn-outline"
               onClick={handleClearLogs}
               disabled={syncLogs.length === 0}
@@ -207,16 +208,16 @@ function SyncDebugSection() {
             </button>
           </div>
         </div>
-        
+
         {syncLogs.length > 0 ? (
-          <div style={{ 
-            maxHeight: showAllLogs ? '400px' : '200px', 
+          <div style={{
+            maxHeight: showAllLogs ? '400px' : '200px',
             overflowY: 'auto',
             border: '1px solid var(--gray-200)',
             borderRadius: 'var(--radius-sm)',
           }}>
             {syncLogs.slice(0, showAllLogs ? 50 : 10).map((log) => (
-              <div 
+              <div
                 key={log.id}
                 style={{
                   display: 'flex',
@@ -232,8 +233,8 @@ function SyncDebugSection() {
                 {log.status === 'error' && <XCircle size={14} color="#dc2626" />}
                 {log.status === 'pending' && <RefreshCw size={14} color="#3b82f6" className="animate-spin" />}
                 {log.status === 'retrying' && <RefreshCw size={14} color="#f59e0b" />}
-                
-                <span style={{ 
+
+                <span style={{
                   fontWeight: 500,
                   textTransform: 'uppercase',
                   fontSize: '0.65rem',
@@ -243,27 +244,27 @@ function SyncDebugSection() {
                 }}>
                   {log.operation}
                 </span>
-                
+
                 <span style={{ color: 'var(--text-secondary)' }}>{log.entity}</span>
-                
+
                 {log.entityId && (
                   <span style={{ color: 'var(--gray-400)', fontFamily: 'monospace', fontSize: '0.65rem' }}>
                     {log.entityId.substring(0, 8)}...
                   </span>
                 )}
-                
+
                 {log.error && (
                   <span style={{ color: 'var(--danger)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {log.error}
                   </span>
                 )}
-                
+
                 {log.durationMs !== undefined && (
                   <span style={{ color: 'var(--gray-400)', marginLeft: 'auto' }}>
                     {log.durationMs}ms
                   </span>
                 )}
-                
+
                 <span style={{ color: 'var(--gray-400)', fontSize: '0.65rem' }}>
                   {log.timestamp.toLocaleTimeString()}
                 </span>
@@ -271,9 +272,9 @@ function SyncDebugSection() {
             ))}
           </div>
         ) : (
-          <div style={{ 
-            padding: '2rem', 
-            textAlign: 'center', 
+          <div style={{
+            padding: '2rem',
+            textAlign: 'center',
             color: 'var(--text-secondary)',
             background: 'var(--gray-50)',
             borderRadius: 'var(--radius-sm)',
@@ -285,7 +286,7 @@ function SyncDebugSection() {
 
       {/* Actions */}
       <div style={{ display: 'flex', gap: '0.5rem' }}>
-        <button 
+        <button
           className="btn btn-outline"
           onClick={handleRefreshConnection}
           disabled={isRefreshing}
@@ -308,7 +309,7 @@ export default function SettingsPage() {
   const [showExportModal, setShowExportModal] = useState(false);
 
   // Days of week with translations
-  const DAYS_OF_WEEK = useMemo(() => language === 'en' 
+  const DAYS_OF_WEEK = useMemo(() => language === 'en'
     ? ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
     : ['Ahad', 'Isnin', 'Selasa', 'Rabu', 'Khamis', 'Jumaat', 'Sabtu'], [language]);
 
@@ -411,6 +412,51 @@ export default function SettingsPage() {
     setReceiptSettings(savedSettings);
   }, []);
 
+  // Load all settings from Supabase on mount
+  useEffect(() => {
+    const loadSettings = async () => {
+      try {
+        // Try Supabase first
+        const supabaseSettings = await loadSettingsFromSupabase();
+
+        if (supabaseSettings) {
+          console.log('[Settings Page] Loaded settings from Supabase');
+          setOutletSettings(supabaseSettings.outlet);
+          setOperatingHours(DAYS_OF_WEEK.map((day, idx) => ({
+            dayOfWeek: idx,
+            dayName: day,
+            isOpen: supabaseSettings.operatingHours[day]?.isOpen ?? !(supabaseSettings.operatingHours[day]?.closed) ?? (idx !== 0),
+            openTime: supabaseSettings.operatingHours[day]?.open ?? '08:00',
+            closeTime: supabaseSettings.operatingHours[day]?.close ?? '22:00',
+          })));
+          setNotificationSettings(prev => ({
+            ...prev,
+            lowStockAlert: supabaseSettings.notification.lowStock,
+            equipmentReminder: supabaseSettings.notification.equipmentReminder,
+          }));
+          setSocialMedia(supabaseSettings.socialMedia);
+          setAppearanceSettings(prev => ({ ...prev, ...supabaseSettings.appearance }));
+          setSecuritySettings(prev => ({ ...prev, ...supabaseSettings.security }));
+        } else {
+          // Fallback to localStorage
+          console.log('[Settings Page] Loading from localStorage (Supabase unavailable)');
+          const localSettings = loadSettingsFromLocalStorage();
+          setOutletSettings(localSettings.outlet);
+          setNotificationSettings(prev => ({
+            ...prev,
+            lowStockAlert: localSettings.notification.lowStock,
+            equipmentReminder: localSettings.notification.equipmentReminder,
+          }));
+          setSocialMedia(localSettings.socialMedia);
+        }
+      } catch (error) {
+        console.error('[Settings Page] Error loading settings:', error);
+      }
+    };
+
+    loadSettings();
+  }, [DAYS_OF_WEEK]);
+
   // Notification settings
   const [notificationSettings, setNotificationSettings] = useState({
     lowStockAlert: true,
@@ -422,22 +468,67 @@ export default function SettingsPage() {
 
   const handleSaveSettings = async () => {
     setIsSaving(true);
-    
-    // Simulate save
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // In a real app, would save to backend/localStorage here
-    localStorage.setItem('abangbob_outlet_settings', JSON.stringify(outletSettings));
-    localStorage.setItem('abangbob_operating_hours', JSON.stringify(operatingHours));
-    localStorage.setItem('abangbob_receipt_settings', JSON.stringify(receiptSettings));
-    localStorage.setItem('abangbob_notification_settings', JSON.stringify(notificationSettings));
-    localStorage.setItem('abangbob_social_media', JSON.stringify(socialMedia));
-    localStorage.setItem('abangbob_payment_settings', JSON.stringify(paymentMethods));
-    localStorage.setItem('abangbob_appearance_settings', JSON.stringify(appearanceSettings));
-    localStorage.setItem('abangbob_security_settings', JSON.stringify(securitySettings));
-    
-    setIsSaving(false);
-    alert(t('settings.saveSuccess'));
+
+    try {
+      // Prepare operating hours in the format for Supabase
+      const operatingHoursMap: Record<string, { open: string; close: string; isOpen: boolean }> = {};
+      operatingHours.forEach(day => {
+        operatingHoursMap[day.dayName] = {
+          open: day.openTime,
+          close: day.closeTime,
+          isOpen: day.isOpen,
+        };
+      });
+
+      // Save to Supabase (also saves to localStorage as backup)
+      const success = await saveSettingsToSupabase({
+        outlet: outletSettings,
+        operatingHours: operatingHoursMap,
+        receipt: {
+          headerText: receiptSettings.headerText || '',
+          footerText: receiptSettings.footerText || 'Terima kasih!',
+          showLogo: receiptSettings.showLogoTop ?? true,
+          autoPrint: receiptSettings.autoPrint ?? false,
+          printKitchenSlip: receiptSettings.printKitchenSlip ?? true,
+        },
+        notification: {
+          lowStock: notificationSettings.lowStockAlert,
+          orderReminder: notificationSettings.newOrderSound,
+          equipmentReminder: notificationSettings.equipmentReminder,
+        },
+        socialMedia,
+        paymentMethods: {
+          cash: paymentMethods.some(p => p.code === 'cash' && p.isEnabled),
+          card: paymentMethods.some(p => p.code === 'card' && p.isEnabled),
+          qr: paymentMethods.some(p => p.code === 'qr' && p.isEnabled),
+          ewallet: paymentMethods.some(p => p.code === 'ewallet' && p.isEnabled),
+        },
+        appearance: {
+          sidebarCollapsed: false,
+        },
+        security: {
+          requirePIN: securitySettings.pinMinLength >= 4,
+          autoLogout: securitySettings.autoLockRegister,
+          autoLogoutMinutes: securitySettings.sessionTimeoutMinutes,
+        },
+      });
+
+      if (success) {
+        console.log('[Settings] Saved to Supabase successfully');
+      } else {
+        console.log('[Settings] Saved to localStorage only (Supabase unavailable)');
+      }
+
+      // Also save receipt settings using the existing service
+      saveReceiptSettings(receiptSettings);
+
+      alert(t('settings.saveSuccess'));
+    } catch (error) {
+      console.error('[Settings] Save error:', error);
+      alert('Gagal menyimpan settings. Sila cuba lagi.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleExportData = () => {
@@ -472,14 +563,14 @@ export default function SettingsPage() {
         localStorage.removeItem(key);
       }
     });
-    
+
     setShowResetModal(false);
     alert(t('settings.resetSuccess'));
     window.location.reload();
   };
 
   const updateOperatingHour = (dayIdx: number, field: string, value: string | boolean) => {
-    setOperatingHours(prev => prev.map((day, idx) => 
+    setOperatingHours(prev => prev.map((day, idx) =>
       idx === dayIdx ? { ...day, [field]: value } : day
     ));
   };
@@ -578,8 +669,8 @@ export default function SettingsPage() {
               {t('settings.subtitle')}
             </p>
           </div>
-          <button 
-            className="btn btn-primary" 
+          <button
+            className="btn btn-primary"
             onClick={handleSaveSettings}
             disabled={isSaving}
           >
@@ -678,8 +769,8 @@ export default function SettingsPage() {
                     <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{currentStaff.role}</div>
                   </div>
                 </div>
-                <button 
-                  className="btn btn-outline btn-sm" 
+                <button
+                  className="btn btn-outline btn-sm"
                   onClick={logoutStaff}
                   style={{ width: '100%' }}
                 >
@@ -829,7 +920,7 @@ export default function SettingsPage() {
                     <div className="form-group">
                       <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                          <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/>
+                          <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z" />
                         </svg>
                         TikTok
                       </label>
@@ -858,9 +949,9 @@ export default function SettingsPage() {
                 </div>
 
                 {/* Multi-outlet Ready Banner */}
-                <div style={{ 
-                  marginTop: '1.5rem', 
-                  padding: '1rem', 
+                <div style={{
+                  marginTop: '1.5rem',
+                  padding: '1rem',
                   background: 'linear-gradient(135deg, #dbeafe 0%, #ede9fe 100%)',
                   borderRadius: 'var(--radius-md)',
                   border: '1px solid #818cf8'
@@ -1032,13 +1123,13 @@ export default function SettingsPage() {
                         {printerSettings.isConnected ? 'Printer Disambung' : 'Printer Tidak Disambung'}
                       </div>
                       <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
-                        {printerSettings.isConnected 
-                          ? 'Thermal printer sedia untuk digunakan' 
+                        {printerSettings.isConnected
+                          ? 'Thermal printer sedia untuk digunakan'
                           : 'Klik "Sambung Printer" untuk mula'}
                       </div>
                     </div>
                   </div>
-                  
+
                   {printerSettings.isConnected ? (
                     <button
                       className="btn btn-outline"
@@ -1095,9 +1186,9 @@ export default function SettingsPage() {
 
                 {/* Auto-cut Setting */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '1.5rem' }}>
-                  <label style={{ 
-                    display: 'flex', 
-                    justifyContent: 'space-between', 
+                  <label style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
                     alignItems: 'center',
                     padding: '1rem',
                     background: 'var(--gray-100)',
@@ -1118,9 +1209,9 @@ export default function SettingsPage() {
                     />
                   </label>
 
-                  <label style={{ 
-                    display: 'flex', 
-                    justifyContent: 'space-between', 
+                  <label style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
                     alignItems: 'center',
                     padding: '1rem',
                     background: 'var(--gray-100)',
@@ -1143,9 +1234,9 @@ export default function SettingsPage() {
                 </div>
 
                 {/* Test Buttons */}
-                <div style={{ 
-                  marginTop: '1.5rem', 
-                  paddingTop: '1.5rem', 
+                <div style={{
+                  marginTop: '1.5rem',
+                  paddingTop: '1.5rem',
                   borderTop: '1px solid var(--gray-200)',
                   display: 'flex',
                   gap: '0.75rem',
@@ -1171,7 +1262,7 @@ export default function SettingsPage() {
                 </div>
 
                 {/* Help Section */}
-                <div style={{ 
+                <div style={{
                   marginTop: '1.5rem',
                   padding: '1rem',
                   background: '#eff6ff',
@@ -1202,7 +1293,7 @@ export default function SettingsPage() {
                     </div>
                     <div className="card-subtitle">Tetapkan kaedah pembayaran yang diterima</div>
                   </div>
-                  <button 
+                  <button
                     className="btn btn-primary btn-sm"
                     onClick={() => {
                       setPaymentForm({
@@ -1224,11 +1315,11 @@ export default function SettingsPage() {
                   {paymentMethods
                     .sort((a, b) => a.sortOrder - b.sortOrder)
                     .map((pm) => (
-                      <div 
+                      <div
                         key={pm.id}
-                        style={{ 
-                          display: 'flex', 
-                          justifyContent: 'space-between', 
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
                           alignItems: 'center',
                           padding: '1rem',
                           background: 'var(--gray-100)',
@@ -1237,14 +1328,14 @@ export default function SettingsPage() {
                         }}
                       >
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                          <div style={{ 
-                            width: '40px', 
-                            height: '40px', 
-                            background: pm.color, 
-                            borderRadius: 'var(--radius-md)', 
-                            display: 'flex', 
-                            alignItems: 'center', 
-                            justifyContent: 'center', 
+                          <div style={{
+                            width: '40px',
+                            height: '40px',
+                            background: pm.color,
+                            borderRadius: 'var(--radius-md)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
                             color: 'white',
                             fontWeight: 700,
                             fontSize: '0.7rem'
@@ -1334,7 +1425,7 @@ export default function SettingsPage() {
                     </div>
                     <div className="card-subtitle">Tetapkan kadar cukai untuk produk</div>
                   </div>
-                  <button 
+                  <button
                     className="btn btn-primary btn-sm"
                     onClick={() => {
                       setTaxForm({
@@ -1355,11 +1446,11 @@ export default function SettingsPage() {
                 {taxRates.length > 0 ? (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                     {taxRates.map((tax) => (
-                      <div 
+                      <div
                         key={tax.id}
-                        style={{ 
-                          display: 'flex', 
-                          justifyContent: 'space-between', 
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
                           alignItems: 'center',
                           padding: '1rem',
                           background: 'var(--gray-100)',
@@ -1368,14 +1459,14 @@ export default function SettingsPage() {
                         }}
                       >
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                          <div style={{ 
-                            width: '50px', 
-                            height: '40px', 
-                            background: 'var(--primary)', 
-                            borderRadius: 'var(--radius-md)', 
-                            display: 'flex', 
-                            alignItems: 'center', 
-                            justifyContent: 'center', 
+                          <div style={{
+                            width: '50px',
+                            height: '40px',
+                            background: 'var(--primary)',
+                            borderRadius: 'var(--radius-md)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
                             color: 'white',
                             fontWeight: 700,
                             fontSize: '0.9rem'
@@ -1430,8 +1521,8 @@ export default function SettingsPage() {
                   <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>
                     <Percent size={48} style={{ marginBottom: '1rem', opacity: 0.5 }} />
                     <p>Belum ada kadar cukai</p>
-                    <button 
-                      className="btn btn-primary btn-sm" 
+                    <button
+                      className="btn btn-primary btn-sm"
                       style={{ marginTop: '1rem' }}
                       onClick={() => {
                         setTaxForm({
@@ -1502,7 +1593,7 @@ export default function SettingsPage() {
                         }}>
                           {theme.icon}
                         </div>
-                        <span style={{ 
+                        <span style={{
                           fontWeight: appearanceSettings.theme === theme.value ? 600 : 400,
                           color: appearanceSettings.theme === theme.value ? 'var(--primary)' : 'var(--text-primary)'
                         }}>
@@ -1517,9 +1608,9 @@ export default function SettingsPage() {
                 </div>
 
                 <div style={{ marginTop: '1.5rem' }}>
-                  <label style={{ 
-                    display: 'flex', 
-                    justifyContent: 'space-between', 
+                  <label style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
                     alignItems: 'center',
                     padding: '1rem',
                     background: 'var(--gray-100)',
@@ -1590,9 +1681,9 @@ export default function SettingsPage() {
                     </small>
                   </div>
 
-                  <label style={{ 
-                    display: 'flex', 
-                    justifyContent: 'space-between', 
+                  <label style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
                     alignItems: 'center',
                     padding: '1rem',
                     background: 'var(--gray-100)',
@@ -1613,9 +1704,9 @@ export default function SettingsPage() {
                     />
                   </label>
 
-                  <label style={{ 
-                    display: 'flex', 
-                    justifyContent: 'space-between', 
+                  <label style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
                     alignItems: 'center',
                     padding: '1rem',
                     background: 'var(--gray-100)',
@@ -1651,9 +1742,9 @@ export default function SettingsPage() {
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                  <label style={{ 
-                    display: 'flex', 
-                    justifyContent: 'space-between', 
+                  <label style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
                     alignItems: 'center',
                     padding: '1rem',
                     background: 'var(--gray-100)',
@@ -1674,9 +1765,9 @@ export default function SettingsPage() {
                     />
                   </label>
 
-                  <label style={{ 
-                    display: 'flex', 
-                    justifyContent: 'space-between', 
+                  <label style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
                     alignItems: 'center',
                     padding: '1rem',
                     background: 'var(--gray-100)',
@@ -1697,9 +1788,9 @@ export default function SettingsPage() {
                     />
                   </label>
 
-                  <label style={{ 
-                    display: 'flex', 
-                    justifyContent: 'space-between', 
+                  <label style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
                     alignItems: 'center',
                     padding: '1rem',
                     background: 'var(--gray-100)',
@@ -1720,9 +1811,9 @@ export default function SettingsPage() {
                     />
                   </label>
 
-                  <label style={{ 
-                    display: 'flex', 
-                    justifyContent: 'space-between', 
+                  <label style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
                     alignItems: 'center',
                     padding: '1rem',
                     background: 'var(--gray-100)',
@@ -1827,9 +1918,9 @@ export default function SettingsPage() {
                     <div className="card-title">{t('settings.supabaseFeatures')}</div>
                   </div>
                   <div className="grid grid-cols-2" style={{ gap: '1rem' }}>
-                    <div style={{ 
-                      padding: '1rem', 
-                      background: 'var(--gray-100)', 
+                    <div style={{
+                      padding: '1rem',
+                      background: 'var(--gray-100)',
                       borderRadius: 'var(--radius-md)',
                       opacity: isSupabaseConnected ? 1 : 0.5
                     }}>
@@ -1838,9 +1929,9 @@ export default function SettingsPage() {
                         {t('settings.realTimeSyncDesc')}
                       </div>
                     </div>
-                    <div style={{ 
-                      padding: '1rem', 
-                      background: 'var(--gray-100)', 
+                    <div style={{
+                      padding: '1rem',
+                      background: 'var(--gray-100)',
                       borderRadius: 'var(--radius-md)',
                       opacity: isSupabaseConnected ? 1 : 0.5
                     }}>
@@ -1849,9 +1940,9 @@ export default function SettingsPage() {
                         {t('settings.authenticationDesc')}
                       </div>
                     </div>
-                    <div style={{ 
-                      padding: '1rem', 
-                      background: 'var(--gray-100)', 
+                    <div style={{
+                      padding: '1rem',
+                      background: 'var(--gray-100)',
                       borderRadius: 'var(--radius-md)',
                       opacity: isSupabaseConnected ? 1 : 0.5
                     }}>
@@ -1860,9 +1951,9 @@ export default function SettingsPage() {
                         {t('settings.cloudStorageDesc')}
                       </div>
                     </div>
-                    <div style={{ 
-                      padding: '1rem', 
-                      background: 'var(--gray-100)', 
+                    <div style={{
+                      padding: '1rem',
+                      background: 'var(--gray-100)',
                       borderRadius: 'var(--radius-md)',
                       opacity: isSupabaseConnected ? 1 : 0.5
                     }}>
@@ -1888,9 +1979,9 @@ export default function SettingsPage() {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2" style={{ gap: '1rem' }}>
-                  <div style={{ 
-                    padding: '1.5rem', 
-                    background: 'var(--gray-100)', 
+                  <div style={{
+                    padding: '1.5rem',
+                    background: 'var(--gray-100)',
                     borderRadius: 'var(--radius-md)',
                     textAlign: 'center'
                   }}>
@@ -1905,9 +1996,9 @@ export default function SettingsPage() {
                     </button>
                   </div>
 
-                  <div style={{ 
-                    padding: '1.5rem', 
-                    background: 'var(--gray-100)', 
+                  <div style={{
+                    padding: '1.5rem',
+                    background: 'var(--gray-100)',
                     borderRadius: 'var(--radius-md)',
                     textAlign: 'center'
                   }}>
@@ -1923,10 +2014,10 @@ export default function SettingsPage() {
                   </div>
                 </div>
 
-                <div style={{ 
+                <div style={{
                   marginTop: '1.5rem',
-                  padding: '1.5rem', 
-                  background: '#fee2e2', 
+                  padding: '1.5rem',
+                  background: '#fee2e2',
                   borderRadius: 'var(--radius-md)',
                   border: '1px solid #ef4444'
                 }}>
@@ -1955,9 +2046,9 @@ export default function SettingsPage() {
           maxWidth="400px"
         >
           <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-            <div style={{ 
-              width: '60px', height: '60px', 
-              background: '#dbeafe', borderRadius: '50%', 
+            <div style={{
+              width: '60px', height: '60px',
+              background: '#dbeafe', borderRadius: '50%',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               margin: '0 auto 1rem'
             }}>
@@ -1986,9 +2077,9 @@ export default function SettingsPage() {
           maxWidth="400px"
         >
           <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-            <div style={{ 
-              width: '60px', height: '60px', 
-              background: '#fee2e2', borderRadius: '50%', 
+            <div style={{
+              width: '60px', height: '60px',
+              background: '#fee2e2', borderRadius: '50%',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               margin: '0 auto 1rem'
             }}>
@@ -2107,12 +2198,12 @@ export default function SettingsPage() {
           </div>
 
           <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1.5rem' }}>
-            <button 
-              className="btn btn-outline" 
+            <button
+              className="btn btn-outline"
               onClick={() => {
                 setPaymentModalType(null);
                 setSelectedPaymentMethod(null);
-              }} 
+              }}
               style={{ flex: 1 }}
             >
               Batal
@@ -2176,25 +2267,25 @@ export default function SettingsPage() {
             </p>
           </div>
           <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <button 
-              className="btn btn-outline" 
+            <button
+              className="btn btn-outline"
               onClick={() => {
                 setPaymentModalType(null);
                 setSelectedPaymentMethod(null);
-              }} 
+              }}
               style={{ flex: 1 }}
             >
               Batal
             </button>
-            <button 
-              className="btn btn-danger" 
+            <button
+              className="btn btn-danger"
               onClick={() => {
                 if (selectedPaymentMethod) {
                   deletePaymentMethod(selectedPaymentMethod.id);
                 }
                 setPaymentModalType(null);
                 setSelectedPaymentMethod(null);
-              }} 
+              }}
               style={{ flex: 1 }}
             >
               Padam
@@ -2289,12 +2380,12 @@ export default function SettingsPage() {
           </div>
 
           <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1.5rem' }}>
-            <button 
-              className="btn btn-outline" 
+            <button
+              className="btn btn-outline"
               onClick={() => {
                 setTaxModalType(null);
                 setSelectedTaxRate(null);
-              }} 
+              }}
               style={{ flex: 1 }}
             >
               Batal
@@ -2362,25 +2453,25 @@ export default function SettingsPage() {
             )}
           </div>
           <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <button 
-              className="btn btn-outline" 
+            <button
+              className="btn btn-outline"
               onClick={() => {
                 setTaxModalType(null);
                 setSelectedTaxRate(null);
-              }} 
+              }}
               style={{ flex: 1 }}
             >
               Batal
             </button>
-            <button 
-              className="btn btn-danger" 
+            <button
+              className="btn btn-danger"
               onClick={() => {
                 if (selectedTaxRate && !selectedTaxRate.isDefault) {
                   deleteTaxRate(selectedTaxRate.id);
                 }
                 setTaxModalType(null);
                 setSelectedTaxRate(null);
-              }} 
+              }}
               disabled={selectedTaxRate?.isDefault}
               style={{ flex: 1 }}
             >
