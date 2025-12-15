@@ -1106,9 +1106,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   // Order actions
   const addOrder = useCallback(async (orderData: Omit<Order, 'id' | 'orderNumber'>): Promise<Order> => {
     const timestamp = Date.now();
+    // Generate proper UUID for Supabase compatibility
+    const orderId = typeof crypto !== 'undefined' && crypto.randomUUID
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
     const newOrder: Order = {
       ...orderData,
-      id: `order_${timestamp}`,
+      id: orderId,
       orderNumber: `ORD-${timestamp.toString().slice(-6)}`,
     };
 
