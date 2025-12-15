@@ -3,12 +3,13 @@
 import { useState, useMemo } from 'react';
 import MainLayout from '@/components/MainLayout';
 import { useStaffPortal, useStaff } from '@/lib/store';
+import { useAuth } from '@/lib/contexts/AuthContext';
 import Link from 'next/link';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import Modal from '@/components/Modal';
 import StaffPortalNav from '@/components/StaffPortalNav';
-import { 
-  CheckSquare, 
+import {
+  CheckSquare,
   Square,
   Camera,
   FileText,
@@ -18,15 +19,14 @@ import {
   Moon,
   AlertCircle,
   CheckCircle,
-  History
+  History,
+  CalendarX
 } from 'lucide-react';
 
-// Demo: Using staff ID 2 (Siti Nurhaliza) as the logged-in user
-const CURRENT_STAFF_ID = '2';
-
 export default function ChecklistPage() {
-  const { staff, isInitialized } = useStaff();
-  const { 
+  const { isInitialized } = useStaff();
+  const { currentStaff } = useAuth();
+  const {
     getChecklistTemplatesByType,
     getTodayChecklist,
     startChecklist,
@@ -36,9 +36,7 @@ export default function ChecklistPage() {
     schedules,
     shifts
   } = useStaffPortal();
-  
-  const currentStaff = staff.find(s => s.id === CURRENT_STAFF_ID);
-  
+
   const [activeTab, setActiveTab] = useState<'opening' | 'closing'>('opening');
   const [showPhotoModal, setShowPhotoModal] = useState(false);
   const [showNotesModal, setShowNotesModal] = useState(false);
@@ -50,8 +48,9 @@ export default function ChecklistPage() {
   // Get today's schedule to determine shift type
   const today = new Date().toISOString().split('T')[0];
   const todaySchedule = useMemo(() => {
-    return schedules.find(s => s.staffId === CURRENT_STAFF_ID && s.date === today);
-  }, [schedules, today]);
+    if (!currentStaff) return undefined;
+    return schedules.find(s => s.staffId === currentStaff.id && s.date === today);
+  }, [schedules, today, currentStaff]);
 
   const currentShift = useMemo(() => {
     if (!todaySchedule) return null;
@@ -73,16 +72,17 @@ export default function ChecklistPage() {
 
   // Start a new checklist if needed
   const handleStartChecklist = () => {
-    if (!currentStaff || !todaySchedule) return;
-    startChecklist(activeTab, CURRENT_STAFF_ID, currentStaff.name, todaySchedule.shiftId);
+    if (!currentStaff) return;
+    const shiftId = todaySchedule?.shiftId || 'unscheduled';
+    startChecklist(activeTab, currentStaff.id, currentStaff.name, shiftId);
   };
 
   // Toggle item completion
   const handleToggleItem = (templateId: string, currentlyCompleted: boolean) => {
     if (!currentChecklist) return;
-    
+
     const template = currentTemplates.find(t => t.id === templateId);
-    
+
     // If requires photo and not completed, open photo modal
     if (!currentlyCompleted && template?.requirePhoto) {
       setSelectedItemId(templateId);
@@ -90,7 +90,7 @@ export default function ChecklistPage() {
       setShowPhotoModal(true);
       return;
     }
-    
+
     // If requires notes and not completed, open notes modal
     if (!currentlyCompleted && template?.requireNotes && !template?.requirePhoto) {
       setSelectedItemId(templateId);
@@ -98,7 +98,7 @@ export default function ChecklistPage() {
       setShowNotesModal(true);
       return;
     }
-    
+
     // Otherwise just toggle
     updateChecklistItem(currentChecklist.id, templateId, {
       isCompleted: !currentlyCompleted,
@@ -109,22 +109,22 @@ export default function ChecklistPage() {
   // Submit photo for item
   const handlePhotoSubmit = () => {
     if (!currentChecklist || !selectedItemId) return;
-    
+
     const template = currentTemplates.find(t => t.id === selectedItemId);
-    
+
     // If also requires notes, switch to notes modal
     if (template?.requireNotes) {
       setShowPhotoModal(false);
       setShowNotesModal(true);
       return;
     }
-    
+
     updateChecklistItem(currentChecklist.id, selectedItemId, {
       isCompleted: true,
       completedAt: new Date().toISOString(),
       photoUrl: photoUrl || 'photo_uploaded.jpg',
     });
-    
+
     setShowPhotoModal(false);
     setSelectedItemId(null);
     setPhotoUrl('');
@@ -133,14 +133,14 @@ export default function ChecklistPage() {
   // Submit notes for item
   const handleNotesSubmit = () => {
     if (!currentChecklist || !selectedItemId) return;
-    
+
     updateChecklistItem(currentChecklist.id, selectedItemId, {
       isCompleted: true,
       completedAt: new Date().toISOString(),
       photoUrl: photoUrl || undefined,
       notes: notes,
     });
-    
+
     setShowNotesModal(false);
     setSelectedItemId(null);
     setPhotoUrl('');
@@ -195,10 +195,10 @@ export default function ChecklistPage() {
         </div>
 
         {/* Shift Info */}
-        {currentShift && (
-          <div 
+        {currentShift ? (
+          <div
             className="staff-shift-badge"
-            style={{ 
+            style={{
               marginBottom: '1.5rem',
               padding: '1rem 1.25rem',
               background: `${currentShift.color}15`,
@@ -216,6 +216,30 @@ export default function ChecklistPage() {
               </div>
               <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
                 {currentShift.startTime} - {currentShift.endTime}
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div
+            className="staff-shift-badge"
+            style={{
+              marginBottom: '1.5rem',
+              padding: '1rem 1.25rem',
+              background: 'var(--gray-100)',
+              borderLeft: '4px solid var(--gray-400)',
+              borderRadius: 'var(--radius-lg)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.75rem'
+            }}
+          >
+            <CalendarX size={24} color="var(--gray-500)" />
+            <div>
+              <div style={{ fontWeight: 600, color: 'var(--gray-700)' }}>
+                Tiada Jadual
+              </div>
+              <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+                Anda tiada shift berjadual hari ini
               </div>
             </div>
           </div>
@@ -261,11 +285,11 @@ export default function ChecklistPage() {
           {currentChecklist && (
             <div style={{ marginBottom: '1.5rem' }}>
               <div className="progress-bar" style={{ height: '10px', borderRadius: '5px' }}>
-                <div 
+                <div
                   className="progress-bar-fill"
-                  style={{ 
+                  style={{
                     width: `${progressPercent}%`,
-                    background: progressPercent === 100 
+                    background: progressPercent === 100
                       ? 'linear-gradient(135deg, #10b981 0%, #34d399 100%)'
                       : 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
                     borderRadius: '5px'
@@ -278,11 +302,11 @@ export default function ChecklistPage() {
           {/* Not Started State */}
           {!currentChecklist && currentTemplates.length > 0 && (
             <div style={{ textAlign: 'center', padding: '2rem' }}>
-              <div 
-                style={{ 
-                  width: 80, 
-                  height: 80, 
-                  borderRadius: '50%', 
+              <div
+                style={{
+                  width: 80,
+                  height: 80,
+                  borderRadius: '50%',
                   background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.05) 100%)',
                   display: 'flex',
                   alignItems: 'center',
@@ -316,14 +340,14 @@ export default function ChecklistPage() {
             <div className="staff-stagger" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               {currentChecklist.items.map((item, index) => {
                 const template = currentTemplates.find(t => t.id === item.templateId);
-                
+
                 return (
-                  <div 
+                  <div
                     key={item.templateId}
-                    style={{ 
+                    style={{
                       padding: '1rem',
                       borderRadius: 'var(--radius-lg)',
-                      background: item.isCompleted 
+                      background: item.isCompleted
                         ? 'linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(52, 211, 153, 0.05) 100%)'
                         : 'var(--gray-50)',
                       border: `1px solid ${item.isCompleted ? '#86efac' : 'var(--gray-200)'}`,
@@ -338,22 +362,22 @@ export default function ChecklistPage() {
                       ) : (
                         <Square size={24} color="var(--gray-400)" />
                       )}
-                      
+
                       <div style={{ flex: 1 }}>
-                        <div style={{ 
+                        <div style={{
                           fontWeight: 500,
                           textDecoration: item.isCompleted ? 'line-through' : 'none',
                           color: item.isCompleted ? 'var(--text-secondary)' : 'inherit'
                         }}>
                           {index + 1}. {item.title}
                         </div>
-                        
+
                         {template?.description && (
                           <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
                             {template.description}
                           </div>
                         )}
-                        
+
                         {/* Requirements */}
                         <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem', flexWrap: 'wrap' }}>
                           {template?.requirePhoto && (
@@ -369,7 +393,7 @@ export default function ChecklistPage() {
                             </span>
                           )}
                         </div>
-                        
+
                         {/* Completion info */}
                         {item.isCompleted && item.completedAt && (
                           <div style={{ fontSize: '0.7rem', color: 'var(--text-light)', marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
@@ -377,11 +401,11 @@ export default function ChecklistPage() {
                             Selesai pada {new Date(item.completedAt).toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit' })}
                           </div>
                         )}
-                        
+
                         {item.notes && (
-                          <div style={{ 
-                            fontSize: '0.75rem', 
-                            color: 'var(--text-secondary)', 
+                          <div style={{
+                            fontSize: '0.75rem',
+                            color: 'var(--text-secondary)',
                             marginTop: '0.5rem',
                             padding: '0.5rem',
                             background: 'var(--gray-100)',
@@ -401,7 +425,7 @@ export default function ChecklistPage() {
           {/* Submit Button */}
           {currentChecklist && currentChecklist.status === 'in_progress' && (
             <div style={{ marginTop: '1.5rem' }}>
-              <button 
+              <button
                 className={`btn ${completedCount < totalCount ? 'btn-outline' : 'btn-primary'}`}
                 style={{ width: '100%' }}
                 onClick={handleSubmitChecklist}
@@ -446,11 +470,11 @@ export default function ChecklistPage() {
           maxWidth="400px"
         >
           <div style={{ textAlign: 'center', padding: '1.5rem' }}>
-            <div 
-              style={{ 
-                width: 80, 
-                height: 80, 
-                borderRadius: '50%', 
+            <div
+              style={{
+                width: 80,
+                height: 80,
+                borderRadius: '50%',
                 background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.05) 100%)',
                 display: 'flex',
                 alignItems: 'center',
@@ -463,11 +487,11 @@ export default function ChecklistPage() {
             <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
               Ambil gambar sebagai bukti
             </p>
-            
+
             {/* In a real app, this would be a file upload */}
-            <div style={{ 
-              padding: '2rem', 
-              border: '2px dashed var(--gray-300)', 
+            <div style={{
+              padding: '2rem',
+              border: '2px dashed var(--gray-300)',
               borderRadius: 'var(--radius-lg)',
               marginBottom: '1rem',
               cursor: 'pointer',
@@ -478,7 +502,7 @@ export default function ChecklistPage() {
                 Klik untuk ambil gambar
               </div>
             </div>
-            
+
             <div style={{ display: 'flex', gap: '0.5rem' }}>
               <button className="btn btn-outline" onClick={() => setShowPhotoModal(false)} style={{ flex: 1 }}>
                 Batal
@@ -507,7 +531,7 @@ export default function ChecklistPage() {
               placeholder="Masukkan catatan..."
             />
           </div>
-          
+
           <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
             <button className="btn btn-outline" onClick={() => setShowNotesModal(false)} style={{ flex: 1 }}>
               Batal
