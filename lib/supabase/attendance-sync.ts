@@ -72,7 +72,7 @@ export async function getAllowedLocations() {
     const supabase = getSupabaseClient();
     if (!supabase) return { success: false, error: 'Supabase not configured', data: null };
 
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
         .from('allowed_locations')
         .select('*')
         .eq('is_active', true)
@@ -90,7 +90,7 @@ export async function addAllowedLocation(location: Omit<AllowedLocation, 'id' | 
     const supabase = getSupabaseClient();
     if (!supabase) return { success: false, error: 'Supabase not configured', data: null };
 
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
         .from('allowed_locations')
         .insert([location])
         .select()
@@ -108,7 +108,7 @@ export async function updateAllowedLocation(id: string, updates: Partial<Allowed
     const supabase = getSupabaseClient();
     if (!supabase) return { success: false, error: 'Supabase not configured', data: null };
 
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
         .from('allowed_locations')
         .update(updates)
         .eq('id', id)
@@ -127,7 +127,7 @@ export async function deleteAllowedLocation(id: string) {
     const supabase = getSupabaseClient();
     if (!supabase) return { success: false, error: 'Supabase not configured' };
 
-    const { error } = await supabase
+    const { error } = await (supabase as any)
         .from('allowed_locations')
         .update({ is_active: false })
         .eq('id', id);
@@ -155,7 +155,7 @@ export async function verifyLocation(latitude: number, longitude: number) {
         };
     }
 
-    const { data: locations, error } = await supabase
+    const { data: locations, error } = await (supabase as any)
         .from('allowed_locations')
         .select('*')
         .eq('is_active', true);
@@ -207,7 +207,7 @@ export async function uploadAttendancePhoto(staffId: string, file: File): Promis
     const fileExt = file.name.split('.').pop();
     const fileName = `${staffId}/${Date.now()}.${fileExt}`;
 
-    const { data, error } = await supabase.storage
+    const { data, error } = await (supabase as any).storage
         .from('attendance-photos')
         .upload(fileName, file, {
             cacheControl: '3600',
@@ -220,7 +220,7 @@ export async function uploadAttendancePhoto(staffId: string, file: File): Promis
     }
 
     // Get public URL
-    const { data: { publicUrl } } = supabase.storage
+    const { data: { publicUrl } } = (supabase as any).storage
         .from('attendance-photos')
         .getPublicUrl(data.path);
 
@@ -280,7 +280,7 @@ export async function clockIn(data: ClockInData) {
             selfie_url,
         };
 
-        const { data: record, error: insertError } = await supabase
+        const { data: record, error: insertError } = await (supabase as any)
             .from('attendance')
             .insert([attendance_data])
             .select()
@@ -315,7 +315,7 @@ export async function clockOut(attendanceId: string) {
     const supabase = getSupabaseClient();
     if (!supabase) return { success: false, error: 'Supabase not configured', data: null };
 
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
         .from('attendance')
         .update({ clock_out: new Date().toISOString() })
         .eq('id', attendanceId)
@@ -340,7 +340,7 @@ export async function getTodayAttendance(staffId: string) {
 
     const today = new Date().toISOString().split('T')[0];
 
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
         .from('attendance')
         .select(`
       *,
@@ -364,7 +364,7 @@ export async function getAttendanceHistory(staffId: string, limit = 30) {
     const supabase = getSupabaseClient();
     if (!supabase) return { success: false, error: 'Supabase not configured', data: null };
 
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
         .from('attendance')
         .select(`
       *,
@@ -387,7 +387,7 @@ export async function getAllAttendance(startDate?: string, endDate?: string) {
     const supabase = getSupabaseClient();
     if (!supabase) return { success: false, error: 'Supabase not configured', data: null };
 
-    let query = supabase
+    let query = (supabase as any)
         .from('attendance')
         .select(`
       *,
