@@ -7,7 +7,7 @@
 export type UserRole = 'Admin' | 'Manager' | 'Staff';
 
 // Permission categories
-export type PermissionCategory = 
+export type PermissionCategory =
   | 'dashboard'
   | 'pos'
   | 'menu'
@@ -81,7 +81,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     { category: 'order-history', actions: ['view', 'export'] },
     { category: 'void-refund', actions: ['request', 'approve'] },
   ],
-  
+
   Manager: [
     // Most access, but no settings or critical admin functions
     { category: 'dashboard', actions: ['view', 'export'] },
@@ -113,7 +113,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     { category: 'order-history', actions: ['view', 'export'] },
     { category: 'void-refund', actions: ['request', 'approve'] },
   ],
-  
+
   Staff: [
     // Limited access - primarily operational
     { category: 'dashboard', actions: ['view'] },
@@ -139,8 +139,8 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
 // Navigation items that should be visible to each role
 export const NAV_VISIBILITY: Record<string, UserRole[]> = {
   // Main
-  '/': ['Admin', 'Manager', 'Staff'],
-  
+  '/': ['Admin', 'Manager'],
+
   // Staff Portal - All
   '/staff-portal': ['Admin', 'Manager', 'Staff'],
   '/staff-portal/schedule': ['Admin', 'Manager', 'Staff'],
@@ -152,7 +152,7 @@ export const NAV_VISIBILITY: Record<string, UserRole[]> = {
   '/staff-portal/training': ['Admin', 'Manager', 'Staff'],
   '/staff-portal/requests': ['Admin', 'Manager', 'Staff'],
   '/staff-portal/swap-shift': ['Admin', 'Manager', 'Staff'],
-  
+
   // Operations
   '/pos': ['Admin', 'Manager', 'Staff'],
   '/order-history': ['Admin', 'Manager', 'Staff'],
@@ -160,14 +160,14 @@ export const NAV_VISIBILITY: Record<string, UserRole[]> = {
   '/kds': ['Admin', 'Manager', 'Staff'],
   '/delivery': ['Admin', 'Manager', 'Staff'],
   '/order-display': ['Admin', 'Manager', 'Staff'],
-  
+
   // Inventory & Production
   '/inventory': ['Admin', 'Manager', 'Staff'],
   '/production': ['Admin', 'Manager', 'Staff'],
   '/equipment': ['Admin', 'Manager', 'Staff'],
   '/recipes': ['Admin', 'Manager', 'Staff'],
   '/suppliers': ['Admin', 'Manager'],
-  
+
   // HR & Finance
   '/hr': ['Admin', 'Manager'],
   '/hr/staff': ['Admin', 'Manager'],
@@ -181,11 +181,11 @@ export const NAV_VISIBILITY: Record<string, UserRole[]> = {
   '/hr/checklist-config': ['Admin', 'Manager'],
   '/hr/refund-approvals': ['Admin', 'Manager'],
   '/finance': ['Admin', 'Manager'],
-  
+
   // Marketing
   '/customers': ['Admin', 'Manager'],
   '/promotions': ['Admin', 'Manager'],
-  
+
   // Reports & Settings
   '/analytics': ['Admin', 'Manager'],
   '/audit-log': ['Admin', 'Manager'],
@@ -203,12 +203,12 @@ export function hasPermission(
   action: ActionType
 ): boolean {
   if (!role) return false;
-  
+
   const rolePermissions = ROLE_PERMISSIONS[role];
   const categoryPermission = rolePermissions.find(p => p.category === category);
-  
+
   if (!categoryPermission) return false;
-  
+
   return categoryPermission.actions.includes(action);
 }
 
@@ -217,18 +217,18 @@ export function hasPermission(
  */
 export function canViewNavItem(role: UserRole | null, path: string): boolean {
   if (!role) return false;
-  
+
   // Check exact path
   if (NAV_VISIBILITY[path]) {
     return NAV_VISIBILITY[path].includes(role);
   }
-  
+
   // Check parent path (for nested routes)
   const parentPath = path.split('/').slice(0, 2).join('/');
   if (parentPath && NAV_VISIBILITY[parentPath]) {
     return NAV_VISIBILITY[parentPath].includes(role);
   }
-  
+
   // Default: Admin and Manager can see everything
   return role === 'Admin' || role === 'Manager';
 }
@@ -248,10 +248,10 @@ export function getAllowedActions(
   category: PermissionCategory
 ): ActionType[] {
   if (!role) return [];
-  
+
   const rolePermissions = ROLE_PERMISSIONS[role];
   const categoryPermission = rolePermissions.find(p => p.category === category);
-  
+
   return categoryPermission?.actions || [];
 }
 
@@ -263,7 +263,7 @@ export function filterNavItems<T extends { href: string }>(
   role: UserRole | null
 ): T[] {
   if (!role) return [];
-  
+
   return items.filter(item => canViewNavItem(role, item.href));
 }
 

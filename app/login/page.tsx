@@ -3,12 +3,12 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/contexts/AuthContext';
-import { 
-  LogIn, 
-  User, 
-  Lock, 
-  Eye, 
-  EyeOff, 
+import {
+  LogIn,
+  User,
+  Lock,
+  Eye,
+  EyeOff,
   Loader2,
   KeyRound,
   Users,
@@ -22,7 +22,7 @@ export default function LoginPage() {
   const router = useRouter();
   const { signInWithEmail, loginWithPin, isStaffLoggedIn, user, loading: authLoading } = useAuth();
   const { staff, isInitialized } = useStore();
-  
+
   const [mode, setMode] = useState<LoginMode>('select');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -45,25 +45,25 @@ export default function LoginPage() {
     setLoading(true);
 
     const result = await signInWithEmail(email, password);
-    
+
     if (result.success) {
       router.push('/');
     } else {
       setError(result.error || 'Login gagal');
     }
-    
+
     setLoading(false);
   };
 
   const handlePinLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    
+
     if (!selectedStaffId) {
       setError('Sila pilih staf');
       return;
     }
-    
+
     if (pin.length !== 4) {
       setError('PIN mesti 4 digit');
       return;
@@ -71,13 +71,22 @@ export default function LoginPage() {
 
     setLoading(true);
     const result = await loginWithPin(selectedStaffId, pin);
-    
+
     if (result.success) {
-      router.push('/');
+      // Determine redirect path based on role
+      const staffMember = staff.find(s => s.id === selectedStaffId);
+
+      // If staff role, go to staff portal
+      // If admin/manager, go to main dashboard
+      if (staffMember?.role === 'Staff') {
+        router.push('/staff-portal');
+      } else {
+        router.push('/');
+      }
     } else {
       setError(result.error || 'Login gagal');
     }
-    
+
     setLoading(false);
   };
 
@@ -114,9 +123,9 @@ export default function LoginPage() {
         {/* Header */}
         <div className="login-header">
           <div className="login-logo">
-            <img 
-              src="/logo.png" 
-              alt="Abang Bob" 
+            <img
+              src="/logo.png"
+              alt="Abang Bob"
               className="login-logo-img"
             />
           </div>
@@ -127,7 +136,7 @@ export default function LoginPage() {
         {/* Mode Selection */}
         {mode === 'select' && (
           <div className="login-modes">
-            <button 
+            <button
               className="login-mode-btn"
               onClick={() => setMode('pin')}
             >
@@ -139,8 +148,8 @@ export default function LoginPage() {
                 <span className="mode-desc">Guna PIN untuk akses cepat</span>
               </div>
             </button>
-            
-            <button 
+
+            <button
               className="login-mode-btn"
               onClick={() => setMode('email')}
             >
@@ -158,8 +167,8 @@ export default function LoginPage() {
         {/* Email Login Form */}
         {mode === 'email' && (
           <form className="login-form" onSubmit={handleEmailLogin}>
-            <button 
-              type="button" 
+            <button
+              type="button"
               className="back-btn"
               onClick={() => { setMode('select'); setError(''); }}
             >
@@ -168,7 +177,7 @@ export default function LoginPage() {
             </button>
 
             <h2>Login Admin</h2>
-            
+
             {error && (
               <div className="login-error">
                 {error}
@@ -210,8 +219,8 @@ export default function LoginPage() {
               </div>
             </div>
 
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               className="btn btn-primary btn-lg login-btn"
               disabled={loading}
             >
@@ -233,8 +242,8 @@ export default function LoginPage() {
         {/* PIN Login */}
         {mode === 'pin' && (
           <div className="pin-login">
-            <button 
-              type="button" 
+            <button
+              type="button"
               className="back-btn"
               onClick={() => { setMode('select'); setError(''); setPin(''); setSelectedStaffId(''); }}
             >
@@ -321,7 +330,7 @@ export default function LoginPage() {
             </div>
 
             {/* Submit */}
-            <button 
+            <button
               type="button"
               className="btn btn-primary btn-lg login-btn"
               onClick={handlePinLogin}

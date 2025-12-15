@@ -7,13 +7,24 @@ import CommandPalette, { useCommandPalette } from './CommandPalette';
 import BottomNav, { useBottomNav } from './BottomNav';
 import Sheet from './Sheet';
 // import { useTranslation } from '@/lib/contexts/LanguageContext'; // Removed as t is not strictly needed for basic labels or we can add it properly
-
+import { useAuth } from '@/lib/contexts/AuthContext';
+import { canViewNavItem, type UserRole } from '@/lib/permissions';
 
 export default function MainLayout({ children }: { children: ReactNode }) {
   // Default to closed to prevent flash on mobile
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const sidebarRef = useRef<HTMLElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  const { user, currentStaff, isStaffLoggedIn } = useAuth();
+
+  // Determine role
+  const userRole: UserRole = React.useMemo(() => {
+    if (user) return 'Admin';
+    if (isStaffLoggedIn && currentStaff) return currentStaff.role;
+    // Default to 'Admin' for now to match Sidebar behavior, but ideally should be null
+    return 'Admin';
+  }, [user, isStaffLoggedIn, currentStaff]);
 
   // Open sidebar on mount if desktop
   useEffect(() => {
@@ -233,41 +244,43 @@ export default function MainLayout({ children }: { children: ReactNode }) {
             { href: '/notifications', label: 'Notifikasi', icon: Bell, color: '#eab308' },
             { href: '/settings', label: 'Tetapan', icon: Settings, color: '#4b5563' },
             { href: '/help', label: 'Bantuan', icon: HelpCircle, color: '#06b6d4' },
-          ].map((item, index) => (
-            <a
-              key={index}
-              href={item.href}
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '0.5rem',
-                textDecoration: 'none',
-                color: 'var(--text-primary)',
-              }}
-              onClick={bottomNav.closeMore}
-            >
-              <div style={{
-                width: '50px',
-                height: '50px',
-                borderRadius: '16px',
-                background: `${item.color}15`,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: item.color,
-                transition: 'transform 0.2s',
-              }}
-                className="icon-btn-hover"
+          ]
+            .filter(item => canViewNavItem(userRole, item.href))
+            .map((item, index) => (
+              <a
+                key={index}
+                href={item.href}
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.5rem',
+                  textDecoration: 'none',
+                  color: 'var(--text-primary)',
+                }}
+                onClick={bottomNav.closeMore}
               >
-                <item.icon size={24} />
-              </div>
-              <span style={{ fontSize: '0.7rem', fontWeight: 600, textAlign: 'center' }}>
-                {item.label}
-              </span>
-            </a>
-          ))}
+                <div style={{
+                  width: '50px',
+                  height: '50px',
+                  borderRadius: '16px',
+                  background: `${item.color}15`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: item.color,
+                  transition: 'transform 0.2s',
+                }}
+                  className="icon-btn-hover"
+                >
+                  <item.icon size={24} />
+                </div>
+                <span style={{ fontSize: '0.7rem', fontWeight: 600, textAlign: 'center' }}>
+                  {item.label}
+                </span>
+              </a>
+            ))}
         </div>
       </Sheet>
     </div>
