@@ -54,6 +54,7 @@ import {
   Percent,
   Activity,
   XCircle,
+  MapPin,
 } from 'lucide-react';
 import SupabaseStatusIndicator from '@/components/SupabaseStatusIndicator';
 import { getDataSourceInfo, DataSource } from '@/lib/store';
