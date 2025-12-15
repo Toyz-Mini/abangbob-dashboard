@@ -1,10 +1,10 @@
 /**
- * Payment Methods & Tax Rates Supabase Sync
- * Handles CRUD operations for payment methods and tax rates
+ * Payment Methods, Tax Rates & Menu Categories Supabase Sync
+ * Handles CRUD operations for payment methods, tax rates, and menu categories
  */
 
 import { getSupabaseClient } from './client';
-import { PaymentMethodConfig, TaxRate } from '../types';
+import { PaymentMethodConfig, TaxRate, MenuCategory } from '../types';
 
 // ============================================
 // Payment Methods Functions
@@ -307,6 +307,162 @@ export async function deleteTaxRate(id: string): Promise<{ success: boolean; err
         return { success: true };
     } catch (error) {
         console.error('[Supabase] Exception deleting tax rate:', error);
+        return { success: false, error: String(error) };
+    }
+}
+
+// ============================================
+// Menu Categories Functions
+// ============================================
+
+export async function getAllMenuCategories(): Promise<{ success: boolean; data?: MenuCategory[]; error?: string }> {
+    try {
+        const supabase = getSupabaseClient();
+        if (!supabase) {
+            return { success: false, error: 'Supabase not configured' };
+        }
+
+        const { data, error } = await (supabase
+            .from('menu_categories') as any)
+            .select('*')
+            .order('sort_order', { ascending: true });
+
+        if (error) {
+            console.error('[Supabase] Error fetching menu categories:', error);
+            return { success: false, error: error.message };
+        }
+
+        // Transform snake_case to camelCase
+        const transformed: MenuCategory[] = (data || []).map((item: any) => ({
+            id: item.id,
+            name: item.name,
+            description: item.description || '',
+            icon: item.icon || '',
+            color: item.color,
+            sortOrder: item.sort_order,
+            isActive: item.is_active,
+            createdAt: item.created_at,
+        }));
+
+        return { success: true, data: transformed };
+    } catch (error) {
+        console.error('[Supabase] Exception fetching menu categories:', error);
+        return { success: false, error: String(error) };
+    }
+}
+
+export async function addMenuCategory(category: MenuCategory): Promise<{ success: boolean; data?: MenuCategory; error?: string }> {
+    try {
+        const supabase = getSupabaseClient();
+        if (!supabase) {
+            return { success: false, error: 'Supabase not configured' };
+        }
+
+        const { data, error } = await (supabase
+            .from('menu_categories') as any)
+            .insert({
+                id: category.id,
+                name: category.name,
+                description: category.description || '',
+                icon: category.icon || '',
+                color: category.color,
+                sort_order: category.sortOrder,
+                is_active: category.isActive,
+            })
+            .select()
+            .single();
+
+        if (error) {
+            console.error('[Supabase] Error adding menu category:', error);
+            return { success: false, error: error.message };
+        }
+
+        // Transform back to client format
+        const transformed: MenuCategory = {
+            id: data.id,
+            name: data.name,
+            description: data.description || '',
+            icon: data.icon || '',
+            color: data.color,
+            sortOrder: data.sort_order,
+            isActive: data.is_active,
+            createdAt: data.created_at,
+        };
+
+        return { success: true, data: transformed };
+    } catch (error) {
+        console.error('[Supabase] Exception adding menu category:', error);
+        return { success: false, error: String(error) };
+    }
+}
+
+export async function updateMenuCategory(id: string, updates: Partial<MenuCategory>): Promise<{ success: boolean; data?: MenuCategory; error?: string }> {
+    try {
+        const supabase = getSupabaseClient();
+        if (!supabase) {
+            return { success: false, error: 'Supabase not configured' };
+        }
+
+        // Transform camelCase to snake_case for Supabase
+        const dbUpdates: any = {};
+        if (updates.name !== undefined) dbUpdates.name = updates.name;
+        if (updates.description !== undefined) dbUpdates.description = updates.description;
+        if (updates.icon !== undefined) dbUpdates.icon = updates.icon;
+        if (updates.color !== undefined) dbUpdates.color = updates.color;
+        if (updates.sortOrder !== undefined) dbUpdates.sort_order = updates.sortOrder;
+        if (updates.isActive !== undefined) dbUpdates.is_active = updates.isActive;
+
+        const { data, error } = await (supabase
+            .from('menu_categories') as any)
+            .update(dbUpdates)
+            .eq('id', id)
+            .select()
+            .single();
+
+        if (error) {
+            console.error('[Supabase] Error updating menu category:', error);
+            return { success: false, error: error.message };
+        }
+
+        // Transform back to client format
+        const transformed: MenuCategory = {
+            id: data.id,
+            name: data.name,
+            description: data.description || '',
+            icon: data.icon || '',
+            color: data.color,
+            sortOrder: data.sort_order,
+            isActive: data.is_active,
+            createdAt: data.created_at,
+        };
+
+        return { success: true, data: transformed };
+    } catch (error) {
+        console.error('[Supabase] Exception updating menu category:', error);
+        return { success: false, error: String(error) };
+    }
+}
+
+export async function deleteMenuCategory(id: string): Promise<{ success: boolean; error?: string }> {
+    try {
+        const supabase = getSupabaseClient();
+        if (!supabase) {
+            return { success: false, error: 'Supabase not configured' };
+        }
+
+        const { error } = await (supabase
+            .from('menu_categories') as any)
+            .delete()
+            .eq('id', id);
+
+        if (error) {
+            console.error('[Supabase] Error deleting menu category:', error);
+            return { success: false, error: error.message };
+        }
+
+        return { success: true };
+    } catch (error) {
+        console.error('[Supabase] Exception deleting menu category:', error);
         return { success: false, error: String(error) };
     }
 }

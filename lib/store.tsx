@@ -611,7 +611,17 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       setOilActionHistory(supabaseConnected && supabaseData.oilActionHistory?.length > 0 ? supabaseData.oilActionHistory : getFromStorage(STORAGE_KEYS.OIL_ACTION_HISTORY, []));
 
       // Menu Categories, Payment Methods, Tax Rates
-      setMenuCategories(getFromStorage(STORAGE_KEYS.MENU_CATEGORIES, DEFAULT_MENU_CATEGORIES));
+      // Load Menu Categories from Supabase
+      if (supabaseConnected) {
+        const menuCategoriesResult = await PaymentTaxSync.getAllMenuCategories();
+        if (menuCategoriesResult.success && menuCategoriesResult.data && menuCategoriesResult.data.length > 0) {
+          setMenuCategories(menuCategoriesResult.data);
+        } else {
+          setMenuCategories(getFromStorage(STORAGE_KEYS.MENU_CATEGORIES, DEFAULT_MENU_CATEGORIES));
+        }
+      } else {
+        setMenuCategories(getFromStorage(STORAGE_KEYS.MENU_CATEGORIES, DEFAULT_MENU_CATEGORIES));
+      }
 
       // Load Payment Methods from Supabase
       if (supabaseConnected) {
@@ -2590,22 +2600,61 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   // ==================== MENU CATEGORIES FUNCTIONS ====================
 
-  const addMenuCategory = useCallback((category: Omit<MenuCategory, 'id' | 'createdAt'>) => {
+  const addMenuCategory = useCallback(async (category: Omit<MenuCategory, 'id' | 'createdAt'>) => {
     const newCategory: MenuCategory = {
       ...category,
       id: `cat_${Date.now()}`,
       createdAt: new Date().toISOString(),
     };
+
+    // Try to sync to Supabase first
+    try {
+      const result = await PaymentTaxSync.addMenuCategory(newCategory);
+      if (result.success && result.data) {
+        setMenuCategories(prev => [...prev, result.data!]);
+        return;
+      }
+    } catch (error) {
+      console.error('[Menu Categories] Supabase sync failed, saving to localStorage:', error);
+    }
+
+    // Fallback to localStorage only
     setMenuCategories(prev => [...prev, newCategory]);
   }, []);
 
-  const updateMenuCategory = useCallback((id: string, updates: Partial<MenuCategory>) => {
+  const updateMenuCategory = useCallback(async (id: string, updates: Partial<MenuCategory>) => {
+    // Try to sync to Supabase first
+    try {
+      const result = await PaymentTaxSync.updateMenuCategory(id, updates);
+      if (result.success) {
+        setMenuCategories(prev => prev.map(cat =>
+          cat.id === id ? { ...cat, ...updates } : cat
+        ));
+        return;
+      }
+    } catch (error) {
+      console.error('[Menu Categories] Supabase update failed, updating localStorage only:', error);
+    }
+
+    // Fallback: update localStorage only
     setMenuCategories(prev => prev.map(cat =>
       cat.id === id ? { ...cat, ...updates } : cat
     ));
   }, []);
 
-  const deleteMenuCategory = useCallback((id: string) => {
+  const deleteMenuCategory = useCallback(async (id: string) => {
+    // Try to sync to Supabase first
+    try {
+      const result = await PaymentTaxSync.deleteMenuCategory(id);
+      if (result.success) {
+        setMenuCategories(prev => prev.filter(cat => cat.id !== id));
+        return;
+      }
+    } catch (error) {
+      console.error('[Menu Categories] Supabase delete failed, deleting from localStorage only:', error);
+    }
+
+    // Fallback: delete from localStorage only
     setMenuCategories(prev => prev.filter(cat => cat.id !== id));
   }, []);
 
