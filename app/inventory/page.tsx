@@ -126,10 +126,10 @@ export default function InventoryPage() {
       alert('Sila masukkan nama item');
       return;
     }
-    
+
     setIsProcessing(true);
     await new Promise(resolve => setTimeout(resolve, 500)); // Simulate network delay
-    
+
     addStockItem({
       name: formData.name.trim(),
       category: formData.category,
@@ -139,7 +139,7 @@ export default function InventoryPage() {
       cost: formData.cost,
       supplier: formData.supplier.trim() || undefined,
     });
-    
+
     closeModal();
   };
 
@@ -148,10 +148,10 @@ export default function InventoryPage() {
       alert('Sila masukkan nama item');
       return;
     }
-    
+
     setIsProcessing(true);
     await new Promise(resolve => setTimeout(resolve, 500));
-    
+
     updateStockItem(selectedItem.id, {
       name: formData.name.trim(),
       category: formData.category,
@@ -161,7 +161,7 @@ export default function InventoryPage() {
       cost: formData.cost,
       supplier: formData.supplier.trim() || undefined,
     });
-    
+
     closeModal();
   };
 
@@ -170,27 +170,27 @@ export default function InventoryPage() {
       alert('Sila masukkan kuantiti yang sah');
       return;
     }
-    
+
     setIsProcessing(true);
     await new Promise(resolve => setTimeout(resolve, 500));
-    
-    const reason = adjustmentData.reason === 'Lain-lain' 
-      ? adjustmentData.customReason 
+
+    const reason = adjustmentData.reason === 'Lain-lain'
+      ? adjustmentData.customReason
       : adjustmentData.reason;
-    
+
     adjustStock(selectedItem.id, adjustmentData.quantity, adjustmentData.type, reason);
-    
+
     closeModal();
   };
 
   const handleDeleteStock = async () => {
     if (!selectedItem) return;
-    
+
     setIsProcessing(true);
     await new Promise(resolve => setTimeout(resolve, 500));
-    
+
     deleteStockItem(selectedItem.id);
-    
+
     closeModal();
   };
 
@@ -211,19 +211,21 @@ export default function InventoryPage() {
   return (
     <MainLayout>
       <div className="animate-fade-in">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
-          <div>
-            <h1 style={{ fontSize: '2rem', fontWeight: 700, marginBottom: '0.5rem' }}>
-              {t('inventory.title')}
-            </h1>
-            <p style={{ color: 'var(--text-secondary)' }}>
-              {t('inventory.subtitle')}
-            </p>
+        <div className="page-header">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+            <div>
+              <h1 className="page-title" style={{ marginBottom: '0.5rem' }}>
+                {t('inventory.title')}
+              </h1>
+              <p className="page-subtitle">
+                {t('inventory.subtitle')}
+              </p>
+            </div>
+            <button className="btn btn-primary" onClick={openAddModal}>
+              <Plus size={18} />
+              {t('inventory.addItem')}
+            </button>
           </div>
-          <button className="btn btn-primary" onClick={openAddModal}>
-            <Plus size={18} />
-            {t('inventory.addItem')}
-          </button>
         </div>
 
         {/* Search and Filter */}
@@ -267,17 +269,17 @@ export default function InventoryPage() {
             <div className="card-subtitle">{t('common.total')}: {inventory.length} items</div>
           </div>
 
-          <div style={{ overflowX: 'auto' }}>
+          <div className="table-responsive">
             <table className="table">
               <thead>
                 <tr>
                   <th>Item</th>
-                  <th>Kategori</th>
+                  <th className="hidden-mobile">Kategori</th>
                   <th>Kuantiti Semasa</th>
-                  <th>Minimum</th>
-                  <th>Unit</th>
-                  <th>Kos</th>
-                  <th>Supplier</th>
+                  <th className="hidden-mobile">Minimum</th>
+                  <th className="hidden-mobile">Unit</th>
+                  <th className="hidden-mobile">Kos</th>
+                  <th className="hidden-mobile">Supplier</th>
                   <th>Status</th>
                   <th>Tindakan</th>
                 </tr>
@@ -288,12 +290,12 @@ export default function InventoryPage() {
                   return (
                     <tr key={item.id}>
                       <td style={{ fontWeight: 600 }}>{item.name}</td>
-                      <td>{item.category}</td>
+                      <td className="hidden-mobile">{item.category}</td>
                       <td>{item.currentQuantity}</td>
-                      <td>{item.minQuantity}</td>
-                      <td>{item.unit}</td>
-                      <td>BND {item.cost.toFixed(2)}</td>
-                      <td>{item.supplier || '-'}</td>
+                      <td className="hidden-mobile">{item.minQuantity}</td>
+                      <td className="hidden-mobile">{item.unit}</td>
+                      <td className="hidden-mobile">BND {item.cost.toFixed(2)}</td>
+                      <td className="hidden-mobile">{item.supplier || '-'}</td>
                       <td>
                         <span className={`badge ${status.badge}`}>
                           {status.label}
@@ -474,10 +476,10 @@ export default function InventoryPage() {
           subtitle={selectedItem?.name}
           maxWidth="450px"
         >
-          <div style={{ 
-            background: 'var(--gray-100)', 
-            padding: '1rem', 
-            borderRadius: 'var(--radius-md)', 
+          <div style={{
+            background: 'var(--gray-100)',
+            padding: '1rem',
+            borderRadius: 'var(--radius-md)',
             marginBottom: '1.5rem',
             textAlign: 'center'
           }}>
@@ -593,13 +595,13 @@ export default function InventoryPage() {
           maxWidth="400px"
         >
           <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-            <div style={{ 
-              width: '60px', 
-              height: '60px', 
-              background: '#fee2e2', 
-              borderRadius: '50%', 
-              display: 'flex', 
-              alignItems: 'center', 
+            <div style={{
+              width: '60px',
+              height: '60px',
+              background: '#fee2e2',
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
               justifyContent: 'center',
               margin: '0 auto 1rem'
             }}>
@@ -650,10 +652,10 @@ export default function InventoryPage() {
         >
           {selectedItem && (
             <>
-              <div style={{ 
-                background: 'var(--gray-100)', 
-                padding: '1rem', 
-                borderRadius: 'var(--radius-md)', 
+              <div style={{
+                background: 'var(--gray-100)',
+                padding: '1rem',
+                borderRadius: 'var(--radius-md)',
                 marginBottom: '1.5rem',
                 display: 'flex',
                 justifyContent: 'space-between',

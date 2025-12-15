@@ -404,19 +404,21 @@ export default function POSPage() {
   return (
     <MainLayout>
       <div className="animate-fade-in">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '1rem' }}>
-          <h1 style={{ fontSize: '2rem', fontWeight: 700 }}>
-            {t('pos.title')}
-          </h1>
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <button className="btn btn-outline" onClick={() => setModalType('queue')}>
-              <ChefHat size={18} />
-              {t('pos.orderQueue')} ({pendingOrders.length + preparingOrders.length})
-            </button>
-            <button className="btn btn-outline" onClick={() => setModalType('history')}>
-              <History size={18} />
-              {t('pos.orderHistory')} ({todayOrders.length})
-            </button>
+        <div className="page-header">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+            <h1 className="page-title">
+              {t('pos.title')}
+            </h1>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <button className="btn btn-outline" onClick={() => setModalType('queue')}>
+                <ChefHat size={18} />
+                {t('pos.orderQueue')} ({pendingOrders.length + preparingOrders.length})
+              </button>
+              <button className="btn btn-outline" onClick={() => setModalType('history')}>
+                <History size={18} />
+                {t('pos.orderHistory')} ({todayOrders.length})
+              </button>
+            </div>
           </div>
         </div>
 
@@ -1382,8 +1384,8 @@ export default function POSPage() {
                       </td>
                       <td>
                         <span className={`badge ${order.status === 'completed' ? 'badge-success' :
-                            order.status === 'ready' ? 'badge-success' :
-                              order.status === 'preparing' ? 'badge-info' : 'badge-warning'
+                          order.status === 'ready' ? 'badge-success' :
+                            order.status === 'preparing' ? 'badge-info' : 'badge-warning'
                           }`} style={{ fontSize: '0.7rem' }}>
                           {order.status}
                         </span>
