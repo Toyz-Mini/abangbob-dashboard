@@ -48,6 +48,7 @@ import {
   Award,
   AlertCircle,
   ChevronRight,
+  Lock,
   Download,
 } from 'lucide-react';
 
@@ -977,8 +978,8 @@ export default function StaffListPage() {
               <div>
                 <div className="text-xs uppercase tracking-wider text-slate-400 font-semibold mb-2">Peranan Semasa</div>
                 <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${selectedStaff.accessLevel === 'admin' ? 'bg-red-50 text-red-700 border-red-100' :
-                    selectedStaff.accessLevel === 'manager' ? 'bg-amber-50 text-amber-700 border-amber-100' :
-                      'bg-blue-50 text-blue-700 border-blue-100'
+                  selectedStaff.accessLevel === 'manager' ? 'bg-amber-50 text-amber-700 border-amber-100' :
+                    'bg-blue-50 text-blue-700 border-blue-100'
                   }`}>
                   {selectedStaff.accessLevel === 'admin' ? 'Administrator' :
                     selectedStaff.accessLevel === 'manager' ? 'Manager' : 'Staff'}
@@ -1001,8 +1002,8 @@ export default function StaffListPage() {
                     <div
                       key={key}
                       className={`flex items-center gap-3 p-3 rounded-lg border transition-colors duration-200 ${hasPermission
-                          ? 'bg-green-50/50 border-green-100'
-                          : 'bg-gray-50 border-gray-100 opacity-60'
+                        ? 'bg-green-50/50 border-green-100'
+                        : 'bg-gray-50 border-gray-100 opacity-60'
                         }`}
                     >
                       <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 ${hasPermission ? 'bg-green-100 text-green-600' : 'bg-gray-200 text-gray-400'
