@@ -5,10 +5,10 @@ import MainLayout from '@/components/MainLayout';
 import DataTable, { Column } from '@/components/DataTable';
 import Modal from '@/components/Modal';
 import StatCard from '@/components/StatCard';
-import { useOrderHistory } from '@/lib/store';
+import { useOrders, useOrderHistory } from '@/lib/store';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { useTranslation } from '@/lib/contexts/LanguageContext';
-import { OrderHistoryItem, OrderHistoryFilters, VoidRefundRequest } from '@/lib/types';
+import { OrderHistoryItem, OrderHistoryFilters, VoidRefundRequest, Order } from '@/lib/types';
 import { canApproveVoidRefund, canViewAllOrders, canExport } from '@/lib/permissions';
 import { getOrderStatusColor, getOrderStatusLabel, getPaymentMethodLabel, getOrderTypeLabel, getVoidRefundTypeLabel } from '@/lib/order-history-data';
 import { exportToCSV } from '@/lib/services/excel-export';
@@ -33,15 +33,18 @@ import {
 } from 'lucide-react';
 
 export default function OrderHistoryPage() {
+  // Use orders from Supabase-synced store
+  const { orders, isInitialized: ordersInitialized } = useOrders();
+
+  // Keep void/refund functionality from orderHistory
   const {
-    orderHistory,
-    getOrderHistory,
     getPendingVoidRefundRequests,
     getPendingVoidRefundCount,
     approveVoidRefund,
     rejectVoidRefund,
-    isInitialized,
+    isInitialized: historyInitialized,
   } = useOrderHistory();
+
   const { currentStaff } = useAuth();
   const { t } = useTranslation();
 
@@ -70,17 +73,50 @@ export default function OrderHistoryPage() {
   const canViewAll = canViewAllOrders(userRole);
   const canExportData = canExport(userRole, 'order-history');
 
-  // Get filtered orders based on role
+  // Convert orders to OrderHistoryItem format and apply filters
   const filteredOrders = useMemo(() => {
-    let orders = getOrderHistory(filters);
+    // Transform orders to OrderHistoryItem format
+    let historyItems: OrderHistoryItem[] = orders.map((order: Order) => ({
+      ...order,
+      voidRefundStatus: 'none' as const,
+      refundAmount: 0,
+      cashierId: order.staffId,
+      cashierName: order.staffId || 'Unknown',
+    }));
+
+    // Apply date filter
+    if (filters.dateRange?.start && filters.dateRange?.end) {
+      historyItems = historyItems.filter(o => {
+        const orderDate = o.createdAt.split('T')[0];
+        return orderDate >= filters.dateRange!.start && orderDate <= filters.dateRange!.end;
+      });
+    }
+
+    // Apply status filter
+    if (filters.status && filters.status !== 'all') {
+      historyItems = historyItems.filter(o => o.status === filters.status);
+    }
+
+    // Apply payment method filter
+    if (filters.paymentMethod && filters.paymentMethod !== 'all') {
+      historyItems = historyItems.filter(o => o.paymentMethod === filters.paymentMethod);
+    }
+
+    // Apply order type filter
+    if (filters.orderType && filters.orderType !== 'all') {
+      historyItems = historyItems.filter(o => o.orderType === filters.orderType);
+    }
 
     // If staff, only show their own orders
     if (!canViewAll && currentStaff) {
-      orders = orders.filter(o => o.cashierId === currentStaff.id);
+      historyItems = historyItems.filter(o => o.cashierId === currentStaff.id);
     }
 
-    return orders;
-  }, [getOrderHistory, filters, canViewAll, currentStaff]);
+    // Sort by date descending
+    historyItems.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+    return historyItems;
+  }, [orders, filters, canViewAll, currentStaff]);
 
   // Get pending requests for Manager/Admin
   const pendingRequests = getPendingVoidRefundRequests();
@@ -219,7 +255,7 @@ export default function OrderHistoryPage() {
     setShowVoidRefundModal(true);
   };
 
-  if (!isInitialized) {
+  if (!ordersInitialized) {
     return (
       <MainLayout>
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
