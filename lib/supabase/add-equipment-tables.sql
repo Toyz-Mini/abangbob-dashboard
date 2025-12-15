@@ -22,12 +22,19 @@ CREATE INDEX IF NOT EXISTS idx_oil_trackers_status ON public.oil_trackers(status
 CREATE INDEX IF NOT EXISTS idx_oil_trackers_outlet ON public.oil_trackers(outlet_id);
 CREATE INDEX IF NOT EXISTS idx_oil_trackers_pending ON public.oil_trackers(has_pending_request);
 
+DROP POLICY IF EXISTS "Anyone can view oil trackers" ON public.oil_trackers;
+DROP POLICY IF EXISTS "Staff can manage oil trackers" ON public.oil_trackers;
 ALTER TABLE public.oil_trackers ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Anyone can view oil trackers" ON public.oil_trackers FOR SELECT USING (true);
 CREATE POLICY "Staff can manage oil trackers" ON public.oil_trackers FOR ALL USING (true);
 
-ALTER PUBLICATION supabase_realtime ADD TABLE public.oil_trackers;
+-- Realtime (ignore error if already added)
+DO $$ BEGIN
+  ALTER PUBLICATION supabase_realtime ADD TABLE public.oil_trackers;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
+DROP TRIGGER IF EXISTS update_oil_trackers_updated_at ON public.oil_trackers;
 CREATE TRIGGER update_oil_trackers_updated_at BEFORE UPDATE ON public.oil_trackers
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
@@ -60,12 +67,18 @@ CREATE INDEX IF NOT EXISTS idx_oil_change_requests_status ON public.oil_change_r
 CREATE INDEX IF NOT EXISTS idx_oil_change_requests_requested ON public.oil_change_requests(requested_at DESC);
 CREATE INDEX IF NOT EXISTS idx_oil_change_requests_action_type ON public.oil_change_requests(action_type);
 
+DROP POLICY IF EXISTS "Anyone can view oil change requests" ON public.oil_change_requests;
+DROP POLICY IF EXISTS "Staff can create oil change requests" ON public.oil_change_requests;
+DROP POLICY IF EXISTS "Managers can update oil change requests" ON public.oil_change_requests;
 ALTER TABLE public.oil_change_requests ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Anyone can view oil change requests" ON public.oil_change_requests FOR SELECT USING (true);
 CREATE POLICY "Staff can create oil change requests" ON public.oil_change_requests FOR INSERT WITH CHECK (true);
 CREATE POLICY "Managers can update oil change requests" ON public.oil_change_requests FOR UPDATE USING (true);
 
-ALTER PUBLICATION supabase_realtime ADD TABLE public.oil_change_requests;
+DO $$ BEGIN
+  ALTER PUBLICATION supabase_realtime ADD TABLE public.oil_change_requests;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 -- ========================================
 -- OIL ACTION HISTORY TABLE
@@ -91,11 +104,16 @@ CREATE INDEX IF NOT EXISTS idx_oil_action_history_fryer ON public.oil_action_his
 CREATE INDEX IF NOT EXISTS idx_oil_action_history_action_at ON public.oil_action_history(action_at DESC);
 CREATE INDEX IF NOT EXISTS idx_oil_action_history_action_type ON public.oil_action_history(action_type);
 
+DROP POLICY IF EXISTS "Anyone can view oil action history" ON public.oil_action_history;
+DROP POLICY IF EXISTS "Staff can create oil action history" ON public.oil_action_history;
 ALTER TABLE public.oil_action_history ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Anyone can view oil action history" ON public.oil_action_history FOR SELECT USING (true);
 CREATE POLICY "Staff can create oil action history" ON public.oil_action_history FOR INSERT WITH CHECK (true);
 
-ALTER PUBLICATION supabase_realtime ADD TABLE public.oil_action_history;
+DO $$ BEGIN
+  ALTER PUBLICATION supabase_realtime ADD TABLE public.oil_action_history;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 COMMENT ON TABLE public.oil_trackers IS 'Fryer oil tracking with cycle management';
 COMMENT ON TABLE public.oil_change_requests IS 'Oil change/topup approval workflow';
