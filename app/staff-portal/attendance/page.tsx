@@ -16,7 +16,7 @@ type LocationStatus = 'checking' | 'verified' | 'out-of-range' | 'error';
 
 export default function AttendancePage() {
     const router = useRouter();
-    const { staffUser, isStaffLoggedIn } = useAuth();
+    const { currentStaff, isStaffLoggedIn } = useAuth();
     const videoRef = useRef<HTMLVideoElement>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -32,19 +32,19 @@ export default function AttendancePage() {
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        if (!isStaffLoggedIn || !staffUser) {
+        if (!isStaffLoggedIn || !currentStaff) {
             router.push('/login');
             return;
         }
 
         loadTodayAttendance();
         checkLocation();
-    }, [isStaffLoggedIn, staffUser, router]);
+    }, [isStaffLoggedIn, currentStaff, router]);
 
     const loadTodayAttendance = async () => {
-        if (!staffUser) return;
+        if (!currentStaff) return;
 
-        const result = await getTodayAttendance(staffUser.id);
+        const result = await getTodayAttendance(currentStaff.id);
         if (result.success && result.data) {
             setTodayAttendance(result.data);
         }
@@ -160,7 +160,7 @@ export default function AttendancePage() {
     };
 
     const handleClockIn = async () => {
-        if (!staffUser || !currentLocation || !photoBlob) return;
+        if (!currentStaff || !currentLocation || !photoBlob) return;
 
         setIsSubmitting(true);
         setError(null);
@@ -169,7 +169,7 @@ export default function AttendancePage() {
         const file = new File([photoBlob], `selfie-${Date.now()}.jpg`, { type: 'image/jpeg' });
 
         const result = await clockIn({
-            staff_id: staffUser.id,
+            staff_id: currentStaff.id,
             latitude: currentLocation.lat,
             longitude: currentLocation.lng,
             selfie_file: file,
