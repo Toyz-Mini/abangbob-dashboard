@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@react-google-maps/api": "^2.20.7",
     "@supabase/ssr": "^0.1.0",
     "@supabase/supabase-js": "^2.87.1",
     "date-fns": "^4.1.0",

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Plus, MapPin, Edit2, Trash2, Save, X } from 'lucide-react';
+import LocationMapPicker from './LocationMapPicker';
 import {
     getAllowedLocations,
     addAllowedLocation,
@@ -220,7 +221,7 @@ export default function LocationSettings() {
             {/* Add/Edit Modal */}
             {showModal && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+                    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
                         <div className="p-6">
                             <div className="flex items-center justify-between mb-4">
                                 <h3 className="text-lg font-semibold">
@@ -232,6 +233,25 @@ export default function LocationSettings() {
                             </div>
 
                             <form onSubmit={handleSubmit} className="space-y-4">
+                                {/* Map Section */}
+                                <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4">
+                                    <label className="block text-sm font-medium mb-3">📍 Pilih Lokasi di Map</label>
+                                    <div className="h-[400px] rounded-lg overflow-hidden border-2 border-gray-200 dark:border-gray-700">
+                                        <LocationMapPicker
+                                            latitude={formData.latitude || 4.9031}
+                                            longitude={formData.longitude || 114.9398}
+                                            radius={formData.radius_meters}
+                                            onLocationChange={(lat, lng) => {
+                                                setFormData({ ...formData, latitude: lat, longitude: lng });
+                                            }}
+                                        />
+                                    </div>
+                                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">
+                                        💡 Tip: Drag marker atau click map untuk set lokasi
+                                    </p>
+                                </div>
+
+                                {/* Form Fields */}
                                 <div>
                                     <label className="block text-sm font-medium mb-1">Nama Lokasi</label>
                                     <input
@@ -255,53 +275,36 @@ export default function LocationSettings() {
                                     />
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-medium mb-1">Latitude</label>
-                                        <input
-                                            type="number"
-                                            step="0.000001"
-                                            value={formData.latitude}
-                                            onChange={(e) => setFormData({ ...formData, latitude: parseFloat(e.target.value) })}
-                                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700"
-                                            required
-                                        />
+                                {/* Radius Slider */}
+                                <div>
+                                    <div className="flex items-center justify-between mb-2">
+                                        <label className="block text-sm font-medium">Radius Kehadiran</label>
+                                        <span className="text-sm font-semibold text-primary">{formData.radius_meters}m</span>
                                     </div>
-                                    <div>
-                                        <label className="block text-sm font-medium mb-1">Longitude</label>
-                                        <input
-                                            type="number"
-                                            step="0.000001"
-                                            value={formData.longitude}
-                                            onChange={(e) => setFormData({ ...formData, longitude: parseFloat(e.target.value) })}
-                                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700"
-                                            required
-                                        />
+                                    <input
+                                        type="range"
+                                        min="50"
+                                        max="1000"
+                                        step="50"
+                                        value={formData.radius_meters}
+                                        onChange={(e) => setFormData({ ...formData, radius_meters: parseInt(e.target.value) })}
+                                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
+                                        style={{
+                                            background: `linear-gradient(to right, var(--primary) 0%, var(--primary) ${((formData.radius_meters - 50) / 950) * 100}%, rgb(229, 231, 235) ${((formData.radius_meters - 50) / 950) * 100}%, rgb(229, 231, 235) 100%)`
+                                        }}
+                                    />
+                                    <div className="flex justify-between text-xs text-gray-500 mt-1">
+                                        <span>50m</span>
+                                        <span>1km</span>
                                     </div>
                                 </div>
 
-                                <button
-                                    type="button"
-                                    onClick={handleGetCurrentLocation}
-                                    disabled={gettingLocation}
-                                    className="w-full px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50"
-                                >
-                                    {gettingLocation ? 'Mendapatkan lokasi...' : '📍 Guna Lokasi Semasa'}
-                                </button>
-
-                                <div>
-                                    <label className="block text-sm font-medium mb-1">Radius (meter)</label>
-                                    <select
-                                        value={formData.radius_meters}
-                                        onChange={(e) => setFormData({ ...formData, radius_meters: parseInt(e.target.value) })}
-                                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700"
-                                    >
-                                        <option value={50}>50 meter</option>
-                                        <option value={100}>100 meter</option>
-                                        <option value={200}>200 meter</option>
-                                        <option value={500}>500 meter</option>
-                                        <option value={1000}>1 kilometer</option>
-                                    </select>
+                                {/* Coordinates Display */}
+                                <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-3">
+                                    <div className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Koordinat:</div>
+                                    <div className="font-mono text-sm">
+                                        {formData.latitude.toFixed(6)}, {formData.longitude.toFixed(6)}
+                                    </div>
                                 </div>
 
                                 <div className="flex gap-3 pt-4">
