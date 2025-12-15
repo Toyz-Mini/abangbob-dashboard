@@ -289,7 +289,7 @@ export const MOCK_MENU: MenuItem[] = [
 
   // Combo Category (New)
   {
-    id: '20',
+    id: '550e8400-e29b-41d4-a716-446655440020',
     name: 'Ayam Gunting Value Box',
     category: 'Combo',
     price: 10.90,
@@ -298,7 +298,7 @@ export const MOCK_MENU: MenuItem[] = [
     modifierGroupIds: [],
   },
   {
-    id: '21',
+    id: '550e8400-e29b-41d4-a716-446655440021',
     name: 'Super Wrap Combo',
     category: 'Combo',
     price: 4.90,
@@ -307,7 +307,7 @@ export const MOCK_MENU: MenuItem[] = [
     modifierGroupIds: [],
   },
   {
-    id: '22',
+    id: '550e8400-e29b-41d4-a716-446655440022',
     name: 'Crunchy Duo Set',
     category: 'Combo',
     price: 10.90,
@@ -316,7 +316,7 @@ export const MOCK_MENU: MenuItem[] = [
     modifierGroupIds: [],
   },
   {
-    id: '23',
+    id: '550e8400-e29b-41d4-a716-446655440023',
     name: 'Popcorn Snack Combo',
     category: 'Combo',
     price: 5.00,
@@ -325,7 +325,7 @@ export const MOCK_MENU: MenuItem[] = [
     modifierGroupIds: [],
   },
   {
-    id: '24',
+    id: '550e8400-e29b-41d4-a716-446655440024',
     name: 'Burger Crispy XXL Meal',
     category: 'Combo',
     price: 11.00,
@@ -334,7 +334,7 @@ export const MOCK_MENU: MenuItem[] = [
     modifierGroupIds: [],
   },
   {
-    id: '25',
+    id: '550e8400-e29b-41d4-a716-446655440025',
     name: 'Potato Bowl Set',
     category: 'Combo',
     price: 5.90,
@@ -343,7 +343,7 @@ export const MOCK_MENU: MenuItem[] = [
     modifierGroupIds: [],
   },
   {
-    id: '26',
+    id: '550e8400-e29b-41d4-a716-446655440026',
     name: 'Nashville Combo',
     category: 'Combo',
     price: 14.00,
@@ -354,7 +354,7 @@ export const MOCK_MENU: MenuItem[] = [
 
   // Party Sets Category (New)
   {
-    id: '27',
+    id: '550e8400-e29b-41d4-a716-446655440027',
     name: 'Squad Bundle (5-7 Pax)',
     category: 'Party Sets',
     price: 49.90,
@@ -363,7 +363,7 @@ export const MOCK_MENU: MenuItem[] = [
     modifierGroupIds: [],
   },
   {
-    id: '28',
+    id: '550e8400-e29b-41d4-a716-446655440028',
     name: 'Party Box (10-14 Pax)',
     category: 'Party Sets',
     price: 99.90,
@@ -372,7 +372,7 @@ export const MOCK_MENU: MenuItem[] = [
     modifierGroupIds: [],
   },
   {
-    id: '29',
+    id: '550e8400-e29b-41d4-a716-446655440029',
     name: 'Mega Celebration Box (18-25 Pax)',
     category: 'Party Sets',
     price: 149.90,
