@@ -13,20 +13,20 @@ export default function MainLayout({ children }: { children: ReactNode }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const sidebarRef = useRef<HTMLElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  
+
   // Command palette state
   const commandPalette = useCommandPalette();
-  
+
   // Bottom nav more menu
   const bottomNav = useBottomNav();
 
   // Auto-close when clicking outside sidebar
   useEffect(() => {
     if (!isSidebarOpen) return; // Don't listen if already closed
-    
+
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as HTMLElement;
-      
+
       // Don't close if clicking inside sidebar
       if (sidebarRef.current?.contains(target)) {
         return;
@@ -42,19 +42,12 @@ export default function MainLayout({ children }: { children: ReactNode }) {
     const timeoutId = setTimeout(() => {
       document.addEventListener('click', handleClickOutside);
     }, 100);
-    
+
     return () => {
       clearTimeout(timeoutId);
       document.removeEventListener('click', handleClickOutside);
     };
   }, [isSidebarOpen]);
-
-  // Expand sidebar on hover when collapsed
-  const handleSidebarMouseEnter = () => {
-    if (!isSidebarOpen && window.innerWidth >= 768) {
-      setIsSidebarOpen(true);
-    }
-  };
 
   // Handle click on sidebar to expand if collapsed
   const handleSidebarClick = (e: React.MouseEvent) => {
@@ -64,6 +57,36 @@ export default function MainLayout({ children }: { children: ReactNode }) {
       setIsSidebarOpen(true);
     }
   };
+
+  // Toggle body class for mobile overlay
+  useEffect(() => {
+    if (window.innerWidth < 768 && isSidebarOpen) {
+      document.body.classList.add('mobile-sidebar-open');
+    } else {
+      document.body.classList.remove('mobile-sidebar-open');
+    }
+
+    // Also handle resize
+    const handleResize = () => {
+      if (window.innerWidth >= 768) {
+        document.body.classList.remove('mobile-sidebar-open');
+      } else if (isSidebarOpen) {
+        document.body.classList.add('mobile-sidebar-open');
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [isSidebarOpen]);
+
+  // Expand sidebar on hover when collapsed
+  const handleSidebarMouseEnter = () => {
+    if (!isSidebarOpen && window.innerWidth >= 768) {
+      setIsSidebarOpen(true);
+    }
+  };
+
+
 
   // Handle nav link click - close sidebar on mobile
   const handleNavClick = () => {
@@ -78,11 +101,11 @@ export default function MainLayout({ children }: { children: ReactNode }) {
     const rect = button.getBoundingClientRect();
     const x = ((e.clientX - rect.left) / rect.width) * 100;
     const y = ((e.clientY - rect.top) / rect.height) * 100;
-    
+
     button.style.setProperty('--ripple-x', `${x}%`);
     button.style.setProperty('--ripple-y', `${y}%`);
     button.classList.add('ripple');
-    
+
     setTimeout(() => {
       button.classList.remove('ripple');
     }, 600);
@@ -127,8 +150,8 @@ export default function MainLayout({ children }: { children: ReactNode }) {
       <a href="#main-content" className="skip-link">
         Skip to main content
       </a>
-      
-      <Sidebar 
+
+      <Sidebar
         ref={sidebarRef}
         isOpen={isSidebarOpen}
         onMouseEnter={handleSidebarMouseEnter}
@@ -136,26 +159,26 @@ export default function MainLayout({ children }: { children: ReactNode }) {
         onNavClick={handleNavClick}
       />
       <TopNav onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)} />
-      <main 
+      <main
         id="main-content"
         className={`main-content page-enter ${isSidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}
       >
         <Breadcrumb />
         {children}
       </main>
-      
+
       {/* Command Palette */}
-      <CommandPalette 
-        isOpen={commandPalette.isOpen} 
-        onClose={commandPalette.close} 
+      <CommandPalette
+        isOpen={commandPalette.isOpen}
+        onClose={commandPalette.close}
       />
-      
+
       {/* Bottom Navigation (Mobile) */}
-      <BottomNav 
+      <BottomNav
         showMore={true}
         onMoreClick={bottomNav.openMore}
       />
-      
+
       {/* More Menu Sheet (Mobile) */}
       <Sheet
         isOpen={bottomNav.isMoreOpen}
