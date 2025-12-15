@@ -5,12 +5,12 @@ import { useOrders, useStaff } from '@/lib/store';
 import { useSound } from '@/lib/contexts/SoundContext';
 import { useLanguage } from '@/lib/contexts/LanguageContext';
 import { Order } from '@/lib/types';
-import { 
-  Maximize, 
-  Minimize, 
-  Clock, 
-  ChefHat, 
-  CheckCircle, 
+import {
+  Maximize,
+  Minimize,
+  Clock,
+  ChefHat,
+  CheckCircle,
   AlertTriangle,
   Volume2,
   VolumeX,
@@ -27,7 +27,7 @@ export default function KDSPage() {
   const { staff, isInitialized: staffInitialized } = useStaff();
   const { playSound, settings: soundSettings } = useSound();
   const { t, language } = useLanguage();
-  
+
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [lastOrderCount, setLastOrderCount] = useState(0);
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -55,7 +55,7 @@ export default function KDSPage() {
 
   // Get today's orders
   const todayOrders = getTodayOrders();
-  
+
   // Categorize orders
   const pendingOrders = todayOrders.filter(o => o.status === 'pending');
   const preparingOrders = todayOrders.filter(o => o.status === 'preparing');
@@ -101,7 +101,7 @@ export default function KDSPage() {
     const now = new Date();
     const diffMs = now.getTime() - created.getTime();
     const diffMins = Math.floor(diffMs / 60000);
-    
+
     if (diffMins < 1) return language === 'en' ? 'New' : 'Baru';
     if (diffMins < 60) return `${diffMins}m`;
     const hours = Math.floor(diffMins / 60);
@@ -114,7 +114,7 @@ export default function KDSPage() {
     const created = new Date(order.createdAt);
     const now = new Date();
     const diffMins = Math.floor((now.getTime() - created.getTime()) / 60000);
-    
+
     if (order.status === 'pending' && diffMins >= 5) return true;
     if (order.status === 'preparing' && diffMins >= 15) return true;
     return false;
@@ -133,10 +133,10 @@ export default function KDSPage() {
 
   if (!isInitialized || !staffInitialized) {
     return (
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
         minHeight: '100vh',
         background: 'var(--bg-secondary)'
       }}>
@@ -149,16 +149,16 @@ export default function KDSPage() {
   const selectedStaffName = activeStaff.find(s => s.id === selectedStaffId)?.name;
 
   return (
-    <div className={isFullscreen ? 'kds-fullscreen' : ''} style={{ 
-      minHeight: '100vh', 
+    <div className={isFullscreen ? 'kds-fullscreen' : ''} style={{
+      minHeight: '100vh',
       background: 'var(--bg-secondary)',
       padding: isFullscreen ? '1rem' : '1.5rem'
     }}>
       {/* Header */}
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center', 
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
         marginBottom: '1.5rem',
         background: 'var(--bg-primary)',
         padding: '1rem 1.5rem',
@@ -177,7 +177,7 @@ export default function KDSPage() {
               {t('kds.title')}
             </h1>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
-              {currentTime.toLocaleDateString(dateLocale, { weekday: 'long', day: 'numeric', month: 'short' })} • 
+              {currentTime.toLocaleDateString(dateLocale, { weekday: 'long', day: 'numeric', month: 'short' })} •
               {currentTime.toLocaleTimeString(dateLocale, { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
             </p>
           </div>
@@ -186,27 +186,27 @@ export default function KDSPage() {
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           {/* Stats */}
           <div style={{ display: 'flex', gap: '1rem' }}>
-            <div style={{ 
-              padding: '0.5rem 1rem', 
-              background: '#fef3c7', 
+            <div style={{
+              padding: '0.5rem 1rem',
+              background: '#fef3c7',
               borderRadius: 'var(--radius-md)',
               textAlign: 'center'
             }}>
               <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#92400e' }}>{pendingOrders.length}</div>
               <div style={{ fontSize: '0.7rem', color: '#92400e' }}>{t('kds.pending')}</div>
             </div>
-            <div style={{ 
-              padding: '0.5rem 1rem', 
-              background: '#dbeafe', 
+            <div style={{
+              padding: '0.5rem 1rem',
+              background: '#dbeafe',
               borderRadius: 'var(--radius-md)',
               textAlign: 'center'
             }}>
               <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#1e40af' }}>{preparingOrders.length}</div>
               <div style={{ fontSize: '0.7rem', color: '#1e40af' }}>{t('kds.preparing')}</div>
             </div>
-            <div style={{ 
-              padding: '0.5rem 1rem', 
-              background: '#d1fae5', 
+            <div style={{
+              padding: '0.5rem 1rem',
+              background: '#d1fae5',
               borderRadius: 'var(--radius-md)',
               textAlign: 'center'
             }}>
@@ -216,9 +216,9 @@ export default function KDSPage() {
           </div>
 
           {/* Staff Selector */}
-          <div style={{ 
-            display: 'flex', 
-            alignItems: 'center', 
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
             gap: '0.5rem',
             padding: '0.5rem 1rem',
             background: selectedStaffId ? '#dbeafe' : '#fef3c7',
@@ -248,8 +248,8 @@ export default function KDSPage() {
           </div>
 
           {/* Sound indicator */}
-          <div style={{ 
-            padding: '0.5rem', 
+          <div style={{
+            padding: '0.5rem',
             borderRadius: 'var(--radius-md)',
             color: soundSettings.enabled ? 'var(--success)' : 'var(--danger)'
           }}>
@@ -257,7 +257,7 @@ export default function KDSPage() {
           </div>
 
           {/* Fullscreen toggle */}
-          <button 
+          <button
             onClick={toggleFullscreen}
             className="btn btn-outline"
             style={{ padding: '0.75rem' }}
@@ -269,22 +269,22 @@ export default function KDSPage() {
       </div>
 
       {/* Order Columns */}
-      <div style={{ 
-        display: 'grid', 
-        gridTemplateColumns: 'repeat(3, 1fr)', 
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(3, 1fr)',
         gap: '1rem',
         height: isFullscreen ? 'calc(100vh - 120px)' : 'calc(100vh - 200px)'
       }}>
         {/* Pending Column */}
-        <div style={{ 
-          background: 'var(--bg-primary)', 
+        <div style={{
+          background: 'var(--bg-primary)',
           borderRadius: 'var(--radius-lg)',
           overflow: 'hidden',
           display: 'flex',
           flexDirection: 'column'
         }}>
-          <div style={{ 
-            padding: '1rem', 
+          <div style={{
+            padding: '1rem',
             background: '#fef3c7',
             borderBottom: '3px solid #f59e0b',
             display: 'flex',
@@ -295,23 +295,23 @@ export default function KDSPage() {
               <Clock size={20} color="#92400e" />
               <span style={{ fontWeight: 700, color: '#92400e' }}>{t('kds.pending')}</span>
             </div>
-            <span style={{ 
-              background: '#f59e0b', 
-              color: 'white', 
-              padding: '0.25rem 0.75rem', 
+            <span style={{
+              background: '#f59e0b',
+              color: 'white',
+              padding: '0.25rem 0.75rem',
               borderRadius: '9999px',
               fontWeight: 700
             }}>
               {pendingOrders.length}
             </span>
           </div>
-          
+
           <div style={{ flex: 1, overflowY: 'auto', padding: '0.75rem' }}>
             {pendingOrders.length > 0 ? (
               pendingOrders.map(order => (
-                <OrderCard 
-                  key={order.id} 
-                  order={order} 
+                <OrderCard
+                  key={order.id}
+                  order={order}
                   isUrgent={isUrgent(order)}
                   timeElapsed={getTimeElapsed(order.createdAt)}
                   onAction={() => handleStatusChange(order.id, 'preparing')}
@@ -326,15 +326,15 @@ export default function KDSPage() {
         </div>
 
         {/* Preparing Column */}
-        <div style={{ 
-          background: 'var(--bg-primary)', 
+        <div style={{
+          background: 'var(--bg-primary)',
           borderRadius: 'var(--radius-lg)',
           overflow: 'hidden',
           display: 'flex',
           flexDirection: 'column'
         }}>
-          <div style={{ 
-            padding: '1rem', 
+          <div style={{
+            padding: '1rem',
             background: '#dbeafe',
             borderBottom: '3px solid #3b82f6',
             display: 'flex',
@@ -345,23 +345,23 @@ export default function KDSPage() {
               <ChefHat size={20} color="#1e40af" />
               <span style={{ fontWeight: 700, color: '#1e40af' }}>{t('kds.preparing')}</span>
             </div>
-            <span style={{ 
-              background: '#3b82f6', 
-              color: 'white', 
-              padding: '0.25rem 0.75rem', 
+            <span style={{
+              background: '#3b82f6',
+              color: 'white',
+              padding: '0.25rem 0.75rem',
               borderRadius: '9999px',
               fontWeight: 700
             }}>
               {preparingOrders.length}
             </span>
           </div>
-          
+
           <div style={{ flex: 1, overflowY: 'auto', padding: '0.75rem' }}>
             {preparingOrders.length > 0 ? (
               preparingOrders.map(order => (
-                <OrderCard 
-                  key={order.id} 
-                  order={order} 
+                <OrderCard
+                  key={order.id}
+                  order={order}
                   isUrgent={isUrgent(order)}
                   timeElapsed={getTimeElapsed(order.createdAt)}
                   onAction={() => handleStatusChange(order.id, 'ready')}
@@ -376,15 +376,15 @@ export default function KDSPage() {
         </div>
 
         {/* Ready Column */}
-        <div style={{ 
-          background: 'var(--bg-primary)', 
+        <div style={{
+          background: 'var(--bg-primary)',
           borderRadius: 'var(--radius-lg)',
           overflow: 'hidden',
           display: 'flex',
           flexDirection: 'column'
         }}>
-          <div style={{ 
-            padding: '1rem', 
+          <div style={{
+            padding: '1rem',
             background: '#d1fae5',
             borderBottom: '3px solid #10b981',
             display: 'flex',
@@ -395,23 +395,23 @@ export default function KDSPage() {
               <CheckCircle size={20} color="#065f46" />
               <span style={{ fontWeight: 700, color: '#065f46' }}>{t('kds.ready')}</span>
             </div>
-            <span style={{ 
-              background: '#10b981', 
-              color: 'white', 
-              padding: '0.25rem 0.75rem', 
+            <span style={{
+              background: '#10b981',
+              color: 'white',
+              padding: '0.25rem 0.75rem',
               borderRadius: '9999px',
               fontWeight: 700
             }}>
               {readyOrders.length}
             </span>
           </div>
-          
+
           <div style={{ flex: 1, overflowY: 'auto', padding: '0.75rem' }}>
             {readyOrders.length > 0 ? (
               readyOrders.map(order => (
-                <OrderCard 
-                  key={order.id} 
-                  order={order} 
+                <OrderCard
+                  key={order.id}
+                  order={order}
                   isUrgent={false}
                   timeElapsed={getTimeElapsed(order.createdAt)}
                   onAction={() => handleStatusChange(order.id, 'completed')}
@@ -431,17 +431,17 @@ export default function KDSPage() {
 }
 
 // Order Card Component
-function OrderCard({ 
-  order, 
-  isUrgent, 
-  timeElapsed, 
-  onAction, 
-  actionLabel, 
+function OrderCard({
+  order,
+  isUrgent,
+  timeElapsed,
+  onAction,
+  actionLabel,
   actionColor,
   isReady = false
-}: { 
-  order: Order; 
-  isUrgent: boolean; 
+}: {
+  order: Order;
+  isUrgent: boolean;
   timeElapsed: string;
   onAction: () => void;
   actionLabel: string;
@@ -449,8 +449,8 @@ function OrderCard({
   isReady?: boolean;
 }) {
   return (
-    <div 
-      style={{ 
+    <div
+      style={{
         background: isUrgent ? '#fef2f2' : 'var(--gray-50)',
         borderRadius: 'var(--radius-md)',
         padding: '1rem',
@@ -460,9 +460,9 @@ function OrderCard({
       }}
     >
       {/* Header */}
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
         alignItems: 'flex-start',
         marginBottom: '0.75rem'
       }}>
@@ -472,9 +472,9 @@ function OrderCard({
             {order.orderType === 'takeaway' ? 'Takeaway' : 'GoMamam'}
           </div>
         </div>
-        <div style={{ 
-          display: 'flex', 
-          alignItems: 'center', 
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
           gap: '0.25rem',
           padding: '0.25rem 0.5rem',
           borderRadius: 'var(--radius-sm)',
@@ -492,31 +492,72 @@ function OrderCard({
       {/* Items */}
       <div style={{ marginBottom: '0.75rem' }}>
         {order.items.map((item, idx) => (
-          <div 
-            key={idx} 
-            style={{ 
-              display: 'flex', 
-              alignItems: 'center',
+          <div
+            key={idx}
+            style={{
               padding: '0.5rem 0',
               borderBottom: idx < order.items.length - 1 ? '1px dashed var(--gray-300)' : 'none'
             }}
           >
-            <span style={{ 
-              minWidth: '28px', 
-              height: '28px', 
-              background: 'var(--primary)', 
-              color: 'white',
-              borderRadius: 'var(--radius-sm)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontWeight: 700,
-              marginRight: '0.75rem',
-              fontSize: '0.875rem'
-            }}>
-              {item.quantity}
-            </span>
-            <span style={{ fontWeight: 500, fontSize: '0.9rem' }}>{item.name}</span>
+            <div style={{ display: 'flex', alignItems: 'flex-start' }}>
+              <span style={{
+                minWidth: '28px',
+                height: '28px',
+                background: 'var(--primary)',
+                color: 'white',
+                borderRadius: 'var(--radius-sm)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontWeight: 700,
+                marginRight: '0.75rem',
+                fontSize: '0.875rem',
+                flexShrink: 0
+              }}>
+                {item.quantity}
+              </span>
+              <div style={{ flex: 1 }}>
+                <span style={{ fontWeight: 600, fontSize: '0.9rem', display: 'block' }}>
+                  {item.name}
+                </span>
+                {/* Show modifiers/flavours */}
+                {item.selectedModifiers && item.selectedModifiers.length > 0 && (
+                  <div style={{ marginTop: '0.25rem' }}>
+                    {item.selectedModifiers.map((mod, modIdx) => (
+                      <span
+                        key={modIdx}
+                        style={{
+                          display: 'inline-block',
+                          background: '#fef3c7',
+                          color: '#92400e',
+                          padding: '0.125rem 0.5rem',
+                          borderRadius: '9999px',
+                          fontSize: '0.7rem',
+                          fontWeight: 600,
+                          marginRight: '0.25rem',
+                          marginTop: '0.25rem',
+                          border: '1px solid #f59e0b'
+                        }}
+                      >
+                        {mod.name}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                {/* Show notes if any */}
+                {item.notes && (
+                  <div style={{
+                    marginTop: '0.25rem',
+                    fontSize: '0.75rem',
+                    color: 'var(--danger)',
+                    fontStyle: 'italic',
+                    fontWeight: 500
+                  }}>
+                    📝 {item.notes}
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         ))}
       </div>
@@ -552,10 +593,10 @@ function OrderCard({
 // Empty State Component
 function EmptyState({ message }: { message: string }) {
   return (
-    <div style={{ 
-      display: 'flex', 
-      flexDirection: 'column', 
-      alignItems: 'center', 
+    <div style={{
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
       justifyContent: 'center',
       height: '200px',
       color: 'var(--text-secondary)'
