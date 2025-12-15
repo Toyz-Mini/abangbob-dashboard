@@ -539,21 +539,9 @@ function OrderCard({
                           border: '1px solid #f59e0b'
                         }}
                       >
-                        {mod.name}
+                        {mod.optionName}
                       </span>
                     ))}
-                  </div>
-                )}
-                {/* Show notes if any */}
-                {item.notes && (
-                  <div style={{
-                    marginTop: '0.25rem',
-                    fontSize: '0.75rem',
-                    color: 'var(--danger)',
-                    fontStyle: 'italic',
-                    fontWeight: 500
-                  }}>
-                    📝 {item.notes}
                   </div>
                 )}
               </div>
