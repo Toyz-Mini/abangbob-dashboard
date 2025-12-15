@@ -1127,6 +1127,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       id: `prod_${Date.now()}`,
     };
     setProductionLogs(prev => [newLog, ...prev]);
+    // Sync to Supabase
+    SupabaseSync.syncAddProductionLog(newLog);
   }, []);
 
   // Delivery order actions
@@ -1366,27 +1368,39 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const addShift = useCallback((shiftData: Omit<Shift, 'id'>) => {
     const newShift: Shift = { ...shiftData, id: `shift_${Date.now()}` };
     setShifts(prev => [...prev, newShift]);
+    // Sync to Supabase
+    SupabaseSync.syncAddShift(newShift);
   }, []);
 
   const updateShift = useCallback((id: string, updates: Partial<Shift>) => {
     setShifts(prev => prev.map(s => s.id === id ? { ...s, ...updates } : s));
+    // Sync to Supabase
+    SupabaseSync.syncUpdateShift(id, updates);
   }, []);
 
   const deleteShift = useCallback((id: string) => {
     setShifts(prev => prev.filter(s => s.id !== id));
+    // Sync to Supabase
+    SupabaseSync.syncDeleteShift(id);
   }, []);
 
   const addScheduleEntry = useCallback((entryData: Omit<ScheduleEntry, 'id'>) => {
     const newEntry: ScheduleEntry = { ...entryData, id: `sched_${Date.now()}` };
     setSchedules(prev => [...prev, newEntry]);
+    // Sync to Supabase
+    SupabaseSync.syncAddScheduleEntry(newEntry);
   }, []);
 
   const updateScheduleEntry = useCallback((id: string, updates: Partial<ScheduleEntry>) => {
     setSchedules(prev => prev.map(s => s.id === id ? { ...s, ...updates } : s));
+    // Sync to Supabase
+    SupabaseSync.syncUpdateScheduleEntry(id, updates);
   }, []);
 
   const deleteScheduleEntry = useCallback((id: string) => {
     setSchedules(prev => prev.filter(s => s.id !== id));
+    // Sync to Supabase
+    SupabaseSync.syncDeleteScheduleEntry(id);
   }, []);
 
   const getWeekSchedule = useCallback((startDate: string): ScheduleEntry[] => {
@@ -1817,6 +1831,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       createdAt: new Date().toISOString(),
     };
     setLeaveRequests(prev => [newRequest, ...prev]);
+    // Sync to Supabase
+    SupabaseSync.syncAddLeaveRequest(newRequest);
     // Update pending count in leave balance
     setLeaveBalances(prev => prev.map(lb => {
       if (lb.staffId !== request.staffId) return lb;
@@ -1836,6 +1852,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   const updateLeaveRequest = useCallback((id: string, updates: Partial<LeaveRequest>) => {
     setLeaveRequests(prev => prev.map(r => r.id === id ? { ...r, ...updates } : r));
+    // Sync to Supabase
+    SupabaseSync.syncUpdateLeaveRequest(id, updates);
   }, []);
 
   const approveLeaveRequest = useCallback((id: string, approverId: string, approverName: string) => {
