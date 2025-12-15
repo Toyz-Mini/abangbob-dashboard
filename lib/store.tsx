@@ -14,6 +14,7 @@ import { MOCK_CHECKLIST_TEMPLATES, MOCK_CHECKLIST_COMPLETIONS, MOCK_LEAVE_BALANC
 import * as SupabaseSync from './supabase-sync';
 import { isSupabaseConfigured, getConnectionState, checkSupabaseConnection } from './supabase/client';
 import { logSyncError, logSyncSuccess } from './utils/sync-logger';
+import * as PaymentTaxSync from './supabase/payment-tax-sync';
 
 // Data source tracking for debugging
 export type DataSource = 'supabase' | 'localStorage' | 'mock' | 'unknown';
