@@ -116,6 +116,7 @@ interface StoreState {
   updateStockItem: (id: string, updates: Partial<StockItem>) => void;
   deleteStockItem: (id: string) => void;
   adjustStock: (id: string, quantity: number, type: 'in' | 'out', reason: string) => void;
+  refreshInventory: () => Promise<void>;
 
   // Staff
   staff: StaffProfile[];
@@ -126,6 +127,8 @@ interface StoreState {
   clockIn: (staffId: string, pin: string) => { success: boolean; message: string };
   clockOut: (staffId: string) => { success: boolean; message: string };
   getStaffAttendanceToday: (staffId: string) => AttendanceRecord | undefined;
+  refreshStaff: () => Promise<void>;
+  refreshAttendance: () => Promise<void>;
 
   // Orders
   orders: Order[];
@@ -1175,6 +1178,81 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       console.error('Failed to refresh orders from Supabase:', error);
     }
   }, []);
+
+  // Refresh inventory from Supabase (for realtime sync)
+  const refreshInventory = useCallback(async () => {
+    try {
+      const supabaseInventory = await SupabaseSync.loadInventoryFromSupabase();
+      if (supabaseInventory && supabaseInventory.length > 0) {
+        setInventory(supabaseInventory);
+        console.log('[Realtime] Inventory refreshed from Supabase:', supabaseInventory.length);
+      }
+    } catch (error) {
+      console.error('Failed to refresh inventory from Supabase:', error);
+    }
+  }, []);
+
+  // Refresh menu from Supabase (for realtime sync)
+  const refreshMenu = useCallback(async () => {
+    try {
+      const menuResult = await SupabaseSync.loadMenuItemsFromSupabase();
+      if (menuResult.data && menuResult.data.length > 0) {
+        setMenuItems(menuResult.data);
+        console.log('[Realtime] Menu refreshed from Supabase:', menuResult.data.length);
+      }
+      // Also refresh modifiers
+      const modGroupResult = await SupabaseSync.loadModifierGroupsFromSupabase();
+      if (modGroupResult.data && modGroupResult.data.length > 0) {
+        setModifierGroups(modGroupResult.data);
+      }
+      const modOptResult = await SupabaseSync.loadModifierOptionsFromSupabase();
+      if (modOptResult.data && modOptResult.data.length > 0) {
+        setModifierOptions(modOptResult.data);
+      }
+    } catch (error) {
+      console.error('Failed to refresh menu from Supabase:', error);
+    }
+  }, []);
+
+  // Refresh staff from Supabase (for realtime sync)
+  const refreshStaff = useCallback(async () => {
+    try {
+      const supabaseStaff = await SupabaseSync.loadStaffFromSupabase();
+      if (supabaseStaff && supabaseStaff.length > 0) {
+        setStaff(supabaseStaff);
+        console.log('[Realtime] Staff refreshed from Supabase:', supabaseStaff.length);
+      }
+    } catch (error) {
+      console.error('Failed to refresh staff from Supabase:', error);
+    }
+  }, []);
+
+  // Refresh attendance from Supabase (for realtime sync)
+  const refreshAttendance = useCallback(async () => {
+    try {
+      const supabaseAttendance = await SupabaseSync.loadAttendanceFromSupabase();
+      if (supabaseAttendance && supabaseAttendance.length > 0) {
+        setAttendance(supabaseAttendance);
+        console.log('[Realtime] Attendance refreshed from Supabase:', supabaseAttendance.length);
+      }
+    } catch (error) {
+      console.error('Failed to refresh attendance from Supabase:', error);
+    }
+  }, []);
+
+  // Refresh schedules from Supabase (for realtime sync)
+  const refreshSchedules = useCallback(async () => {
+    try {
+      const supabaseSchedules = await SupabaseSync.loadSchedulesFromSupabase();
+      if (supabaseSchedules && supabaseSchedules.length > 0) {
+        setSchedules(supabaseSchedules);
+        console.log('[Realtime] Schedules refreshed from Supabase:', supabaseSchedules.length);
+      }
+    } catch (error) {
+      console.error('Failed to refresh schedules from Supabase:', error);
+    }
+  }, []);
+
 
   // Production log actions
   const addProductionLog = useCallback((log: Omit<ProductionLog, 'id'>) => {
@@ -2863,6 +2941,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     updateStockItem,
     deleteStockItem,
     adjustStock,
+    refreshInventory,
 
     // Staff
     staff,
@@ -2873,6 +2952,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     clockIn,
     clockOut,
     getStaffAttendanceToday,
+    refreshStaff,
+    refreshAttendance,
 
     // Orders
     orders,
@@ -3117,6 +3198,7 @@ export function useInventory() {
     updateStockItem: store.updateStockItem,
     deleteStockItem: store.deleteStockItem,
     adjustStock: store.adjustStock,
+    refreshInventory: store.refreshInventory,
     isInitialized: store.isInitialized,
   };
 }
@@ -3132,6 +3214,8 @@ export function useStaff() {
     clockIn: store.clockIn,
     clockOut: store.clockOut,
     getStaffAttendanceToday: store.getStaffAttendanceToday,
+    refreshStaff: store.refreshStaff,
+    refreshAttendance: store.refreshAttendance,
     isInitialized: store.isInitialized,
   };
 }

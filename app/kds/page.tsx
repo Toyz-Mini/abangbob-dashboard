@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useOrders, useStaff } from '@/lib/store';
+import { useOrdersRealtime } from '@/lib/supabase/realtime-hooks';
 import { useSound } from '@/lib/contexts/SoundContext';
 import { useLanguage } from '@/lib/contexts/LanguageContext';
 import { Order } from '@/lib/types';
@@ -23,7 +24,7 @@ import Link from 'next/link';
 type OrderColumn = 'pending' | 'preparing' | 'ready';
 
 export default function KDSPage() {
-  const { orders, updateOrderStatus, getTodayOrders, isInitialized } = useOrders();
+  const { orders, updateOrderStatus, getTodayOrders, refreshOrders, isInitialized } = useOrders();
   const { staff, isInitialized: staffInitialized } = useStaff();
   const { playSound, settings: soundSettings } = useSound();
   const { t, language } = useLanguage();
@@ -32,6 +33,14 @@ export default function KDSPage() {
   const [lastOrderCount, setLastOrderCount] = useState(0);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [selectedStaffId, setSelectedStaffId] = useState<string>('');
+
+  // Subscribe to realtime order changes
+  const handleOrderChange = useCallback(() => {
+    console.log('[KDS Realtime] Order change detected, refreshing...');
+    refreshOrders();
+  }, [refreshOrders]);
+
+  useOrdersRealtime(handleOrderChange);
 
   // Locale for date formatting
   const dateLocale = language === 'en' ? 'en-MY' : 'ms-MY';

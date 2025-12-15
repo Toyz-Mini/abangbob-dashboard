@@ -120,6 +120,27 @@ export function useAttendanceRealtime(onAttendanceChange: RealtimeChangeHandler)
 }
 
 /**
+ * Subscribe to menu_items table changes (for POS/menu sync)
+ */
+export function useMenuRealtime(onMenuChange: RealtimeChangeHandler) {
+  return useSupabaseRealtime('menu_items', onMenuChange);
+}
+
+/**
+ * Subscribe to modifier options table changes
+ */
+export function useModifiersRealtime(onModifierChange: RealtimeChangeHandler) {
+  return useSupabaseRealtime('modifier_options', onModifierChange);
+}
+
+/**
+ * Subscribe to schedules table changes
+ */
+export function useSchedulesRealtime(onScheduleChange: RealtimeChangeHandler) {
+  return useSupabaseRealtime('schedules', onScheduleChange);
+}
+
+/**
  * Check if realtime is enabled and working
  */
 export async function testRealtimeConnection(): Promise<boolean> {
@@ -137,5 +158,4 @@ export async function testRealtimeConnection(): Promise<boolean> {
     return false;
   }
 }
-
 
