@@ -27,6 +27,14 @@ export const MOCK_MODIFIER_GROUPS: ModifierGroup[] = [
     minSelection: 0,
     maxSelection: 1,
   },
+  {
+    id: 'modgroup_size_nashville',
+    name: 'Pilih Saiz',
+    isRequired: true,
+    allowMultiple: false,
+    minSelection: 1,
+    maxSelection: 1,
+  },
 ];
 
 // ==================== MODIFIER OPTIONS ====================
@@ -70,6 +78,21 @@ export const MOCK_MODIFIER_OPTIONS: ModifierOption[] = [
     extraPrice: 1.00,
     isAvailable: true,
   },
+  // Nashville size options
+  {
+    id: 'modopt_nashville_1pc',
+    groupId: 'modgroup_size_nashville',
+    name: '1 piece',
+    extraPrice: 0.00,
+    isAvailable: true,
+  },
+  {
+    id: 'modopt_nashville_3pcs',
+    groupId: 'modgroup_size_nashville',
+    name: '3 pieces (FREE Dipping Sauce)',
+    extraPrice: 7.00,
+    isAvailable: true,
+  },
 ];
 
 // ==================== MENU ITEMS ====================
@@ -106,7 +129,7 @@ export const MOCK_MENU: MenuItem[] = [
     isAvailable: true,
     modifierGroupIds: [],
   },
-  
+
   // Burger Category
   {
     id: '4',
@@ -138,7 +161,7 @@ export const MOCK_MENU: MenuItem[] = [
     isAvailable: true,
     modifierGroupIds: [],
   },
-  
+
   // Minuman Category
   {
     id: '7',
@@ -180,7 +203,7 @@ export const MOCK_MENU: MenuItem[] = [
     isAvailable: true,
     modifierGroupIds: [],
   },
-  
+
   // Alacart Category
   {
     id: '11',
@@ -245,6 +268,24 @@ export const MOCK_MENU: MenuItem[] = [
     isAvailable: true,
     modifierGroupIds: ['modgroup_flavour', 'modgroup_addon_sauce'],
   },
+  {
+    id: '18',
+    name: 'Potato Bowl',
+    category: 'Alacart',
+    price: 3.50,
+    description: 'NEW! Creamy potato bowl with special mayo topping',
+    isAvailable: true,
+    modifierGroupIds: [],
+  },
+  {
+    id: '19',
+    name: 'Nashville Mozzarella Cheese',
+    category: 'Alacart',
+    price: 3.90,
+    description: 'Crispy Nashville-style mozzarella cheese sticks',
+    isAvailable: true,
+    modifierGroupIds: ['modgroup_size_nashville'],
+  },
 ];
 
 export const MENU_CATEGORIES = ['All', ...Array.from(new Set(MOCK_MENU.map(item => item.category)))];
@@ -267,7 +308,7 @@ export const UPSELL_RULES: Record<string, string[]> = {
 // Helper function to get upsell suggestions based on cart items
 export const getUpsellSuggestions = (cartItemIds: string[], allMenuItems: MenuItem[]): MenuItem[] => {
   const suggestedIds = new Set<string>();
-  
+
   // First, check custom rules
   cartItemIds.forEach(itemId => {
     const rules = UPSELL_RULES[itemId];
@@ -275,15 +316,15 @@ export const getUpsellSuggestions = (cartItemIds: string[], allMenuItems: MenuIt
       rules.forEach(suggestId => suggestedIds.add(suggestId));
     }
   });
-  
+
   // If no suggestions from rules, use popular items
   if (suggestedIds.size === 0) {
     POPULAR_UPSELL_IDS.forEach(id => suggestedIds.add(id));
   }
-  
+
   // Filter out items already in cart
   const filteredIds = Array.from(suggestedIds).filter(id => !cartItemIds.includes(id));
-  
+
   // Get menu items for suggestions (max 4)
   return filteredIds
     .slice(0, 4)
