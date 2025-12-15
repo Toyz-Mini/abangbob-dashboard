@@ -201,26 +201,30 @@ VALUES ('outlet-logos', 'outlet-logos', true);`
         };
       }
 
-      const { data, error } = await supabase.storage.listBuckets();
+      // Instead of listBuckets (which requires elevated permissions),
+      // try to list files in the bucket - this works with anon key
+      const { data, error } = await supabase.storage
+        .from('outlet-logos')
+        .list('', { limit: 1 });
 
       if (error) {
+        // Check if it's a "bucket not found" error
+        if (error.message.includes('Bucket not found') || error.message.includes('does not exist')) {
+          return {
+            status: 'error',
+            message: 'Bucket "outlet-logos" tidak wujud',
+            details: 'Sila buat bucket menggunakan SQL commands di bawah'
+          };
+        }
+        // Other errors might be permission-related but bucket exists
         return {
-          status: 'error',
-          message: 'Tidak boleh list buckets',
+          status: 'warning',
+          message: 'Bucket mungkin wujud tetapi tidak dapat verify',
           details: error.message
         };
       }
 
-      const bucketExists = data?.some(bucket => bucket.name === 'outlet-logos');
-
-      if (!bucketExists) {
-        return {
-          status: 'error',
-          message: 'Bucket "outlet-logos" tidak wujud',
-          details: 'Sila buat bucket menggunakan SQL commands di bawah'
-        };
-      }
-
+      // If we can list files (even if empty), bucket exists
       return {
         status: 'success',
         message: 'Bucket outlet-logos wujud',
