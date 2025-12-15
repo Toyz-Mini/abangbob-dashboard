@@ -8,13 +8,13 @@ import { Expense, ExpenseCategory } from '@/lib/types';
 import { EXPENSE_CATEGORIES, PAYMENT_METHODS, getCategoryLabel, getCategoryColor } from '@/lib/finance-data';
 import Modal from '@/components/Modal';
 import LoadingSpinner from '@/components/LoadingSpinner';
-import { 
-  DollarSign, 
-  TrendingUp, 
-  TrendingDown, 
-  Plus, 
-  Edit2, 
-  Trash2, 
+import {
+  DollarSign,
+  TrendingUp,
+  TrendingDown,
+  Plus,
+  Edit2,
+  Trash2,
   Calendar,
   Wallet,
   CreditCard,
@@ -30,18 +30,18 @@ type ModalType = 'add' | 'edit' | 'delete' | 'cashflow' | null;
 type ViewMode = 'expenses' | 'cashflow' | 'pnl';
 
 export default function FinancePage() {
-  const { 
-    expenses, 
-    cashFlows, 
+  const {
+    expenses,
+    cashFlows,
     orders,
-    addExpense, 
-    updateExpense, 
+    addExpense,
+    updateExpense,
     deleteExpense,
     updateCashFlow,
     getTodayCashFlow,
     getMonthlyExpenses,
     getMonthlyRevenue,
-    isInitialized 
+    isInitialized
   } = useFinance();
   const { t, language } = useTranslation();
 
@@ -83,7 +83,7 @@ export default function FinancePage() {
   // Calculate totals
   const monthlyExpenseTotal = filteredExpenses.reduce((sum, e) => sum + e.amount, 0);
   const monthlyRevenue = getMonthlyRevenue(filterMonth);
-  
+
   // Expense by category
   const expenseByCategory = useMemo(() => {
     const grouped: Record<string, number> = {};
@@ -104,12 +104,12 @@ export default function FinancePage() {
   const calculatePnL = useMemo(() => {
     const monthExpenses = getMonthlyExpenses(filterMonth);
     const revenue = monthlyRevenue;
-    
+
     const expenseBreakdown: Record<string, number> = {};
     monthExpenses.forEach(e => {
       expenseBreakdown[e.category] = (expenseBreakdown[e.category] || 0) + e.amount;
     });
-    
+
     const totalExpenses = monthExpenses.reduce((sum, e) => sum + e.amount, 0);
     const estimatedCOGS = expenseBreakdown['ingredients'] || 0;
     const grossProfit = revenue - estimatedCOGS;
@@ -258,29 +258,31 @@ export default function FinancePage() {
   return (
     <MainLayout>
       <div className="animate-fade-in">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
-          <div>
-            <h1 style={{ fontSize: '2rem', fontWeight: 700, marginBottom: '0.5rem' }}>
-              {t('finance.title')}
-            </h1>
-            <p style={{ color: 'var(--text-secondary)' }}>
-              {t('finance.subtitle')}
-            </p>
-          </div>
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <button className="btn btn-outline" onClick={openCashFlowModal}>
-              <Wallet size={18} />
-              {t('finance.cashFlowToday')}
-            </button>
-            <button className="btn btn-primary" onClick={openAddModal}>
-              <Plus size={18} />
-              {t('finance.addExpense')}
-            </button>
+        <div className="page-header">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+            <div>
+              <h1 className="page-title" style={{ marginBottom: '0.5rem' }}>
+                {t('finance.title')}
+              </h1>
+              <p className="page-subtitle">
+                {t('finance.subtitle')}
+              </p>
+            </div>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <button className="btn btn-outline" onClick={openCashFlowModal}>
+                <Wallet size={18} />
+                {t('finance.cashFlowToday')}
+              </button>
+              <button className="btn btn-primary" onClick={openAddModal}>
+                <Plus size={18} />
+                {t('finance.addExpense')}
+              </button>
+            </div>
           </div>
         </div>
 
         {/* View Mode Tabs */}
-        <div style={{ marginBottom: '1.5rem', display: 'flex', gap: '0.5rem', borderBottom: '2px solid var(--gray-200)', paddingBottom: '0.5rem' }}>
+        <div style={{ marginBottom: '1.5rem', display: 'flex', gap: '0.5rem', borderBottom: '2px solid var(--gray-200)', paddingBottom: '0.5rem', overflowX: 'auto', whiteSpace: 'nowrap' }}>
           <button
             onClick={() => setViewMode('expenses')}
             className={`btn btn-sm ${viewMode === 'expenses' ? 'btn-primary' : 'btn-outline'}`}
@@ -373,7 +375,7 @@ export default function FinancePage() {
                 </div>
 
                 {filteredExpenses.length > 0 ? (
-                  <div style={{ overflowX: 'auto' }}>
+                  <div className="table-responsive">
                     <table className="table">
                       <thead>
                         <tr>
@@ -392,10 +394,10 @@ export default function FinancePage() {
                               {new Date(expense.date).toLocaleDateString('ms-MY')}
                             </td>
                             <td>
-                              <span 
-                                style={{ 
-                                  padding: '0.25rem 0.5rem', 
-                                  borderRadius: 'var(--radius-sm)', 
+                              <span
+                                style={{
+                                  padding: '0.25rem 0.5rem',
+                                  borderRadius: 'var(--radius-sm)',
                                   fontSize: '0.75rem',
                                   fontWeight: 600,
                                   background: `${getCategoryColor(expense.category)}20`,
@@ -449,9 +451,9 @@ export default function FinancePage() {
                 )}
 
                 {filteredExpenses.length > 0 && (
-                  <div style={{ 
-                    marginTop: '1rem', 
-                    paddingTop: '1rem', 
+                  <div style={{
+                    marginTop: '1rem',
+                    paddingTop: '1rem',
                     borderTop: '2px solid var(--gray-200)',
                     display: 'flex',
                     justifyContent: 'space-between',
@@ -487,16 +489,16 @@ export default function FinancePage() {
                               BND {amount.toFixed(2)}
                             </span>
                           </div>
-                          <div style={{ 
-                            width: '100%', 
-                            height: '8px', 
-                            background: 'var(--gray-200)', 
+                          <div style={{
+                            width: '100%',
+                            height: '8px',
+                            background: 'var(--gray-200)',
                             borderRadius: 'var(--radius-sm)',
                             overflow: 'hidden'
                           }}>
-                            <div style={{ 
-                              width: `${percentage}%`, 
-                              height: '100%', 
+                            <div style={{
+                              width: `${percentage}%`,
+                              height: '100%',
                               background: getCategoryColor(category as ExpenseCategory),
                               borderRadius: 'var(--radius-sm)',
                               transition: 'width 0.3s'
@@ -549,34 +551,35 @@ export default function FinancePage() {
                 <div className="card-title">Cash Flow Harian</div>
                 <div className="card-subtitle">7 hari terakhir</div>
               </div>
-              <table className="table">
-                <thead>
-                  <tr>
-                    <th>Tarikh</th>
-                    <th>Pembukaan</th>
-                    <th>Jualan Tunai</th>
-                    <th>Jualan Kad</th>
-                    <th>Perbelanjaan</th>
-                    <th>Penutup</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {cashFlows.slice(0, 7).map(cf => (
-                    <tr key={cf.id}>
-                      <td style={{ fontWeight: 600 }}>
-                        {new Date(cf.date).toLocaleDateString('ms-MY', { weekday: 'short', day: 'numeric', month: 'short' })}
-                      </td>
-                      <td>BND {cf.openingCash.toFixed(2)}</td>
-                      <td style={{ color: 'var(--success)' }}>+{cf.salesCash.toFixed(2)}</td>
-                      <td style={{ color: 'var(--primary)' }}>+{cf.salesCard.toFixed(2)}</td>
-                      <td style={{ color: 'var(--danger)' }}>-{cf.expensesCash.toFixed(2)}</td>
-                      <td style={{ fontWeight: 700 }}>BND {cf.closingCash.toFixed(2)}</td>
+              <div className="table-responsive">
+                <table className="table">
+                  <thead>
+                    <tr>
+                      <th>Tarikh</th>
+                      <th>Pembukaan</th>
+                      <th>Jualan Tunai</th>
+                      <th>Jualan Kad</th>
+                      <th>Perbelanjaan</th>
+                      <th>Penutup</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {cashFlows.slice(0, 7).map(cf => (
+                      <tr key={cf.id}>
+                        <td style={{ fontWeight: 600 }}>
+                          {new Date(cf.date).toLocaleDateString('ms-MY', { weekday: 'short', day: 'numeric', month: 'short' })}
+                        </td>
+                        <td>BND {cf.openingCash.toFixed(2)}</td>
+                        <td style={{ color: 'var(--success)' }}>+{cf.salesCash.toFixed(2)}</td>
+                        <td style={{ color: 'var(--primary)' }}>+{cf.salesCard.toFixed(2)}</td>
+                        <td style={{ color: 'var(--danger)' }}>-{cf.expensesCash.toFixed(2)}</td>
+                        <td style={{ fontWeight: 700 }}>BND {cf.closingCash.toFixed(2)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
-
             <div className="card">
               <div className="card-header">
                 <div className="card-title">Ringkasan Aliran Tunai</div>
@@ -682,9 +685,9 @@ export default function FinancePage() {
                 </div>
 
                 {/* Net Profit */}
-                <div style={{ 
-                  padding: '1rem', 
-                  background: calculatePnL.netProfit >= 0 ? '#dbeafe' : '#fee2e2', 
+                <div style={{
+                  padding: '1rem',
+                  background: calculatePnL.netProfit >= 0 ? '#dbeafe' : '#fee2e2',
                   borderRadius: 'var(--radius-md)',
                   marginTop: '0.5rem'
                 }}>
@@ -844,13 +847,13 @@ export default function FinancePage() {
           maxWidth="400px"
         >
           <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-            <div style={{ 
-              width: '60px', 
-              height: '60px', 
-              background: '#fee2e2', 
-              borderRadius: '50%', 
-              display: 'flex', 
-              alignItems: 'center', 
+            <div style={{
+              width: '60px',
+              height: '60px',
+              background: '#fee2e2',
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
               justifyContent: 'center',
               margin: '0 auto 1rem'
             }}>
@@ -941,9 +944,9 @@ export default function FinancePage() {
             </div>
           </div>
 
-          <div style={{ 
-            padding: '1rem', 
-            background: 'var(--gray-100)', 
+          <div style={{
+            padding: '1rem',
+            background: 'var(--gray-100)',
             borderRadius: 'var(--radius-md)',
             marginTop: '1rem'
           }}>

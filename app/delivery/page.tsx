@@ -27,13 +27,13 @@ export default function DeliveryHubPage() {
   // Check for new orders and play sound
   useEffect(() => {
     const newOrders = deliveryOrders.filter(o => o.status === 'new');
-    
+
     if (newOrders.length > lastOrderCount && soundEnabled && audioRef.current) {
       audioRef.current.play().catch(() => {
         // Autoplay might be blocked, that's okay
       });
     }
-    
+
     setLastOrderCount(newOrders.length);
   }, [deliveryOrders, soundEnabled, lastOrderCount]);
 
@@ -123,7 +123,7 @@ export default function DeliveryHubPage() {
           {orders.map(order => {
             const nextStatus = canMoveTo(order.status);
             const platformColor = getPlatformColor(order.platform);
-            
+
             return (
               <div
                 key={order.id}
@@ -166,9 +166,9 @@ export default function DeliveryHubPage() {
                   ))}
                 </div>
 
-                <div style={{ 
-                  display: 'flex', 
-                  justifyContent: 'space-between', 
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
                   alignItems: 'center',
                   paddingTop: '0.75rem',
                   borderTop: '1px solid var(--gray-200)'
@@ -195,17 +195,17 @@ export default function DeliveryHubPage() {
                         }}
                         className="btn btn-primary btn-sm"
                       >
-                        → {nextStatus === 'preparing' ? 'Prepare' : 
-                            nextStatus === 'ready' ? 'Ready' : 'Picked Up'}
+                        → {nextStatus === 'preparing' ? 'Prepare' :
+                          nextStatus === 'ready' ? 'Ready' : 'Picked Up'}
                       </button>
                     )}
                   </div>
                 </div>
 
                 {order.driverName && (
-                  <div style={{ 
-                    marginTop: '0.5rem', 
-                    fontSize: '0.75rem', 
+                  <div style={{
+                    marginTop: '0.5rem',
+                    fontSize: '0.75rem',
                     color: 'var(--text-secondary)',
                     padding: '0.5rem',
                     background: 'var(--gray-100)',
@@ -245,33 +245,35 @@ export default function DeliveryHubPage() {
   return (
     <MainLayout>
       <div className="animate-fade-in">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
-          <div>
-            <h1 style={{ fontSize: '2rem', fontWeight: 700, marginBottom: '0.5rem' }}>
-              Unified Delivery Hub
-            </h1>
-            <p style={{ color: 'var(--text-secondary)' }}>
-              Terima semua order delivery dalam satu skrin
-            </p>
-          </div>
-          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-            <button
-              onClick={() => setSoundEnabled(!soundEnabled)}
-              className={`btn ${soundEnabled ? 'btn-primary' : 'btn-outline'}`}
-              title={soundEnabled ? 'Sound On' : 'Sound Off'}
-            >
-              {soundEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
-              {soundEnabled ? 'Sound On' : 'Sound Off'}
-            </button>
+        <div className="page-header">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+            <div>
+              <h1 className="page-title" style={{ marginBottom: '0.5rem' }}>
+                Unified Delivery Hub
+              </h1>
+              <p className="page-subtitle">
+                Terima semua order delivery dalam satu skrin
+              </p>
+            </div>
+            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+              <button
+                onClick={() => setSoundEnabled(!soundEnabled)}
+                className={`btn ${soundEnabled ? 'btn-primary' : 'btn-outline'}`}
+                title={soundEnabled ? 'Sound On' : 'Sound Off'}
+              >
+                {soundEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
+                {soundEnabled ? 'Sound On' : 'Sound Off'}
+              </button>
+            </div>
           </div>
         </div>
 
         {/* New Order Alert */}
         {newOrders.length > 0 && (
-          <div className="alert alert-warning" style={{ 
-            marginBottom: '1.5rem', 
-            display: 'flex', 
-            alignItems: 'center', 
+          <div className="alert alert-warning" style={{
+            marginBottom: '1.5rem',
+            display: 'flex',
+            alignItems: 'center',
             justifyContent: 'space-between',
             animation: 'pulse 2s infinite'
           }}>
@@ -311,8 +313,8 @@ export default function DeliveryHubPage() {
                 <span style={{ fontWeight: 600 }}>
                   {platform.name}
                 </span>
-                <span style={{ 
-                  fontSize: '0.75rem', 
+                <span style={{
+                  fontSize: '0.75rem',
                   color: 'var(--text-secondary)',
                   textTransform: 'uppercase'
                 }}>
@@ -375,11 +377,11 @@ export default function DeliveryHubPage() {
         >
           {selectedOrder && (
             <>
-              <div 
+              <div
                 ref={slipRef}
-                style={{ 
-                  background: 'var(--gray-50)', 
-                  padding: '1rem', 
+                style={{
+                  background: 'var(--gray-50)',
+                  padding: '1rem',
                   borderRadius: 'var(--radius-md)',
                   fontFamily: 'monospace',
                   fontSize: '0.875rem'

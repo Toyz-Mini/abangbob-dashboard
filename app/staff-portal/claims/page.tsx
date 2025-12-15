@@ -7,8 +7,8 @@ import { getClaimTypeLabel, getStatusLabel, getStatusColor } from '@/lib/staff-p
 import Link from 'next/link';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import StaffPortalNav from '@/components/StaffPortalNav';
-import { 
-  DollarSign, 
+import {
+  DollarSign,
   Plus,
   ArrowLeft,
   Clock,
@@ -26,13 +26,13 @@ const CURRENT_STAFF_ID = '2';
 export default function ClaimsPage() {
   const { staff, isInitialized } = useStaff();
   const { getStaffClaimRequests } = useStaffPortal();
-  
+
   const currentStaff = staff.find(s => s.id === CURRENT_STAFF_ID);
   const claimRequests = getStaffClaimRequests(CURRENT_STAFF_ID);
 
   // Sort by date descending
   const sortedRequests = useMemo(() => {
-    return [...claimRequests].sort((a, b) => 
+    return [...claimRequests].sort((a, b) =>
       new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
   }, [claimRequests]);
@@ -57,23 +57,25 @@ export default function ClaimsPage() {
     <MainLayout>
       <div className="staff-portal animate-fade-in">
         {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
-          <div>
-            <Link href="/staff-portal" className="btn btn-outline btn-sm" style={{ marginBottom: '0.5rem' }}>
-              <ArrowLeft size={16} />
-              Kembali
+        <div className="page-header">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
+            <div>
+              <Link href="/staff-portal" className="btn btn-outline btn-sm" style={{ marginBottom: '0.5rem' }}>
+                <ArrowLeft size={16} />
+                Kembali
+              </Link>
+              <h1 className="page-title" style={{ marginTop: '0.5rem' }}>
+                Tuntutan Saya
+              </h1>
+              <p className="page-subtitle">
+                Submit dan track tuntutan
+              </p>
+            </div>
+            <Link href="/staff-portal/claims/new" className="btn btn-primary">
+              <Plus size={18} />
+              Tuntutan Baru
             </Link>
-            <h1 style={{ fontSize: '1.75rem', fontWeight: 700, marginTop: '0.5rem' }}>
-              Tuntutan Saya
-            </h1>
-            <p style={{ color: 'var(--text-secondary)' }}>
-              Submit dan track tuntutan
-            </p>
           </div>
-          <Link href="/staff-portal/claims/new" className="btn btn-primary">
-            <Plus size={18} />
-            Tuntutan Baru
-          </Link>
         </div>
 
         {/* Stats Cards */}
@@ -85,7 +87,7 @@ export default function ClaimsPage() {
             <div className="staff-stat-value">BND {pendingTotal.toFixed(2)}</div>
             <div className="staff-stat-label">Menunggu Kelulusan</div>
           </div>
-          
+
           <div className="staff-stat-card success">
             <div className="staff-stat-icon success">
               <CheckCircle size={24} />
@@ -93,7 +95,7 @@ export default function ClaimsPage() {
             <div className="staff-stat-value">BND {approvedTotal.toFixed(2)}</div>
             <div className="staff-stat-label">Diluluskan</div>
           </div>
-          
+
           <div className="staff-stat-card cool">
             <div className="staff-stat-icon cool">
               <Wallet size={24} />
@@ -116,10 +118,10 @@ export default function ClaimsPage() {
           {sortedRequests.length > 0 ? (
             <div className="staff-stagger" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
               {sortedRequests.map(claim => (
-                <div 
+                <div
                   key={claim.id}
                   className="staff-info-row"
-                  style={{ 
+                  style={{
                     flexDirection: 'column',
                     alignItems: 'stretch',
                     gap: '0.75rem',
@@ -142,14 +144,14 @@ export default function ClaimsPage() {
                     </div>
 
                     <div style={{ textAlign: 'right' }}>
-                      <div style={{ 
-                        fontSize: '1.25rem', 
-                        fontWeight: 700, 
+                      <div style={{
+                        fontSize: '1.25rem',
+                        fontWeight: 700,
                         background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
                         WebkitBackgroundClip: 'text',
                         WebkitTextFillColor: 'transparent',
                         backgroundClip: 'text',
-                        marginBottom: '0.25rem' 
+                        marginBottom: '0.25rem'
                       }}>
                         BND {claim.amount.toFixed(2)}
                       </div>
@@ -160,7 +162,7 @@ export default function ClaimsPage() {
                         {claim.status === 'paid' && <DollarSign size={12} style={{ marginRight: '0.25rem' }} />}
                         {getStatusLabel(claim.status)}
                       </span>
-                      
+
                       <div style={{ fontSize: '0.7rem', color: 'var(--text-light)', marginTop: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '0.25rem' }}>
                         <Clock size={10} />
                         {new Date(claim.createdAt).toLocaleDateString('ms-MY')}

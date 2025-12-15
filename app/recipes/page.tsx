@@ -6,11 +6,11 @@ import { useRecipes, useMenu } from '@/lib/store';
 import { Recipe, RecipeIngredient } from '@/lib/types';
 import Modal from '@/components/Modal';
 import LoadingSpinner from '@/components/LoadingSpinner';
-import { 
-  ChefHat, 
-  Plus, 
-  Edit2, 
-  Trash2, 
+import {
+  ChefHat,
+  Plus,
+  Edit2,
+  Trash2,
   DollarSign,
   TrendingUp,
   AlertTriangle,
@@ -44,8 +44,8 @@ export default function RecipesPage() {
   // Calculate recipe metrics
   const recipeMetrics = useMemo(() => {
     const totalRecipes = recipes.length;
-    const avgMargin = recipes.length > 0 
-      ? recipes.reduce((sum, r) => sum + r.profitMargin, 0) / recipes.length 
+    const avgMargin = recipes.length > 0
+      ? recipes.reduce((sum, r) => sum + r.profitMargin, 0) / recipes.length
       : 0;
     const lowMarginCount = recipes.filter(r => r.profitMargin < 30).length;
     const highMarginCount = recipes.filter(r => r.profitMargin >= 50).length;
@@ -273,19 +273,21 @@ export default function RecipesPage() {
   return (
     <MainLayout>
       <div className="animate-fade-in">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
-          <div>
-            <h1 style={{ fontSize: '2rem', fontWeight: 700, marginBottom: '0.5rem' }}>
-              Recipe Costing
-            </h1>
-            <p style={{ color: 'var(--text-secondary)' }}>
-              Kira kos bahan dan margin keuntungan setiap menu
-            </p>
+        <div className="page-header">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+            <div>
+              <h1 className="page-title" style={{ marginBottom: '0.5rem' }}>
+                Recipe Costing
+              </h1>
+              <p className="page-subtitle">
+                Kira kos bahan dan margin keuntungan setiap menu
+              </p>
+            </div>
+            <button className="btn btn-primary" onClick={openAddModal}>
+              <Plus size={18} />
+              Tambah Resepi
+            </button>
           </div>
-          <button className="btn btn-primary" onClick={openAddModal}>
-            <Plus size={18} />
-            Tambah Resepi
-          </button>
         </div>
 
         {/* Metrics Cards */}
@@ -470,11 +472,11 @@ export default function RecipesPage() {
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                   {menuItemsWithoutRecipes.slice(0, 5).map(item => (
-                    <div 
+                    <div
                       key={item.id}
-                      style={{ 
-                        display: 'flex', 
-                        justifyContent: 'space-between', 
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
                         alignItems: 'center',
                         padding: '0.5rem',
                         background: 'var(--gray-100)',
@@ -567,8 +569,8 @@ export default function RecipesPage() {
                   className="btn btn-sm btn-outline"
                   onClick={() => addIngredient({ id: item.id, name: item.name, unit: item.unit, cost: item.cost })}
                   disabled={formData.ingredients.some(i => i.stockItemId === item.id)}
-                  style={{ 
-                    opacity: formData.ingredients.some(i => i.stockItemId === item.id) ? 0.5 : 1 
+                  style={{
+                    opacity: formData.ingredients.some(i => i.stockItemId === item.id) ? 0.5 : 1
                   }}
                 >
                   + {item.name}
@@ -580,55 +582,57 @@ export default function RecipesPage() {
           {formData.ingredients.length > 0 && (
             <div style={{ marginBottom: '1rem' }}>
               <label className="form-label">Senarai Bahan</label>
-              <table className="table">
-                <thead>
-                  <tr>
-                    <th>Bahan</th>
-                    <th>Kuantiti</th>
-                    <th>Unit</th>
-                    <th>Kos/Unit</th>
-                    <th>Jumlah</th>
-                    <th></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {formData.ingredients.map(ing => (
-                    <tr key={ing.stockItemId}>
-                      <td>{ing.stockItemName}</td>
-                      <td>
-                        <input
-                          type="number"
-                          className="form-input"
-                          value={ing.quantity}
-                          onChange={(e) => updateIngredientQuantity(ing.stockItemId, Number(e.target.value))}
-                          min="0.1"
-                          step="0.1"
-                          style={{ width: '80px' }}
-                        />
-                      </td>
-                      <td>{ing.unit}</td>
-                      <td>BND {ing.costPerUnit.toFixed(2)}</td>
-                      <td style={{ fontWeight: 600 }}>BND {(ing.quantity * ing.costPerUnit).toFixed(2)}</td>
-                      <td>
-                        <button
-                          className="btn btn-sm btn-outline"
-                          onClick={() => removeIngredient(ing.stockItemId)}
-                          style={{ color: 'var(--danger)' }}
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      </td>
+              <div className="table-responsive">
+                <table className="table">
+                  <thead>
+                    <tr>
+                      <th>Bahan</th>
+                      <th>Kuantiti</th>
+                      <th>Unit</th>
+                      <th>Kos/Unit</th>
+                      <th>Jumlah</th>
+                      <th></th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {formData.ingredients.map(ing => (
+                      <tr key={ing.stockItemId}>
+                        <td>{ing.stockItemName}</td>
+                        <td>
+                          <input
+                            type="number"
+                            className="form-input"
+                            value={ing.quantity}
+                            onChange={(e) => updateIngredientQuantity(ing.stockItemId, Number(e.target.value))}
+                            min="0.1"
+                            step="0.1"
+                            style={{ width: '80px' }}
+                          />
+                        </td>
+                        <td>{ing.unit}</td>
+                        <td>BND {ing.costPerUnit.toFixed(2)}</td>
+                        <td style={{ fontWeight: 600 }}>BND {(ing.quantity * ing.costPerUnit).toFixed(2)}</td>
+                        <td>
+                          <button
+                            className="btn btn-sm btn-outline"
+                            onClick={() => removeIngredient(ing.stockItemId)}
+                            style={{ color: 'var(--danger)' }}
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
 
           {/* Cost Summary */}
-          <div style={{ 
-            padding: '1rem', 
-            background: 'var(--gray-100)', 
+          <div style={{
+            padding: '1rem',
+            background: 'var(--gray-100)',
             borderRadius: 'var(--radius-md)',
             marginBottom: '1rem'
           }}>
@@ -647,9 +651,9 @@ export default function RecipesPage() {
               </div>
               <div>
                 <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Margin</div>
-                <div style={{ 
-                  fontSize: '1.25rem', 
-                  fontWeight: 700, 
+                <div style={{
+                  fontSize: '1.25rem',
+                  fontWeight: 700,
                   color: getMarginColor(calculateProfitMargin())
                 }}>
                   {calculateProfitMargin().toFixed(1)}%
@@ -716,9 +720,9 @@ export default function RecipesPage() {
           maxWidth="400px"
         >
           <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-            <div style={{ 
-              width: '60px', height: '60px', 
-              background: '#fee2e2', borderRadius: '50%', 
+            <div style={{
+              width: '60px', height: '60px',
+              background: '#fee2e2', borderRadius: '50%',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               margin: '0 auto 1rem'
             }}>

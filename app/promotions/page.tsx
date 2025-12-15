@@ -7,11 +7,11 @@ import { Promotion } from '@/lib/types';
 import { MOCK_MENU } from '@/lib/menu-data';
 import Modal from '@/components/Modal';
 import LoadingSpinner from '@/components/LoadingSpinner';
-import { 
-  Tag, 
-  Plus, 
-  Edit2, 
-  Trash2, 
+import {
+  Tag,
+  Plus,
+  Edit2,
+  Trash2,
   Percent,
   Gift,
   Clock,
@@ -225,8 +225,8 @@ export default function PromotionsPage() {
   };
 
   const toggleStatus = (promo: Promotion) => {
-    updatePromotion(promo.id, { 
-      status: promo.status === 'active' ? 'inactive' : 'active' 
+    updatePromotion(promo.id, {
+      status: promo.status === 'active' ? 'inactive' : 'active'
     });
   };
 
@@ -268,19 +268,21 @@ export default function PromotionsPage() {
   return (
     <MainLayout>
       <div className="animate-fade-in">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
-          <div>
-            <h1 style={{ fontSize: '2rem', fontWeight: 700, marginBottom: '0.5rem' }}>
-              Pengurusan Promosi
-            </h1>
-            <p style={{ color: 'var(--text-secondary)' }}>
-              Urus diskaun, promo codes dan tawaran istimewa
-            </p>
+        <div className="page-header">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+            <div>
+              <h1 className="page-title" style={{ marginBottom: '0.5rem' }}>
+                Pengurusan Promosi
+              </h1>
+              <p className="page-subtitle">
+                Urus diskaun, promo codes dan tawaran istimewa
+              </p>
+            </div>
+            <button className="btn btn-primary" onClick={openAddModal}>
+              <Plus size={18} />
+              Buat Promosi
+            </button>
           </div>
-          <button className="btn btn-primary" onClick={openAddModal}>
-            <Plus size={18} />
-            Buat Promosi
-          </button>
         </div>
 
         {/* Metrics Cards */}
@@ -335,10 +337,10 @@ export default function PromotionsPage() {
         {filteredPromotions.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3" style={{ gap: '1rem' }}>
             {filteredPromotions.map(promo => (
-              <div 
-                key={promo.id} 
+              <div
+                key={promo.id}
                 className="card"
-                style={{ 
+                style={{
                   opacity: isExpired(promo) ? 0.6 : 1,
                   borderLeft: `4px solid ${promo.status === 'active' ? 'var(--success)' : 'var(--gray-400)'}`
                 }}
@@ -348,14 +350,13 @@ export default function PromotionsPage() {
                     <div style={{ fontWeight: 700, fontSize: '1.1rem', marginBottom: '0.25rem' }}>
                       {promo.name}
                     </div>
-                    <span className={`badge ${
-                      isExpired(promo) ? 'badge-danger' :
-                      promo.status === 'active' ? 'badge-success' : 'badge-warning'
-                    }`}>
+                    <span className={`badge ${isExpired(promo) ? 'badge-danger' :
+                        promo.status === 'active' ? 'badge-success' : 'badge-warning'
+                      }`}>
                       {isExpired(promo) ? 'Tamat' : promo.status === 'active' ? 'Aktif' : 'Tidak Aktif'}
                     </span>
                   </div>
-                  <div style={{ 
+                  <div style={{
                     padding: '0.75rem 1rem',
                     background: 'var(--gradient-primary)',
                     borderRadius: 'var(--radius-md)',
@@ -383,15 +384,15 @@ export default function PromotionsPage() {
                   {promo.promoCode && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                       <Tag size={14} color="var(--text-secondary)" />
-                      <code style={{ 
-                        background: 'var(--gray-100)', 
-                        padding: '0.25rem 0.5rem', 
+                      <code style={{
+                        background: 'var(--gray-100)',
+                        padding: '0.25rem 0.5rem',
                         borderRadius: 'var(--radius-sm)',
                         fontWeight: 600
                       }}>
                         {promo.promoCode}
                       </code>
-                      <button 
+                      <button
                         className="btn btn-sm btn-outline"
                         onClick={() => navigator.clipboard.writeText(promo.promoCode || '')}
                         style={{ padding: '0.25rem' }}
@@ -413,9 +414,9 @@ export default function PromotionsPage() {
                   </div>
                 )}
 
-                <div style={{ 
-                  display: 'flex', 
-                  justifyContent: 'space-between', 
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
                   alignItems: 'center',
                   paddingTop: '1rem',
                   borderTop: '1px solid var(--gray-200)'
@@ -650,9 +651,9 @@ export default function PromotionsPage() {
           maxWidth="400px"
         >
           <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-            <div style={{ 
-              width: '60px', height: '60px', 
-              background: '#fee2e2', borderRadius: '50%', 
+            <div style={{
+              width: '60px', height: '60px',
+              background: '#fee2e2', borderRadius: '50%',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               margin: '0 auto 1rem'
             }}>

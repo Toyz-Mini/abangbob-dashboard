@@ -130,43 +130,45 @@ export default function ProductionPage() {
   return (
     <MainLayout>
       <div className="animate-fade-in">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
-          <div>
-            <h1 style={{ fontSize: '2rem', fontWeight: 700, marginBottom: '0.5rem' }}>
-              Production & Kitchen Ops
-            </h1>
-            <p style={{ color: 'var(--text-secondary)' }}>
-              Pantau peralatan dan log production harian
-            </p>
-          </div>
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <button className="btn btn-primary" onClick={() => setShowAddLogModal(true)}>
-              <Plus size={18} />
-              Log Production
-            </button>
-            <button className="btn btn-outline" onClick={() => setShowWasteModal(true)} style={{ color: 'var(--danger)' }}>
-              <Trash2 size={18} />
-              Log Pembaziran
-            </button>
+        <div className="page-header">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+            <div>
+              <h1 className="page-title" style={{ marginBottom: '0.5rem' }}>
+                Production & Kitchen Ops
+              </h1>
+              <p className="page-subtitle">
+                Pantau peralatan dan log production harian
+              </p>
+            </div>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <button className="btn btn-primary" onClick={() => setShowAddLogModal(true)}>
+                <Plus size={18} />
+                Log Production
+              </button>
+              <button className="btn btn-outline" onClick={() => setShowWasteModal(true)} style={{ color: 'var(--danger)' }}>
+                <Trash2 size={18} />
+                Log Pembaziran
+              </button>
+            </div>
           </div>
         </div>
 
         {/* Equipment Health Link */}
         <Link href="/equipment" style={{ textDecoration: 'none' }}>
-          <div className="card" style={{ 
-            marginBottom: '2rem', 
-            display: 'flex', 
-            alignItems: 'center', 
+          <div className="card" style={{
+            marginBottom: '2rem',
+            display: 'flex',
+            alignItems: 'center',
             justifyContent: 'space-between',
             cursor: 'pointer',
             transition: 'all 0.2s',
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <div style={{ 
-                background: 'var(--primary)', 
-                color: 'white', 
-                padding: '1rem', 
-                borderRadius: 'var(--radius-md)' 
+              <div style={{
+                background: 'var(--primary)',
+                color: 'white',
+                padding: '1rem',
+                borderRadius: 'var(--radius-md)'
               }}>
                 <Wrench size={24} />
               </div>
@@ -217,38 +219,40 @@ export default function ProductionPage() {
             <div className="card-title">Daily Production Log</div>
             <div className="card-subtitle">{new Date().toLocaleDateString('ms-MY')}</div>
           </div>
-          
+
           {todayLogs.length > 0 ? (
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>Item</th>
-                  <th>Kuantiti Dihasilkan</th>
-                  <th>Sisa/Buangan</th>
-                  <th>Catatan</th>
-                </tr>
-              </thead>
-              <tbody>
-                {todayLogs.map(log => (
-                  <tr key={log.id}>
-                    <td style={{ fontWeight: 600 }}>{log.item}</td>
-                    <td>
-                      {log.quantityProduced > 0 && (
-                        <span style={{ color: 'var(--success)', fontWeight: 600 }}>+{log.quantityProduced}</span>
-                      )}
-                    </td>
-                    <td>
-                      {log.wasteAmount > 0 && (
-                        <span style={{ color: 'var(--danger)', fontWeight: 600 }}>-{log.wasteAmount}</span>
-                      )}
-                    </td>
-                    <td style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
-                      {log.notes || '-'}
-                    </td>
+            <div className="table-responsive">
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>Item</th>
+                    <th>Kuantiti Dihasilkan</th>
+                    <th>Sisa/Buangan</th>
+                    <th>Catatan</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {todayLogs.map(log => (
+                    <tr key={log.id}>
+                      <td style={{ fontWeight: 600 }}>{log.item}</td>
+                      <td>
+                        {log.quantityProduced > 0 && (
+                          <span style={{ color: 'var(--success)', fontWeight: 600 }}>+{log.quantityProduced}</span>
+                        )}
+                      </td>
+                      <td>
+                        {log.wasteAmount > 0 && (
+                          <span style={{ color: 'var(--danger)', fontWeight: 600 }}>-{log.wasteAmount}</span>
+                        )}
+                      </td>
+                      <td style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
+                        {log.notes || '-'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           ) : (
             <p style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '2rem' }}>
               Tiada log production hari ini. Klik "Log Production" untuk mula.

@@ -5,10 +5,10 @@ import MainLayout from '@/components/MainLayout';
 import { useNotifications, useInventory, useOrders, useStore } from '@/lib/store';
 import { Notification as NotificationType } from '@/lib/types';
 import LoadingSpinner from '@/components/LoadingSpinner';
-import { 
-  Bell, 
-  Package, 
-  ShoppingCart, 
+import {
+  Bell,
+  Package,
+  ShoppingCart,
   AlertTriangle,
   Users,
   DollarSign,
@@ -24,14 +24,14 @@ import {
 import StatCard from '@/components/StatCard';
 
 export default function NotificationsPage() {
-  const { 
-    notifications, 
+  const {
+    notifications,
     addNotification,
-    markNotificationRead, 
-    markAllNotificationsRead, 
+    markNotificationRead,
+    markAllNotificationsRead,
     deleteNotification,
     getUnreadCount,
-    isInitialized 
+    isInitialized
   } = useNotifications();
 
   const { inventory } = useInventory();
@@ -48,8 +48,8 @@ export default function NotificationsPage() {
     // Check for low stock
     const lowStockItems = inventory.filter(item => item.currentQuantity <= item.minQuantity);
     lowStockItems.forEach(item => {
-      const exists = notifications.some(n => 
-        n.type === 'low_stock' && 
+      const exists = notifications.some(n =>
+        n.type === 'low_stock' &&
         n.message.includes(item.name) &&
         new Date(n.createdAt).toDateString() === new Date().toDateString()
       );
@@ -67,8 +67,8 @@ export default function NotificationsPage() {
     // Check for new delivery orders
     const newDeliveryOrders = deliveryOrders.filter(o => o.status === 'new');
     if (newDeliveryOrders.length > 0) {
-      const exists = notifications.some(n => 
-        n.type === 'new_order' && 
+      const exists = notifications.some(n =>
+        n.type === 'new_order' &&
         n.message.includes(`${newDeliveryOrders.length} pesanan baru`) &&
         new Date(n.createdAt).toDateString() === new Date().toDateString()
       );
@@ -94,8 +94,8 @@ export default function NotificationsPage() {
     });
 
     if (pendingTooLong.length > 0) {
-      const exists = notifications.some(n => 
-        n.type === 'new_order' && 
+      const exists = notifications.some(n =>
+        n.type === 'new_order' &&
         n.message.includes('lebih 15 minit') &&
         new Date(n.createdAt).toDateString() === new Date().toDateString()
       );
@@ -114,8 +114,8 @@ export default function NotificationsPage() {
     const todayLogs = productionLogs.filter(log => log.date === new Date().toISOString().split('T')[0]);
     const totalWaste = todayLogs.reduce((sum, log) => sum + log.wasteAmount, 0);
     if (totalWaste > 10) {
-      const exists = notifications.some(n => 
-        n.type === 'equipment' && 
+      const exists = notifications.some(n =>
+        n.type === 'equipment' &&
         n.message.includes('pembaziran') &&
         new Date(n.createdAt).toDateString() === new Date().toDateString()
       );
@@ -144,7 +144,7 @@ export default function NotificationsPage() {
   const stats = useMemo(() => {
     const unread = getUnreadCount();
     const critical = notifications.filter(n => n.priority === 'critical' && !n.isRead).length;
-    const today = notifications.filter(n => 
+    const today = notifications.filter(n =>
       new Date(n.createdAt).toDateString() === new Date().toDateString()
     ).length;
 
@@ -219,30 +219,32 @@ export default function NotificationsPage() {
   return (
     <MainLayout>
       <div className="animate-fade-in">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
-          <div>
-            <h1 style={{ fontSize: '2rem', fontWeight: 700, marginBottom: '0.5rem' }}>
-              Pusat Notifikasi
-            </h1>
-            <p style={{ color: 'var(--text-secondary)' }}>
-              Semua amaran dan peringatan penting
-            </p>
-          </div>
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <button 
-              className="btn btn-outline" 
-              onClick={generateSmartNotifications}
-              disabled={isRefreshing}
-            >
-              <RefreshCw size={18} className={isRefreshing ? 'animate-spin' : ''} />
-              Refresh
-            </button>
-            {stats.unread > 0 && (
-              <button className="btn btn-primary" onClick={markAllNotificationsRead}>
-                <CheckCheck size={18} />
-                Tandai Semua Dibaca
+        <div className="page-header">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+            <div>
+              <h1 className="page-title" style={{ marginBottom: '0.5rem' }}>
+                Pusat Notifikasi
+              </h1>
+              <p className="page-subtitle">
+                Semua amaran dan peringatan penting
+              </p>
+            </div>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <button
+                className="btn btn-outline"
+                onClick={generateSmartNotifications}
+                disabled={isRefreshing}
+              >
+                <RefreshCw size={18} className={isRefreshing ? 'animate-spin' : ''} />
+                Refresh
               </button>
-            )}
+              {stats.unread > 0 && (
+                <button className="btn btn-primary" onClick={markAllNotificationsRead}>
+                  <CheckCheck size={18} />
+                  Tandai Semua Dibaca
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
@@ -380,11 +382,10 @@ export default function NotificationsPage() {
                             background: 'var(--primary)',
                           }} />
                         )}
-                        <span className={`badge ${
-                          notif.priority === 'critical' ? 'badge-danger' :
-                          notif.priority === 'high' ? 'badge-warning' :
-                          notif.priority === 'medium' ? 'badge-info' : 'badge-success'
-                        }`} style={{ fontSize: '0.6rem' }}>
+                        <span className={`badge ${notif.priority === 'critical' ? 'badge-danger' :
+                            notif.priority === 'high' ? 'badge-warning' :
+                              notif.priority === 'medium' ? 'badge-info' : 'badge-success'
+                          }`} style={{ fontSize: '0.6rem' }}>
                           {notif.priority}
                         </span>
                       </div>
@@ -436,8 +437,8 @@ export default function NotificationsPage() {
             <div style={{ textAlign: 'center', padding: '3rem' }}>
               <Bell size={48} color="var(--gray-400)" style={{ marginBottom: '1rem' }} />
               <p style={{ color: 'var(--text-secondary)' }}>
-                {filterType === 'unread' 
-                  ? 'Tiada notifikasi belum dibaca' 
+                {filterType === 'unread'
+                  ? 'Tiada notifikasi belum dibaca'
                   : 'Tiada notifikasi untuk ditunjukkan'
                 }
               </p>
@@ -459,7 +460,7 @@ export default function NotificationsPage() {
                   📦 Restock Stok
                 </div>
                 <p style={{ fontSize: '0.875rem', color: '#92400e' }}>
-                  {inventory.filter(i => i.currentQuantity <= i.minQuantity).length} item perlu diisi semula. 
+                  {inventory.filter(i => i.currentQuantity <= i.minQuantity).length} item perlu diisi semula.
                   <a href="/suppliers" style={{ marginLeft: '0.5rem', textDecoration: 'underline' }}>Buat PO →</a>
                 </p>
               </div>

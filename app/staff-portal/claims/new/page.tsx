@@ -8,7 +8,7 @@ import { ClaimType } from '@/lib/types';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import LoadingSpinner from '@/components/LoadingSpinner';
-import { 
+import {
   ArrowLeft,
   Send,
   DollarSign
@@ -33,7 +33,7 @@ export default function NewClaimPage() {
   const router = useRouter();
   const { staff, isInitialized } = useStaff();
   const { addClaimRequest } = useStaffPortal();
-  
+
   const currentStaff = staff.find(s => s.id === CURRENT_STAFF_ID);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -46,7 +46,7 @@ export default function NewClaimPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     const amount = parseFloat(form.amount);
     if (isNaN(amount) || amount <= 0) {
       alert('Sila masukkan jumlah yang sah');
@@ -90,15 +90,15 @@ export default function NewClaimPage() {
     <MainLayout>
       <div className="animate-fade-in">
         {/* Header */}
-        <div style={{ marginBottom: '1.5rem' }}>
-          <Link href="/staff-portal/claims" className="btn btn-outline btn-sm" style={{ marginBottom: '0.5rem' }}>
+        <div className="page-header">
+          <Link href="/staff-portal/claims" className="btn btn-outline btn-sm" style={{ marginBottom: '0.5rem', width: 'fit-content' }}>
             <ArrowLeft size={16} />
             Kembali
           </Link>
-          <h1 style={{ fontSize: '1.75rem', fontWeight: 700, marginTop: '0.5rem' }}>
+          <h1 className="page-title" style={{ marginTop: '0.5rem' }}>
             Tuntutan Baru
           </h1>
-          <p style={{ color: 'var(--text-secondary)' }}>
+          <p className="page-subtitle">
             Isi borang tuntutan
           </p>
         </div>
@@ -160,7 +160,7 @@ export default function NewClaimPage() {
               />
             </div>
 
-            <DocumentUpload 
+            <DocumentUpload
               label="Upload Resit/Bukti"
               accept="image/*,.pdf"
               maxSize={5}

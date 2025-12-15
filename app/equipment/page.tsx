@@ -5,14 +5,14 @@ import MainLayout from '@/components/MainLayout';
 import { useEquipment } from '@/lib/store';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { OilTracker, OilChangeRequest, OilActionHistory, OilActionType } from '@/lib/types';
-import { 
-  Plus, 
-  Wrench, 
-  AlertTriangle, 
-  Camera, 
-  Check, 
-  X, 
-  Edit2, 
+import {
+  Plus,
+  Wrench,
+  AlertTriangle,
+  Camera,
+  Check,
+  X,
+  Edit2,
   Trash2,
   Droplets,
   History,
@@ -26,8 +26,8 @@ import LoadingSpinner from '@/components/LoadingSpinner';
 type TabType = 'fryers' | 'pending' | 'history';
 
 export default function EquipmentPage() {
-  const { 
-    oilTrackers, 
+  const {
+    oilTrackers,
     oilChangeRequests,
     oilActionHistory,
     addOilTracker,
@@ -38,9 +38,9 @@ export default function EquipmentPage() {
     rejectOilRequest,
     getPendingOilRequests,
     getPendingOilRequestCount,
-    isInitialized 
+    isInitialized
   } = useEquipment();
-  
+
   const { user, currentStaff } = useAuth();
   const isManager = currentStaff?.role === 'Admin' || currentStaff?.role === 'Manager';
   const currentUserName = user?.user_metadata?.name || 'Staff';
@@ -51,7 +51,7 @@ export default function EquipmentPage() {
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [showPhotoModal, setShowPhotoModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  
+
   const [selectedFryer, setSelectedFryer] = useState<OilTracker | null>(null);
   const [selectedRequest, setSelectedRequest] = useState<OilChangeRequest | null>(null);
   const [selectedPhoto, setSelectedPhoto] = useState<string>('');
@@ -97,8 +97,8 @@ export default function EquipmentPage() {
 
   const startCamera = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: 'environment' } 
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'environment' }
       });
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
@@ -163,7 +163,7 @@ export default function EquipmentPage() {
     );
 
     setIsProcessing(false);
-    
+
     if (result.success) {
       setShowOilActionModal(false);
       setCapturedPhoto('');
@@ -178,9 +178,9 @@ export default function EquipmentPage() {
     await new Promise(resolve => setTimeout(resolve, 300));
 
     const result = approveOilRequest(request.id, user?.id || '', currentUserName);
-    
+
     setIsProcessing(false);
-    
+
     if (result.success) {
       alert('Request berjaya diluluskan!');
     } else {
@@ -198,7 +198,7 @@ export default function EquipmentPage() {
     await new Promise(resolve => setTimeout(resolve, 300));
 
     rejectOilRequest(selectedRequest.id, user?.id || '', currentUserName, rejectReason);
-    
+
     setIsProcessing(false);
     setShowRejectModal(false);
     setRejectReason('');
@@ -291,29 +291,31 @@ export default function EquipmentPage() {
     <MainLayout>
       <div className="animate-fade-in">
         {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
-          <div>
-            <h1 style={{ fontSize: '2rem', fontWeight: 700, marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <Wrench size={28} />
-              Equipment Health
-            </h1>
-            <p style={{ color: 'var(--text-secondary)' }}>
-              Pantau dan uruskan peralatan dapur - Oil Tracker
-            </p>
+        <div className="page-header">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+            <div>
+              <h1 className="page-title" style={{ marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <Wrench size={28} />
+                Equipment Health
+              </h1>
+              <p className="page-subtitle">
+                Pantau dan uruskan peralatan dapur - Oil Tracker
+              </p>
+            </div>
+            {isManager && (
+              <button
+                className="btn btn-primary"
+                onClick={() => {
+                  setSelectedFryer(null);
+                  setFryerForm({ name: '', cycleLimit: 500 });
+                  setShowAddFryerModal(true);
+                }}
+              >
+                <Plus size={18} />
+                Tambah Fryer
+              </button>
+            )}
           </div>
-          {isManager && (
-            <button 
-              className="btn btn-primary" 
-              onClick={() => {
-                setSelectedFryer(null);
-                setFryerForm({ name: '', cycleLimit: 500 });
-                setShowAddFryerModal(true);
-              }}
-            >
-              <Plus size={18} />
-              Tambah Fryer
-            </button>
-          )}
         </div>
 
         {/* Tabs */}
@@ -370,7 +372,7 @@ export default function EquipmentPage() {
             {oilTrackers.map(tracker => {
               const percentage = getStatusPercentage(tracker);
               const statusColor = getStatusColor(tracker.status);
-              
+
               return (
                 <div key={tracker.fryerId} className="card" style={{ position: 'relative' }}>
                   {tracker.hasPendingRequest && (
@@ -388,7 +390,7 @@ export default function EquipmentPage() {
                       ⏳ PENDING
                     </div>
                   )}
-                  
+
                   <div style={{ marginBottom: '1rem' }}>
                     <div style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.5rem' }}>
                       {tracker.name}
@@ -417,9 +419,9 @@ export default function EquipmentPage() {
                         transition: 'all 0.3s',
                       }} />
                     </div>
-                    <div style={{ 
-                      display: 'flex', 
-                      justifyContent: 'space-between', 
+                    <div style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
                       marginTop: '0.5rem',
                       fontSize: '0.875rem',
                       color: 'var(--text-secondary)',
@@ -430,12 +432,11 @@ export default function EquipmentPage() {
                   </div>
 
                   <div style={{ marginBottom: '1rem' }}>
-                    <span className={`badge ${
-                      tracker.status === 'good' ? 'badge-success' :
-                      tracker.status === 'warning' ? 'badge-warning' : 'badge-danger'
-                    }`}>
-                      {tracker.status === 'good' ? 'BAIK' : 
-                       tracker.status === 'warning' ? 'AWAS' : 'KRITIKAL'}
+                    <span className={`badge ${tracker.status === 'good' ? 'badge-success' :
+                        tracker.status === 'warning' ? 'badge-warning' : 'badge-danger'
+                      }`}>
+                      {tracker.status === 'good' ? 'BAIK' :
+                        tracker.status === 'warning' ? 'AWAS' : 'KRITIKAL'}
                     </span>
                   </div>
 
@@ -465,7 +466,7 @@ export default function EquipmentPage() {
                       Topup
                     </button>
                   </div>
-                  
+
                   {isManager && (
                     <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
                       <button
@@ -511,71 +512,73 @@ export default function EquipmentPage() {
               <div className="card-title">Pending Approvals</div>
               <div className="card-subtitle">{pendingCount} request menunggu kelulusan</div>
             </div>
-            
+
             {pendingRequests.length > 0 ? (
-              <table className="table">
-                <thead>
-                  <tr>
-                    <th>Fryer</th>
-                    <th>Jenis</th>
-                    <th>Staff</th>
-                    <th>Tarikh</th>
-                    <th>Cycles</th>
-                    <th>Bukti</th>
-                    <th>Tindakan</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {pendingRequests.map(request => (
-                    <tr key={request.id}>
-                      <td style={{ fontWeight: 600 }}>{request.fryerName}</td>
-                      <td>
-                        <span className={`badge ${request.actionType === 'change' ? 'badge-success' : 'badge-info'}`}>
-                          {request.actionType === 'change' ? 'TUKAR' : `TOPUP ${request.topupPercentage}%`}
-                        </span>
-                      </td>
-                      <td>{request.requestedBy}</td>
-                      <td style={{ fontSize: '0.875rem' }}>{formatDate(request.requestedAt)}</td>
-                      <td>
-                        {request.previousCycles} → {request.proposedCycles}
-                      </td>
-                      <td>
-                        <button
-                          className="btn btn-outline btn-sm"
-                          onClick={() => {
-                            setSelectedPhoto(request.photoUrl);
-                            setShowPhotoModal(true);
-                          }}
-                        >
-                          <ImageIcon size={14} />
-                        </button>
-                      </td>
-                      <td>
-                        <div style={{ display: 'flex', gap: '0.5rem' }}>
-                          <button
-                            className="btn btn-primary btn-sm"
-                            onClick={() => handleApprove(request)}
-                            disabled={isProcessing}
-                          >
-                            <Check size={14} />
-                          </button>
+              <div className="table-responsive">
+                <table className="table">
+                  <thead>
+                    <tr>
+                      <th>Fryer</th>
+                      <th>Jenis</th>
+                      <th>Staff</th>
+                      <th>Tarikh</th>
+                      <th>Cycles</th>
+                      <th>Bukti</th>
+                      <th>Tindakan</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {pendingRequests.map(request => (
+                      <tr key={request.id}>
+                        <td style={{ fontWeight: 600 }}>{request.fryerName}</td>
+                        <td>
+                          <span className={`badge ${request.actionType === 'change' ? 'badge-success' : 'badge-info'}`}>
+                            {request.actionType === 'change' ? 'TUKAR' : `TOPUP ${request.topupPercentage}%`}
+                          </span>
+                        </td>
+                        <td>{request.requestedBy}</td>
+                        <td style={{ fontSize: '0.875rem' }}>{formatDate(request.requestedAt)}</td>
+                        <td>
+                          {request.previousCycles} → {request.proposedCycles}
+                        </td>
+                        <td>
                           <button
                             className="btn btn-outline btn-sm"
                             onClick={() => {
-                              setSelectedRequest(request);
-                              setShowRejectModal(true);
+                              setSelectedPhoto(request.photoUrl);
+                              setShowPhotoModal(true);
                             }}
-                            style={{ color: 'var(--danger)' }}
-                            disabled={isProcessing}
                           >
-                            <X size={14} />
+                            <ImageIcon size={14} />
                           </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                        </td>
+                        <td>
+                          <div style={{ display: 'flex', gap: '0.5rem' }}>
+                            <button
+                              className="btn btn-primary btn-sm"
+                              onClick={() => handleApprove(request)}
+                              disabled={isProcessing}
+                            >
+                              <Check size={14} />
+                            </button>
+                            <button
+                              className="btn btn-outline btn-sm"
+                              onClick={() => {
+                                setSelectedRequest(request);
+                                setShowRejectModal(true);
+                              }}
+                              style={{ color: 'var(--danger)' }}
+                              disabled={isProcessing}
+                            >
+                              <X size={14} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             ) : (
               <p style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '2rem' }}>
                 Tiada request pending.
@@ -591,50 +594,52 @@ export default function EquipmentPage() {
               <div className="card-title">History Tukar & Topup Minyak</div>
               <div className="card-subtitle">Rekod yang telah diluluskan</div>
             </div>
-            
+
             {oilActionHistory.length > 0 ? (
-              <table className="table">
-                <thead>
-                  <tr>
-                    <th>Tarikh</th>
-                    <th>Fryer</th>
-                    <th>Jenis</th>
-                    <th>Cycles</th>
-                    <th>Staff</th>
-                    <th>Approved By</th>
-                    <th>Bukti</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {oilActionHistory.map(history => (
-                    <tr key={history.id}>
-                      <td style={{ fontSize: '0.875rem' }}>{formatDate(history.actionAt)}</td>
-                      <td style={{ fontWeight: 600 }}>{history.fryerName}</td>
-                      <td>
-                        <span className={`badge ${history.actionType === 'change' ? 'badge-success' : 'badge-info'}`}>
-                          {history.actionType === 'change' ? 'TUKAR' : `TOPUP ${history.topupPercentage}%`}
-                        </span>
-                      </td>
-                      <td>
-                        {history.previousCycles} → {history.newCycles}
-                      </td>
-                      <td>{history.requestedBy}</td>
-                      <td>{history.approvedBy}</td>
-                      <td>
-                        <button
-                          className="btn btn-outline btn-sm"
-                          onClick={() => {
-                            setSelectedPhoto(history.photoUrl);
-                            setShowPhotoModal(true);
-                          }}
-                        >
-                          <ImageIcon size={14} />
-                        </button>
-                      </td>
+              <div className="table-responsive">
+                <table className="table">
+                  <thead>
+                    <tr>
+                      <th>Tarikh</th>
+                      <th>Fryer</th>
+                      <th>Jenis</th>
+                      <th>Cycles</th>
+                      <th>Staff</th>
+                      <th>Approved By</th>
+                      <th>Bukti</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {oilActionHistory.map(history => (
+                      <tr key={history.id}>
+                        <td style={{ fontSize: '0.875rem' }}>{formatDate(history.actionAt)}</td>
+                        <td style={{ fontWeight: 600 }}>{history.fryerName}</td>
+                        <td>
+                          <span className={`badge ${history.actionType === 'change' ? 'badge-success' : 'badge-info'}`}>
+                            {history.actionType === 'change' ? 'TUKAR' : `TOPUP ${history.topupPercentage}%`}
+                          </span>
+                        </td>
+                        <td>
+                          {history.previousCycles} → {history.newCycles}
+                        </td>
+                        <td>{history.requestedBy}</td>
+                        <td>{history.approvedBy}</td>
+                        <td>
+                          <button
+                            className="btn btn-outline btn-sm"
+                            onClick={() => {
+                              setSelectedPhoto(history.photoUrl);
+                              setShowPhotoModal(true);
+                            }}
+                          >
+                            <ImageIcon size={14} />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             ) : (
               <p style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '2rem' }}>
                 Tiada rekod history.
@@ -717,8 +722,8 @@ export default function EquipmentPage() {
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                   <span>Selepas {actionType === 'change' ? 'tukar' : 'topup'}:</span>
                   <strong style={{ color: 'var(--success)' }}>
-                    {actionType === 'change' 
-                      ? '0' 
+                    {actionType === 'change'
+                      ? '0'
                       : Math.round(selectedFryer.currentCycles * (1 - oilActionForm.topupPercentage / 100))
                     } / {selectedFryer.cycleLimit}
                   </strong>
@@ -747,9 +752,9 @@ export default function EquipmentPage() {
 
               <div className="form-group">
                 <label className="form-label">📸 Ambil Gambar Bukti (Wajib)</label>
-                <div style={{ 
-                  border: '2px dashed var(--border)', 
-                  borderRadius: 'var(--radius-md)', 
+                <div style={{
+                  border: '2px dashed var(--border)',
+                  borderRadius: 'var(--radius-md)',
                   padding: '1rem',
                   textAlign: 'center',
                 }}>
@@ -759,13 +764,13 @@ export default function EquipmentPage() {
                       Buka Kamera
                     </button>
                   )}
-                  
+
                   {isCameraActive && (
                     <div>
-                      <video 
-                        ref={videoRef} 
-                        autoPlay 
-                        playsInline 
+                      <video
+                        ref={videoRef}
+                        autoPlay
+                        playsInline
                         style={{ width: '100%', borderRadius: 'var(--radius-md)', marginBottom: '1rem' }}
                       />
                       <button className="btn btn-primary" onClick={capturePhoto}>
@@ -774,16 +779,16 @@ export default function EquipmentPage() {
                       </button>
                     </div>
                   )}
-                  
+
                   {capturedPhoto && (
                     <div>
-                      <img 
-                        src={capturedPhoto} 
-                        alt="Captured" 
+                      <img
+                        src={capturedPhoto}
+                        alt="Captured"
                         style={{ width: '100%', borderRadius: 'var(--radius-md)', marginBottom: '1rem' }}
                       />
-                      <button 
-                        className="btn btn-outline" 
+                      <button
+                        className="btn btn-outline"
                         onClick={() => {
                           setCapturedPhoto('');
                           startCamera();
@@ -890,9 +895,9 @@ export default function EquipmentPage() {
           maxWidth="600px"
         >
           {selectedPhoto && (
-            <img 
-              src={selectedPhoto} 
-              alt="Proof" 
+            <img
+              src={selectedPhoto}
+              alt="Proof"
               style={{ width: '100%', borderRadius: 'var(--radius-md)' }}
             />
           )}

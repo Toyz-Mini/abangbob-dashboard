@@ -7,8 +7,8 @@ import { getLeaveTypeLabel, getStatusLabel, getStatusColor } from '@/lib/staff-p
 import Link from 'next/link';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import StaffPortalNav from '@/components/StaffPortalNav';
-import { 
-  Plane, 
+import {
+  Plane,
   Plus,
   ArrowLeft,
   Calendar,
@@ -22,14 +22,14 @@ import {
 const CURRENT_STAFF_ID = '2';
 
 // Leave Balance Ring Component
-function LeaveBalanceRing({ 
-  balance, 
-  total, 
+function LeaveBalanceRing({
+  balance,
+  total,
   type,
   label,
   detail
-}: { 
-  balance: number; 
+}: {
+  balance: number;
   total: number;
   type: 'annual' | 'medical' | 'emergency' | 'unpaid';
   label: string;
@@ -83,14 +83,14 @@ function LeaveBalanceRing({
 export default function LeavePage() {
   const { staff, isInitialized } = useStaff();
   const { getLeaveBalance, getStaffLeaveRequests } = useStaffPortal();
-  
+
   const currentStaff = staff.find(s => s.id === CURRENT_STAFF_ID);
   const leaveBalance = getLeaveBalance(CURRENT_STAFF_ID);
   const leaveRequests = getStaffLeaveRequests(CURRENT_STAFF_ID);
 
   // Sort by date descending
   const sortedRequests = useMemo(() => {
-    return [...leaveRequests].sort((a, b) => 
+    return [...leaveRequests].sort((a, b) =>
       new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
   }, [leaveRequests]);
@@ -111,23 +111,25 @@ export default function LeavePage() {
     <MainLayout>
       <div className="staff-portal animate-fade-in">
         {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
-          <div>
-            <Link href="/staff-portal" className="btn btn-outline btn-sm" style={{ marginBottom: '0.5rem' }}>
-              <ArrowLeft size={16} />
-              Kembali
+        <div className="page-header">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
+            <div>
+              <Link href="/staff-portal" className="btn btn-outline btn-sm" style={{ marginBottom: '0.5rem' }}>
+                <ArrowLeft size={16} />
+                Kembali
+              </Link>
+              <h1 className="page-title" style={{ marginTop: '0.5rem' }}>
+                Pengurusan Cuti
+              </h1>
+              <p className="page-subtitle">
+                Lihat baki dan mohon cuti
+              </p>
+            </div>
+            <Link href="/staff-portal/leave/apply" className="btn btn-primary">
+              <Plus size={18} />
+              Mohon Cuti
             </Link>
-            <h1 style={{ fontSize: '1.75rem', fontWeight: 700, marginTop: '0.5rem' }}>
-              Pengurusan Cuti
-            </h1>
-            <p style={{ color: 'var(--text-secondary)' }}>
-              Lihat baki dan mohon cuti
-            </p>
           </div>
-          <Link href="/staff-portal/leave/apply" className="btn btn-primary">
-            <Plus size={18} />
-            Mohon Cuti
-          </Link>
         </div>
 
         {/* Leave Balance Cards */}
@@ -139,34 +141,34 @@ export default function LeavePage() {
                 Baki Cuti {new Date().getFullYear()}
               </div>
             </div>
-            
+
             <div className="grid grid-cols-2 md:grid-cols-4 staff-stagger" style={{ gap: '1rem' }}>
-              <LeaveBalanceRing 
-                balance={leaveBalance.annual.balance} 
+              <LeaveBalanceRing
+                balance={leaveBalance.annual.balance}
                 total={leaveBalance.annual.entitled}
                 type="annual"
                 label="Cuti Tahunan"
                 detail={`Diambil: ${leaveBalance.annual.taken} | Pending: ${leaveBalance.annual.pending}`}
               />
-              
-              <LeaveBalanceRing 
-                balance={leaveBalance.medical.balance} 
+
+              <LeaveBalanceRing
+                balance={leaveBalance.medical.balance}
                 total={leaveBalance.medical.entitled}
                 type="medical"
                 label="Cuti Sakit"
                 detail={`Diambil: ${leaveBalance.medical.taken}`}
               />
-              
-              <LeaveBalanceRing 
-                balance={leaveBalance.emergency.balance} 
+
+              <LeaveBalanceRing
+                balance={leaveBalance.emergency.balance}
                 total={leaveBalance.emergency.entitled}
                 type="emergency"
                 label="Cuti Kecemasan"
                 detail={`Diambil: ${leaveBalance.emergency.taken}`}
               />
-              
-              <LeaveBalanceRing 
-                balance={leaveBalance.unpaid.taken} 
+
+              <LeaveBalanceRing
+                balance={leaveBalance.unpaid.taken}
                 total={5}
                 type="unpaid"
                 label="Tanpa Gaji"
@@ -189,10 +191,10 @@ export default function LeavePage() {
           {sortedRequests.length > 0 ? (
             <div className="staff-stagger" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
               {sortedRequests.map(request => (
-                <div 
+                <div
                   key={request.id}
                   className="staff-info-row"
-                  style={{ 
+                  style={{
                     flexDirection: 'column',
                     alignItems: 'stretch',
                     gap: '0.75rem',
@@ -225,12 +227,12 @@ export default function LeavePage() {
                         {request.status === 'pending' && <AlertCircle size={12} style={{ marginRight: '0.25rem' }} />}
                         {getStatusLabel(request.status)}
                       </span>
-                      
+
                       <div style={{ fontSize: '0.7rem', color: 'var(--text-light)', marginTop: '0.5rem' }}>
                         <Clock size={10} style={{ marginRight: '0.25rem', display: 'inline' }} />
                         {new Date(request.createdAt).toLocaleDateString('ms-MY')}
                       </div>
-                      
+
                       {request.approverName && (
                         <div style={{ fontSize: '0.7rem', color: 'var(--text-light)' }}>
                           {request.status === 'approved' ? 'Diluluskan' : 'Ditolak'} oleh: {request.approverName}

@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import MainLayout from '@/components/MainLayout';
 import { useStaff } from '@/lib/store';
-import { 
+import {
   StaffProfile,
   Gender,
   MaritalStatus,
@@ -16,10 +16,10 @@ import {
   LeaveEntitlement,
   StaffPermissions,
 } from '@/lib/types';
-import { 
-  BRUNEI_BANKS, 
-  RELATION_OPTIONS, 
-  NATIONALITY_OPTIONS, 
+import {
+  BRUNEI_BANKS,
+  RELATION_OPTIONS,
+  NATIONALITY_OPTIONS,
   RELIGION_OPTIONS,
   DEPARTMENT_OPTIONS,
   POSITION_OPTIONS,
@@ -27,14 +27,14 @@ import {
 import Link from 'next/link';
 import Modal from '@/components/Modal';
 import LoadingSpinner from '@/components/LoadingSpinner';
-import { 
-  Eye, 
-  EyeOff, 
-  Edit2, 
-  Trash2, 
-  UserPlus, 
-  Phone, 
-  DollarSign, 
+import {
+  Eye,
+  EyeOff,
+  Edit2,
+  Trash2,
+  UserPlus,
+  Phone,
+  DollarSign,
   Clock,
   User,
   Briefcase,
@@ -57,7 +57,7 @@ export default function StaffListPage() {
   const { staff, updateStaff, deleteStaff, getStaffAttendanceToday, isInitialized } = useStaff();
   const [filter, setFilter] = useState<'all' | 'active' | 'on-leave'>('all');
   const [searchTerm, setSearchTerm] = useState('');
-  
+
   // Modal states
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -155,7 +155,7 @@ export default function StaffListPage() {
       phone: editForm.phone?.trim() || '',
       pin: editForm.pin,
       emergencyContact: editForm.emergencyContact?.name ? editForm.emergencyContact as EmergencyContact : undefined,
-      
+
       // Employment
       role: editForm.role,
       position: editForm.position || undefined,
@@ -167,7 +167,7 @@ export default function StaffListPage() {
       reportingTo: editForm.reportingTo || undefined,
       workLocation: editForm.workLocation || undefined,
       status: editForm.status,
-      
+
       // Salary
       salaryType: editForm.salaryType,
       baseSalary: editForm.baseSalary,
@@ -176,11 +176,11 @@ export default function StaffListPage() {
       bankDetails: (editForm.bankDetails as BankDetails)?.bankName ? editForm.bankDetails as BankDetails : undefined,
       statutoryContributions: editForm.statutoryContributions as StatutoryContributions,
       leaveEntitlement: editForm.leaveEntitlement as LeaveEntitlement,
-      
+
       // Permissions
       accessLevel: editForm.accessLevel,
       permissions: editForm.permissions as StaffPermissions,
-      
+
       // Other
       uniformSize: editForm.uniformSize || undefined,
       shoeSize: editForm.shoeSize || undefined,
@@ -190,7 +190,7 @@ export default function StaffListPage() {
       notes: editForm.notes || undefined,
       skills: editForm.skills,
       certifications: editForm.certifications,
-      
+
       updatedAt: new Date().toISOString(),
     };
 
@@ -736,9 +736,9 @@ export default function StaffListPage() {
               <span className="detail-label">Status Perkahwinan</span>
               <span className="detail-value">
                 {selectedStaff.maritalStatus === 'single' ? 'Bujang' :
-                 selectedStaff.maritalStatus === 'married' ? 'Berkahwin' :
-                 selectedStaff.maritalStatus === 'divorced' ? 'Bercerai' :
-                 selectedStaff.maritalStatus === 'widowed' ? 'Balu/Duda' : '-'}
+                  selectedStaff.maritalStatus === 'married' ? 'Berkahwin' :
+                    selectedStaff.maritalStatus === 'divorced' ? 'Bercerai' :
+                      selectedStaff.maritalStatus === 'widowed' ? 'Balu/Duda' : '-'}
               </span>
             </div>
             <div className="detail-item">
@@ -877,9 +877,9 @@ export default function StaffListPage() {
               <span className="detail-label">Jenis Pekerjaan</span>
               <span className="detail-value">
                 {selectedStaff.employmentType === 'permanent' ? 'Tetap' :
-                 selectedStaff.employmentType === 'contract' ? 'Kontrak' :
-                 selectedStaff.employmentType === 'part-time' ? 'Separuh Masa' :
-                 selectedStaff.employmentType === 'probation' ? 'Percubaan' : '-'}
+                  selectedStaff.employmentType === 'contract' ? 'Kontrak' :
+                    selectedStaff.employmentType === 'part-time' ? 'Separuh Masa' :
+                      selectedStaff.employmentType === 'probation' ? 'Percubaan' : '-'}
               </span>
             </div>
             <div className="detail-item">
@@ -920,8 +920,8 @@ export default function StaffListPage() {
               <span className="detail-label">Jenis Gaji</span>
               <span className="detail-value">
                 {selectedStaff.salaryType === 'monthly' ? 'Bulanan' :
-                 selectedStaff.salaryType === 'hourly' ? 'Per Jam' :
-                 selectedStaff.salaryType === 'daily' ? 'Harian' : 'Bulanan'}
+                  selectedStaff.salaryType === 'hourly' ? 'Per Jam' :
+                    selectedStaff.salaryType === 'daily' ? 'Harian' : 'Bulanan'}
               </span>
             </div>
           </div>
@@ -1017,7 +1017,7 @@ export default function StaffListPage() {
           <div style={{ marginBottom: '1.5rem' }}>
             <span className={`badge ${selectedStaff.accessLevel === 'admin' ? 'badge-danger' : selectedStaff.accessLevel === 'manager' ? 'badge-warning' : 'badge-info'}`} style={{ fontSize: '1rem', padding: '0.5rem 1rem' }}>
               {selectedStaff.accessLevel === 'admin' ? 'Administrator' :
-               selectedStaff.accessLevel === 'manager' ? 'Manager' : 'Staff'}
+                selectedStaff.accessLevel === 'manager' ? 'Manager' : 'Staff'}
             </span>
           </div>
         </div>
@@ -1030,11 +1030,11 @@ export default function StaffListPage() {
             {permissionsList.map(({ key, label }) => {
               const hasPermission = permissions?.[key as keyof StaffPermissions] as boolean;
               return (
-                <div 
-                  key={key} 
-                  style={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
+                <div
+                  key={key}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
                     gap: '0.5rem',
                     padding: '0.5rem 0.75rem',
                     background: hasPermission ? 'var(--success-light)' : 'var(--gray-100)',
@@ -1067,19 +1067,21 @@ export default function StaffListPage() {
   return (
     <MainLayout>
       <div className="animate-fade-in">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
-          <div>
-            <h1 style={{ fontSize: '2rem', fontWeight: 700, marginBottom: '0.5rem' }}>
-              Senarai Staf
-            </h1>
-            <p style={{ color: 'var(--text-secondary)' }}>
-              Database lengkap semua staf ({staff.length} orang)
-            </p>
+        <div className="page-header">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+            <div>
+              <h1 className="page-title" style={{ marginBottom: '0.5rem' }}>
+                Senarai Staf
+              </h1>
+              <p className="page-subtitle">
+                Database lengkap semua staf ({staff.length} orang)
+              </p>
+            </div>
+            <Link href="/hr/staff/new" className="btn btn-primary">
+              <UserPlus size={18} />
+              Daftar Staf Baru
+            </Link>
           </div>
-          <Link href="/hr/staff/new" className="btn btn-primary">
-            <UserPlus size={18} />
-            Daftar Staf Baru
-          </Link>
         </div>
 
         {/* Search and Filter */}
@@ -1122,13 +1124,13 @@ export default function StaffListPage() {
               <div key={staffMember.id} className="card staff-card">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '1rem' }}>
                   <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-                    <div style={{ 
-                      width: '48px', 
-                      height: '48px', 
-                      background: 'var(--gradient-primary)', 
-                      borderRadius: '50%', 
-                      display: 'flex', 
-                      alignItems: 'center', 
+                    <div style={{
+                      width: '48px',
+                      height: '48px',
+                      background: 'var(--gradient-primary)',
+                      borderRadius: '50%',
+                      display: 'flex',
+                      alignItems: 'center',
                       justifyContent: 'center',
                       color: 'white',
                       fontWeight: 700,
@@ -1152,9 +1154,9 @@ export default function StaffListPage() {
                 </div>
 
                 {/* Today's Attendance */}
-                <div style={{ 
-                  background: 'var(--gray-100)', 
-                  padding: '0.75rem', 
+                <div style={{
+                  background: 'var(--gray-100)',
+                  padding: '0.75rem',
                   borderRadius: 'var(--radius-md)',
                   marginBottom: '1rem',
                   display: 'flex',
@@ -1190,8 +1192,8 @@ export default function StaffListPage() {
                   </div>
                 )}
 
-                <div style={{ 
-                  paddingTop: '1rem', 
+                <div style={{
+                  paddingTop: '1rem',
                   borderTop: '1px solid var(--gray-200)',
                   display: 'flex',
                   justifyContent: 'space-between',
@@ -1212,24 +1214,24 @@ export default function StaffListPage() {
                 </div>
 
                 <div style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem' }}>
-                  <button 
-                    className="btn btn-outline btn-sm" 
+                  <button
+                    className="btn btn-outline btn-sm"
                     style={{ flex: 1 }}
                     onClick={() => openEditModal(staffMember)}
                   >
                     <Edit2 size={14} />
                     Edit
                   </button>
-                  <button 
-                    className="btn btn-outline btn-sm" 
+                  <button
+                    className="btn btn-outline btn-sm"
                     style={{ flex: 1 }}
                     onClick={() => openDetailModal(staffMember)}
                   >
                     <Eye size={14} />
                     Detail
                   </button>
-                  <button 
-                    className="btn btn-outline btn-sm" 
+                  <button
+                    className="btn btn-outline btn-sm"
                     style={{ padding: '0.5rem', color: 'var(--danger)' }}
                     onClick={() => openDeleteModal(staffMember)}
                   >
@@ -1329,13 +1331,13 @@ export default function StaffListPage() {
           maxWidth="400px"
         >
           <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-            <div style={{ 
-              width: '60px', 
-              height: '60px', 
-              background: '#fee2e2', 
-              borderRadius: '50%', 
-              display: 'flex', 
-              alignItems: 'center', 
+            <div style={{
+              width: '60px',
+              height: '60px',
+              background: '#fee2e2',
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
               justifyContent: 'center',
               margin: '0 auto 1rem'
             }}>
@@ -1387,20 +1389,20 @@ export default function StaffListPage() {
           {selectedStaff && (
             <>
               {/* Profile Header */}
-              <div style={{ 
-                background: 'var(--gray-100)', 
-                padding: '1.5rem', 
-                borderRadius: 'var(--radius-md)', 
+              <div style={{
+                background: 'var(--gray-100)',
+                padding: '1.5rem',
+                borderRadius: 'var(--radius-md)',
                 marginBottom: '1.5rem',
                 textAlign: 'center'
               }}>
-                <div style={{ 
-                  width: '80px', 
-                  height: '80px', 
-                  background: 'var(--gradient-primary)', 
-                  borderRadius: '50%', 
-                  display: 'flex', 
-                  alignItems: 'center', 
+                <div style={{
+                  width: '80px',
+                  height: '80px',
+                  background: 'var(--gradient-primary)',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
                   justifyContent: 'center',
                   margin: '0 auto 1rem',
                   fontSize: '2rem',
@@ -1466,15 +1468,15 @@ export default function StaffListPage() {
               </div>
 
               <div style={{ marginTop: '1.5rem', display: 'flex', gap: '0.5rem' }}>
-                <button 
-                  className="btn btn-outline" 
-                  onClick={() => setShowDetailModal(false)} 
+                <button
+                  className="btn btn-outline"
+                  onClick={() => setShowDetailModal(false)}
                   style={{ flex: 1 }}
                 >
                   Tutup
                 </button>
-                <button 
-                  className="btn btn-primary" 
+                <button
+                  className="btn btn-primary"
                   onClick={() => {
                     setShowDetailModal(false);
                     openEditModal(selectedStaff);

@@ -73,12 +73,12 @@ export default function OrderHistoryPage() {
   // Get filtered orders based on role
   const filteredOrders = useMemo(() => {
     let orders = getOrderHistory(filters);
-    
+
     // If staff, only show their own orders
     if (!canViewAll && currentStaff) {
       orders = orders.filter(o => o.cashierId === currentStaff.id);
     }
-    
+
     return orders;
   }, [getOrderHistory, filters, canViewAll, currentStaff]);
 
@@ -165,9 +165,9 @@ export default function OrderHistoryPage() {
       id: 'status',
       header: 'Status',
       accessor: (row) => (
-        <OrderStatusBadge 
-          status={row.status} 
-          voidRefundStatus={row.voidRefundStatus} 
+        <OrderStatusBadge
+          status={row.status}
+          voidRefundStatus={row.voidRefundStatus}
         />
       ),
     },
@@ -233,32 +233,34 @@ export default function OrderHistoryPage() {
     <MainLayout>
       <div className="animate-fade-in">
         {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <History size={28} />
-            <div>
-              <h1 style={{ fontSize: '1.75rem', fontWeight: 700, margin: 0 }}>
-                Sejarah Pesanan
-              </h1>
-              <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '0.875rem' }}>
-                Lihat, cari, dan urus semua pesanan
-              </p>
+        <div className="page-header">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <History size={28} />
+              <div>
+                <h1 className="page-title" style={{ marginBottom: '0.25rem' }}>
+                  Sejarah Pesanan
+                </h1>
+                <p className="page-subtitle">
+                  Lihat, cari, dan urus semua pesanan
+                </p>
+              </div>
             </div>
-          </div>
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <button 
-              className="btn btn-outline"
-              onClick={() => setShowFilters(!showFilters)}
-            >
-              <Filter size={18} />
-              Filter
-            </button>
-            {canExportData && (
-              <button className="btn btn-outline" onClick={handleExport}>
-                <Download size={18} />
-                Export CSV
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <button
+                className="btn btn-outline"
+                onClick={() => setShowFilters(!showFilters)}
+              >
+                <Filter size={18} />
+                Filter
               </button>
-            )}
+              {canExportData && (
+                <button className="btn btn-outline" onClick={handleExport}>
+                  <Download size={18} />
+                  Export CSV
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
@@ -408,21 +410,23 @@ export default function OrderHistoryPage() {
 
         {/* Data Table */}
         <div className="card">
-          <DataTable
-            data={filteredOrders as unknown as Record<string, unknown>[]}
-            columns={columns as unknown as Column<Record<string, unknown>>[]}
-            keyField="id"
-            searchable
-            searchPlaceholder="Cari order ID, pelanggan, cashier..."
-            pagination
-            pageSize={10}
-            emptyMessage={
-              <div style={{ textAlign: 'center', padding: '2rem' }}>
-                <History size={48} style={{ color: 'var(--text-secondary)', marginBottom: '1rem' }} />
-                <p>Tiada pesanan dijumpai</p>
-              </div>
-            }
-          />
+          <div className="table-responsive">
+            <DataTable
+              data={filteredOrders as unknown as Record<string, unknown>[]}
+              columns={columns as unknown as Column<Record<string, unknown>>[]}
+              keyField="id"
+              searchable
+              searchPlaceholder="Cari order ID, pelanggan, cashier..."
+              pagination
+              pageSize={10}
+              emptyMessage={
+                <div style={{ textAlign: 'center', padding: '2rem' }}>
+                  <History size={48} style={{ color: 'var(--text-secondary)', marginBottom: '1rem' }} />
+                  <p>Tiada pesanan dijumpai</p>
+                </div>
+              }
+            />
+          </div>
         </div>
 
         {/* Order Detail Modal */}

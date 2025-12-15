@@ -7,11 +7,11 @@ import { useMenu, useMenuCategories } from '@/lib/store';
 import { MenuItem, ModifierGroup, ModifierOption, MenuCategory } from '@/lib/types';
 import Modal from '@/components/Modal';
 import LoadingSpinner from '@/components/LoadingSpinner';
-import { 
-  UtensilsCrossed, 
-  Plus, 
-  Edit2, 
-  Trash2, 
+import {
+  UtensilsCrossed,
+  Plus,
+  Edit2,
+  Trash2,
   Search,
   ToggleLeft,
   ToggleRight,
@@ -32,10 +32,10 @@ export default function MenuManagementPage() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  
-  const { 
-    menuItems, 
-    modifierGroups, 
+
+  const {
+    menuItems,
+    modifierGroups,
     modifierOptions,
     addMenuItem,
     updateMenuItem,
@@ -48,7 +48,7 @@ export default function MenuManagementPage() {
     updateModifierOption,
     deleteModifierOption,
     getOptionsForGroup,
-    isInitialized 
+    isInitialized
   } = useMenu();
 
   const {
@@ -74,7 +74,7 @@ export default function MenuManagementPage() {
     const search = searchParams.get('search') || '';
     const category = searchParams.get('category') || 'All';
     const tab = searchParams.get('tab') as TabType || 'menu';
-    
+
     setSearchTerm(search);
     setFilterCategory(category);
     if (['menu', 'categories', 'groups', 'options'].includes(tab)) {
@@ -85,7 +85,7 @@ export default function MenuManagementPage() {
   // Update URL when filters change
   const updateUrlParams = (params: { search?: string; category?: string; tab?: string }) => {
     const newParams = new URLSearchParams(searchParams.toString());
-    
+
     Object.entries(params).forEach(([key, value]) => {
       if (value && value !== 'All' && value !== '' && value !== 'menu') {
         newParams.set(key, value);
@@ -93,7 +93,7 @@ export default function MenuManagementPage() {
         newParams.delete(key);
       }
     });
-    
+
     const newUrl = newParams.toString() ? `${pathname}?${newParams.toString()}` : pathname;
     router.replace(newUrl, { scroll: false });
   };
@@ -523,19 +523,21 @@ export default function MenuManagementPage() {
   return (
     <MainLayout>
       <div className="animate-fade-in">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
-          <div>
-            <h1 style={{ fontSize: '2rem', fontWeight: 700, marginBottom: '0.5rem' }}>
-              Pengurusan Menu
-            </h1>
-            <p style={{ color: 'var(--text-secondary)' }}>
-              Urus menu items, modifier groups dan options
-            </p>
+        <div className="page-header">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+            <div>
+              <h1 className="page-title" style={{ marginBottom: '0.5rem' }}>
+                Pengurusan Menu
+              </h1>
+              <p className="page-subtitle">
+                Urus menu items, modifier groups dan options
+              </p>
+            </div>
           </div>
         </div>
 
         {/* Tabs */}
-        <div style={{ marginBottom: '1.5rem', display: 'flex', gap: '0.5rem', borderBottom: '2px solid var(--gray-200)', paddingBottom: '0.5rem' }}>
+        <div style={{ marginBottom: '1.5rem', display: 'flex', gap: '0.5rem', borderBottom: '2px solid var(--gray-200)', overflowX: 'auto', whiteSpace: 'nowrap', paddingBottom: '1rem' }}>
           <button
             onClick={() => handleTabChange('menu')}
             className={`btn btn-sm ${activeTab === 'menu' ? 'btn-primary' : 'btn-outline'}`}
@@ -601,88 +603,90 @@ export default function MenuManagementPage() {
 
             {filteredMenuItems.length > 0 ? (
               <div className="card">
-                <table className="table">
-                  <thead>
-                    <tr>
-                      <th>Menu</th>
-                      <th>Kategori</th>
-                      <th>Harga</th>
-                      <th>Modifiers</th>
-                      <th>Status</th>
-                      <th>Tindakan</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredMenuItems.map(item => (
-                      <tr key={item.id}>
-                        <td>
-                          <div style={{ fontWeight: 600 }}>{item.name}</div>
-                          {item.description && (
-                            <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                              {item.description}
-                            </div>
-                          )}
-                        </td>
-                        <td>
-                          <span className="badge badge-info">{item.category}</span>
-                        </td>
-                        <td style={{ fontWeight: 600 }}>BND {item.price.toFixed(2)}</td>
-                        <td>
-                          {item.modifierGroupIds.length > 0 ? (
-                            <div style={{ display: 'flex', gap: '0.25rem', flexWrap: 'wrap' }}>
-                              {item.modifierGroupIds.map(gid => {
-                                const group = modifierGroups.find(g => g.id === gid);
-                                return group ? (
-                                  <span key={gid} className="badge badge-warning" style={{ fontSize: '0.65rem' }}>
-                                    {group.name}
-                                  </span>
-                                ) : null;
-                              })}
-                            </div>
-                          ) : (
-                            <span style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>-</span>
-                          )}
-                        </td>
-                        <td>
-                          <button
-                            onClick={() => toggleMenuItemAvailability(item.id)}
-                            style={{ 
-                              background: 'none', 
-                              border: 'none', 
-                              cursor: 'pointer',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '0.25rem',
-                              color: item.isAvailable ? 'var(--success)' : 'var(--danger)'
-                            }}
-                          >
-                            {item.isAvailable ? <ToggleRight size={24} /> : <ToggleLeft size={24} />}
-                            <span style={{ fontSize: '0.75rem' }}>
-                              {item.isAvailable ? 'Available' : 'Sold Out'}
-                            </span>
-                          </button>
-                        </td>
-                        <td>
-                          <div style={{ display: 'flex', gap: '0.25rem' }}>
-                            <button
-                              className="btn btn-sm btn-outline"
-                              onClick={() => openEditMenuModal(item)}
-                            >
-                              <Edit2 size={14} />
-                            </button>
-                            <button
-                              className="btn btn-sm btn-outline"
-                              onClick={() => openDeleteMenuModal(item)}
-                              style={{ color: 'var(--danger)' }}
-                            >
-                              <Trash2 size={14} />
-                            </button>
-                          </div>
-                        </td>
+                <div className="table-responsive">
+                  <table className="table">
+                    <thead>
+                      <tr>
+                        <th>Menu</th>
+                        <th>Kategori</th>
+                        <th>Harga</th>
+                        <th>Modifiers</th>
+                        <th>Status</th>
+                        <th>Tindakan</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {filteredMenuItems.map(item => (
+                        <tr key={item.id}>
+                          <td>
+                            <div style={{ fontWeight: 600 }}>{item.name}</div>
+                            {item.description && (
+                              <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                                {item.description}
+                              </div>
+                            )}
+                          </td>
+                          <td>
+                            <span className="badge badge-info">{item.category}</span>
+                          </td>
+                          <td style={{ fontWeight: 600 }}>BND {item.price.toFixed(2)}</td>
+                          <td>
+                            {item.modifierGroupIds.length > 0 ? (
+                              <div style={{ display: 'flex', gap: '0.25rem', flexWrap: 'wrap' }}>
+                                {item.modifierGroupIds.map(gid => {
+                                  const group = modifierGroups.find(g => g.id === gid);
+                                  return group ? (
+                                    <span key={gid} className="badge badge-warning" style={{ fontSize: '0.65rem' }}>
+                                      {group.name}
+                                    </span>
+                                  ) : null;
+                                })}
+                              </div>
+                            ) : (
+                              <span style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>-</span>
+                            )}
+                          </td>
+                          <td>
+                            <button
+                              onClick={() => toggleMenuItemAvailability(item.id)}
+                              style={{
+                                background: 'none',
+                                border: 'none',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.25rem',
+                                color: item.isAvailable ? 'var(--success)' : 'var(--danger)'
+                              }}
+                            >
+                              {item.isAvailable ? <ToggleRight size={24} /> : <ToggleLeft size={24} />}
+                              <span style={{ fontSize: '0.75rem' }}>
+                                {item.isAvailable ? 'Available' : 'Sold Out'}
+                              </span>
+                            </button>
+                          </td>
+                          <td>
+                            <div style={{ display: 'flex', gap: '0.25rem' }}>
+                              <button
+                                className="btn btn-sm btn-outline"
+                                onClick={() => openEditMenuModal(item)}
+                              >
+                                <Edit2 size={14} />
+                              </button>
+                              <button
+                                className="btn btn-sm btn-outline"
+                                onClick={() => openDeleteMenuModal(item)}
+                                style={{ color: 'var(--danger)' }}
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             ) : (
               <div className="card" style={{ textAlign: 'center', padding: '3rem' }}>
@@ -758,11 +762,11 @@ export default function MenuManagementPage() {
                       {options.length > 0 ? (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                           {options.map(opt => (
-                            <div 
+                            <div
                               key={opt.id}
-                              style={{ 
-                                display: 'flex', 
-                                justifyContent: 'space-between', 
+                              style={{
+                                display: 'flex',
+                                justifyContent: 'space-between',
                                 alignItems: 'center',
                                 padding: '0.5rem 0.75rem',
                                 background: opt.isAvailable ? 'var(--gray-50)' : '#fee2e2',
@@ -940,9 +944,9 @@ export default function MenuManagementPage() {
                               {category.description || '-'}
                             </td>
                             <td>
-                              <code style={{ 
-                                background: 'var(--gray-100)', 
-                                padding: '0.25rem 0.5rem', 
+                              <code style={{
+                                background: 'var(--gray-100)',
+                                padding: '0.25rem 0.5rem',
                                 borderRadius: 'var(--radius-sm)',
                                 fontSize: '0.75rem'
                               }}>
@@ -1118,9 +1122,9 @@ export default function MenuManagementPage() {
           maxWidth="400px"
         >
           <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-            <div style={{ 
-              width: '60px', height: '60px', 
-              background: '#fee2e2', borderRadius: '50%', 
+            <div style={{
+              width: '60px', height: '60px',
+              background: '#fee2e2', borderRadius: '50%',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               margin: '0 auto 1rem'
             }}>
@@ -1247,9 +1251,9 @@ export default function MenuManagementPage() {
           maxWidth="400px"
         >
           <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-            <div style={{ 
-              width: '60px', height: '60px', 
-              background: '#fee2e2', borderRadius: '50%', 
+            <div style={{
+              width: '60px', height: '60px',
+              background: '#fee2e2', borderRadius: '50%',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               margin: '0 auto 1rem'
             }}>
@@ -1511,10 +1515,10 @@ export default function MenuManagementPage() {
           </div>
           <div style={{ display: 'flex', gap: '0.5rem' }}>
             <button className="btn btn-outline" onClick={closeModal} style={{ flex: 1 }}>Batal</button>
-            <button 
-              className="btn btn-danger" 
-              onClick={handleDeleteCategory} 
-              disabled={isProcessing || !!(selectedCategory && menuItems.filter(item => item.category === selectedCategory.name).length > 0)} 
+            <button
+              className="btn btn-danger"
+              onClick={handleDeleteCategory}
+              disabled={isProcessing || !!(selectedCategory && menuItems.filter(item => item.category === selectedCategory.name).length > 0)}
               style={{ flex: 1 }}
             >
               {isProcessing ? <LoadingSpinner size="sm" /> : 'Padam'}

@@ -8,7 +8,7 @@ import { LeaveType } from '@/lib/types';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import LoadingSpinner from '@/components/LoadingSpinner';
-import { 
+import {
   ArrowLeft,
   Calendar,
   Send
@@ -31,7 +31,7 @@ export default function ApplyLeavePage() {
   const router = useRouter();
   const { staff, isInitialized } = useStaff();
   const { addLeaveRequest, getLeaveBalance } = useStaffPortal();
-  
+
   const currentStaff = staff.find(s => s.id === CURRENT_STAFF_ID);
   const leaveBalance = getLeaveBalance(CURRENT_STAFF_ID);
 
@@ -46,7 +46,7 @@ export default function ApplyLeavePage() {
   });
 
   // Calculate duration
-  const duration = form.startDate && form.endDate 
+  const duration = form.startDate && form.endDate
     ? calculateLeaveDays(form.startDate, form.endDate, form.isHalfDay)
     : 0;
 
@@ -64,7 +64,7 @@ export default function ApplyLeavePage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!form.startDate || !form.endDate) {
       alert('Sila pilih tarikh');
       return;
@@ -115,15 +115,15 @@ export default function ApplyLeavePage() {
     <MainLayout>
       <div className="animate-fade-in">
         {/* Header */}
-        <div style={{ marginBottom: '1.5rem' }}>
-          <Link href="/staff-portal/leave" className="btn btn-outline btn-sm" style={{ marginBottom: '0.5rem' }}>
+        <div className="page-header">
+          <Link href="/staff-portal/leave" className="btn btn-outline btn-sm" style={{ marginBottom: '0.5rem', width: 'fit-content' }}>
             <ArrowLeft size={16} />
             Kembali
           </Link>
-          <h1 style={{ fontSize: '1.75rem', fontWeight: 700, marginTop: '0.5rem' }}>
+          <h1 className="page-title" style={{ marginTop: '0.5rem' }}>
             Mohon Cuti
           </h1>
-          <p style={{ color: 'var(--text-secondary)' }}>
+          <p className="page-subtitle">
             Isi borang permohonan cuti
           </p>
         </div>
@@ -156,8 +156,8 @@ export default function ApplyLeavePage() {
                   type="date"
                   className="form-input"
                   value={form.startDate}
-                  onChange={(e) => setForm(prev => ({ 
-                    ...prev, 
+                  onChange={(e) => setForm(prev => ({
+                    ...prev,
                     startDate: e.target.value,
                     endDate: prev.endDate < e.target.value ? e.target.value : prev.endDate
                   }))}
@@ -217,9 +217,9 @@ export default function ApplyLeavePage() {
 
             {/* Duration Preview */}
             {duration > 0 && (
-              <div style={{ 
-                padding: '1rem', 
-                background: 'var(--gray-50)', 
+              <div style={{
+                padding: '1rem',
+                background: 'var(--gray-50)',
                 borderRadius: 'var(--radius-md)',
                 marginBottom: '1rem',
                 display: 'flex',
@@ -244,7 +244,7 @@ export default function ApplyLeavePage() {
 
             {/* MC Document Upload - only show for medical leave */}
             {form.type === 'medical' && (
-              <DocumentUpload 
+              <DocumentUpload
                 label="Upload Sijil MC"
                 accept="image/*,.pdf"
                 maxSize={5}

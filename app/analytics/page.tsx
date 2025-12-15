@@ -4,8 +4,8 @@ import { useState, useMemo, useCallback } from 'react';
 import MainLayout from '@/components/MainLayout';
 import { useStore } from '@/lib/store';
 import { useToast } from '@/lib/contexts/ToastContext';
-import { 
-  exportToCSV, 
+import {
+  exportToCSV,
   printReport,
   generateDailySalesReport,
   generateInventoryReport,
@@ -17,10 +17,10 @@ import TimeHeatmap from '@/components/charts/TimeHeatmap';
 import PerformanceMatrix from '@/components/charts/PerformanceMatrix';
 import StaffProductivityChart from '@/components/charts/StaffProductivityChart';
 import ProfitMarginChart from '@/components/charts/ProfitMarginChart';
-import { 
-  BarChart3, 
-  TrendingUp, 
-  ShoppingBag, 
+import {
+  BarChart3,
+  TrendingUp,
+  ShoppingBag,
   Clock,
   Star,
   Users,
@@ -82,7 +82,7 @@ export default function AnalyticsPage() {
   // Daily sales trend
   const dailySalesTrend = useMemo(() => {
     const dailyData: Record<string, { date: string; revenue: number; orders: number }> = {};
-    
+
     filteredOrders.forEach(order => {
       const date = order.createdAt.split('T')[0];
       if (!dailyData[date]) {
@@ -109,24 +109,24 @@ export default function AnalyticsPage() {
 
   // Best sellers with profit margin
   const menuPerformance = useMemo(() => {
-    const itemStats: Record<string, { 
+    const itemStats: Record<string, {
       id: string;
-      name: string; 
-      quantity: number; 
+      name: string;
+      quantity: number;
       revenue: number;
       cost: number;
       category: string;
     }> = {};
-    
+
     filteredOrders.forEach(order => {
       order.items.forEach(item => {
         if (!itemStats[item.id]) {
           // Find menu item to get cost
           const menuItem = menuItems.find(m => m.id === item.id);
-          itemStats[item.id] = { 
+          itemStats[item.id] = {
             id: item.id,
-            name: item.name, 
-            quantity: 0, 
+            name: item.name,
+            quantity: 0,
             revenue: 0,
             cost: 0,
             category: menuItem?.category || 'Lain-lain',
@@ -149,15 +149,15 @@ export default function AnalyticsPage() {
   const staffProductivity = useMemo(() => {
     const monthAttendance = attendance.filter(a => a.date.startsWith(selectedMonth));
     const activeStaff = staff.filter(s => s.status === 'active');
-    
+
     // Get orders processed by each staff
     const ordersByStaff: Record<string, number> = {};
     const orderTimes: Record<string, number[]> = {};
-    
+
     orders.forEach(order => {
       if (order.preparedByStaffId && order.createdAt.startsWith(selectedMonth)) {
         ordersByStaff[order.preparedByStaffId] = (ordersByStaff[order.preparedByStaffId] || 0) + 1;
-        
+
         // Calculate prep time
         if (order.preparingStartedAt && order.readyAt) {
           const startTime = new Date(order.preparingStartedAt).getTime();
@@ -172,7 +172,7 @@ export default function AnalyticsPage() {
     return activeStaff.map(s => {
       const records = monthAttendance.filter(a => a.staffId === s.id);
       const daysWorked = records.length;
-      
+
       let totalMinutes = 0;
       records.forEach(r => {
         if (r.clockInTime && r.clockOutTime) {
@@ -185,7 +185,7 @@ export default function AnalyticsPage() {
       const ordersProcessed = ordersByStaff[s.id] || 0;
       const times = orderTimes[s.id] || [];
       const avgOrderTime = times.length > 0 ? times.reduce((a, b) => a + b, 0) / times.length : 0;
-      
+
       // Efficiency score (based on orders per hour)
       const hoursWorked = Math.round(totalMinutes / 60);
       const efficiency = hoursWorked > 0 ? Math.min(100, (ordersProcessed / hoursWorked) * 20) : 0;
@@ -236,14 +236,14 @@ export default function AnalyticsPage() {
 
     const prevRevenue = prevOrders.reduce((sum, o) => sum + o.total, 0);
     const currentRevenue = salesAnalytics.totalRevenue;
-    
-    const revenueChange = prevRevenue > 0 
-      ? ((currentRevenue - prevRevenue) / prevRevenue) * 100 
+
+    const revenueChange = prevRevenue > 0
+      ? ((currentRevenue - prevRevenue) / prevRevenue) * 100
       : 100;
 
     const prevOrderCount = prevOrders.length;
-    const orderChange = prevOrderCount > 0 
-      ? ((salesAnalytics.totalOrders - prevOrderCount) / prevOrderCount) * 100 
+    const orderChange = prevOrderCount > 0
+      ? ((salesAnalytics.totalOrders - prevOrderCount) / prevOrderCount) * 100
       : 100;
 
     return { revenueChange, orderChange };
@@ -272,13 +272,13 @@ export default function AnalyticsPage() {
   // Export handlers
   const handleExportCSV = useCallback(async () => {
     setIsExporting(true);
-    
+
     try {
       // Prepare data based on active tab
       let data: Record<string, unknown>[] = [];
       let columns: ExportColumn[] = [];
       let filename = '';
-      
+
       if (activeTab === 'overview' || activeTab === 'sales') {
         // Export sales data
         data = dailySalesTrend.map(day => ({
@@ -354,7 +354,7 @@ export default function AnalyticsPage() {
         ];
         filename = `profit_margin_${dateRange}_${new Date().toISOString().split('T')[0]}`;
       }
-      
+
       if (data.length > 0) {
         exportToCSV({
           filename,
@@ -432,57 +432,59 @@ export default function AnalyticsPage() {
     <MainLayout>
       <div className="animate-fade-in">
         {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
-          <div>
-            <h1 style={{ fontSize: '2rem', fontWeight: 700, marginBottom: '0.5rem' }}>
-              Analytics Dashboard
-            </h1>
-            <p style={{ color: 'var(--text-secondary)' }}>
-              Insights dan analisis untuk buat keputusan yang lebih baik
-            </p>
-          </div>
-          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
-            {/* Export Buttons */}
-            <div style={{ display: 'flex', gap: '0.25rem', marginRight: '1rem' }}>
+        <div className="page-header">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+            <div>
+              <h1 className="page-title" style={{ marginBottom: '0.5rem' }}>
+                Analytics Dashboard
+              </h1>
+              <p className="page-subtitle">
+                Insights dan analisis untuk buat keputusan yang lebih baik
+              </p>
+            </div>
+            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+              {/* Export Buttons */}
+              <div style={{ display: 'flex', gap: '0.25rem', marginRight: '1rem' }}>
+                <button
+                  onClick={handleExportCSV}
+                  className="btn btn-sm btn-outline"
+                  disabled={isExporting}
+                  title="Export ke CSV"
+                >
+                  <Download size={16} />
+                  CSV
+                </button>
+                <button
+                  onClick={handleExportPDF}
+                  className="btn btn-sm btn-outline"
+                  disabled={isExporting}
+                  title="Export ke PDF"
+                >
+                  <FileText size={16} />
+                  PDF
+                </button>
+              </div>
+
+              {/* Date Range Buttons */}
               <button
-                onClick={handleExportCSV}
-                className="btn btn-sm btn-outline"
-                disabled={isExporting}
-                title="Export ke CSV"
+                onClick={() => setDateRange('7d')}
+                className={`btn btn-sm ${dateRange === '7d' ? 'btn-primary' : 'btn-outline'}`}
               >
-                <Download size={16} />
-                CSV
+                7 Hari
               </button>
               <button
-                onClick={handleExportPDF}
-                className="btn btn-sm btn-outline"
-                disabled={isExporting}
-                title="Export ke PDF"
+                onClick={() => setDateRange('30d')}
+                className={`btn btn-sm ${dateRange === '30d' ? 'btn-primary' : 'btn-outline'}`}
               >
-                <FileText size={16} />
-                PDF
+                30 Hari
+              </button>
+              <button
+                onClick={() => setDateRange('90d')}
+                className={`btn btn-sm ${dateRange === '90d' ? 'btn-primary' : 'btn-outline'}`}
+              >
+                90 Hari
               </button>
             </div>
-            
-            {/* Date Range Buttons */}
-            <button
-              onClick={() => setDateRange('7d')}
-              className={`btn btn-sm ${dateRange === '7d' ? 'btn-primary' : 'btn-outline'}`}
-            >
-              7 Hari
-            </button>
-            <button
-              onClick={() => setDateRange('30d')}
-              className={`btn btn-sm ${dateRange === '30d' ? 'btn-primary' : 'btn-outline'}`}
-            >
-              30 Hari
-            </button>
-            <button
-              onClick={() => setDateRange('90d')}
-              className={`btn btn-sm ${dateRange === '90d' ? 'btn-primary' : 'btn-outline'}`}
-            >
-              90 Hari
-            </button>
           </div>
         </div>
 
@@ -597,46 +599,48 @@ export default function AnalyticsPage() {
                   Trend Jualan Harian
                 </div>
               </div>
-              <div style={{ height: '200px', display: 'flex', alignItems: 'flex-end', gap: '4px', padding: '1rem 0' }}>
-                {dailySalesTrend.length > 0 ? (
-                  dailySalesTrend.slice(-14).map((day) => {
-                    const maxRevenue = Math.max(...dailySalesTrend.map(d => d.revenue));
-                    const height = maxRevenue > 0 ? (day.revenue / maxRevenue) * 160 : 0;
-                    return (
-                      <div
-                        key={day.date}
-                        style={{
-                          flex: 1,
-                          display: 'flex',
-                          flexDirection: 'column',
-                          alignItems: 'center',
-                          gap: '0.25rem'
-                        }}
-                        title={`${day.date}: BND ${day.revenue.toFixed(2)} (${day.orders} pesanan)`}
-                      >
-                        <div style={{ fontSize: '0.6rem', color: 'var(--text-secondary)' }}>
-                          {day.orders}
-                        </div>
+              <div className="table-responsive">
+                <div style={{ height: '200px', display: 'flex', alignItems: 'flex-end', gap: '4px', padding: '1rem 0', minWidth: '600px' }}>
+                  {dailySalesTrend.length > 0 ? (
+                    dailySalesTrend.slice(-14).map((day) => {
+                      const maxRevenue = Math.max(...dailySalesTrend.map(d => d.revenue));
+                      const height = maxRevenue > 0 ? (day.revenue / maxRevenue) * 160 : 0;
+                      return (
                         <div
+                          key={day.date}
                           style={{
-                            width: '100%',
-                            height: `${Math.max(height, 4)}px`,
-                            background: 'var(--gradient-primary)',
-                            borderRadius: 'var(--radius-sm)',
-                            transition: 'height 0.3s'
+                            flex: 1,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            gap: '0.25rem'
                           }}
-                        />
-                        <div style={{ fontSize: '0.6rem', color: 'var(--text-secondary)' }}>
-                          {new Date(day.date).getDate()}
+                          title={`${day.date}: BND ${day.revenue.toFixed(2)} (${day.orders} pesanan)`}
+                        >
+                          <div style={{ fontSize: '0.6rem', color: 'var(--text-secondary)' }}>
+                            {day.orders}
+                          </div>
+                          <div
+                            style={{
+                              width: '100%',
+                              height: `${Math.max(height, 4)}px`,
+                              background: 'var(--gradient-primary)',
+                              borderRadius: 'var(--radius-sm)',
+                              transition: 'height 0.3s'
+                            }}
+                          />
+                          <div style={{ fontSize: '0.6rem', color: 'var(--text-secondary)' }}>
+                            {new Date(day.date).getDate()}
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })
-                ) : (
-                  <p style={{ width: '100%', textAlign: 'center', color: 'var(--text-secondary)' }}>
-                    Tiada data jualan untuk tempoh ini
-                  </p>
-                )}
+                      );
+                    })
+                  ) : (
+                    <p style={{ width: '100%', textAlign: 'center', color: 'var(--text-secondary)' }}>
+                      Tiada data jualan untuk tempoh ini
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -680,15 +684,15 @@ export default function AnalyticsPage() {
                             {item.quantity} unit
                           </span>
                         </div>
-                        <div style={{ 
-                          width: '100%', 
-                          height: '6px', 
-                          background: 'var(--gray-200)', 
+                        <div style={{
+                          width: '100%',
+                          height: '6px',
+                          background: 'var(--gray-200)',
                           borderRadius: 'var(--radius-sm)'
                         }}>
-                          <div style={{ 
-                            width: `${percentage}%`, 
-                            height: '100%', 
+                          <div style={{
+                            width: `${percentage}%`,
+                            height: '100%',
                             background: idx === 0 ? 'var(--warning)' : idx < 3 ? 'var(--primary)' : 'var(--gray-400)',
                             borderRadius: 'var(--radius-sm)'
                           }} />
@@ -712,40 +716,42 @@ export default function AnalyticsPage() {
                   Analisis Waktu Puncak
                 </div>
               </div>
-              <div style={{ display: 'flex', alignItems: 'flex-end', gap: '4px', height: '150px' }}>
-                {Array.from({ length: 17 }, (_, i) => i + 6).map(hour => {
-                  const count = heatmapData.filter(d => d.hour === hour).length;
-                  const maxCount = Math.max(...Array.from({ length: 17 }, (_, i) => 
-                    heatmapData.filter(d => d.hour === i + 6).length
-                  ), 1);
-                  const height = (count / maxCount) * 130;
-                  const isBusinessHour = hour >= 10 && hour <= 21;
-                  return (
-                    <div
-                      key={hour}
-                      style={{
-                        flex: 1,
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        gap: '0.25rem'
-                      }}
-                      title={`${hour}:00 - ${count} pesanan`}
-                    >
+              <div className="table-responsive">
+                <div style={{ display: 'flex', alignItems: 'flex-end', gap: '4px', height: '150px', minWidth: '600px' }}>
+                  {Array.from({ length: 17 }, (_, i) => i + 6).map(hour => {
+                    const count = heatmapData.filter(d => d.hour === hour).length;
+                    const maxCount = Math.max(...Array.from({ length: 17 }, (_, i) =>
+                      heatmapData.filter(d => d.hour === i + 6).length
+                    ), 1);
+                    const height = (count / maxCount) * 130;
+                    const isBusinessHour = hour >= 10 && hour <= 21;
+                    return (
                       <div
+                        key={hour}
                         style={{
-                          width: '100%',
-                          height: `${Math.max(height, 2)}px`,
-                          background: count === maxCount ? 'var(--warning)' : isBusinessHour ? 'var(--primary)' : 'var(--gray-300)',
-                          borderRadius: 'var(--radius-sm)',
+                          flex: 1,
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          gap: '0.25rem'
                         }}
-                      />
-                      <div style={{ fontSize: '0.6rem', color: 'var(--text-secondary)' }}>
-                        {hour}
+                        title={`${hour}:00 - ${count} pesanan`}
+                      >
+                        <div
+                          style={{
+                            width: '100%',
+                            height: `${Math.max(height, 2)}px`,
+                            background: count === maxCount ? 'var(--warning)' : isBusinessHour ? 'var(--primary)' : 'var(--gray-300)',
+                            borderRadius: 'var(--radius-sm)',
+                          }}
+                        />
+                        <div style={{ fontSize: '0.6rem', color: 'var(--text-secondary)' }}>
+                          {hour}
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
               </div>
             </div>
           </div>
