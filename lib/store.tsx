@@ -1119,6 +1119,15 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }
 
     setOrders(prev => [newOrder, ...prev]);
+
+    // Also add to orderHistory for Order History page
+    const historyItem: OrderHistoryItem = {
+      ...newOrder,
+      voidRefundStatus: 'none',
+      refundAmount: 0,
+    };
+    setOrderHistory(prev => [historyItem, ...prev]);
+
     return newOrder;
   }, []);
 

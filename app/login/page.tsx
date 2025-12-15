@@ -73,7 +73,13 @@ export default function LoginPage() {
     const result = await loginWithPin(selectedStaffId, pin);
 
     if (result.success) {
-      router.push('/');
+      // Check if staff role should go to staff portal
+      const staffMember = staff.find(s => s.id === selectedStaffId);
+      if (staffMember?.role === 'Staff') {
+        router.push('/staff-portal');
+      } else {
+        router.push('/');
+      }
     } else {
       setError(result.error || 'Login gagal');
     }
