@@ -70,14 +70,14 @@ export default function AttendancePage() {
                 if (result.verified && result.nearest_location) {
                     setLocationStatus('verified');
                     setNearestLocation({
-                        name: result.nearest_location!.name,
+                        name: (result.nearest_location as any).name,
                         distance: Math.round(result.distance || 0),
                     });
                 } else {
                     setLocationStatus('out-of-range');
                     if (result.nearest_location) {
                         setNearestLocation({
-                            name: result.nearest_location!.name,
+                            name: (result.nearest_location as any).name,
                             distance: Math.round(result.distance || 0),
                         });
                     }
