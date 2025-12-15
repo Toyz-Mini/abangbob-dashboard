@@ -711,109 +711,117 @@ export default function StaffListPage() {
     if (!selectedStaff) return null;
     const age = calculateAge(selectedStaff.dateOfBirth);
 
-    const Card = ({ title, icon: Icon, children }: { title: string, icon: any, children: React.ReactNode }) => (
-      <div className="bg-white p-5 rounded-xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow duration-200 h-full">
-        <h4 className="flex items-center gap-2 text-base font-semibold text-slate-800 mb-4 pb-3 border-b border-slate-100">
-          <Icon size={18} className="text-secondary" /> {title}
-        </h4>
-        <div className="space-y-4">
+    const SectionCard = ({ title, icon: Icon, children }: { title: string, icon: any, children: React.ReactNode }) => (
+      <div className="bg-white rounded-xl border border-gray-200 shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] h-full overflow-hidden">
+        <div className="px-5 py-4 border-b border-gray-50 flex items-center gap-3 bg-gray-50/30">
+          <div className="p-1.5 bg-white border border-gray-100 rounded-lg text-gray-500 shadow-sm">
+            <Icon size={16} />
+          </div>
+          <h4 className="text-[15px] font-bold text-gray-800 tracking-tight">{title}</h4>
+        </div>
+        <div className="p-5">
           {children}
         </div>
       </div>
     );
 
-    const Item = ({ label, value, sub }: { label: string, value: string | number | undefined | null, sub?: string }) => (
-      <div>
-        <div className="text-xs uppercase tracking-wider text-slate-400 font-semibold mb-1">{label}</div>
-        <div className="text-sm font-medium text-slate-900 break-words">
-          {value || <span className="text-slate-300 italic">Tidak dinyatakan</span>}
-          {sub && <span className="text-slate-500 ml-1 text-xs">({sub})</span>}
+    const Field = ({ label, value, sub }: { label: string, value: string | number | undefined | null, sub?: string }) => (
+      <div className="flex flex-col gap-1.5">
+        <span className="text-[11px] uppercase tracking-wider text-gray-400 font-semibold leading-none">{label}</span>
+        <div className="text-[14px] font-medium text-gray-900 break-words flex items-baseline gap-2 leading-snug">
+          {value ? (
+            <span>{value}</span>
+          ) : (
+            <span className="text-gray-300 italic font-normal text-xs">Tidak dinyatakan</span>
+          )}
+          {sub && <span className="text-gray-400 text-xs font-normal">({sub})</span>}
         </div>
       </div>
     );
 
     return (
-      <div className="detail-content bg-slate-50 p-6 -m-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {/* Personal Info Card */}
-          <div className="md:col-span-2 lg:col-span-1">
-            <Card title="Maklumat Peribadi" icon={User}>
-              <div className="grid grid-cols-2 gap-4">
-                <Item label="Nama Penuh" value={selectedStaff.name} />
-                <Item label="No. IC" value={selectedStaff.icNumber} />
-                <Item label="Tarikh Lahir" value={formatDate(selectedStaff.dateOfBirth)} sub={age ? `${age} tahun` : undefined} />
-                <Item label="Jantina" value={selectedStaff.gender === 'male' ? 'Lelaki' : selectedStaff.gender === 'female' ? 'Perempuan' : '-'} />
-                <Item label="Status" value={
-                  selectedStaff.maritalStatus === 'single' ? 'Bujang' :
-                    selectedStaff.maritalStatus === 'married' ? 'Berkahwin' :
-                      selectedStaff.maritalStatus === 'divorced' ? 'Bercerai' :
-                        selectedStaff.maritalStatus === 'widowed' ? 'Balu/Duda' : '-'
-                } />
-                <Item label="Warganegara" value={selectedStaff.nationality} />
-                <Item label="Agama" value={selectedStaff.religion} />
-                <Item label="Jenis Darah" value={selectedStaff.bloodType} />
+      <div className="detail-content bg-gray-50/50 -m-6 p-6 min-h-[400px]">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          {/* Personal Info */}
+          <SectionCard title="Maklumat Peribadi" icon={User}>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-6">
+              <Field label="Nama Penuh" value={selectedStaff.name} />
+              <Field label="No. IC" value={selectedStaff.icNumber} />
+              <Field label="Tarikh Lahir" value={formatDate(selectedStaff.dateOfBirth)} sub={age ? `${age} tahun` : undefined} />
+              <Field label="Jantina" value={selectedStaff.gender === 'male' ? 'Lelaki' : selectedStaff.gender === 'female' ? 'Perempuan' : '-'} />
+              <Field label="Status" value={
+                selectedStaff.maritalStatus === 'single' ? 'Bujang' :
+                  selectedStaff.maritalStatus === 'married' ? 'Berkahwin' :
+                    selectedStaff.maritalStatus === 'divorced' ? 'Bercerai' :
+                      selectedStaff.maritalStatus === 'widowed' ? 'Balu/Duda' : '-'
+              } />
+              <Field label="Warganegara" value={selectedStaff.nationality} />
+              <Field label="Agama" value={selectedStaff.religion} />
+              <Field label="Jenis Darah" value={selectedStaff.bloodType} />
+            </div>
+          </SectionCard>
+
+          {/* Contact Info */}
+          <SectionCard title="Hubungi" icon={Phone}>
+            <div className="space-y-6">
+              <Field label="Telefon" value={selectedStaff.phone} />
+              <Field label="Email" value={selectedStaff.email} />
+              <Field label="Alamat" value={selectedStaff.address} />
+            </div>
+          </SectionCard>
+
+          {/* Emergency Contact */}
+          <SectionCard title="Kecemasan" icon={AlertCircle}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <div className="sm:col-span-2">
+                <Field label="Nama" value={selectedStaff.emergencyContact?.name} />
               </div>
-            </Card>
-          </div>
-
-          {/* Contact Info Card */}
-          <Card title="Hubungi" icon={Phone}>
-            <div className="space-y-4">
-              <Item label="Telefon" value={selectedStaff.phone} />
-              <Item label="Email" value={selectedStaff.email} />
-              <Item label="Alamat" value={selectedStaff.address} />
+              <Field label="Hubungan" value={selectedStaff.emergencyContact?.relation} />
+              <Field label="Telefon" value={selectedStaff.emergencyContact?.phone} />
             </div>
-          </Card>
+          </SectionCard>
 
-          {/* Emergency Contact Card */}
-          <Card title="Kecemasan" icon={AlertCircle}>
-            <div className="space-y-4">
-              <Item label="Nama" value={selectedStaff.emergencyContact?.name} />
-              <Item label="Hubungan" value={selectedStaff.emergencyContact?.relation} />
-              <Item label="Telefon" value={selectedStaff.emergencyContact?.phone} />
+          {/* Bank Info */}
+          <SectionCard title="Bank" icon={CreditCard}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <div className="sm:col-span-2">
+                <Field label="Nama Bank" value={selectedStaff.bankDetails?.bankName} />
+              </div>
+              <Field label="No. Akaun" value={selectedStaff.bankDetails?.accountNumber} />
+              <Field label="Pemegang Akaun" value={selectedStaff.bankDetails?.accountName} />
             </div>
-          </Card>
+          </SectionCard>
 
-          {/* Bank Info Card */}
-          <Card title="Bank" icon={CreditCard}>
-            <div className="space-y-4">
-              <Item label="Nama Bank" value={selectedStaff.bankDetails?.bankName} />
-              <Item label="No. Akaun" value={selectedStaff.bankDetails?.accountNumber} />
-              <Item label="Pemegang Akaun" value={selectedStaff.bankDetails?.accountName} />
-            </div>
-          </Card>
-
-          {/* TAP/SCP Card */}
-          <div className="md:col-span-2 lg:col-span-2">
-            <div className="bg-white p-5 rounded-xl border border-slate-100 shadow-sm h-full">
-              <h4 className="flex items-center gap-2 text-base font-semibold text-slate-800 mb-4 pb-3 border-b border-slate-100">
-                <Shield size={18} className="text-secondary" /> Caruman TAP/SCP
-              </h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div>
-                  <h5 className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-blue-500"></div> TAP (Tabung Amanah Pekerja)
+          {/* TAP/SCP */}
+          <div className="md:col-span-2">
+            <SectionCard title="Caruman TAP / SCP" icon={Shield}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="p-4 bg-sky-50/40 rounded-xl border border-sky-100/60">
+                  <h5 className="text-[13px] font-bold text-sky-900 mb-4 flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-sky-500"></span> TAP
                   </h5>
-                  <div className="grid grid-cols-2 gap-4 pl-4 border-l-2 border-slate-100">
-                    <Item label="No. Ahli" value={selectedStaff.statutoryContributions?.tapNumber} />
-                    <div></div>
-                    <Item label="Caruman Pekerja" value={`${selectedStaff.statutoryContributions?.tapEmployeeRate || 5}%`} />
-                    <Item label="Caruman Majikan" value={`${selectedStaff.statutoryContributions?.tapEmployerRate || 5}%`} />
+                  <div className="space-y-4">
+                    <Field label="No. Ahli" value={selectedStaff.statutoryContributions?.tapNumber} />
+                    <div className="grid grid-cols-2 gap-4 pt-2 border-t border-sky-100/50">
+                      <Field label="Pekerja" value={selectedStaff.statutoryContributions?.tapEmployeeRate ? `${selectedStaff.statutoryContributions.tapEmployeeRate}%` : '5%'} />
+                      <Field label="Majikan" value={selectedStaff.statutoryContributions?.tapEmployerRate ? `${selectedStaff.statutoryContributions.tapEmployerRate}%` : '5%'} />
+                    </div>
                   </div>
                 </div>
-                <div>
-                  <h5 className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-purple-500"></div> SCP (Supp. Contrib. Pension)
+                <div className="p-4 bg-violet-50/40 rounded-xl border border-violet-100/60">
+                  <h5 className="text-[13px] font-bold text-violet-900 mb-4 flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-violet-500"></span> SCP
                   </h5>
-                  <div className="grid grid-cols-2 gap-4 pl-4 border-l-2 border-slate-100">
-                    <Item label="No. Ahli" value={selectedStaff.statutoryContributions?.scpNumber} />
-                    <div></div>
-                    <Item label="Caruman Pekerja" value={`${selectedStaff.statutoryContributions?.scpEmployeeRate || 3.5}%`} />
-                    <Item label="Caruman Majikan" value={`${selectedStaff.statutoryContributions?.scpEmployerRate || 3.5}%`} />
+                  <div className="space-y-4">
+                    <Field label="No. Ahli" value={selectedStaff.statutoryContributions?.scpNumber} />
+                    <div className="grid grid-cols-2 gap-4 pt-2 border-t border-violet-100/50">
+                      <Field label="Pekerja" value={selectedStaff.statutoryContributions?.scpEmployeeRate ? `${selectedStaff.statutoryContributions.scpEmployeeRate}%` : '3.5%'} />
+                      <Field label="Majikan" value={selectedStaff.statutoryContributions?.scpEmployerRate ? `${selectedStaff.statutoryContributions.scpEmployerRate}%` : '3.5%'} />
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
+            </SectionCard>
           </div>
         </div>
       </div>
@@ -823,93 +831,93 @@ export default function StaffListPage() {
   const renderDetailEmployment = () => {
     if (!selectedStaff) return null;
 
-    const Card = ({ title, icon: Icon, children }: { title: string, icon: any, children: React.ReactNode }) => (
-      <div className="bg-white p-5 rounded-xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow duration-200 h-full">
-        <h4 className="flex items-center gap-2 text-base font-semibold text-slate-800 mb-4 pb-3 border-b border-slate-100">
-          <Icon size={18} className="text-secondary" /> {title}
-        </h4>
-        <div className="space-y-4">
+    const SectionCard = ({ title, icon: Icon, children }: { title: string, icon: any, children: React.ReactNode }) => (
+      <div className="bg-white rounded-xl border border-gray-200 shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] h-full overflow-hidden">
+        <div className="px-5 py-4 border-b border-gray-50 flex items-center gap-3 bg-gray-50/30">
+          <div className="p-1.5 bg-white border border-gray-100 rounded-lg text-gray-500 shadow-sm">
+            <Icon size={16} />
+          </div>
+          <h4 className="text-[15px] font-bold text-gray-800 tracking-tight">{title}</h4>
+        </div>
+        <div className="p-5">
           {children}
         </div>
       </div>
     );
 
-    const Item = ({ label, value, badge }: { label: string, value: string | number | undefined | null, badge?: string }) => (
-      <div>
-        <div className="text-xs uppercase tracking-wider text-slate-400 font-semibold mb-1">{label}</div>
-        <div className="text-sm font-medium text-slate-900 break-words flex items-center gap-2">
-          {value || <span className="text-slate-300 italic">Tidak dinyatakan</span>}
-          {badge && <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${badge === 'active' ? 'bg-green-100 text-green-700' :
-            badge === 'permanent' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700'
+    const Field = ({ label, value, badge }: { label: string, value: string | number | undefined | null, badge?: string }) => (
+      <div className="flex flex-col gap-1.5">
+        <span className="text-[11px] uppercase tracking-wider text-gray-400 font-semibold leading-none">{label}</span>
+        <div className="text-[14px] font-medium text-gray-900 break-words flex items-center gap-2 leading-snug">
+          {value || <span className="text-gray-300 italic font-normal text-xs">Tidak dinyatakan</span>}
+          {badge && <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide ${badge === 'active' ? 'bg-green-100 text-green-700' :
+              badge === 'permanent' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700'
             }`}>{badge}</span>}
         </div>
       </div>
     );
 
     return (
-      <div className="detail-content bg-slate-50 p-6 -m-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="detail-content bg-gray-50/50 -m-6 p-6 min-h-[400px]">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {/* Job Info Card */}
-          <Card title="Maklumat Pekerjaan" icon={Briefcase}>
-            <div className="space-y-4">
-              <Item label="No. Pekerja" value={selectedStaff.employeeNumber} />
-              <Item label="Jawatan" value={selectedStaff.role} />
-              <Item label="Posisi" value={selectedStaff.position} />
-              <Item label="Jabatan" value={selectedStaff.department} />
-              <Item label="Jenis Pekerjaan" value={
+          <SectionCard title="Maklumat Pekerjaan" icon={Briefcase}>
+            <div className="space-y-6">
+              <Field label="No. Pekerja" value={selectedStaff.employeeNumber} />
+              <Field label="Jawatan" value={selectedStaff.role} />
+              <Field label="Posisi" value={selectedStaff.position} />
+              <Field label="Jabatan" value={selectedStaff.department} />
+              <Field label="Jenis Pekerjaan" value={
                 selectedStaff.employmentType === 'permanent' ? 'Tetap' :
                   selectedStaff.employmentType === 'contract' ? 'Kontrak' :
                     selectedStaff.employmentType === 'part-time' ? 'Separuh Masa' :
                       selectedStaff.employmentType === 'probation' ? 'Percubaan' : '-'
               } badge={selectedStaff.employmentType} />
-              <Item label="Lokasi Kerja" value={selectedStaff.workLocation} />
-              <Item label="Tarikh Mula" value={formatDate(selectedStaff.joinDate)} />
-              <Item label="Melaporkan Kepada" value={
+              <Field label="Lokasi Kerja" value={selectedStaff.workLocation} />
+              <Field label="Tarikh Mula" value={formatDate(selectedStaff.joinDate)} />
+              <Field label="Melaporkan Kepada" value={
                 selectedStaff.reportingTo ? staff.find(s => s.id === selectedStaff.reportingTo)?.name : '-'
               } />
             </div>
-          </Card>
+          </SectionCard>
 
           {/* Salary Info Card */}
-          <Card title="Maklumat Gaji" icon={DollarSign}>
-            <div className="space-y-4">
-              <Item label="Gaji Asas" value={selectedStaff.baseSalary ? `BND ${selectedStaff.baseSalary.toLocaleString()}` : '-'} />
-              <Item label="Kadar Jam" value={selectedStaff.hourlyRate ? `BND ${selectedStaff.hourlyRate}/jam` : '-'} />
-              <Item label="Kadar OT" value={`${selectedStaff.overtimeRate || 1.5}x`} />
-              <Item label="Jenis Gaji" value={
+          <SectionCard title="Maklumat Gaji" icon={DollarSign}>
+            <div className="space-y-6">
+              <Field label="Gaji Asas" value={selectedStaff.baseSalary ? `BND ${selectedStaff.baseSalary.toLocaleString()}` : '-'} />
+              <Field label="Kadar Jam" value={selectedStaff.hourlyRate ? `BND ${selectedStaff.hourlyRate}/jam` : '-'} />
+              <Field label="Kadar OT" value={`${selectedStaff.overtimeRate || 1.5}x`} />
+              <Field label="Jenis Gaji" value={
                 selectedStaff.salaryType === 'monthly' ? 'Bulanan' :
                   selectedStaff.salaryType === 'hourly' ? 'Per Jam' :
                     selectedStaff.salaryType === 'daily' ? 'Harian' : 'Bulanan'
               } />
             </div>
-          </Card>
+          </SectionCard>
 
           {/* Leave Entitlement Card */}
-          <Card title="Entitlement Cuti" icon={Calendar}>
-            <div className="grid grid-cols-2 gap-4">
-              <Item label="Tahunan" value={`${selectedStaff.leaveEntitlement?.annual || 14} hari`} />
-              <Item label="Sakit" value={`${selectedStaff.leaveEntitlement?.medical || 14} hari`} />
-              <Item label="Kecemasan" value={`${selectedStaff.leaveEntitlement?.emergency || 3} hari`} />
-              <Item label="Ehsan" value={`${selectedStaff.leaveEntitlement?.compassionate || 3} hari`} />
-              <Item label="Bersalin" value={`${selectedStaff.leaveEntitlement?.maternity || 105} hari`} />
-              <Item label="Paterniti" value={`${selectedStaff.leaveEntitlement?.paternity || 3} hari`} />
+          <SectionCard title="Entitlement Cuti" icon={Calendar}>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-6">
+              <Field label="Tahunan" value={`${selectedStaff.leaveEntitlement?.annual || 14} hari`} />
+              <Field label="Sakit" value={`${selectedStaff.leaveEntitlement?.medical || 14} hari`} />
+              <Field label="Kecemasan" value={`${selectedStaff.leaveEntitlement?.emergency || 3} hari`} />
+              <Field label="Ehsan" value={`${selectedStaff.leaveEntitlement?.compassionate || 3} hari`} />
+              <Field label="Bersalin" value={`${selectedStaff.leaveEntitlement?.maternity || 105} hari`} />
+              <Field label="Paterniti" value={`${selectedStaff.leaveEntitlement?.paternity || 3} hari`} />
             </div>
-          </Card>
+          </SectionCard>
 
           {/* Skills & Certs Card (Full Width) */}
           {(selectedStaff.skills?.length || selectedStaff.certifications?.length) ? (
             <div className="md:col-span-2 lg:col-span-3">
-              <div className="bg-white p-5 rounded-xl border border-slate-100 shadow-sm h-full">
-                <h4 className="flex items-center gap-2 text-base font-semibold text-slate-800 mb-4 pb-3 border-b border-slate-100">
-                  <Award size={18} className="text-secondary" /> Kemahiran & Sijil
-                </h4>
+              <SectionCard title="Kemahiran & Sijil" icon={Award}>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {selectedStaff.skills?.length ? (
                     <div>
-                      <div className="text-xs uppercase tracking-wider text-slate-400 font-semibold mb-2">Kemahiran</div>
+                      <div className="text-[11px] uppercase tracking-wider text-gray-400 font-semibold mb-3">Kemahiran</div>
                       <div className="flex flex-wrap gap-2">
                         {selectedStaff.skills.map(skill => (
-                          <span key={skill} className="px-3 py-1 bg-sky-50 text-sky-700 rounded-full text-sm font-medium border border-sky-100">
+                          <span key={skill} className="px-3 py-1 bg-sky-50 text-sky-700 rounded-full text-xs font-bold border border-sky-100">
                             {skill}
                           </span>
                         ))}
@@ -918,10 +926,10 @@ export default function StaffListPage() {
                   ) : null}
                   {selectedStaff.certifications?.length ? (
                     <div>
-                      <div className="text-xs uppercase tracking-wider text-slate-400 font-semibold mb-2">Sijil</div>
+                      <div className="text-[11px] uppercase tracking-wider text-gray-400 font-semibold mb-3">Sijil</div>
                       <div className="flex flex-wrap gap-2">
                         {selectedStaff.certifications.map(cert => (
-                          <span key={cert} className="px-3 py-1 bg-emerald-50 text-emerald-700 rounded-full text-sm font-medium border border-emerald-100">
+                          <span key={cert} className="px-3 py-1 bg-emerald-50 text-emerald-700 rounded-full text-xs font-bold border border-emerald-100">
                             {cert}
                           </span>
                         ))}
@@ -929,7 +937,7 @@ export default function StaffListPage() {
                     </div>
                   ) : null}
                 </div>
-              </div>
+              </SectionCard>
             </div>
           ) : null}
         </div>
@@ -955,29 +963,32 @@ export default function StaffListPage() {
       { key: 'canVoidTransaction', label: 'Void Transaksi' },
     ];
 
-    const Card = ({ title, icon: Icon, children }: { title: string, icon: any, children: React.ReactNode }) => (
-      <div className="bg-white p-5 rounded-xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow duration-200 h-full">
-        <h4 className="flex items-center gap-2 text-base font-semibold text-slate-800 mb-4 pb-3 border-b border-slate-100">
-          <Icon size={18} className="text-secondary" /> {title}
-        </h4>
-        <div className="space-y-4">
+    const SectionCard = ({ title, icon: Icon, children }: { title: string, icon: any, children: React.ReactNode }) => (
+      <div className="bg-white rounded-xl border border-gray-200 shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] h-full overflow-hidden">
+        <div className="px-5 py-4 border-b border-gray-50 flex items-center gap-3 bg-gray-50/30">
+          <div className="p-1.5 bg-white border border-gray-100 rounded-lg text-gray-500 shadow-sm">
+            <Icon size={16} />
+          </div>
+          <h4 className="text-[15px] font-bold text-gray-800 tracking-tight">{title}</h4>
+        </div>
+        <div className="p-5">
           {children}
         </div>
       </div>
     );
 
     return (
-      <div className="detail-content bg-slate-50 p-6 -m-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="detail-content bg-gray-50/50 -m-6 p-6 min-h-[400px]">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           {/* Access Level Card */}
-          <Card title="Tahap Akses" icon={Shield}>
-            <div className="flex flex-col gap-4">
-              <div className="text-sm text-slate-600">
+          <SectionCard title="Tahap Akses" icon={Shield}>
+            <div className="flex flex-col gap-6">
+              <div className="text-sm text-gray-600 leading-relaxed">
                 Tahap akses menentukan modul mana yang boleh dilihat oleh staf ini secara umum.
               </div>
               <div>
-                <div className="text-xs uppercase tracking-wider text-slate-400 font-semibold mb-2">Peranan Semasa</div>
-                <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${selectedStaff.accessLevel === 'admin' ? 'bg-red-50 text-red-700 border-red-100' :
+                <div className="text-[11px] uppercase tracking-wider text-gray-400 font-semibold mb-2">Peranan Semasa</div>
+                <span className={`inline-flex items-center px-4 py-1.5 rounded-full text-sm font-bold border shadow-sm ${selectedStaff.accessLevel === 'admin' ? 'bg-red-50 text-red-700 border-red-100' :
                   selectedStaff.accessLevel === 'manager' ? 'bg-amber-50 text-amber-700 border-amber-100' :
                     'bg-blue-50 text-blue-700 border-blue-100'
                   }`}>
@@ -986,15 +997,11 @@ export default function StaffListPage() {
                 </span>
               </div>
             </div>
-          </Card>
+          </SectionCard>
 
           {/* Special Permissions Card */}
           <div className="md:col-span-2">
-            <div className="bg-white p-5 rounded-xl border border-slate-100 shadow-sm h-full">
-              <h4 className="flex items-center gap-2 text-base font-semibold text-slate-800 mb-4 pb-3 border-b border-slate-100">
-                <Lock size={18} className="text-secondary" /> Kebenaran Khusus
-              </h4>
-
+            <SectionCard title="Kebenaran Khusus" icon={Lock}>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                 {permissionsList.map(({ key, label }) => {
                   const hasPermission = permissions?.[key as keyof StaffPermissions] as boolean;
@@ -1025,12 +1032,12 @@ export default function StaffListPage() {
                     <DollarSign size={16} />
                   </div>
                   <div>
-                    <div className="text-xs uppercase tracking-wider text-orange-800 font-bold mb-0.5">Had Diskaun Maksimum</div>
-                    <div className="text-lg font-bold text-orange-900">{permissions.maxDiscountPercent}%</div>
+                    <div className="text-[11px] uppercase tracking-wider text-orange-800 font-bold mb-0.5">Had Diskaun Maksimum</div>
+                    <div className="text-xl font-bold text-orange-900">{permissions.maxDiscountPercent}%</div>
                   </div>
                 </div>
               )}
-            </div>
+            </SectionCard>
           </div>
         </div>
       </div>
@@ -1440,24 +1447,22 @@ export default function StaffListPage() {
                 {detailTab === 'permissions' && renderDetailPermissions()}
               </div>
 
-              <div style={{ marginTop: '1.5rem', display: 'flex', gap: '0.5rem' }}>
+              <div className="mt-8 flex justify-end gap-3 pt-6 border-t border-gray-100">
                 <button
-                  className="btn btn-outline"
+                  className="px-6 py-2.5 rounded-lg border border-gray-200 text-gray-700 font-medium hover:bg-gray-50 transition-colors text-sm"
                   onClick={() => setShowDetailModal(false)}
-                  style={{ flex: 1 }}
                 >
                   Tutup
                 </button>
                 <button
-                  className="btn btn-primary"
+                  className="px-6 py-2.5 rounded-lg bg-slate-900 text-white font-medium hover:bg-slate-800 transition-colors flex items-center gap-2 shadow-sm text-sm"
                   onClick={() => {
                     setShowDetailModal(false);
                     openEditModal(selectedStaff);
                   }}
-                  style={{ flex: 1 }}
                 >
                   <Edit2 size={16} />
-                  Edit
+                  Edit Profil
                 </button>
               </div>
             </>
@@ -1520,6 +1525,6 @@ export default function StaffListPage() {
           font-size: 0.875rem;
         }
       `}</style>
-    </MainLayout>
+    </MainLayout >
   );
 }
