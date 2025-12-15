@@ -450,12 +450,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       // Check if Supabase is configured
       const supabaseConfigured = isSupabaseConfigured();
       let supabaseConnected = false;
-      
+
       if (supabaseConfigured) {
         // Verify connection is actually working
         const connectionCheck = await checkSupabaseConnection();
         supabaseConnected = connectionCheck.connected;
-        
+
         if (!supabaseConnected) {
           console.warn('[Data Init] Supabase configured but connection failed:', connectionCheck.error);
           logSyncError('initial_load', 'unknown', connectionCheck.error || 'Connection failed');
@@ -473,7 +473,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       // - If Supabase is connected and returns data (even empty), use it (trust the source)
       // - If Supabase is NOT connected, prefer localStorage over mock data
       // - Only use mock data for first-time installations (no localStorage data exists)
-      
+
       // Helper function to determine data source
       const getDataWithSource = <T,>(
         supabaseArr: T[] | undefined,
@@ -498,14 +498,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           console.log(`[Data Init] ${entityName}: No data in Supabase or localStorage`);
           return { data: [], source: 'supabase' };
         }
-        
+
         // Supabase not connected - try localStorage first
         const localData = getFromStorage<T[]>(storageKey, []);
         if (localData.length > 0) {
           console.log(`[Data Init] ${entityName}: Loaded ${localData.length} items from localStorage (Supabase offline)`);
           return { data: localData, source: 'localStorage' };
         }
-        
+
         // No localStorage data - check if this is first install (use mock) or data loss
         // Only use mock data if localStorage is completely empty (first install scenario)
         const hasAnyLocalData = typeof window !== 'undefined' && localStorage.getItem(storageKey) !== null;
@@ -513,7 +513,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           console.log(`[Data Init] ${entityName}: First install - using ${mockData.length} mock items`);
           return { data: mockData, source: 'mock' };
         }
-        
+
         console.log(`[Data Init] ${entityName}: No data available`);
         return { data: [], source: 'localStorage' };
       };
@@ -618,11 +618,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       const sourceInfo = supabaseConnected ? 'Supabase (primary)' : 'localStorage (offline mode)';
       console.log(`[Data Init] Complete - Source: ${sourceInfo}`);
       console.log('[Data Init] Data sources:', dataSourceInfo);
-      
+
       if (supabaseConnected) {
         logSyncSuccess('initial_load', 'unknown');
       }
-      
+
       setIsInitialized(true);
     };
 
@@ -1505,9 +1505,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     // Find current item to get the toggled value
     const currentItem = menuItems.find(item => item.id === id);
     if (!currentItem) return;
-    
+
     const newAvailability = !currentItem.isAvailable;
-    
+
     // Update local state first (optimistic update)
     setMenuItems(prev => prev.map(item =>
       item.id === id ? { ...item, isAvailable: newAvailability } : item
@@ -2029,14 +2029,20 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       createdAt: new Date().toISOString(),
     };
     setAnnouncements(prev => [newAnnouncement, ...prev]);
+    // Sync to Supabase
+    SupabaseSync.syncAddAnnouncement(newAnnouncement);
   }, []);
 
   const updateAnnouncement = useCallback((id: string, updates: Partial<Announcement>) => {
     setAnnouncements(prev => prev.map(a => a.id === id ? { ...a, ...updates } : a));
+    // Sync to Supabase
+    SupabaseSync.syncUpdateAnnouncement(id, updates);
   }, []);
 
   const deleteAnnouncement = useCallback((id: string) => {
     setAnnouncements(prev => prev.filter(a => a.id !== id));
+    // Sync to Supabase
+    SupabaseSync.syncDeleteAnnouncement(id);
   }, []);
 
   const getActiveAnnouncements = useCallback((role?: 'Manager' | 'Staff'): Announcement[] => {
@@ -2352,16 +2358,22 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       fryerId: `fryer_${Date.now()}`,
     };
     setOilTrackers(prev => [...prev, newTracker]);
+    // Sync to Supabase
+    SupabaseSync.syncAddOilTracker(newTracker);
   }, []);
 
   const updateOilTracker = useCallback((fryerId: string, updates: Partial<OilTracker>) => {
     setOilTrackers(prev => prev.map(t =>
       t.fryerId === fryerId ? { ...t, ...updates } : t
     ));
+    // Sync to Supabase
+    SupabaseSync.syncUpdateOilTracker(fryerId, updates);
   }, []);
 
   const deleteOilTracker = useCallback((fryerId: string) => {
     setOilTrackers(prev => prev.filter(t => t.fryerId !== fryerId));
+    // Sync to Supabase
+    SupabaseSync.syncDeleteOilTracker(fryerId);
   }, []);
 
   const updateOilTrackerStatus = (tracker: OilTracker): OilTracker => {
@@ -2420,6 +2432,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     setOilTrackers(prev => prev.map(t =>
       t.fryerId === fryerId ? { ...t, hasPendingRequest: true } : t
     ));
+    // Sync to Supabase
+    SupabaseSync.syncAddOilChangeRequest(newRequest);
+    SupabaseSync.syncUpdateOilTracker(fryerId, { hasPendingRequest: true });
 
     return { success: true };
   }, [oilTrackers]);
@@ -2479,6 +2494,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       photoUrl: request.photoUrl,
     };
     setOilActionHistory(prev => [historyEntry, ...prev]);
+    // Sync to Supabase
+    SupabaseSync.syncAddOilActionHistory(historyEntry);
+    SupabaseSync.syncUpdateOilChangeRequest(requestId, { status: 'approved', reviewedAt: now, reviewedBy: approvedByName });
+    SupabaseSync.syncUpdateOilTracker(request.fryerId, {
+      currentCycles: request.proposedCycles,
+      hasPendingRequest: false,
+      ...(request.actionType === 'change' ? { lastChangedDate: today } : { lastTopupDate: today }),
+    });
 
     return { success: true };
   }, [oilChangeRequests]);
