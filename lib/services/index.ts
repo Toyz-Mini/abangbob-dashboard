@@ -31,6 +31,7 @@ export type { ExportColumn, ExportOptions } from './excel-export';
 export {
   isWhatsAppConfigured,
   getWhatsAppConfig,
+  getWhatsAppConfigFromSupabase,
   saveWhatsAppConfig,
   formatPhoneNumber,
   generateOrderReceiptMessage,

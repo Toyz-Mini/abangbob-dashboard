@@ -50,6 +50,35 @@ export function getWhatsAppConfig(): WhatsAppConfig {
   return { isConfigured: false };
 }
 
+// Get WhatsApp config from Supabase with localStorage fallback (async)
+export async function getWhatsAppConfigFromSupabase(): Promise<WhatsAppConfig> {
+  const supabase = getSupabaseClient();
+
+  // Try Supabase first
+  if (supabase) {
+    try {
+      const { data, error } = await (supabase.from('app_settings') as any)
+        .select('setting_value')
+        .eq('setting_key', 'whatsapp_config')
+        .single();
+
+      if (!error && data?.setting_value) {
+        // Also update localStorage for faster subsequent loads
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('abangbob_whatsapp_config', JSON.stringify(data.setting_value));
+        }
+        console.log('[WhatsApp] Loaded config from Supabase');
+        return data.setting_value;
+      }
+    } catch (error) {
+      console.error('[WhatsApp] Failed to load from Supabase:', error);
+    }
+  }
+
+  // Fallback to localStorage
+  return getWhatsAppConfig();
+}
+
 // Save WhatsApp configuration to localStorage and Supabase
 export function saveWhatsAppConfig(config: Partial<WhatsAppConfig>): void {
   const current = getWhatsAppConfig();
