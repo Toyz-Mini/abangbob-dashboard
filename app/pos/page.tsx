@@ -2,7 +2,7 @@
 
 import { useState, useRef, useMemo, useEffect, useCallback } from 'react';
 import MainLayout from '@/components/MainLayout';
-import { useOrders, useMenu, useInventory } from '@/lib/store';
+import { useOrders, useMenu, useInventory, usePaymentMethods } from '@/lib/store';
 import { useTranslation } from '@/lib/contexts/LanguageContext';
 import { useToast } from '@/lib/contexts/ToastContext';
 import { CartItem, Order, MenuItem, SelectedModifier, ReceiptSettings, DEFAULT_RECEIPT_SETTINGS } from '@/lib/types';
@@ -29,8 +29,12 @@ export default function POSPage() {
   const { orders, addOrder, updateOrderStatus, getTodayOrders, isInitialized } = useOrders();
   const { menuItems, modifierGroups, modifierOptions, getOptionsForGroup } = useMenu();
   const { inventory, adjustStock } = useInventory();
+  const { getEnabledPaymentMethods } = usePaymentMethods();
   const { t, language } = useTranslation();
   const { showToast } = useToast();
+
+  // Get enabled payment methods from settings
+  const enabledPaymentMethods = getEnabledPaymentMethods();
 
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -38,7 +42,7 @@ export default function POSPage() {
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('+673');
   const [orderType, setOrderType] = useState<'takeaway' | 'gomamam'>('takeaway');
-  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card' | 'qr' | 'ewallet'>('cash');
+  const [paymentMethod, setPaymentMethod] = useState<string>('cash');
   const [isProcessing, setIsProcessing] = useState(false);
   const [lastOrder, setLastOrder] = useState<Order | null>(null);
   const [discountPercent, setDiscountPercent] = useState(0);
@@ -1034,43 +1038,24 @@ export default function POSPage() {
           <div className="form-group">
             <label className="form-label">Kaedah Pembayaran *</label>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem' }}>
-              <button
-                type="button"
-                onClick={() => setPaymentMethod('cash')}
-                className={`btn ${paymentMethod === 'cash' ? 'btn-primary' : 'btn-outline'}`}
-                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
-              >
-                <DollarSign size={18} />
-                Tunai
-              </button>
-              <button
-                type="button"
-                onClick={() => setPaymentMethod('card')}
-                className={`btn ${paymentMethod === 'card' ? 'btn-primary' : 'btn-outline'}`}
-                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
-              >
-                <CreditCard size={18} />
-                Kad
-              </button>
-              <button
-                type="button"
-                onClick={() => setPaymentMethod('qr')}
-                className={`btn ${paymentMethod === 'qr' ? 'btn-primary' : 'btn-outline'}`}
-                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
-              >
-                <QrCode size={18} />
-                QR Code
-              </button>
-              <button
-                type="button"
-                onClick={() => setPaymentMethod('ewallet')}
-                className={`btn ${paymentMethod === 'ewallet' ? 'btn-primary' : 'btn-outline'}`}
-                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
-              >
-                <Wallet size={18} />
-                E-Wallet
-              </button>
+              {enabledPaymentMethods.map((pm) => (
+                <button
+                  key={pm.id}
+                  type="button"
+                  onClick={() => setPaymentMethod(pm.code)}
+                  className={`btn ${paymentMethod === pm.code ? 'btn-primary' : 'btn-outline'}`}
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
+                >
+                  {pm.icon && <span style={{ fontSize: '1.2rem' }}>{pm.icon}</span>}
+                  {pm.name}
+                </button>
+              ))}
             </div>
+            {enabledPaymentMethods.length === 0 && (
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginTop: '0.5rem' }}>
+                Tiada kaedah pembayaran aktif. Sila tetapkan dalam Settings.
+              </p>
+            )}
           </div>
 
           <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1.5rem' }}>

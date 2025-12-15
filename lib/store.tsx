@@ -1120,10 +1120,15 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const addOrder = useCallback(async (orderData: Omit<Order, 'id' | 'orderNumber'>): Promise<Order> => {
     const timestamp = Date.now();
 
+    // Get order prefix from localStorage (default to 'ORD')
+    const orderPrefix = typeof window !== 'undefined'
+      ? localStorage.getItem('orderNumberPrefix') || 'ORD'
+      : 'ORD';
+
     const newOrder: Order = {
       ...orderData,
       id: generateUUID(),
-      orderNumber: `ORD-${timestamp.toString().slice(-6)}`,
+      orderNumber: `${orderPrefix}-${timestamp.toString().slice(-6)}`,
     };
 
     // Sync to Supabase

@@ -358,7 +358,7 @@ export interface DeliveryOrder {
 // ==================== FINANCE TYPES ====================
 
 export type ExpenseCategory = 'rent' | 'utilities' | 'supplies' | 'wages' | 'marketing' | 'maintenance' | 'ingredients' | 'equipment' | 'other';
-export type PaymentMethod = 'cash' | 'bank' | 'card' | 'ewallet';
+export type PaymentMethod = 'cash' | 'bank' | 'card' | 'ewallet' | 'qr' | 'trf' | string;
 
 export interface Expense {
   id: string;
