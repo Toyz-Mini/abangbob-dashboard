@@ -1,12 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { 
-  Cloud, 
-  CheckCircle, 
-  XCircle, 
-  AlertTriangle, 
-  Copy, 
+import {
+  Cloud,
+  CheckCircle,
+  XCircle,
+  AlertTriangle,
+  Copy,
   Check,
   RefreshCw,
   ChevronDown,
@@ -47,7 +47,7 @@ export default function SupabaseSetupChecker() {
 -- Public: Yes (checked)
 -- File size limit: 2MB
 -- Allowed MIME types: image/jpeg, image/png, image/webp, image/gif`,
-    
+
     policies: `-- Run in Supabase Dashboard > SQL Editor
 
 -- Enable RLS for storage
@@ -168,7 +168,7 @@ VALUES ('outlet-logos', 'outlet-logos', true);`
 
       // Try a simple query to test connection
       const { error } = await supabase.from('staff').select('count', { count: 'exact', head: true });
-      
+
       if (error && !error.message.includes('relation') && !error.message.includes('does not exist')) {
         return {
           status: 'error',
@@ -202,7 +202,7 @@ VALUES ('outlet-logos', 'outlet-logos', true);`
       }
 
       const { data, error } = await supabase.storage.listBuckets();
-      
+
       if (error) {
         return {
           status: 'error',
@@ -212,7 +212,7 @@ VALUES ('outlet-logos', 'outlet-logos', true);`
       }
 
       const bucketExists = data?.some(bucket => bucket.name === 'outlet-logos');
-      
+
       if (!bucketExists) {
         return {
           status: 'error',
@@ -245,10 +245,13 @@ VALUES ('outlet-logos', 'outlet-logos', true);`
         };
       }
 
-      // Try to create a test file
-      const testFile = new Blob(['test'], { type: 'text/plain' });
-      const testFileName = `test_${Date.now()}.txt`;
-      
+      // Create a minimal valid PNG image for testing
+      // This is a 1x1 transparent PNG (smallest valid PNG file)
+      const pngBase64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+      const pngBytes = Uint8Array.from(atob(pngBase64), c => c.charCodeAt(0));
+      const testFile = new Blob([pngBytes], { type: 'image/png' });
+      const testFileName = `test_${Date.now()}.png`;
+
       const { error: uploadError } = await supabase.storage
         .from('outlet-logos')
         .upload(testFileName, testFile);
@@ -261,12 +264,20 @@ VALUES ('outlet-logos', 'outlet-logos', true);`
             details: 'Create bucket terlebih dahulu'
           };
         }
-        
+
         if (uploadError.message.includes('permission') || uploadError.message.includes('policy')) {
           return {
             status: 'error',
             message: 'Tiada permission untuk upload',
             details: 'Sila setup storage policies (lihat SQL commands di bawah)'
+          };
+        }
+
+        if (uploadError.message.includes('mime') || uploadError.message.includes('type')) {
+          return {
+            status: 'error',
+            message: 'MIME type tidak dibenarkan',
+            details: 'Bucket hanya menerima file image (jpeg, png, webp, gif)'
           };
         }
 
@@ -458,7 +469,7 @@ VALUES ('outlet-logos', 'outlet-logos', true);`
                   <li>File size limit: <strong>2MB</strong></li>
                   <li>Allowed MIME types: image/jpeg, image/png, image/webp, image/gif</li>
                 </ul>
-                
+
                 <div className="sql-block">
                   <div className="sql-header">
                     <span>Atau gunakan SQL (alternative):</span>

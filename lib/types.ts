@@ -175,7 +175,7 @@ export interface StaffDocument {
 export interface StaffProfile {
   id: string;
   employeeNumber?: string;
-  
+
   // === Personal Information ===
   name: string;
   icNumber?: string;
@@ -188,7 +188,7 @@ export interface StaffProfile {
   email?: string;
   phone: string;
   profilePhotoUrl?: string;
-  
+
   // === Employment Details ===
   role: 'Manager' | 'Staff';
   position?: string;
@@ -202,10 +202,10 @@ export interface StaffProfile {
   status: 'active' | 'on-leave' | 'terminated';
   terminationDate?: string;
   terminationReason?: string;
-  
+
   // === Authentication ===
   pin: string;
-  
+
   // === Salary & Compensation ===
   salaryType?: SalaryType;
   baseSalary: number;
@@ -215,33 +215,33 @@ export interface StaffProfile {
   allowances?: Allowance[];
   fixedDeductions?: Deduction[];
   paymentFrequency?: 'weekly' | 'biweekly' | 'monthly';
-  
+
   // === Bank Details ===
   bankDetails?: BankDetails;
-  
+
   // === Statutory Contributions (TAP/SCP for Brunei) ===
   statutoryContributions?: StatutoryContributions;
-  
+
   // === Emergency Contact ===
   emergencyContact?: EmergencyContact;
-  
+
   // === Leave Entitlement ===
   leaveEntitlement?: LeaveEntitlement;
-  
+
   // === Permissions & Access ===
   accessLevel?: AccessLevel;
   permissions?: StaffPermissions;
-  
+
   // === Schedule Preferences ===
   schedulePreferences?: SchedulePreferences;
-  
+
   // === Documents ===
   documents?: StaffDocument[];
-  
+
   // === Skills & Training ===
   skills?: string[];
   certifications?: string[];
-  
+
   // === Additional Info ===
   uniformSize?: string;
   shoeSize?: string;
@@ -249,14 +249,14 @@ export interface StaffProfile {
   medicalConditions?: string;
   bloodType?: string;
   notes?: string;
-  
+
   // === Performance ===
   performanceBadges?: string[];
-  
+
   // === Metadata ===
   createdAt?: string;
   updatedAt?: string;
-  
+
   // === Legacy fields for backward compatibility ===
   /** @deprecated Use statutoryContributions.epfNumber instead */
   epf?: string;
@@ -607,34 +607,34 @@ export interface ReceiptSettings {
   logoBottomUrl: string;
   showLogoTop: boolean;
   showLogoBottom: boolean;
-  
+
   // Business Info
   businessName: string;
   businessTagline: string;
   businessAddress: string;
   businessPhone: string;
-  
+
   // Custom Content
   headerText: string;
   footerText: string;
   customMessage: string;
-  
+
   // Social Media
   instagram: string;
   facebook: string;
   tiktok: string;
   whatsapp: string;
   showSocialMedia: boolean;
-  
+
   // QR Code
   qrCodeUrl: string;
   showQrCode: boolean;
   qrCodeLabel: string;
-  
+
   // Customer Display Options
   showCustomerName: boolean;
   showCustomerPhone: boolean;
-  
+
   // Printing Options
   autoPrint: boolean;
   printKitchenSlip: boolean;
@@ -665,29 +665,29 @@ export const DEFAULT_RECEIPT_SETTINGS: ReceiptSettings = {
   logoBottomUrl: '',
   showLogoTop: true,
   showLogoBottom: false,
-  
+
   businessName: 'ABANGBOB',
   businessTagline: 'Nasi Lemak & Burger',
   businessAddress: '',
   businessPhone: '',
-  
+
   headerText: '',
   footerText: 'Terima kasih!\nSila datang lagi',
   customMessage: '',
-  
+
   instagram: '@abangbob.bn',
   facebook: '',
   tiktok: '',
   whatsapp: '',
   showSocialMedia: true,
-  
+
   qrCodeUrl: '',
   showQrCode: false,
   qrCodeLabel: 'Scan untuk feedback',
-  
+
   showCustomerName: true,
   showCustomerPhone: false,
-  
+
   autoPrint: false,
   printKitchenSlip: true,
   openCashDrawer: true,
@@ -704,7 +704,7 @@ export const DEFAULT_PRINTER_SETTINGS: PrinterSettings = {
 
 // ==================== KPI & GAMIFICATION TYPES ====================
 
-export type KPIMetricKey = 
+export type KPIMetricKey =
   | 'mealPrepTime'
   | 'attendance'
   | 'emergencyLeave'
@@ -833,13 +833,13 @@ export interface ChecklistItemCompletion {
 
 // ==================== ENHANCED LEAVE TYPES ====================
 
-export type LeaveType = 
-  | 'annual' 
-  | 'medical' 
-  | 'emergency' 
-  | 'unpaid' 
-  | 'maternity' 
-  | 'paternity' 
+export type LeaveType =
+  | 'annual'
+  | 'medical'
+  | 'emergency'
+  | 'unpaid'
+  | 'maternity'
+  | 'paternity'
   | 'compassionate'
   | 'replacement'
   | 'study';
@@ -882,7 +882,7 @@ export interface LeaveRequest {
 
 // ==================== CLAIM TYPES ====================
 
-export type ClaimType = 
+export type ClaimType =
   | 'medical'
   | 'transport'
   | 'meal'
@@ -912,7 +912,7 @@ export interface ClaimRequest {
 
 // ==================== STAFF REQUEST TYPES ====================
 
-export type RequestCategory = 
+export type RequestCategory =
   | 'shift_swap'
   | 'off_day'
   | 'ot_request'
@@ -980,19 +980,19 @@ export interface VoidRefundRequest {
   reason: string;
   amount?: number; // For refunds
   itemsToRefund?: RefundItem[];
-  
+
   // Requester info
   requestedBy: string;
   requestedByName: string;
   requestedAt: string;
-  
+
   // Approval info
   status: VoidRefundRequestStatus;
   approvedBy?: string;
   approvedByName?: string;
   approvedAt?: string;
   rejectionReason?: string;
-  
+
   // Reversal tracking
   salesReversed: boolean;
   inventoryReversed: boolean;
@@ -1000,7 +1000,7 @@ export interface VoidRefundRequest {
     salesDeducted: number;
     inventoryItems: { itemId: string; itemName: string; quantity: number }[];
   };
-  
+
   createdAt: string;
   updatedAt?: string;
 }
@@ -1011,7 +1011,7 @@ export interface OrderHistoryItem extends Order {
   cashierName?: string;
   outletId?: string;
   outletName?: string;
-  
+
   // Void/Refund status
   voidRefundStatus: OrderVoidRefundStatus;
   refundAmount?: number;
@@ -1022,23 +1022,23 @@ export interface OrderHistoryItem extends Order {
   voidedAt?: string;
   voidedBy?: string;
   voidedByName?: string;
-  
+
   // Pending request (if any)
   pendingRequest?: VoidRefundRequest;
-  
+
   // Sync info
   isSyncedOffline?: boolean;
 }
 
 // Order Status for history (extended)
-export type OrderHistoryStatus = 
+export type OrderHistoryStatus =
   | 'pending'
   | 'preparing'
   | 'ready'
-  | 'completed' 
-  | 'cancelled' 
+  | 'completed'
+  | 'cancelled'
   | 'voided'
-  | 'refunded' 
+  | 'refunded'
   | 'partial_refund'
   | 'pending_void'
   | 'pending_refund';
@@ -1141,4 +1141,105 @@ export interface TaxRate {
 export const DEFAULT_TAX_RATES: TaxRate[] = [
   { id: 'tax_1', name: 'Tiada Cukai', rate: 0, description: 'Tanpa cukai', isDefault: true, isActive: true, createdAt: new Date().toISOString() },
 ];
+
+// ==================== STAFF ADVANCE TYPES ====================
+
+export type StaffAdvanceStatus = 'pending' | 'approved' | 'rejected' | 'deducted';
+
+export interface StaffAdvance {
+  id: string;
+  staffId: string;
+  staffName: string;
+  amount: number;
+  advanceDate: string;
+  reason?: string;
+  status: StaffAdvanceStatus;
+  deductionMonth?: string; // YYYY-MM format for when it will be deducted
+  deductionAmount?: number; // Amount to deduct per month (for installments)
+  remainingBalance?: number; // Remaining amount to be deducted
+  approvedBy?: string;
+  approvedByName?: string;
+  approvedAt?: string;
+  notes?: string;
+  createdAt: string;
+}
+
+// ==================== EVENT CHECKLIST TYPES ====================
+
+export type EventChecklistStatus = 'preparing' | 'packed' | 'dispatched' | 'returned' | 'completed';
+
+export interface EventChecklistItem {
+  id: string;
+  name: string;
+  quantity: number;
+  packed: boolean;
+  packedQuantity?: number;
+  notes?: string;
+}
+
+export interface EventChecklist {
+  id: string;
+  eventName: string;
+  eventDate?: string;
+  eventEndDate?: string;
+  location?: string;
+  boothNumber?: string;
+  items: EventChecklistItem[];
+  totalItems: number;
+  packedItems: number;
+  status: EventChecklistStatus;
+  preparedBy?: string;
+  preparedByName?: string;
+  checkedBy?: string;
+  checkedByName?: string;
+  notes?: string;
+  outletId?: string;
+  createdAt: string;
+  updatedAt?: string;
+}
+
+// ==================== INTERVIEW CANDIDATE TYPES ====================
+
+export type InterviewCandidateStatus = 'pending' | 'scheduled' | 'interviewed' | 'shortlisted' | 'hired' | 'rejected' | 'no_show';
+export type InterviewSource = 'Walk-in' | 'Referral' | 'JobStreet' | 'Facebook' | 'Instagram' | 'WhatsApp' | 'LinkedIn' | 'Other';
+
+export interface InterviewCandidate {
+  id: string;
+  name: string;
+  phone?: string;
+  email?: string;
+  icNumber?: string; // Malaysian IC number
+  positionApplied: string;
+  experienceYears: number;
+  source?: InterviewSource | string;
+  interviewDate?: string;
+  interviewTime?: string;
+  interviewerId?: string;
+  interviewerName?: string;
+  status: InterviewCandidateStatus;
+  rating?: number; // 1-5
+  strengths?: string;
+  weaknesses?: string;
+  expectedSalary?: number;
+  availableStartDate?: string;
+  notes?: string;
+  resumeUrl?: string;
+  createdAt: string;
+  updatedAt?: string;
+}
+
+// ==================== OUTLET TYPES ====================
+
+export type OutletType = 'Main Outlet' | 'Outlet' | 'Event Venue' | 'Event Booth';
+
+export interface Outlet {
+  id: string;
+  name: string;
+  code: string;
+  address?: string;
+  type?: OutletType | string;
+  phone?: string;
+  isActive: boolean;
+  createdAt?: string;
+}
 
