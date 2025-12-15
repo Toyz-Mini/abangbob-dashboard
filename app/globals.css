@@ -8834,11 +8834,11 @@ body {
   font-weight: 500;
 }
 
-.form-group {
+.login-page .form-group {
   margin-bottom: 1.25rem;
 }
 
-.form-group label {
+.login-page .form-group label {
   display: block;
   font-size: 0.875rem;
   font-weight: 600;

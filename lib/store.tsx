@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
-import { StockItem, StaffProfile, AttendanceRecord, Order, ProductionLog, DeliveryOrder, Expense, DailyCashFlow, Customer, Supplier, PurchaseOrder, Recipe, Shift, ScheduleEntry, Promotion, Notification, MenuItem, ModifierGroup, ModifierOption, StaffKPI, LeaveRecord, TrainingRecord, OTRecord, CustomerReview, KPIMetrics, ChecklistItemTemplate, ChecklistCompletion, LeaveBalance, LeaveRequest, ClaimRequest, StaffRequest, Announcement, OrderHistoryItem, VoidRefundRequest, VoidRefundType, OrderHistoryFilters, RefundItem, OilTracker, OilChangeRequest, OilActionHistory, OilActionType } from './types';
+import { StockItem, StaffProfile, AttendanceRecord, Order, ProductionLog, DeliveryOrder, Expense, DailyCashFlow, Customer, Supplier, PurchaseOrder, Recipe, Shift, ScheduleEntry, Promotion, Notification, MenuItem, ModifierGroup, ModifierOption, StaffKPI, LeaveRecord, TrainingRecord, OTRecord, CustomerReview, KPIMetrics, ChecklistItemTemplate, ChecklistCompletion, LeaveBalance, LeaveRequest, ClaimRequest, StaffRequest, Announcement, OrderHistoryItem, VoidRefundRequest, VoidRefundType, OrderHistoryFilters, RefundItem, OilTracker, OilChangeRequest, OilActionHistory, OilActionType, MenuCategory, PaymentMethodConfig, TaxRate, DEFAULT_MENU_CATEGORIES, DEFAULT_PAYMENT_METHODS, DEFAULT_TAX_RATES } from './types';
 import { MOCK_ORDER_HISTORY, MOCK_VOID_REFUND_REQUESTS, ORDER_HISTORY_STORAGE_KEYS } from './order-history-data';
 import { MOCK_STOCK } from './inventory-data';
 import { MOCK_STAFF, MOCK_ATTENDANCE, MOCK_PAYROLL } from './hr-data';
@@ -56,6 +56,10 @@ const STORAGE_KEYS = {
   OIL_TRACKERS: 'abangbob_oil_trackers',
   OIL_CHANGE_REQUESTS: 'abangbob_oil_change_requests',
   OIL_ACTION_HISTORY: 'abangbob_oil_action_history',
+  // Menu Categories, Payment Methods, Tax Rates
+  MENU_CATEGORIES: 'abangbob_menu_categories',
+  PAYMENT_METHODS: 'abangbob_payment_methods',
+  TAX_RATES: 'abangbob_tax_rates',
 };
 
 // Inventory log type for tracking stock changes
@@ -282,6 +286,28 @@ interface StoreState {
   getOilRequestsByStaff: (staffId: string) => OilChangeRequest[];
   getPendingOilRequestCount: () => number;
 
+  // Menu Categories
+  menuCategories: MenuCategory[];
+  addMenuCategory: (category: Omit<MenuCategory, 'id' | 'createdAt'>) => void;
+  updateMenuCategory: (id: string, updates: Partial<MenuCategory>) => void;
+  deleteMenuCategory: (id: string) => void;
+  getActiveCategories: () => MenuCategory[];
+
+  // Payment Methods
+  paymentMethods: PaymentMethodConfig[];
+  addPaymentMethod: (method: Omit<PaymentMethodConfig, 'id' | 'createdAt'>) => void;
+  updatePaymentMethod: (id: string, updates: Partial<PaymentMethodConfig>) => void;
+  deletePaymentMethod: (id: string) => void;
+  getEnabledPaymentMethods: () => PaymentMethodConfig[];
+
+  // Tax Rates
+  taxRates: TaxRate[];
+  addTaxRate: (rate: Omit<TaxRate, 'id' | 'createdAt'>) => void;
+  updateTaxRate: (id: string, updates: Partial<TaxRate>) => void;
+  deleteTaxRate: (id: string) => void;
+  getDefaultTaxRate: () => TaxRate | undefined;
+  getActiveTaxRates: () => TaxRate[];
+
   // Utility
   isInitialized: boolean;
 }
@@ -382,6 +408,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [oilChangeRequests, setOilChangeRequests] = useState<OilChangeRequest[]>([]);
   const [oilActionHistory, setOilActionHistory] = useState<OilActionHistory[]>([]);
 
+  // Menu Categories, Payment Methods, Tax Rates state
+  const [menuCategories, setMenuCategories] = useState<MenuCategory[]>([]);
+  const [paymentMethods, setPaymentMethods] = useState<PaymentMethodConfig[]>([]);
+  const [taxRates, setTaxRates] = useState<TaxRate[]>([]);
+
   // Initialize from Supabase first, fallback to localStorage
   useEffect(() => {
     const initializeData = async () => {
@@ -456,6 +487,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       setOilTrackers(supabaseData.oilTrackers?.length > 0 ? supabaseData.oilTrackers : getFromStorage(STORAGE_KEYS.OIL_TRACKERS, MOCK_OIL_TRACKERS));
       setOilChangeRequests(supabaseData.oilChangeRequests?.length > 0 ? supabaseData.oilChangeRequests : getFromStorage(STORAGE_KEYS.OIL_CHANGE_REQUESTS, []));
       setOilActionHistory(supabaseData.oilActionHistory?.length > 0 ? supabaseData.oilActionHistory : getFromStorage(STORAGE_KEYS.OIL_ACTION_HISTORY, []));
+
+      // Menu Categories, Payment Methods, Tax Rates
+      setMenuCategories(getFromStorage(STORAGE_KEYS.MENU_CATEGORIES, DEFAULT_MENU_CATEGORIES));
+      setPaymentMethods(getFromStorage(STORAGE_KEYS.PAYMENT_METHODS, DEFAULT_PAYMENT_METHODS));
+      setTaxRates(getFromStorage(STORAGE_KEYS.TAX_RATES, DEFAULT_TAX_RATES));
 
       console.log('[Data Init] All data loaded from Supabase with localStorage fallback');
       setIsInitialized(true);
@@ -688,6 +724,27 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       setToStorage(STORAGE_KEYS.OIL_ACTION_HISTORY, oilActionHistory);
     }
   }, [oilActionHistory, isInitialized]);
+
+  // Menu Categories persistence
+  useEffect(() => {
+    if (isInitialized) {
+      setToStorage(STORAGE_KEYS.MENU_CATEGORIES, menuCategories);
+    }
+  }, [menuCategories, isInitialized]);
+
+  // Payment Methods persistence
+  useEffect(() => {
+    if (isInitialized) {
+      setToStorage(STORAGE_KEYS.PAYMENT_METHODS, paymentMethods);
+    }
+  }, [paymentMethods, isInitialized]);
+
+  // Tax Rates persistence
+  useEffect(() => {
+    if (isInitialized) {
+      setToStorage(STORAGE_KEYS.TAX_RATES, taxRates);
+    }
+  }, [taxRates, isInitialized]);
 
   // Inventory actions
   const addStockItem = useCallback(async (item: Omit<StockItem, 'id'>) => {
@@ -2313,6 +2370,111 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     return oilChangeRequests.filter(r => r.status === 'pending').length;
   }, [oilChangeRequests]);
 
+  // ==================== MENU CATEGORIES FUNCTIONS ====================
+
+  const addMenuCategory = useCallback((category: Omit<MenuCategory, 'id' | 'createdAt'>) => {
+    const newCategory: MenuCategory = {
+      ...category,
+      id: `cat_${Date.now()}`,
+      createdAt: new Date().toISOString(),
+    };
+    setMenuCategories(prev => [...prev, newCategory]);
+  }, []);
+
+  const updateMenuCategory = useCallback((id: string, updates: Partial<MenuCategory>) => {
+    setMenuCategories(prev => prev.map(cat =>
+      cat.id === id ? { ...cat, ...updates } : cat
+    ));
+  }, []);
+
+  const deleteMenuCategory = useCallback((id: string) => {
+    setMenuCategories(prev => prev.filter(cat => cat.id !== id));
+  }, []);
+
+  const getActiveCategories = useCallback((): MenuCategory[] => {
+    return menuCategories
+      .filter(cat => cat.isActive)
+      .sort((a, b) => a.sortOrder - b.sortOrder);
+  }, [menuCategories]);
+
+  // ==================== PAYMENT METHODS FUNCTIONS ====================
+
+  const addPaymentMethod = useCallback((method: Omit<PaymentMethodConfig, 'id' | 'createdAt'>) => {
+    const newMethod: PaymentMethodConfig = {
+      ...method,
+      id: `pm_${Date.now()}`,
+      createdAt: new Date().toISOString(),
+    };
+    setPaymentMethods(prev => [...prev, newMethod]);
+  }, []);
+
+  const updatePaymentMethod = useCallback((id: string, updates: Partial<PaymentMethodConfig>) => {
+    setPaymentMethods(prev => prev.map(pm =>
+      pm.id === id ? { ...pm, ...updates } : pm
+    ));
+  }, []);
+
+  const deletePaymentMethod = useCallback((id: string) => {
+    // Prevent deletion of system payment methods
+    const method = paymentMethods.find(pm => pm.id === id);
+    if (method?.isSystem) {
+      console.warn('Cannot delete system payment method');
+      return;
+    }
+    setPaymentMethods(prev => prev.filter(pm => pm.id !== id));
+  }, [paymentMethods]);
+
+  const getEnabledPaymentMethods = useCallback((): PaymentMethodConfig[] => {
+    return paymentMethods
+      .filter(pm => pm.isEnabled)
+      .sort((a, b) => a.sortOrder - b.sortOrder);
+  }, [paymentMethods]);
+
+  // ==================== TAX RATES FUNCTIONS ====================
+
+  const addTaxRate = useCallback((rate: Omit<TaxRate, 'id' | 'createdAt'>) => {
+    const newRate: TaxRate = {
+      ...rate,
+      id: `tax_${Date.now()}`,
+      createdAt: new Date().toISOString(),
+    };
+    // If this is set as default, unset other defaults
+    if (newRate.isDefault) {
+      setTaxRates(prev => prev.map(r => ({ ...r, isDefault: false })));
+    }
+    setTaxRates(prev => [...prev, newRate]);
+  }, []);
+
+  const updateTaxRate = useCallback((id: string, updates: Partial<TaxRate>) => {
+    setTaxRates(prev => {
+      // If setting this as default, unset other defaults
+      if (updates.isDefault) {
+        return prev.map(r =>
+          r.id === id ? { ...r, ...updates } : { ...r, isDefault: false }
+        );
+      }
+      return prev.map(r => r.id === id ? { ...r, ...updates } : r);
+    });
+  }, []);
+
+  const deleteTaxRate = useCallback((id: string) => {
+    const rate = taxRates.find(r => r.id === id);
+    // Don't allow deleting the default tax rate
+    if (rate?.isDefault) {
+      console.warn('Cannot delete default tax rate');
+      return;
+    }
+    setTaxRates(prev => prev.filter(r => r.id !== id));
+  }, [taxRates]);
+
+  const getDefaultTaxRate = useCallback((): TaxRate | undefined => {
+    return taxRates.find(r => r.isDefault && r.isActive);
+  }, [taxRates]);
+
+  const getActiveTaxRates = useCallback((): TaxRate[] => {
+    return taxRates.filter(r => r.isActive);
+  }, [taxRates]);
+
   const value: StoreState = {
     // Inventory
     inventory,
@@ -2522,6 +2684,28 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     getPendingOilRequests,
     getOilRequestsByStaff,
     getPendingOilRequestCount,
+
+    // Menu Categories
+    menuCategories,
+    addMenuCategory,
+    updateMenuCategory,
+    deleteMenuCategory,
+    getActiveCategories,
+
+    // Payment Methods
+    paymentMethods,
+    addPaymentMethod,
+    updatePaymentMethod,
+    deletePaymentMethod,
+    getEnabledPaymentMethods,
+
+    // Tax Rates
+    taxRates,
+    addTaxRate,
+    updateTaxRate,
+    deleteTaxRate,
+    getDefaultTaxRate,
+    getActiveTaxRates,
 
     // Utility
     isInitialized,
@@ -2834,6 +3018,43 @@ export function useEquipment() {
     staff: store.staff,
 
     // Utility
+    isInitialized: store.isInitialized,
+  };
+}
+
+export function useMenuCategories() {
+  const store = useStore();
+  return {
+    menuCategories: store.menuCategories,
+    addMenuCategory: store.addMenuCategory,
+    updateMenuCategory: store.updateMenuCategory,
+    deleteMenuCategory: store.deleteMenuCategory,
+    getActiveCategories: store.getActiveCategories,
+    isInitialized: store.isInitialized,
+  };
+}
+
+export function usePaymentMethods() {
+  const store = useStore();
+  return {
+    paymentMethods: store.paymentMethods,
+    addPaymentMethod: store.addPaymentMethod,
+    updatePaymentMethod: store.updatePaymentMethod,
+    deletePaymentMethod: store.deletePaymentMethod,
+    getEnabledPaymentMethods: store.getEnabledPaymentMethods,
+    isInitialized: store.isInitialized,
+  };
+}
+
+export function useTaxRates() {
+  const store = useStore();
+  return {
+    taxRates: store.taxRates,
+    addTaxRate: store.addTaxRate,
+    updateTaxRate: store.updateTaxRate,
+    deleteTaxRate: store.deleteTaxRate,
+    getDefaultTaxRate: store.getDefaultTaxRate,
+    getActiveTaxRates: store.getActiveTaxRates,
     isInitialized: store.isInitialized,
   };
 }

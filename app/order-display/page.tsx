@@ -11,8 +11,15 @@ import {
   CheckCircle,
   Volume2,
   VolumeX,
-  Utensils
+  Utensils,
+  Clock,
+  Users,
+  Mic,
+  MicOff
 } from 'lucide-react';
+
+// Average prep time per order in minutes (can be adjusted based on historical data)
+const AVG_PREP_TIME_MINUTES = 5;
 
 export default function OrderDisplayPage() {
   const { orders, getTodayOrders, isInitialized } = useOrders();
@@ -21,14 +28,53 @@ export default function OrderDisplayPage() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [newReadyOrders, setNewReadyOrders] = useState<Set<string>>(new Set());
+  const [voiceEnabled, setVoiceEnabled] = useState(true);
   const prevReadyOrdersRef = useRef<string[]>([]);
 
   // Get today's orders
   const todayOrders = getTodayOrders();
   
   // Filter orders by status
+  const pendingOrders = todayOrders.filter(o => o.status === 'pending');
   const preparingOrders = todayOrders.filter(o => o.status === 'preparing');
   const readyOrders = todayOrders.filter(o => o.status === 'ready');
+
+  // Voice announcement function using Web Speech API
+  const announceOrder = useCallback((orderNumber: string) => {
+    if (!voiceEnabled) return;
+    
+    if ('speechSynthesis' in window) {
+      // Cancel any ongoing speech
+      window.speechSynthesis.cancel();
+      
+      const utterance = new SpeechSynthesisUtterance(
+        `Nombor pesanan ${orderNumber} sedia untuk diambil`
+      );
+      utterance.lang = 'ms-MY'; // Malay
+      utterance.rate = 0.9;
+      utterance.pitch = 1;
+      utterance.volume = 1;
+      
+      // Fallback to English voice if Malay not available
+      const voices = window.speechSynthesis.getVoices();
+      const malayVoice = voices.find(v => v.lang.includes('ms'));
+      const englishVoice = voices.find(v => v.lang.includes('en'));
+      
+      if (malayVoice) {
+        utterance.voice = malayVoice;
+      } else if (englishVoice) {
+        utterance.voice = englishVoice;
+        utterance.text = `Order number ${orderNumber} is ready for pickup`;
+      }
+      
+      window.speechSynthesis.speak(utterance);
+    }
+  }, [voiceEnabled]);
+
+  // Toggle voice announcements
+  const toggleVoice = useCallback(() => {
+    setVoiceEnabled(prev => !prev);
+  }, []);
 
   // Update time every second
   useEffect(() => {
@@ -36,7 +82,17 @@ export default function OrderDisplayPage() {
     return () => clearInterval(timer);
   }, []);
 
-  // Detect new ready orders and play sound
+  // Load voices when available
+  useEffect(() => {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.getVoices();
+      window.speechSynthesis.onvoiceschanged = () => {
+        window.speechSynthesis.getVoices();
+      };
+    }
+  }, []);
+
+  // Detect new ready orders, play sound, and announce
   useEffect(() => {
     const currentReadyIds = readyOrders.map(o => o.id);
     const prevReadyIds = prevReadyOrdersRef.current;
@@ -47,6 +103,15 @@ export default function OrderDisplayPage() {
     if (newlyReady.length > 0) {
       // Play sound for new ready order
       playSound('orderReady');
+      
+      // Voice announce each new ready order
+      newlyReady.forEach(id => {
+        const order = readyOrders.find(o => o.id === id);
+        if (order) {
+          // Delay announcement slightly so sound plays first
+          setTimeout(() => announceOrder(order.orderNumber), 500);
+        }
+      });
       
       // Add to flashing set
       setNewReadyOrders(prev => {
@@ -66,7 +131,7 @@ export default function OrderDisplayPage() {
     }
     
     prevReadyOrdersRef.current = currentReadyIds;
-  }, [readyOrders, playSound]);
+  }, [readyOrders, playSound, announceOrder]);
 
   // Fullscreen toggle
   const toggleFullscreen = useCallback(() => {
@@ -102,6 +167,26 @@ export default function OrderDisplayPage() {
     document.addEventListener('click', handleClick, { once: true });
     return () => document.removeEventListener('click', handleClick);
   }, []);
+
+  // Calculate estimated wait time based on queue position
+  const getEstimatedWaitTime = (position: number): string => {
+    const totalMinutes = position * AVG_PREP_TIME_MINUTES + (preparingOrders.length * AVG_PREP_TIME_MINUTES);
+    if (totalMinutes < 1) return '< 1 min';
+    if (totalMinutes >= 60) {
+      const hours = Math.floor(totalMinutes / 60);
+      const mins = totalMinutes % 60;
+      return `~${hours}h ${mins}m`;
+    }
+    return `~${totalMinutes} min`;
+  };
+
+  // Get wait time color based on estimated time
+  const getWaitTimeColor = (position: number): string => {
+    const totalMinutes = position * AVG_PREP_TIME_MINUTES + (preparingOrders.length * AVG_PREP_TIME_MINUTES);
+    if (totalMinutes <= 5) return '#10b981'; // Green
+    if (totalMinutes <= 10) return '#f59e0b'; // Yellow/Orange
+    return '#ef4444'; // Red
+  };
 
   if (!isInitialized) {
     return (
@@ -154,12 +239,25 @@ export default function OrderDisplayPage() {
           50% { transform: translateY(-5px); }
         }
         
+        @keyframes pulse-border {
+          0%, 100% { 
+            border-color: rgba(59, 130, 246, 0.4);
+          }
+          50% { 
+            border-color: rgba(59, 130, 246, 0.8);
+          }
+        }
+        
         .order-number-new {
           animation: pulse-glow 1.5s ease-in-out infinite;
         }
         
         .order-card {
           animation: slide-in 0.4s ease-out;
+        }
+        
+        .queue-card {
+          animation: slide-in 0.3s ease-out;
         }
       `}</style>
 
@@ -168,18 +266,18 @@ export default function OrderDisplayPage() {
         display: 'flex', 
         justifyContent: 'space-between', 
         alignItems: 'center', 
-        marginBottom: '1.5rem',
+        marginBottom: '1rem',
         background: 'rgba(255, 255, 255, 0.05)',
         backdropFilter: 'blur(10px)',
-        padding: '1rem 2rem',
+        padding: '0.75rem 1.5rem',
         borderRadius: '16px',
         border: '1px solid rgba(255, 255, 255, 0.1)'
       }}>
         {/* Logo & Name */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           <div style={{ 
-            width: '60px', 
-            height: '60px', 
+            width: '50px', 
+            height: '50px', 
             background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
             borderRadius: '12px',
             display: 'flex',
@@ -187,11 +285,11 @@ export default function OrderDisplayPage() {
             justifyContent: 'center',
             boxShadow: '0 4px 15px rgba(249, 115, 22, 0.4)'
           }}>
-            <Utensils size={32} color="white" />
+            <Utensils size={28} color="white" />
           </div>
           <div>
             <h1 style={{ 
-              fontSize: '2rem', 
+              fontSize: '1.75rem', 
               fontWeight: 800, 
               color: 'white',
               letterSpacing: '-0.02em'
@@ -200,7 +298,7 @@ export default function OrderDisplayPage() {
             </h1>
             <p style={{ 
               color: 'rgba(255, 255, 255, 0.6)', 
-              fontSize: '0.9rem',
+              fontSize: '0.85rem',
               fontWeight: 500
             }}>
               Status Pesanan Anda
@@ -208,12 +306,34 @@ export default function OrderDisplayPage() {
           </div>
         </div>
 
+        {/* Stats Summary */}
+        <div style={{ display: 'flex', gap: '1rem' }}>
+          <StatBadge 
+            icon={<Users size={18} />} 
+            label="Giliran" 
+            value={pendingOrders.length} 
+            color="#3b82f6" 
+          />
+          <StatBadge 
+            icon={<ChefHat size={18} />} 
+            label="Dibuat" 
+            value={preparingOrders.length} 
+            color="#f59e0b" 
+          />
+          <StatBadge 
+            icon={<CheckCircle size={18} />} 
+            label="Sedia" 
+            value={readyOrders.length} 
+            color="#10b981" 
+          />
+        </div>
+
         {/* Time & Controls */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           {/* Current Time */}
           <div style={{ textAlign: 'right' }}>
             <div style={{ 
-              fontSize: '2.5rem', 
+              fontSize: '2rem', 
               fontWeight: 700, 
               color: 'white',
               fontVariantNumeric: 'tabular-nums'
@@ -223,7 +343,7 @@ export default function OrderDisplayPage() {
                 minute: '2-digit'
               })}
             </div>
-            <div style={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: '0.9rem' }}>
+            <div style={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: '0.8rem' }}>
               {currentTime.toLocaleDateString('ms-MY', { 
                 weekday: 'long', 
                 day: 'numeric', 
@@ -232,47 +352,136 @@ export default function OrderDisplayPage() {
             </div>
           </div>
 
+          {/* Voice Toggle */}
+          <button
+            onClick={toggleVoice}
+            title={voiceEnabled ? 'Matikan pengumuman suara' : 'Hidupkan pengumuman suara'}
+            style={{
+              padding: '0.6rem',
+              background: voiceEnabled ? 'rgba(139, 92, 246, 0.2)' : 'rgba(107, 114, 128, 0.2)',
+              border: `2px solid ${voiceEnabled ? '#8b5cf6' : '#6b7280'}`,
+              borderRadius: '10px',
+              color: voiceEnabled ? '#8b5cf6' : '#6b7280',
+              cursor: 'pointer',
+              transition: 'all 0.2s'
+            }}
+          >
+            {voiceEnabled ? <Mic size={22} /> : <MicOff size={22} />}
+          </button>
+
           {/* Sound Toggle */}
           <button
             onClick={toggleSound}
+            title={soundSettings.enabled ? 'Matikan bunyi' : 'Hidupkan bunyi'}
             style={{
-              padding: '0.75rem',
+              padding: '0.6rem',
               background: soundSettings.enabled ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)',
               border: `2px solid ${soundSettings.enabled ? '#10b981' : '#ef4444'}`,
-              borderRadius: '12px',
+              borderRadius: '10px',
               color: soundSettings.enabled ? '#10b981' : '#ef4444',
               cursor: 'pointer',
               transition: 'all 0.2s'
             }}
           >
-            {soundSettings.enabled ? <Volume2 size={24} /> : <VolumeX size={24} />}
+            {soundSettings.enabled ? <Volume2 size={22} /> : <VolumeX size={22} />}
           </button>
 
           {/* Fullscreen Toggle */}
           <button 
             onClick={toggleFullscreen}
+            title={isFullscreen ? 'Keluar skrin penuh' : 'Skrin penuh'}
             style={{
-              padding: '0.75rem',
+              padding: '0.6rem',
               background: 'rgba(255, 255, 255, 0.1)',
               border: '2px solid rgba(255, 255, 255, 0.2)',
-              borderRadius: '12px',
+              borderRadius: '10px',
               color: 'white',
               cursor: 'pointer',
               transition: 'all 0.2s'
             }}
           >
-            {isFullscreen ? <Minimize size={24} /> : <Maximize size={24} />}
+            {isFullscreen ? <Minimize size={22} /> : <Maximize size={22} />}
           </button>
         </div>
       </div>
 
-      {/* Two Column Display */}
+      {/* Three Column Display */}
       <div style={{ 
         display: 'grid', 
-        gridTemplateColumns: '1fr 1fr', 
-        gap: '1.5rem',
-        height: isFullscreen ? 'calc(100vh - 140px)' : 'calc(100vh - 200px)'
+        gridTemplateColumns: '1fr 1.2fr 1.2fr', 
+        gap: '1rem',
+        height: isFullscreen ? 'calc(100vh - 120px)' : 'calc(100vh - 180px)'
       }}>
+        {/* DALAM GILIRAN Column (Queue) */}
+        <div style={{ 
+          background: 'rgba(59, 130, 246, 0.1)',
+          borderRadius: '20px',
+          overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
+          border: '2px solid rgba(59, 130, 246, 0.3)'
+        }}>
+          {/* Header */}
+          <div style={{ 
+            padding: '1rem 1.5rem', 
+            background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <Users size={28} color="white" />
+              <span style={{ 
+                fontSize: '1.4rem', 
+                fontWeight: 800, 
+                color: 'white',
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em'
+              }}>
+                Dalam Giliran
+              </span>
+            </div>
+            <div style={{ 
+              background: 'rgba(255, 255, 255, 0.3)',
+              padding: '0.4rem 1.2rem',
+              borderRadius: '50px',
+              fontSize: '1.3rem',
+              fontWeight: 800,
+              color: 'white'
+            }}>
+              {pendingOrders.length}
+            </div>
+          </div>
+          
+          {/* Queue List */}
+          <div style={{ 
+            flex: 1, 
+            padding: '1rem',
+            overflowY: 'auto',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '0.75rem'
+          }}>
+            {pendingOrders.length > 0 ? (
+              pendingOrders.map((order, index) => (
+                <QueueCard 
+                  key={order.id}
+                  orderNumber={order.orderNumber}
+                  position={index + 1}
+                  estimatedTime={getEstimatedWaitTime(index + 1)}
+                  timeColor={getWaitTimeColor(index + 1)}
+                />
+              ))
+            ) : (
+              <EmptyState 
+                icon={<Users size={48} />}
+                message="Tiada pesanan dalam giliran"
+                color="#3b82f6"
+              />
+            )}
+          </div>
+        </div>
+
         {/* SEDANG DIBUAT Column */}
         <div style={{ 
           background: 'rgba(251, 191, 36, 0.1)',
@@ -284,16 +493,16 @@ export default function OrderDisplayPage() {
         }}>
           {/* Header */}
           <div style={{ 
-            padding: '1.5rem 2rem', 
+            padding: '1rem 1.5rem', 
             background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between'
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <ChefHat size={36} color="white" />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <ChefHat size={28} color="white" />
               <span style={{ 
-                fontSize: '1.8rem', 
+                fontSize: '1.4rem', 
                 fontWeight: 800, 
                 color: 'white',
                 textTransform: 'uppercase',
@@ -304,9 +513,9 @@ export default function OrderDisplayPage() {
             </div>
             <div style={{ 
               background: 'rgba(255, 255, 255, 0.3)',
-              padding: '0.5rem 1.5rem',
+              padding: '0.4rem 1.2rem',
               borderRadius: '50px',
-              fontSize: '1.5rem',
+              fontSize: '1.3rem',
               fontWeight: 800,
               color: 'white'
             }}>
@@ -317,12 +526,12 @@ export default function OrderDisplayPage() {
           {/* Order Numbers */}
           <div style={{ 
             flex: 1, 
-            padding: '1.5rem',
+            padding: '1rem',
             overflowY: 'auto',
             display: 'flex',
             flexWrap: 'wrap',
             alignContent: 'flex-start',
-            gap: '1rem'
+            gap: '0.75rem'
           }}>
             {preparingOrders.length > 0 ? (
               preparingOrders.map(order => (
@@ -335,7 +544,7 @@ export default function OrderDisplayPage() {
               ))
             ) : (
               <EmptyState 
-                icon={<ChefHat size={64} />}
+                icon={<ChefHat size={48} />}
                 message="Tiada pesanan dalam penyediaan"
                 color="#f59e0b"
               />
@@ -354,16 +563,16 @@ export default function OrderDisplayPage() {
         }}>
           {/* Header */}
           <div style={{ 
-            padding: '1.5rem 2rem', 
+            padding: '1rem 1.5rem', 
             background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between'
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <CheckCircle size={36} color="white" />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <CheckCircle size={28} color="white" />
               <span style={{ 
-                fontSize: '1.8rem', 
+                fontSize: '1.4rem', 
                 fontWeight: 800, 
                 color: 'white',
                 textTransform: 'uppercase',
@@ -374,9 +583,9 @@ export default function OrderDisplayPage() {
             </div>
             <div style={{ 
               background: 'rgba(255, 255, 255, 0.3)',
-              padding: '0.5rem 1.5rem',
+              padding: '0.4rem 1.2rem',
               borderRadius: '50px',
-              fontSize: '1.5rem',
+              fontSize: '1.3rem',
               fontWeight: 800,
               color: 'white'
             }}>
@@ -387,12 +596,12 @@ export default function OrderDisplayPage() {
           {/* Order Numbers */}
           <div style={{ 
             flex: 1, 
-            padding: '1.5rem',
+            padding: '1rem',
             overflowY: 'auto',
             display: 'flex',
             flexWrap: 'wrap',
             alignContent: 'flex-start',
-            gap: '1rem'
+            gap: '0.75rem'
           }}>
             {readyOrders.length > 0 ? (
               readyOrders.map(order => (
@@ -405,7 +614,7 @@ export default function OrderDisplayPage() {
               ))
             ) : (
               <EmptyState 
-                icon={<CheckCircle size={64} />}
+                icon={<CheckCircle size={48} />}
                 message="Tiada pesanan siap"
                 color="#10b981"
               />
@@ -417,19 +626,130 @@ export default function OrderDisplayPage() {
       {/* Footer - Instruction */}
       <div style={{
         position: 'fixed',
-        bottom: '1rem',
+        bottom: '0.75rem',
         left: '50%',
         transform: 'translateX(-50%)',
         background: 'rgba(255, 255, 255, 0.1)',
         backdropFilter: 'blur(10px)',
-        padding: '0.75rem 2rem',
+        padding: '0.6rem 1.5rem',
         borderRadius: '50px',
         color: 'rgba(255, 255, 255, 0.7)',
-        fontSize: '1rem',
+        fontSize: '0.9rem',
         fontWeight: 500,
-        border: '1px solid rgba(255, 255, 255, 0.1)'
+        border: '1px solid rgba(255, 255, 255, 0.1)',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '0.5rem'
       }}>
+        <CheckCircle size={16} />
         Sila ambil pesanan anda apabila nombor dipaparkan di bahagian "Sedia Diambil"
+      </div>
+    </div>
+  );
+}
+
+// Stat Badge Component for header
+function StatBadge({ 
+  icon, 
+  label, 
+  value, 
+  color 
+}: { 
+  icon: React.ReactNode;
+  label: string;
+  value: number;
+  color: string;
+}) {
+  return (
+    <div style={{
+      display: 'flex',
+      alignItems: 'center',
+      gap: '0.5rem',
+      padding: '0.5rem 1rem',
+      background: `${color}20`,
+      borderRadius: '12px',
+      border: `2px solid ${color}40`
+    }}>
+      <div style={{ color }}>{icon}</div>
+      <div>
+        <div style={{ fontSize: '1.25rem', fontWeight: 800, color }}>{value}</div>
+        <div style={{ fontSize: '0.7rem', color: `${color}cc`, fontWeight: 600 }}>{label}</div>
+      </div>
+    </div>
+  );
+}
+
+// Queue Card Component with position and estimated time
+function QueueCard({ 
+  orderNumber, 
+  position,
+  estimatedTime,
+  timeColor
+}: { 
+  orderNumber: string;
+  position: number;
+  estimatedTime: string;
+  timeColor: string;
+}) {
+  return (
+    <div 
+      className="queue-card"
+      style={{ 
+        background: 'rgba(59, 130, 246, 0.15)',
+        border: '2px solid rgba(59, 130, 246, 0.3)',
+        borderRadius: '14px',
+        padding: '0.75rem 1rem',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        transition: 'all 0.3s ease',
+      }}
+    >
+      {/* Position & Order Number */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+        <div style={{
+          width: '36px',
+          height: '36px',
+          background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+          borderRadius: '10px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: 'white',
+          fontWeight: 800,
+          fontSize: '1rem'
+        }}>
+          #{position}
+        </div>
+        <div style={{ 
+          fontSize: '1.4rem', 
+          fontWeight: 800,
+          color: '#60a5fa',
+          letterSpacing: '0.02em',
+          fontVariantNumeric: 'tabular-nums'
+        }}>
+          {orderNumber}
+        </div>
+      </div>
+
+      {/* Estimated Wait Time */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '0.4rem',
+        padding: '0.4rem 0.75rem',
+        background: `${timeColor}20`,
+        borderRadius: '8px',
+        border: `1px solid ${timeColor}40`
+      }}>
+        <Clock size={14} color={timeColor} />
+        <span style={{ 
+          fontSize: '0.85rem', 
+          fontWeight: 700, 
+          color: timeColor 
+        }}>
+          {estimatedTime}
+        </span>
       </div>
     </div>
   );
@@ -464,15 +784,15 @@ function OrderNumberCard({
       className={`order-card ${isNew ? 'order-number-new' : ''}`}
       style={{ 
         ...baseStyles,
-        borderRadius: '16px',
-        padding: '1.5rem 2rem',
-        minWidth: '160px',
+        borderRadius: '14px',
+        padding: '1.25rem 1.75rem',
+        minWidth: '140px',
         textAlign: 'center',
         transition: 'all 0.3s ease',
       }}
     >
       <div style={{ 
-        fontSize: '2.2rem', 
+        fontSize: '2rem', 
         fontWeight: 800,
         letterSpacing: '0.02em',
         fontVariantNumeric: 'tabular-nums'
@@ -501,22 +821,19 @@ function EmptyState({
       justifyContent: 'center',
       width: '100%',
       height: '100%',
-      minHeight: '200px',
+      minHeight: '150px',
       color: color,
       opacity: 0.4
     }}>
       {icon}
       <span style={{ 
-        marginTop: '1rem', 
-        fontSize: '1.2rem',
-        fontWeight: 500
+        marginTop: '0.75rem', 
+        fontSize: '1rem',
+        fontWeight: 500,
+        textAlign: 'center'
       }}>
         {message}
       </span>
     </div>
   );
 }
-
-
-
-

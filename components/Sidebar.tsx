@@ -23,6 +23,7 @@ import {
   Bell,
   Settings,
   Monitor,
+  Tv,
   FileText,
   BookOpen,
   UserCircle,
@@ -72,6 +73,7 @@ const navGroupsConfig: NavGroup[] = [
       { href: '/order-history', labelKey: 'nav.orderHistory', icon: History, tourId: 'order-history' },
       { href: '/menu-management', labelKey: 'nav.menu', icon: BookOpen, tourId: 'menu' },
       { href: '/kds', labelKey: 'nav.kds', icon: Monitor, tourId: 'kds' },
+      { href: '/order-display', labelKey: 'nav.orderDisplay', icon: Tv, tourId: 'order-display' },
       { href: '/delivery', labelKey: 'nav.delivery', icon: Truck, tourId: 'delivery' },
     ]
   },

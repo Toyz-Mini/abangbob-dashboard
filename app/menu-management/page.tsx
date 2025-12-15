@@ -3,8 +3,8 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import MainLayout from '@/components/MainLayout';
-import { useMenu } from '@/lib/store';
-import { MenuItem, ModifierGroup, ModifierOption } from '@/lib/types';
+import { useMenu, useMenuCategories } from '@/lib/store';
+import { MenuItem, ModifierGroup, ModifierOption, MenuCategory } from '@/lib/types';
 import Modal from '@/components/Modal';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { 
@@ -20,13 +20,13 @@ import {
   DollarSign,
   Check,
   X,
-  AlertCircle
+  AlertCircle,
+  FolderOpen,
+  GripVertical
 } from 'lucide-react';
 
-type TabType = 'menu' | 'groups' | 'options';
-type ModalType = 'add-menu' | 'edit-menu' | 'delete-menu' | 'add-group' | 'edit-group' | 'delete-group' | 'add-option' | 'edit-option' | 'delete-option' | null;
-
-const MENU_CATEGORIES = ['Nasi Lemak', 'Burger', 'Minuman', 'Sides', 'Dessert', 'Alacart'];
+type TabType = 'menu' | 'categories' | 'groups' | 'options';
+type ModalType = 'add-menu' | 'edit-menu' | 'delete-menu' | 'add-group' | 'edit-group' | 'delete-group' | 'add-option' | 'edit-option' | 'delete-option' | 'add-category' | 'edit-category' | 'delete-category' | null;
 
 export default function MenuManagementPage() {
   const router = useRouter();
@@ -51,11 +51,20 @@ export default function MenuManagementPage() {
     isInitialized 
   } = useMenu();
 
+  const {
+    menuCategories,
+    addMenuCategory,
+    updateMenuCategory,
+    deleteMenuCategory,
+    getActiveCategories,
+  } = useMenuCategories();
+
   const [activeTab, setActiveTab] = useState<TabType>('menu');
   const [modalType, setModalType] = useState<ModalType>(null);
   const [selectedMenuItem, setSelectedMenuItem] = useState<MenuItem | null>(null);
   const [selectedGroup, setSelectedGroup] = useState<ModifierGroup | null>(null);
   const [selectedOption, setSelectedOption] = useState<ModifierOption | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<MenuCategory | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('All');
@@ -68,7 +77,7 @@ export default function MenuManagementPage() {
     
     setSearchTerm(search);
     setFilterCategory(category);
-    if (['menu', 'groups', 'options'].includes(tab)) {
+    if (['menu', 'categories', 'groups', 'options'].includes(tab)) {
       setActiveTab(tab);
     }
   }, [searchParams]);
@@ -132,6 +141,20 @@ export default function MenuManagementPage() {
     isAvailable: true,
   });
 
+  // Category Form
+  const [categoryForm, setCategoryForm] = useState({
+    name: '',
+    description: '',
+    color: '#3b82f6',
+    sortOrder: 1,
+    isActive: true,
+  });
+
+  // Get active categories for dropdowns
+  const activeCategories = useMemo(() => {
+    return getActiveCategories();
+  }, [menuCategories, getActiveCategories]);
+
   // Filtered menu items
   const filteredMenuItems = useMemo(() => {
     return menuItems.filter(item => {
@@ -143,15 +166,18 @@ export default function MenuManagementPage() {
 
   // Get unique categories from menu items
   const categories = useMemo(() => {
-    const cats = new Set(menuItems.map(item => item.category));
-    return ['All', ...Array.from(cats)];
-  }, [menuItems]);
+    // Combine active categories with any categories from existing menu items
+    const activeCatNames = activeCategories.map(c => c.name);
+    const menuCats = new Set(menuItems.map(item => item.category));
+    const allCats = new Set([...activeCatNames, ...menuCats]);
+    return ['All', ...Array.from(allCats)];
+  }, [menuItems, activeCategories]);
 
   // Modal handlers
   const openAddMenuModal = () => {
     setMenuForm({
       name: '',
-      category: 'Nasi Lemak',
+      category: activeCategories[0]?.name || 'Uncategorized',
       price: 0,
       description: '',
       isAvailable: true,
@@ -232,11 +258,41 @@ export default function MenuManagementPage() {
     setModalType('delete-option');
   };
 
+  // Category Modal Openers
+  const openAddCategoryModal = () => {
+    setCategoryForm({
+      name: '',
+      description: '',
+      color: '#3b82f6',
+      sortOrder: menuCategories.length + 1,
+      isActive: true,
+    });
+    setModalType('add-category');
+  };
+
+  const openEditCategoryModal = (category: MenuCategory) => {
+    setSelectedCategory(category);
+    setCategoryForm({
+      name: category.name,
+      description: category.description || '',
+      color: category.color || '#3b82f6',
+      sortOrder: category.sortOrder,
+      isActive: category.isActive,
+    });
+    setModalType('edit-category');
+  };
+
+  const openDeleteCategoryModal = (category: MenuCategory) => {
+    setSelectedCategory(category);
+    setModalType('delete-category');
+  };
+
   const closeModal = () => {
     setModalType(null);
     setSelectedMenuItem(null);
     setSelectedGroup(null);
     setSelectedOption(null);
+    setSelectedCategory(null);
     setIsProcessing(false);
   };
 
@@ -388,6 +444,62 @@ export default function MenuManagementPage() {
     closeModal();
   };
 
+  // Category Handlers
+  const handleAddCategory = async () => {
+    if (!categoryForm.name.trim()) {
+      alert('Sila masukkan nama kategori');
+      return;
+    }
+
+    setIsProcessing(true);
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    addMenuCategory({
+      name: categoryForm.name.trim(),
+      description: categoryForm.description.trim() || undefined,
+      color: categoryForm.color,
+      sortOrder: categoryForm.sortOrder,
+      isActive: categoryForm.isActive,
+    });
+
+    closeModal();
+  };
+
+  const handleEditCategory = async () => {
+    if (!selectedCategory || !categoryForm.name.trim()) return;
+
+    setIsProcessing(true);
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    updateMenuCategory(selectedCategory.id, {
+      name: categoryForm.name.trim(),
+      description: categoryForm.description.trim() || undefined,
+      color: categoryForm.color,
+      sortOrder: categoryForm.sortOrder,
+      isActive: categoryForm.isActive,
+    });
+
+    closeModal();
+  };
+
+  const handleDeleteCategory = async () => {
+    if (!selectedCategory) return;
+
+    // Check if any menu items use this category
+    const itemsUsingCategory = menuItems.filter(item => item.category === selectedCategory.name);
+    if (itemsUsingCategory.length > 0) {
+      alert(`Tidak boleh padam kategori ini. ${itemsUsingCategory.length} menu item masih menggunakan kategori ini.`);
+      setIsProcessing(false);
+      return;
+    }
+
+    setIsProcessing(true);
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    deleteMenuCategory(selectedCategory.id);
+    closeModal();
+  };
+
   // Toggle modifier group in menu item form
   const toggleModifierGroup = (groupId: string) => {
     setMenuForm(prev => ({
@@ -430,6 +542,13 @@ export default function MenuManagementPage() {
           >
             <UtensilsCrossed size={16} />
             Menu Items ({menuItems.length})
+          </button>
+          <button
+            onClick={() => handleTabChange('categories')}
+            className={`btn btn-sm ${activeTab === 'categories' ? 'btn-primary' : 'btn-outline'}`}
+          >
+            <FolderOpen size={16} />
+            Kategori ({menuCategories.length})
           </button>
           <button
             onClick={() => handleTabChange('groups')}
@@ -774,6 +893,110 @@ export default function MenuManagementPage() {
           </>
         )}
 
+        {/* Categories Tab */}
+        {activeTab === 'categories' && (
+          <>
+            <div style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'flex-end' }}>
+              <button className="btn btn-primary" onClick={openAddCategoryModal}>
+                <Plus size={18} />
+                Tambah Kategori
+              </button>
+            </div>
+
+            {menuCategories.length > 0 ? (
+              <div className="card">
+                <table className="table">
+                  <thead>
+                    <tr>
+                      <th style={{ width: '50px' }}>#</th>
+                      <th>Nama Kategori</th>
+                      <th>Keterangan</th>
+                      <th>Warna</th>
+                      <th>Item</th>
+                      <th>Status</th>
+                      <th>Tindakan</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {menuCategories
+                      .sort((a, b) => a.sortOrder - b.sortOrder)
+                      .map((category, index) => {
+                        const itemCount = menuItems.filter(item => item.category === category.name).length;
+                        return (
+                          <tr key={category.id}>
+                            <td style={{ color: 'var(--text-secondary)' }}>{index + 1}</td>
+                            <td>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                <div style={{
+                                  width: '24px',
+                                  height: '24px',
+                                  background: category.color || '#3b82f6',
+                                  borderRadius: 'var(--radius-sm)',
+                                }} />
+                                <span style={{ fontWeight: 600 }}>{category.name}</span>
+                              </div>
+                            </td>
+                            <td style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
+                              {category.description || '-'}
+                            </td>
+                            <td>
+                              <code style={{ 
+                                background: 'var(--gray-100)', 
+                                padding: '0.25rem 0.5rem', 
+                                borderRadius: 'var(--radius-sm)',
+                                fontSize: '0.75rem'
+                              }}>
+                                {category.color || '#3b82f6'}
+                              </code>
+                            </td>
+                            <td>
+                              <span className="badge badge-info">{itemCount} item</span>
+                            </td>
+                            <td>
+                              <span className={`badge ${category.isActive ? 'badge-success' : 'badge-warning'}`}>
+                                {category.isActive ? 'Aktif' : 'Tidak Aktif'}
+                              </span>
+                            </td>
+                            <td>
+                              <div style={{ display: 'flex', gap: '0.25rem' }}>
+                                <button
+                                  className="btn btn-sm btn-outline"
+                                  onClick={() => openEditCategoryModal(category)}
+                                >
+                                  <Edit2 size={14} />
+                                </button>
+                                <button
+                                  className="btn btn-sm btn-outline"
+                                  onClick={() => openDeleteCategoryModal(category)}
+                                  style={{ color: 'var(--danger)' }}
+                                  disabled={itemCount > 0}
+                                  title={itemCount > 0 ? 'Tidak boleh padam kategori yang masih digunakan' : 'Padam kategori'}
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="card" style={{ textAlign: 'center', padding: '3rem' }}>
+                <FolderOpen size={48} color="var(--gray-400)" style={{ marginBottom: '1rem' }} />
+                <p style={{ color: 'var(--text-secondary)', marginBottom: '1rem' }}>
+                  Belum ada kategori menu
+                </p>
+                <button className="btn btn-primary" onClick={openAddCategoryModal}>
+                  <Plus size={18} />
+                  Tambah Kategori Pertama
+                </button>
+              </div>
+            )}
+          </>
+        )}
+
         {/* Add/Edit Menu Modal */}
         <Modal
           isOpen={modalType === 'add-menu' || modalType === 'edit-menu'}
@@ -800,8 +1023,8 @@ export default function MenuManagementPage() {
                 value={menuForm.category}
                 onChange={(e) => setMenuForm(prev => ({ ...prev, category: e.target.value }))}
               >
-                {MENU_CATEGORIES.map(cat => (
-                  <option key={cat} value={cat}>{cat}</option>
+                {activeCategories.map(cat => (
+                  <option key={cat.id} value={cat.name}>{cat.name}</option>
                 ))}
               </select>
             </div>
@@ -1141,9 +1364,9 @@ export default function MenuManagementPage() {
           maxWidth="400px"
         >
           <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-            <div style={{ 
-              width: '60px', height: '60px', 
-              background: '#fee2e2', borderRadius: '50%', 
+            <div style={{
+              width: '60px', height: '60px',
+              background: '#fee2e2', borderRadius: '50%',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               margin: '0 auto 1rem'
             }}>
@@ -1156,6 +1379,144 @@ export default function MenuManagementPage() {
           <div style={{ display: 'flex', gap: '0.5rem' }}>
             <button className="btn btn-outline" onClick={closeModal} style={{ flex: 1 }}>Batal</button>
             <button className="btn btn-danger" onClick={handleDeleteOption} disabled={isProcessing} style={{ flex: 1 }}>
+              {isProcessing ? <LoadingSpinner size="sm" /> : 'Padam'}
+            </button>
+          </div>
+        </Modal>
+
+        {/* Add/Edit Category Modal */}
+        <Modal
+          isOpen={modalType === 'add-category' || modalType === 'edit-category'}
+          onClose={closeModal}
+          title={modalType === 'add-category' ? 'Tambah Kategori Baru' : 'Edit Kategori'}
+          maxWidth="450px"
+        >
+          <div className="form-group">
+            <label className="form-label">Nama Kategori *</label>
+            <input
+              type="text"
+              className="form-input"
+              value={categoryForm.name}
+              onChange={(e) => setCategoryForm(prev => ({ ...prev, name: e.target.value }))}
+              placeholder="Contoh: Nasi Lemak, Burger, Minuman"
+            />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Keterangan</label>
+            <textarea
+              className="form-input"
+              value={categoryForm.description}
+              onChange={(e) => setCategoryForm(prev => ({ ...prev, description: e.target.value }))}
+              rows={2}
+              placeholder="Penerangan kategori..."
+            />
+          </div>
+
+          <div className="grid grid-cols-2" style={{ gap: '1rem' }}>
+            <div className="form-group">
+              <label className="form-label">Warna</label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <input
+                  type="color"
+                  value={categoryForm.color}
+                  onChange={(e) => setCategoryForm(prev => ({ ...prev, color: e.target.value }))}
+                  style={{ width: '50px', height: '36px', border: 'none', borderRadius: 'var(--radius-sm)', cursor: 'pointer' }}
+                />
+                <input
+                  type="text"
+                  className="form-input"
+                  value={categoryForm.color}
+                  onChange={(e) => setCategoryForm(prev => ({ ...prev, color: e.target.value }))}
+                  style={{ flex: 1 }}
+                />
+              </div>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Urutan</label>
+              <input
+                type="number"
+                className="form-input"
+                value={categoryForm.sortOrder}
+                onChange={(e) => setCategoryForm(prev => ({ ...prev, sortOrder: Number(e.target.value) }))}
+                min="1"
+              />
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Status</label>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <button
+                type="button"
+                onClick={() => setCategoryForm(prev => ({ ...prev, isActive: true }))}
+                className={`btn ${categoryForm.isActive ? 'btn-success' : 'btn-outline'}`}
+                style={{ flex: 1 }}
+              >
+                <Check size={16} />
+                Aktif
+              </button>
+              <button
+                type="button"
+                onClick={() => setCategoryForm(prev => ({ ...prev, isActive: false }))}
+                className={`btn ${!categoryForm.isActive ? 'btn-warning' : 'btn-outline'}`}
+                style={{ flex: 1 }}
+              >
+                <X size={16} />
+                Tidak Aktif
+              </button>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1.5rem' }}>
+            <button className="btn btn-outline" onClick={closeModal} disabled={isProcessing} style={{ flex: 1 }}>
+              Batal
+            </button>
+            <button
+              className="btn btn-primary"
+              onClick={modalType === 'add-category' ? handleAddCategory : handleEditCategory}
+              disabled={isProcessing}
+              style={{ flex: 1 }}
+            >
+              {isProcessing ? <LoadingSpinner size="sm" /> : modalType === 'add-category' ? 'Tambah' : 'Simpan'}
+            </button>
+          </div>
+        </Modal>
+
+        {/* Delete Category Modal */}
+        <Modal
+          isOpen={modalType === 'delete-category'}
+          onClose={closeModal}
+          title="Padam Kategori"
+          maxWidth="400px"
+        >
+          <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+            <div style={{
+              width: '60px', height: '60px',
+              background: '#fee2e2', borderRadius: '50%',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              margin: '0 auto 1rem'
+            }}>
+              <Trash2 size={28} color="var(--danger)" />
+            </div>
+            <p style={{ color: 'var(--text-secondary)' }}>
+              Padam kategori <strong>{selectedCategory?.name}</strong>?
+            </p>
+            {selectedCategory && menuItems.filter(item => item.category === selectedCategory.name).length > 0 && (
+              <p style={{ fontSize: '0.875rem', color: 'var(--warning)', marginTop: '0.5rem' }}>
+                <AlertCircle size={14} style={{ display: 'inline', marginRight: '0.25rem' }} />
+                Kategori ini masih digunakan oleh {menuItems.filter(item => item.category === selectedCategory.name).length} menu item.
+              </p>
+            )}
+          </div>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <button className="btn btn-outline" onClick={closeModal} style={{ flex: 1 }}>Batal</button>
+            <button 
+              className="btn btn-danger" 
+              onClick={handleDeleteCategory} 
+              disabled={isProcessing || (selectedCategory && menuItems.filter(item => item.category === selectedCategory.name).length > 0)} 
+              style={{ flex: 1 }}
+            >
               {isProcessing ? <LoadingSpinner size="sm" /> : 'Padam'}
             </button>
           </div>

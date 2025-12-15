@@ -1079,3 +1079,66 @@ export interface PaymentRecord {
   createdAt: string;
 }
 
+// ==================== MENU CATEGORY TYPES ====================
+
+export interface MenuCategory {
+  id: string;
+  name: string;
+  description?: string;
+  icon?: string;
+  color?: string;
+  sortOrder: number;
+  isActive: boolean;
+  createdAt: string;
+}
+
+// Default menu categories
+export const DEFAULT_MENU_CATEGORIES: MenuCategory[] = [
+  { id: 'cat_1', name: 'Nasi Lemak', sortOrder: 1, isActive: true, createdAt: new Date().toISOString() },
+  { id: 'cat_2', name: 'Burger', sortOrder: 2, isActive: true, createdAt: new Date().toISOString() },
+  { id: 'cat_3', name: 'Minuman', sortOrder: 3, isActive: true, createdAt: new Date().toISOString() },
+  { id: 'cat_4', name: 'Sides', sortOrder: 4, isActive: true, createdAt: new Date().toISOString() },
+  { id: 'cat_5', name: 'Dessert', sortOrder: 5, isActive: true, createdAt: new Date().toISOString() },
+  { id: 'cat_6', name: 'Alacart', sortOrder: 6, isActive: true, createdAt: new Date().toISOString() },
+];
+
+// ==================== PAYMENT METHOD CONFIG TYPES ====================
+
+export interface PaymentMethodConfig {
+  id: string;
+  name: string;
+  code: string;
+  icon?: string;
+  color: string;
+  isEnabled: boolean;
+  isSystem: boolean; // System payment methods cannot be deleted
+  sortOrder: number;
+  createdAt: string;
+}
+
+// Default payment methods
+export const DEFAULT_PAYMENT_METHODS: PaymentMethodConfig[] = [
+  { id: 'pm_1', name: 'Tunai (Cash)', code: 'cash', color: '#22c55e', isEnabled: true, isSystem: true, sortOrder: 1, createdAt: new Date().toISOString() },
+  { id: 'pm_2', name: 'Kad (Card)', code: 'card', color: '#3b82f6', isEnabled: true, isSystem: true, sortOrder: 2, createdAt: new Date().toISOString() },
+  { id: 'pm_3', name: 'QR Code', code: 'qr', color: '#8b5cf6', isEnabled: true, isSystem: true, sortOrder: 3, createdAt: new Date().toISOString() },
+  { id: 'pm_4', name: 'DST Pay', code: 'dstpay', color: '#f97316', isEnabled: false, isSystem: false, sortOrder: 4, createdAt: new Date().toISOString() },
+  { id: 'pm_5', name: 'BIBD Pay', code: 'bibdpay', color: '#0891b2', isEnabled: false, isSystem: false, sortOrder: 5, createdAt: new Date().toISOString() },
+];
+
+// ==================== TAX RATE TYPES ====================
+
+export interface TaxRate {
+  id: string;
+  name: string;
+  rate: number; // Percentage (e.g., 6 for 6%)
+  description?: string;
+  isDefault: boolean;
+  isActive: boolean;
+  createdAt: string;
+}
+
+// Default tax rates
+export const DEFAULT_TAX_RATES: TaxRate[] = [
+  { id: 'tax_1', name: 'Tiada Cukai', rate: 0, description: 'Tanpa cukai', isDefault: true, isActive: true, createdAt: new Date().toISOString() },
+];
+

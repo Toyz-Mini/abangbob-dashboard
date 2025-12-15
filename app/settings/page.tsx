@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import MainLayout from '@/components/MainLayout';
-import { useStore } from '@/lib/store';
+import { useStore, usePaymentMethods, useTaxRates } from '@/lib/store';
 import { useTranslation } from '@/lib/contexts/LanguageContext';
 import Modal from '@/components/Modal';
 import LoadingSpinner from '@/components/LoadingSpinner';
@@ -11,7 +11,7 @@ import { useAuth } from '@/lib/contexts/AuthContext';
 import LogoUpload from '@/components/LogoUpload';
 import ReceiptDesigner from '@/components/ReceiptDesigner';
 import SupabaseSetupChecker from '@/components/SupabaseSetupChecker';
-import { ReceiptSettings, PrinterSettings, DEFAULT_RECEIPT_SETTINGS, DEFAULT_PRINTER_SETTINGS } from '@/lib/types';
+import { ReceiptSettings, PrinterSettings, DEFAULT_RECEIPT_SETTINGS, DEFAULT_PRINTER_SETTINGS, PaymentMethodConfig, TaxRate } from '@/lib/types';
 import { thermalPrinter, loadReceiptSettings, saveReceiptSettings } from '@/lib/services';
 import { 
   Settings, 
@@ -46,9 +46,16 @@ import {
   WifiOff,
   Play,
   Power,
+  Plus,
+  Edit2,
+  ToggleLeft,
+  ToggleRight,
+  Percent,
 } from 'lucide-react';
 
-type SettingSection = 'outlet' | 'operations' | 'receipt' | 'printer' | 'data' | 'notifications' | 'supabase' | 'payment' | 'appearance' | 'security';
+type SettingSection = 'outlet' | 'operations' | 'receipt' | 'printer' | 'data' | 'notifications' | 'supabase' | 'payment' | 'tax' | 'appearance' | 'security';
+type PaymentModalType = 'add-payment' | 'edit-payment' | 'delete-payment' | null;
+type TaxModalType = 'add-tax' | 'edit-tax' | 'delete-tax' | null;
 
 export default function SettingsPage() {
   const { isInitialized } = useStore();
@@ -84,15 +91,46 @@ export default function SettingsPage() {
     whatsapp: '+673 712 3456',
   });
 
-  // Payment method settings
-  const [paymentSettings, setPaymentSettings] = useState({
-    cash: true,
-    card: true,
-    qrCode: true,
-    dstPay: false,
-    bibdPay: false,
-    orderNumberPrefix: 'AB',
+  // Payment method settings - Now using store
+  const {
+    paymentMethods,
+    addPaymentMethod,
+    updatePaymentMethod,
+    deletePaymentMethod,
+  } = usePaymentMethods();
+
+  // Tax rates - Using store
+  const {
+    taxRates,
+    addTaxRate,
+    updateTaxRate,
+    deleteTaxRate,
+  } = useTaxRates();
+
+  // Payment modal state
+  const [paymentModalType, setPaymentModalType] = useState<PaymentModalType>(null);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethodConfig | null>(null);
+  const [paymentForm, setPaymentForm] = useState({
+    name: '',
+    code: '',
+    color: '#3b82f6',
+    isEnabled: true,
+    sortOrder: 1,
   });
+
+  // Tax modal state
+  const [taxModalType, setTaxModalType] = useState<TaxModalType>(null);
+  const [selectedTaxRate, setSelectedTaxRate] = useState<TaxRate | null>(null);
+  const [taxForm, setTaxForm] = useState({
+    name: '',
+    rate: 0,
+    description: '',
+    isDefault: false,
+    isActive: true,
+  });
+
+  // Order number prefix (kept for backward compatibility)
+  const [orderNumberPrefix, setOrderNumberPrefix] = useState('AB');
 
   // Appearance settings
   const [appearanceSettings, setAppearanceSettings] = useState({
@@ -212,6 +250,7 @@ export default function SettingsPage() {
     { id: 'receipt', labelKey: 'settings.receiptSettings', icon: Receipt },
     { id: 'printer', labelKey: 'Printer & Drawer', icon: Printer },
     { id: 'payment', labelKey: 'settings.paymentMethods', icon: CreditCard },
+    { id: 'tax', labelKey: 'Cukai', icon: Percent },
     { id: 'appearance', labelKey: 'settings.appearance', icon: Palette },
     { id: 'security', labelKey: 'settings.security', icon: Lock },
     { id: 'notifications', labelKey: 'settings.notifications', icon: Bell },
@@ -914,147 +953,110 @@ export default function SettingsPage() {
             {/* Payment Methods Settings */}
             {activeSection === 'payment' && (
               <div className="card">
-                <div className="card-header">
-                  <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <CreditCard size={20} />
-                    Kaedah Pembayaran
+                <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <div>
+                    <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <CreditCard size={20} />
+                      Kaedah Pembayaran
+                    </div>
+                    <div className="card-subtitle">Tetapkan kaedah pembayaran yang diterima</div>
                   </div>
-                  <div className="card-subtitle">Tetapkan kaedah pembayaran yang diterima</div>
+                  <button 
+                    className="btn btn-primary btn-sm"
+                    onClick={() => {
+                      setPaymentForm({
+                        name: '',
+                        code: '',
+                        color: '#3b82f6',
+                        isEnabled: true,
+                        sortOrder: paymentMethods.length + 1,
+                      });
+                      setPaymentModalType('add-payment');
+                    }}
+                  >
+                    <Plus size={16} />
+                    Tambah
+                  </button>
                 </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                  <label style={{ 
-                    display: 'flex', 
-                    justifyContent: 'space-between', 
-                    alignItems: 'center',
-                    padding: '1rem',
-                    background: 'var(--gray-100)',
-                    borderRadius: 'var(--radius-md)',
-                    cursor: 'pointer'
-                  }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                      <div style={{ width: '40px', height: '40px', background: '#22c55e', borderRadius: 'var(--radius-md)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
-                        <DollarSign size={20} />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  {paymentMethods
+                    .sort((a, b) => a.sortOrder - b.sortOrder)
+                    .map((pm) => (
+                      <div 
+                        key={pm.id}
+                        style={{ 
+                          display: 'flex', 
+                          justifyContent: 'space-between', 
+                          alignItems: 'center',
+                          padding: '1rem',
+                          background: 'var(--gray-100)',
+                          borderRadius: 'var(--radius-md)',
+                          opacity: pm.isEnabled ? 1 : 0.6,
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                          <div style={{ 
+                            width: '40px', 
+                            height: '40px', 
+                            background: pm.color, 
+                            borderRadius: 'var(--radius-md)', 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            justifyContent: 'center', 
+                            color: 'white',
+                            fontWeight: 700,
+                            fontSize: '0.7rem'
+                          }}>
+                            {pm.code.toUpperCase().slice(0, 4)}
+                          </div>
+                          <div>
+                            <div style={{ fontWeight: 600 }}>{pm.name}</div>
+                            <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                              Kod: {pm.code}
+                              {pm.isSystem && <span className="badge badge-info" style={{ marginLeft: '0.5rem', fontSize: '0.65rem' }}>Sistem</span>}
+                            </div>
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <button
+                            className="btn btn-sm btn-outline"
+                            onClick={() => updatePaymentMethod(pm.id, { isEnabled: !pm.isEnabled })}
+                            title={pm.isEnabled ? 'Nyahaktifkan' : 'Aktifkan'}
+                          >
+                            {pm.isEnabled ? <ToggleRight size={18} color="var(--success)" /> : <ToggleLeft size={18} />}
+                          </button>
+                          <button
+                            className="btn btn-sm btn-outline"
+                            onClick={() => {
+                              setSelectedPaymentMethod(pm);
+                              setPaymentForm({
+                                name: pm.name,
+                                code: pm.code,
+                                color: pm.color,
+                                isEnabled: pm.isEnabled,
+                                sortOrder: pm.sortOrder,
+                              });
+                              setPaymentModalType('edit-payment');
+                            }}
+                          >
+                            <Edit2 size={14} />
+                          </button>
+                          {!pm.isSystem && (
+                            <button
+                              className="btn btn-sm btn-outline"
+                              onClick={() => {
+                                setSelectedPaymentMethod(pm);
+                                setPaymentModalType('delete-payment');
+                              }}
+                              style={{ color: 'var(--danger)' }}
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
                       </div>
-                      <div>
-                        <div style={{ fontWeight: 600 }}>Tunai (Cash)</div>
-                        <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Terima bayaran tunai</div>
-                      </div>
-                    </div>
-                    <input
-                      type="checkbox"
-                      checked={paymentSettings.cash}
-                      onChange={(e) => setPaymentSettings(prev => ({ ...prev, cash: e.target.checked }))}
-                      style={{ width: '20px', height: '20px' }}
-                    />
-                  </label>
-
-                  <label style={{ 
-                    display: 'flex', 
-                    justifyContent: 'space-between', 
-                    alignItems: 'center',
-                    padding: '1rem',
-                    background: 'var(--gray-100)',
-                    borderRadius: 'var(--radius-md)',
-                    cursor: 'pointer'
-                  }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                      <div style={{ width: '40px', height: '40px', background: '#3b82f6', borderRadius: 'var(--radius-md)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
-                        <CreditCard size={20} />
-                      </div>
-                      <div>
-                        <div style={{ fontWeight: 600 }}>Kad (Card)</div>
-                        <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Debit/Credit card</div>
-                      </div>
-                    </div>
-                    <input
-                      type="checkbox"
-                      checked={paymentSettings.card}
-                      onChange={(e) => setPaymentSettings(prev => ({ ...prev, card: e.target.checked }))}
-                      style={{ width: '20px', height: '20px' }}
-                    />
-                  </label>
-
-                  <label style={{ 
-                    display: 'flex', 
-                    justifyContent: 'space-between', 
-                    alignItems: 'center',
-                    padding: '1rem',
-                    background: 'var(--gray-100)',
-                    borderRadius: 'var(--radius-md)',
-                    cursor: 'pointer'
-                  }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                      <div style={{ width: '40px', height: '40px', background: '#8b5cf6', borderRadius: 'var(--radius-md)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <rect x="3" y="3" width="18" height="18" rx="2"/>
-                          <path d="M7 7h.01M17 7h.01M7 17h.01M17 17h.01M12 12h.01"/>
-                        </svg>
-                      </div>
-                      <div>
-                        <div style={{ fontWeight: 600 }}>QR Code</div>
-                        <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Imbas & bayar</div>
-                      </div>
-                    </div>
-                    <input
-                      type="checkbox"
-                      checked={paymentSettings.qrCode}
-                      onChange={(e) => setPaymentSettings(prev => ({ ...prev, qrCode: e.target.checked }))}
-                      style={{ width: '20px', height: '20px' }}
-                    />
-                  </label>
-
-                  <label style={{ 
-                    display: 'flex', 
-                    justifyContent: 'space-between', 
-                    alignItems: 'center',
-                    padding: '1rem',
-                    background: 'var(--gray-100)',
-                    borderRadius: 'var(--radius-md)',
-                    cursor: 'pointer'
-                  }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                      <div style={{ width: '40px', height: '40px', background: '#f97316', borderRadius: 'var(--radius-md)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 700, fontSize: '0.7rem' }}>
-                        DST
-                      </div>
-                      <div>
-                        <div style={{ fontWeight: 600 }}>DST Pay</div>
-                        <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>E-wallet DST</div>
-                      </div>
-                    </div>
-                    <input
-                      type="checkbox"
-                      checked={paymentSettings.dstPay}
-                      onChange={(e) => setPaymentSettings(prev => ({ ...prev, dstPay: e.target.checked }))}
-                      style={{ width: '20px', height: '20px' }}
-                    />
-                  </label>
-
-                  <label style={{ 
-                    display: 'flex', 
-                    justifyContent: 'space-between', 
-                    alignItems: 'center',
-                    padding: '1rem',
-                    background: 'var(--gray-100)',
-                    borderRadius: 'var(--radius-md)',
-                    cursor: 'pointer'
-                  }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                      <div style={{ width: '40px', height: '40px', background: '#0891b2', borderRadius: 'var(--radius-md)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 700, fontSize: '0.6rem' }}>
-                        BIBD
-                      </div>
-                      <div>
-                        <div style={{ fontWeight: 600 }}>BIBD Pay</div>
-                        <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>E-wallet BIBD</div>
-                      </div>
-                    </div>
-                    <input
-                      type="checkbox"
-                      checked={paymentSettings.bibdPay}
-                      onChange={(e) => setPaymentSettings(prev => ({ ...prev, bibdPay: e.target.checked }))}
-                      style={{ width: '20px', height: '20px' }}
-                    />
-                  </label>
+                    ))}
                 </div>
 
                 <div style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid var(--gray-200)' }}>
@@ -1065,8 +1067,8 @@ export default function SettingsPage() {
                       <input
                         type="text"
                         className="form-input"
-                        value={paymentSettings.orderNumberPrefix}
-                        onChange={(e) => setPaymentSettings(prev => ({ ...prev, orderNumberPrefix: e.target.value.toUpperCase() }))}
+                        value={orderNumberPrefix}
+                        onChange={(e) => setOrderNumberPrefix(e.target.value.toUpperCase())}
                         maxLength={4}
                         style={{ width: '100px' }}
                       />
@@ -1077,6 +1079,135 @@ export default function SettingsPage() {
                     </small>
                   </div>
                 </div>
+              </div>
+            )}
+
+            {/* Tax Settings */}
+            {activeSection === 'tax' && (
+              <div className="card">
+                <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <div>
+                    <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <Percent size={20} />
+                      Cukai
+                    </div>
+                    <div className="card-subtitle">Tetapkan kadar cukai untuk produk</div>
+                  </div>
+                  <button 
+                    className="btn btn-primary btn-sm"
+                    onClick={() => {
+                      setTaxForm({
+                        name: '',
+                        rate: 0,
+                        description: '',
+                        isDefault: false,
+                        isActive: true,
+                      });
+                      setTaxModalType('add-tax');
+                    }}
+                  >
+                    <Plus size={16} />
+                    Tambah
+                  </button>
+                </div>
+
+                {taxRates.length > 0 ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                    {taxRates.map((tax) => (
+                      <div 
+                        key={tax.id}
+                        style={{ 
+                          display: 'flex', 
+                          justifyContent: 'space-between', 
+                          alignItems: 'center',
+                          padding: '1rem',
+                          background: 'var(--gray-100)',
+                          borderRadius: 'var(--radius-md)',
+                          opacity: tax.isActive ? 1 : 0.6,
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                          <div style={{ 
+                            width: '50px', 
+                            height: '40px', 
+                            background: 'var(--primary)', 
+                            borderRadius: 'var(--radius-md)', 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            justifyContent: 'center', 
+                            color: 'white',
+                            fontWeight: 700,
+                            fontSize: '0.9rem'
+                          }}>
+                            {tax.rate}%
+                          </div>
+                          <div>
+                            <div style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                              {tax.name}
+                              {tax.isDefault && <span className="badge badge-success" style={{ fontSize: '0.65rem' }}>Default</span>}
+                              {!tax.isActive && <span className="badge badge-warning" style={{ fontSize: '0.65rem' }}>Tidak Aktif</span>}
+                            </div>
+                            <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                              {tax.description || `Cukai ${tax.rate}%`}
+                            </div>
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <button
+                            className="btn btn-sm btn-outline"
+                            onClick={() => {
+                              setSelectedTaxRate(tax);
+                              setTaxForm({
+                                name: tax.name,
+                                rate: tax.rate,
+                                description: tax.description || '',
+                                isDefault: tax.isDefault,
+                                isActive: tax.isActive,
+                              });
+                              setTaxModalType('edit-tax');
+                            }}
+                          >
+                            <Edit2 size={14} />
+                          </button>
+                          <button
+                            className="btn btn-sm btn-outline"
+                            onClick={() => {
+                              setSelectedTaxRate(tax);
+                              setTaxModalType('delete-tax');
+                            }}
+                            style={{ color: 'var(--danger)' }}
+                            disabled={tax.isDefault}
+                            title={tax.isDefault ? 'Cukai default tidak boleh dipadam' : 'Padam cukai'}
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>
+                    <Percent size={48} style={{ marginBottom: '1rem', opacity: 0.5 }} />
+                    <p>Belum ada kadar cukai</p>
+                    <button 
+                      className="btn btn-primary btn-sm" 
+                      style={{ marginTop: '1rem' }}
+                      onClick={() => {
+                        setTaxForm({
+                          name: '',
+                          rate: 0,
+                          description: '',
+                          isDefault: true,
+                          isActive: true,
+                        });
+                        setTaxModalType('add-tax');
+                      }}
+                    >
+                      <Plus size={16} />
+                      Tambah Cukai Pertama
+                    </button>
+                  </div>
+                )}
               </div>
             )}
 
@@ -1637,6 +1768,379 @@ export default function SettingsPage() {
             <button className="btn btn-danger" onClick={handleResetData} style={{ flex: 1 }}>
               <Trash2 size={16} />
               {t('settings.yesResetAll')}
+            </button>
+          </div>
+        </Modal>
+
+        {/* Add/Edit Payment Method Modal */}
+        <Modal
+          isOpen={paymentModalType === 'add-payment' || paymentModalType === 'edit-payment'}
+          onClose={() => {
+            setPaymentModalType(null);
+            setSelectedPaymentMethod(null);
+          }}
+          title={paymentModalType === 'add-payment' ? 'Tambah Kaedah Pembayaran' : 'Edit Kaedah Pembayaran'}
+          maxWidth="450px"
+        >
+          <div className="form-group">
+            <label className="form-label">Nama *</label>
+            <input
+              type="text"
+              className="form-input"
+              value={paymentForm.name}
+              onChange={(e) => setPaymentForm(prev => ({ ...prev, name: e.target.value }))}
+              placeholder="Contoh: Tunai (Cash)"
+            />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Kod *</label>
+            <input
+              type="text"
+              className="form-input"
+              value={paymentForm.code}
+              onChange={(e) => setPaymentForm(prev => ({ ...prev, code: e.target.value.toLowerCase() }))}
+              placeholder="Contoh: cash, card, qr"
+              disabled={paymentModalType === 'edit-payment' && selectedPaymentMethod?.isSystem}
+            />
+            {paymentModalType === 'edit-payment' && selectedPaymentMethod?.isSystem && (
+              <small style={{ color: 'var(--text-secondary)' }}>Kod untuk kaedah sistem tidak boleh diubah</small>
+            )}
+          </div>
+
+          <div className="grid grid-cols-2" style={{ gap: '1rem' }}>
+            <div className="form-group">
+              <label className="form-label">Warna</label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <input
+                  type="color"
+                  value={paymentForm.color}
+                  onChange={(e) => setPaymentForm(prev => ({ ...prev, color: e.target.value }))}
+                  style={{ width: '50px', height: '36px', border: 'none', borderRadius: 'var(--radius-sm)', cursor: 'pointer' }}
+                />
+                <input
+                  type="text"
+                  className="form-input"
+                  value={paymentForm.color}
+                  onChange={(e) => setPaymentForm(prev => ({ ...prev, color: e.target.value }))}
+                  style={{ flex: 1 }}
+                />
+              </div>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Urutan</label>
+              <input
+                type="number"
+                className="form-input"
+                value={paymentForm.sortOrder}
+                onChange={(e) => setPaymentForm(prev => ({ ...prev, sortOrder: Number(e.target.value) }))}
+                min="1"
+              />
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Status</label>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <button
+                type="button"
+                onClick={() => setPaymentForm(prev => ({ ...prev, isEnabled: true }))}
+                className={`btn ${paymentForm.isEnabled ? 'btn-success' : 'btn-outline'}`}
+                style={{ flex: 1 }}
+              >
+                <CheckCircle size={16} />
+                Aktif
+              </button>
+              <button
+                type="button"
+                onClick={() => setPaymentForm(prev => ({ ...prev, isEnabled: false }))}
+                className={`btn ${!paymentForm.isEnabled ? 'btn-warning' : 'btn-outline'}`}
+                style={{ flex: 1 }}
+              >
+                Tidak Aktif
+              </button>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1.5rem' }}>
+            <button 
+              className="btn btn-outline" 
+              onClick={() => {
+                setPaymentModalType(null);
+                setSelectedPaymentMethod(null);
+              }} 
+              style={{ flex: 1 }}
+            >
+              Batal
+            </button>
+            <button
+              className="btn btn-primary"
+              onClick={() => {
+                if (!paymentForm.name.trim() || !paymentForm.code.trim()) {
+                  alert('Sila masukkan nama dan kod');
+                  return;
+                }
+                if (paymentModalType === 'add-payment') {
+                  addPaymentMethod({
+                    name: paymentForm.name.trim(),
+                    code: paymentForm.code.trim(),
+                    color: paymentForm.color,
+                    isEnabled: paymentForm.isEnabled,
+                    isSystem: false,
+                    sortOrder: paymentForm.sortOrder,
+                  });
+                } else if (selectedPaymentMethod) {
+                  updatePaymentMethod(selectedPaymentMethod.id, {
+                    name: paymentForm.name.trim(),
+                    code: selectedPaymentMethod.isSystem ? selectedPaymentMethod.code : paymentForm.code.trim(),
+                    color: paymentForm.color,
+                    isEnabled: paymentForm.isEnabled,
+                    sortOrder: paymentForm.sortOrder,
+                  });
+                }
+                setPaymentModalType(null);
+                setSelectedPaymentMethod(null);
+              }}
+              style={{ flex: 1 }}
+            >
+              {paymentModalType === 'add-payment' ? 'Tambah' : 'Simpan'}
+            </button>
+          </div>
+        </Modal>
+
+        {/* Delete Payment Method Modal */}
+        <Modal
+          isOpen={paymentModalType === 'delete-payment'}
+          onClose={() => {
+            setPaymentModalType(null);
+            setSelectedPaymentMethod(null);
+          }}
+          title="Padam Kaedah Pembayaran"
+          maxWidth="400px"
+        >
+          <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+            <div style={{
+              width: '60px', height: '60px',
+              background: '#fee2e2', borderRadius: '50%',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              margin: '0 auto 1rem'
+            }}>
+              <Trash2 size={28} color="var(--danger)" />
+            </div>
+            <p style={{ color: 'var(--text-secondary)' }}>
+              Padam kaedah pembayaran <strong>{selectedPaymentMethod?.name}</strong>?
+            </p>
+          </div>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <button 
+              className="btn btn-outline" 
+              onClick={() => {
+                setPaymentModalType(null);
+                setSelectedPaymentMethod(null);
+              }} 
+              style={{ flex: 1 }}
+            >
+              Batal
+            </button>
+            <button 
+              className="btn btn-danger" 
+              onClick={() => {
+                if (selectedPaymentMethod) {
+                  deletePaymentMethod(selectedPaymentMethod.id);
+                }
+                setPaymentModalType(null);
+                setSelectedPaymentMethod(null);
+              }} 
+              style={{ flex: 1 }}
+            >
+              Padam
+            </button>
+          </div>
+        </Modal>
+
+        {/* Add/Edit Tax Rate Modal */}
+        <Modal
+          isOpen={taxModalType === 'add-tax' || taxModalType === 'edit-tax'}
+          onClose={() => {
+            setTaxModalType(null);
+            setSelectedTaxRate(null);
+          }}
+          title={taxModalType === 'add-tax' ? 'Tambah Kadar Cukai' : 'Edit Kadar Cukai'}
+          maxWidth="450px"
+        >
+          <div className="form-group">
+            <label className="form-label">Nama Cukai *</label>
+            <input
+              type="text"
+              className="form-input"
+              value={taxForm.name}
+              onChange={(e) => setTaxForm(prev => ({ ...prev, name: e.target.value }))}
+              placeholder="Contoh: GST, Cukai Perkhidmatan"
+            />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Kadar (%) *</label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <input
+                type="number"
+                className="form-input"
+                value={taxForm.rate}
+                onChange={(e) => setTaxForm(prev => ({ ...prev, rate: Number(e.target.value) }))}
+                min="0"
+                max="100"
+                step="0.1"
+                style={{ flex: 1 }}
+              />
+              <span style={{ fontWeight: 600, fontSize: '1.25rem' }}>%</span>
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Keterangan</label>
+            <textarea
+              className="form-input"
+              value={taxForm.description}
+              onChange={(e) => setTaxForm(prev => ({ ...prev, description: e.target.value }))}
+              rows={2}
+              placeholder="Penerangan cukai..."
+            />
+          </div>
+
+          <div className="grid grid-cols-2" style={{ gap: '1rem' }}>
+            <div className="form-group">
+              <label className="form-label">Status</label>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <button
+                  type="button"
+                  onClick={() => setTaxForm(prev => ({ ...prev, isActive: true }))}
+                  className={`btn ${taxForm.isActive ? 'btn-success' : 'btn-outline'}`}
+                  style={{ flex: 1 }}
+                >
+                  Aktif
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTaxForm(prev => ({ ...prev, isActive: false }))}
+                  className={`btn ${!taxForm.isActive ? 'btn-warning' : 'btn-outline'}`}
+                  style={{ flex: 1 }}
+                >
+                  Tidak
+                </button>
+              </div>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Default</label>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <button
+                  type="button"
+                  onClick={() => setTaxForm(prev => ({ ...prev, isDefault: !prev.isDefault }))}
+                  className={`btn ${taxForm.isDefault ? 'btn-primary' : 'btn-outline'}`}
+                  style={{ flex: 1 }}
+                >
+                  {taxForm.isDefault ? 'Ya' : 'Tidak'}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1.5rem' }}>
+            <button 
+              className="btn btn-outline" 
+              onClick={() => {
+                setTaxModalType(null);
+                setSelectedTaxRate(null);
+              }} 
+              style={{ flex: 1 }}
+            >
+              Batal
+            </button>
+            <button
+              className="btn btn-primary"
+              onClick={() => {
+                if (!taxForm.name.trim()) {
+                  alert('Sila masukkan nama cukai');
+                  return;
+                }
+                if (taxModalType === 'add-tax') {
+                  addTaxRate({
+                    name: taxForm.name.trim(),
+                    rate: taxForm.rate,
+                    description: taxForm.description.trim() || undefined,
+                    isDefault: taxForm.isDefault,
+                    isActive: taxForm.isActive,
+                  });
+                } else if (selectedTaxRate) {
+                  updateTaxRate(selectedTaxRate.id, {
+                    name: taxForm.name.trim(),
+                    rate: taxForm.rate,
+                    description: taxForm.description.trim() || undefined,
+                    isDefault: taxForm.isDefault,
+                    isActive: taxForm.isActive,
+                  });
+                }
+                setTaxModalType(null);
+                setSelectedTaxRate(null);
+              }}
+              style={{ flex: 1 }}
+            >
+              {taxModalType === 'add-tax' ? 'Tambah' : 'Simpan'}
+            </button>
+          </div>
+        </Modal>
+
+        {/* Delete Tax Rate Modal */}
+        <Modal
+          isOpen={taxModalType === 'delete-tax'}
+          onClose={() => {
+            setTaxModalType(null);
+            setSelectedTaxRate(null);
+          }}
+          title="Padam Kadar Cukai"
+          maxWidth="400px"
+        >
+          <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+            <div style={{
+              width: '60px', height: '60px',
+              background: '#fee2e2', borderRadius: '50%',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              margin: '0 auto 1rem'
+            }}>
+              <Trash2 size={28} color="var(--danger)" />
+            </div>
+            <p style={{ color: 'var(--text-secondary)' }}>
+              Padam kadar cukai <strong>{selectedTaxRate?.name}</strong>?
+            </p>
+            {selectedTaxRate?.isDefault && (
+              <p style={{ fontSize: '0.875rem', color: 'var(--danger)', marginTop: '0.5rem' }}>
+                Cukai default tidak boleh dipadam.
+              </p>
+            )}
+          </div>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <button 
+              className="btn btn-outline" 
+              onClick={() => {
+                setTaxModalType(null);
+                setSelectedTaxRate(null);
+              }} 
+              style={{ flex: 1 }}
+            >
+              Batal
+            </button>
+            <button 
+              className="btn btn-danger" 
+              onClick={() => {
+                if (selectedTaxRate && !selectedTaxRate.isDefault) {
+                  deleteTaxRate(selectedTaxRate.id);
+                }
+                setTaxModalType(null);
+                setSelectedTaxRate(null);
+              }} 
+              disabled={selectedTaxRate?.isDefault}
+              style={{ flex: 1 }}
+            >
+              Padam
             </button>
           </div>
         </Modal>
