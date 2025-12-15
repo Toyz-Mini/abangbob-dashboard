@@ -175,23 +175,25 @@ export default function ChecklistPage() {
     <MainLayout>
       <div className="staff-portal animate-fade-in">
         {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
-          <div>
-            <Link href="/staff-portal" className="btn btn-outline btn-sm" style={{ marginBottom: '0.5rem' }}>
-              <ArrowLeft size={16} />
-              Kembali
+        <div className="page-header">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
+            <div>
+              <Link href="/staff-portal" className="btn btn-outline btn-sm" style={{ marginBottom: '0.5rem' }}>
+                <ArrowLeft size={16} />
+                Kembali
+              </Link>
+              <h1 className="page-title" style={{ marginTop: '0.5rem' }}>
+                Checklist Harian
+              </h1>
+              <p className="page-subtitle">
+                {new Date().toLocaleDateString('ms-MY', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+              </p>
+            </div>
+            <Link href="/staff-portal/checklist/history" className="btn btn-outline">
+              <History size={18} />
+              Sejarah
             </Link>
-            <h1 style={{ fontSize: '1.75rem', fontWeight: 700, marginTop: '0.5rem' }}>
-              Checklist Harian
-            </h1>
-            <p style={{ color: 'var(--text-secondary)' }}>
-              {new Date().toLocaleDateString('ms-MY', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
-            </p>
           </div>
-          <Link href="/staff-portal/checklist/history" className="btn btn-outline">
-            <History size={18} />
-            Sejarah
-          </Link>
         </div>
 
         {/* Shift Info */}
@@ -199,14 +201,15 @@ export default function ChecklistPage() {
           <div
             className="staff-shift-badge"
             style={{
-              marginBottom: '1.5rem',
-              padding: '1rem 1.25rem',
               background: `${currentShift.color}15`,
               borderLeft: `4px solid ${currentShift.color}`,
               borderRadius: 'var(--radius-lg)',
               display: 'flex',
               alignItems: 'center',
-              gap: '0.75rem'
+              gap: '0.75rem',
+              // Padding and margin handled by CSS mobile override
+              padding: '1rem 1.25rem',
+              marginBottom: '1.5rem',
             }}
           >
             {isOpeningShift ? <Sun size={24} color={currentShift.color} /> : <Moon size={24} color={currentShift.color} />}

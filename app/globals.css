@@ -2282,6 +2282,33 @@ body {
   .sound-toggle {
     display: none;
   }
+
+  /* Responsive Typography */
+  h1,
+  .page-title {
+    font-size: 1.5rem !important;
+    line-height: 1.2 !important;
+  }
+
+  h2,
+  .section-title {
+    font-size: 1.25rem !important;
+  }
+
+  /* Reduce margins on mobile */
+  .page-header {
+    margin-bottom: 1rem !important;
+  }
+
+  .mb-lg {
+    margin-bottom: 1rem !important;
+  }
+
+  /* Adjust shift badge and other cards */
+  .staff-shift-badge {
+    padding: 0.75rem 1rem !important;
+    margin-bottom: 1rem !important;
+  }
 }
 
 .search-input {
