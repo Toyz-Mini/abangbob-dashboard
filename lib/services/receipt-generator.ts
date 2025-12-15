@@ -462,6 +462,67 @@ async function syncPrinterSettingsToSupabase(settings: object): Promise<void> {
   }
 }
 
+// ==================== ASYNC LOAD FROM SUPABASE ====================
+
+// Load receipt settings from Supabase (with localStorage fallback)
+export async function loadReceiptSettingsFromSupabase(): Promise<ReceiptSettings> {
+  const supabase = getSupabaseClient();
+
+  // Try Supabase first
+  if (supabase) {
+    try {
+      const { data, error } = await (supabase.from('app_settings') as any)
+        .select('setting_value')
+        .eq('setting_key', 'receipt_settings')
+        .single();
+
+      if (!error && data?.setting_value) {
+        const settings = { ...DEFAULT_RECEIPT_SETTINGS, ...data.setting_value };
+        // Also update localStorage for faster subsequent loads
+        if (typeof window !== 'undefined') {
+          localStorage.setItem(RECEIPT_SETTINGS_KEY, JSON.stringify(settings));
+        }
+        console.log('[Receipt] Loaded settings from Supabase');
+        return settings;
+      }
+    } catch (error) {
+      console.error('[Receipt] Failed to load from Supabase:', error);
+    }
+  }
+
+  // Fallback to localStorage
+  return loadReceiptSettings();
+}
+
+// Load printer settings from Supabase (with localStorage fallback)
+export async function loadPrinterSettingsFromSupabase(): Promise<object | null> {
+  const supabase = getSupabaseClient();
+
+  // Try Supabase first
+  if (supabase) {
+    try {
+      const { data, error } = await (supabase.from('app_settings') as any)
+        .select('setting_value')
+        .eq('setting_key', 'printer_settings')
+        .single();
+
+      if (!error && data?.setting_value) {
+        // Also update localStorage for faster subsequent loads
+        if (typeof window !== 'undefined') {
+          localStorage.setItem(PRINTER_SETTINGS_KEY, JSON.stringify(data.setting_value));
+        }
+        console.log('[Printer] Loaded settings from Supabase');
+        return data.setting_value;
+      }
+    } catch (error) {
+      console.error('[Printer] Failed to load from Supabase:', error);
+    }
+  }
+
+  // Fallback to localStorage
+  return loadPrinterSettings();
+}
+
 // ==================== EXPORTS ====================
 
 export {

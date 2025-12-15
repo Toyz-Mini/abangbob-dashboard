@@ -12,7 +12,7 @@ import LogoUpload from '@/components/LogoUpload';
 import ReceiptDesigner from '@/components/ReceiptDesigner';
 import SupabaseSetupChecker from '@/components/SupabaseSetupChecker';
 import { ReceiptSettings, PrinterSettings, DEFAULT_RECEIPT_SETTINGS, DEFAULT_PRINTER_SETTINGS, PaymentMethodConfig, TaxRate } from '@/lib/types';
-import { thermalPrinter, loadReceiptSettings, saveReceiptSettings } from '@/lib/services';
+import { thermalPrinter, loadReceiptSettings, saveReceiptSettings, loadReceiptSettingsFromSupabase } from '@/lib/services';
 import {
   Settings,
   Store,
@@ -406,10 +406,13 @@ export default function SettingsPage() {
   const [printerSettings, setPrinterSettings] = useState<PrinterSettings>(DEFAULT_PRINTER_SETTINGS);
   const [isPrinterConnecting, setIsPrinterConnecting] = useState(false);
 
-  // Load saved receipt settings on mount
+  // Load saved receipt settings on mount (from Supabase with localStorage fallback)
   useEffect(() => {
-    const savedSettings = loadReceiptSettings();
-    setReceiptSettings(savedSettings);
+    const loadSettings = async () => {
+      const savedSettings = await loadReceiptSettingsFromSupabase();
+      setReceiptSettings(savedSettings);
+    };
+    loadSettings();
   }, []);
 
   // Load all settings from Supabase on mount
