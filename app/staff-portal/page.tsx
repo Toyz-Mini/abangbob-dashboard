@@ -319,8 +319,8 @@ export default function StaffPortalPage() {
         {/* Birthday Banner */}
         <BirthdayBanner currentStaffId={staffId} />
 
-        {/* Premium Compact Header - Glassmorphism */}
-        <div className="staff-header glass-panel" style={{ marginBottom: '1.5rem', padding: '1.5rem', borderRadius: 'var(--radius-xl)', background: 'linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%)', boxShadow: '0 10px 30px -10px rgba(204, 21, 18, 0.4)' }}>
+        {/* Premium Compact Header - Glassmorphism & Living Gradient */}
+        <div className="staff-header glass-panel living-gradient animate-slide-up" style={{ marginBottom: '1.5rem', padding: '1.5rem', borderRadius: 'var(--radius-xl)', boxShadow: '0 10px 30px -10px rgba(204, 21, 18, 0.4)' }}>
           <div className="staff-header-content">
             <div className="staff-greeting">
               <div className="staff-info">
@@ -406,14 +406,14 @@ export default function StaffPortalPage() {
 
         {/* Clock Message */}
         {clockMessage && (
-          <div className={`staff-message ${clockMessage.includes('berjaya') ? 'success' : 'error'}`} style={{ marginBottom: '1.5rem' }}>
+          <div className={`staff-message ${clockMessage.includes('berjaya') ? 'success' : 'error'} animate-slide-up delay-100`} style={{ marginBottom: '1.5rem' }}>
             {clockMessage.includes('berjaya') ? <CheckCircle size={20} /> : <AlertCircle size={20} />}
             {clockMessage}
           </div>
         )}
 
         {/* --- SECTION 1: DAILY OPERATIONS (High Priority) --- */}
-        <div style={{ marginBottom: '2rem' }}>
+        <div className="animate-slide-up delay-200" style={{ marginBottom: '2rem' }}>
           <h3 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <span style={{ width: '4px', height: '16px', background: 'var(--primary)', borderRadius: '2px' }}></span>
             Operasi Harian
@@ -463,7 +463,7 @@ export default function StaffPortalPage() {
         </div>
 
         {/* --- SECTION 2: HR & MANAGEMENT (Secondary) --- */}
-        <div style={{ marginBottom: '2rem' }}>
+        <div className="animate-slide-up delay-300" style={{ marginBottom: '2rem' }}>
           <h3 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <span style={{ width: '4px', height: '16px', background: 'var(--secondary)', borderRadius: '2px' }}></span>
             Pengurusan Saya
@@ -506,7 +506,7 @@ export default function StaffPortalPage() {
         </div>
 
         {/* Team Today Widget */}
-        <div>
+        <div className="animate-slide-up delay-400">
           <TeamTodayWidget currentStaffId={staffId} />
 
           {/* Recent Achievements */}

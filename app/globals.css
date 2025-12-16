@@ -10547,3 +10547,87 @@ html {
   right: 10px;
   box-shadow: 0 0 0 2px white;
 }
+
+/* UI/UX Phase 3: Premium Polish */
+
+/* 1. Living Header Animation */
+@keyframes breathingGradient {
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.living-gradient {
+  background: linear-gradient(-45deg, var(--primary), var(--primary-dark), #b91c1c, var(--primary));
+  background-size: 400% 400%;
+  animation: breathingGradient 15s ease infinite;
+}
+
+/* 2. Cascading Entry Animations */
+@keyframes slideUpFade {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-up {
+  opacity: 0;
+  /* Hidden initially */
+  animation: slideUpFade 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.delay-100 {
+  animation-delay: 100ms;
+}
+
+.delay-200 {
+  animation-delay: 200ms;
+}
+
+.delay-300 {
+  animation-delay: 300ms;
+}
+
+.delay-400 {
+  animation-delay: 400ms;
+}
+
+.delay-500 {
+  animation-delay: 500ms;
+}
+
+/* 3. Floating Bottom Nav (iOS Style) */
+@media (max-width: 768px) {
+  .bottom-nav {
+    bottom: 20px;
+    left: 16px;
+    right: 16px;
+    border-radius: 24px;
+    background: rgba(255, 255, 255, 0.95);
+    box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    height: 70px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+
+  /* Add plenty of padding to bottom of page so content isn't covered */
+  .staff-portal,
+  .main-content {
+    padding-bottom: 120px !important;
+  }
+}
