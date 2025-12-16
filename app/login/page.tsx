@@ -120,44 +120,44 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center relative overflow-hidden bg-[#0a0a0a] text-white selection:bg-primary/30">
+    <div className="min-h-screen w-full flex items-center justify-center relative overflow-hidden bg-[#FDFBF7] text-gray-900 selection:bg-primary/20">
 
       {/* --- Ambient Background Effects --- */}
-      {/* 1. Deep noise texture overlay (Refined) */}
-      <div className="absolute inset-0 z-0 opacity-[0.03] pointer-events-none mix-blend-overlay"
+      {/* 1. Deep noise texture overlay (Subtle) */}
+      <div className="absolute inset-0 z-0 opacity-[0.4] pointer-events-none mix-blend-multiply"
         style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 200 200\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noiseFilter\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.8\' numOctaves=\'3\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noiseFilter)\'/%3E%3C/svg%3E")' }}>
       </div>
 
-      {/* 2. Primary ambient glow (Top Left) */}
-      <div className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] bg-primary/10 rounded-full blur-[120px] animate-pulse-slow" />
+      {/* 2. Primary ambient glow (Top Left - Softer) */}
+      <div className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] bg-primary/5 rounded-full blur-[120px] animate-pulse-slow" />
 
-      {/* 3. Secondary ambient glow (Bottom Right) */}
-      <div className="absolute bottom-[-10%] right-[-10%] w-[50vw] h-[50vw] bg-orange-600/5 rounded-full blur-[100px] animate-pulse-slow" style={{ animationDelay: '2s' }} />
+      {/* 3. Secondary ambient glow (Bottom Right - Softer) */}
+      <div className="absolute bottom-[-10%] right-[-10%] w-[50vw] h-[50vw] bg-orange-500/5 rounded-full blur-[100px] animate-pulse-slow" style={{ animationDelay: '2s' }} />
 
       {/* Main Container */}
       <div className="relative z-10 w-full max-w-md px-6 animate-scale-in">
 
-        {/* Glass Card */}
-        <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-black/40 backdrop-blur-xl shadow-2xl ring-1 ring-white/5">
+        {/* Glass Card (Light Mode) */}
+        <div className="relative overflow-hidden rounded-3xl border border-white/60 bg-white/70 backdrop-blur-xl shadow-[0_20px_40px_-15px_rgba(0,0,0,0.1)] ring-1 ring-white/80">
 
           {/* Inner Highlight Border (Top) */}
-          <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+          <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white to-transparent" />
 
           <div className="p-8 md:p-10 flex flex-col items-center text-center">
 
             {/* Logo Section */}
             <div className="relative group mb-8">
               {/* Logo Backlight */}
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-20 bg-primary/40 blur-[40px] rounded-full group-hover:bg-primary/60 transition-all duration-700" />
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 bg-primary/10 blur-[30px] rounded-full group-hover:bg-primary/20 transition-all duration-700" />
 
-              <div className="relative z-10 w-24 h-24 rounded-full bg-gradient-to-b from-white/10 to-transparent p-px shadow-lg overflow-hidden shrink-0">
-                <div className="w-full h-full rounded-full bg-black/20 backdrop-blur-sm flex items-center justify-center overflow-hidden">
+              <div className="relative z-10 w-24 h-24 rounded-full bg-gradient-to-b from-white to-gray-50 p-px shadow-lg overflow-hidden shrink-0 border border-gray-100">
+                <div className="w-full h-full rounded-full bg-white flex items-center justify-center overflow-hidden">
                   <img
                     src="/logo.png"
                     alt="Abang Bob"
                     width="80"
                     height="80"
-                    className="w-full h-full object-contain p-2 drop-shadow-xl transform group-hover:scale-110 transition-transform duration-500"
+                    className="w-full h-full object-contain p-2 drop-shadow-sm transform group-hover:scale-110 transition-transform duration-500"
                     style={{ maxWidth: '100%', maxHeight: '100%' }}
                   />
                 </div>
@@ -166,11 +166,11 @@ export default function LoginPage() {
 
             {/* Typography */}
             <div className="space-y-2 mb-10">
-              <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-white">
+              <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-gray-900">
                 AbangBob
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-orange-400">.</span>
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-orange-500">.</span>
               </h1>
-              <p className="text-sm font-medium text-gray-400 tracking-widest uppercase">
+              <p className="text-sm font-medium text-gray-500 tracking-widest uppercase">
                 Premium F&B Management
               </p>
             </div>
@@ -179,40 +179,40 @@ export default function LoginPage() {
             {mode === 'select' && (
               <div className="w-full grid gap-4 animate-slide-up" style={{ animationDelay: '0.1s' }}>
                 <button
-                  className="group relative w-full p-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/20 transition-all duration-300 text-left overflow-hidden"
+                  className="group relative w-full p-4 rounded-xl bg-white shadow-sm hover:shadow-md border border-gray-200 hover:border-primary/30 transition-all duration-300 text-left overflow-hidden"
                   onClick={() => setMode('pin')}
                 >
-                  <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
                   <div className="relative flex items-center gap-4">
-                    <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-gradient-to-br from-gray-800 to-black border border-white/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform duration-300">
+                    <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-gray-50 border border-gray-200 flex items-center justify-center text-primary group-hover:scale-110 transition-transform duration-300">
                       <KeyRound size={20} />
                     </div>
                     <div className="flex-1">
-                      <h3 className="font-semibold text-white group-hover:text-primary transition-colors">Login Staf</h3>
-                      <p className="text-xs text-gray-400">Akses pantas guna PIN 4-digit</p>
+                      <h3 className="font-semibold text-gray-900 group-hover:text-primary transition-colors">Login Staf</h3>
+                      <p className="text-xs text-gray-500">Akses pantas guna PIN 4-digit</p>
                     </div>
-                    <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-gray-500 group-hover:text-white group-hover:bg-white/10 transition-all">
+                    <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 group-hover:text-primary group-hover:bg-primary/10 transition-all">
                       <ArrowLeft className="rotate-180 w-4 h-4" />
                     </div>
                   </div>
                 </button>
 
                 <button
-                  className="group relative w-full p-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/20 transition-all duration-300 text-left overflow-hidden"
+                  className="group relative w-full p-4 rounded-xl bg-white shadow-sm hover:shadow-md border border-gray-200 hover:border-orange-500/30 transition-all duration-300 text-left overflow-hidden"
                   onClick={() => setMode('email')}
                 >
-                  <div className="absolute inset-0 bg-gradient-to-r from-orange-500/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  <div className="absolute inset-0 bg-gradient-to-r from-orange-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
                   <div className="relative flex items-center gap-4">
-                    <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-gradient-to-br from-gray-800 to-black border border-white/10 flex items-center justify-center text-orange-500 group-hover:scale-110 transition-transform duration-300">
+                    <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-gray-50 border border-gray-200 flex items-center justify-center text-orange-500 group-hover:scale-110 transition-transform duration-300">
                       <User size={20} />
                     </div>
                     <div className="flex-1">
-                      <h3 className="font-semibold text-white group-hover:text-orange-400 transition-colors">Login Admin</h3>
-                      <p className="text-xs text-gray-400">Dashboard pengurusan penuh</p>
+                      <h3 className="font-semibold text-gray-900 group-hover:text-orange-600 transition-colors">Login Admin</h3>
+                      <p className="text-xs text-gray-500">Dashboard pengurusan penuh</p>
                     </div>
-                    <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-gray-500 group-hover:text-white group-hover:bg-white/10 transition-all">
+                    <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 group-hover:text-orange-500 group-hover:bg-orange-50 transition-all">
                       <ArrowLeft className="rotate-180 w-4 h-4" />
                     </div>
                   </div>
@@ -225,17 +225,17 @@ export default function LoginPage() {
               <form className="w-full animate-slide-up" onSubmit={handleEmailLogin}>
                 <button
                   type="button"
-                  className="mb-8 group flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors"
+                  className="mb-8 group flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 transition-colors"
                   onClick={() => { setMode('select'); setError(''); }}
                 >
-                  <div className="p-1 rounded-md bg-white/5 group-hover:bg-white/10 transition-colors">
+                  <div className="p-1 rounded-md bg-gray-100 group-hover:bg-gray-200 transition-colors">
                     <ArrowLeft size={14} />
                   </div>
                   <span>Kembali</span>
                 </button>
 
                 {error && (
-                  <div className="mb-6 w-full p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-200 text-sm flex items-center gap-3 animate-shake">
+                  <div className="mb-6 w-full p-3 rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm flex items-center gap-3 animate-shake">
                     <EyeOff size={16} className="text-red-500 shrink-0" />
                     <p>{error}</p>
                   </div>
@@ -245,14 +245,14 @@ export default function LoginPage() {
                   <div className="space-y-1.5 text-left">
                     <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider ml-1">Email</label>
                     <div className="relative group">
-                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-500 group-focus-within:text-primary transition-colors">
+                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-primary transition-colors">
                         <User size={18} />
                       </div>
                       <input
                         type="email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        className="w-full bg-black/20 border border-white/10 rounded-xl py-3.5 pl-11 pr-4 text-white placeholder-gray-600 focus:outline-none focus:border-primary/50 focus:bg-black/40 transition-all text-sm font-medium"
+                        className="w-full bg-gray-50 border border-gray-200 rounded-xl py-3.5 pl-11 pr-4 text-gray-900 placeholder-gray-400 focus:outline-none focus:border-primary/50 focus:bg-white focus:shadow-sm transition-all text-sm font-medium"
                         placeholder="admin@abangbob.com"
                         required
                       />
@@ -262,20 +262,20 @@ export default function LoginPage() {
                   <div className="space-y-1.5 text-left">
                     <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider ml-1">Password</label>
                     <div className="relative group">
-                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-500 group-focus-within:text-primary transition-colors">
+                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-primary transition-colors">
                         <Lock size={18} />
                       </div>
                       <input
                         type={showPassword ? 'text' : 'password'}
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        className="w-full bg-black/20 border border-white/10 rounded-xl py-3.5 pl-11 pr-12 text-white placeholder-gray-600 focus:outline-none focus:border-primary/50 focus:bg-black/40 transition-all text-sm font-medium font-mono"
+                        className="w-full bg-gray-50 border border-gray-200 rounded-xl py-3.5 pl-11 pr-12 text-gray-900 placeholder-gray-400 focus:outline-none focus:border-primary/50 focus:bg-white focus:shadow-sm transition-all text-sm font-medium font-mono"
                         placeholder="••••••••"
                         required
                       />
                       <button
                         type="button"
-                        className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-500 hover:text-white transition-colors"
+                        className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
                         onClick={() => setShowPassword(!showPassword)}
                       >
                         {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -299,17 +299,17 @@ export default function LoginPage() {
               <div className="w-full animate-slide-up">
                 <button
                   type="button"
-                  className="mb-6 group flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors"
+                  className="mb-6 group flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 transition-colors"
                   onClick={() => { setMode('select'); setError(''); setPin(''); setSelectedStaffId(''); }}
                 >
-                  <div className="p-1 rounded-md bg-white/5 group-hover:bg-white/10 transition-colors">
+                  <div className="p-1 rounded-md bg-gray-100 group-hover:bg-gray-200 transition-colors">
                     <ArrowLeft size={14} />
                   </div>
                   <span>Kembali</span>
                 </button>
 
                 {error && (
-                  <div className="mb-6 w-full p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-200 text-sm flex items-center gap-3 animate-shake">
+                  <div className="mb-6 w-full p-3 rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm flex items-center gap-3 animate-shake">
                     <EyeOff size={16} className="text-red-500 shrink-0" />
                     <p>{error}</p>
                   </div>
@@ -325,22 +325,22 @@ export default function LoginPage() {
                         type="button"
                         onClick={() => { setSelectedStaffId(s.id); setError(''); }}
                         className={`relative group p-3 rounded-xl border transition-all duration-300 ${isSelected
-                          ? 'bg-primary/20 border-primary/50 shadow-[0_0_20px_rgba(204,21,18,0.2)]'
-                          : 'bg-white/5 border-white/5 hover:bg-white/10 hover:border-white/20'
+                          ? 'bg-primary/5 border-primary/50 shadow-md'
+                          : 'bg-white border-gray-200 hover:border-gray-300 hover:shadow-sm'
                           }`}
                       >
                         <div className="flex flex-col items-center gap-3">
                           <div className={`w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold border-2 transition-all duration-300 ${isSelected
-                            ? 'bg-primary text-white border-primary-light shadow-lg scale-110'
-                            : 'bg-gray-800 text-gray-400 border-transparent group-hover:border-gray-600'
+                            ? 'bg-primary text-white border-primary-light shadow-md scale-110'
+                            : 'bg-gray-100 text-gray-500 border-transparent group-hover:bg-gray-200'
                             }`}>
                             {s.name.charAt(0).toUpperCase()}
                           </div>
                           <div className="text-center">
-                            <span className={`block text-xs font-bold truncate max-w-[100px] mb-1 ${isSelected ? 'text-white' : 'text-gray-300 group-hover:text-white'}`}>
+                            <span className={`block text-xs font-bold truncate max-w-[100px] mb-1 ${isSelected ? 'text-primary' : 'text-gray-700'}`}>
                               {s.name}
                             </span>
-                            <span className="block text-[10px] text-gray-500 uppercase tracking-wider">{s.role}</span>
+                            <span className="block text-[10px] text-gray-400 uppercase tracking-wider">{s.role}</span>
                           </div>
                         </div>
 
@@ -358,8 +358,8 @@ export default function LoginPage() {
                     <div
                       key={i}
                       className={`w-3 h-3 rounded-full transition-all duration-300 ${pin.length > i
-                        ? 'bg-primary shadow-[0_0_15px_var(--primary)] scale-125'
-                        : 'bg-white/20'
+                        ? 'bg-primary shadow-[0_0_15px_rgba(204,21,18,0.4)] scale-125'
+                        : 'bg-gray-300'
                         }`}
                     />
                   ))}
@@ -371,7 +371,7 @@ export default function LoginPage() {
                     <button
                       key={digit}
                       type="button"
-                      className="w-16 h-16 rounded-full bg-white/5 hover:bg-white/15 border border-white/5 hover:border-white/20 text-2xl font-light text-white transition-all active:scale-95 flex items-center justify-center disabled:opacity-30"
+                      className="w-16 h-16 rounded-full bg-white hover:bg-gray-50 border border-gray-200 hover:border-gray-300 shadow-sm text-2xl font-light text-gray-800 transition-all active:scale-95 flex items-center justify-center disabled:opacity-30 disabled:shadow-none"
                       onClick={() => handlePinInput(digit.toString())}
                       disabled={!selectedStaffId}
                     >
@@ -380,14 +380,14 @@ export default function LoginPage() {
                   ))}
                   <button
                     type="button"
-                    className="w-16 h-16 rounded-full hover:bg-red-500/20 text-red-500/70 hover:text-red-500 transition-all"
+                    className="w-16 h-16 rounded-full hover:bg-red-50 text-red-500/70 hover:text-red-600 transition-all"
                     onClick={handlePinClear}
                   >
                     <span className="text-xs font-bold tracking-widest">CLR</span>
                   </button>
                   <button
                     type="button"
-                    className="w-16 h-16 rounded-full bg-white/5 hover:bg-white/15 border border-white/5 text-2xl font-light text-white transition-all active:scale-95 flex items-center justify-center disabled:opacity-30"
+                    className="w-16 h-16 rounded-full bg-white hover:bg-gray-50 border border-gray-200 hover:border-gray-300 shadow-sm text-2xl font-light text-gray-800 transition-all active:scale-95 flex items-center justify-center disabled:opacity-30"
                     onClick={() => handlePinInput('0')}
                     disabled={!selectedStaffId}
                   >
@@ -395,7 +395,7 @@ export default function LoginPage() {
                   </button>
                   <button
                     type="button"
-                    className="w-16 h-16 rounded-full hover:bg-white/10 text-gray-400 hover:text-white transition-all"
+                    className="w-16 h-16 rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-all"
                     onClick={handlePinBackspace}
                   >
                     <ArrowLeft size={24} />
@@ -418,8 +418,8 @@ export default function LoginPage() {
           </div>
 
           {/* Footer Bar */}
-          <div className="bg-black/40 p-3 text-center border-t border-white/5 backdrop-blur-md">
-            <p className="text-[10px] text-gray-500 font-mono tracking-widest opacity-60 hover:opacity-100 transition-opacity">
+          <div className="bg-gray-50/80 p-3 text-center border-t border-gray-200/60 backdrop-blur-md">
+            <p className="text-[10px] text-gray-400 font-mono tracking-widest opacity-80 hover:opacity-100 transition-opacity">
               ABANGBOB DASHBOARD v2.0 • SYSTEM SECURE
             </p>
           </div>
