@@ -225,6 +225,7 @@ interface StoreState {
   deleteMenuItem: (id: string) => void;
   toggleMenuItemAvailability: (id: string) => void;
   getMenuCategories: () => string[];
+  refreshMenu: () => Promise<void>;
 
   // Modifier Groups
   modifierGroups: ModifierGroup[];
@@ -3125,6 +3126,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     deleteMenuItem,
     toggleMenuItemAvailability,
     getMenuCategories,
+    refreshMenu,
 
     // Modifier Groups
     modifierGroups,
@@ -3438,6 +3440,7 @@ export function useMenu() {
     updateModifierOption: store.updateModifierOption,
     deleteModifierOption: store.deleteModifierOption,
     getOptionsForGroup: store.getOptionsForGroup,
+    refreshMenu: store.refreshMenu,
     isInitialized: store.isInitialized,
   };
 }

@@ -3,6 +3,7 @@
 import { useState, useRef, useMemo, useEffect, useCallback } from 'react';
 import MainLayout from '@/components/MainLayout';
 import { useOrders, useMenu, useInventory, usePaymentMethods } from '@/lib/store';
+import { useMenuRealtime, useInventoryRealtime, useModifiersRealtime } from '@/lib/supabase/realtime-hooks';
 import { useTranslation } from '@/lib/contexts/LanguageContext';
 import { useToast } from '@/lib/contexts/ToastContext';
 import { CartItem, Order, MenuItem, SelectedModifier, ReceiptSettings, DEFAULT_RECEIPT_SETTINGS } from '@/lib/types';
@@ -27,11 +28,26 @@ type ModalType = 'upsell' | 'checkout' | 'receipt' | 'history' | 'queue' | 'modi
 
 export default function POSPage() {
   const { orders, addOrder, updateOrderStatus, getTodayOrders, isInitialized } = useOrders();
-  const { menuItems, modifierGroups, modifierOptions, getOptionsForGroup } = useMenu();
-  const { inventory, adjustStock } = useInventory();
+  const { menuItems, modifierGroups, modifierOptions, getOptionsForGroup, refreshMenu } = useMenu();
+  const { inventory, adjustStock, refreshInventory } = useInventory();
   const { paymentMethods, isInitialized: paymentMethodsInitialized } = usePaymentMethods();
   const { t, language } = useTranslation();
   const { showToast } = useToast();
+
+  // Realtime subscriptions for menu, inventory, and modifiers
+  const handleMenuChange = useCallback(() => {
+    console.log('[Realtime] Menu change detected, refreshing...');
+    refreshMenu();
+  }, [refreshMenu]);
+
+  const handleInventoryChange = useCallback(() => {
+    console.log('[Realtime] Inventory change detected, refreshing...');
+    refreshInventory();
+  }, [refreshInventory]);
+
+  useMenuRealtime(handleMenuChange);
+  useInventoryRealtime(handleInventoryChange);
+  useModifiersRealtime(handleMenuChange); // Modifiers also refresh menu
 
   // Get enabled payment methods from settings - using useMemo for proper reactivity
   const enabledPaymentMethods = useMemo(() => {

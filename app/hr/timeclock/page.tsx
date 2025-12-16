@@ -1,14 +1,29 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import MainLayout from '@/components/MainLayout';
 import { useStaff } from '@/lib/store';
+import { useAttendanceRealtime, useStaffRealtime } from '@/lib/supabase/realtime-hooks';
 import Modal from '@/components/Modal';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { Clock, LogIn, LogOut, User, CheckCircle, XCircle, History } from 'lucide-react';
 
 export default function TimeClockPage() {
-  const { staff, attendance, clockIn, clockOut, getStaffAttendanceToday, isInitialized } = useStaff();
+  const { staff, attendance, clockIn, clockOut, getStaffAttendanceToday, refreshStaff, refreshAttendance, isInitialized } = useStaff();
+
+  // Realtime subscriptions for staff and attendance
+  const handleAttendanceChange = useCallback(() => {
+    console.log('[Realtime] Attendance change detected, refreshing...');
+    refreshAttendance();
+  }, [refreshAttendance]);
+
+  const handleStaffChange = useCallback(() => {
+    console.log('[Realtime] Staff change detected, refreshing...');
+    refreshStaff();
+  }, [refreshStaff]);
+
+  useAttendanceRealtime(handleAttendanceChange);
+  useStaffRealtime(handleStaffChange);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [selectedStaffId, setSelectedStaffId] = useState<string | null>(null);
   const [pin, setPin] = useState('');
@@ -134,8 +149,8 @@ export default function TimeClockPage() {
         </div>
 
         {/* Current Time Display */}
-        <div className="card" style={{ 
-          textAlign: 'center', 
+        <div className="card" style={{
+          textAlign: 'center',
           marginBottom: '2rem',
           background: 'var(--gradient-primary)',
           color: 'white'
@@ -225,8 +240,8 @@ export default function TimeClockPage() {
                 Masukkan PIN
               </div>
               <div className="card-subtitle">
-                {selectedStaffId 
-                  ? staff.find(s => s.id === selectedStaffId)?.name 
+                {selectedStaffId
+                  ? staff.find(s => s.id === selectedStaffId)?.name
                   : 'Sila pilih staf dahulu'}
               </div>
             </div>
@@ -240,7 +255,7 @@ export default function TimeClockPage() {
               <>
                 {/* Result Message */}
                 {resultMessage && (
-                  <div 
+                  <div
                     className={`alert ${resultMessage.type === 'success' ? 'alert-success' : 'alert-danger'}`}
                     style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
                   >
@@ -250,11 +265,11 @@ export default function TimeClockPage() {
                 )}
 
                 {/* PIN Display */}
-                <div style={{ 
-                  display: 'flex', 
-                  justifyContent: 'center', 
-                  gap: '0.75rem', 
-                  marginBottom: '1.5rem' 
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'center',
+                  gap: '0.75rem',
+                  marginBottom: '1.5rem'
                 }}>
                   {[0, 1, 2, 3].map(i => (
                     <div
@@ -278,9 +293,9 @@ export default function TimeClockPage() {
                 </div>
 
                 {/* Number Pad */}
-                <div style={{ 
-                  display: 'grid', 
-                  gridTemplateColumns: 'repeat(3, 1fr)', 
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(3, 1fr)',
                   gap: '0.5rem',
                   maxWidth: '300px',
                   margin: '0 auto'
@@ -338,8 +353,8 @@ export default function TimeClockPage() {
                       onClick={handleClockAction}
                       disabled={pin.length !== 4 || isProcessing}
                       className={`btn ${isClockIn ? 'btn-primary' : 'btn-danger'}`}
-                      style={{ 
-                        width: '100%', 
+                      style={{
+                        width: '100%',
                         marginTop: '1.5rem',
                         padding: '1rem',
                         fontSize: '1.1rem',
@@ -372,9 +387,9 @@ export default function TimeClockPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-4" style={{ gap: '1rem' }}>
-            <div style={{ 
-              padding: '1rem', 
-              background: 'var(--gray-100)', 
+            <div style={{
+              padding: '1rem',
+              background: 'var(--gray-100)',
               borderRadius: 'var(--radius-md)',
               textAlign: 'center'
             }}>
@@ -384,9 +399,9 @@ export default function TimeClockPage() {
               <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>Total Staf Aktif</div>
             </div>
 
-            <div style={{ 
-              padding: '1rem', 
-              background: '#d1fae5', 
+            <div style={{
+              padding: '1rem',
+              background: '#d1fae5',
               borderRadius: 'var(--radius-md)',
               textAlign: 'center'
             }}>
@@ -396,9 +411,9 @@ export default function TimeClockPage() {
               <div style={{ fontSize: '0.875rem', color: '#065f46' }}>Sedang Bekerja</div>
             </div>
 
-            <div style={{ 
-              padding: '1rem', 
-              background: '#dbeafe', 
+            <div style={{
+              padding: '1rem',
+              background: '#dbeafe',
               borderRadius: 'var(--radius-md)',
               textAlign: 'center'
             }}>
@@ -408,9 +423,9 @@ export default function TimeClockPage() {
               <div style={{ fontSize: '0.875rem', color: '#1e40af' }}>Sudah Clock Out</div>
             </div>
 
-            <div style={{ 
-              padding: '1rem', 
-              background: '#fef3c7', 
+            <div style={{
+              padding: '1rem',
+              background: '#fef3c7',
               borderRadius: 'var(--radius-md)',
               textAlign: 'center'
             }}>

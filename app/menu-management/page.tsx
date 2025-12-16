@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import MainLayout from '@/components/MainLayout';
 import { useMenu, useMenuCategories } from '@/lib/store';
+import { useMenuRealtime, useModifiersRealtime } from '@/lib/supabase/realtime-hooks';
 import { MenuItem, ModifierGroup, ModifierOption, MenuCategory } from '@/lib/types';
 import Modal from '@/components/Modal';
 import LoadingSpinner from '@/components/LoadingSpinner';
@@ -48,6 +49,7 @@ export default function MenuManagementPage() {
     updateModifierOption,
     deleteModifierOption,
     getOptionsForGroup,
+    refreshMenu,
     isInitialized
   } = useMenu();
 
@@ -58,6 +60,15 @@ export default function MenuManagementPage() {
     deleteMenuCategory,
     getActiveCategories,
   } = useMenuCategories();
+
+  // Realtime subscriptions for menu and modifiers
+  const handleMenuChange = useCallback(() => {
+    console.log('[Realtime] Menu change detected, refreshing...');
+    refreshMenu();
+  }, [refreshMenu]);
+
+  useMenuRealtime(handleMenuChange);
+  useModifiersRealtime(handleMenuChange);
 
   const [activeTab, setActiveTab] = useState<TabType>('menu');
   const [modalType, setModalType] = useState<ModalType>(null);

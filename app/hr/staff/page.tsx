@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import MainLayout from '@/components/MainLayout';
 import { useStaff } from '@/lib/store';
+import { useStaffRealtime } from '@/lib/supabase/realtime-hooks';
 import {
   StaffProfile,
   Gender,
@@ -55,7 +56,16 @@ import {
 type EditTab = 'personal' | 'employment' | 'salary' | 'permissions';
 
 export default function StaffListPage() {
-  const { staff, updateStaff, deleteStaff, getStaffAttendanceToday, isInitialized } = useStaff();
+  const { staff, updateStaff, deleteStaff, getStaffAttendanceToday, refreshStaff, isInitialized } = useStaff();
+
+  // Realtime subscription for staff
+  const handleStaffChange = useCallback(() => {
+    console.log('[Realtime] Staff change detected, refreshing...');
+    refreshStaff();
+  }, [refreshStaff]);
+
+  useStaffRealtime(handleStaffChange);
+
   const [filter, setFilter] = useState<'all' | 'active' | 'on-leave'>('all');
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -851,7 +861,7 @@ export default function StaffListPage() {
         <div className="text-[14px] font-medium text-gray-900 break-words flex items-center gap-2 leading-snug">
           {value || <span className="text-gray-300 italic font-normal text-xs">Tidak dinyatakan</span>}
           {badge && <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide ${badge === 'active' ? 'bg-green-100 text-green-700' :
-              badge === 'permanent' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700'
+            badge === 'permanent' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700'
             }`}>{badge}</span>}
         </div>
       </div>

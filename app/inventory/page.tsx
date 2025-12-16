@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import MainLayout from '@/components/MainLayout';
 import { useInventory } from '@/lib/store';
+import { useInventoryRealtime } from '@/lib/supabase/realtime-hooks';
 import { useTranslation } from '@/lib/contexts/LanguageContext';
 import { StockItem } from '@/lib/types';
 import Modal from '@/components/Modal';
@@ -24,8 +25,16 @@ const ADJUSTMENT_REASONS = [
 ];
 
 export default function InventoryPage() {
-  const { inventory, inventoryLogs, addStockItem, updateStockItem, deleteStockItem, adjustStock, isInitialized } = useInventory();
+  const { inventory, inventoryLogs, addStockItem, updateStockItem, deleteStockItem, adjustStock, refreshInventory, isInitialized } = useInventory();
   const { t, language } = useTranslation();
+
+  // Realtime subscription for inventory
+  const handleInventoryChange = useCallback(() => {
+    console.log('[Realtime] Inventory change detected, refreshing...');
+    refreshInventory();
+  }, [refreshInventory]);
+
+  useInventoryRealtime(handleInventoryChange);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('All');
   const [modalType, setModalType] = useState<ModalType>(null);
