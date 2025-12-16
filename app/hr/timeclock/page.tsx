@@ -165,7 +165,7 @@ export default function TimeClockPage() {
       if (staffMember?.pin !== pin) {
         result = { success: false, message: 'PIN salah' };
       } else {
-        result = clockOut(selectedStaffId);
+        result = await clockOut(selectedStaffId);
       }
     } else {
       result = { success: false, message: 'Sudah selesai bekerja hari ini' };

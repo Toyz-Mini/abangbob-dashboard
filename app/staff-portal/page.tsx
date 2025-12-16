@@ -40,6 +40,7 @@ import {
   AchievementBadge,
   staffAchievements
 } from '@/components/staff-portal';
+import VerificationWizard from '@/components/VerificationWizard';
 
 
 // Circular Progress Component
@@ -166,6 +167,10 @@ export default function StaffPortalPage() {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
 
+  // Verification Wizard State
+  const [isVerificationOpen, setIsVerificationOpen] = useState(false);
+  const [verificationMode, setVerificationMode] = useState<'IN' | 'OUT'>('IN');
+
   // Get staff ID - prioritize PIN login, fall back to Supabase user
   // If logged in as Admin via Supabase, use first available staff or show admin view
   const staffId = authStaff?.id || user?.id || '';
@@ -273,25 +278,44 @@ export default function StaffPortalPage() {
     return 'Selamat Malam';
   };
 
-  const handleClockIn = async () => {
+  const handleClockIn = () => {
     if (!currentStaff || !staffId) return;
-    setIsClocking(true);
-    // Get pin from full staff profile if available
-    const fullStaff = staff.find(s => s.id === staffId);
-    const pin = fullStaff?.pin || '';
-    const result = await clockIn(staffId, pin);
-    setClockMessage(result.message);
-    setTimeout(() => setClockMessage(''), 3000);
-    setIsClocking(false);
+    setVerificationMode('IN');
+    setIsVerificationOpen(true);
   };
 
-  const handleClockOut = async () => {
+  const handleClockOut = () => {
     if (!staffId) return;
+    setVerificationMode('OUT');
+    setIsVerificationOpen(true);
+  };
+
+  const handleVerificationSuccess = async (photoBlob: Blob, location: { lat: number; lng: number }) => {
     setIsClocking(true);
-    const result = clockOut(staffId);
-    setClockMessage(result.message);
-    setTimeout(() => setClockMessage(''), 3000);
-    setIsClocking(false);
+
+    try {
+      // Get pin from full staff profile if available (store version has the pin)
+      const fullStaff = staff.find(s => s.id === staffId);
+      const pin = fullStaff?.pin || '';
+
+      let result;
+
+      if (verificationMode === 'IN') {
+        result = await clockIn(staffId, pin, photoBlob, location.lat, location.lng);
+      } else {
+        // Clock out supports verification data now
+        result = await clockOut(staffId, pin, photoBlob, location.lat, location.lng);
+      }
+
+      setClockMessage(result.message);
+      setTimeout(() => setClockMessage(''), 5000);
+    } catch (error) {
+      console.error('Verification error:', error);
+      setClockMessage('Ralat semasa proses kehadiran.');
+    } finally {
+      setIsClocking(false);
+      setIsVerificationOpen(false);
+    }
   };
 
   if (!isInitialized || !currentStaff) {
@@ -664,6 +688,14 @@ export default function StaffPortalPage() {
         <FeedbackModal
           isOpen={showFeedbackModal}
           onClose={() => setShowFeedbackModal(false)}
+          staffName={currentStaff.name}
+        />
+
+        {/* Verification Wizard */}
+        <VerificationWizard
+          isOpen={isVerificationOpen}
+          onClose={() => setIsVerificationOpen(false)}
+          onSuccess={handleVerificationSuccess}
           staffName={currentStaff.name}
         />
 

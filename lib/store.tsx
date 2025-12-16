@@ -139,7 +139,7 @@ interface StoreState {
   updateStaff: (id: string, updates: Partial<StaffProfile>) => void;
   deleteStaff: (id: string) => void;
   clockIn: (staffId: string, pin: string, photo?: Blob, latitude?: number, longitude?: number) => Promise<{ success: boolean; message: string }>;
-  clockOut: (staffId: string) => { success: boolean; message: string };
+  clockOut: (staffId: string, pin?: string, photo?: Blob, latitude?: number, longitude?: number) => Promise<{ success: boolean; message: string }>;
   getStaffAttendanceToday: (staffId: string) => AttendanceRecord | undefined;
   refreshStaff: () => Promise<void>;
   refreshAttendance: () => Promise<void>;
@@ -1174,7 +1174,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     return { success: true, message: `Clock in berjaya pada ${now} (Offline/Local)` };
   }, [staff, attendance]);
 
-  const clockOut = useCallback((staffId: string): { success: boolean; message: string } => {
+  const clockOut = useCallback(async (staffId: string, pin?: string, photo?: Blob, latitude?: number, longitude?: number): Promise<{ success: boolean; message: string }> => {
     const today = new Date().toISOString().split('T')[0];
     const record = attendance.find(a => a.staffId === staffId && a.date === today && a.clockInTime && !a.clockOutTime);
 
@@ -1183,6 +1183,30 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }
 
     const now = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+
+    // Supabase Sync
+    if (isSupabaseConfigured() && photo && latitude && longitude) {
+      try {
+        const syncResult = await SupabaseSync.clockOut({
+          attendance_id: record.id,
+          staff_id: staffId,
+          latitude,
+          longitude,
+          selfie_file: photo as File
+        });
+
+        if (syncResult.success) {
+          setAttendance(prev => prev.map(a =>
+            a.id === record.id ? { ...a, clockOutTime: now } : a
+          ));
+          return { success: true, message: 'Clock out berjaya' };
+        } else {
+          return { success: false, message: syncResult.error || 'Gagal clock out' };
+        }
+      } catch (err) {
+        console.error('Supabase clock-out failed', err);
+      }
+    }
 
     setAttendance(prev => prev.map(a =>
       a.id === record.id ? { ...a, clockOutTime: now } : a

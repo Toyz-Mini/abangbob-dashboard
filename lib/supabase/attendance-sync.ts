@@ -311,23 +311,91 @@ export async function clockIn(data: ClockInData) {
     }
 }
 
-export async function clockOut(attendanceId: string) {
-    const supabase = getSupabaseClient();
-    if (!supabase) return { success: false, error: 'Supabase not configured', data: null };
+export interface ClockOutData {
+    attendance_id: string;
+    latitude: number;
+    longitude: number;
+    selfie_file: File;
+    staff_id: string; // Needed for photo path
+}
 
-    const { data, error } = await (supabase as any)
-        .from('attendance')
-        .update({ clock_out: new Date().toISOString() })
-        .eq('id', attendanceId)
-        .select()
-        .single();
+export async function clockOut(data: ClockOutData) {
+    try {
+        // 1. Verify location
+        const verification = await verifyLocation(data.latitude, data.longitude);
 
-    if (error) {
-        console.error('Error clocking out:', error);
-        return { success: false, error: error.message, data: null };
+        if (!verification.verified) {
+            return {
+                success: false,
+                error: `Anda berada ${Math.round(verification.distance || 0)}m dari lokasi terdekat. Sila berada dalam radius yang dibenarkan.`,
+                data: null,
+            };
+        }
+
+        // 2. Upload selfie
+        const { path: selfie_url, error: uploadError } = await uploadAttendancePhoto(
+            data.staff_id,
+            data.selfie_file
+        );
+
+        if (uploadError) {
+            return {
+                success: false,
+                error: 'Gagal upload foto. Sila cuba lagi.',
+                data: null,
+            };
+        }
+
+        // 3. Update attendance record
+        const supabase = getSupabaseClient();
+        if (!supabase) {
+            return {
+                success: false,
+                error: 'Supabase not configured',
+                data: null,
+            };
+        }
+
+        // We'll append clock-out metadata to notes since we don't have dedicated columns yet
+        // This ensures the data is preserved without requiring immediate schema migration
+        const noteEntry = `[Clock Out Verified] Lat: ${data.latitude}, Lng: ${data.longitude}, Dist: ${Math.round(verification.distance || 0)}m, Selfie: ${selfie_url}`;
+
+        // Fetch current notes first to append
+        const { data: currentRecord, error: fetchError } = await (supabase as any)
+            .from('attendance')
+            .select('notes')
+            .eq('id', data.attendance_id)
+            .single();
+
+        const currentNotes = currentRecord?.notes ? `${currentRecord.notes}\n` : '';
+
+        const updates = {
+            clock_out: new Date().toISOString(),
+            notes: `${currentNotes}${noteEntry}`
+        };
+
+        const { data: record, error } = await (supabase as any)
+            .from('attendance')
+            .update(updates)
+            .eq('id', data.attendance_id)
+            .select()
+            .single();
+
+        if (error) {
+            console.error('Error clocking out:', error);
+            return { success: false, error: error.message, data: null };
+        }
+
+        return { success: true, data: record, error: null };
+
+    } catch (error: any) {
+        console.error('Clock-out error:', error);
+        return {
+            success: false,
+            error: error.message || 'Ralat tidak dijangka',
+            data: null,
+        };
     }
-
-    return { success: true, data, error: null };
 }
 
 // =====================================================
