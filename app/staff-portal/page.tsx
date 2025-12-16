@@ -279,7 +279,7 @@ export default function StaffPortalPage() {
     // Get pin from full staff profile if available
     const fullStaff = staff.find(s => s.id === staffId);
     const pin = fullStaff?.pin || '';
-    const result = clockIn(staffId, pin);
+    const result = await clockIn(staffId, pin);
     setClockMessage(result.message);
     setTimeout(() => setClockMessage(''), 3000);
     setIsClocking(false);
