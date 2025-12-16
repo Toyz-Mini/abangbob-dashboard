@@ -63,8 +63,8 @@ function CircularProgress({
       <svg>
         <defs>
           <linearGradient id="clockGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="var(--primary)" />
-            <stop offset="100%" stopColor="var(--primary-dark)" />
+            <stop offset="0%" stopColor="#CC1512" />
+            <stop offset="100%" stopColor="#A50F0F" />
           </linearGradient>
         </defs>
         <circle
