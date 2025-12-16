@@ -29,12 +29,16 @@ export default function POSPage() {
   const { orders, addOrder, updateOrderStatus, getTodayOrders, isInitialized } = useOrders();
   const { menuItems, modifierGroups, modifierOptions, getOptionsForGroup } = useMenu();
   const { inventory, adjustStock } = useInventory();
-  const { getEnabledPaymentMethods } = usePaymentMethods();
+  const { paymentMethods, isInitialized: paymentMethodsInitialized } = usePaymentMethods();
   const { t, language } = useTranslation();
   const { showToast } = useToast();
 
-  // Get enabled payment methods from settings
-  const enabledPaymentMethods = getEnabledPaymentMethods();
+  // Get enabled payment methods from settings - using useMemo for proper reactivity
+  const enabledPaymentMethods = useMemo(() => {
+    return paymentMethods
+      .filter(pm => pm.isEnabled)
+      .sort((a, b) => a.sortOrder - b.sortOrder);
+  }, [paymentMethods]);
 
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -46,6 +50,7 @@ export default function POSPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [lastOrder, setLastOrder] = useState<Order | null>(null);
   const [discountPercent, setDiscountPercent] = useState(0);
+  const [cashReceived, setCashReceived] = useState<number>(0);
   const [receiptSettings, setReceiptSettings] = useState<ReceiptSettings>(DEFAULT_RECEIPT_SETTINGS);
   const receiptRef = useRef<HTMLDivElement>(null);
 
@@ -350,6 +355,7 @@ export default function POSPage() {
       setCustomerPhone('+673');
       setPaymentMethod('cash');
       setDiscountPercent(0);
+      setCashReceived(0);
       setCurrentTransactionId(null);
       setRetryCount(0);
     } catch (error) {
@@ -1058,6 +1064,77 @@ export default function POSPage() {
             )}
           </div>
 
+          {/* Cash Amount Input - Show only for cash payment */}
+          {paymentMethod === 'cash' && (
+            <div className="form-group" style={{
+              background: 'var(--gray-100)',
+              padding: '1rem',
+              borderRadius: 'var(--radius-md)',
+              marginTop: '0.5rem'
+            }}>
+              <label className="form-label" style={{ marginBottom: '0.5rem' }}>
+                Jumlah Diterima (BND)
+              </label>
+              <input
+                type="number"
+                className="form-input"
+                placeholder="0.00"
+                value={cashReceived || ''}
+                onChange={(e) => setCashReceived(Number(e.target.value))}
+                min="0"
+                step="0.01"
+                style={{ fontSize: '1.25rem', fontWeight: 700, textAlign: 'center' }}
+              />
+              {cashReceived > 0 && (
+                <div style={{
+                  marginTop: '0.75rem',
+                  padding: '0.75rem',
+                  background: cashReceived >= cartTotal ? 'var(--success-light, #d1fae5)' : 'var(--danger-light, #fee2e2)',
+                  borderRadius: 'var(--radius-sm)',
+                  textAlign: 'center'
+                }}>
+                  <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>
+                    Baki
+                  </div>
+                  <div style={{
+                    fontSize: '1.5rem',
+                    fontWeight: 700,
+                    color: cashReceived >= cartTotal ? 'var(--success)' : 'var(--danger)'
+                  }}>
+                    BND {(cashReceived - cartTotal).toFixed(2)}
+                  </div>
+                  {cashReceived < cartTotal && (
+                    <div style={{ fontSize: '0.75rem', color: 'var(--danger)', marginTop: '0.25rem' }}>
+                      Kurang BND {(cartTotal - cashReceived).toFixed(2)}
+                    </div>
+                  )}
+                </div>
+              )}
+              {/* Quick cash buttons */}
+              <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.75rem', flexWrap: 'wrap' }}>
+                {[5, 10, 20, 50, 100].map(amount => (
+                  <button
+                    key={amount}
+                    type="button"
+                    onClick={() => setCashReceived(amount)}
+                    className="btn btn-sm btn-outline"
+                    style={{ flex: 1, minWidth: '50px' }}
+                  >
+                    ${amount}
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => setCashReceived(Math.ceil(cartTotal))}
+                  className="btn btn-sm btn-primary"
+                  style={{ flex: 1, minWidth: '50px' }}
+                >
+                  Tepat
+                </button>
+              </div>
+            </div>
+          )}
+
           <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1.5rem' }}>
             <button
               onClick={() => setModalType(null)}
@@ -1124,7 +1201,7 @@ export default function POSPage() {
                   borderRadius: 'var(--radius-md)',
                   display: 'flex',
                   justifyContent: 'center',
-                  maxHeight: '350px',
+                  maxHeight: '60vh',
                   overflow: 'auto',
                 }}
               >

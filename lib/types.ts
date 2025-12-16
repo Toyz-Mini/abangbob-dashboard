@@ -2,6 +2,9 @@
 
 export type UserRole = 'admin' | 'manager' | 'staff';
 
+// Payment method type (defining early as it's used by Order)
+export type PaymentMethod = 'cash' | 'bank' | 'card' | 'ewallet' | 'qr' | 'trf' | string;
+
 export interface MenuItem {
   id: string;
   name: string;
@@ -60,7 +63,7 @@ export interface Order {
   customerPhone?: string;
   orderType: 'takeaway' | 'gomamam' | 'dine-in' | 'delivery';
   status: 'pending' | 'preparing' | 'ready' | 'completed' | 'cancelled';
-  paymentMethod?: 'cash' | 'card' | 'qr' | 'ewallet';
+  paymentMethod?: PaymentMethod;
   createdAt: string;
   staffId?: string;
   // Staff speed tracking timestamps
@@ -358,7 +361,7 @@ export interface DeliveryOrder {
 // ==================== FINANCE TYPES ====================
 
 export type ExpenseCategory = 'rent' | 'utilities' | 'supplies' | 'wages' | 'marketing' | 'maintenance' | 'ingredients' | 'equipment' | 'other';
-export type PaymentMethod = 'cash' | 'bank' | 'card' | 'ewallet' | 'qr' | 'trf' | string;
+// PaymentMethod is defined at the top of this file
 
 export interface Expense {
   id: string;
