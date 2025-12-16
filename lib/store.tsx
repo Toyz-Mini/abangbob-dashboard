@@ -321,6 +321,7 @@ interface StoreState {
   getPendingVoidRefundRequests: () => VoidRefundRequest[];
   getVoidRefundRequestsByStaff: (staffId: string) => VoidRefundRequest[];
   getPendingVoidRefundCount: () => number;
+  refreshVoidRefundRequests: () => Promise<void>;
 
   // Oil Tracker / Equipment
   oilTrackers: OilTracker[];
@@ -2578,6 +2579,18 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     return voidRefundRequests.filter(r => r.status === 'pending').length;
   }, [voidRefundRequests]);
 
+  // Refresh void refund requests from Supabase (for realtime sync)
+  const refreshVoidRefundRequests = useCallback(async () => {
+    try {
+      const voidRefundData = await VoidRefundOps.fetchVoidRefundRequests();
+      if (voidRefundData && voidRefundData.length >= 0) {
+        setVoidRefundRequests(voidRefundData);
+      }
+    } catch (error) {
+      console.error('Failed to refresh void refund requests:', error);
+    }
+  }, []);
+
   // ==================== OIL TRACKER / EQUIPMENT FUNCTIONS ====================
 
   const addOilTracker = useCallback((tracker: Omit<OilTracker, 'fryerId'>) => {
@@ -3208,6 +3221,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     getPendingVoidRefundRequests,
     getVoidRefundRequestsByStaff,
     getPendingVoidRefundCount,
+    refreshVoidRefundRequests,
 
     // Oil Tracker / Equipment
     oilTrackers,
@@ -3529,6 +3543,7 @@ export function useOrderHistory() {
     getPendingVoidRefundRequests: store.getPendingVoidRefundRequests,
     getVoidRefundRequestsByStaff: store.getVoidRefundRequestsByStaff,
     getPendingVoidRefundCount: store.getPendingVoidRefundCount,
+    refreshVoidRefundRequests: store.refreshVoidRefundRequests,
 
     // Related data
     staff: store.staff,

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import MainLayout from '@/components/MainLayout';
 import DataTable, { Column } from '@/components/DataTable';
 import StatCard from '@/components/StatCard';
@@ -13,6 +13,7 @@ import { getVoidRefundTypeLabel } from '@/lib/order-history-data';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import OrderDetailModal from '@/components/order-history/OrderDetailModal';
 import PendingApprovalsPanel from '@/components/order-history/PendingApprovalsPanel';
+import { useVoidRefundRealtime } from '@/lib/supabase/realtime-hooks';
 import {
   RefreshCw,
   CheckCircle,
@@ -34,10 +35,18 @@ export default function RefundApprovalsPage() {
     getPendingVoidRefundCount,
     approveVoidRefund,
     rejectVoidRefund,
+    refreshVoidRefundRequests,
     isInitialized,
   } = useOrderHistory();
   const { currentStaff } = useAuth();
   const { t } = useTranslation();
+
+  // Subscribe to realtime updates for void_refund_requests
+  const handleRealtimeUpdate = useCallback(() => {
+    refreshVoidRefundRequests();
+  }, [refreshVoidRefundRequests]);
+
+  useVoidRefundRealtime(handleRealtimeUpdate);
 
   // State
   const [selectedOrder, setSelectedOrder] = useState<OrderHistoryItem | null>(null);

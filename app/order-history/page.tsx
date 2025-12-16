@@ -6,7 +6,7 @@ import DataTable, { Column } from '@/components/DataTable';
 import Modal from '@/components/Modal';
 import StatCard from '@/components/StatCard';
 import { useOrders, useOrderHistory } from '@/lib/store';
-import { useOrdersRealtime } from '@/lib/supabase/realtime-hooks';
+import { useOrdersRealtime, useVoidRefundRealtime } from '@/lib/supabase/realtime-hooks';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { useTranslation } from '@/lib/contexts/LanguageContext';
 import { OrderHistoryItem, OrderHistoryFilters, VoidRefundRequest, Order } from '@/lib/types';
@@ -43,6 +43,7 @@ export default function OrderHistoryPage() {
     getPendingVoidRefundCount,
     approveVoidRefund,
     rejectVoidRefund,
+    refreshVoidRefundRequests,
     isInitialized: historyInitialized,
   } = useOrderHistory();
 
@@ -55,8 +56,17 @@ export default function OrderHistoryPage() {
     refreshOrders();
   }, [refreshOrders]);
 
+  // Handle realtime void/refund changes - refresh when requests change
+  const handleVoidRefundChange = useCallback(() => {
+    console.log('[Realtime] Void/refund change detected, refreshing...');
+    refreshVoidRefundRequests();
+  }, [refreshVoidRefundRequests]);
+
   // Subscribe to realtime order changes
   useOrdersRealtime(handleOrderChange);
+
+  // Subscribe to realtime void/refund changes
+  useVoidRefundRealtime(handleVoidRefundChange);
 
   // State
   const [selectedOrder, setSelectedOrder] = useState<OrderHistoryItem | null>(null);

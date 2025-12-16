@@ -141,6 +141,13 @@ export function useSchedulesRealtime(onScheduleChange: RealtimeChangeHandler) {
 }
 
 /**
+ * Subscribe to void_refund_requests table changes (for refund sync across devices)
+ */
+export function useVoidRefundRealtime(onVoidRefundChange: RealtimeChangeHandler) {
+  return useSupabaseRealtime('void_refund_requests', onVoidRefundChange);
+}
+
+/**
  * Check if realtime is enabled and working
  */
 export async function testRealtimeConnection(): Promise<boolean> {
