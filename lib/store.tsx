@@ -284,6 +284,7 @@ interface StoreState {
   rejectLeaveRequest: (id: string, approverId: string, approverName: string, reason: string) => void;
   getStaffLeaveRequests: (staffId: string) => LeaveRequest[];
   getPendingLeaveRequests: () => LeaveRequest[];
+  refreshLeaveRequests: () => Promise<void>;
 
   // Staff Portal - Claims
   claimRequests: ClaimRequest[];
@@ -294,6 +295,7 @@ interface StoreState {
   markClaimAsPaid: (id: string) => void;
   getStaffClaimRequests: (staffId: string) => ClaimRequest[];
   getPendingClaimRequests: () => ClaimRequest[];
+  refreshClaimRequests: () => Promise<void>;
 
   // Staff Portal - General Requests
   staffRequests: StaffRequest[];
@@ -1292,6 +1294,44 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  // Refresh leave requests from Supabase (for realtime sync)
+  const refreshLeaveRequests = useCallback(async () => {
+    try {
+      const supabaseLeaveRequests = await VoidRefundOps.fetchLeaveRequests();
+      if (supabaseLeaveRequests && supabaseLeaveRequests.length > 0) {
+        setLeaveRequests(supabaseLeaveRequests);
+        console.log('[Realtime] Leave requests refreshed from Supabase:', supabaseLeaveRequests.length);
+      }
+    } catch (error) {
+      console.error('Failed to refresh leave requests from Supabase:', error);
+    }
+  }, []);
+
+  // Refresh claim requests from Supabase (for realtime sync)
+  const refreshClaimRequests = useCallback(async () => {
+    try {
+      const supabaseClaimRequests = await VoidRefundOps.fetchClaimRequests();
+      if (supabaseClaimRequests && supabaseClaimRequests.length > 0) {
+        setClaimRequests(supabaseClaimRequests);
+        console.log('[Realtime] Claim requests refreshed from Supabase:', supabaseClaimRequests.length);
+      }
+    } catch (error) {
+      console.error('Failed to refresh claim requests from Supabase:', error);
+    }
+  }, []);
+
+  // Refresh staff requests from Supabase (for realtime sync)
+  const refreshStaffRequests = useCallback(async () => {
+    try {
+      const supabaseStaffRequests = await VoidRefundOps.fetchStaffRequests();
+      if (supabaseStaffRequests && supabaseStaffRequests.length > 0) {
+        setStaffRequests(supabaseStaffRequests);
+        console.log('[Realtime] Staff requests refreshed from Supabase:', supabaseStaffRequests.length);
+      }
+    } catch (error) {
+      console.error('Failed to refresh staff requests from Supabase:', error);
+    }
+  }, []);
 
   // Production log actions
   const addProductionLog = useCallback((log: Omit<ProductionLog, 'id'>) => {
@@ -3186,6 +3226,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     rejectLeaveRequest,
     getStaffLeaveRequests,
     getPendingLeaveRequests,
+    refreshLeaveRequests,
 
     // Staff Portal - Claims
     claimRequests,
@@ -3196,6 +3237,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     markClaimAsPaid,
     getStaffClaimRequests,
     getPendingClaimRequests,
+    refreshClaimRequests,
 
     // Staff Portal - General Requests
     staffRequests,
@@ -3499,6 +3541,7 @@ export function useStaffPortal() {
     rejectLeaveRequest: store.rejectLeaveRequest,
     getStaffLeaveRequests: store.getStaffLeaveRequests,
     getPendingLeaveRequests: store.getPendingLeaveRequests,
+    refreshLeaveRequests: store.refreshLeaveRequests,
     // Claims
     claimRequests: store.claimRequests,
     addClaimRequest: store.addClaimRequest,
@@ -3508,6 +3551,7 @@ export function useStaffPortal() {
     markClaimAsPaid: store.markClaimAsPaid,
     getStaffClaimRequests: store.getStaffClaimRequests,
     getPendingClaimRequests: store.getPendingClaimRequests,
+    refreshClaimRequests: store.refreshClaimRequests,
     // Staff Requests
     staffRequests: store.staffRequests,
     addStaffRequest: store.addStaffRequest,

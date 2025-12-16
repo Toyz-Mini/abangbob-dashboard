@@ -1,13 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import MainLayout from '@/components/MainLayout';
 import { useStaffPortal } from '@/lib/store';
+import { useLeaveRequestsRealtime, useClaimRequestsRealtime } from '@/lib/supabase/realtime-hooks';
 import { getLeaveTypeLabel, getClaimTypeLabel, getRequestCategoryLabel, getStatusLabel, getStatusColor } from '@/lib/staff-portal-data';
 import Modal from '@/components/Modal';
 import LoadingSpinner from '@/components/LoadingSpinner';
-import { 
-  CheckCircle, 
+import {
+  CheckCircle,
   XCircle,
   Plane,
   DollarSign,
@@ -24,7 +25,7 @@ const CURRENT_APPROVER_NAME = 'Ahmad Bin Hassan';
 type TabType = 'leave' | 'claims' | 'requests';
 
 export default function ApprovalsPage() {
-  const { 
+  const {
     getPendingLeaveRequests,
     getPendingClaimRequests,
     getPendingStaffRequests,
@@ -34,8 +35,24 @@ export default function ApprovalsPage() {
     rejectClaimRequest,
     completeStaffRequest,
     rejectStaffRequest,
-    isInitialized 
+    refreshLeaveRequests,
+    refreshClaimRequests,
+    isInitialized
   } = useStaffPortal();
+
+  // Realtime subscriptions for leave and claims
+  const handleLeaveChange = useCallback(() => {
+    console.log('[Realtime] Leave request change detected, refreshing...');
+    refreshLeaveRequests();
+  }, [refreshLeaveRequests]);
+
+  const handleClaimChange = useCallback(() => {
+    console.log('[Realtime] Claim request change detected, refreshing...');
+    refreshClaimRequests();
+  }, [refreshClaimRequests]);
+
+  useLeaveRequestsRealtime(handleLeaveChange);
+  useClaimRequestsRealtime(handleClaimChange);
 
   const [activeTab, setActiveTab] = useState<TabType>('leave');
   const [showRejectModal, setShowRejectModal] = useState(false);
@@ -154,9 +171,9 @@ export default function ApprovalsPage() {
             pendingLeave.length > 0 ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 {pendingLeave.map(request => (
-                  <div 
+                  <div
                     key={request.id}
-                    style={{ 
+                    style={{
                       padding: '1rem',
                       borderRadius: 'var(--radius-md)',
                       background: 'var(--gray-50)',
@@ -192,7 +209,7 @@ export default function ApprovalsPage() {
                       </div>
 
                       <div style={{ display: 'flex', gap: '0.5rem' }}>
-                        <button 
+                        <button
                           className="btn btn-success btn-sm"
                           onClick={() => handleApprove('leave', request.id)}
                           disabled={isProcessing}
@@ -200,7 +217,7 @@ export default function ApprovalsPage() {
                           <CheckCircle size={16} />
                           Lulus
                         </button>
-                        <button 
+                        <button
                           className="btn btn-danger btn-sm"
                           onClick={() => openRejectModal('leave', request.id)}
                           disabled={isProcessing}
@@ -225,9 +242,9 @@ export default function ApprovalsPage() {
             pendingClaims.length > 0 ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 {pendingClaims.map(claim => (
-                  <div 
+                  <div
                     key={claim.id}
-                    style={{ 
+                    style={{
                       padding: '1rem',
                       borderRadius: 'var(--radius-md)',
                       background: 'var(--gray-50)',
@@ -256,7 +273,7 @@ export default function ApprovalsPage() {
                       </div>
 
                       <div style={{ display: 'flex', gap: '0.5rem' }}>
-                        <button 
+                        <button
                           className="btn btn-success btn-sm"
                           onClick={() => handleApprove('claims', claim.id)}
                           disabled={isProcessing}
@@ -264,7 +281,7 @@ export default function ApprovalsPage() {
                           <CheckCircle size={16} />
                           Lulus
                         </button>
-                        <button 
+                        <button
                           className="btn btn-danger btn-sm"
                           onClick={() => openRejectModal('claims', claim.id)}
                           disabled={isProcessing}
@@ -289,9 +306,9 @@ export default function ApprovalsPage() {
             pendingRequests.length > 0 ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 {pendingRequests.map(request => (
-                  <div 
+                  <div
                     key={request.id}
-                    style={{ 
+                    style={{
                       padding: '1rem',
                       borderRadius: 'var(--radius-md)',
                       background: 'var(--gray-50)',
@@ -320,7 +337,7 @@ export default function ApprovalsPage() {
                       </div>
 
                       <div style={{ display: 'flex', gap: '0.5rem' }}>
-                        <button 
+                        <button
                           className="btn btn-success btn-sm"
                           onClick={() => handleApprove('requests', request.id)}
                           disabled={isProcessing}
@@ -328,7 +345,7 @@ export default function ApprovalsPage() {
                           <CheckCircle size={16} />
                           Selesai
                         </button>
-                        <button 
+                        <button
                           className="btn btn-danger btn-sm"
                           onClick={() => openRejectModal('requests', request.id)}
                           disabled={isProcessing}
