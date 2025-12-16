@@ -1111,14 +1111,18 @@ export default function POSPage() {
                 </div>
               )}
               {/* Quick cash buttons */}
-              <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.75rem', flexWrap: 'wrap' }}>
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(3, 1fr)',
+                gap: '0.5rem',
+                marginTop: '0.75rem'
+              }}>
                 {[5, 10, 20, 50, 100].map(amount => (
                   <button
                     key={amount}
                     type="button"
                     onClick={() => setCashReceived(amount)}
                     className="btn btn-sm btn-outline"
-                    style={{ flex: 1, minWidth: '50px' }}
                   >
                     ${amount}
                   </button>
@@ -1127,7 +1131,6 @@ export default function POSPage() {
                   type="button"
                   onClick={() => setCashReceived(Math.ceil(cartTotal))}
                   className="btn btn-sm btn-primary"
-                  style={{ flex: 1, minWidth: '50px' }}
                 >
                   Tepat
                 </button>
@@ -1201,8 +1204,6 @@ export default function POSPage() {
                   borderRadius: 'var(--radius-md)',
                   display: 'flex',
                   justifyContent: 'center',
-                  maxHeight: '60vh',
-                  overflow: 'auto',
                 }}
               >
                 <ReceiptPreview
