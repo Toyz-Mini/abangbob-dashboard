@@ -6,7 +6,7 @@ import { useStaff } from '@/lib/store';
 import Link from 'next/link';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import StaffPortalNav from '@/components/StaffPortalNav';
-import { 
+import {
   ArrowLeft,
   FileText,
   Download,
@@ -88,10 +88,10 @@ export default function PayslipPage() {
   const currentStaff = staff.find(s => s.id === CURRENT_STAFF_ID);
 
   // Calculate totals
-  const totalEarnings = selectedPayslip 
+  const totalEarnings = selectedPayslip
     ? selectedPayslip.basicSalary + selectedPayslip.overtime + selectedPayslip.allowances
     : 0;
-  
+
   const totalDeductions = selectedPayslip
     ? selectedPayslip.epfEmployee + selectedPayslip.socso + selectedPayslip.otherDeductions
     : 0;
@@ -112,9 +112,9 @@ export default function PayslipPage() {
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
           <div>
-            <Link href="/staff-portal" className="btn btn-outline btn-sm" style={{ marginBottom: '0.5rem' }}>
-              <ArrowLeft size={16} />
-              Kembali
+            <Link href="/staff-portal" className="text-sm font-medium text-gray-500 hover:text-gray-900 flex items-center gap-2" style={{ marginBottom: '0.5rem', transition: 'color 0.2s' }}>
+              <ArrowLeft size={18} />
+              Kembali ke Portal
             </Link>
             <h1 style={{ fontSize: '1.75rem', fontWeight: 700, marginTop: '0.5rem' }}>
               Slip Gaji

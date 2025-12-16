@@ -28,6 +28,7 @@ import {
   Users
 } from 'lucide-react';
 
+import { usePathname } from 'next/navigation';
 import RouteGuard from './RouteGuard';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { canViewNavItem, type UserRole } from '@/lib/permissions';
@@ -37,6 +38,7 @@ export default function MainLayout({ children }: { children: ReactNode }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const sidebarRef = useRef<HTMLElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const pathname = usePathname();
 
   const { user, isStaffLoggedIn, currentStaff } = useAuth();
 
@@ -243,12 +245,14 @@ export default function MainLayout({ children }: { children: ReactNode }) {
           onClose={commandPalette.close}
         />
 
-        {/* Bottom Navigation (Mobile) */}
-        <BottomNav
-          items={bottomNavItems}
-          showMore={true}
-          onMoreClick={bottomNav.openMore}
-        />
+        {/* Bottom Navigation (Mobile) - Hide on Staff Portal as it has its own nav */}
+        {!pathname?.startsWith('/staff-portal') && (
+          <BottomNav
+            items={bottomNavItems}
+            showMore={true}
+            onMoreClick={bottomNav.openMore}
+          />
+        )}
 
         {/* More Menu Sheet (Mobile) */}
         <Sheet

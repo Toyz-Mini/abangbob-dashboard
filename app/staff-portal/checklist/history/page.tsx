@@ -5,7 +5,7 @@ import MainLayout from '@/components/MainLayout';
 import { useStaffPortal, useStaff } from '@/lib/store';
 import Link from 'next/link';
 import LoadingSpinner from '@/components/LoadingSpinner';
-import { 
+import {
   ArrowLeft,
   CheckCircle,
   XCircle,
@@ -21,7 +21,7 @@ const CURRENT_STAFF_ID = '2';
 export default function ChecklistHistoryPage() {
   const { staff, isInitialized } = useStaff();
   const { checklistCompletions, shifts } = useStaffPortal();
-  
+
   const currentStaff = staff.find(s => s.id === CURRENT_STAFF_ID);
 
   // Get my checklist history
@@ -58,9 +58,9 @@ export default function ChecklistHistoryPage() {
       <div className="animate-fade-in">
         {/* Header */}
         <div style={{ marginBottom: '1.5rem' }}>
-          <Link href="/staff-portal/checklist" className="btn btn-outline btn-sm" style={{ marginBottom: '0.5rem' }}>
-            <ArrowLeft size={16} />
-            Kembali
+          <Link href="/staff-portal/checklist" className="text-sm font-medium text-gray-500 hover:text-gray-900 flex items-center gap-2" style={{ marginBottom: '0.5rem', transition: 'color 0.2s' }}>
+            <ArrowLeft size={18} />
+            Kembali ke Checklist
           </Link>
           <h1 style={{ fontSize: '1.75rem', fontWeight: 700, marginTop: '0.5rem' }}>
             Sejarah Checklist
@@ -89,9 +89,9 @@ export default function ChecklistHistoryPage() {
                     const totalItems = checklist.items.length;
 
                     return (
-                      <div 
+                      <div
                         key={checklist.id}
-                        style={{ 
+                        style={{
                           padding: '1rem',
                           borderRadius: 'var(--radius-md)',
                           background: checklist.status === 'completed' ? '#dcfce7' : '#fef3c7',
@@ -148,14 +148,14 @@ export default function ChecklistHistoryPage() {
 
                         {/* Progress bar */}
                         <div style={{ marginTop: '0.75rem' }}>
-                          <div style={{ 
-                            height: '4px', 
-                            background: 'rgba(0,0,0,0.1)', 
+                          <div style={{
+                            height: '4px',
+                            background: 'rgba(0,0,0,0.1)',
                             borderRadius: '2px',
                             overflow: 'hidden'
                           }}>
-                            <div style={{ 
-                              height: '100%', 
+                            <div style={{
+                              height: '100%',
                               width: `${(completedItems / totalItems) * 100}%`,
                               background: checklist.status === 'completed' ? 'var(--success)' : 'var(--warning)'
                             }} />

@@ -6,8 +6,8 @@ import { useStaffPortal, useStaff } from '@/lib/store';
 import Link from 'next/link';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import StaffPortalNav from '@/components/StaffPortalNav';
-import { 
-  Calendar, 
+import {
+  Calendar,
   ChevronLeft,
   ChevronRight,
   Clock,
@@ -24,7 +24,7 @@ const CURRENT_STAFF_ID = '2';
 export default function MySchedulePage() {
   const { staff, isInitialized } = useStaff();
   const { schedules, shifts } = useStaffPortal();
-  
+
   const currentStaff = staff.find(s => s.id === CURRENT_STAFF_ID);
 
   // Week navigation
@@ -54,10 +54,10 @@ export default function MySchedulePage() {
     const endDate = new Date(currentWeekStart);
     endDate.setDate(endDate.getDate() + 7);
     const endStr = endDate.toISOString().split('T')[0];
-    
-    return schedules.filter(s => 
-      s.staffId === CURRENT_STAFF_ID && 
-      s.date >= startStr && 
+
+    return schedules.filter(s =>
+      s.staffId === CURRENT_STAFF_ID &&
+      s.date >= startStr &&
       s.date < endStr
     );
   }, [schedules, currentWeekStart]);
@@ -138,9 +138,9 @@ export default function MySchedulePage() {
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
           <div>
-            <Link href="/staff-portal" className="btn btn-outline btn-sm" style={{ marginBottom: '0.5rem' }}>
-              <ArrowLeft size={16} />
-              Kembali
+            <Link href="/staff-portal" className="text-sm font-medium text-gray-500 hover:text-gray-900 flex items-center gap-2" style={{ marginBottom: '0.5rem', transition: 'color 0.2s' }}>
+              <ArrowLeft size={18} />
+              Kembali ke Portal
             </Link>
             <h1 style={{ fontSize: '1.75rem', fontWeight: 700, marginTop: '0.5rem' }}>
               Jadual Kerja Saya
@@ -163,8 +163,8 @@ export default function MySchedulePage() {
                 {weekDates[0].toLocaleDateString('ms-MY', { day: 'numeric', month: 'short' })} - {' '}
                 {weekDates[6].toLocaleDateString('ms-MY', { day: 'numeric', month: 'short', year: 'numeric' })}
               </div>
-              <button 
-                className="btn btn-sm btn-outline" 
+              <button
+                className="btn btn-sm btn-outline"
                 onClick={goToCurrentWeek}
                 style={{ marginTop: '0.5rem' }}
               >
@@ -187,7 +187,7 @@ export default function MySchedulePage() {
             <div className="staff-stat-value">{myWeekSchedule.length}</div>
             <div className="staff-stat-label">Hari Bekerja</div>
           </div>
-          
+
           <div className="staff-stat-card success">
             <div className="staff-stat-icon success">
               <Clock size={24} />
@@ -195,7 +195,7 @@ export default function MySchedulePage() {
             <div className="staff-stat-value">{weeklyHours}h</div>
             <div className="staff-stat-label">Jumlah Jam</div>
           </div>
-          
+
           <div className="staff-stat-card cool">
             <div className="staff-stat-icon cool">
               <Coffee size={24} />
@@ -223,13 +223,13 @@ export default function MySchedulePage() {
               const isPast = date < new Date() && !today;
 
               return (
-                <div 
+                <div
                   key={date.toISOString()}
-                  style={{ 
+                  style={{
                     padding: '1rem',
                     borderRadius: 'var(--radius-lg)',
-                    background: today 
-                      ? 'linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.05) 100%)' 
+                    background: today
+                      ? 'linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.05) 100%)'
                       : schedule ? 'var(--gray-50)' : 'transparent',
                     border: today ? '2px solid #6366f1' : '1px solid var(--gray-200)',
                     opacity: isPast ? 0.6 : 1,
@@ -238,8 +238,8 @@ export default function MySchedulePage() {
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem', flexWrap: 'wrap' }}>
                     <div style={{ minWidth: '100px' }}>
-                      <div style={{ 
-                        fontWeight: 700, 
+                      <div style={{
+                        fontWeight: 700,
                         fontSize: today ? '1.1rem' : '1rem',
                         color: today ? '#6366f1' : 'inherit'
                       }}>
@@ -257,9 +257,9 @@ export default function MySchedulePage() {
 
                     {schedule && shift ? (
                       <div style={{ flex: 1 }}>
-                        <div style={{ 
-                          display: 'flex', 
-                          alignItems: 'center', 
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
                           gap: '0.5rem',
                           padding: '0.75rem',
                           background: `${shift.color}15`,
@@ -278,8 +278,8 @@ export default function MySchedulePage() {
                             <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
                               {shift.startTime} - {shift.endTime}
                               <span style={{ marginLeft: '0.5rem', fontSize: '0.75rem' }}>
-                                ({Math.round(((parseInt(shift.endTime.split(':')[0]) * 60 + parseInt(shift.endTime.split(':')[1])) - 
-                                  (parseInt(shift.startTime.split(':')[0]) * 60 + parseInt(shift.startTime.split(':')[1])) - 
+                                ({Math.round(((parseInt(shift.endTime.split(':')[0]) * 60 + parseInt(shift.endTime.split(':')[1])) -
+                                  (parseInt(shift.startTime.split(':')[0]) * 60 + parseInt(shift.startTime.split(':')[1])) -
                                   shift.breakDuration) / 60)}j kerja)
                               </span>
                             </div>
@@ -302,9 +302,9 @@ export default function MySchedulePage() {
                         )}
                       </div>
                     ) : (
-                      <div style={{ 
-                        flex: 1, 
-                        padding: '1rem', 
+                      <div style={{
+                        flex: 1,
+                        padding: '1rem',
                         textAlign: 'center',
                         color: 'var(--text-light)',
                         background: 'var(--gray-100)',
@@ -329,9 +329,9 @@ export default function MySchedulePage() {
             </div>
             <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
               {shifts.map(shift => (
-                <div 
+                <div
                   key={shift.id}
-                  style={{ 
+                  style={{
                     padding: '0.5rem 1rem',
                     borderRadius: 'var(--radius-md)',
                     background: `${shift.color}15`,

@@ -5,7 +5,7 @@ import { useStaffPortal, useStaff, useKPI } from '@/lib/store';
 import Link from 'next/link';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import StaffPortalNav from '@/components/StaffPortalNav';
-import { 
+import {
   ArrowLeft,
   Phone,
   DollarSign,
@@ -37,7 +37,7 @@ export default function ProfilePage() {
   const { staff, attendance, isInitialized } = useStaff();
   const { getLeaveBalance } = useStaffPortal();
   const { getStaffKPI } = useKPI();
-  
+
   const currentStaff = staff.find(s => s.id === CURRENT_STAFF_ID);
   const leaveBalance = getLeaveBalance(CURRENT_STAFF_ID);
   const kpi = getStaffKPI(CURRENT_STAFF_ID);
@@ -88,9 +88,9 @@ export default function ProfilePage() {
       <div className="staff-portal animate-fade-in">
         {/* Header */}
         <div style={{ marginBottom: '1.5rem' }}>
-          <Link href="/staff-portal" className="btn btn-outline btn-sm" style={{ marginBottom: '0.5rem' }}>
-            <ArrowLeft size={16} />
-            Kembali
+          <Link href="/staff-portal" className="text-sm font-medium text-gray-500 hover:text-gray-900 flex items-center gap-2" style={{ marginBottom: '0.5rem', transition: 'color 0.2s' }}>
+            <ArrowLeft size={18} />
+            Kembali ke Portal
           </Link>
         </div>
 
@@ -106,7 +106,7 @@ export default function ProfilePage() {
               <span style={{ opacity: 0.7, marginLeft: '0.5rem' }}>({currentStaff.employeeNumber})</span>
             )}
           </p>
-          
+
           <div className="staff-profile-badges">
             <span className={`staff-profile-badge ${currentStaff.status === 'active' ? '' : 'warning'}`}>
               {currentStaff.status === 'active' ? '✓ Aktif' : '⏸ Cuti'}
@@ -163,7 +163,7 @@ export default function ProfilePage() {
               Maklumat Peribadi
             </div>
           </div>
-          
+
           <div className="profile-info-grid">
             <div className="profile-info-item">
               <div className="profile-info-icon">
@@ -187,7 +187,7 @@ export default function ProfilePage() {
                 </span>
               </div>
             </div>
-            
+
             <div className="profile-info-item">
               <div className="profile-info-icon">
                 <Phone size={16} />
@@ -228,7 +228,7 @@ export default function ProfilePage() {
               Kenalan Kecemasan
             </div>
           </div>
-          
+
           <div className="profile-info-grid">
             <div className="profile-info-item">
               <div className="profile-info-content">
@@ -264,7 +264,7 @@ export default function ProfilePage() {
               Maklumat Pekerjaan
             </div>
           </div>
-          
+
           <div className="profile-info-grid">
             <div className="profile-info-item">
               <div className="profile-info-content">
@@ -285,9 +285,9 @@ export default function ProfilePage() {
                 <span className="profile-info-label">Jenis Pekerjaan</span>
                 <span className="profile-info-value">
                   {currentStaff.employmentType === 'permanent' ? 'Tetap' :
-                   currentStaff.employmentType === 'contract' ? 'Kontrak' :
-                   currentStaff.employmentType === 'part-time' ? 'Separuh Masa' :
-                   currentStaff.employmentType === 'probation' ? 'Percubaan' : '-'}
+                    currentStaff.employmentType === 'contract' ? 'Kontrak' :
+                      currentStaff.employmentType === 'part-time' ? 'Separuh Masa' :
+                        currentStaff.employmentType === 'probation' ? 'Percubaan' : '-'}
                 </span>
               </div>
             </div>
@@ -395,7 +395,7 @@ export default function ProfilePage() {
               Baki Cuti Tahun Ini
             </div>
           </div>
-          
+
           <div className="leave-balance-grid">
             <div className="leave-balance-item">
               <div className="leave-balance-label">Cuti Tahunan</div>
@@ -404,12 +404,12 @@ export default function ProfilePage() {
                 <span className="leave-balance-total">/ {currentStaff.leaveEntitlement?.annual || 14} hari</span>
               </div>
               <div className="leave-balance-bar">
-                <div 
-                  className="leave-balance-fill" 
-                  style={{ 
+                <div
+                  className="leave-balance-fill"
+                  style={{
                     width: `${((leaveBalance?.annual.balance || currentStaff.leaveEntitlement?.annual || 14) / (currentStaff.leaveEntitlement?.annual || 14)) * 100}%`,
                     background: 'var(--primary)'
-                  }} 
+                  }}
                 />
               </div>
             </div>
@@ -421,12 +421,12 @@ export default function ProfilePage() {
                 <span className="leave-balance-total">/ {currentStaff.leaveEntitlement?.medical || 14} hari</span>
               </div>
               <div className="leave-balance-bar">
-                <div 
-                  className="leave-balance-fill" 
-                  style={{ 
+                <div
+                  className="leave-balance-fill"
+                  style={{
                     width: `${((leaveBalance?.medical.balance || currentStaff.leaveEntitlement?.medical || 14) / (currentStaff.leaveEntitlement?.medical || 14)) * 100}%`,
                     background: 'var(--success)'
-                  }} 
+                  }}
                 />
               </div>
             </div>
@@ -438,12 +438,12 @@ export default function ProfilePage() {
                 <span className="leave-balance-total">/ {currentStaff.leaveEntitlement?.emergency || 3} hari</span>
               </div>
               <div className="leave-balance-bar">
-                <div 
-                  className="leave-balance-fill" 
-                  style={{ 
+                <div
+                  className="leave-balance-fill"
+                  style={{
                     width: `${((leaveBalance?.emergency.balance || currentStaff.leaveEntitlement?.emergency || 3) / (currentStaff.leaveEntitlement?.emergency || 3)) * 100}%`,
                     background: 'var(--warning)'
-                  }} 
+                  }}
                 />
               </div>
             </div>
@@ -455,20 +455,20 @@ export default function ProfilePage() {
                 <span className="leave-balance-total">/ {currentStaff.leaveEntitlement?.compassionate || 3} hari</span>
               </div>
               <div className="leave-balance-bar">
-                <div 
-                  className="leave-balance-fill" 
-                  style={{ 
+                <div
+                  className="leave-balance-fill"
+                  style={{
                     width: `${((leaveBalance?.compassionate.balance || currentStaff.leaveEntitlement?.compassionate || 3) / (currentStaff.leaveEntitlement?.compassionate || 3)) * 100}%`,
                     background: 'var(--info)'
-                  }} 
+                  }}
                 />
               </div>
             </div>
           </div>
 
-          <Link 
-            href="/staff-portal/leave" 
-            className="btn btn-outline btn-sm" 
+          <Link
+            href="/staff-portal/leave"
+            className="btn btn-outline btn-sm"
             style={{ marginTop: '1rem', width: '100%' }}
           >
             Lihat Semua Cuti
@@ -484,7 +484,7 @@ export default function ProfilePage() {
                 Kemahiran & Sijil
               </div>
             </div>
-            
+
             {currentStaff.skills?.length ? (
               <div style={{ marginBottom: '1rem' }}>
                 <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.5rem' }}>Kemahiran:</span>
@@ -495,7 +495,7 @@ export default function ProfilePage() {
                 </div>
               </div>
             ) : null}
-            
+
             {currentStaff.certifications?.length ? (
               <div>
                 <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.5rem' }}>Sijil:</span>
@@ -519,7 +519,7 @@ export default function ProfilePage() {
               </div>
               <div className="card-subtitle">Bulan {new Date().toLocaleDateString('ms-MY', { month: 'long' })}</div>
             </div>
-            
+
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               {/* Attendance */}
               <div>
@@ -530,13 +530,13 @@ export default function ProfilePage() {
                   </span>
                 </div>
                 <div className="progress-bar">
-                  <div 
-                    className="progress-bar-fill" 
+                  <div
+                    className="progress-bar-fill"
                     style={{ width: `${kpi.metrics?.attendance || 0}%` }}
                   />
                 </div>
               </div>
-              
+
               {/* Customer Rating */}
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
@@ -546,13 +546,13 @@ export default function ProfilePage() {
                   </span>
                 </div>
                 <div className="progress-bar">
-                  <div 
-                    className="progress-bar-fill" 
+                  <div
+                    className="progress-bar-fill"
                     style={{ width: `${kpi.metrics?.customerRating || 0}%` }}
                   />
                 </div>
               </div>
-              
+
               {/* Upselling */}
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
@@ -562,17 +562,17 @@ export default function ProfilePage() {
                   </span>
                 </div>
                 <div className="progress-bar">
-                  <div 
-                    className="progress-bar-fill" 
+                  <div
+                    className="progress-bar-fill"
                     style={{ width: `${kpi.metrics?.upselling || 0}%` }}
                   />
                 </div>
               </div>
             </div>
-            
-            <Link 
-              href={`/hr/kpi/${CURRENT_STAFF_ID}`} 
-              className="btn btn-outline btn-sm" 
+
+            <Link
+              href={`/hr/kpi/${CURRENT_STAFF_ID}`}
+              className="btn btn-outline btn-sm"
               style={{ marginTop: '1.5rem', width: '100%' }}
             >
               Lihat Laporan Penuh

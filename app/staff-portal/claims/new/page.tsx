@@ -91,9 +91,9 @@ export default function NewClaimPage() {
       <div className="animate-fade-in">
         {/* Header */}
         <div className="page-header">
-          <Link href="/staff-portal/claims" className="btn btn-outline btn-sm" style={{ marginBottom: '0.5rem', width: 'fit-content' }}>
-            <ArrowLeft size={16} />
-            Kembali
+          <Link href="/staff-portal/claims" className="text-sm font-medium text-gray-500 hover:text-gray-900 flex items-center gap-2" style={{ marginBottom: '0.5rem', width: 'fit-content', transition: 'color 0.2s' }}>
+            <ArrowLeft size={18} />
+            Kembali ke Tuntutan
           </Link>
           <h1 className="page-title" style={{ marginTop: '0.5rem' }}>
             Tuntutan Baru

@@ -6,7 +6,7 @@ import { useStaff } from '@/lib/store';
 import Link from 'next/link';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import StaffPortalNav from '@/components/StaffPortalNav';
-import { 
+import {
   ArrowLeft,
   GraduationCap,
   Award,
@@ -120,7 +120,7 @@ const mockCertificates: Certificate[] = [
 export default function TrainingPage() {
   const { staff, isInitialized } = useStaff();
   const [activeTab, setActiveTab] = useState<'training' | 'certificates'>('training');
-  
+
   const currentStaff = staff.find(s => s.id === CURRENT_STAFF_ID);
 
   const completedCount = mockTrainings.filter(t => t.status === 'completed').length;
@@ -142,9 +142,9 @@ export default function TrainingPage() {
       <div className="staff-portal animate-fade-in">
         {/* Header */}
         <div style={{ marginBottom: '1.5rem' }}>
-          <Link href="/staff-portal" className="btn btn-outline btn-sm" style={{ marginBottom: '0.5rem' }}>
-            <ArrowLeft size={16} />
-            Kembali
+          <Link href="/staff-portal" className="text-sm font-medium text-gray-500 hover:text-gray-900 flex items-center gap-2" style={{ marginBottom: '0.5rem', transition: 'color 0.2s' }}>
+            <ArrowLeft size={18} />
+            Kembali ke Portal
           </Link>
           <h1 style={{ fontSize: '1.75rem', fontWeight: 700, marginTop: '0.5rem' }}>
             Latihan & Sijil
@@ -163,7 +163,7 @@ export default function TrainingPage() {
             <div className="staff-stat-value">{completedCount}</div>
             <div className="staff-stat-label">Selesai</div>
           </div>
-          
+
           <div className="staff-stat-card primary">
             <div className="staff-stat-icon primary">
               <PlayCircle size={24} />
@@ -171,7 +171,7 @@ export default function TrainingPage() {
             <div className="staff-stat-value">{inProgressCount}</div>
             <div className="staff-stat-label">Sedang Berjalan</div>
           </div>
-          
+
           {mandatoryPending > 0 && (
             <div className="staff-stat-card warm">
               <div className="staff-stat-icon warm">
@@ -230,7 +230,7 @@ export default function TrainingPage() {
                         <span className="training-category">{training.category}</span>
                       </div>
                     </div>
-                    
+
                     <div className="training-status">
                       {training.status === 'completed' ? (
                         <div className="status-completed">
@@ -268,13 +268,13 @@ export default function TrainingPage() {
                       )}
                     </div>
                   </div>
-                  
+
                   {training.status === 'in_progress' && (
                     <div className="training-progress-bar">
                       <div className="progress-bar" style={{ height: '6px' }}>
-                        <div 
-                          className="progress-bar-fill" 
-                          style={{ width: `${training.progress}%` }} 
+                        <div
+                          className="progress-bar-fill"
+                          style={{ width: `${training.progress}%` }}
                         />
                       </div>
                     </div>
@@ -297,8 +297,8 @@ export default function TrainingPage() {
 
             <div className="staff-stagger" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
               {mockCertificates.map(cert => (
-                <div 
-                  key={cert.id} 
+                <div
+                  key={cert.id}
                   className={`certificate-card ${cert.status}`}
                 >
                   <div className="certificate-icon">

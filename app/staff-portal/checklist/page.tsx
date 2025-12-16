@@ -178,9 +178,9 @@ export default function ChecklistPage() {
         <div className="page-header">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
             <div>
-              <Link href="/staff-portal" className="btn btn-outline btn-sm" style={{ marginBottom: '0.5rem' }}>
-                <ArrowLeft size={16} />
-                Kembali
+              <Link href="/staff-portal" className="text-sm font-medium text-gray-500 hover:text-gray-900 flex items-center gap-2" style={{ marginBottom: '0.5rem', transition: 'color 0.2s' }}>
+                <ArrowLeft size={18} />
+                Kembali ke Portal
               </Link>
               <h1 className="page-title" style={{ marginTop: '0.5rem' }}>
                 Checklist Harian

@@ -7,7 +7,7 @@ import Link from 'next/link';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import Modal from '@/components/Modal';
 import StaffPortalNav from '@/components/StaffPortalNav';
-import { 
+import {
   ArrowLeft,
   ArrowLeftRight,
   Calendar,
@@ -66,7 +66,7 @@ const mockSwapRequests: SwapRequest[] = [
 export default function SwapShiftPage() {
   const { staff, isInitialized } = useStaff();
   const { schedules, shifts } = useStaffPortal();
-  
+
   const [showRequestModal, setShowRequestModal] = useState(false);
   const [selectedDate, setSelectedDate] = useState<string>('');
   const [selectedColleague, setSelectedColleague] = useState<string>('');
@@ -94,7 +94,7 @@ export default function SwapShiftPage() {
   // Get available colleagues for swap
   const availableColleagues = useMemo(() => {
     if (!selectedDate) return [];
-    
+
     const mySchedule = myUpcomingSchedules.find(s => s.date === selectedDate);
     if (!mySchedule) return [];
 
@@ -174,9 +174,9 @@ export default function SwapShiftPage() {
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
           <div>
-            <Link href="/staff-portal" className="btn btn-outline btn-sm" style={{ marginBottom: '0.5rem' }}>
-              <ArrowLeft size={16} />
-              Kembali
+            <Link href="/staff-portal" className="text-sm font-medium text-gray-500 hover:text-gray-900 flex items-center gap-2" style={{ marginBottom: '0.5rem', transition: 'color 0.2s' }}>
+              <ArrowLeft size={18} />
+              Kembali ke Portal
             </Link>
             <h1 style={{ fontSize: '1.75rem', fontWeight: 700, marginTop: '0.5rem' }}>
               Tukar Shift
@@ -202,7 +202,7 @@ export default function SwapShiftPage() {
 
           <div className="grid grid-cols-2 md:grid-cols-4" style={{ gap: '0.75rem' }}>
             {myUpcomingSchedules.map(schedule => (
-              <div 
+              <div
                 key={schedule.date}
                 className="shift-card"
                 style={{
@@ -304,7 +304,7 @@ export default function SwapShiftPage() {
               {/* Select My Shift */}
               <div className="form-group">
                 <label className="form-label">Pilih Shift Anda</label>
-                <select 
+                <select
                   className="form-select"
                   value={selectedDate}
                   onChange={(e) => {
@@ -327,7 +327,7 @@ export default function SwapShiftPage() {
                 <div className="form-group">
                   <label className="form-label">Tukar Dengan</label>
                   {availableColleagues.length > 0 ? (
-                    <select 
+                    <select
                       className="form-select"
                       value={selectedColleague}
                       onChange={(e) => {
@@ -356,7 +356,7 @@ export default function SwapShiftPage() {
                   {(() => {
                     const colleague = availableColleagues.find(c => c.id === selectedColleague);
                     return colleague && colleague.schedules.length > 0 ? (
-                      <select 
+                      <select
                         className="form-select"
                         value={selectedColleagueDate}
                         onChange={(e) => setSelectedColleagueDate(e.target.value)}
@@ -389,16 +389,16 @@ export default function SwapShiftPage() {
 
               {/* Actions */}
               <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1.5rem' }}>
-                <button 
-                  className="btn btn-outline" 
+                <button
+                  className="btn btn-outline"
                   style={{ flex: 1 }}
                   onClick={() => setShowRequestModal(false)}
                   disabled={isSubmitting}
                 >
                   Batal
                 </button>
-                <button 
-                  className="btn btn-primary" 
+                <button
+                  className="btn btn-primary"
                   style={{ flex: 1 }}
                   onClick={handleSubmitRequest}
                   disabled={!selectedDate || !selectedColleague || !selectedColleagueDate || isSubmitting}
