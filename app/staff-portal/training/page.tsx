@@ -20,6 +20,7 @@ import {
   BookOpen,
   FileText
 } from 'lucide-react';
+import PremiumBackButton from '@/components/PremiumBackButton';
 
 const CURRENT_STAFF_ID = '2';
 
@@ -142,10 +143,7 @@ export default function TrainingPage() {
       <div className="staff-portal animate-fade-in">
         {/* Header */}
         <div style={{ marginBottom: '1.5rem' }}>
-          <Link href="/staff-portal" className="text-sm font-medium text-gray-500 hover:text-gray-900 flex items-center gap-2" style={{ marginBottom: '0.5rem', transition: 'color 0.2s' }}>
-            <ArrowLeft size={18} />
-            Kembali ke Portal
-          </Link>
+          <PremiumBackButton href="/staff-portal" label="Kembali ke Portal" />
           <h1 style={{ fontSize: '1.75rem', fontWeight: 700, marginTop: '0.5rem' }}>
             Latihan & Sijil
           </h1>

@@ -16,8 +16,10 @@ import {
   Clock,
   CheckCircle,
   XCircle,
-  AlertCircle
+  AlertCircle,
+  ChevronRight
 } from 'lucide-react';
+import PremiumBackButton from '@/components/PremiumBackButton';
 
 // Demo: Using staff ID 2 as the logged-in user
 const CURRENT_STAFF_ID = '2';
@@ -123,10 +125,7 @@ export default function LeavePage() {
         <div className="page-header">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
             <div>
-              <Link href="/staff-portal" className="text-sm font-medium text-gray-500 hover:text-gray-900 flex items-center gap-2" style={{ marginBottom: '0.5rem', transition: 'color 0.2s' }}>
-                <ArrowLeft size={18} />
-                Kembali ke Portal
-              </Link>
+              <PremiumBackButton href="/staff-portal" label="Kembali ke Portal" />
               <h1 className="page-title" style={{ marginTop: '0.5rem' }}>
                 Pengurusan Cuti
               </h1>
