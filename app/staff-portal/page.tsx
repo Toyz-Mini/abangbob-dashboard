@@ -219,7 +219,7 @@ export default function StaffPortalPage() {
   const isClosingShift = currentShift?.endTime && currentShift.endTime >= '20:00';
 
   // Get earned achievements
-  const earnedAchievements = staffAchievements.filter(a => a.earnedDate).slice(0, 3);
+  const earnedAchievements = staffAchievements?.filter(a => a.earnedDate).slice(0, 3) || [];
 
   // Update time every second for smooth clock
   useEffect(() => {
@@ -529,7 +529,7 @@ export default function StaffPortalPage() {
         </div>
 
         {/* Announcements Section */}
-        {announcements.length > 0 && (
+        {announcements && announcements.length > 0 && (
           <div className="card" style={{ marginBottom: '1.5rem' }}>
             <div className="card-header">
               <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -613,7 +613,7 @@ export default function StaffPortalPage() {
 
             {totalPending > 0 ? (
               <div className="staff-stagger" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                {leaveRequests.filter(r => r.status === 'pending').slice(0, 3).map(req => (
+                {leaveRequests && leaveRequests.filter(r => r.status === 'pending').slice(0, 3).map(req => (
                   <div key={req.id} className="staff-info-row">
                     <div>
                       <div style={{ fontWeight: 500, fontSize: '0.875rem' }}>
