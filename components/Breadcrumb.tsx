@@ -39,23 +39,23 @@ interface BreadcrumbItem {
 
 export default function Breadcrumb() {
   const pathname = usePathname();
-  
-  // Don't show breadcrumb on home page
-  if (pathname === '/') {
+
+  // Don't show breadcrumb on home page or staff portal
+  if (pathname === '/' || pathname.startsWith('/staff-portal')) {
     return null;
   }
 
   const pathSegments = pathname.split('/').filter(Boolean);
-  
+
   const breadcrumbItems: BreadcrumbItem[] = pathSegments.map((segment, index) => {
     const href = '/' + pathSegments.slice(0, index + 1).join('/');
     const isCurrentPage = index === pathSegments.length - 1;
-    
+
     // Handle dynamic routes (e.g., [tableId])
-    const label = segment.startsWith('[') 
-      ? segment.replace(/[\[\]]/g, '') 
+    const label = segment.startsWith('[')
+      ? segment.replace(/[\[\]]/g, '')
       : (routeNames[segment] || segment.charAt(0).toUpperCase() + segment.slice(1));
-    
+
     return { label, href, isCurrentPage };
   });
 
@@ -68,7 +68,7 @@ export default function Breadcrumb() {
             <span>Dashboard</span>
           </Link>
         </li>
-        
+
         {breadcrumbItems.map((item, index) => (
           <li key={item.href} className="breadcrumb-item">
             <ChevronRight size={14} className="breadcrumb-separator" />

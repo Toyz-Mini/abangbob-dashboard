@@ -173,7 +173,7 @@ export const NAV_VISIBILITY: Record<string, UserRole[]> = {
   '/inventory': ['Admin', 'Manager', 'Staff'],
   '/production': ['Admin', 'Manager', 'Staff'],
   '/equipment': ['Admin', 'Manager', 'Staff'],
-  '/recipes': ['Admin', 'Manager', 'Staff'],
+  '/recipes': ['Admin', 'Manager'],
   '/suppliers': ['Admin', 'Manager'],
 
   // HR & Finance

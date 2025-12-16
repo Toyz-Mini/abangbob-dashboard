@@ -63,8 +63,8 @@ function CircularProgress({
       <svg>
         <defs>
           <linearGradient id="clockGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#6366f1" />
-            <stop offset="100%" stopColor="#8b5cf6" />
+            <stop offset="0%" stopColor="var(--primary)" />
+            <stop offset="100%" stopColor="var(--primary-dark)" />
           </linearGradient>
         </defs>
         <circle
@@ -513,7 +513,7 @@ export default function StaffPortalPage() {
               <div className="card" style={{ marginTop: '1rem' }}>
                 <div className="card-header" style={{ paddingBottom: '0.5rem' }}>
                   <div className="card-title" style={{ fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <Trophy size={18} color="#f59e0b" />
+                    <Trophy size={18} color="var(--secondary)" />
                     Pencapaian Terkini
                   </div>
                 </div>
@@ -535,7 +535,7 @@ export default function StaffPortalPage() {
           <div className="card" style={{ marginBottom: '1.5rem' }}>
             <div className="card-header">
               <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <Megaphone size={20} color="var(--warning)" />
+                <Megaphone size={20} color="var(--primary)" />
                 Pengumuman
               </div>
             </div>

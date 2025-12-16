@@ -185,9 +185,11 @@ export default function MainLayout({ children }: { children: ReactNode }) {
 
   // Mobile Menu Items - Standardized Brand Colors
   const mobileMenuItems = [
+    { href: '/staff-portal', label: 'Portal', icon: LayoutDashboard, color: 'var(--primary)' }, // Staff Portal Home
     { href: '/delivery', label: 'Delivery', icon: Truck, color: 'var(--primary)' }, // Red
     { href: '/production', label: 'Produksi', icon: Factory, color: 'var(--secondary)' }, // Gold
     { href: '/kds', label: 'KDS', icon: Tv, color: 'var(--text-primary)' }, // Dark
+    // Recipes removed for staff in permissions.ts
     { href: '/recipes', label: 'Resipi', icon: ChefHat, color: 'var(--primary)' },
     { href: '/suppliers', label: 'Stok', icon: Boxes, color: 'var(--secondary)' },
     { href: '/finance', label: 'Kewangan', icon: DollarSign, color: 'var(--text-primary)' },
@@ -201,7 +203,9 @@ export default function MainLayout({ children }: { children: ReactNode }) {
 
   // Determine Bottom Nav Items based on Role
   const bottomNavItems = [
-    { href: '/', label: 'Home', icon: LayoutDashboard },
+    // Show Staff Portal only if role is Staff (or maybe for everyone as Home?)
+    // For Staff, Home is /staff-portal. For Admin, Home is /
+    { href: userRole === 'Staff' ? '/staff-portal' : '/', label: 'Home', icon: LayoutDashboard },
     { href: '/pos', label: 'POS', icon: ShoppingCart },
     { href: '/inventory', label: 'Inventori', icon: Package },
     { href: '/hr', label: 'HR', icon: Users },
