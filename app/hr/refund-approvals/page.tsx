@@ -68,12 +68,12 @@ export default function RefundApprovalsPage() {
   // Get filtered requests
   const filteredRequests = useMemo(() => {
     let requests = [...voidRefundRequests];
-    
+
     if (filterStatus !== 'all') {
       requests = requests.filter(r => r.status === filterStatus);
     }
-    
-    return requests.sort((a, b) => 
+
+    return requests.sort((a, b) =>
       new Date(b.requestedAt).getTime() - new Date(a.requestedAt).getTime()
     );
   }, [voidRefundRequests, filterStatus]);
@@ -83,7 +83,7 @@ export default function RefundApprovalsPage() {
     const pending = voidRefundRequests.filter(r => r.status === 'pending');
     const approved = voidRefundRequests.filter(r => r.status === 'approved');
     const rejected = voidRefundRequests.filter(r => r.status === 'rejected');
-    
+
     return {
       pendingCount: pending.length,
       approvedCount: approved.length,
@@ -113,8 +113,8 @@ export default function RefundApprovalsPage() {
       id: 'type',
       header: 'Jenis',
       accessor: (row) => (
-        <span 
-          style={{ 
+        <span
+          style={{
             fontWeight: 600,
             color: row.type === 'void' ? 'var(--danger)' : 'var(--warning)',
             textTransform: 'uppercase',
@@ -176,7 +176,7 @@ export default function RefundApprovalsPage() {
         let color = 'var(--text-secondary)';
         let icon = <Clock size={14} />;
         let label = 'Pending';
-        
+
         if (row.status === 'approved') {
           color = 'var(--success)';
           icon = <CheckCircle size={14} />;
@@ -188,7 +188,7 @@ export default function RefundApprovalsPage() {
         } else if (row.status === 'pending') {
           color = 'var(--warning)';
         }
-        
+
         return (
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color }}>
             {icon}
@@ -276,14 +276,14 @@ export default function RefundApprovalsPage() {
         {pendingCount > 0 && (
           <PendingApprovalsPanel
             requests={pendingRequests}
-            onApprove={(requestId) => {
+            onApprove={async (requestId) => {
               if (currentStaff) {
-                approveVoidRefund(requestId, currentStaff.id, currentStaff.name);
+                await approveVoidRefund(requestId, currentStaff.id, currentStaff.name);
               }
             }}
-            onReject={(requestId, reason) => {
+            onReject={async (requestId, reason) => {
               if (currentStaff) {
-                rejectVoidRefund(requestId, currentStaff.id, currentStaff.name, reason);
+                await rejectVoidRefund(requestId, currentStaff.id, currentStaff.name, reason);
               }
             }}
           />
@@ -352,8 +352,8 @@ export default function RefundApprovalsPage() {
             userRole={userRole}
             currentStaffId={currentStaff?.id}
             currentStaffName={currentStaff?.name}
-            onVoidRequest={() => {}}
-            onRefundRequest={() => {}}
+            onVoidRequest={() => { }}
+            onRefundRequest={() => { }}
           />
         )}
       </div>

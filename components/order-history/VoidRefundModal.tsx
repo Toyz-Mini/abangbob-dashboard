@@ -42,7 +42,7 @@ export default function VoidRefundModal({
     if (mode === 'void' || refundType === 'full') {
       return order.total;
     }
-    
+
     let total = 0;
     order.items.forEach((item, idx) => {
       const key = `${item.id}_${idx}`;
@@ -90,7 +90,7 @@ export default function VoidRefundModal({
       } else {
         // Build items to refund for partial refund
         const itemsToRefund: RefundItem[] = [];
-        
+
         if (refundType === 'partial') {
           order.items.forEach((item, idx) => {
             const key = `${item.id}_${idx}`;
@@ -106,11 +106,11 @@ export default function VoidRefundModal({
           });
         }
 
-        result = requestRefund(
-          order.id, 
-          refundAmount, 
-          reason, 
-          requestedBy, 
+        result = await requestRefund(
+          order.id,
+          refundAmount,
+          reason,
+          requestedBy,
           requestedByName,
           refundType === 'partial' ? itemsToRefund : undefined
         );
@@ -118,8 +118,8 @@ export default function VoidRefundModal({
 
       if (result.success) {
         showToast(
-          mode === 'void' 
-            ? 'Permintaan void telah dihantar untuk kelulusan' 
+          mode === 'void'
+            ? 'Permintaan void telah dihantar untuk kelulusan'
             : 'Permintaan refund telah dihantar untuk kelulusan',
           'success'
         );
@@ -141,9 +141,9 @@ export default function VoidRefundModal({
     >
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
         {/* Order Info */}
-        <div style={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
           padding: '0.75rem',
           background: 'var(--gray-100)',
           borderRadius: 'var(--radius-md)',
@@ -162,9 +162,9 @@ export default function VoidRefundModal({
         </div>
 
         {/* Warning */}
-        <div style={{ 
-          display: 'flex', 
-          alignItems: 'flex-start', 
+        <div style={{
+          display: 'flex',
+          alignItems: 'flex-start',
           gap: '0.75rem',
           padding: '0.75rem',
           background: '#fef3c7',
@@ -214,8 +214,8 @@ export default function VoidRefundModal({
         {mode === 'refund' && refundType === 'partial' && (
           <div>
             <label className="form-label">Pilih Item untuk Refund</label>
-            <div style={{ 
-              border: '1px solid var(--gray-300)', 
+            <div style={{
+              border: '1px solid var(--gray-300)',
               borderRadius: 'var(--radius-md)',
               maxHeight: '200px',
               overflowY: 'auto',
@@ -224,11 +224,11 @@ export default function VoidRefundModal({
                 const key = `${item.id}_${idx}`;
                 const selection = selectedItems[key];
                 return (
-                  <div 
+                  <div
                     key={key}
-                    style={{ 
-                      display: 'flex', 
-                      alignItems: 'center', 
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
                       padding: '0.75rem',
                       borderBottom: idx < order.items.length - 1 ? '1px solid var(--gray-200)' : 'none',
                       background: selection?.selected ? 'var(--primary-light)' : 'transparent',
@@ -243,7 +243,7 @@ export default function VoidRefundModal({
                     <div style={{ flex: 1 }}>
                       <div style={{ fontWeight: 500, fontSize: '0.875rem' }}>{item.name}</div>
                       <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                        BND {item.itemTotal.toFixed(2)} × 
+                        BND {item.itemTotal.toFixed(2)} ×
                         {selection?.selected && (
                           <input
                             type="number"
@@ -251,8 +251,8 @@ export default function VoidRefundModal({
                             max={item.quantity}
                             value={selection?.quantity || 1}
                             onChange={(e) => updateQuantity(key, parseInt(e.target.value) || 1, item.quantity)}
-                            style={{ 
-                              width: '40px', 
+                            style={{
+                              width: '40px',
                               marginLeft: '0.25rem',
                               padding: '0.125rem 0.25rem',
                               border: '1px solid var(--gray-300)',
@@ -275,7 +275,7 @@ export default function VoidRefundModal({
         )}
 
         {/* Refund Amount Display */}
-        <div style={{ 
+        <div style={{
           padding: '0.75rem',
           background: 'var(--gray-100)',
           borderRadius: 'var(--radius-md)',
@@ -305,8 +305,8 @@ export default function VoidRefundModal({
         </div>
 
         {/* Note about approval */}
-        <div style={{ 
-          fontSize: '0.75rem', 
+        <div style={{
+          fontSize: '0.75rem',
           color: 'var(--text-secondary)',
           display: 'flex',
           alignItems: 'center',
@@ -318,15 +318,15 @@ export default function VoidRefundModal({
 
         {/* Action Buttons */}
         <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
-          <button 
-            className="btn btn-outline" 
+          <button
+            className="btn btn-outline"
             onClick={onClose}
             style={{ flex: 1 }}
             disabled={isSubmitting}
           >
             Batal
           </button>
-          <button 
+          <button
             className="btn btn-danger"
             onClick={handleSubmit}
             style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}

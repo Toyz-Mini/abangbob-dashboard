@@ -15,6 +15,7 @@ import * as SupabaseSync from './supabase-sync';
 import { isSupabaseConfigured, getConnectionState, checkSupabaseConnection } from './supabase/client';
 import { logSyncError, logSyncSuccess } from './utils/sync-logger';
 import * as PaymentTaxSync from './supabase/payment-tax-sync';
+import * as VoidRefundOps from './supabase/operations';
 
 // Helper function to generate UUID for Supabase compatibility
 function generateUUID(): string {
@@ -314,9 +315,9 @@ interface StoreState {
   getOrderHistory: (filters?: Partial<OrderHistoryFilters>) => OrderHistoryItem[];
   getOrderById: (orderId: string) => OrderHistoryItem | undefined;
   requestVoid: (orderId: string, reason: string, requestedBy: string, requestedByName: string) => { success: boolean; error?: string };
-  requestRefund: (orderId: string, amount: number, reason: string, requestedBy: string, requestedByName: string, items?: RefundItem[]) => { success: boolean; error?: string };
-  approveVoidRefund: (requestId: string, approvedBy: string, approvedByName: string) => { success: boolean; error?: string };
-  rejectVoidRefund: (requestId: string, rejectedBy: string, rejectedByName: string, reason: string) => void;
+  requestRefund: (orderId: string, amount: number, reason: string, requestedBy: string, requestedByName: string, items?: RefundItem[]) => Promise<{ success: boolean; error?: string }>;
+  approveVoidRefund: (requestId: string, approvedBy: string, approvedByName: string) => Promise<{ success: boolean; error?: string }>;
+  rejectVoidRefund: (requestId: string, rejectedBy: string, rejectedByName: string, reason: string) => Promise<void>;
   getPendingVoidRefundRequests: () => VoidRefundRequest[];
   getVoidRefundRequestsByStaff: (staffId: string) => VoidRefundRequest[];
   getPendingVoidRefundCount: () => number;
@@ -620,7 +621,23 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
       // Order History (void refund uses orders table)
       setOrderHistory(getFromStorage(STORAGE_KEYS.ORDER_HISTORY, MOCK_ORDER_HISTORY));
-      setVoidRefundRequests(getFromStorage(STORAGE_KEYS.VOID_REFUND_REQUESTS, MOCK_VOID_REFUND_REQUESTS));
+
+      // Load Void Refund Requests from Supabase
+      if (supabaseConnected) {
+        try {
+          const voidRefundData = await VoidRefundOps.fetchVoidRefundRequests();
+          if (voidRefundData && voidRefundData.length > 0) {
+            setVoidRefundRequests(voidRefundData);
+          } else {
+            setVoidRefundRequests(getFromStorage(STORAGE_KEYS.VOID_REFUND_REQUESTS, MOCK_VOID_REFUND_REQUESTS));
+          }
+        } catch (error) {
+          console.error('Failed to load void refund requests from Supabase:', error);
+          setVoidRefundRequests(getFromStorage(STORAGE_KEYS.VOID_REFUND_REQUESTS, MOCK_VOID_REFUND_REQUESTS));
+        }
+      } else {
+        setVoidRefundRequests(getFromStorage(STORAGE_KEYS.VOID_REFUND_REQUESTS, MOCK_VOID_REFUND_REQUESTS));
+      }
 
       // Oil Trackers / Equipment
       setOilTrackers(supabaseConnected && supabaseData.oilTrackers?.length > 0 ? supabaseData.oilTrackers : getFromStorage(STORAGE_KEYS.OIL_TRACKERS, MOCK_OIL_TRACKERS));
@@ -2334,14 +2351,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     return { success: true };
   }, [orderHistory]);
 
-  const requestRefund = useCallback((
+  const requestRefund = useCallback(async (
     orderId: string,
     amount: number,
     reason: string,
     requestedBy: string,
     requestedByName: string,
     items?: RefundItem[]
-  ): { success: boolean; error?: string } => {
+  ): Promise<{ success: boolean; error?: string }> => {
     const order = orderHistory.find(o => o.id === orderId);
     if (!order) {
       return { success: false, error: 'Order not found' };
@@ -2370,6 +2387,17 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       createdAt: new Date().toISOString(),
     };
 
+    // Sync to Supabase
+    try {
+      const supabaseRequest = await VoidRefundOps.insertVoidRefundRequest(newRequest);
+      if (supabaseRequest && supabaseRequest.id) {
+        newRequest.id = supabaseRequest.id;
+      }
+    } catch (error) {
+      console.error('Failed to sync refund request to Supabase:', error);
+      // Continue with local storage as fallback
+    }
+
     setVoidRefundRequests(prev => [...prev, newRequest]);
     setOrderHistory(prev => prev.map(o =>
       o.id === orderId
@@ -2380,11 +2408,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     return { success: true };
   }, [orderHistory]);
 
-  const approveVoidRefund = useCallback((
+  const approveVoidRefund = useCallback(async (
     requestId: string,
     approvedBy: string,
     approvedByName: string
-  ): { success: boolean; error?: string } => {
+  ): Promise<{ success: boolean; error?: string }> => {
     const request = voidRefundRequests.find(r => r.id === requestId);
     if (!request) {
       return { success: false, error: 'Request not found' };
@@ -2475,17 +2503,33 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     // Note: In a real implementation, we would look up inventory mappings
     // and call adjustStock for each inventory item
 
+    // Sync to Supabase
+    try {
+      await VoidRefundOps.updateVoidRefundRequest(requestId, {
+        status: 'approved',
+        approvedBy,
+        approvedByName,
+        approvedAt: now,
+        salesReversed: true,
+        inventoryReversed: true,
+      });
+    } catch (error) {
+      console.error('Failed to sync approval to Supabase:', error);
+    }
+
     return { success: true };
   }, [voidRefundRequests, orderHistory, cashFlows]);
 
-  const rejectVoidRefund = useCallback((
+  const rejectVoidRefund = useCallback(async (
     requestId: string,
     rejectedBy: string,
     rejectedByName: string,
     reason: string
-  ): void => {
+  ): Promise<void> => {
     const request = voidRefundRequests.find(r => r.id === requestId);
     if (!request) return;
+
+    const now = new Date().toISOString();
 
     setVoidRefundRequests(prev => prev.map(r =>
       r.id === requestId
@@ -2494,7 +2538,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           status: 'rejected' as const,
           approvedBy: rejectedBy,
           approvedByName: rejectedByName,
-          approvedAt: new Date().toISOString(),
+          approvedAt: now,
           rejectionReason: reason
         }
         : r
@@ -2505,6 +2549,19 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         ? { ...o, voidRefundStatus: 'none' as const, pendingRequest: undefined }
         : o
     ));
+
+    // Sync to Supabase
+    try {
+      await VoidRefundOps.updateVoidRefundRequest(requestId, {
+        status: 'rejected',
+        approvedBy: rejectedBy,
+        approvedByName: rejectedByName,
+        approvedAt: now,
+        rejectionReason: reason,
+      });
+    } catch (error) {
+      console.error('Failed to sync rejection to Supabase:', error);
+    }
   }, [voidRefundRequests]);
 
   const getPendingVoidRefundRequests = useCallback((): VoidRefundRequest[] => {

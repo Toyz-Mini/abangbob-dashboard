@@ -345,14 +345,14 @@ export default function OrderHistoryPage() {
         {canApprove && pendingCount > 0 && (
           <PendingApprovalsPanel
             requests={pendingRequests}
-            onApprove={(requestId) => {
+            onApprove={async (requestId) => {
               if (currentStaff) {
-                approveVoidRefund(requestId, currentStaff.id, currentStaff.name);
+                await approveVoidRefund(requestId, currentStaff.id, currentStaff.name);
               }
             }}
-            onReject={(requestId, reason) => {
+            onReject={async (requestId, reason) => {
               if (currentStaff) {
-                rejectVoidRefund(requestId, currentStaff.id, currentStaff.name, reason);
+                await rejectVoidRefund(requestId, currentStaff.id, currentStaff.name, reason);
               }
             }}
           />
