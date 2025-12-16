@@ -319,216 +319,217 @@ export default function StaffPortalPage() {
         {/* Birthday Banner */}
         <BirthdayBanner currentStaffId={staffId} />
 
-        {/* Header Section */}
-        <div className="staff-header" style={{ marginBottom: '1.5rem' }}>
+        {/* Premium Compact Header - Glassmorphism */}
+        <div className="staff-header glass-panel" style={{ marginBottom: '1.5rem', padding: '1.5rem', borderRadius: 'var(--radius-xl)', background: 'linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%)', boxShadow: '0 10px 30px -10px rgba(204, 21, 18, 0.4)' }}>
           <div className="staff-header-content">
             <div className="staff-greeting">
-              <div className="staff-avatar staff-avatar-lg">
-                {currentStaff.name.charAt(0)}
-              </div>
               <div className="staff-info">
-                <h1>
-                  {getGreeting()}, {currentStaff.name.split(' ')[0]}!
-                  <span className="wave-emoji">👋</span>
+                <h1 style={{ fontSize: '1.5rem', fontWeight: 600, color: 'white', marginBottom: '0.25rem' }}>
+                  {getGreeting()}, <span style={{ fontWeight: 800 }}>{currentStaff.name.split(' ')[0]}</span>
                 </h1>
-                {currentShift ? (
-                  <div className="staff-shift-badge">
-                    <span className="pulse-dot"></span>
-                    {isOpeningShift ? <Sun size={16} /> : <Moon size={16} />}
-                    <span>Shift {currentShift.name}: {currentShift.startTime} - {currentShift.endTime}</span>
-                  </div>
-                ) : (
-                  <div className="staff-shift-badge" style={{ opacity: 0.7 }}>
-                    Tiada jadual hari ini
-                  </div>
-                )}
-              </div>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              <NotificationCenter />
-              <EmergencySOS />
-              <div className="staff-time-display">
-                <div className="staff-time">
-                  {currentTime.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
-                </div>
-                <div className="staff-date">
+                <div style={{ fontSize: '0.9rem', opacity: 0.9, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   {currentTime.toLocaleDateString('ms-MY', { weekday: 'long', day: 'numeric', month: 'long' })}
                 </div>
               </div>
             </div>
+
+            {/* Compact Status Badge */}
+            <div className={`status-pill ${isClockedIn ? 'active' : 'inactive'}`} style={{
+              background: 'rgba(255,255,255,0.2)',
+              backdropFilter: 'blur(8px)',
+              padding: '0.5rem 1rem',
+              borderRadius: '2rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              border: '1px solid rgba(255,255,255,0.3)'
+            }}>
+              <div style={{
+                width: '8px',
+                height: '8px',
+                borderRadius: '50%',
+                background: isClockedIn ? '#4ade80' : 'rgba(255,255,255,0.5)',
+                boxShadow: isClockedIn ? '0 0 8px #4ade80' : 'none'
+              }} />
+              <span style={{ color: 'white', fontSize: '0.85rem', fontWeight: 500 }}>
+                {isClockedIn ? 'Clocked In' : 'Not Clocked In'}
+              </span>
+            </div>
+          </div>
+
+          {/* Compact Clock Action Row */}
+          <div style={{ marginTop: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', gap: '1rem' }}>
+              {todayAttendance?.clockInTime && (
+                <div>
+                  <div style={{ fontSize: '0.75rem', opacity: 0.8, color: 'white' }}>MASUK</div>
+                  <div style={{ fontSize: '1.1rem', fontWeight: 700, color: 'white' }}>{todayAttendance.clockInTime}</div>
+                </div>
+              )}
+              {todayAttendance?.clockOutTime && (
+                <div>
+                  <div style={{ fontSize: '0.75rem', opacity: 0.8, color: 'white' }}>KELUAR</div>
+                  <div style={{ fontSize: '1.1rem', fontWeight: 700, color: 'white' }}>{todayAttendance.clockOutTime}</div>
+                </div>
+              )}
+              {!todayAttendance?.clockInTime && (
+                <div style={{ fontSize: '0.9rem', opacity: 0.9, color: 'white', fontStyle: 'italic' }}>
+                  Sedia untuk shift hari ini?
+                </div>
+              )}
+            </div>
+
+            <button
+              className={`btn ${isClockedIn ? 'btn-outline-white' : 'btn-white'}`}
+              onClick={isClockedIn ? handleClockOut : hasCompletedShift ? undefined : handleClockIn}
+              disabled={hasCompletedShift}
+              style={{
+                borderRadius: '2rem',
+                padding: '0.5rem 1.25rem',
+                fontSize: '0.9rem',
+                fontWeight: 600,
+                boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
+                background: isClockedIn ? 'rgba(255,255,255,0.15)' : 'white',
+                color: isClockedIn ? 'white' : 'var(--primary)',
+                border: isClockedIn ? '1px solid rgba(255,255,255,0.5)' : 'none'
+              }}
+            >
+              {isClocking ? <LoadingSpinner size="sm" /> : (
+                <>
+                  <Clock size={18} style={{ marginRight: '0.5rem' }} />
+                  {isClockedIn ? 'Clock Out' : hasCompletedShift ? 'Selesai' : 'Clock In'}
+                </>
+              )}
+            </button>
           </div>
         </div>
 
         {/* Clock Message */}
         {clockMessage && (
-          <div className={`staff-message ${clockMessage.includes('berjaya') ? 'success' : 'error'}`} style={{ marginBottom: '1rem' }}>
+          <div className={`staff-message ${clockMessage.includes('berjaya') ? 'success' : 'error'}`} style={{ marginBottom: '1.5rem' }}>
             {clockMessage.includes('berjaya') ? <CheckCircle size={20} /> : <AlertCircle size={20} />}
             {clockMessage}
           </div>
         )}
 
-        {/* Clock Widget, Quick Actions & Team Today Row */}
-        <div className="grid grid-cols-2 md:grid-cols-4" style={{ gap: '1rem', marginBottom: '1.5rem' }}>
-          {/* Clock In/Out Widget - Full width on mobile */}
-          <div className="col-span-2 md:col-span-1" style={{ width: '100%' }}>
-            <div className={`staff-clock-widget ${isClockedIn ? 'clocked-in' : hasCompletedShift ? 'completed' : 'clocked-out'}`}>
-              <CircularProgress progress={workProgress}>
-                <div className="clock-progress-time">{workedTime}</div>
-                <div className="clock-progress-label">jam kerja</div>
-              </CircularProgress>
+        {/* --- SECTION 1: DAILY OPERATIONS (High Priority) --- */}
+        <div style={{ marginBottom: '2rem' }}>
+          <h3 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <span style={{ width: '4px', height: '16px', background: 'var(--primary)', borderRadius: '2px' }}></span>
+            Operasi Harian
+          </h3>
 
-              {isClocking ? (
-                <div style={{ display: 'flex', justifyContent: 'center', padding: '1rem' }}>
-                  <LoadingSpinner size="sm" />
-                </div>
-              ) : (
-                <button
-                  className={`staff-clock-btn ${isClockedIn ? 'clock-out' : hasCompletedShift ? 'completed' : 'clock-in'}`}
-                  onClick={isClockedIn ? handleClockOut : hasCompletedShift ? undefined : handleClockIn}
-                  disabled={hasCompletedShift}
-                >
-                  <Clock size={22} />
-                  {isClockedIn ? 'Clock Out' : hasCompletedShift ? 'Shift Selesai' : 'Clock In'}
-                </button>
-              )}
-
-              {todayAttendance?.clockInTime && (
-                <div style={{ marginTop: '0.75rem', fontSize: '0.75rem', color: 'var(--text-secondary)', textAlign: 'center' }}>
-                  Masuk: {todayAttendance.clockInTime}
-                  {todayAttendance.clockOutTime && ` • Keluar: ${todayAttendance.clockOutTime}`}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Quick Actions Grid */}
-          <div className="staff-action-grid" style={{ gridColumn: 'span 2' }}>
-            {/* Checklist Card */}
-            <Link href="/staff-portal/checklist" className="staff-action-card">
-              <div className="staff-action-icon checklist">
+          <div className="grid grid-cols-2" style={{ gap: '1rem' }}>
+            {/* Checklist Card - Featured */}
+            <Link href="/staff-portal/checklist" className="staff-action-card featured" style={{ gridColumn: 'span 2', display: 'flex', alignItems: 'center', padding: '1rem', background: 'white', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-sm)', border: '1px solid var(--border-light)' }}>
+              <div className="staff-action-icon checklist" style={{ marginRight: '1rem' }}>
                 <CheckSquare size={24} />
               </div>
-              <div>
-                <div className="staff-action-label">Checklist</div>
-                <div className="staff-action-sublabel">
-                  {isOpeningShift && !openingChecklist?.completedAt && 'Opening belum siap'}
-                  {isOpeningShift && openingChecklist?.completedAt && 'Selesai ✓'}
-                  {isClosingShift && !closingChecklist?.completedAt && 'Closing belum siap'}
-                  {isClosingShift && closingChecklist?.completedAt && 'Selesai ✓'}
-                  {!isOpeningShift && !isClosingShift && 'Lihat checklist'}
+              <div style={{ flex: 1 }}>
+                <div className="staff-action-label" style={{ fontSize: '1rem' }}>Checklist Harian</div>
+                <div className="staff-action-sublabel" style={{ color: isOpeningShift && !openingChecklist?.completedAt ? 'var(--danger)' : 'var(--text-secondary)' }}>
+                  {isOpeningShift && !openingChecklist?.completedAt && '⚠️ Opening Pending'}
+                  {isOpeningShift && openingChecklist?.completedAt && '✅ Opening Selesai'}
+                  {isClosingShift && !closingChecklist?.completedAt && '⚠️ Closing Pending'}
+                  {isClosingShift && closingChecklist?.completedAt && '✅ Closing Selesai'}
+                  {!isOpeningShift && !isClosingShift && 'Lihat senarai tugas'}
                 </div>
               </div>
+              <ChevronRight size={20} color="var(--text-light)" />
             </Link>
 
             {/* Schedule Card */}
             <Link href="/staff-portal/schedule" className="staff-action-card">
               <div className="staff-action-icon schedule">
-                <Calendar size={24} />
+                <Calendar size={22} />
               </div>
-              <div>
+              <div style={{ marginTop: '0.75rem' }}>
                 <div className="staff-action-label">Jadual</div>
-                <div className="staff-action-sublabel">Lihat timetable</div>
+                <div className="staff-action-sublabel">Shift minggu ini</div>
               </div>
             </Link>
 
-            {/* Leave Card */}
-            <Link href="/staff-portal/leave" className="staff-action-card">
-              <div className="staff-action-icon leave">
-                <Plane size={24} />
-              </div>
-              <div>
-                <div className="staff-action-label">Cuti</div>
-                <div className="staff-action-sublabel">Baki: {leaveBalance?.annual?.balance || 0} hari</div>
-              </div>
-              {pendingLeaveCount > 0 && (
-                <span className="staff-action-badge">{pendingLeaveCount}</span>
-              )}
-            </Link>
-
-            {/* Claims Card */}
-            <Link href="/staff-portal/claims" className="staff-action-card">
-              <div className="staff-action-icon claims">
-                <DollarSign size={24} />
-              </div>
-              <div>
-                <div className="staff-action-label">Tuntutan</div>
-                <div className="staff-action-sublabel">Submit claim</div>
-              </div>
-              {pendingClaimCount > 0 && (
-                <span className="staff-action-badge">{pendingClaimCount}</span>
-              )}
-            </Link>
-
-            {/* Payslip Card */}
-            <Link href="/staff-portal/payslip" className="staff-action-card">
-              <div className="staff-action-icon requests">
-                <Receipt size={24} />
-              </div>
-              <div>
-                <div className="staff-action-label">Slip Gaji</div>
-                <div className="staff-action-sublabel">Lihat payslip</div>
-              </div>
-            </Link>
-
-            {/* Swap Shift Card */}
+            {/* Swap Shift */}
             <Link href="/staff-portal/swap-shift" className="staff-action-card">
-              <div className="staff-action-icon profile">
-                <ArrowLeftRight size={24} />
+              <div className="staff-action-icon">
+                <ArrowLeftRight size={22} />
               </div>
-              <div>
+              <div style={{ marginTop: '0.75rem' }}>
                 <div className="staff-action-label">Tukar Shift</div>
-                <div className="staff-action-sublabel">Swap dengan rakan</div>
+                <div className="staff-action-sublabel">Request swap</div>
               </div>
             </Link>
-
-            {/* Training Card */}
-            <Link href="/staff-portal/training" className="staff-action-card">
-              <div className="staff-action-icon kpi">
-                <GraduationCap size={24} />
-              </div>
-              <div>
-                <div className="staff-action-label">Latihan</div>
-                <div className="staff-action-sublabel">Kursus & sijil</div>
-              </div>
-            </Link>
-
-            {/* Profile Card */}
-            <Link href="/staff-portal/profile" className="staff-action-card">
-              <div className="staff-action-icon profile">
-                <User size={24} />
-              </div>
-              <div>
-                <div className="staff-action-label">Profil</div>
-                <div className="staff-action-sublabel">Maklumat saya</div>
-              </div>
-            </Link>
-          </div>
-
-          {/* Team Today Widget */}
-          <div>
-            <TeamTodayWidget currentStaffId={staffId} />
-
-            {/* Recent Achievements */}
-            {earnedAchievements.length > 0 && (
-              <div className="card" style={{ marginTop: '1rem' }}>
-                <div className="card-header" style={{ paddingBottom: '0.5rem' }}>
-                  <div className="card-title" style={{ fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <Trophy size={18} color="var(--secondary)" />
-                    Pencapaian Terkini
-                  </div>
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                  {earnedAchievements.map(achievement => (
-                    <AchievementBadge key={achievement.id} achievement={achievement} size="sm" />
-                  ))}
-                </div>
-                <Link href="/staff-portal/profile" className="team-today-link" style={{ marginTop: '0.5rem' }}>
-                  Lihat semua <ChevronRight size={14} />
-                </Link>
-              </div>
-            )}
           </div>
         </div>
+
+        {/* --- SECTION 2: HR & MANAGEMENT (Secondary) --- */}
+        <div style={{ marginBottom: '2rem' }}>
+          <h3 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <span style={{ width: '4px', height: '16px', background: 'var(--secondary)', borderRadius: '2px' }}></span>
+            Pengurusan Saya
+          </h3>
+
+          <div className="grid grid-cols-4" style={{ gap: '0.75rem' }}>
+            {/* Leaves */}
+            <Link href="/staff-portal/leave" className="staff-action-card compact" style={{ flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '0.75rem' }}>
+              <div className="staff-action-icon leave" style={{ width: '40px', height: '40px', marginBottom: '0.5rem' }}>
+                <Plane size={18} />
+              </div>
+              <div className="staff-action-label" style={{ fontSize: '0.75rem' }}>Cuti</div>
+              {pendingLeaveCount > 0 && <span className="notification-dot" />}
+            </Link>
+
+            {/* Claims */}
+            <Link href="/staff-portal/claims" className="staff-action-card compact" style={{ flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '0.75rem' }}>
+              <div className="staff-action-icon claims" style={{ width: '40px', height: '40px', marginBottom: '0.5rem' }}>
+                <DollarSign size={18} />
+              </div>
+              <div className="staff-action-label" style={{ fontSize: '0.75rem' }}>Tuntutan</div>
+            </Link>
+
+            {/* Payslip */}
+            <Link href="/staff-portal/payslip" className="staff-action-card compact" style={{ flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '0.75rem' }}>
+              <div className="staff-action-icon" style={{ width: '40px', height: '40px', marginBottom: '0.5rem' }}>
+                <Receipt size={18} />
+              </div>
+              <div className="staff-action-label" style={{ fontSize: '0.75rem' }}>Payslip</div>
+            </Link>
+
+            {/* Profile */}
+            <Link href="/staff-portal/profile" className="staff-action-card compact" style={{ flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '0.75rem' }}>
+              <div className="staff-action-icon profile" style={{ width: '40px', height: '40px', marginBottom: '0.5rem' }}>
+                <User size={18} />
+              </div>
+              <div className="staff-action-label" style={{ fontSize: '0.75rem' }}>Profil</div>
+            </Link>
+          </div>
+        </div>
+
+        {/* Team Today Widget */}
+        <div>
+          <TeamTodayWidget currentStaffId={staffId} />
+
+          {/* Recent Achievements */}
+          {earnedAchievements.length > 0 && (
+            <div className="card" style={{ marginTop: '1rem' }}>
+              <div className="card-header" style={{ paddingBottom: '0.5rem' }}>
+                <div className="card-title" style={{ fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <Trophy size={18} color="var(--secondary)" />
+                  Pencapaian Terkini
+                </div>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                {earnedAchievements.map(achievement => (
+                  <AchievementBadge key={achievement.id} achievement={achievement} size="sm" />
+                ))}
+              </div>
+              <Link href="/staff-portal/profile" className="team-today-link" style={{ marginTop: '0.5rem' }}>
+                Lihat semua <ChevronRight size={14} />
+              </Link>
+            </div>
+          )}
+        </div>
+
 
         {/* Announcements Section */}
         {announcements && announcements.length > 0 && (
@@ -669,6 +670,6 @@ export default function StaffPortalPage() {
         {/* Bottom Navigation for Mobile */}
         <StaffPortalNav currentPage="home" pendingCount={totalPending} />
       </div>
-    </MainLayout>
+    </MainLayout >
   );
 }
