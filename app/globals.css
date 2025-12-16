@@ -1,3 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 :root {
   /* Color Palette - Abang Bob Brand (Merah + Cream) */
   --primary: #CC1512;
