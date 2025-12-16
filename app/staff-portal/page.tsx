@@ -436,7 +436,7 @@ export default function StaffPortalPage() {
               </div>
               <div>
                 <div className="staff-action-label">Cuti</div>
-                <div className="staff-action-sublabel">Baki: {leaveBalance?.annual.balance || 0} hari</div>
+                <div className="staff-action-sublabel">Baki: {leaveBalance?.annual?.balance || 0} hari</div>
               </div>
               {pendingLeaveCount > 0 && (
                 <span className="staff-action-badge">{pendingLeaveCount}</span>
