@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import MainLayout from '@/components/MainLayout';
 import { DELIVERY_PLATFORMS } from '@/lib/delivery-data';
 import { useStore } from '@/lib/store';
+import { useDeliveryOrdersRealtime } from '@/lib/supabase/realtime-hooks';
 import { DeliveryOrder } from '@/lib/types';
 import Modal from '@/components/Modal';
 import LoadingSpinner from '@/components/LoadingSpinner';
@@ -11,7 +12,16 @@ import { Volume2, VolumeX, Printer, Bell, RefreshCw, ShoppingBag, ChefHat, Check
 import StatCard from '@/components/StatCard';
 
 export default function DeliveryHubPage() {
-  const { deliveryOrders, updateDeliveryStatus, isInitialized } = useStore();
+  const { deliveryOrders, updateDeliveryStatus, refreshDeliveryOrders, isInitialized } = useStore();
+
+  // Realtime subscription for delivery orders
+  const handleDeliveryOrderChange = useCallback(() => {
+    console.log('[Realtime] Delivery order change detected, refreshing...');
+    refreshDeliveryOrders();
+  }, [refreshDeliveryOrders]);
+
+  useDeliveryOrdersRealtime(handleDeliveryOrderChange);
+
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [showSlipModal, setShowSlipModal] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<DeliveryOrder | null>(null);

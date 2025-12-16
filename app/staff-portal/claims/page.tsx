@@ -1,8 +1,9 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useCallback } from 'react';
 import MainLayout from '@/components/MainLayout';
 import { useStaffPortal, useStaff } from '@/lib/store';
+import { useClaimRequestsRealtime } from '@/lib/supabase/realtime-hooks';
 import { getClaimTypeLabel, getStatusLabel, getStatusColor } from '@/lib/staff-portal-data';
 import Link from 'next/link';
 import LoadingSpinner from '@/components/LoadingSpinner';
@@ -25,7 +26,15 @@ const CURRENT_STAFF_ID = '2';
 
 export default function ClaimsPage() {
   const { staff, isInitialized } = useStaff();
-  const { getStaffClaimRequests } = useStaffPortal();
+  const { getStaffClaimRequests, refreshClaimRequests } = useStaffPortal();
+
+  // Realtime subscription for claim requests
+  const handleClaimChange = useCallback(() => {
+    console.log('[Realtime] Claim request change detected, refreshing...');
+    refreshClaimRequests();
+  }, [refreshClaimRequests]);
+
+  useClaimRequestsRealtime(handleClaimChange);
 
   const currentStaff = staff.find(s => s.id === CURRENT_STAFF_ID);
   const claimRequests = getStaffClaimRequests(CURRENT_STAFF_ID);

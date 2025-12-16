@@ -4,6 +4,7 @@ import { useState, useRef, useCallback } from 'react';
 import MainLayout from '@/components/MainLayout';
 import { useEquipment } from '@/lib/store';
 import { useAuth } from '@/lib/contexts/AuthContext';
+import { useOilTrackersRealtime } from '@/lib/supabase/realtime-hooks';
 import { OilTracker, OilChangeRequest, OilActionHistory, OilActionType } from '@/lib/types';
 import {
   Plus,
@@ -38,8 +39,15 @@ export default function EquipmentPage() {
     rejectOilRequest,
     getPendingOilRequests,
     getPendingOilRequestCount,
+    refreshOilTrackers,
     isInitialized
   } = useEquipment();
+
+  const handleOilTrackersChange = useCallback(() => {
+    refreshOilTrackers();
+  }, [refreshOilTrackers]);
+
+  useOilTrackersRealtime(handleOilTrackersChange);
 
   const { user, currentStaff } = useAuth();
   const isManager = currentStaff?.role === 'Admin' || currentStaff?.role === 'Manager';
@@ -433,7 +441,7 @@ export default function EquipmentPage() {
 
                   <div style={{ marginBottom: '1rem' }}>
                     <span className={`badge ${tracker.status === 'good' ? 'badge-success' :
-                        tracker.status === 'warning' ? 'badge-warning' : 'badge-danger'
+                      tracker.status === 'warning' ? 'badge-warning' : 'badge-danger'
                       }`}>
                       {tracker.status === 'good' ? 'BAIK' :
                         tracker.status === 'warning' ? 'AWAS' : 'KRITIKAL'}

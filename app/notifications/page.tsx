@@ -3,6 +3,8 @@
 import { useState, useMemo, useEffect } from 'react';
 import MainLayout from '@/components/MainLayout';
 import { useNotifications, useInventory, useOrders, useStore } from '@/lib/store';
+import { useNotificationsRealtime } from '@/lib/supabase/realtime-hooks';
+import { useCallback } from 'react';
 import { Notification as NotificationType } from '@/lib/types';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import {
@@ -31,8 +33,15 @@ export default function NotificationsPage() {
     markAllNotificationsRead,
     deleteNotification,
     getUnreadCount,
+    refreshNotifications,
     isInitialized
   } = useNotifications();
+
+  const handleNotificationsChange = useCallback(() => {
+    refreshNotifications();
+  }, [refreshNotifications]);
+
+  useNotificationsRealtime(handleNotificationsChange);
 
   const { inventory } = useInventory();
   const { orders, getTodayOrders } = useOrders();
@@ -383,8 +392,8 @@ export default function NotificationsPage() {
                           }} />
                         )}
                         <span className={`badge ${notif.priority === 'critical' ? 'badge-danger' :
-                            notif.priority === 'high' ? 'badge-warning' :
-                              notif.priority === 'medium' ? 'badge-info' : 'badge-success'
+                          notif.priority === 'high' ? 'badge-warning' :
+                            notif.priority === 'medium' ? 'badge-info' : 'badge-success'
                           }`} style={{ fontSize: '0.6rem' }}>
                           {notif.priority}
                         </span>

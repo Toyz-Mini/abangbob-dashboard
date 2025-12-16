@@ -3,7 +3,7 @@
 import { useState, useCallback } from 'react';
 import MainLayout from '@/components/MainLayout';
 import { useStaffPortal } from '@/lib/store';
-import { useLeaveRequestsRealtime, useClaimRequestsRealtime } from '@/lib/supabase/realtime-hooks';
+import { useLeaveRequestsRealtime, useClaimRequestsRealtime, useStaffRequestsRealtime } from '@/lib/supabase/realtime-hooks';
 import { getLeaveTypeLabel, getClaimTypeLabel, getRequestCategoryLabel, getStatusLabel, getStatusColor } from '@/lib/staff-portal-data';
 import Modal from '@/components/Modal';
 import LoadingSpinner from '@/components/LoadingSpinner';
@@ -37,6 +37,7 @@ export default function ApprovalsPage() {
     rejectStaffRequest,
     refreshLeaveRequests,
     refreshClaimRequests,
+    refreshStaffRequests,
     isInitialized
   } = useStaffPortal();
 
@@ -51,8 +52,14 @@ export default function ApprovalsPage() {
     refreshClaimRequests();
   }, [refreshClaimRequests]);
 
+  const handleStaffRequestsChange = useCallback(() => {
+    console.log('[Realtime] Staff request change detected, refreshing...');
+    refreshStaffRequests();
+  }, [refreshStaffRequests]);
+
   useLeaveRequestsRealtime(handleLeaveChange);
   useClaimRequestsRealtime(handleClaimChange);
+  useStaffRequestsRealtime(handleStaffRequestsChange);
 
   const [activeTab, setActiveTab] = useState<TabType>('leave');
   const [showRejectModal, setShowRejectModal] = useState(false);

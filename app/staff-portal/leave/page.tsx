@@ -1,8 +1,9 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useCallback } from 'react';
 import MainLayout from '@/components/MainLayout';
 import { useStaffPortal, useStaff } from '@/lib/store';
+import { useLeaveRequestsRealtime } from '@/lib/supabase/realtime-hooks';
 import { getLeaveTypeLabel, getStatusLabel, getStatusColor } from '@/lib/staff-portal-data';
 import Link from 'next/link';
 import LoadingSpinner from '@/components/LoadingSpinner';
@@ -82,7 +83,15 @@ function LeaveBalanceRing({
 
 export default function LeavePage() {
   const { staff, isInitialized } = useStaff();
-  const { getLeaveBalance, getStaffLeaveRequests } = useStaffPortal();
+  const { getLeaveBalance, getStaffLeaveRequests, refreshLeaveRequests } = useStaffPortal();
+
+  // Realtime subscription for leave requests
+  const handleLeaveChange = useCallback(() => {
+    console.log('[Realtime] Leave request change detected, refreshing...');
+    refreshLeaveRequests();
+  }, [refreshLeaveRequests]);
+
+  useLeaveRequestsRealtime(handleLeaveChange);
 
   const currentStaff = staff.find(s => s.id === CURRENT_STAFF_ID);
   const leaveBalance = getLeaveBalance(CURRENT_STAFF_ID);

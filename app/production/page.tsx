@@ -4,6 +4,8 @@ import { useState } from 'react';
 import Link from 'next/link';
 import MainLayout from '@/components/MainLayout';
 import { useStore } from '@/lib/store';
+import { useProductionLogsRealtime } from '@/lib/supabase/realtime-hooks';
+import { useCallback } from 'react';
 import { Plus, Trash2, Package, CheckCircle, Wrench, ArrowRight } from 'lucide-react';
 import Modal from '@/components/Modal';
 import LoadingSpinner from '@/components/LoadingSpinner';
@@ -31,7 +33,14 @@ const WASTE_REASONS = [
 ];
 
 export default function ProductionPage() {
-  const { productionLogs, addProductionLog, isInitialized } = useStore();
+  const { productionLogs, addProductionLog, refreshProductionLogs, isInitialized } = useStore();
+
+  const handleProductionLogsChange = useCallback(() => {
+    refreshProductionLogs();
+  }, [refreshProductionLogs]);
+
+  useProductionLogsRealtime(handleProductionLogsChange);
+
   const [showAddLogModal, setShowAddLogModal] = useState(false);
   const [showWasteModal, setShowWasteModal] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);

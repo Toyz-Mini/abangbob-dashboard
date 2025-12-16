@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import MainLayout from '@/components/MainLayout';
 import { usePromotions } from '@/lib/store';
+import { usePromotionsRealtime } from '@/lib/supabase/realtime-hooks';
 import { Promotion } from '@/lib/types';
 import { MOCK_MENU } from '@/lib/menu-data';
 import Modal from '@/components/Modal';
@@ -23,14 +24,14 @@ import {
 } from 'lucide-react';
 import StatCard from '@/components/StatCard';
 
-type ModalType = 'add' | 'edit' | 'delete' | null;
-
 const PROMO_TYPES = [
   { value: 'percentage', label: 'Diskaun %', icon: Percent },
   { value: 'fixed_amount', label: 'Potongan Tetap', icon: Tag },
   { value: 'bogo', label: 'Buy 1 Get 1', icon: Gift },
   { value: 'free_item', label: 'Item Percuma', icon: Zap },
 ];
+
+type ModalType = 'add' | 'edit' | 'delete' | null;
 
 const DAYS_OF_WEEK = [
   { value: 0, label: 'Ahad' },
@@ -43,7 +44,15 @@ const DAYS_OF_WEEK = [
 ];
 
 export default function PromotionsPage() {
-  const { promotions, addPromotion, updatePromotion, deletePromotion, isInitialized } = usePromotions();
+  const { promotions, addPromotion, updatePromotion, deletePromotion, refreshPromotions, isInitialized } = usePromotions();
+
+  // Realtime subscription for promotions
+  const handlePromotionsChange = useCallback(() => {
+    console.log('[Realtime] Promotions change detected, refreshing...');
+    refreshPromotions();
+  }, [refreshPromotions]);
+
+  usePromotionsRealtime(handlePromotionsChange);
   const [modalType, setModalType] = useState<ModalType>(null);
   const [selectedPromo, setSelectedPromo] = useState<Promotion | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -351,7 +360,7 @@ export default function PromotionsPage() {
                       {promo.name}
                     </div>
                     <span className={`badge ${isExpired(promo) ? 'badge-danger' :
-                        promo.status === 'active' ? 'badge-success' : 'badge-warning'
+                      promo.status === 'active' ? 'badge-success' : 'badge-warning'
                       }`}>
                       {isExpired(promo) ? 'Tamat' : promo.status === 'active' ? 'Aktif' : 'Tidak Aktif'}
                     </span>

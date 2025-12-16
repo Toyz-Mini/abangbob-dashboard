@@ -154,10 +154,12 @@ interface StoreState {
   // Production Logs
   productionLogs: ProductionLog[];
   addProductionLog: (log: Omit<ProductionLog, 'id'>) => void;
+  refreshProductionLogs: () => Promise<void>;
 
   // Delivery Orders
   deliveryOrders: DeliveryOrder[];
   updateDeliveryStatus: (orderId: string, status: DeliveryOrder['status']) => void;
+  refreshDeliveryOrders: () => Promise<void>;
 
   // Finance
   expenses: Expense[];
@@ -169,6 +171,8 @@ interface StoreState {
   getTodayCashFlow: () => DailyCashFlow | undefined;
   getMonthlyExpenses: (month: string) => Expense[];
   getMonthlyRevenue: (month: string) => number;
+  refreshExpenses: () => Promise<void>;
+  refreshCashFlows: () => Promise<void>;
 
   // Customers
   customers: Customer[];
@@ -176,6 +180,7 @@ interface StoreState {
   updateCustomer: (id: string, updates: Partial<Customer>) => void;
   addLoyaltyPoints: (customerId: string, points: number, orderId?: string) => void;
   redeemLoyaltyPoints: (customerId: string, points: number) => boolean;
+  refreshCustomers: () => Promise<void>;
 
   // Suppliers
   suppliers: Supplier[];
@@ -185,12 +190,15 @@ interface StoreState {
   deleteSupplier: (id: string) => void;
   addPurchaseOrder: (po: Omit<PurchaseOrder, 'id' | 'poNumber' | 'createdAt' | 'updatedAt'>) => Promise<PurchaseOrder>;
   updatePurchaseOrderStatus: (id: string, status: PurchaseOrder['status']) => void;
+  refreshSuppliers: () => Promise<void>;
+  refreshPurchaseOrders: () => Promise<void>;
 
   // Recipes
   recipes: Recipe[];
   addRecipe: (recipe: Omit<Recipe, 'id' | 'createdAt' | 'updatedAt' | 'totalCost' | 'profitMargin'>) => void;
   updateRecipe: (id: string, updates: Partial<Recipe>) => void;
   deleteRecipe: (id: string) => void;
+  refreshRecipes: () => Promise<void>;
 
   // Shifts & Schedules
   shifts: Shift[];
@@ -210,6 +218,7 @@ interface StoreState {
   updatePromotion: (id: string, updates: Partial<Promotion>) => void;
   deletePromotion: (id: string) => void;
   validatePromoCode: (code: string) => Promotion | null;
+  refreshPromotions: () => Promise<void>;
 
   // Notifications
   notifications: Notification[];
@@ -218,6 +227,8 @@ interface StoreState {
   markAllNotificationsRead: () => void;
   deleteNotification: (id: string) => void;
   getUnreadCount: () => number;
+  refreshNotifications: () => Promise<void>;
+  refreshAnnouncements: () => Promise<void>;
 
   // Menu Items
   menuItems: MenuItem[];
@@ -305,6 +316,9 @@ interface StoreState {
   rejectStaffRequest: (id: string, responseNote: string) => void;
   getStaffRequestsByStaff: (staffId: string) => StaffRequest[];
   getPendingStaffRequests: () => StaffRequest[];
+  refreshStaffRequests: () => Promise<void>;
+  refreshChecklistTemplates: () => Promise<void>;
+  refreshChecklistCompletions: () => Promise<void>;
 
   // Staff Portal - Announcements
   announcements: Announcement[];
@@ -340,6 +354,8 @@ interface StoreState {
   getPendingOilRequests: () => OilChangeRequest[];
   getOilRequestsByStaff: (staffId: string) => OilChangeRequest[];
   getPendingOilRequestCount: () => number;
+  getOilActionHistory: (fryerId: string) => OilActionHistory[];
+  refreshOilTrackers: () => Promise<void>;
 
   // Menu Categories
   menuCategories: MenuCategory[];
@@ -1351,6 +1367,19 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     ));
   }, []);
 
+  // Refresh delivery orders from Supabase (for realtime sync)
+  const refreshDeliveryOrders = useCallback(async () => {
+    try {
+      const supabaseOrders = await VoidRefundOps.fetchDeliveryOrders();
+      if (supabaseOrders) {
+        setDeliveryOrders(supabaseOrders);
+        console.log('[Realtime] Delivery orders refreshed from Supabase:', supabaseOrders.length);
+      }
+    } catch (error) {
+      console.error('Failed to refresh delivery orders from Supabase:', error);
+    }
+  }, []);
+
   // Finance actions
   const addExpense = useCallback(async (expense: Omit<Expense, 'id' | 'createdAt'>) => {
     const newExpense: Expense = {
@@ -1430,6 +1459,115 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       .filter(o => o.createdAt.startsWith(month) && o.status === 'completed')
       .reduce((sum, o) => sum + o.total, 0);
   }, [orders]);
+
+  // Refresh expenses from Supabase (for realtime sync)
+  const refreshExpenses = useCallback(async () => {
+    try {
+      const supabaseExpenses = await VoidRefundOps.fetchExpenses();
+      if (supabaseExpenses) {
+        setExpenses(supabaseExpenses);
+        console.log('[Realtime] Expenses refreshed from Supabase:', supabaseExpenses.length);
+      }
+    } catch (error) {
+      console.error('Failed to refresh expenses from Supabase:', error);
+    }
+  }, []);
+
+  // Refresh cash flows from Supabase (for realtime sync)
+  const refreshCashFlows = useCallback(async () => {
+    try {
+      const supabaseCashFlows = await VoidRefundOps.fetchCashFlows();
+      if (supabaseCashFlows) {
+        setCashFlows(supabaseCashFlows);
+        console.log('[Realtime] Cash flows refreshed from Supabase:', supabaseCashFlows.length);
+      }
+    } catch (error) {
+      console.error('Failed to refresh cash flows from Supabase:', error);
+    }
+  }, []);
+
+  const refreshCustomers = useCallback(async () => {
+    try {
+      const data = await VoidRefundOps.fetchCustomers();
+      if (data) setCustomers(data);
+    } catch (error) { console.error('Failed to refresh customers', error); }
+  }, []);
+
+  const refreshSuppliers = useCallback(async () => {
+    try {
+      const data = await VoidRefundOps.fetchSuppliers();
+      if (data) setSuppliers(data);
+    } catch (error) { console.error('Failed to refresh suppliers', error); }
+  }, []);
+
+  const refreshPurchaseOrders = useCallback(async () => {
+    try {
+      const data = await VoidRefundOps.fetchPurchaseOrders();
+      if (data) setPurchaseOrders(data);
+    } catch (error) { console.error('Failed to refresh POs', error); }
+  }, []);
+
+  const refreshRecipes = useCallback(async () => {
+    try {
+      const data = await VoidRefundOps.fetchRecipes();
+      if (data) setRecipes(data);
+    } catch (error) { console.error('Failed to refresh recipes', error); }
+  }, []);
+
+  const refreshNotifications = useCallback(async () => {
+    try {
+      const data = await VoidRefundOps.fetchNotifications();
+      if (data) setNotifications(data);
+    } catch (error) { console.error('Failed to refresh notifications', error); }
+  }, []);
+
+  const refreshAnnouncements = useCallback(async () => {
+    try {
+      const data = await VoidRefundOps.fetchAnnouncements();
+      if (data) setAnnouncements(data);
+    } catch (error) { console.error('Failed to refresh announcements', error); }
+  }, []);
+
+  const refreshOilTrackers = useCallback(async () => {
+    try {
+      const data = await VoidRefundOps.fetchOilTrackers();
+      if (data) setOilTrackers(data);
+    } catch (error) { console.error('Failed to refresh oil trackers', error); }
+  }, []);
+
+  const refreshChecklistTemplates = useCallback(async () => {
+    try {
+      const data = await VoidRefundOps.fetchChecklistTemplates();
+      if (data) setChecklistTemplates(data);
+    } catch (error) { console.error('Failed to refresh checklist templates', error); }
+  }, []);
+
+  const refreshChecklistCompletions = useCallback(async () => {
+    try {
+      const data = await VoidRefundOps.fetchChecklistCompletions();
+      if (data) setChecklistCompletions(data);
+    } catch (error) { console.error('Failed to refresh checklist completions', error); }
+  }, []);
+
+  const refreshProductionLogs = useCallback(async () => {
+    try {
+      const data = await VoidRefundOps.fetchProductionLogs();
+      if (data) setProductionLogs(data);
+    } catch (error) { console.error('Failed to refresh production logs', error); }
+  }, []);
+
+  // Refresh promotions from Supabase (for realtime sync)
+  const refreshPromotions = useCallback(async () => {
+    try {
+      const supabasePromotions = await VoidRefundOps.fetchPromotions();
+      if (supabasePromotions) {
+        setPromotions(supabasePromotions);
+        console.log('[Realtime] Promotions refreshed from Supabase:', supabasePromotions.length);
+      }
+    } catch (error) {
+      console.error('Failed to refresh promotions from Supabase:', error);
+    }
+  }, []);
 
   // Customer actions
   const addCustomer = useCallback(async (customerData: Omit<Customer, 'id' | 'createdAt' | 'loyaltyPoints' | 'totalSpent' | 'totalOrders' | 'segment'>): Promise<Customer> => {
@@ -2830,6 +2968,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     return oilChangeRequests.filter(r => r.status === 'pending').length;
   }, [oilChangeRequests]);
 
+  const getOilActionHistory = useCallback((fryerId: string): OilActionHistory[] => {
+    return oilActionHistory.filter(h => h.fryerId === fryerId)
+      .sort((a, b) => new Date(b.actionAt).getTime() - new Date(a.actionAt).getTime());
+  }, [oilActionHistory]);
+
   // ==================== MENU CATEGORIES FUNCTIONS ====================
 
   const addMenuCategory = useCallback(async (category: Omit<MenuCategory, 'id' | 'createdAt'>) => {
@@ -3096,10 +3239,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     // Production Logs
     productionLogs,
     addProductionLog,
+    refreshProductionLogs,
 
     // Delivery Orders
     deliveryOrders,
     updateDeliveryStatus,
+    refreshDeliveryOrders,
 
     // Finance
     expenses,
@@ -3111,6 +3256,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     getTodayCashFlow,
     getMonthlyExpenses,
     getMonthlyRevenue,
+    refreshExpenses,
+    refreshCashFlows,
 
     // Customers
     customers,
@@ -3118,6 +3265,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     updateCustomer,
     addLoyaltyPoints,
     redeemLoyaltyPoints,
+    refreshCustomers,
 
     // Suppliers
     suppliers,
@@ -3127,12 +3275,15 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     deleteSupplier,
     addPurchaseOrder,
     updatePurchaseOrderStatus,
+    refreshSuppliers,
+    refreshPurchaseOrders,
 
     // Recipes
     recipes,
     addRecipe,
     updateRecipe,
     deleteRecipe,
+    refreshRecipes,
 
     // Shifts & Schedules
     shifts,
@@ -3152,6 +3303,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     updatePromotion,
     deletePromotion,
     validatePromoCode,
+    refreshPromotions,
 
     // Notifications
     notifications,
@@ -3160,6 +3312,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     markAllNotificationsRead,
     deleteNotification,
     getUnreadCount,
+    refreshNotifications,
+    refreshAnnouncements,
 
     // Menu Items
     menuItems,
@@ -3247,6 +3401,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     rejectStaffRequest,
     getStaffRequestsByStaff,
     getPendingStaffRequests,
+    refreshStaffRequests,
+    refreshChecklistTemplates,
+    refreshChecklistCompletions,
 
     // Staff Portal - Announcements
     announcements,
@@ -3282,6 +3439,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     getPendingOilRequests,
     getOilRequestsByStaff,
     getPendingOilRequestCount,
+    getOilActionHistory,
+    refreshOilTrackers,
 
     // Menu Categories
     menuCategories,
@@ -3380,6 +3539,8 @@ export function useFinance() {
     getTodayCashFlow: store.getTodayCashFlow,
     getMonthlyExpenses: store.getMonthlyExpenses,
     getMonthlyRevenue: store.getMonthlyRevenue,
+    refreshExpenses: store.refreshExpenses,
+    refreshCashFlows: store.refreshCashFlows,
     orders: store.orders,
     isInitialized: store.isInitialized,
   };
@@ -3393,6 +3554,7 @@ export function useCustomers() {
     updateCustomer: store.updateCustomer,
     addLoyaltyPoints: store.addLoyaltyPoints,
     redeemLoyaltyPoints: store.redeemLoyaltyPoints,
+    refreshCustomers: store.refreshCustomers,
     isInitialized: store.isInitialized,
   };
 }
@@ -3407,6 +3569,8 @@ export function useSuppliers() {
     deleteSupplier: store.deleteSupplier,
     addPurchaseOrder: store.addPurchaseOrder,
     updatePurchaseOrderStatus: store.updatePurchaseOrderStatus,
+    refreshSuppliers: store.refreshSuppliers,
+    refreshPurchaseOrders: store.refreshPurchaseOrders,
     inventory: store.inventory,
     isInitialized: store.isInitialized,
   };
@@ -3419,6 +3583,7 @@ export function useRecipes() {
     addRecipe: store.addRecipe,
     updateRecipe: store.updateRecipe,
     deleteRecipe: store.deleteRecipe,
+    refreshRecipes: store.refreshRecipes,
     inventory: store.inventory,
     isInitialized: store.isInitialized,
   };
@@ -3450,6 +3615,7 @@ export function usePromotions() {
     updatePromotion: store.updatePromotion,
     deletePromotion: store.deletePromotion,
     validatePromoCode: store.validatePromoCode,
+    refreshPromotions: store.refreshPromotions,
     isInitialized: store.isInitialized,
   };
 }
@@ -3463,6 +3629,8 @@ export function useNotifications() {
     markAllNotificationsRead: store.markAllNotificationsRead,
     deleteNotification: store.deleteNotification,
     getUnreadCount: store.getUnreadCount,
+    refreshNotifications: store.refreshNotifications,
+    refreshAnnouncements: store.refreshAnnouncements,
     isInitialized: store.isInitialized,
   };
 }
@@ -3560,6 +3728,10 @@ export function useStaffPortal() {
     rejectStaffRequest: store.rejectStaffRequest,
     getStaffRequestsByStaff: store.getStaffRequestsByStaff,
     getPendingStaffRequests: store.getPendingStaffRequests,
+    refreshStaffRequests: store.refreshStaffRequests,
+    refreshChecklistTemplates: store.refreshChecklistTemplates,
+    refreshChecklistCompletions: store.refreshChecklistCompletions,
+
     // Announcements
     announcements: store.announcements,
     addAnnouncement: store.addAnnouncement,
@@ -3620,6 +3792,8 @@ export function useEquipment() {
     getPendingOilRequests: store.getPendingOilRequests,
     getOilRequestsByStaff: store.getOilRequestsByStaff,
     getPendingOilRequestCount: store.getPendingOilRequestCount,
+    getOilActionHistory: store.getOilActionHistory,
+    refreshOilTrackers: store.refreshOilTrackers,
 
     // Related data
     staff: store.staff,

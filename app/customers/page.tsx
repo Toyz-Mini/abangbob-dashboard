@@ -3,14 +3,16 @@
 import { useState, useMemo } from 'react';
 import MainLayout from '@/components/MainLayout';
 import { useCustomers, useOrders } from '@/lib/store';
+import { useCustomersRealtime } from '@/lib/supabase/realtime-hooks';
+import { useCallback } from 'react';
 import { Customer } from '@/lib/types';
 import Modal from '@/components/Modal';
 import LoadingSpinner from '@/components/LoadingSpinner';
-import { 
-  UserCheck, 
-  Plus, 
-  Edit2, 
-  Trash2, 
+import {
+  UserCheck,
+  Plus,
+  Edit2,
+  Trash2,
   Phone,
   Gift,
   Star,
@@ -26,14 +28,21 @@ import StatCard from '@/components/StatCard';
 type ModalType = 'add' | 'edit' | 'view' | 'points' | null;
 
 export default function CustomersPage() {
-  const { 
-    customers, 
-    addCustomer, 
-    updateCustomer, 
+  const {
+    customers,
+    addCustomer,
+    updateCustomer,
     addLoyaltyPoints,
     redeemLoyaltyPoints,
-    isInitialized 
+    refreshCustomers,
+    isInitialized
   } = useCustomers();
+
+  const handleCustomersChange = useCallback(() => {
+    refreshCustomers();
+  }, [refreshCustomers]);
+
+  useCustomersRealtime(handleCustomersChange);
 
   const { orders } = useOrders();
 
@@ -437,11 +446,11 @@ export default function CustomersPage() {
               {upcomingBirthdays.length > 0 ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                   {upcomingBirthdays.map(customer => (
-                    <div 
+                    <div
                       key={customer.id}
-                      style={{ 
-                        padding: '0.75rem', 
-                        background: 'var(--gray-100)', 
+                      style={{
+                        padding: '0.75rem',
+                        background: 'var(--gray-100)',
                         borderRadius: 'var(--radius-sm)',
                         display: 'flex',
                         justifyContent: 'space-between',
@@ -551,9 +560,9 @@ export default function CustomersPage() {
           {selectedCustomer && (
             <>
               <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-                <div style={{ 
-                  width: '80px', 
-                  height: '80px', 
+                <div style={{
+                  width: '80px',
+                  height: '80px',
                   background: selectedCustomer.segment === 'vip' ? '#fef3c7' : '#dbeafe',
                   borderRadius: '50%',
                   display: 'flex',
@@ -596,11 +605,11 @@ export default function CustomersPage() {
                 {getCustomerOrders(selectedCustomer.phone).slice(0, 5).length > 0 ? (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                     {getCustomerOrders(selectedCustomer.phone).slice(0, 5).map(order => (
-                      <div 
+                      <div
                         key={order.id}
-                        style={{ 
-                          padding: '0.75rem', 
-                          background: 'var(--gray-100)', 
+                        style={{
+                          padding: '0.75rem',
+                          background: 'var(--gray-100)',
                           borderRadius: 'var(--radius-sm)',
                           display: 'flex',
                           justifyContent: 'space-between'
@@ -645,10 +654,10 @@ export default function CustomersPage() {
         >
           {selectedCustomer && (
             <>
-              <div style={{ 
-                textAlign: 'center', 
-                padding: '1.5rem', 
-                background: 'var(--gray-100)', 
+              <div style={{
+                textAlign: 'center',
+                padding: '1.5rem',
+                background: 'var(--gray-100)',
                 borderRadius: 'var(--radius-md)',
                 marginBottom: '1.5rem'
               }}>
@@ -695,7 +704,7 @@ export default function CustomersPage() {
               {pointsForm.points > 0 && (
                 <div className={`alert ${pointsForm.action === 'add' ? 'alert-success' : 'alert-warning'}`}>
                   Baki baru: <strong>
-                    {pointsForm.action === 'add' 
+                    {pointsForm.action === 'add'
                       ? selectedCustomer.loyaltyPoints + pointsForm.points
                       : Math.max(0, selectedCustomer.loyaltyPoints - pointsForm.points)
                     } points

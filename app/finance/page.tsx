@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import MainLayout from '@/components/MainLayout';
 import { useFinance } from '@/lib/store';
+import { useExpensesRealtime, useCashFlowsRealtime } from '@/lib/supabase/realtime-hooks';
 import { useTranslation } from '@/lib/contexts/LanguageContext';
 import { Expense, ExpenseCategory, PaymentMethod } from '@/lib/types';
 import { EXPENSE_CATEGORIES, PAYMENT_METHODS, getCategoryLabel, getCategoryColor } from '@/lib/finance-data';
@@ -41,8 +42,24 @@ export default function FinancePage() {
     getTodayCashFlow,
     getMonthlyExpenses,
     getMonthlyRevenue,
+    refreshExpenses,
+    refreshCashFlows,
     isInitialized
   } = useFinance();
+
+  // Realtime subscriptions
+  const handleExpensesChange = useCallback(() => {
+    console.log('[Realtime] Expenses change detected, refreshing...');
+    refreshExpenses();
+  }, [refreshExpenses]);
+
+  const handleCashFlowsChange = useCallback(() => {
+    console.log('[Realtime] Cash flows change detected, refreshing...');
+    refreshCashFlows();
+  }, [refreshCashFlows]);
+
+  useExpensesRealtime(handleExpensesChange);
+  useCashFlowsRealtime(handleCashFlowsChange);
   const { t, language } = useTranslation();
 
   const [viewMode, setViewMode] = useState<ViewMode>('expenses');

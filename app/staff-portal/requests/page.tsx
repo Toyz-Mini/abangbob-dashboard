@@ -1,15 +1,16 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import MainLayout from '@/components/MainLayout';
 import { useStaffPortal, useStaff } from '@/lib/store';
+import { useStaffRequestsRealtime } from '@/lib/supabase/realtime-hooks';
 import { getRequestCategoryLabel, getStatusLabel, getStatusColor } from '@/lib/staff-portal-data';
 import { RequestCategory } from '@/lib/types';
 import Modal from '@/components/Modal';
 import Link from 'next/link';
 import LoadingSpinner from '@/components/LoadingSpinner';
-import { 
-  FileText, 
+import {
+  FileText,
   Plus,
   ArrowLeft,
   Clock,
@@ -35,8 +36,16 @@ const REQUEST_CATEGORIES: RequestCategory[] = [
 
 export default function RequestsPage() {
   const { staff, isInitialized } = useStaff();
-  const { getStaffRequestsByStaff, addStaffRequest } = useStaffPortal();
-  
+  const { getStaffRequestsByStaff, addStaffRequest, refreshStaffRequests } = useStaffPortal();
+
+  // Realtime subscription for staff requests
+  const handleStaffRequestsChange = useCallback(() => {
+    console.log('[Realtime] Staff request change detected, refreshing...');
+    refreshStaffRequests();
+  }, [refreshStaffRequests]);
+
+  useStaffRequestsRealtime(handleStaffRequestsChange);
+
   const currentStaff = staff.find(s => s.id === CURRENT_STAFF_ID);
   const requests = getStaffRequestsByStaff(CURRENT_STAFF_ID);
 
@@ -51,7 +60,7 @@ export default function RequestsPage() {
 
   // Sort by date descending
   const sortedRequests = useMemo(() => {
-    return [...requests].sort((a, b) => 
+    return [...requests].sort((a, b) =>
       new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
   }, [requests]);
@@ -131,9 +140,9 @@ export default function RequestsPage() {
           {sortedRequests.length > 0 ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
               {sortedRequests.map(request => (
-                <div 
+                <div
                   key={request.id}
-                  style={{ 
+                  style={{
                     padding: '1rem',
                     borderRadius: 'var(--radius-md)',
                     background: 'var(--gray-50)',
@@ -165,7 +174,7 @@ export default function RequestsPage() {
                         {request.status === 'pending' && <AlertCircle size={12} style={{ marginRight: '0.25rem' }} />}
                         {getStatusLabel(request.status)}
                       </span>
-                      
+
                       <div style={{ fontSize: '0.7rem', color: 'var(--text-light)', marginTop: '0.5rem' }}>
                         <Clock size={10} style={{ marginRight: '0.25rem', display: 'inline' }} />
                         {new Date(request.createdAt).toLocaleDateString('ms-MY')}
@@ -174,10 +183,10 @@ export default function RequestsPage() {
                   </div>
 
                   {request.responseNote && (
-                    <div style={{ 
-                      marginTop: '0.75rem', 
-                      padding: '0.5rem', 
-                      background: request.status === 'completed' ? '#dcfce7' : '#fee2e2', 
+                    <div style={{
+                      marginTop: '0.75rem',
+                      padding: '0.5rem',
+                      background: request.status === 'completed' ? '#dcfce7' : '#fee2e2',
                       borderRadius: 'var(--radius-sm)',
                       fontSize: '0.75rem',
                       color: request.status === 'completed' ? '#166534' : '#991b1b'

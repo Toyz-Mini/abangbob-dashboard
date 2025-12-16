@@ -162,6 +162,13 @@ export function useClaimRequestsRealtime(onClaimChange: RealtimeChangeHandler) {
 }
 
 /**
+ * Subscribe to staff_requests table changes
+ */
+export function useStaffRequestsRealtime(onStaffRequestChange: RealtimeChangeHandler) {
+  return useSupabaseRealtime('staff_requests', onStaffRequestChange);
+}
+
+/**
  * Subscribe to promotions table changes
  */
 export function usePromotionsRealtime(onPromotionChange: RealtimeChangeHandler) {
@@ -250,6 +257,20 @@ export function usePaymentMethodsRealtime(onPaymentMethodChange: RealtimeChangeH
  */
 export function useTaxRatesRealtime(onTaxRateChange: RealtimeChangeHandler) {
   return useSupabaseRealtime('tax_rates', onTaxRateChange);
+}
+
+/**
+ * Subscribe to production_logs table changes
+ */
+export function useProductionLogsRealtime(onProductionLogChange: RealtimeChangeHandler) {
+  return useSupabaseRealtime('production_logs', onProductionLogChange);
+}
+
+/**
+ * Subscribe to oil_trackers table changes
+ */
+export function useOilTrackersRealtime(onOilTrackerChange: RealtimeChangeHandler) {
+  return useSupabaseRealtime('oil_trackers', onOilTrackerChange);
 }
 
 /**

@@ -3,6 +3,8 @@
 import { useState, useMemo } from 'react';
 import MainLayout from '@/components/MainLayout';
 import { useRecipes, useMenu } from '@/lib/store';
+import { useRecipesRealtime } from '@/lib/supabase/realtime-hooks';
+import { useCallback } from 'react';
 import { Recipe, RecipeIngredient } from '@/lib/types';
 import Modal from '@/components/Modal';
 import LoadingSpinner from '@/components/LoadingSpinner';
@@ -22,8 +24,14 @@ import StatCard from '@/components/StatCard';
 type ModalType = 'add' | 'edit' | 'delete' | null;
 
 export default function RecipesPage() {
-  const { recipes, inventory, addRecipe, updateRecipe, deleteRecipe, isInitialized } = useRecipes();
+  const { recipes, inventory, addRecipe, updateRecipe, deleteRecipe, refreshRecipes, isInitialized } = useRecipes();
   const { menuItems } = useMenu();
+
+  const handleRecipesChange = useCallback(() => {
+    refreshRecipes();
+  }, [refreshRecipes]);
+
+  useRecipesRealtime(handleRecipesChange);
   const [modalType, setModalType] = useState<ModalType>(null);
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);

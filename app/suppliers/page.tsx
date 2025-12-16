@@ -3,14 +3,16 @@
 import { useState, useMemo } from 'react';
 import MainLayout from '@/components/MainLayout';
 import { useSuppliers } from '@/lib/store';
+import { useSuppliersRealtime } from '@/lib/supabase/realtime-hooks';
+import { useCallback } from 'react';
 import { Supplier, PurchaseOrder, PurchaseOrderItem, SupplierAccountNumber } from '@/lib/types';
 import Modal from '@/components/Modal';
 import LoadingSpinner from '@/components/LoadingSpinner';
-import { 
-  Boxes, 
-  Plus, 
-  Edit2, 
-  Trash2, 
+import {
+  Boxes,
+  Plus,
+  Edit2,
+  Trash2,
   FileText,
   Phone,
   Mail,
@@ -35,17 +37,26 @@ const PAYMENT_TERMS = [
 ];
 
 export default function SuppliersPage() {
-  const { 
-    suppliers, 
-    purchaseOrders, 
+  const {
+    suppliers,
+    purchaseOrders,
     inventory,
-    addSupplier, 
-    updateSupplier, 
+    addSupplier,
+    updateSupplier,
     deleteSupplier,
     addPurchaseOrder,
     updatePurchaseOrderStatus,
-    isInitialized 
+    refreshSuppliers,
+    refreshPurchaseOrders,
+    isInitialized
   } = useSuppliers();
+
+  const handleSuppliersChange = useCallback(() => {
+    refreshSuppliers();
+    refreshPurchaseOrders();
+  }, [refreshSuppliers, refreshPurchaseOrders]);
+
+  useSuppliersRealtime(handleSuppliersChange);
 
   const [viewMode, setViewMode] = useState<ViewMode>('suppliers');
   const [modalType, setModalType] = useState<ModalType>(null);
@@ -82,7 +93,7 @@ export default function SuppliersPage() {
   }, [inventory]);
 
   // Filter suppliers
-  const filteredSuppliers = suppliers.filter(s => 
+  const filteredSuppliers = suppliers.filter(s =>
     s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     s.contactPerson.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -213,8 +224,8 @@ export default function SuppliersPage() {
     if (existing) {
       setPoForm(prev => ({
         ...prev,
-        items: prev.items.map(i => 
-          i.stockItemId === stockItem.id 
+        items: prev.items.map(i =>
+          i.stockItemId === stockItem.id
             ? { ...i, quantity: i.quantity + 1 }
             : i
         )
@@ -246,7 +257,7 @@ export default function SuppliersPage() {
     } else {
       setPoForm(prev => ({
         ...prev,
-        items: prev.items.map(i => 
+        items: prev.items.map(i =>
           i.stockItemId === stockItemId ? { ...i, quantity } : i
         )
       }));
@@ -409,9 +420,9 @@ export default function SuppliersPage() {
                       </div>
                     </div>
 
-                    <div style={{ 
-                      padding: '0.75rem', 
-                      background: 'var(--gray-100)', 
+                    <div style={{
+                      padding: '0.75rem',
+                      background: 'var(--gray-100)',
                       borderRadius: 'var(--radius-sm)',
                       marginBottom: '1rem',
                       fontSize: '0.875rem'
@@ -485,11 +496,11 @@ export default function SuppliersPage() {
               {pendingPOs.length > 0 ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                   {pendingPOs.map(po => (
-                    <div 
+                    <div
                       key={po.id}
-                      style={{ 
-                        padding: '1rem', 
-                        border: '1px solid var(--gray-200)', 
+                      style={{
+                        padding: '1rem',
+                        border: '1px solid var(--gray-200)',
                         borderRadius: 'var(--radius-md)',
                         cursor: 'pointer'
                       }}
@@ -497,11 +508,10 @@ export default function SuppliersPage() {
                     >
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
                         <strong>{po.poNumber}</strong>
-                        <span className={`badge ${
-                          po.status === 'draft' ? 'badge-warning' :
+                        <span className={`badge ${po.status === 'draft' ? 'badge-warning' :
                           po.status === 'sent' ? 'badge-info' :
-                          'badge-success'
-                        }`}>
+                            'badge-success'
+                          }`}>
                           {po.status}
                         </span>
                       </div>
@@ -529,11 +539,11 @@ export default function SuppliersPage() {
               {completedPOs.length > 0 ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                   {completedPOs.slice(0, 5).map(po => (
-                    <div 
+                    <div
                       key={po.id}
-                      style={{ 
-                        padding: '1rem', 
-                        border: '1px solid var(--gray-200)', 
+                      style={{
+                        padding: '1rem',
+                        border: '1px solid var(--gray-200)',
                         borderRadius: 'var(--radius-md)',
                         cursor: 'pointer',
                         opacity: 0.8
@@ -738,9 +748,9 @@ export default function SuppliersPage() {
             {supplierForm.accountNumbers.length > 0 && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                 {supplierForm.accountNumbers.map((account, index) => (
-                  <div key={index} style={{ 
-                    padding: '0.75rem', 
-                    border: '1px solid var(--gray-200)', 
+                  <div key={index} style={{
+                    padding: '0.75rem',
+                    border: '1px solid var(--gray-200)',
                     borderRadius: 'var(--radius-sm)',
                     position: 'relative'
                   }}>
@@ -779,7 +789,7 @@ export default function SuppliersPage() {
                         onChange={(e) => {
                           setSupplierForm(prev => ({
                             ...prev,
-                            accountNumbers: prev.accountNumbers.map((acc, i) => 
+                            accountNumbers: prev.accountNumbers.map((acc, i) =>
                               i === index ? { ...acc, bankName: e.target.value } : acc
                             )
                           }));
@@ -794,7 +804,7 @@ export default function SuppliersPage() {
                         onChange={(e) => {
                           setSupplierForm(prev => ({
                             ...prev,
-                            accountNumbers: prev.accountNumbers.map((acc, i) => 
+                            accountNumbers: prev.accountNumbers.map((acc, i) =>
                               i === index ? { ...acc, accountNumber: e.target.value } : acc
                             )
                           }));
@@ -810,7 +820,7 @@ export default function SuppliersPage() {
                       onChange={(e) => {
                         setSupplierForm(prev => ({
                           ...prev,
-                          accountNumbers: prev.accountNumbers.map((acc, i) => 
+                          accountNumbers: prev.accountNumbers.map((acc, i) =>
                             i === index ? { ...acc, accountName: e.target.value } : acc
                           )
                         }));
@@ -858,9 +868,9 @@ export default function SuppliersPage() {
           maxWidth="400px"
         >
           <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-            <div style={{ 
-              width: '60px', height: '60px', 
-              background: '#fee2e2', borderRadius: '50%', 
+            <div style={{
+              width: '60px', height: '60px',
+              background: '#fee2e2', borderRadius: '50%',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               margin: '0 auto 1rem'
             }}>
@@ -1005,12 +1015,11 @@ export default function SuppliersPage() {
                       {new Date(selectedPO.createdAt).toLocaleDateString('ms-MY')}
                     </div>
                   </div>
-                  <span className={`badge ${
-                    selectedPO.status === 'draft' ? 'badge-warning' :
+                  <span className={`badge ${selectedPO.status === 'draft' ? 'badge-warning' :
                     selectedPO.status === 'sent' ? 'badge-info' :
-                    selectedPO.status === 'confirmed' ? 'badge-success' :
-                    selectedPO.status === 'received' ? 'badge-success' : 'badge-danger'
-                  }`}>
+                      selectedPO.status === 'confirmed' ? 'badge-success' :
+                        selectedPO.status === 'received' ? 'badge-success' : 'badge-danger'
+                    }`}>
                     {selectedPO.status}
                   </span>
                 </div>
