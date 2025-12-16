@@ -19,13 +19,13 @@ export default function TopNav({ onMenuClick }: TopNavProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
-  
+
   const { resolvedTheme, toggleTheme } = useTheme();
   const { settings, toggleSound, playSound } = useSound();
   const { language, toggleLanguage, t } = useLanguage();
   const { getUnreadCount } = useNotifications();
   const { currentStaff, logoutStaff, signOut } = useAuth();
-  
+
   const unreadCount = getUnreadCount();
 
   // Close dropdown when clicking outside
@@ -66,14 +66,14 @@ export default function TopNav({ onMenuClick }: TopNavProps) {
   return (
     <div className="top-nav">
       <div className="top-nav-left">
-        <button onClick={onMenuClick} className="mobile-menu-btn icon-btn">
+        <button onClick={onMenuClick} className="mobile-menu-btn icon-btn desktop-only">
           <Menu size={24} />
         </button>
 
         {/* Logo untuk mobile */}
-        <img 
-          src="/logo.png" 
-          alt="Abang Bob" 
+        <img
+          src="/logo.png"
+          alt="Abang Bob"
           className="topnav-logo"
         />
 
@@ -132,7 +132,7 @@ export default function TopNav({ onMenuClick }: TopNavProps) {
 
         {/* User Profile with Dropdown */}
         <div className="user-dropdown-container" ref={userMenuRef}>
-          <button 
+          <button
             className={`user-profile-btn ${isUserMenuOpen ? 'active' : ''}`}
             onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
           >
@@ -154,21 +154,21 @@ export default function TopNav({ onMenuClick }: TopNavProps) {
                   <div className="dropdown-user-role">{currentStaff?.role || t('topnav.systemManager')}</div>
                 </div>
               </div>
-              
+
               <div className="dropdown-divider" />
-              
+
               <Link href="/settings" className="dropdown-item" onClick={() => setIsUserMenuOpen(false)}>
                 <Settings size={18} />
                 <span>{t('topnav.accountSettings')}</span>
               </Link>
-              
+
               <button className="dropdown-item">
                 <Store size={18} />
                 <span>{t('topnav.switchOutlet')}</span>
               </button>
-              
+
               <div className="dropdown-divider" />
-              
+
               <button className="dropdown-item dropdown-item-danger" onClick={handleLogout}>
                 <LogOut size={18} />
                 <span>{t('topnav.logout')}</span>

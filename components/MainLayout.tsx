@@ -21,7 +21,11 @@ import {
   FileText,
   Bell,
   HelpCircle,
-  Tv
+  Tv,
+  LayoutDashboard,
+  ShoppingCart,
+  Package,
+  Users
 } from 'lucide-react';
 
 import RouteGuard from './RouteGuard';
@@ -179,20 +183,28 @@ export default function MainLayout({ children }: { children: ReactNode }) {
     };
   }, [handleRipple]);
 
-  // Mobile Menu Items
+  // Mobile Menu Items - Standardized Brand Colors
   const mobileMenuItems = [
-    { href: '/delivery', label: 'Delivery', icon: Truck, color: '#3b82f6' },
-    { href: '/production', label: 'Produksi', icon: Factory, color: '#f59e0b' },
-    { href: '/kds', label: 'KDS', icon: Tv, color: '#10b981' },
-    { href: '/recipes', label: 'Resipi', icon: ChefHat, color: '#ec4899' },
-    { href: '/suppliers', label: 'Stok', icon: Boxes, color: '#8b5cf6' },
-    { href: '/finance', label: 'Kewangan', icon: DollarSign, color: '#059669' },
-    { href: '/customers', label: 'Pelanggan', icon: UserCheck, color: '#6366f1' },
-    { href: '/analytics', label: 'Analitik', icon: BarChart3, color: '#ef4444' },
-    { href: '/audit-log', label: 'Audit', icon: FileText, color: '#64748b' },
-    { href: '/notifications', label: 'Notifikasi', icon: Bell, color: '#eab308' },
-    { href: '/settings', label: 'Tetapan', icon: Settings, color: '#4b5563' },
-    { href: '/help', label: 'Bantuan', icon: HelpCircle, color: '#06b6d4' },
+    { href: '/delivery', label: 'Delivery', icon: Truck, color: 'var(--primary)' }, // Red
+    { href: '/production', label: 'Produksi', icon: Factory, color: 'var(--secondary)' }, // Gold
+    { href: '/kds', label: 'KDS', icon: Tv, color: 'var(--text-primary)' }, // Dark
+    { href: '/recipes', label: 'Resipi', icon: ChefHat, color: 'var(--primary)' },
+    { href: '/suppliers', label: 'Stok', icon: Boxes, color: 'var(--secondary)' },
+    { href: '/finance', label: 'Kewangan', icon: DollarSign, color: 'var(--text-primary)' },
+    { href: '/customers', label: 'Pelanggan', icon: UserCheck, color: 'var(--primary)' },
+    { href: '/analytics', label: 'Analitik', icon: BarChart3, color: 'var(--secondary)' },
+    { href: '/audit-log', label: 'Audit', icon: FileText, color: 'var(--text-secondary)' }, // Grey
+    { href: '/notifications', label: 'Notifikasi', icon: Bell, color: 'var(--warning)' }, // Keep warning for alerts
+    { href: '/settings', label: 'Tetapan', icon: Settings, color: 'var(--text-secondary)' },
+    { href: '/help', label: 'Bantuan', icon: HelpCircle, color: 'var(--info)' }, // Keep info for help
+  ].filter(item => canViewNavItem(userRole, item.href));
+
+  // Determine Bottom Nav Items based on Role
+  const bottomNavItems = [
+    { href: '/', label: 'Home', icon: LayoutDashboard },
+    { href: '/pos', label: 'POS', icon: ShoppingCart },
+    { href: '/inventory', label: 'Inventori', icon: Package },
+    { href: '/hr', label: 'HR', icon: Users },
   ].filter(item => canViewNavItem(userRole, item.href));
 
   return (
@@ -229,6 +241,7 @@ export default function MainLayout({ children }: { children: ReactNode }) {
 
         {/* Bottom Navigation (Mobile) */}
         <BottomNav
+          items={bottomNavItems}
           showMore={true}
           onMoreClick={bottomNav.openMore}
         />
