@@ -9,29 +9,35 @@ interface InventoryLevelChartProps {
 export default function InventoryLevelChart({ data }: InventoryLevelChartProps) {
   return (
     <ResponsiveContainer width="100%" height={300}>
-      <BarChart data={data} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="var(--gray-200)" />
-        <XAxis 
-          dataKey="name" 
+      <BarChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+        <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.05)" vertical={false} />
+        <XAxis
+          dataKey="name"
           stroke="var(--text-secondary)"
-          style={{ fontSize: '12px' }}
+          style={{ fontSize: '11px', fontWeight: 500 }}
           angle={-45}
           textAnchor="end"
-          height={80}
+          height={60}
+          tickLine={false}
+          axisLine={false}
         />
-        <YAxis 
+        <YAxis
           stroke="var(--text-secondary)"
-          style={{ fontSize: '12px' }}
+          style={{ fontSize: '11px' }}
+          tickLine={false}
+          axisLine={false}
         />
-        <Tooltip 
+        <Tooltip
           contentStyle={{
-            backgroundColor: 'var(--bg-primary)',
-            border: '1px solid var(--gray-200)',
-            borderRadius: 'var(--radius-md)',
+            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+            border: 'none',
+            borderRadius: '12px',
+            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
           }}
+          cursor={{ fill: 'rgba(0,0,0,0.02)' }}
         />
-        <Bar dataKey="min" fill="var(--warning)" radius={[4, 4, 0, 0]} />
-        <Bar dataKey="quantity" fill="var(--success)" radius={[4, 4, 0, 0]} />
+        <Bar dataKey="min" fill="var(--warning)" radius={[6, 6, 6, 6]} barSize={8} fillOpacity={0.6} />
+        <Bar dataKey="quantity" fill="var(--success)" radius={[6, 6, 6, 6]} barSize={8} />
       </BarChart>
     </ResponsiveContainer>
   );
