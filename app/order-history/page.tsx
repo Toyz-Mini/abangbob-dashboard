@@ -31,7 +31,12 @@ import {
   XCircle,
   Clock,
   RefreshCw,
+  Search,
+  ShoppingCart
 } from 'lucide-react';
+import LivePageHeader from '@/components/LivePageHeader';
+import GlassCard from '@/components/GlassCard';
+import PremiumButton from '@/components/PremiumButton';
 
 export default function OrderHistoryPage() {
   // Use orders from Supabase-synced store
@@ -288,40 +293,30 @@ export default function OrderHistoryPage() {
   return (
     <MainLayout>
       <div className="animate-fade-in">
-        {/* Header */}
-        <div className="page-header">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              <History size={28} />
-              <div>
-                <h1 className="page-title" style={{ marginBottom: '0.25rem' }}>
-                  Sejarah Pesanan
-                </h1>
-                <p className="page-subtitle">
-                  Lihat, cari, dan urus semua pesanan
-                </p>
-              </div>
-            </div>
+        <LivePageHeader
+          title="Sejarah Pesanan"
+          subtitle="Lihat, cari, dan urus semua pesanan lampau"
+          rightContent={
             <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <button
-                className="btn btn-outline"
+              <PremiumButton
+                variant="glass"
+                icon={Filter}
                 onClick={() => setShowFilters(!showFilters)}
+                isActive={showFilters}
               >
-                <Filter size={18} />
                 Filter
-              </button>
+              </PremiumButton>
               {canExportData && (
-                <button className="btn btn-outline" onClick={handleExport}>
-                  <Download size={18} />
+                <PremiumButton variant="outline" icon={Download} onClick={handleExport}>
                   Export CSV
-                </button>
+                </PremiumButton>
               )}
             </div>
-          </div>
-        </div>
+          }
+        />
 
         {/* Stats */}
-        <div className="content-grid cols-4 mb-lg">
+        <div className="content-grid cols-4 mb-lg animate-slide-up-stagger">
           <StatCard
             label="Jumlah Pesanan"
             value={stats.totalOrders}
@@ -332,7 +327,7 @@ export default function OrderHistoryPage() {
             label="Pesanan Selesai"
             value={stats.completedOrders}
             icon={CheckCircle}
-            gradient="peach"
+            gradient="success"
           />
           <StatCard
             label="Void / Refund"
@@ -340,6 +335,7 @@ export default function OrderHistoryPage() {
             change={pendingCount > 0 ? `${pendingCount} pending` : undefined}
             changeType={pendingCount > 0 ? 'warning' : 'neutral'}
             icon={RefreshCw}
+            gradient="accent"
           />
           <StatCard
             label="Jumlah Jualan"
@@ -353,28 +349,32 @@ export default function OrderHistoryPage() {
 
         {/* Pending Approvals Panel (Manager/Admin only) */}
         {canApprove && pendingCount > 0 && (
-          <PendingApprovalsPanel
-            requests={pendingRequests}
-            onApprove={async (requestId) => {
-              if (currentStaff) {
-                await approveVoidRefund(requestId, currentStaff.id, currentStaff.name);
-              }
-            }}
-            onReject={async (requestId, reason) => {
-              if (currentStaff) {
-                await rejectVoidRefund(requestId, currentStaff.id, currentStaff.name, reason);
-              }
-            }}
-          />
+          <div className="mb-lg animate-slide-up">
+            <PendingApprovalsPanel
+              requests={pendingRequests}
+              onApprove={async (requestId) => {
+                if (currentStaff) {
+                  await approveVoidRefund(requestId, currentStaff.id, currentStaff.name);
+                }
+              }}
+              onReject={async (requestId, reason) => {
+                if (currentStaff) {
+                  await rejectVoidRefund(requestId, currentStaff.id, currentStaff.name, reason);
+                }
+              }}
+            />
+          </div>
         )}
 
         {/* Filters Panel */}
         {showFilters && (
-          <div className="card mb-lg">
-            <div className="card-header">
-              <div className="card-title">Filter Pesanan</div>
+          <GlassCard className="mb-lg animate-slide-up">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', paddingBottom: '0.5rem', borderBottom: '1px solid var(--border-light)' }}>
+              <Filter size={18} color="var(--primary)" />
+              <span style={{ fontWeight: 600 }}>Filter Lanjutan</span>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
               <div className="form-group">
                 <label className="form-label">Tarikh Mula</label>
                 <input
@@ -444,9 +444,10 @@ export default function OrderHistoryPage() {
                 </select>
               </div>
             </div>
-            <div style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem' }}>
-              <button
-                className="btn btn-outline btn-sm"
+            <div style={{ marginTop: '1rem', display: 'flex', justifyContent: 'flex-end' }}>
+              <PremiumButton
+                variant="ghost"
+                size="sm"
                 onClick={() => setFilters({
                   status: 'all',
                   paymentMethod: 'all',
@@ -459,13 +460,13 @@ export default function OrderHistoryPage() {
                 })}
               >
                 Reset Filter
-              </button>
+              </PremiumButton>
             </div>
-          </div>
+          </GlassCard>
         )}
 
         {/* Data Table */}
-        <div className="card">
+        <GlassCard className="animate-slide-up" style={{ animationDelay: '0.2s', padding: 0, overflow: 'hidden' }}>
           <div className="table-responsive">
             <DataTable
               data={filteredOrders as unknown as Record<string, unknown>[]}
@@ -476,14 +477,14 @@ export default function OrderHistoryPage() {
               pagination
               pageSize={10}
               emptyMessage={
-                <div style={{ textAlign: 'center', padding: '2rem' }}>
-                  <History size={48} style={{ color: 'var(--text-secondary)', marginBottom: '1rem' }} />
-                  <p>Tiada pesanan dijumpai</p>
+                <div style={{ textAlign: 'center', padding: '3rem' }}>
+                  <History size={48} style={{ color: 'var(--text-secondary)', marginBottom: '1rem', opacity: 0.5 }} />
+                  <p style={{ color: 'var(--text-secondary)' }}>Tiada pesanan dijumpai</p>
                 </div>
               }
             />
           </div>
-        </div>
+        </GlassCard>
 
         {/* Order Detail Modal */}
         {selectedOrder && (

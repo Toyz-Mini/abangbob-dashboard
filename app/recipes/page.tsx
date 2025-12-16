@@ -17,9 +17,14 @@ import {
   TrendingUp,
   AlertTriangle,
   Star,
-  PieChart
+  PieChart,
+  Clock,
+  Search
 } from 'lucide-react';
 import StatCard from '@/components/StatCard';
+import LivePageHeader from '@/components/LivePageHeader';
+import GlassCard from '@/components/GlassCard';
+import PremiumButton from '@/components/PremiumButton';
 
 type ModalType = 'add' | 'edit' | 'delete' | null;
 
@@ -281,25 +286,18 @@ export default function RecipesPage() {
   return (
     <MainLayout>
       <div className="animate-fade-in">
-        <div className="page-header">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
-            <div>
-              <h1 className="page-title" style={{ marginBottom: '0.5rem' }}>
-                Recipe Costing
-              </h1>
-              <p className="page-subtitle">
-                Kira kos bahan dan margin keuntungan setiap menu
-              </p>
-            </div>
-            <button className="btn btn-primary" onClick={openAddModal}>
-              <Plus size={18} />
+        <LivePageHeader
+          title="Recipe Costing"
+          subtitle="Kira kos bahan dan margin keuntungan setiap menu"
+          rightContent={
+            <PremiumButton onClick={openAddModal} icon={Plus}>
               Tambah Resepi
-            </button>
-          </div>
-        </div>
+            </PremiumButton>
+          }
+        />
 
         {/* Metrics Cards */}
-        <div className="content-grid cols-4 mb-lg">
+        <div className="content-grid cols-4 mb-lg animate-slide-up-stagger">
           <StatCard
             label="Jumlah Resepi"
             value={recipeMetrics.totalRecipes}
@@ -333,167 +331,190 @@ export default function RecipesPage() {
           />
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3" style={{ gap: '1.5rem' }}>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Recipe List */}
           <div className="lg:col-span-2">
-            <div className="card">
-              <div className="card-header">
-                <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <ChefHat size={20} />
-                  Senarai Resepi
+            <GlassCard className="animate-slide-up" style={{ animationDelay: '0.1s' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <div style={{ padding: '0.5rem', background: 'var(--primary-light)', borderRadius: 'var(--radius-md)', color: 'var(--primary)' }}>
+                    <ChefHat size={24} />
+                  </div>
+                  <h2 style={{ fontSize: '1.25rem', fontWeight: 700 }}>Senarai Resepi</h2>
                 </div>
-                <input
-                  type="text"
-                  className="form-input"
-                  placeholder="Cari resepi..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  style={{ width: '200px' }}
-                />
+                <div style={{ position: 'relative' }}>
+                  <Search size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
+                  <input
+                    type="text"
+                    className="form-input"
+                    placeholder="Cari resepi..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    style={{ paddingLeft: '2.5rem', width: '200px' }}
+                  />
+                </div>
               </div>
 
               {filteredRecipes.length > 0 ? (
-                <div style={{ overflowX: 'auto' }}>
-                  <table className="table">
-                    <thead>
-                      <tr>
-                        <th>Menu Item</th>
-                        <th>Kos Bahan</th>
-                        <th>Harga Jual</th>
-                        <th>Untung</th>
-                        <th>Margin</th>
-                        <th>Tindakan</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredRecipes.map(recipe => {
-                        const profit = recipe.sellingPrice - recipe.totalCost;
-                        return (
-                          <tr key={recipe.id}>
-                            <td>
-                              <div style={{ fontWeight: 600 }}>{recipe.menuItemName}</div>
-                              <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                                {recipe.ingredients.length} bahan • {recipe.prepTime} min
-                              </div>
-                            </td>
-                            <td style={{ color: 'var(--danger)' }}>
-                              BND {recipe.totalCost.toFixed(2)}
-                            </td>
-                            <td style={{ fontWeight: 600 }}>
-                              BND {recipe.sellingPrice.toFixed(2)}
-                            </td>
-                            <td style={{ color: 'var(--success)', fontWeight: 600 }}>
-                              BND {profit.toFixed(2)}
-                            </td>
-                            <td>
-                              <span className={`badge ${getMarginBadge(recipe.profitMargin)}`}>
-                                {recipe.profitMargin.toFixed(1)}%
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {filteredRecipes.map(recipe => {
+                    const profit = recipe.sellingPrice - recipe.totalCost;
+                    const marginColor = getMarginColor(recipe.profitMargin); // Ensure this function is available or inline style
+                    // Re-implementing simplified margin color getter for inline use if needed or relying on existing function
+                    const isHighMargin = recipe.profitMargin >= 50;
+
+                    return (
+                      <div key={recipe.id} className="hover-lift" style={{
+                        background: 'var(--bg-card)',
+                        border: '1px solid var(--border-light)',
+                        borderRadius: 'var(--radius-lg)',
+                        padding: '1rem',
+                        position: 'relative',
+                        overflow: 'hidden'
+                      }}>
+                        {/* Header */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
+                          <div>
+                            <h3 style={{ fontWeight: 700, fontSize: '1.1rem', marginBottom: '0.25rem' }}>{recipe.menuItemName}</h3>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                              <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                                <Clock size={14} /> {recipe.prepTime} min
                               </span>
-                            </td>
-                            <td>
-                              <div style={{ display: 'flex', gap: '0.25rem' }}>
-                                <button
-                                  className="btn btn-sm btn-outline"
-                                  onClick={() => openEditModal(recipe)}
-                                >
-                                  <Edit2 size={14} />
-                                </button>
-                                <button
-                                  className="btn btn-sm btn-outline"
-                                  onClick={() => openDeleteModal(recipe)}
-                                  style={{ color: 'var(--danger)' }}
-                                >
-                                  <Trash2 size={14} />
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
+                              <span>•</span>
+                              <span>{recipe.ingredients.length} bahan</span>
+                            </div>
+                          </div>
+                          <span className={`badge ${getMarginBadge(recipe.profitMargin)}`} style={{ height: 'fit-content' }}>
+                            {recipe.profitMargin.toFixed(1)}%
+                          </span>
+                        </div>
+
+                        {/* Cost Breakdown */}
+                        <div style={{
+                          background: 'var(--bg-secondary)',
+                          borderRadius: 'var(--radius-md)',
+                          padding: '0.75rem',
+                          marginBottom: '1rem',
+                          display: 'grid',
+                          gridTemplateColumns: '1fr 1fr 1fr',
+                          gap: '0.5rem',
+                          textAlign: 'center'
+                        }}>
+                          <div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Kos</div>
+                            <div style={{ fontWeight: 600, color: 'var(--danger)' }}>${recipe.totalCost.toFixed(2)}</div>
+                          </div>
+                          <div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Jual</div>
+                            <div style={{ fontWeight: 600 }}>${recipe.sellingPrice.toFixed(2)}</div>
+                          </div>
+                          <div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Untung</div>
+                            <div style={{ fontWeight: 700, color: 'var(--success)' }}>${profit.toFixed(2)}</div>
+                          </div>
+                        </div>
+
+                        {/* Actions */}
+                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                          <PremiumButton variant="outline" size="sm" onClick={() => openEditModal(recipe)} style={{ flex: 1 }}>
+                            <Edit2 size={14} style={{ marginRight: '4px' }} /> Edit
+                          </PremiumButton>
+                          <button
+                            className="btn-icon btn-ghost-danger"
+                            onClick={() => openDeleteModal(recipe)}
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               ) : (
                 <div style={{ textAlign: 'center', padding: '3rem' }}>
-                  <ChefHat size={48} color="var(--gray-400)" style={{ marginBottom: '1rem' }} />
+                  <ChefHat size={48} color="var(--gray-400)" style={{ marginBottom: '1rem', opacity: 0.5 }} />
                   <p style={{ color: 'var(--text-secondary)', marginBottom: '1rem' }}>
                     {searchTerm ? 'Tiada resepi dijumpai' : 'Belum ada resepi'}
                   </p>
-                  <button className="btn btn-primary" onClick={openAddModal}>
+                  <PremiumButton onClick={openAddModal}>
                     <Plus size={18} />
                     Tambah Resepi Pertama
-                  </button>
+                  </PremiumButton>
                 </div>
               )}
-            </div>
+            </GlassCard>
           </div>
 
-          {/* Menu Engineering */}
-          <div>
-            <div className="card">
-              <div className="card-header">
-                <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          {/* Menu Engineering & Sidebar */}
+          <div className="flex flex-col gap-6">
+            <GlassCard className="animate-slide-up" style={{ animationDelay: '0.2s' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+                <div style={{ padding: '0.5rem', background: 'rgba(245, 158, 11, 0.1)', borderRadius: 'var(--radius-md)', color: 'var(--warning)' }}>
                   <PieChart size={20} />
-                  Menu Engineering
                 </div>
+                <h3 style={{ fontSize: '1.1rem', fontWeight: 700 }}>Menu Engineering</h3>
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                <div style={{ padding: '1rem', background: '#d1fae5', borderRadius: 'var(--radius-md)' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                    <Star size={16} color="#065f46" />
-                    <span style={{ fontWeight: 600, color: '#065f46' }}>Stars (High Margin)</span>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                <div className="hover-lift" style={{ padding: '1rem', background: '#ecfdf5', borderRadius: 'var(--radius-lg)', border: '1px solid #a7f3d0' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
+                    <Star size={18} color="#059669" fill="#059669" />
+                    <span style={{ fontWeight: 700, color: '#065f46' }}>Stars</span>
+                    <span className="badge badge-success" style={{ marginLeft: 'auto' }}>{menuMatrix.stars.length}</span>
                   </div>
-                  <div style={{ fontSize: '0.875rem', color: '#065f46' }}>
-                    {menuMatrix.stars.length} item - Fokus promosi!
-                  </div>
-                </div>
-
-                <div style={{ padding: '1rem', background: '#fef3c7', borderRadius: 'var(--radius-md)' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                    <AlertTriangle size={16} color="#92400e" />
-                    <span style={{ fontWeight: 600, color: '#92400e' }}>Plowhorses (Popular, Low Margin)</span>
-                  </div>
-                  <div style={{ fontSize: '0.875rem', color: '#92400e' }}>
-                    {menuMatrix.plowhorses.length} item - Naikkan harga atau kurangkan kos
+                  <div style={{ fontSize: '0.85rem', color: '#064e3b' }}>
+                    High Profit & Popular. Kekalkan kualiti & promosi!
                   </div>
                 </div>
 
-                <div style={{ padding: '1rem', background: '#fee2e2', borderRadius: 'var(--radius-md)' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                    <Trash2 size={16} color="#991b1b" />
-                    <span style={{ fontWeight: 600, color: '#991b1b' }}>Dogs (Low Margin)</span>
+                <div className="hover-lift" style={{ padding: '1rem', background: '#fffbeb', borderRadius: 'var(--radius-lg)', border: '1px solid #fcd34d' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
+                    <AlertTriangle size={18} color="#d97706" />
+                    <span style={{ fontWeight: 700, color: '#92400e' }}>Plowhorses</span>
+                    <span className="badge badge-warning" style={{ marginLeft: 'auto' }}>{menuMatrix.plowhorses.length}</span>
                   </div>
-                  <div style={{ fontSize: '0.875rem', color: '#991b1b' }}>
-                    {menuMatrix.dogs.length} item - Pertimbangkan untuk buang
+                  <div style={{ fontSize: '0.85rem', color: '#78350f' }}>
+                    Popular tapi Low Margin. Naikkan harga sedikit?
+                  </div>
+                </div>
+
+                <div className="hover-lift" style={{ padding: '1rem', background: '#fef2f2', borderRadius: 'var(--radius-lg)', border: '1px solid #fecaca' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
+                    <Trash2 size={18} color="#dc2626" />
+                    <span style={{ fontWeight: 700, color: '#991b1b' }}>Dogs</span>
+                    <span className="badge badge-danger" style={{ marginLeft: 'auto' }}>{menuMatrix.dogs.length}</span>
+                  </div>
+                  <div style={{ fontSize: '0.85rem', color: '#7f1d1d' }}>
+                    Low Profit & Popularity. Pertimbangkan untuk buang.
                   </div>
                 </div>
               </div>
-            </div>
+            </GlassCard>
 
             {/* Items without recipes */}
             {menuItemsWithoutRecipes.length > 0 && (
-              <div className="card" style={{ marginTop: '1.5rem' }}>
-                <div className="card-header">
-                  <div className="card-title">Belum Ada Resepi</div>
-                  <div className="card-subtitle">{menuItemsWithoutRecipes.length} item</div>
+              <GlassCard className="animate-slide-up" style={{ animationDelay: '0.3s' }}>
+                <div className="card-header" style={{ marginBottom: '1rem' }}>
+                  <div className="card-title" style={{ fontSize: '1rem' }}>Belum Ada Resepi</div>
+                  <div className="card-subtitle">{menuItemsWithoutRecipes.length} item perlukan perhatian</div>
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                  {menuItemsWithoutRecipes.slice(0, 5).map(item => (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: '300px', overflowY: 'auto' }}>
+                  {menuItemsWithoutRecipes.map(item => (
                     <div
                       key={item.id}
                       style={{
                         display: 'flex',
                         justifyContent: 'space-between',
                         alignItems: 'center',
-                        padding: '0.5rem',
-                        background: 'var(--gray-100)',
-                        borderRadius: 'var(--radius-sm)'
+                        padding: '0.75rem',
+                        background: 'var(--bg-secondary)',
+                        borderRadius: 'var(--radius-md)',
+                        borderLeft: '3px solid var(--warning)'
                       }}
                     >
-                      <span style={{ fontSize: '0.875rem' }}>{item.name}</span>
+                      <span style={{ fontSize: '0.9rem', fontWeight: 500 }}>{item.name}</span>
                       <button
-                        className="btn btn-sm btn-outline"
+                        className="btn btn-sm btn-ghost-primary"
                         onClick={() => {
                           setFormData({
                             menuItemId: item.id,
@@ -508,12 +529,12 @@ export default function RecipesPage() {
                           setModalType('add');
                         }}
                       >
-                        <Plus size={14} />
+                        <Plus size={16} />
                       </button>
                     </div>
                   ))}
                 </div>
-              </div>
+              </GlassCard>
             )}
           </div>
         </div>

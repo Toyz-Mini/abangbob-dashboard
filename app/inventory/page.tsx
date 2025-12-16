@@ -8,8 +8,11 @@ import { useAuth } from '@/lib/contexts/AuthContext';
 import { useTranslation } from '@/lib/contexts/LanguageContext';
 import { StockItem } from '@/lib/types';
 import Modal from '@/components/Modal';
-import { AlertTriangle, Plus, Edit2, Trash2, ArrowUp, ArrowDown, History, Package } from 'lucide-react';
+import { AlertTriangle, Plus, Edit2, Trash2, ArrowUp, ArrowDown, History, Package, LayoutGrid, List as ListIcon, Search, Filter } from 'lucide-react';
 import LoadingSpinner from '@/components/LoadingSpinner';
+import LivePageHeader from '@/components/LivePageHeader';
+import GlassCard from '@/components/GlassCard';
+import PremiumButton from '@/components/PremiumButton';
 
 type ModalType = 'add' | 'edit' | 'adjust' | 'delete' | 'history' | null;
 
@@ -46,6 +49,7 @@ export default function InventoryPage() {
   const [modalType, setModalType] = useState<ModalType>(null);
   const [selectedItem, setSelectedItem] = useState<StockItem | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>('grid');
 
   // Form states
   const [formData, setFormData] = useState({
@@ -223,200 +227,264 @@ export default function InventoryPage() {
     );
   }
 
+  // Helper for Stock Level Ring
+  const StockLevelRing = ({ percentage, color }: { percentage: number, color: string }) => {
+    const radius = 18;
+    const circumference = 2 * Math.PI * radius;
+    const offset = circumference - (Math.min(percentage, 100) / 100) * circumference;
+
+    // Map tailwind/css variable colors to hex for SVG
+    const getColor = (c: string) => {
+      if (c.includes('success')) return '#10b981';
+      if (c.includes('warning')) return '#f59e0b';
+      if (c.includes('danger')) return '#ef4444';
+      return '#3b82f6';
+    };
+
+    return (
+      <div style={{ position: 'relative', width: '44px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <svg width="44" height="44" style={{ transform: 'rotate(-90deg)' }}>
+          <circle cx="22" cy="22" r={radius} fill="none" stroke="rgba(0,0,0,0.1)" strokeWidth="4" />
+          <circle
+            cx="22"
+            cy="22"
+            r={radius}
+            fill="none"
+            stroke={getColor(color)}
+            strokeWidth="4"
+            strokeDasharray={circumference}
+            strokeDashoffset={offset}
+            strokeLinecap="round"
+          />
+        </svg>
+      </div>
+    );
+  };
+
   return (
     <MainLayout>
       <div className="animate-fade-in">
-        <div className="page-header">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
-            <div>
-              <h1 className="page-title" style={{ marginBottom: '0.5rem' }}>
-                {t('inventory.title')}
-              </h1>
-              <p className="page-subtitle">
-                {t('inventory.subtitle')}
-              </p>
-            </div>
-            {canDeleteItems && (
-              <button className="btn btn-primary" onClick={openAddModal}>
-                <Plus size={18} />
+        <LivePageHeader
+          title={t('inventory.title')}
+          subtitle={t('inventory.subtitle')}
+          rightContent={
+            canDeleteItems && (
+              <PremiumButton onClick={openAddModal} icon={Plus}>
                 {t('inventory.addItem')}
-              </button>
-            )}
-          </div>
-        </div>
+              </PremiumButton>
+            )
+          }
+        />
 
-        {/* Search and Filter */}
-        <div style={{ marginBottom: '1.5rem', display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-          <input
-            type="text"
-            className="form-input"
-            placeholder={t('inventory.searchPlaceholder')}
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            style={{ maxWidth: '300px' }}
-          />
-          <select
-            className="form-select"
-            value={filterCategory}
-            onChange={(e) => setFilterCategory(e.target.value)}
-            style={{ maxWidth: '200px' }}
-          >
-            <option value="All">{t('inventory.allCategories')}</option>
-            {STOCK_CATEGORIES.map(cat => (
-              <option key={cat} value={cat}>{cat}</option>
-            ))}
-          </select>
-        </div>
+        {/* Controls Bar */}
+        <GlassCard className="mb-lg" style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', alignItems: 'center', justifyContent: 'space-between', padding: '1rem' }}>
+          <div style={{ display: 'flex', gap: '1rem', flex: 1, minWidth: '300px' }}>
+            <div style={{ position: 'relative', flex: 1 }}>
+              <Search size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
+              <input
+                type="text"
+                className="form-input"
+                placeholder={t('inventory.searchPlaceholder')}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                style={{ paddingLeft: '2.5rem', width: '100%' }}
+              />
+            </div>
+            <div style={{ position: 'relative', width: '200px' }}>
+              <Filter size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
+              <select
+                className="form-select"
+                value={filterCategory}
+                onChange={(e) => setFilterCategory(e.target.value)}
+                style={{ paddingLeft: '2.5rem', width: '100%' }}
+              >
+                <option value="All">{t('inventory.allCategories')}</option>
+                {STOCK_CATEGORIES.map(cat => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', background: 'var(--bg-secondary)', padding: '0.25rem', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-color)' }}>
+            <button
+              onClick={() => setViewMode('grid')}
+              style={{
+                padding: '0.5rem',
+                borderRadius: 'var(--radius-md)',
+                background: viewMode === 'grid' ? 'var(--bg-card)' : 'transparent',
+                color: viewMode === 'grid' ? 'var(--primary)' : 'var(--text-secondary)',
+                boxShadow: viewMode === 'grid' ? 'var(--shadow-sm)' : 'none',
+                transition: 'all 0.2s'
+              }}
+            >
+              <LayoutGrid size={20} />
+            </button>
+            <button
+              onClick={() => setViewMode('list')}
+              style={{
+                padding: '0.5rem',
+                borderRadius: 'var(--radius-md)',
+                background: viewMode === 'list' ? 'var(--bg-card)' : 'transparent',
+                color: viewMode === 'list' ? 'var(--primary)' : 'var(--text-secondary)',
+                boxShadow: viewMode === 'list' ? 'var(--shadow-sm)' : 'none',
+                transition: 'all 0.2s'
+              }}
+            >
+              <ListIcon size={20} />
+            </button>
+          </div>
+        </GlassCard>
 
         {/* Low Stock Alert */}
         {lowStock.length > 0 && (
-          <div className="alert alert-warning" style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <AlertTriangle size={20} />
-            <strong>{lowStock.length} {t('inventory.lowStockAlert')}</strong> {t('inventory.pleaseRestock')}
-          </div>
+          <GlassCard gradient="subtle" className="mb-lg" style={{ display: 'flex', alignItems: 'center', gap: '1rem', borderLeft: '4px solid var(--warning)' }}>
+            <div style={{ background: 'rgba(245, 158, 11, 0.1)', padding: '0.75rem', borderRadius: '50%' }}>
+              <AlertTriangle size={24} color="var(--warning)" />
+            </div>
+            <div>
+              <strong style={{ fontSize: '1.1rem', display: 'block' }}>{lowStock.length} {t('inventory.lowStockAlert')}</strong>
+              <span style={{ color: 'var(--text-secondary)' }}>{t('inventory.pleaseRestock')}</span>
+            </div>
+          </GlassCard>
         )}
 
-        {/* Stock Table */}
-        <div className="card">
-          <div className="card-header">
-            <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <Package size={20} />
-              {t('inventory.stockList')}
-            </div>
-            <div className="card-subtitle">{t('common.total')}: {inventory.length} items</div>
-          </div>
+        {/* Content View */}
+        {viewMode === 'grid' ? (
+          <div className="content-grid cols-3 animate-slide-up-stagger">
+            {filteredStock.map((item) => {
+              const status = getStockStatus(item);
+              const percentage = (item.currentQuantity / item.minQuantity) * 100; // >100 is good
+              // Invert logic for visual ring: 100% means full/good. 
+              // Actually for stock: if qty > min, it's >100%. We just want to show health.
+              // Let's cap at 100 for the ring visual if it's full.
+              const ringPercentage = Math.min(percentage, 100);
 
-          {/* Mobile Card View */}
-          <div className="mobile-only">
-            {filteredStock.map((item) => (
-              <div key={item.id} className="mobile-card">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <div>
-                    <div style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--text-primary)' }}>{item.name}</div>
-                    <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{item.category} • {item.unit}</div>
+              return (
+                <GlassCard key={item.id} hoverEffect={true} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div>
+                      <div className="badge badge-sm" style={{ marginBottom: '0.5rem' }}>{item.category}</div>
+                      <h3 style={{ fontWeight: 700, fontSize: '1.1rem', marginBottom: '0.25rem' }}>{item.name}</h3>
+                      <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>BND {item.cost.toFixed(2)} / {item.unit}</div>
+                    </div>
+                    <StockLevelRing percentage={ringPercentage} color={status.badge} />
                   </div>
-                  <div className={`badge ${getStockStatus(item).badge}`}>
-                    {item.currentQuantity} {item.unit}
-                  </div>
-                </div>
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.5rem', fontSize: '0.9rem' }}>
-                  <div style={{ color: 'var(--text-secondary)' }}>
-                    Min: {item.minQuantity}
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem', marginTop: 'auto' }}>
+                    <span style={{ fontSize: '1.5rem', fontWeight: 800 }}>{item.currentQuantity}</span>
+                    <span style={{ color: 'var(--text-secondary)' }}>{item.unit}</span>
                   </div>
-                  <div style={{ fontWeight: 600 }}>
-                    BND {item.cost.toFixed(2)}
-                  </div>
-                </div>
 
-                <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid var(--border-light)' }}>
-                  <button
-                    className="btn btn-outline btn-sm"
-                    style={{ flex: 1 }}
-                    onClick={() => openAdjustModal(item)}
-                  >
-                    <ArrowUp size={14} style={{ marginRight: '4px' }} />
-                    Laras
-                  </button>
-                  <button
-                    className="btn btn-outline btn-sm"
-                    onClick={() => {
-                      setSelectedItem(item);
-                      setModalType('history');
-                    }}
-                  >
-                    <History size={14} />
-                  </button>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', display: 'flex', justifyContent: 'space-between' }}>
+                    <span>Min: {item.minQuantity}</span>
+                    <span className={`text-${status.badge.replace('badge-', '')}`}>{status.label}</span>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', paddingTop: '1rem', borderTop: '1px solid var(--border-light)' }}>
+                    <PremiumButton variant="secondary" size="sm" onClick={() => openAdjustModal(item)}>
+                      <ArrowUp size={14} style={{ marginRight: '4px' }} /> Laras
+                    </PremiumButton>
+                    <PremiumButton variant="ghost" size="sm" onClick={() => openHistoryModal(item)}>
+                      <History size={14} />
+                    </PremiumButton>
+                  </div>
                   {canDeleteItems && (
-                    <button
-                      className="btn btn-outline btn-sm text-danger"
-                      onClick={() => deleteStockItem(item.id)}
-                    >
-                      <Trash2 size={14} />
-                    </button>
+                    <div style={{ position: 'absolute', top: '1rem', right: '1rem', opacity: 0 }} className="group-hover:opacity-100 transition-opacity">
+                      {/* Hidden delete for clean UI, maybe add to a menu? For now keeping it simple or accessible via edit */}
+                    </div>
                   )}
-                </div>
-              </div>
-            ))}
+                  {canDeleteItems && (
+                    <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+                      <button className="text-sm text-primary hover:underline" onClick={() => openEditModal(item)}>Edit</button>
+                      <button className="text-sm text-danger hover:underline" onClick={() => openDeleteModal(item)}>Padam</button>
+                    </div>
+                  )}
+
+                </GlassCard>
+              );
+            })}
           </div>
+        ) : (
+          <GlassCard>
+            <div className="table-responsive">
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>Item</th>
+                    <th className="hidden-mobile">Kategori</th>
+                    <th>Kuantiti Semasa</th>
+                    <th className="hidden-mobile">Minimum</th>
+                    <th className="hidden-mobile">Unit</th>
+                    <th className="hidden-mobile">Kos</th>
+                    <th className="hidden-mobile">Supplier</th>
+                    <th>Status</th>
+                    <th>Tindakan</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredStock.map(item => {
+                    const status = getStockStatus(item);
+                    return (
+                      <tr key={item.id}>
+                        <td style={{ fontWeight: 600 }}>{item.name}</td>
+                        <td className="hidden-mobile">{item.category}</td>
+                        <td>{item.currentQuantity}</td>
+                        <td className="hidden-mobile">{item.minQuantity}</td>
+                        <td className="hidden-mobile">{item.unit}</td>
+                        <td className="hidden-mobile">BND {item.cost.toFixed(2)}</td>
+                        <td className="hidden-mobile">{item.supplier || '-'}</td>
+                        <td>
+                          <span className={`badge ${status.badge}`}>
+                            {status.label}
+                          </span>
+                        </td>
+                        <td>
+                          <div className="flex gap-2 justify-end">
+                            <button
+                              className="btn-icon btn-ghost-primary"
+                              onClick={() => openAdjustModal(item)}
+                              title="Laras Stok"
+                            >
+                              <ArrowUp size={14} />
+                            </button>
 
-          <div className="table-container desktop-only">
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>Item</th>
-                  <th className="hidden-mobile">Kategori</th>
-                  <th>Kuantiti Semasa</th>
-                  <th className="hidden-mobile">Minimum</th>
-                  <th className="hidden-mobile">Unit</th>
-                  <th className="hidden-mobile">Kos</th>
-                  <th className="hidden-mobile">Supplier</th>
-                  <th>Status</th>
-                  <th>Tindakan</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredStock.map(item => {
-                  const status = getStockStatus(item);
-                  return (
-                    <tr key={item.id}>
-                      <td style={{ fontWeight: 600 }}>{item.name}</td>
-                      <td className="hidden-mobile">{item.category}</td>
-                      <td>{item.currentQuantity}</td>
-                      <td className="hidden-mobile">{item.minQuantity}</td>
-                      <td className="hidden-mobile">{item.unit}</td>
-                      <td className="hidden-mobile">BND {item.cost.toFixed(2)}</td>
-                      <td className="hidden-mobile">{item.supplier || '-'}</td>
-                      <td>
-                        <span className={`badge ${status.badge}`}>
-                          {status.label}
-                        </span>
-                      </td>
-                      <td>
-                        <div className="flex gap-2 justify-end">
-                          <button
-                            className="btn-icon btn-ghost-primary"
-                            onClick={() => openAdjustModal(item)}
-                            title="Laras Stok"
-                          >
-                            <ArrowUp size={14} />
-                          </button>
+                            <button
+                              className="btn-icon btn-ghost"
+                              onClick={() => openHistoryModal(item)}
+                              title="Lihat Sejarah"
+                            >
+                              <History size={14} />
+                            </button>
 
-                          <button
-                            className="btn-icon btn-ghost"
-                            onClick={() => openHistoryModal(item)}
-                            title="Lihat Sejarah"
-                          >
-                            <History size={14} />
-                          </button>
-
-                          {canDeleteItems && (
-                            <>
-                              <button
-                                className="btn-icon btn-ghost"
-                                onClick={() => openEditModal(item)}
-                                title="Edit Item"
-                              >
-                                <Edit2 size={14} />
-                              </button>
-                              <button
-                                className="btn-icon btn-ghost-danger"
-                                onClick={() => deleteStockItem(item.id)}
-                                title="Padam Item"
-                              >
-                                <Trash2 size={14} />
-                              </button>
-                            </>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
+                            {canDeleteItems && (
+                              <>
+                                <button
+                                  className="btn-icon btn-ghost"
+                                  onClick={() => openEditModal(item)}
+                                  title="Edit Item"
+                                >
+                                  <Edit2 size={14} />
+                                </button>
+                                <button
+                                  className="btn-icon btn-ghost-danger"
+                                  onClick={() => deleteStockItem(item.id)}
+                                  title="Padam Item"
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </GlassCard>
+        )}
 
         {/* Add/Edit Modal */}
         <Modal

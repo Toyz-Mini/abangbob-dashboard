@@ -6,10 +6,13 @@ import MainLayout from '@/components/MainLayout';
 import { useStore } from '@/lib/store';
 import { useProductionLogsRealtime } from '@/lib/supabase/realtime-hooks';
 import { useCallback } from 'react';
-import { Plus, Trash2, Package, CheckCircle, Wrench, ArrowRight } from 'lucide-react';
+import { Plus, Trash2, Package, CheckCircle, Wrench, ArrowRight, ClipboardList, AlertOctagon } from 'lucide-react';
 import Modal from '@/components/Modal';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import StatCard from '@/components/StatCard';
+import LivePageHeader from '@/components/LivePageHeader';
+import GlassCard from '@/components/GlassCard';
+import PremiumButton from '@/components/PremiumButton';
 
 const PRODUCTION_ITEMS = [
   'Nasi Lemak Ayam',
@@ -144,63 +147,61 @@ export default function ProductionPage() {
   return (
     <MainLayout>
       <div className="animate-fade-in">
-        <div className="page-header">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
-            <div>
-              <h1 className="page-title" style={{ marginBottom: '0.5rem' }}>
-                Production & Kitchen Ops
-              </h1>
-              <p className="page-subtitle">
-                Pantau peralatan dan log production harian
-              </p>
-            </div>
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <button className="btn btn-primary" onClick={() => setShowAddLogModal(true)}>
-                <Plus size={18} />
+        <LivePageHeader
+          title="Production & Kitchen Ops"
+          subtitle="Pantau peralatan dan log production harian"
+          rightContent={
+            <div style={{ display: 'flex', gap: '0.75rem' }}>
+              <PremiumButton onClick={() => setShowAddLogModal(true)} icon={Plus}>
                 Log Production
-              </button>
-              <button className="btn btn-outline" onClick={() => setShowWasteModal(true)} style={{ color: 'var(--danger)' }}>
-                <Trash2 size={18} />
-                Log Pembaziran
-              </button>
+              </PremiumButton>
+              <PremiumButton variant="glass" onClick={() => setShowWasteModal(true)} style={{ color: 'var(--danger)', borderColor: 'rgba(239, 68, 68, 0.3)' }} icon={Trash2}>
+                Log Sisa
+              </PremiumButton>
             </div>
-          </div>
-        </div>
+          }
+        />
 
         {/* Equipment Health Link */}
         <Link href="/equipment" style={{ textDecoration: 'none' }}>
-          <div className="card" style={{
-            marginBottom: '2rem',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            cursor: 'pointer',
-            transition: 'all 0.2s',
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <GlassCard
+            gradient="accent"
+            hoverEffect={true}
+            className="mb-lg"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              cursor: 'pointer',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
               <div style={{
-                background: 'var(--primary)',
+                background: 'rgba(255,255,255,0.2)',
                 color: 'white',
                 padding: '1rem',
-                borderRadius: 'var(--radius-md)'
+                borderRadius: 'var(--radius-lg)',
+                backdropFilter: 'blur(4px)'
               }}>
-                <Wrench size={24} />
+                <Wrench size={28} />
               </div>
               <div>
-                <h3 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '0.25rem' }}>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.25rem', color: 'var(--text-primary)' }}>
                   Equipment Health - Oil Tracker
                 </h3>
-                <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
+                <p style={{ color: 'var(--text-secondary)' }}>
                   Pantau dan uruskan status minyak fryer
                 </p>
               </div>
             </div>
-            <ArrowRight size={24} style={{ color: 'var(--text-secondary)' }} />
-          </div>
+            <div style={{ background: 'var(--bg-card)', padding: '0.5rem', borderRadius: '50%' }}>
+              <ArrowRight size={24} style={{ color: 'var(--text-primary)' }} />
+            </div>
+          </GlassCard>
         </Link>
 
         {/* Daily Stats */}
-        <div className="content-grid cols-3 mb-lg">
+        <div className="content-grid cols-3 mb-lg animate-slide-up-stagger">
           <StatCard
             label="Item Dihasilkan Hari Ini"
             value={todayProduction.length}
@@ -227,78 +228,99 @@ export default function ProductionPage() {
           />
         </div>
 
-        {/* Production Logs */}
-        <div className="card">
-          <div className="card-header">
-            <div className="card-title">Daily Production Log</div>
-            <div className="card-subtitle">{new Date().toLocaleDateString('ms-MY')}</div>
-          </div>
+        {/* Kanban Layout for Logs */}
+        <div className="content-grid cols-2 animate-slide-up-stagger" style={{ animationDelay: '0.2s', alignItems: 'start' }}>
+          {/* Produced Column */}
+          <GlassCard>
+            <div className="card-header" style={{ borderBottom: '1px solid var(--border-light)', paddingBottom: '1rem', marginBottom: '1rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <div style={{ padding: '0.5rem', background: 'rgba(16, 185, 129, 0.1)', borderRadius: 'var(--radius-md)', color: 'var(--success)' }}>
+                  <ClipboardList size={20} />
+                </div>
+                <div>
+                  <h3 style={{ fontSize: '1.1rem', fontWeight: 700 }}>Production Log</h3>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Item siap dimasak</div>
+                </div>
+              </div>
+            </div>
 
-          {todayLogs.length > 0 ? (
-            <>
-              {/* Mobile Card View */}
-              <div className="mobile-only">
-                {todayLogs.map(log => (
-                  <div key={log.id} className="mobile-card">
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            {todayProduction.length > 0 ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                {todayProduction.map(log => (
+                  <div key={log.id} style={{
+                    padding: '1rem',
+                    background: 'var(--bg-secondary)',
+                    borderRadius: 'var(--radius-lg)',
+                    borderLeft: '4px solid var(--success)',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center'
+                  }}>
+                    <div>
                       <div style={{ fontWeight: 600, fontSize: '1rem' }}>{log.item}</div>
-                      <div>
-                        {log.quantityProduced > 0 && (
-                          <span className="badge badge-success">+{log.quantityProduced} Unit</span>
-                        )}
-                        {log.wasteAmount > 0 && (
-                          <span className="badge badge-danger">-{log.wasteAmount} Sisa</span>
-                        )}
-                      </div>
+                      <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{log.notes || 'Tiada catatan'}</div>
                     </div>
-                    {log.notes && (
-                      <div style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: 'var(--text-secondary)', background: 'var(--bg-secondary)', padding: '0.5rem', borderRadius: 'var(--radius-sm)' }}>
-                        <span style={{ fontWeight: 500 }}>Catatan:</span> {log.notes}
-                      </div>
-                    )}
+                    <div style={{ textAlign: 'right' }}>
+                      <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--success)' }}>+{log.quantityProduced}</div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Unit</div>
+                    </div>
                   </div>
                 ))}
               </div>
-
-              {/* Desktop Table View */}
-              <div className="table-responsive desktop-only">
-                <table className="table">
-                  <thead>
-                    <tr>
-                      <th>Item</th>
-                      <th>Kuantiti Dihasilkan</th>
-                      <th>Sisa/Buangan</th>
-                      <th>Catatan</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {todayLogs.map(log => (
-                      <tr key={log.id}>
-                        <td style={{ fontWeight: 600 }}>{log.item}</td>
-                        <td>
-                          {log.quantityProduced > 0 && (
-                            <span style={{ color: 'var(--success)', fontWeight: 600 }}>+{log.quantityProduced}</span>
-                          )}
-                        </td>
-                        <td>
-                          {log.wasteAmount > 0 && (
-                            <span style={{ color: 'var(--danger)', fontWeight: 600 }}>-{log.wasteAmount}</span>
-                          )}
-                        </td>
-                        <td style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
-                          {log.notes || '-'}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+            ) : (
+              <div style={{ textAlign: 'center', padding: '3rem 1rem', color: 'var(--text-secondary)' }}>
+                <Package size={32} style={{ opacity: 0.3, marginBottom: '0.5rem' }} />
+                <p>Tiada rekod production hari ini.</p>
+                <button className="btn btn-link btn-sm" onClick={() => setShowAddLogModal(true)}>+ Tambah Rekod</button>
               </div>
-            </>
-          ) : (
-            <p style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '2rem' }}>
-              Tiada log production hari ini. Klik "Log Production" untuk mula.
-            </p>
-          )}
+            )}
+          </GlassCard>
+
+          {/* Waste Column */}
+          <GlassCard>
+            <div className="card-header" style={{ borderBottom: '1px solid var(--border-light)', paddingBottom: '1rem', marginBottom: '1rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <div style={{ padding: '0.5rem', background: 'rgba(239, 68, 68, 0.1)', borderRadius: 'var(--radius-md)', color: 'var(--danger)' }}>
+                  <AlertOctagon size={20} />
+                </div>
+                <div>
+                  <h3 style={{ fontSize: '1.1rem', fontWeight: 700 }}>Waste Log</h3>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Sisa & Kerosakan</div>
+                </div>
+              </div>
+            </div>
+
+            {todayWaste.length > 0 ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                {todayWaste.map(log => (
+                  <div key={log.id} style={{
+                    padding: '1rem',
+                    background: 'var(--bg-secondary)',
+                    borderRadius: 'var(--radius-lg)',
+                    borderLeft: '4px solid var(--danger)',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center'
+                  }}>
+                    <div>
+                      <div style={{ fontWeight: 600, fontSize: '1rem' }}>{log.item}</div>
+                      <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{log.notes ? log.notes.replace('Pembaziran: ', '') : 'Tiada sebab'}</div>
+                    </div>
+                    <div style={{ textAlign: 'right' }}>
+                      <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--danger)' }}>-{log.wasteAmount}</div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Unit</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div style={{ textAlign: 'center', padding: '3rem 1rem', color: 'var(--text-secondary)' }}>
+                <CheckCircle size={32} style={{ opacity: 0.3, marginBottom: '0.5rem', color: 'var(--success)' }} />
+                <p>Tiada pembaziran direkodkan.</p>
+                <div style={{ fontSize: '0.8rem', opacity: 0.7 }}>Kerja yang bagus!</div>
+              </div>
+            )}
+          </GlassCard>
         </div>
 
         {/* Add Production Log Modal */}

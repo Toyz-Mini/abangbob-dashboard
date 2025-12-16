@@ -1,6 +1,7 @@
 'use client';
 
 import { LucideIcon } from 'lucide-react';
+import GlassCard from './GlassCard';
 
 interface StatCardProps {
   label: string;
@@ -8,7 +9,7 @@ interface StatCardProps {
   change?: string;
   changeType?: 'positive' | 'negative' | 'neutral' | 'warning';
   icon?: LucideIcon;
-  gradient?: 'primary' | 'success' | 'warning' | 'info' | 'coral' | 'sunset' | 'peach' | 'amber' | 'none';
+  gradient?: 'primary' | 'success' | 'warning' | 'info' | 'coral' | 'sunset' | 'peach' | 'amber' | 'accent' | 'subtle' | 'none';
   sparkline?: number[];
 }
 
@@ -21,7 +22,19 @@ export default function StatCard({
   gradient = 'none',
   sparkline,
 }: StatCardProps) {
-  const gradientClass = gradient !== 'none' ? `gradient-${gradient}` : '';
+  // Map old gradient names to new GlassCard gradients
+  const glassGradientMap: Record<string, 'primary' | 'accent' | 'subtle' | 'none'> = {
+    'primary': 'primary',
+    'coral': 'accent',
+    'sunset': 'accent',
+    'accent': 'accent',
+    'warning': 'subtle',
+    'info': 'subtle',
+    'subtle': 'subtle',
+    'none': 'none'
+  };
+
+  const glassGradient = glassGradientMap[gradient] || 'none';
   const changeClass = changeType !== 'neutral' ? changeType : '';
 
   // Calculate sparkline heights
@@ -34,7 +47,11 @@ export default function StatCard({
   };
 
   return (
-    <div className={`stat-card ${gradientClass}`}>
+    <GlassCard
+      gradient={glassGradient}
+      hoverEffect={true}
+      className={`stat-card ${gradient !== 'none' ? `gradient-${gradient}` : ''}`}
+    >
       <div className="stat-card-header">
         <div className="stat-label">{label}</div>
         {Icon && (
@@ -62,6 +79,6 @@ export default function StatCard({
           ))}
         </div>
       )}
-    </div>
+    </GlassCard>
   );
 }

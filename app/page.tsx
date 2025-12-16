@@ -13,6 +13,9 @@ import StaffAttendanceChart from '@/components/charts/StaffAttendanceChart';
 import { DashboardSkeleton } from '@/components/Skeleton';
 import { DollarSign, ShoppingCart, AlertTriangle, Users, TrendingUp, Clock, ChefHat, Package } from 'lucide-react';
 import AIInsightsWidget from '@/components/AIInsightsWidget';
+import LivePageHeader from '@/components/LivePageHeader';
+import GlassCard from '@/components/GlassCard';
+import PremiumButton from '@/components/PremiumButton';
 
 export default function DashboardPage() {
   const { isInitialized } = useStore();
@@ -84,17 +87,15 @@ export default function DashboardPage() {
   return (
     <MainLayout>
       <div className="animate-fade-in">
-        {/* Page Header */}
-        <div className="page-header">
-          <h1 className="page-title">{t('dashboard.title')}</h1>
-          <p className="page-subtitle">
-            {currentTime.toLocaleDateString(dateLocale, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })} •
-            {t('dashboard.subtitle')}
-          </p>
-        </div>
+        {/* Live Header */}
+        <LivePageHeader
+          title={t('dashboard.title')}
+          subtitle={t('dashboard.subtitle')}
+          showWeather={true}
+        />
 
-        {/* Stats Grid */}
-        <div className="content-grid cols-4 mb-lg">
+        {/* Stats Grid with Staggered Animation */}
+        <div className="content-grid cols-4 mb-lg animate-slide-up-stagger">
           <StatCard
             label={t('dashboard.salesToday')}
             value={`BND ${salesToday.toFixed(2)}`}
@@ -135,53 +136,61 @@ export default function DashboardPage() {
         </div>
 
         {/* AI Insights Widget */}
-        <div className="mb-lg">
+        <div className="mb-lg hover-lift">
           <AIInsightsWidget />
         </div>
 
         {/* Quick Actions */}
-        <div className="card mb-lg">
-          <div className="card-header">
-            <div className="card-title">{t('dashboard.quickActions')}</div>
-          </div>
-          <div className="quick-actions">
-            <Link href="/pos" className="btn btn-primary">
-              <ShoppingCart size={18} />
-              {t('dashboard.openPOS')}
-            </Link>
-            <Link href="/inventory" className="btn btn-outline">
-              <Package size={18} />
-              {t('dashboard.checkInventory')}
-            </Link>
-            <Link href="/hr/timeclock" className="btn btn-outline">
-              <Clock size={18} />
-              {t('dashboard.clockInOut')}
-            </Link>
-            <Link href="/delivery" className="btn btn-outline">
-              <TrendingUp size={18} />
-              {t('dashboard.deliveryHub')}
-            </Link>
-            <Link href="/production" className="btn btn-outline">
-              <ChefHat size={18} />
-              {t('dashboard.production')}
-            </Link>
-          </div>
+        <div className="mb-lg">
+          <GlassCard className="animate-slide-up-stagger" style={{ animationDelay: '0.2s' }}>
+            <div className="card-header" style={{ borderBottom: '1px solid rgba(0,0,0,0.05)', paddingBottom: '1rem', marginBottom: '1rem' }}>
+              <div className="card-title" style={{ fontSize: '1.25rem', fontWeight: 700 }}>{t('dashboard.quickActions')}</div>
+            </div>
+            <div className="quick-actions" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '1rem' }}>
+              <Link href="/pos" style={{ textDecoration: 'none' }}>
+                <PremiumButton variant="primary" icon={ShoppingCart} style={{ width: '100%' }}>
+                  {t('dashboard.openPOS')}
+                </PremiumButton>
+              </Link>
+              <Link href="/inventory" style={{ textDecoration: 'none' }}>
+                <PremiumButton variant="secondary" icon={Package} style={{ width: '100%' }}>
+                  {t('dashboard.checkInventory')}
+                </PremiumButton>
+              </Link>
+              <Link href="/hr/timeclock" style={{ textDecoration: 'none' }}>
+                <PremiumButton variant="secondary" icon={Clock} style={{ width: '100%' }}>
+                  {t('dashboard.clockInOut')}
+                </PremiumButton>
+              </Link>
+              <Link href="/production" style={{ textDecoration: 'none' }}>
+                <PremiumButton variant="secondary" icon={ChefHat} style={{ width: '100%' }}>
+                  {t('dashboard.production')}
+                </PremiumButton>
+              </Link>
+            </div>
+          </GlassCard>
         </div>
 
         {/* Order Queue Alert */}
         {(pendingOrders > 0 || preparingOrders > 0) && (
-          <div className="alert alert-warning alert-flex mb-lg">
-            <div className="alert-content">
-              <ChefHat size={20} />
-              <span>
-                <strong>{pendingOrders + preparingOrders} {language === 'en' ? 'orders' : 'pesanan'}</strong> {t('dashboard.ordersInQueue')}
-                ({pendingOrders} {t('dashboard.pending')}, {preparingOrders} {t('dashboard.preparing')})
-              </span>
+          <GlassCard gradient="accent" className="mb-lg animate-slide-up" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <div style={{ background: 'rgba(255,255,255,0.2)', padding: '0.75rem', borderRadius: '50%' }}>
+                <ChefHat size={24} color="white" />
+              </div>
+              <div style={{ color: 'var(--text-primary)' }}>
+                <strong style={{ fontSize: '1.1rem' }}>{pendingOrders + preparingOrders} {language === 'en' ? 'orders' : 'pesanan'}</strong> {t('dashboard.ordersInQueue')}
+                <div style={{ opacity: 0.8, fontSize: '0.9rem' }}>
+                  ({pendingOrders} {t('dashboard.pending')}, {preparingOrders} {t('dashboard.preparing')})
+                </div>
+              </div>
             </div>
-            <Link href="/pos" className="btn btn-sm btn-warning">
-              {t('dashboard.viewQueue')}
+            <Link href="/pos">
+              <PremiumButton variant="glass" size="sm">
+                {t('dashboard.viewQueue')} →
+              </PremiumButton>
             </Link>
-          </div>
+          </GlassCard>
         )}
 
         {/* Charts Section */}
@@ -201,9 +210,9 @@ export default function DashboardPage() {
 
         <div className="content-grid cols-2">
           {/* Low Stock Alert */}
-          <div className="card">
-            <div className="card-header">
-              <div className="section-title">
+          <GlassCard>
+            <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <div className="section-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 700 }}>
                 <AlertTriangle size={20} className="text-warning" />
                 {t('dashboard.lowStockAlert')}
               </div>
@@ -212,22 +221,20 @@ export default function DashboardPage() {
             {lowStockItems.length > 0 ? (
               <div>
                 <div className="table-responsive">
-                  <table className="table">
+                  <table className="table" style={{ width: '100%', borderCollapse: 'collapse' }}>
                     <thead>
-                      <tr>
-                        <th>{language === 'en' ? 'Item' : 'Item'}</th>
-                        <th>{t('common.quantity')}</th>
-                        <th className="hidden-mobile">{language === 'en' ? 'Minimum' : 'Minimum'}</th>
-                        <th>{t('common.status')}</th>
+                      <tr style={{ borderBottom: '1px solid var(--border-color)' }}>
+                        <th style={{ textAlign: 'left', padding: '0.75rem' }}>{language === 'en' ? 'Item' : 'Item'}</th>
+                        <th style={{ textAlign: 'left', padding: '0.75rem' }}>{t('common.quantity')}</th>
+                        <th style={{ textAlign: 'left', padding: '0.75rem' }}>{t('common.status')}</th>
                       </tr>
                     </thead>
                     <tbody>
                       {lowStockItems.slice(0, 5).map((item) => (
-                        <tr key={item.id}>
-                          <td className="font-semibold">{item.name}</td>
-                          <td>{item.currentQuantity} {item.unit}</td>
-                          <td className="hidden-mobile">{item.minQuantity} {item.unit}</td>
-                          <td>
+                        <tr key={item.id} style={{ borderBottom: '1px solid var(--border-light)' }}>
+                          <td style={{ padding: '0.75rem', fontWeight: 600 }}>{item.name}</td>
+                          <td style={{ padding: '0.75rem' }}>{item.currentQuantity} {item.unit}</td>
+                          <td style={{ padding: '0.75rem' }}>
                             <span className="badge badge-danger">{t('inventory.lowStock')}</span>
                           </td>
                         </tr>
@@ -235,23 +242,25 @@ export default function DashboardPage() {
                     </tbody>
                   </table>
                 </div>
-                <div className="mt-md">
-                  <Link href="/inventory" className="btn btn-outline btn-sm">
-                    {t('common.viewAll')} {t('nav.inventory')}
+                <div className="mt-md" style={{ marginTop: '1rem' }}>
+                  <Link href="/inventory" style={{ textDecoration: 'none' }}>
+                    <PremiumButton variant="outline" size="sm" style={{ width: '100%' }}>
+                      {t('common.viewAll')} {t('nav.inventory')}
+                    </PremiumButton>
                   </Link>
                 </div>
               </div>
             ) : (
-              <div className="empty-state">
+              <div className="empty-state" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>
                 {t('dashboard.stockSufficient')}!
               </div>
             )}
-          </div>
+          </GlassCard>
 
           {/* Staff On Duty */}
-          <div className="card">
-            <div className="card-header">
-              <div className="section-title">
+          <GlassCard>
+            <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <div className="section-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 700 }}>
                 <Users size={20} className="text-success" />
                 {t('dashboard.staffWorking')}
               </div>
@@ -260,24 +269,21 @@ export default function DashboardPage() {
             {onDutyStaff.length > 0 ? (
               <div>
                 <div className="table-responsive">
-                  <table className="table">
+                  <table className="table" style={{ width: '100%', borderCollapse: 'collapse' }}>
                     <thead>
-                      <tr>
-                        <th>{t('common.name')}</th>
-                        <th>{t('hr.role')}</th>
-                        <th className="hidden-mobile">{t('hr.clockIn')}</th>
-                        <th>{t('common.status')}</th>
+                      <tr style={{ borderBottom: '1px solid var(--border-color)' }}>
+                        <th style={{ textAlign: 'left', padding: '0.75rem' }}>{t('common.name')}</th>
+                        <th style={{ textAlign: 'left', padding: '0.75rem' }}>{t('hr.role')}</th>
+                        <th style={{ textAlign: 'left', padding: '0.75rem' }}>{t('common.status')}</th>
                       </tr>
                     </thead>
                     <tbody>
                       {onDutyStaff.map((staffMember) => {
-                        const record = getStaffAttendanceToday(staffMember.id);
                         return (
-                          <tr key={staffMember.id}>
-                            <td className="font-semibold">{staffMember.name}</td>
-                            <td>{staffMember.role}</td>
-                            <td className="hidden-mobile">{record?.clockInTime || '-'}</td>
-                            <td>
+                          <tr key={staffMember.id} style={{ borderBottom: '1px solid var(--border-light)' }}>
+                            <td style={{ padding: '0.75rem', fontWeight: 600 }}>{staffMember.name}</td>
+                            <td style={{ padding: '0.75rem' }}>{staffMember.role}</td>
+                            <td style={{ padding: '0.75rem' }}>
                               <span className="badge badge-success">{t('hr.onDuty')}</span>
                             </td>
                           </tr>
@@ -286,24 +292,26 @@ export default function DashboardPage() {
                     </tbody>
                   </table>
                 </div>
-                <div className="mt-md">
-                  <Link href="/hr" className="btn btn-outline btn-sm">
-                    {language === 'en' ? 'Manage HR' : 'Kelola HR'}
+                <div className="mt-md" style={{ marginTop: '1rem' }}>
+                  <Link href="/hr" style={{ textDecoration: 'none' }}>
+                    <PremiumButton variant="outline" size="sm" style={{ width: '100%' }}>
+                      {language === 'en' ? 'Manage HR' : 'Kelola HR'}
+                    </PremiumButton>
                   </Link>
                 </div>
               </div>
             ) : (
-              <div className="empty-state">
-                <p>{t('dashboard.noStaffOnDuty')}</p>
-                <Link href="/hr/timeclock" className="btn btn-primary btn-sm mt-md">
-                  <Clock size={16} />
-                  {t('hr.clockIn')} {language === 'en' ? 'Now' : 'Sekarang'}
+              <div className="empty-state" style={{ textAlign: 'center', padding: '2rem' }}>
+                <p style={{ marginBottom: '1rem', color: 'var(--text-secondary)' }}>{t('dashboard.noStaffOnDuty')}</p>
+                <Link href="/hr/timeclock">
+                  <PremiumButton variant="primary" size="sm" icon={Clock}>
+                    {t('hr.clockIn')} {language === 'en' ? 'Now' : 'Sekarang'}
+                  </PremiumButton>
                 </Link>
               </div>
             )}
-          </div>
+          </GlassCard>
         </div>
-
         {/* Recent Orders */}
         {todayOrders.length > 0 && (
           <div className="card mt-lg">
