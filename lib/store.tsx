@@ -138,7 +138,7 @@ interface StoreState {
   addStaff: (staffData: Omit<StaffProfile, 'id'>) => void;
   updateStaff: (id: string, updates: Partial<StaffProfile>) => void;
   deleteStaff: (id: string) => void;
-  clockIn: (staffId: string, pin: string) => { success: boolean; message: string };
+  clockIn: (staffId: string, pin: string, photo?: Blob, latitude?: number, longitude?: number) => Promise<{ success: boolean; message: string }>;
   clockOut: (staffId: string) => { success: boolean; message: string };
   getStaffAttendanceToday: (staffId: string) => AttendanceRecord | undefined;
   refreshStaff: () => Promise<void>;
@@ -1101,7 +1101,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     return attendance.find(a => a.staffId === staffId && a.date === today);
   }, [attendance]);
 
-  const clockIn = useCallback((staffId: string, pin: string): { success: boolean; message: string } => {
+  const clockIn = useCallback(async (staffId: string, pin: string, photo?: Blob, latitude?: number, longitude?: number): Promise<{ success: boolean; message: string }> => {
     const staffMember = staff.find(s => s.id === staffId);
     if (!staffMember) {
       return { success: false, message: 'Staf tidak dijumpai' };
@@ -1124,6 +1124,41 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
     const now = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
 
+    // Use Supabase Sync if available and photo/location provided
+    if (isSupabaseConfigured() && photo && latitude && longitude) {
+      try {
+        const syncResult = await SupabaseSync.clockIn({
+          staff_id: staffId, // Note: snake_case for sync layer
+          latitude,
+          longitude,
+          selfie_file: photo as File
+        });
+
+        if (syncResult.success && syncResult.data) {
+          // Update local state with the verified record
+          const newRecord: AttendanceRecord = {
+            id: syncResult.data.id,
+            staffId: syncResult.data.staff_id,
+            date: syncResult.data.date,
+            clockInTime: syncResult.data.clock_in ? new Date(syncResult.data.clock_in).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : now,
+            clockOutTime: undefined,
+            breakDuration: 0,
+            photoProofUrl: syncResult.data.selfie_url || undefined,
+            locationVerified: syncResult.data.location_verified,
+          };
+          setAttendance(prev => [...prev, newRecord]);
+          return { success: true, message: `Clock in berjaya di ${syncResult.location_name || 'Lokasi'}` };
+        } else {
+          // Return specific error from sync layer (e.g. "Outside allowed radius")
+          return { success: false, message: syncResult.error || 'Gagal clock in' };
+        }
+      } catch (err) {
+        console.error('Supabase clock-in failed', err);
+        // Fallback to local logic below if sync fails (optional, maybe strict mode shouldn't fallback?)
+        // For now, let's allow fallback but warn
+      }
+    }
+
     const newRecord: AttendanceRecord = {
       id: generateUUID(),
       staffId,
@@ -1131,10 +1166,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       clockInTime: now,
       clockOutTime: undefined,
       breakDuration: 0,
+      photoProofUrl: photo ? URL.createObjectURL(photo) : undefined, // Temporary local URL
+      locationVerified: false // Not verified
     };
 
     setAttendance(prev => [...prev, newRecord]);
-    return { success: true, message: `Clock in berjaya pada ${now}` };
+    return { success: true, message: `Clock in berjaya pada ${now} (Offline/Local)` };
   }, [staff, attendance]);
 
   const clockOut = useCallback((staffId: string): { success: boolean; message: string } => {

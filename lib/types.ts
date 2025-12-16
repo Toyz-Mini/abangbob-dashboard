@@ -275,6 +275,17 @@ export interface AttendanceRecord {
   clockOutTime?: string;
   breakDuration: number; // in minutes
   photoProofUrl?: string;
+  locationVerified?: boolean;
+  actualLatitude?: number;
+  actualLongitude?: number;
+}
+
+export interface ClockInData {
+  staffId: string;
+  pin: string;
+  latitude?: number;
+  longitude?: number;
+  photo?: Blob | File;
 }
 
 export interface PayrollEntry {

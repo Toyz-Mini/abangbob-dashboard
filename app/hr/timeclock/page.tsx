@@ -1,12 +1,14 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import MainLayout from '@/components/MainLayout';
 import { useStaff } from '@/lib/store';
 import { useAttendanceRealtime, useStaffRealtime } from '@/lib/supabase/realtime-hooks';
 import Modal from '@/components/Modal';
 import LoadingSpinner from '@/components/LoadingSpinner';
-import { Clock, LogIn, LogOut, User, CheckCircle, XCircle, History } from 'lucide-react';
+import Webcam from 'react-webcam';
+import PremiumButton from '@/components/PremiumButton';
+import { Clock, LogIn, LogOut, User, CheckCircle, XCircle, History, Camera, MapPin, RefreshCw } from 'lucide-react';
 
 export default function TimeClockPage() {
   const { staff, attendance, clockIn, clockOut, getStaffAttendanceToday, refreshStaff, refreshAttendance, isInitialized } = useStaff();
@@ -30,6 +32,61 @@ export default function TimeClockPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [resultMessage, setResultMessage] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
+
+  // Verification State
+  const [showCameraModal, setShowCameraModal] = useState(false);
+  const [capturedImage, setCapturedImage] = useState<string | null>(null);
+  const [locationStatus, setLocationStatus] = useState<'idle' | 'checking' | 'success' | 'error'>('idle');
+  const [currentLocation, setCurrentLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const webcamRef = useRef<Webcam>(null);
+
+  const checkLocation = () => {
+    setLocationStatus('checking');
+    if (!navigator.geolocation) {
+      setResultMessage({ type: 'error', message: 'Browser tidak menyokong geolokasi' });
+      setLocationStatus('error');
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setCurrentLocation({
+          lat: position.coords.latitude,
+          lng: position.coords.longitude
+        });
+        setLocationStatus('success');
+      },
+      (error) => {
+        console.error('Location error:', error);
+        setResultMessage({ type: 'error', message: 'Gagal mendapatkan lokasi. Sila benarkan akses lokasi.' });
+        setLocationStatus('error');
+      },
+      { enableHighAccuracy: true, timeout: 5000 }
+    );
+  };
+
+  const capturePhoto = useCallback(() => {
+    const imageSrc = webcamRef.current?.getScreenshot();
+    if (imageSrc) {
+      setCapturedImage(imageSrc);
+    }
+  }, [webcamRef]);
+
+  const retakePhoto = () => {
+    setCapturedImage(null);
+  };
+
+  const dataURLtoBlob = (dataurl: string) => {
+    const arr = dataurl.split(',');
+    const mime = arr[0].match(/:(.*?);/)?.[1];
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    while (n--) {
+      u8arr[n] = bstr.charCodeAt(n);
+    }
+    return new Blob([u8arr], { type: mime });
+  };
 
   // Update clock every second
   useEffect(() => {
@@ -70,19 +127,40 @@ export default function TimeClockPage() {
   const handleClockAction = async () => {
     if (!selectedStaffId || pin.length !== 4) return;
 
+    const staffStatus = getStaffStatus(selectedStaffId);
+
+    // 1. If Clock In, Check Location & Camera Requirement
+    if (staffStatus.status === 'not-clocked') {
+      // Step 1: Open Camera Modal (Location check happens inside or before)
+      if (!showCameraModal) {
+        setResultMessage(null); // Clear previous errors
+        checkLocation(); // Start location check
+        setShowCameraModal(true);
+        return;
+      }
+      // If we are here, it means Submit from Modal called this
+    }
+
     setIsProcessing(true);
     setResultMessage(null);
 
+    // Artificial delay for UX
     await new Promise(resolve => setTimeout(resolve, 800));
-
-    const staffStatus = getStaffStatus(selectedStaffId);
 
     let result;
     if (staffStatus.status === 'not-clocked') {
-      // Clock In
-      result = clockIn(selectedStaffId, pin);
+      // Clock In Logic
+      if (!currentLocation || !capturedImage) {
+        setIsProcessing(false);
+        setResultMessage({ type: 'error', message: 'Sila ambil gambar dan pastikan lokasi diperolehi.' });
+        return;
+      }
+
+      const photoBlob = dataURLtoBlob(capturedImage);
+      result = await clockIn(selectedStaffId, pin, photoBlob, currentLocation.lat, currentLocation.lng);
+
     } else if (staffStatus.status === 'on-duty') {
-      // Clock Out - verify PIN first
+      // Clock Out - Standard Flow (No Photo/Location mandatory for now as per schema limits)
       const staffMember = staff.find(s => s.id === selectedStaffId);
       if (staffMember?.pin !== pin) {
         result = { success: false, message: 'PIN salah' };
@@ -99,15 +177,25 @@ export default function TimeClockPage() {
     });
 
     setIsProcessing(false);
-    setPin('');
 
-    // Auto clear result after 3 seconds
-    setTimeout(() => {
-      setResultMessage(null);
-      if (result.success) {
+    if (result.success) {
+      setPin('');
+      setShowCameraModal(false);
+      setCapturedImage(null);
+      setCurrentLocation(null);
+      setLocationStatus('idle');
+
+      // Success cleanup
+      setTimeout(() => {
+        setResultMessage(null);
         setSelectedStaffId(null);
-      }
-    }, 3000);
+      }, 3000);
+    }
+  };
+
+  const handleCameraSubmit = () => {
+    // Trigger main clock action from modal
+    handleClockAction();
   };
 
   const getTodayAttendance = () => {
@@ -487,6 +575,89 @@ export default function TimeClockPage() {
             <button className="btn btn-outline" onClick={() => setShowHistoryModal(false)} style={{ width: '100%' }}>
               Tutup
             </button>
+          </div>
+        </Modal>
+
+        {/* Camera Verification Modal */}
+        <Modal
+          isOpen={showCameraModal}
+          onClose={() => {
+            setShowCameraModal(false);
+            setCapturedImage(null);
+            setLocationStatus('idle');
+          }}
+          title="Pengesahan Kehadiran"
+          subtitle="Sila ambil selfie untuk Clock In"
+          maxWidth="500px"
+        >
+          <div className="flex flex-col items-center gap-4">
+            {/* Location Status */}
+            <div className={`flex items-center gap-2 p-3 rounded-lg w-full justify-center ${locationStatus === 'success' ? 'bg-green-100 text-green-700' :
+              locationStatus === 'error' ? 'bg-red-100 text-red-700' : 'bg-blue-50 text-blue-700'
+              }`}>
+              <MapPin size={18} />
+              <span className="text-sm font-medium">
+                {locationStatus === 'checking' && 'Sedang mengesan lokasi...'}
+                {locationStatus === 'success' && 'Lokasi disahkan'}
+                {locationStatus === 'error' && 'Gagal kesan lokasi'}
+                {locationStatus === 'idle' && 'Menunggu lokasi...'}
+              </span>
+              {locationStatus === 'error' && (
+                <button onClick={checkLocation} className="ml-2 text-xs underline">Cuba Lagi</button>
+              )}
+            </div>
+
+            {/* Camera View */}
+            <div className="relative w-full aspect-[4/3] bg-black rounded-xl overflow-hidden shadow-lg border-2 border-slate-200">
+              {capturedImage ? (
+                <img src={capturedImage} alt="Selfie" className="w-full h-full object-cover" />
+              ) : (
+                <Webcam
+                  audio={false}
+                  ref={webcamRef}
+                  screenshotFormat="image/jpeg"
+                  videoConstraints={{ facingMode: "user" }}
+                  className="w-full h-full object-cover"
+                />
+              )}
+            </div>
+
+            <div className="flex w-full gap-3 mt-2">
+              {!capturedImage ? (
+                <PremiumButton
+                  onClick={capturePhoto}
+                  className="w-full"
+                  icon={Camera}
+                  disabled={locationStatus === 'checking'} // Optional: Disable capture until location found? Or allow parallel? Let's allow parallel.
+                >
+                  Tangkap Gambar
+                </PremiumButton>
+              ) : (
+                <div className="grid grid-cols-2 gap-3 w-full">
+                  <PremiumButton
+                    onClick={retakePhoto}
+                    variant="outline"
+                    icon={RefreshCw}
+                  >
+                    Ambil Semula
+                  </PremiumButton>
+                  <PremiumButton
+                    onClick={handleCameraSubmit}
+                    icon={CheckCircle}
+                    disabled={locationStatus !== 'success' || isProcessing}
+                    loading={isProcessing}
+                  >
+                    Sahkan & Clock In
+                  </PremiumButton>
+                </div>
+              )}
+            </div>
+
+            {locationStatus !== 'success' && locationStatus !== 'checking' && (
+              <p className="text-xs text-red-500 text-center">
+                Lokasi diperlukan untuk Clock In. Pastikan GPS on.
+              </p>
+            )}
           </div>
         </Modal>
       </div>

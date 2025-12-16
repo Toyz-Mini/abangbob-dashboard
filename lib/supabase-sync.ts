@@ -4,9 +4,10 @@
 
 import { getSupabaseClient, getConnectionState } from './supabase/client';
 import * as ops from './supabase/operations';
-import { 
-  logSyncSuccess, 
-  logSyncError, 
+import * as attendanceOps from './supabase/attendance-sync';
+import {
+  logSyncSuccess,
+  logSyncError,
   logSyncRetry,
   withRetry,
   SyncResult,
@@ -59,7 +60,7 @@ async function syncWithRetry<T>(
   options: { maxRetries?: number; throwOnError?: boolean } = {}
 ): Promise<SyncResult<T>> {
   const { maxRetries = 2, throwOnError = false } = options;
-  
+
   if (!isSupabaseSyncEnabled()) {
     return syncError('Supabase sync is disabled');
   }
@@ -79,19 +80,19 @@ async function syncWithRetry<T>(
     const durationMs = Date.now() - startTime;
     logSyncSuccess(operationType, entity, entityId, durationMs);
     updatePendingSyncCount(-1);
-    
+
     return syncSuccess(result);
   } catch (error) {
     const durationMs = Date.now() - startTime;
     const errorMessage = error instanceof Error ? error.message : String(error);
-    
+
     logSyncError(operationType, entity, error instanceof Error ? error : errorMessage, entityId, maxRetries, durationMs);
     updatePendingSyncCount(-1);
-    
+
     if (throwOnError) {
       throw error;
     }
-    
+
     return syncError(errorMessage);
   }
 }
@@ -100,7 +101,7 @@ async function syncWithRetry<T>(
 
 export async function syncAddStockItem(item: any) {
   if (!isSupabaseSyncEnabled()) return null;
-  
+
   try {
     return await ops.insertInventoryItem(item);
   } catch (error) {
@@ -111,7 +112,7 @@ export async function syncAddStockItem(item: any) {
 
 export async function syncUpdateStockItem(id: string, updates: any) {
   if (!isSupabaseSyncEnabled()) return null;
-  
+
   try {
     return await ops.updateInventoryItem(id, updates);
   } catch (error) {
@@ -122,7 +123,7 @@ export async function syncUpdateStockItem(id: string, updates: any) {
 
 export async function syncDeleteStockItem(id: string) {
   if (!isSupabaseSyncEnabled()) return;
-  
+
   try {
     await ops.deleteInventoryItem(id);
   } catch (error) {
@@ -132,7 +133,7 @@ export async function syncDeleteStockItem(id: string) {
 
 export async function loadInventoryFromSupabase() {
   if (!isSupabaseSyncEnabled()) return [];
-  
+
   try {
     return await ops.fetchInventory();
   } catch (error) {
@@ -145,7 +146,7 @@ export async function loadInventoryFromSupabase() {
 
 export async function syncAddStaff(staff: any) {
   if (!isSupabaseSyncEnabled()) return null;
-  
+
   try {
     return await ops.insertStaff(staff);
   } catch (error) {
@@ -156,7 +157,7 @@ export async function syncAddStaff(staff: any) {
 
 export async function syncUpdateStaff(id: string, updates: any) {
   if (!isSupabaseSyncEnabled()) return null;
-  
+
   try {
     return await ops.updateStaff(id, updates);
   } catch (error) {
@@ -167,7 +168,7 @@ export async function syncUpdateStaff(id: string, updates: any) {
 
 export async function syncDeleteStaff(id: string) {
   if (!isSupabaseSyncEnabled()) return;
-  
+
   try {
     await ops.deleteStaff(id);
   } catch (error) {
@@ -177,7 +178,7 @@ export async function syncDeleteStaff(id: string) {
 
 export async function loadStaffFromSupabase() {
   if (!isSupabaseSyncEnabled()) return [];
-  
+
   try {
     return await ops.fetchStaff();
   } catch (error) {
@@ -221,7 +222,7 @@ export async function loadMenuItemsFromSupabase(): Promise<{ data: any[]; error:
     'menu_items',
     'fetch'
   );
-  
+
   return {
     data: result.success ? result.data : [],
     error: result.error,
@@ -283,7 +284,7 @@ export async function loadModifierGroupsFromSupabase(): Promise<{ data: any[]; e
     'modifier_groups',
     'fetch'
   );
-  
+
   return {
     data: result.success ? result.data : [],
     error: result.error,
@@ -345,7 +346,7 @@ export async function loadModifierOptionsFromSupabase(): Promise<{ data: any[]; 
     'modifier_options',
     'fetch'
   );
-  
+
   return {
     data: result.success ? result.data : [],
     error: result.error,
@@ -376,7 +377,7 @@ export async function loadModifierOptionsFromSupabaseLegacy() {
 
 export async function syncAddOrder(order: any) {
   if (!isSupabaseSyncEnabled()) return null;
-  
+
   try {
     return await ops.insertOrder(order);
   } catch (error) {
@@ -387,7 +388,7 @@ export async function syncAddOrder(order: any) {
 
 export async function syncUpdateOrder(id: string, updates: any) {
   if (!isSupabaseSyncEnabled()) return null;
-  
+
   try {
     return await ops.updateOrder(id, updates);
   } catch (error) {
@@ -398,7 +399,7 @@ export async function syncUpdateOrder(id: string, updates: any) {
 
 export async function loadOrdersFromSupabase(limit?: number) {
   if (!isSupabaseSyncEnabled()) return [];
-  
+
   try {
     return await ops.fetchOrders(limit);
   } catch (error) {
@@ -411,7 +412,7 @@ export async function loadOrdersFromSupabase(limit?: number) {
 
 export async function syncAddCustomer(customer: any) {
   if (!isSupabaseSyncEnabled()) return null;
-  
+
   try {
     return await ops.insertCustomer(customer);
   } catch (error) {
@@ -422,7 +423,7 @@ export async function syncAddCustomer(customer: any) {
 
 export async function syncUpdateCustomer(id: string, updates: any) {
   if (!isSupabaseSyncEnabled()) return null;
-  
+
   try {
     return await ops.updateCustomer(id, updates);
   } catch (error) {
@@ -433,7 +434,7 @@ export async function syncUpdateCustomer(id: string, updates: any) {
 
 export async function loadCustomersFromSupabase() {
   if (!isSupabaseSyncEnabled()) return [];
-  
+
   try {
     return await ops.fetchCustomers();
   } catch (error) {
@@ -446,7 +447,7 @@ export async function loadCustomersFromSupabase() {
 
 export async function syncAddExpense(expense: any) {
   if (!isSupabaseSyncEnabled()) return null;
-  
+
   try {
     return await ops.insertExpense(expense);
   } catch (error) {
@@ -457,7 +458,7 @@ export async function syncAddExpense(expense: any) {
 
 export async function syncUpdateExpense(id: string, updates: any) {
   if (!isSupabaseSyncEnabled()) return null;
-  
+
   try {
     return await ops.updateExpense(id, updates);
   } catch (error) {
@@ -468,7 +469,7 @@ export async function syncUpdateExpense(id: string, updates: any) {
 
 export async function syncDeleteExpense(id: string) {
   if (!isSupabaseSyncEnabled()) return;
-  
+
   try {
     await ops.deleteExpense(id);
   } catch (error) {
@@ -478,7 +479,7 @@ export async function syncDeleteExpense(id: string) {
 
 export async function loadExpensesFromSupabase() {
   if (!isSupabaseSyncEnabled()) return [];
-  
+
   try {
     return await ops.fetchExpenses();
   } catch (error) {
@@ -491,7 +492,7 @@ export async function loadExpensesFromSupabase() {
 
 export async function syncAddAttendance(attendance: any) {
   if (!isSupabaseSyncEnabled()) return null;
-  
+
   try {
     return await ops.insertAttendance(attendance);
   } catch (error) {
@@ -502,7 +503,7 @@ export async function syncAddAttendance(attendance: any) {
 
 export async function syncUpdateAttendance(id: string, updates: any) {
   if (!isSupabaseSyncEnabled()) return null;
-  
+
   try {
     return await ops.updateAttendance(id, updates);
   } catch (error) {
@@ -513,7 +514,7 @@ export async function syncUpdateAttendance(id: string, updates: any) {
 
 export async function loadAttendanceFromSupabase(startDate?: string, endDate?: string) {
   if (!isSupabaseSyncEnabled()) return [];
-  
+
   try {
     return await ops.fetchAttendance(startDate, endDate);
   } catch (error) {
@@ -526,7 +527,7 @@ export async function loadAttendanceFromSupabase(startDate?: string, endDate?: s
 
 export async function syncAddSupplier(supplier: any) {
   if (!isSupabaseSyncEnabled()) return null;
-  
+
   try {
     return await ops.insertSupplier(supplier);
   } catch (error) {
@@ -537,7 +538,7 @@ export async function syncAddSupplier(supplier: any) {
 
 export async function syncUpdateSupplier(id: string, updates: any) {
   if (!isSupabaseSyncEnabled()) return null;
-  
+
   try {
     return await ops.updateSupplier(id, updates);
   } catch (error) {
@@ -548,7 +549,7 @@ export async function syncUpdateSupplier(id: string, updates: any) {
 
 export async function syncDeleteSupplier(id: string) {
   if (!isSupabaseSyncEnabled()) return;
-  
+
   try {
     await ops.deleteSupplier(id);
   } catch (error) {
@@ -558,7 +559,7 @@ export async function syncDeleteSupplier(id: string) {
 
 export async function loadSuppliersFromSupabase() {
   if (!isSupabaseSyncEnabled()) return [];
-  
+
   try {
     return await ops.fetchSuppliers();
   } catch (error) {
@@ -571,7 +572,7 @@ export async function loadSuppliersFromSupabase() {
 
 export async function syncAddPurchaseOrder(po: any) {
   if (!isSupabaseSyncEnabled()) return null;
-  
+
   try {
     return await ops.insertPurchaseOrder(po);
   } catch (error) {
@@ -582,7 +583,7 @@ export async function syncAddPurchaseOrder(po: any) {
 
 export async function syncUpdatePurchaseOrder(id: string, updates: any) {
   if (!isSupabaseSyncEnabled()) return null;
-  
+
   try {
     return await ops.updatePurchaseOrder(id, updates);
   } catch (error) {
@@ -593,7 +594,7 @@ export async function syncUpdatePurchaseOrder(id: string, updates: any) {
 
 export async function loadPurchaseOrdersFromSupabase() {
   if (!isSupabaseSyncEnabled()) return [];
-  
+
   try {
     return await ops.fetchPurchaseOrders();
   } catch (error) {
@@ -606,7 +607,7 @@ export async function loadPurchaseOrdersFromSupabase() {
 
 export async function syncAddInventoryLog(log: any) {
   if (!isSupabaseSyncEnabled()) return null;
-  
+
   try {
     return await ops.insertInventoryLog(log);
   } catch (error) {
@@ -617,7 +618,7 @@ export async function syncAddInventoryLog(log: any) {
 
 export async function loadInventoryLogsFromSupabase(stockItemId?: string) {
   if (!isSupabaseSyncEnabled()) return [];
-  
+
   try {
     return await ops.fetchInventoryLogs(stockItemId);
   } catch (error) {
@@ -630,7 +631,7 @@ export async function loadInventoryLogsFromSupabase(stockItemId?: string) {
 
 export async function syncAddRecipe(recipe: any) {
   if (!isSupabaseSyncEnabled()) return null;
-  
+
   try {
     return await ops.insertRecipe(recipe);
   } catch (error) {
@@ -641,7 +642,7 @@ export async function syncAddRecipe(recipe: any) {
 
 export async function syncUpdateRecipe(id: string, updates: any) {
   if (!isSupabaseSyncEnabled()) return null;
-  
+
   try {
     return await ops.updateRecipe(id, updates);
   } catch (error) {
@@ -652,7 +653,7 @@ export async function syncUpdateRecipe(id: string, updates: any) {
 
 export async function syncDeleteRecipe(id: string) {
   if (!isSupabaseSyncEnabled()) return;
-  
+
   try {
     await ops.deleteRecipe(id);
   } catch (error) {
@@ -662,7 +663,7 @@ export async function syncDeleteRecipe(id: string) {
 
 export async function loadRecipesFromSupabase() {
   if (!isSupabaseSyncEnabled()) return [];
-  
+
   try {
     return await ops.fetchRecipes();
   } catch (error) {
@@ -675,7 +676,7 @@ export async function loadRecipesFromSupabase() {
 
 export async function syncAddShift(shift: any) {
   if (!isSupabaseSyncEnabled()) return null;
-  
+
   try {
     return await ops.insertShift(shift);
   } catch (error) {
@@ -686,7 +687,7 @@ export async function syncAddShift(shift: any) {
 
 export async function syncUpdateShift(id: string, updates: any) {
   if (!isSupabaseSyncEnabled()) return null;
-  
+
   try {
     return await ops.updateShift(id, updates);
   } catch (error) {
@@ -697,7 +698,7 @@ export async function syncUpdateShift(id: string, updates: any) {
 
 export async function syncDeleteShift(id: string) {
   if (!isSupabaseSyncEnabled()) return;
-  
+
   try {
     await ops.deleteShift(id);
   } catch (error) {
@@ -707,7 +708,7 @@ export async function syncDeleteShift(id: string) {
 
 export async function loadShiftsFromSupabase() {
   if (!isSupabaseSyncEnabled()) return [];
-  
+
   try {
     return await ops.fetchShifts();
   } catch (error) {
@@ -720,7 +721,7 @@ export async function loadShiftsFromSupabase() {
 
 export async function syncAddScheduleEntry(entry: any) {
   if (!isSupabaseSyncEnabled()) return null;
-  
+
   try {
     return await ops.insertScheduleEntry(entry);
   } catch (error) {
@@ -731,7 +732,7 @@ export async function syncAddScheduleEntry(entry: any) {
 
 export async function syncUpdateScheduleEntry(id: string, updates: any) {
   if (!isSupabaseSyncEnabled()) return null;
-  
+
   try {
     return await ops.updateScheduleEntry(id, updates);
   } catch (error) {
@@ -742,7 +743,7 @@ export async function syncUpdateScheduleEntry(id: string, updates: any) {
 
 export async function syncDeleteScheduleEntry(id: string) {
   if (!isSupabaseSyncEnabled()) return;
-  
+
   try {
     await ops.deleteScheduleEntry(id);
   } catch (error) {
@@ -752,7 +753,7 @@ export async function syncDeleteScheduleEntry(id: string) {
 
 export async function loadSchedulesFromSupabase(startDate?: string, endDate?: string) {
   if (!isSupabaseSyncEnabled()) return [];
-  
+
   try {
     return await ops.fetchScheduleEntries(startDate, endDate);
   } catch (error) {
@@ -765,7 +766,7 @@ export async function loadSchedulesFromSupabase(startDate?: string, endDate?: st
 
 export async function syncAddPromotion(promotion: any) {
   if (!isSupabaseSyncEnabled()) return null;
-  
+
   try {
     return await ops.insertPromotion(promotion);
   } catch (error) {
@@ -776,7 +777,7 @@ export async function syncAddPromotion(promotion: any) {
 
 export async function syncUpdatePromotion(id: string, updates: any) {
   if (!isSupabaseSyncEnabled()) return null;
-  
+
   try {
     return await ops.updatePromotion(id, updates);
   } catch (error) {
@@ -787,7 +788,7 @@ export async function syncUpdatePromotion(id: string, updates: any) {
 
 export async function syncDeletePromotion(id: string) {
   if (!isSupabaseSyncEnabled()) return;
-  
+
   try {
     await ops.deletePromotion(id);
   } catch (error) {
@@ -797,7 +798,7 @@ export async function syncDeletePromotion(id: string) {
 
 export async function loadPromotionsFromSupabase() {
   if (!isSupabaseSyncEnabled()) return [];
-  
+
   try {
     return await ops.fetchPromotions();
   } catch (error) {
@@ -810,7 +811,7 @@ export async function loadPromotionsFromSupabase() {
 
 export async function syncAddNotification(notification: any) {
   if (!isSupabaseSyncEnabled()) return null;
-  
+
   try {
     return await ops.insertNotification(notification);
   } catch (error) {
@@ -821,7 +822,7 @@ export async function syncAddNotification(notification: any) {
 
 export async function syncUpdateNotification(id: string, updates: any) {
   if (!isSupabaseSyncEnabled()) return null;
-  
+
   try {
     return await ops.updateNotification(id, updates);
   } catch (error) {
@@ -832,7 +833,7 @@ export async function syncUpdateNotification(id: string, updates: any) {
 
 export async function syncDeleteNotification(id: string) {
   if (!isSupabaseSyncEnabled()) return;
-  
+
   try {
     await ops.deleteNotification(id);
   } catch (error) {
@@ -842,7 +843,7 @@ export async function syncDeleteNotification(id: string) {
 
 export async function loadNotificationsFromSupabase() {
   if (!isSupabaseSyncEnabled()) return [];
-  
+
   try {
     return await ops.fetchNotifications();
   } catch (error) {
@@ -855,7 +856,7 @@ export async function loadNotificationsFromSupabase() {
 
 export async function syncAddProductionLog(log: any) {
   if (!isSupabaseSyncEnabled()) return null;
-  
+
   try {
     return await ops.insertProductionLog(log);
   } catch (error) {
@@ -866,7 +867,7 @@ export async function syncAddProductionLog(log: any) {
 
 export async function loadProductionLogsFromSupabase() {
   if (!isSupabaseSyncEnabled()) return [];
-  
+
   try {
     return await ops.fetchProductionLogs();
   } catch (error) {
@@ -879,7 +880,7 @@ export async function loadProductionLogsFromSupabase() {
 
 export async function syncAddDeliveryOrder(order: any) {
   if (!isSupabaseSyncEnabled()) return null;
-  
+
   try {
     return await ops.insertDeliveryOrder(order);
   } catch (error) {
@@ -890,7 +891,7 @@ export async function syncAddDeliveryOrder(order: any) {
 
 export async function syncUpdateDeliveryOrder(id: string, updates: any) {
   if (!isSupabaseSyncEnabled()) return null;
-  
+
   try {
     return await ops.updateDeliveryOrder(id, updates);
   } catch (error) {
@@ -901,7 +902,7 @@ export async function syncUpdateDeliveryOrder(id: string, updates: any) {
 
 export async function loadDeliveryOrdersFromSupabase() {
   if (!isSupabaseSyncEnabled()) return [];
-  
+
   try {
     return await ops.fetchDeliveryOrders();
   } catch (error) {
@@ -914,7 +915,7 @@ export async function loadDeliveryOrdersFromSupabase() {
 
 export async function syncAddCashFlow(cashFlow: any) {
   if (!isSupabaseSyncEnabled()) return null;
-  
+
   try {
     return await ops.insertCashFlow(cashFlow);
   } catch (error) {
@@ -925,7 +926,7 @@ export async function syncAddCashFlow(cashFlow: any) {
 
 export async function syncUpdateCashFlow(id: string, updates: any) {
   if (!isSupabaseSyncEnabled()) return null;
-  
+
   try {
     return await ops.updateCashFlow(id, updates);
   } catch (error) {
@@ -936,7 +937,7 @@ export async function syncUpdateCashFlow(id: string, updates: any) {
 
 export async function loadCashFlowsFromSupabase() {
   if (!isSupabaseSyncEnabled()) return [];
-  
+
   try {
     return await ops.fetchCashFlows();
   } catch (error) {
@@ -949,7 +950,7 @@ export async function loadCashFlowsFromSupabase() {
 
 export async function syncUpsertStaffKPI(kpi: any) {
   if (!isSupabaseSyncEnabled()) return null;
-  
+
   try {
     return await ops.upsertStaffKPI(kpi);
   } catch (error) {
@@ -960,7 +961,7 @@ export async function syncUpsertStaffKPI(kpi: any) {
 
 export async function loadStaffKPIFromSupabase(staffId?: string, period?: string) {
   if (!isSupabaseSyncEnabled()) return [];
-  
+
   try {
     return await ops.fetchStaffKPI(staffId, period);
   } catch (error) {
@@ -973,7 +974,7 @@ export async function loadStaffKPIFromSupabase(staffId?: string, period?: string
 
 export async function syncAddLeaveRecord(record: any) {
   if (!isSupabaseSyncEnabled()) return null;
-  
+
   try {
     return await ops.insertLeaveRecord(record);
   } catch (error) {
@@ -984,7 +985,7 @@ export async function syncAddLeaveRecord(record: any) {
 
 export async function syncUpdateLeaveRecord(id: string, updates: any) {
   if (!isSupabaseSyncEnabled()) return null;
-  
+
   try {
     return await ops.updateLeaveRecord(id, updates);
   } catch (error) {
@@ -995,7 +996,7 @@ export async function syncUpdateLeaveRecord(id: string, updates: any) {
 
 export async function loadLeaveRecordsFromSupabase(staffId?: string) {
   if (!isSupabaseSyncEnabled()) return [];
-  
+
   try {
     return await ops.fetchLeaveRecords(staffId);
   } catch (error) {
@@ -1008,7 +1009,7 @@ export async function loadLeaveRecordsFromSupabase(staffId?: string) {
 
 export async function syncAddTrainingRecord(record: any) {
   if (!isSupabaseSyncEnabled()) return null;
-  
+
   try {
     return await ops.insertTrainingRecord(record);
   } catch (error) {
@@ -1019,7 +1020,7 @@ export async function syncAddTrainingRecord(record: any) {
 
 export async function syncUpdateTrainingRecord(id: string, updates: any) {
   if (!isSupabaseSyncEnabled()) return null;
-  
+
   try {
     return await ops.updateTrainingRecord(id, updates);
   } catch (error) {
@@ -1030,7 +1031,7 @@ export async function syncUpdateTrainingRecord(id: string, updates: any) {
 
 export async function loadTrainingRecordsFromSupabase(staffId?: string) {
   if (!isSupabaseSyncEnabled()) return [];
-  
+
   try {
     return await ops.fetchTrainingRecords(staffId);
   } catch (error) {
@@ -1043,7 +1044,7 @@ export async function loadTrainingRecordsFromSupabase(staffId?: string) {
 
 export async function syncAddOTRecord(record: any) {
   if (!isSupabaseSyncEnabled()) return null;
-  
+
   try {
     return await ops.insertOTRecord(record);
   } catch (error) {
@@ -1054,7 +1055,7 @@ export async function syncAddOTRecord(record: any) {
 
 export async function syncUpdateOTRecord(id: string, updates: any) {
   if (!isSupabaseSyncEnabled()) return null;
-  
+
   try {
     return await ops.updateOTRecord(id, updates);
   } catch (error) {
@@ -1065,7 +1066,7 @@ export async function syncUpdateOTRecord(id: string, updates: any) {
 
 export async function loadOTRecordsFromSupabase(staffId?: string) {
   if (!isSupabaseSyncEnabled()) return [];
-  
+
   try {
     return await ops.fetchOTRecords(staffId);
   } catch (error) {
@@ -1078,7 +1079,7 @@ export async function loadOTRecordsFromSupabase(staffId?: string) {
 
 export async function syncAddCustomerReview(review: any) {
   if (!isSupabaseSyncEnabled()) return null;
-  
+
   try {
     return await ops.insertCustomerReview(review);
   } catch (error) {
@@ -1089,7 +1090,7 @@ export async function syncAddCustomerReview(review: any) {
 
 export async function loadCustomerReviewsFromSupabase(staffId?: string) {
   if (!isSupabaseSyncEnabled()) return [];
-  
+
   try {
     return await ops.fetchCustomerReviews(staffId);
   } catch (error) {
@@ -1102,7 +1103,7 @@ export async function loadCustomerReviewsFromSupabase(staffId?: string) {
 
 export async function syncAddChecklistTemplate(template: any) {
   if (!isSupabaseSyncEnabled()) return null;
-  
+
   try {
     return await ops.insertChecklistTemplate(template);
   } catch (error) {
@@ -1113,7 +1114,7 @@ export async function syncAddChecklistTemplate(template: any) {
 
 export async function syncUpdateChecklistTemplate(id: string, updates: any) {
   if (!isSupabaseSyncEnabled()) return null;
-  
+
   try {
     return await ops.updateChecklistTemplate(id, updates);
   } catch (error) {
@@ -1124,7 +1125,7 @@ export async function syncUpdateChecklistTemplate(id: string, updates: any) {
 
 export async function syncDeleteChecklistTemplate(id: string) {
   if (!isSupabaseSyncEnabled()) return;
-  
+
   try {
     await ops.deleteChecklistTemplate(id);
   } catch (error) {
@@ -1134,7 +1135,7 @@ export async function syncDeleteChecklistTemplate(id: string) {
 
 export async function loadChecklistTemplatesFromSupabase() {
   if (!isSupabaseSyncEnabled()) return [];
-  
+
   try {
     return await ops.fetchChecklistTemplates();
   } catch (error) {
@@ -1147,7 +1148,7 @@ export async function loadChecklistTemplatesFromSupabase() {
 
 export async function syncAddChecklistCompletion(completion: any) {
   if (!isSupabaseSyncEnabled()) return null;
-  
+
   try {
     return await ops.insertChecklistCompletion(completion);
   } catch (error) {
@@ -1158,7 +1159,7 @@ export async function syncAddChecklistCompletion(completion: any) {
 
 export async function syncUpdateChecklistCompletion(id: string, updates: any) {
   if (!isSupabaseSyncEnabled()) return null;
-  
+
   try {
     return await ops.updateChecklistCompletion(id, updates);
   } catch (error) {
@@ -1169,7 +1170,7 @@ export async function syncUpdateChecklistCompletion(id: string, updates: any) {
 
 export async function loadChecklistCompletionsFromSupabase() {
   if (!isSupabaseSyncEnabled()) return [];
-  
+
   try {
     return await ops.fetchChecklistCompletions();
   } catch (error) {
@@ -1182,7 +1183,7 @@ export async function loadChecklistCompletionsFromSupabase() {
 
 export async function syncUpsertLeaveBalance(balance: any) {
   if (!isSupabaseSyncEnabled()) return null;
-  
+
   try {
     return await ops.upsertLeaveBalance(balance);
   } catch (error) {
@@ -1193,7 +1194,7 @@ export async function syncUpsertLeaveBalance(balance: any) {
 
 export async function loadLeaveBalancesFromSupabase() {
   if (!isSupabaseSyncEnabled()) return [];
-  
+
   try {
     return await ops.fetchLeaveBalances();
   } catch (error) {
@@ -1206,7 +1207,7 @@ export async function loadLeaveBalancesFromSupabase() {
 
 export async function syncAddLeaveRequest(request: any) {
   if (!isSupabaseSyncEnabled()) return null;
-  
+
   try {
     return await ops.insertLeaveRequest(request);
   } catch (error) {
@@ -1217,7 +1218,7 @@ export async function syncAddLeaveRequest(request: any) {
 
 export async function syncUpdateLeaveRequest(id: string, updates: any) {
   if (!isSupabaseSyncEnabled()) return null;
-  
+
   try {
     return await ops.updateLeaveRequest(id, updates);
   } catch (error) {
@@ -1228,7 +1229,7 @@ export async function syncUpdateLeaveRequest(id: string, updates: any) {
 
 export async function loadLeaveRequestsFromSupabase(staffId?: string) {
   if (!isSupabaseSyncEnabled()) return [];
-  
+
   try {
     return await ops.fetchLeaveRequests(staffId);
   } catch (error) {
@@ -1241,7 +1242,7 @@ export async function loadLeaveRequestsFromSupabase(staffId?: string) {
 
 export async function syncAddClaimRequest(request: any) {
   if (!isSupabaseSyncEnabled()) return null;
-  
+
   try {
     return await ops.insertClaimRequest(request);
   } catch (error) {
@@ -1252,7 +1253,7 @@ export async function syncAddClaimRequest(request: any) {
 
 export async function syncUpdateClaimRequest(id: string, updates: any) {
   if (!isSupabaseSyncEnabled()) return null;
-  
+
   try {
     return await ops.updateClaimRequest(id, updates);
   } catch (error) {
@@ -1263,7 +1264,7 @@ export async function syncUpdateClaimRequest(id: string, updates: any) {
 
 export async function loadClaimRequestsFromSupabase(staffId?: string) {
   if (!isSupabaseSyncEnabled()) return [];
-  
+
   try {
     return await ops.fetchClaimRequests(staffId);
   } catch (error) {
@@ -1276,7 +1277,7 @@ export async function loadClaimRequestsFromSupabase(staffId?: string) {
 
 export async function syncAddStaffRequest(request: any) {
   if (!isSupabaseSyncEnabled()) return null;
-  
+
   try {
     return await ops.insertStaffRequest(request);
   } catch (error) {
@@ -1287,7 +1288,7 @@ export async function syncAddStaffRequest(request: any) {
 
 export async function syncUpdateStaffRequest(id: string, updates: any) {
   if (!isSupabaseSyncEnabled()) return null;
-  
+
   try {
     return await ops.updateStaffRequest(id, updates);
   } catch (error) {
@@ -1298,7 +1299,7 @@ export async function syncUpdateStaffRequest(id: string, updates: any) {
 
 export async function loadStaffRequestsFromSupabase(staffId?: string) {
   if (!isSupabaseSyncEnabled()) return [];
-  
+
   try {
     return await ops.fetchStaffRequests(staffId);
   } catch (error) {
@@ -1311,7 +1312,7 @@ export async function loadStaffRequestsFromSupabase(staffId?: string) {
 
 export async function syncAddAnnouncement(announcement: any) {
   if (!isSupabaseSyncEnabled()) return null;
-  
+
   try {
     return await ops.insertAnnouncement(announcement);
   } catch (error) {
@@ -1322,7 +1323,7 @@ export async function syncAddAnnouncement(announcement: any) {
 
 export async function syncUpdateAnnouncement(id: string, updates: any) {
   if (!isSupabaseSyncEnabled()) return null;
-  
+
   try {
     return await ops.updateAnnouncement(id, updates);
   } catch (error) {
@@ -1333,7 +1334,7 @@ export async function syncUpdateAnnouncement(id: string, updates: any) {
 
 export async function syncDeleteAnnouncement(id: string) {
   if (!isSupabaseSyncEnabled()) return;
-  
+
   try {
     await ops.deleteAnnouncement(id);
   } catch (error) {
@@ -1343,7 +1344,7 @@ export async function syncDeleteAnnouncement(id: string) {
 
 export async function loadAnnouncementsFromSupabase() {
   if (!isSupabaseSyncEnabled()) return [];
-  
+
   try {
     return await ops.fetchAnnouncements();
   } catch (error) {
@@ -1356,7 +1357,7 @@ export async function loadAnnouncementsFromSupabase() {
 
 export async function syncAddOilTracker(tracker: any) {
   if (!isSupabaseSyncEnabled()) return null;
-  
+
   try {
     return await ops.insertOilTracker(tracker);
   } catch (error) {
@@ -1367,7 +1368,7 @@ export async function syncAddOilTracker(tracker: any) {
 
 export async function syncUpdateOilTracker(fryerId: string, updates: any) {
   if (!isSupabaseSyncEnabled()) return null;
-  
+
   try {
     return await ops.updateOilTracker(fryerId, updates);
   } catch (error) {
@@ -1378,7 +1379,7 @@ export async function syncUpdateOilTracker(fryerId: string, updates: any) {
 
 export async function syncDeleteOilTracker(fryerId: string) {
   if (!isSupabaseSyncEnabled()) return;
-  
+
   try {
     await ops.deleteOilTracker(fryerId);
   } catch (error) {
@@ -1388,7 +1389,7 @@ export async function syncDeleteOilTracker(fryerId: string) {
 
 export async function loadOilTrackersFromSupabase() {
   if (!isSupabaseSyncEnabled()) return [];
-  
+
   try {
     return await ops.fetchOilTrackers();
   } catch (error) {
@@ -1401,7 +1402,7 @@ export async function loadOilTrackersFromSupabase() {
 
 export async function syncAddOilChangeRequest(request: any) {
   if (!isSupabaseSyncEnabled()) return null;
-  
+
   try {
     return await ops.insertOilChangeRequest(request);
   } catch (error) {
@@ -1412,7 +1413,7 @@ export async function syncAddOilChangeRequest(request: any) {
 
 export async function syncUpdateOilChangeRequest(id: string, updates: any) {
   if (!isSupabaseSyncEnabled()) return null;
-  
+
   try {
     return await ops.updateOilChangeRequest(id, updates);
   } catch (error) {
@@ -1423,7 +1424,7 @@ export async function syncUpdateOilChangeRequest(id: string, updates: any) {
 
 export async function loadOilChangeRequestsFromSupabase(status?: string) {
   if (!isSupabaseSyncEnabled()) return [];
-  
+
   try {
     return await ops.fetchOilChangeRequests(status);
   } catch (error) {
@@ -1436,7 +1437,7 @@ export async function loadOilChangeRequestsFromSupabase(status?: string) {
 
 export async function syncAddOilActionHistory(history: any) {
   if (!isSupabaseSyncEnabled()) return null;
-  
+
   try {
     return await ops.insertOilActionHistory(history);
   } catch (error) {
@@ -1447,7 +1448,7 @@ export async function syncAddOilActionHistory(history: any) {
 
 export async function loadOilActionHistoryFromSupabase(fryerId?: string) {
   if (!isSupabaseSyncEnabled()) return [];
-  
+
   try {
     return await ops.fetchOilActionHistory(fryerId);
   } catch (error) {
@@ -1648,6 +1649,13 @@ export async function loadAllDataFromSupabase() {
       oilActionHistory: [],
     };
   }
+}
+
+// ============ ATTENDANCE OPERATIONS WRAPPER ============
+
+export async function clockIn(data: any) {
+  if (!isSupabaseSyncEnabled()) return { success: false, error: 'Supabase disabled' };
+  return await attendanceOps.clockIn(data);
 }
 
 
