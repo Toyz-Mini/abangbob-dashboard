@@ -24,12 +24,20 @@ import {
   Tv
 } from 'lucide-react';
 
+import RouteGuard from './RouteGuard';
+import { useAuth } from '@/lib/contexts/AuthContext';
+import { canViewNavItem, type UserRole } from '@/lib/permissions';
+
 export default function MainLayout({ children }: { children: ReactNode }) {
   // Default to closed to prevent flash on mobile
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const sidebarRef = useRef<HTMLElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  const { user, isStaffLoggedIn, currentStaff } = useAuth();
+
+  // Determine role for mobile menu filtering
+  const userRole: UserRole | null = user ? 'Admin' : (isStaffLoggedIn && currentStaff ? currentStaff.role : null);
 
   // Open sidebar on mount if desktop
   useEffect(() => {
@@ -115,7 +123,6 @@ export default function MainLayout({ children }: { children: ReactNode }) {
   };
 
 
-
   // Handle nav link click - close sidebar on mobile
   const handleNavClick = () => {
     if (window.innerWidth < 768) {
@@ -172,69 +179,72 @@ export default function MainLayout({ children }: { children: ReactNode }) {
     };
   }, [handleRipple]);
 
+  // Mobile Menu Items
+  const mobileMenuItems = [
+    { href: '/delivery', label: 'Delivery', icon: Truck, color: '#3b82f6' },
+    { href: '/production', label: 'Produksi', icon: Factory, color: '#f59e0b' },
+    { href: '/kds', label: 'KDS', icon: Tv, color: '#10b981' },
+    { href: '/recipes', label: 'Resipi', icon: ChefHat, color: '#ec4899' },
+    { href: '/suppliers', label: 'Stok', icon: Boxes, color: '#8b5cf6' },
+    { href: '/finance', label: 'Kewangan', icon: DollarSign, color: '#059669' },
+    { href: '/customers', label: 'Pelanggan', icon: UserCheck, color: '#6366f1' },
+    { href: '/analytics', label: 'Analitik', icon: BarChart3, color: '#ef4444' },
+    { href: '/audit-log', label: 'Audit', icon: FileText, color: '#64748b' },
+    { href: '/notifications', label: 'Notifikasi', icon: Bell, color: '#eab308' },
+    { href: '/settings', label: 'Tetapan', icon: Settings, color: '#4b5563' },
+    { href: '/help', label: 'Bantuan', icon: HelpCircle, color: '#06b6d4' },
+  ].filter(item => canViewNavItem(userRole, item.href));
+
   return (
-    <div className="main-container" ref={containerRef}>
-      {/* Skip to main content link for accessibility */}
-      <a href="#main-content" className="skip-link">
-        Skip to main content
-      </a>
+    <RouteGuard>
+      <div className="main-container" ref={containerRef}>
+        {/* Skip to main content link for accessibility */}
+        <a href="#main-content" className="skip-link">
+          Skip to main content
+        </a>
 
-      <Sidebar
-        ref={sidebarRef}
-        isOpen={isSidebarOpen}
-        onMouseEnter={handleSidebarMouseEnter}
-        onClick={handleSidebarClick}
-        onNavClick={handleNavClick}
-      />
-      <TopNav onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)} />
-      <main
-        id="main-content"
-        className={`main-content page-enter ${isSidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}
-      >
-        <Breadcrumb />
-        {children}
-      </main>
+        <Sidebar
+          ref={sidebarRef}
+          isOpen={isSidebarOpen}
+          onMouseEnter={handleSidebarMouseEnter}
+          onClick={handleSidebarClick}
+          onNavClick={handleNavClick}
+        />
+        <TopNav onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)} />
+        <main
+          id="main-content"
+          className={`main-content page-enter ${isSidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}
+        >
+          <Breadcrumb />
+          {children}
+        </main>
 
-      {/* Command Palette */}
-      <CommandPalette
-        isOpen={commandPalette.isOpen}
-        onClose={commandPalette.close}
-      />
+        {/* Command Palette */}
+        <CommandPalette
+          isOpen={commandPalette.isOpen}
+          onClose={commandPalette.close}
+        />
 
-      {/* Bottom Navigation (Mobile) */}
-      <BottomNav
-        showMore={true}
-        onMoreClick={bottomNav.openMore}
-      />
+        {/* Bottom Navigation (Mobile) */}
+        <BottomNav
+          showMore={true}
+          onMoreClick={bottomNav.openMore}
+        />
 
-      {/* More Menu Sheet (Mobile) */}
-      <Sheet
-        isOpen={bottomNav.isMoreOpen}
-        onClose={bottomNav.closeMore}
-        title="Menu Tambahan"
-        position="bottom"
-      >
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(4, 1fr)',
-          gap: '1rem',
-          padding: '0.5rem 0'
-        }}>
-          {[
-            { href: '/delivery', label: 'Delivery', icon: Truck, color: '#3b82f6' },
-            { href: '/production', label: 'Produksi', icon: Factory, color: '#f59e0b' },
-            { href: '/kds', label: 'KDS', icon: Tv, color: '#10b981' },
-            { href: '/recipes', label: 'Resipi', icon: ChefHat, color: '#ec4899' },
-            { href: '/suppliers', label: 'Stok', icon: Boxes, color: '#8b5cf6' },
-            { href: '/finance', label: 'Kewangan', icon: DollarSign, color: '#059669' },
-            { href: '/customers', label: 'Pelanggan', icon: UserCheck, color: '#6366f1' },
-            { href: '/analytics', label: 'Analitik', icon: BarChart3, color: '#ef4444' },
-            { href: '/audit-log', label: 'Audit', icon: FileText, color: '#64748b' },
-            { href: '/notifications', label: 'Notifikasi', icon: Bell, color: '#eab308' },
-            { href: '/settings', label: 'Tetapan', icon: Settings, color: '#4b5563' },
-            { href: '/help', label: 'Bantuan', icon: HelpCircle, color: '#06b6d4' },
-          ]
-            .map((item, index) => (
+        {/* More Menu Sheet (Mobile) */}
+        <Sheet
+          isOpen={bottomNav.isMoreOpen}
+          onClose={bottomNav.closeMore}
+          title="Menu Tambahan"
+          position="bottom"
+        >
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(4, 1fr)',
+            gap: '1rem',
+            padding: '0.5rem 0'
+          }}>
+            {mobileMenuItems.map((item, index) => (
               <a
                 key={index}
                 href={item.href}
@@ -269,8 +279,9 @@ export default function MainLayout({ children }: { children: ReactNode }) {
                 </span>
               </a>
             ))}
-        </div>
-      </Sheet>
-    </div>
+          </div>
+        </Sheet>
+      </div>
+    </RouteGuard>
   );
 }

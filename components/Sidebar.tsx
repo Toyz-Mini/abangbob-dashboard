@@ -7,13 +7,13 @@ import { useTranslation } from '@/lib/contexts/LanguageContext';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { useOrderHistory } from '@/lib/store';
 import { canViewNavItem, type UserRole } from '@/lib/permissions';
-import { 
-  LayoutDashboard, 
-  ShoppingCart, 
-  Package, 
-  Users, 
-  Factory, 
-  Truck, 
+import {
+  LayoutDashboard,
+  ShoppingCart,
+  Package,
+  Users,
+  Factory,
+  Truck,
   DollarSign,
   BarChart3,
   UserCheck,
@@ -134,13 +134,13 @@ const Sidebar = forwardRef<HTMLElement, SidebarProps>(({ isOpen, onMouseEnter, o
   const { t } = useTranslation();
   const { user, currentStaff, isStaffLoggedIn } = useAuth();
   const { getPendingVoidRefundCount } = useOrderHistory();
-  
+
   // Get pending refund count for badge
   const pendingRefundCount = getPendingVoidRefundCount();
-  
+
   // Determine the current user's role
   // Default to 'Admin' when no auth to ensure menu is always visible
-  const userRole: UserRole = useMemo(() => {
+  const userRole: UserRole | null = useMemo(() => {
     if (user) {
       // Supabase authenticated user is Admin
       return 'Admin';
@@ -148,10 +148,22 @@ const Sidebar = forwardRef<HTMLElement, SidebarProps>(({ isOpen, onMouseEnter, o
     if (isStaffLoggedIn && currentStaff) {
       return currentStaff.role;
     }
-    // Default to Admin to show all menu items when not logged in
-    return 'Admin';
+    // Default to null (no access) when not logged in
+    return 'Staff'; // Temporary safety: default to lowest role if unsure, or null. 
+    // Plan said return null. Let's return null.
+    // However, UserRole type is 'Admin' | 'Manager' | 'Staff'. Null is not in UserRole.
+    // I need to change the return type or handle null.
+    // Looking at the code: `const userRole: UserRole`
+    // I should probably change the type definition or cast.
+    // Actually, let's look at `UserRole`.
+    // If I return null, `filteredNavGroups` logic needs to handle it.
+    // `filteredNavGroups` maps `group.items.filter(...)`.
+    // `canViewNavItem(role, path)` accepts `UserRole | null`.
+    // So `userRole` variable should be `UserRole | null`.
+
+    return null;
   }, [user, currentStaff, isStaffLoggedIn]);
-  
+
   // Filter navigation groups based on user role
   const filteredNavGroups = useMemo(() => {
     return navGroupsConfig
@@ -161,18 +173,18 @@ const Sidebar = forwardRef<HTMLElement, SidebarProps>(({ isOpen, onMouseEnter, o
       }))
       .filter(group => group.items.length > 0);
   }, [userRole]);
-  
+
   return (
-    <aside 
+    <aside
       ref={ref}
       className={`sidebar ${isOpen ? 'open' : 'closed'}`}
       onMouseEnter={onMouseEnter}
       onClick={onClick}
     >
       <div className="nav-logo">
-        <img 
-          src="/logo.png" 
-          alt="Abang Bob" 
+        <img
+          src="/logo.png"
+          alt="Abang Bob"
           className="sidebar-logo-img"
         />
         {isOpen && <span>{t('app.name')}</span>}
@@ -190,13 +202,13 @@ const Sidebar = forwardRef<HTMLElement, SidebarProps>(({ isOpen, onMouseEnter, o
             )}
             <ul className="nav-menu">
               {group.items.map((item) => {
-                const isActive = pathname === item.href || 
+                const isActive = pathname === item.href ||
                   (item.href !== '/' && pathname?.startsWith(item.href));
-                
+
                 const Icon = item.icon;
                 const label = t(item.labelKey);
                 const badgeCount = item.showBadge ? pendingRefundCount : 0;
-                
+
                 return (
                   <li key={item.href} className="nav-item">
                     <Link
@@ -211,9 +223,9 @@ const Sidebar = forwardRef<HTMLElement, SidebarProps>(({ isOpen, onMouseEnter, o
                         <>
                           <span>{label}</span>
                           {badgeCount > 0 && (
-                            <span 
-                              className="badge badge-warning" 
-                              style={{ 
+                            <span
+                              className="badge badge-warning"
+                              style={{
                                 marginLeft: 'auto',
                                 fontSize: '0.7rem',
                                 padding: '0.125rem 0.375rem',
