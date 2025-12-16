@@ -148,6 +148,111 @@ export function useVoidRefundRealtime(onVoidRefundChange: RealtimeChangeHandler)
 }
 
 /**
+ * Subscribe to leave_requests table changes
+ */
+export function useLeaveRequestsRealtime(onLeaveChange: RealtimeChangeHandler) {
+  return useSupabaseRealtime('leave_requests', onLeaveChange);
+}
+
+/**
+ * Subscribe to claim_requests table changes
+ */
+export function useClaimRequestsRealtime(onClaimChange: RealtimeChangeHandler) {
+  return useSupabaseRealtime('claim_requests', onClaimChange);
+}
+
+/**
+ * Subscribe to promotions table changes
+ */
+export function usePromotionsRealtime(onPromotionChange: RealtimeChangeHandler) {
+  return useSupabaseRealtime('promotions', onPromotionChange);
+}
+
+/**
+ * Subscribe to expenses table changes
+ */
+export function useExpensesRealtime(onExpenseChange: RealtimeChangeHandler) {
+  return useSupabaseRealtime('expenses', onExpenseChange);
+}
+
+/**
+ * Subscribe to cash_flows table changes
+ */
+export function useCashFlowsRealtime(onCashFlowChange: RealtimeChangeHandler) {
+  return useSupabaseRealtime('cash_flows', onCashFlowChange);
+}
+
+/**
+ * Subscribe to notifications table changes
+ */
+export function useNotificationsRealtime(onNotificationChange: RealtimeChangeHandler) {
+  return useSupabaseRealtime('notifications', onNotificationChange);
+}
+
+/**
+ * Subscribe to announcements table changes
+ */
+export function useAnnouncementsRealtime(onAnnouncementChange: RealtimeChangeHandler) {
+  return useSupabaseRealtime('announcements', onAnnouncementChange);
+}
+
+/**
+ * Subscribe to checklist_completions table changes
+ */
+export function useChecklistRealtime(onChecklistChange: RealtimeChangeHandler) {
+  return useSupabaseRealtime('checklist_completions', onChecklistChange);
+}
+
+/**
+ * Subscribe to customers table changes
+ */
+export function useCustomersRealtime(onCustomerChange: RealtimeChangeHandler) {
+  return useSupabaseRealtime('customers', onCustomerChange);
+}
+
+/**
+ * Subscribe to suppliers table changes
+ */
+export function useSuppliersRealtime(onSupplierChange: RealtimeChangeHandler) {
+  return useSupabaseRealtime('suppliers', onSupplierChange);
+}
+
+/**
+ * Subscribe to delivery_orders table changes
+ */
+export function useDeliveryOrdersRealtime(onDeliveryChange: RealtimeChangeHandler) {
+  return useSupabaseRealtime('delivery_orders', onDeliveryChange);
+}
+
+/**
+ * Subscribe to recipes table changes
+ */
+export function useRecipesRealtime(onRecipeChange: RealtimeChangeHandler) {
+  return useSupabaseRealtime('recipes', onRecipeChange);
+}
+
+/**
+ * Subscribe to menu_categories table changes
+ */
+export function useMenuCategoriesRealtime(onCategoryChange: RealtimeChangeHandler) {
+  return useSupabaseRealtime('menu_categories', onCategoryChange);
+}
+
+/**
+ * Subscribe to payment_methods table changes
+ */
+export function usePaymentMethodsRealtime(onPaymentMethodChange: RealtimeChangeHandler) {
+  return useSupabaseRealtime('payment_methods', onPaymentMethodChange);
+}
+
+/**
+ * Subscribe to tax_rates table changes
+ */
+export function useTaxRatesRealtime(onTaxRateChange: RealtimeChangeHandler) {
+  return useSupabaseRealtime('tax_rates', onTaxRateChange);
+}
+
+/**
  * Check if realtime is enabled and working
  */
 export async function testRealtimeConnection(): Promise<boolean> {
@@ -165,4 +270,3 @@ export async function testRealtimeConnection(): Promise<boolean> {
     return false;
   }
 }
-

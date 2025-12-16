@@ -202,6 +202,7 @@ interface StoreState {
   updateScheduleEntry: (id: string, updates: Partial<ScheduleEntry>) => void;
   deleteScheduleEntry: (id: string) => void;
   getWeekSchedule: (startDate: string) => ScheduleEntry[];
+  refreshSchedules: () => Promise<void>;
 
   // Promotions
   promotions: Promotion[];
@@ -3103,6 +3104,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     updateScheduleEntry,
     deleteScheduleEntry,
     getWeekSchedule,
+    refreshSchedules,
 
     // Promotions
     promotions,
@@ -3393,6 +3395,7 @@ export function useSchedules() {
     updateScheduleEntry: store.updateScheduleEntry,
     deleteScheduleEntry: store.deleteScheduleEntry,
     getWeekSchedule: store.getWeekSchedule,
+    refreshSchedules: store.refreshSchedules,
     isInitialized: store.isInitialized,
   };
 }

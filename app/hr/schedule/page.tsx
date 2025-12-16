@@ -1,16 +1,17 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import MainLayout from '@/components/MainLayout';
 import { useSchedules } from '@/lib/store';
+import { useSchedulesRealtime, useStaffRealtime } from '@/lib/supabase/realtime-hooks';
 import { Shift, ScheduleEntry } from '@/lib/types';
 import Modal from '@/components/Modal';
 import LoadingSpinner from '@/components/LoadingSpinner';
-import { 
-  Calendar, 
-  Plus, 
-  Edit2, 
-  Trash2, 
+import {
+  Calendar,
+  Plus,
+  Edit2,
+  Trash2,
   ChevronLeft,
   ChevronRight,
   Users,
@@ -28,25 +29,34 @@ const DEFAULT_SHIFTS: Omit<Shift, 'id'>[] = [
 ];
 
 export default function SchedulePage() {
-  const { 
-    shifts, 
-    schedules, 
+  const {
+    shifts,
+    schedules,
     staff,
-    addShift, 
-    updateShift, 
+    addShift,
+    updateShift,
     deleteShift,
     addScheduleEntry,
     updateScheduleEntry,
     deleteScheduleEntry,
     getWeekSchedule,
-    isInitialized 
+    refreshSchedules,
+    isInitialized
   } = useSchedules();
+
+  // Realtime subscription for schedules
+  const handleScheduleChange = useCallback(() => {
+    console.log('[Realtime] Schedule change detected, refreshing...');
+    refreshSchedules();
+  }, [refreshSchedules]);
+
+  useSchedulesRealtime(handleScheduleChange);
 
   const [modalType, setModalType] = useState<ModalType>(null);
   const [selectedShift, setSelectedShift] = useState<Shift | null>(null);
   const [selectedSchedule, setSelectedSchedule] = useState<ScheduleEntry | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
-  
+
   // Week navigation
   const [currentWeekStart, setCurrentWeekStart] = useState(() => {
     const today = new Date();
@@ -130,9 +140,9 @@ export default function SchedulePage() {
 
   // Check for conflicts
   const hasConflict = (staffId: string, date: string, excludeId?: string): boolean => {
-    return schedules.some(s => 
-      s.staffId === staffId && 
-      s.date === date && 
+    return schedules.some(s =>
+      s.staffId === staffId &&
+      s.date === date &&
       s.id !== excludeId
     );
   };
@@ -371,11 +381,11 @@ export default function SchedulePage() {
               </button>
               <div style={{ textAlign: 'center' }}>
                 <div style={{ fontWeight: 700, fontSize: '1.1rem' }}>
-                  {weekDates[0].toLocaleDateString('ms-MY', { day: 'numeric', month: 'short' })} - 
+                  {weekDates[0].toLocaleDateString('ms-MY', { day: 'numeric', month: 'short' })} -
                   {weekDates[6].toLocaleDateString('ms-MY', { day: 'numeric', month: 'short', year: 'numeric' })}
                 </div>
-                <button 
-                  className="btn btn-sm btn-outline" 
+                <button
+                  className="btn btn-sm btn-outline"
                   onClick={goToCurrentWeek}
                   style={{ marginTop: '0.5rem' }}
                 >
@@ -413,9 +423,9 @@ export default function SchedulePage() {
             </div>
             <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
               {shifts.map(shift => (
-                <div 
+                <div
                   key={shift.id}
-                  style={{ 
+                  style={{
                     padding: '0.75rem 1rem',
                     borderRadius: 'var(--radius-md)',
                     background: `${shift.color}20`,
@@ -435,8 +445,8 @@ export default function SchedulePage() {
                     <button className="btn btn-sm btn-outline" onClick={() => openEditShiftModal(shift)}>
                       <Edit2 size={12} />
                     </button>
-                    <button 
-                      className="btn btn-sm btn-outline" 
+                    <button
+                      className="btn btn-sm btn-outline"
                       onClick={() => handleDeleteShift(shift.id)}
                       style={{ color: 'var(--danger)' }}
                     >
@@ -469,9 +479,9 @@ export default function SchedulePage() {
                   <tr>
                     <th style={{ width: '150px' }}>Staf</th>
                     {weekDates.map(date => (
-                      <th 
-                        key={date.toISOString()} 
-                        style={{ 
+                      <th
+                        key={date.toISOString()}
+                        style={{
                           textAlign: 'center',
                           background: isToday(date) ? '#dbeafe' : undefined,
                         }}
@@ -496,18 +506,18 @@ export default function SchedulePage() {
                       {weekDates.map(date => {
                         const schedule = getScheduleForCell(date, staffMember.id);
                         const shift = schedule ? shifts.find(s => s.id === schedule.shiftId) : null;
-                        
+
                         return (
-                          <td 
+                          <td
                             key={date.toISOString()}
-                            style={{ 
+                            style={{
                               textAlign: 'center',
                               background: isToday(date) ? '#dbeafe' : undefined,
                               cursor: 'pointer',
                               padding: '0.5rem',
                             }}
-                            onClick={() => schedule 
-                              ? openEditScheduleModal(schedule) 
+                            onClick={() => schedule
+                              ? openEditScheduleModal(schedule)
                               : openAddScheduleModal(date, staffMember.id)
                             }
                           >
@@ -526,7 +536,7 @@ export default function SchedulePage() {
                                 </div>
                               </div>
                             ) : (
-                              <div style={{ 
+                              <div style={{
                                 padding: '0.75rem',
                                 color: 'var(--gray-400)',
                                 fontSize: '0.75rem',
@@ -551,7 +561,7 @@ export default function SchedulePage() {
             <div style={{ textAlign: 'center', padding: '3rem' }}>
               <Calendar size={48} color="var(--gray-400)" style={{ marginBottom: '1rem' }} />
               <p style={{ color: 'var(--text-secondary)', marginBottom: '1rem' }}>
-                {shifts.length === 0 
+                {shifts.length === 0
                   ? 'Sila buat shift terlebih dahulu'
                   : 'Tiada staf aktif untuk dijadualkan'
                 }
@@ -687,8 +697,8 @@ export default function SchedulePage() {
 
           <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1.5rem' }}>
             {modalType === 'edit-schedule' && (
-              <button 
-                className="btn btn-outline" 
+              <button
+                className="btn btn-outline"
                 onClick={handleDeleteSchedule}
                 style={{ color: 'var(--danger)' }}
               >
