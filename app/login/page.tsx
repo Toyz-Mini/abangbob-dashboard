@@ -366,12 +366,13 @@ export default function LoginPage() {
                 </div>
 
                 {/* PIN Pad */}
-                <div className="grid grid-cols-3 gap-y-3 gap-x-4 md:gap-y-4 md:gap-x-6 max-w-[260px] mx-auto mb-8">
+                {/* PIN Pad */}
+                <div className="flex flex-wrap justify-center gap-3 md:gap-6 max-w-[220px] md:max-w-[260px] mx-auto mb-8">
                   {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(digit => (
                     <button
                       key={digit}
                       type="button"
-                      className="w-14 h-14 md:w-16 md:h-16 rounded-full bg-white hover:bg-gray-50 border border-gray-200 hover:border-gray-300 shadow-sm text-xl md:text-2xl font-light text-gray-800 transition-all active:scale-95 flex items-center justify-center disabled:opacity-30 disabled:shadow-none"
+                      className="w-12 h-12 md:w-16 md:h-16 rounded-full bg-white hover:bg-gray-50 border border-gray-200 hover:border-gray-300 shadow-sm text-lg md:text-2xl font-light text-gray-800 transition-all active:scale-95 flex items-center justify-center disabled:opacity-30 disabled:shadow-none"
                       onClick={() => handlePinInput(digit.toString())}
                       disabled={!selectedStaffId}
                     >
@@ -380,14 +381,14 @@ export default function LoginPage() {
                   ))}
                   <button
                     type="button"
-                    className="w-14 h-14 md:w-16 md:h-16 rounded-full hover:bg-red-50 text-red-500/70 hover:text-red-600 transition-all flex items-center justify-center"
+                    className="w-12 h-12 md:w-16 md:h-16 rounded-full hover:bg-red-50 text-red-500/70 hover:text-red-600 transition-all flex items-center justify-center"
                     onClick={handlePinClear}
                   >
-                    <span className="text-xs font-bold tracking-widest">CLR</span>
+                    <span className="text-[10px] md:text-xs font-bold tracking-widest">CLR</span>
                   </button>
                   <button
                     type="button"
-                    className="w-14 h-14 md:w-16 md:h-16 rounded-full bg-white hover:bg-gray-50 border border-gray-200 hover:border-gray-300 shadow-sm text-xl md:text-2xl font-light text-gray-800 transition-all active:scale-95 flex items-center justify-center disabled:opacity-30"
+                    className="w-12 h-12 md:w-16 md:h-16 rounded-full bg-white hover:bg-gray-50 border border-gray-200 hover:border-gray-300 shadow-sm text-lg md:text-2xl font-light text-gray-800 transition-all active:scale-95 flex items-center justify-center disabled:opacity-30"
                     onClick={() => handlePinInput('0')}
                     disabled={!selectedStaffId}
                   >
@@ -395,10 +396,10 @@ export default function LoginPage() {
                   </button>
                   <button
                     type="button"
-                    className="w-14 h-14 md:w-16 md:h-16 rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-all flex items-center justify-center"
+                    className="w-12 h-12 md:w-16 md:h-16 rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-all flex items-center justify-center"
                     onClick={handlePinBackspace}
                   >
-                    <ArrowLeft size={24} />
+                    <ArrowLeft size={20} className="md:w-6 md:h-6" />
                   </button>
                 </div>
 
