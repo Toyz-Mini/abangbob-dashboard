@@ -50,7 +50,7 @@ export default function StatCard({
     <GlassCard
       gradient={glassGradient}
       hoverEffect={true}
-      className={`stat-card ${gradient !== 'none' ? `gradient-${gradient}` : ''}`}
+      className="stat-card"
     >
       <div className="stat-card-header">
         <div className="stat-label">{label}</div>
