@@ -123,22 +123,22 @@ export default function LoginPage() {
     <div className="min-h-screen w-full flex items-center justify-center relative overflow-hidden bg-[#0a0a0a] text-white selection:bg-primary/30">
 
       {/* --- Ambient Background Effects --- */}
-      {/* 1. Deep noise texture overlay */}
-      <div className="absolute inset-0 z-0 opacity-20 pointer-events-none"
-        style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 200 200\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noiseFilter\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.65\' numOctaves=\'3\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noiseFilter)\'/%3E%3C/svg%3E")' }}>
+      {/* 1. Deep noise texture overlay (Refined) */}
+      <div className="absolute inset-0 z-0 opacity-[0.03] pointer-events-none mix-blend-overlay"
+        style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 200 200\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noiseFilter\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.8\' numOctaves=\'3\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noiseFilter)\'/%3E%3C/svg%3E")' }}>
       </div>
 
       {/* 2. Primary ambient glow (Top Left) */}
-      <div className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] bg-primary/20 rounded-full blur-[120px] animate-pulse-slow" />
+      <div className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] bg-primary/10 rounded-full blur-[120px] animate-pulse-slow" />
 
       {/* 3. Secondary ambient glow (Bottom Right) */}
-      <div className="absolute bottom-[-10%] right-[-10%] w-[50vw] h-[50vw] bg-orange-600/10 rounded-full blur-[100px] animate-pulse-slow" style={{ animationDelay: '2s' }} />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[50vw] h-[50vw] bg-orange-600/5 rounded-full blur-[100px] animate-pulse-slow" style={{ animationDelay: '2s' }} />
 
       {/* Main Container */}
       <div className="relative z-10 w-full max-w-md px-6 animate-scale-in">
 
         {/* Glass Card */}
-        <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-white/5 backdrop-blur-2xl shadow-2xl">
+        <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-black/40 backdrop-blur-xl shadow-2xl ring-1 ring-white/5">
 
           {/* Inner Highlight Border (Top) */}
           <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
@@ -325,14 +325,14 @@ export default function LoginPage() {
                         type="button"
                         onClick={() => { setSelectedStaffId(s.id); setError(''); }}
                         className={`relative group p-3 rounded-xl border transition-all duration-300 ${isSelected
-                            ? 'bg-primary/20 border-primary/50 shadow-[0_0_20px_rgba(204,21,18,0.2)]'
-                            : 'bg-white/5 border-white/5 hover:bg-white/10 hover:border-white/20'
+                          ? 'bg-primary/20 border-primary/50 shadow-[0_0_20px_rgba(204,21,18,0.2)]'
+                          : 'bg-white/5 border-white/5 hover:bg-white/10 hover:border-white/20'
                           }`}
                       >
                         <div className="flex flex-col items-center gap-3">
                           <div className={`w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold border-2 transition-all duration-300 ${isSelected
-                              ? 'bg-primary text-white border-primary-light shadow-lg scale-110'
-                              : 'bg-gray-800 text-gray-400 border-transparent group-hover:border-gray-600'
+                            ? 'bg-primary text-white border-primary-light shadow-lg scale-110'
+                            : 'bg-gray-800 text-gray-400 border-transparent group-hover:border-gray-600'
                             }`}>
                             {s.name.charAt(0).toUpperCase()}
                           </div>
@@ -358,8 +358,8 @@ export default function LoginPage() {
                     <div
                       key={i}
                       className={`w-3 h-3 rounded-full transition-all duration-300 ${pin.length > i
-                          ? 'bg-primary shadow-[0_0_15px_var(--primary)] scale-125'
-                          : 'bg-white/20'
+                        ? 'bg-primary shadow-[0_0_15px_var(--primary)] scale-125'
+                        : 'bg-white/20'
                         }`}
                     />
                   ))}
