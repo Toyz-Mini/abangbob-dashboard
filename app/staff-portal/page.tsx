@@ -368,35 +368,37 @@ export default function StaffPortalPage() {
         )}
 
         {/* Clock Widget, Quick Actions & Team Today Row */}
-        <div className="grid grid-cols-1 md:grid-cols-4" style={{ gap: '1.5rem', marginBottom: '1.5rem' }}>
-          {/* Clock In/Out Widget */}
-          <div className={`staff-clock-widget ${isClockedIn ? 'clocked-in' : hasCompletedShift ? 'completed' : 'clocked-out'}`}>
-            <CircularProgress progress={workProgress}>
-              <div className="clock-progress-time">{workedTime}</div>
-              <div className="clock-progress-label">jam kerja</div>
-            </CircularProgress>
+        <div className="grid grid-cols-2 md:grid-cols-4" style={{ gap: '1rem', marginBottom: '1.5rem' }}>
+          {/* Clock In/Out Widget - Full width on mobile */}
+          <div className="col-span-2 md:col-span-1" style={{ width: '100%' }}>
+            <div className={`staff-clock-widget ${isClockedIn ? 'clocked-in' : hasCompletedShift ? 'completed' : 'clocked-out'}`}>
+              <CircularProgress progress={workProgress}>
+                <div className="clock-progress-time">{workedTime}</div>
+                <div className="clock-progress-label">jam kerja</div>
+              </CircularProgress>
 
-            {isClocking ? (
-              <div style={{ display: 'flex', justifyContent: 'center', padding: '1rem' }}>
-                <LoadingSpinner size="sm" />
-              </div>
-            ) : (
-              <button
-                className={`staff-clock-btn ${isClockedIn ? 'clock-out' : hasCompletedShift ? 'completed' : 'clock-in'}`}
-                onClick={isClockedIn ? handleClockOut : hasCompletedShift ? undefined : handleClockIn}
-                disabled={hasCompletedShift}
-              >
-                <Clock size={22} />
-                {isClockedIn ? 'Clock Out' : hasCompletedShift ? 'Shift Selesai' : 'Clock In'}
-              </button>
-            )}
+              {isClocking ? (
+                <div style={{ display: 'flex', justifyContent: 'center', padding: '1rem' }}>
+                  <LoadingSpinner size="sm" />
+                </div>
+              ) : (
+                <button
+                  className={`staff-clock-btn ${isClockedIn ? 'clock-out' : hasCompletedShift ? 'completed' : 'clock-in'}`}
+                  onClick={isClockedIn ? handleClockOut : hasCompletedShift ? undefined : handleClockIn}
+                  disabled={hasCompletedShift}
+                >
+                  <Clock size={22} />
+                  {isClockedIn ? 'Clock Out' : hasCompletedShift ? 'Shift Selesai' : 'Clock In'}
+                </button>
+              )}
 
-            {todayAttendance?.clockInTime && (
-              <div style={{ marginTop: '0.75rem', fontSize: '0.75rem', color: 'var(--text-secondary)', textAlign: 'center' }}>
-                Masuk: {todayAttendance.clockInTime}
-                {todayAttendance.clockOutTime && ` • Keluar: ${todayAttendance.clockOutTime}`}
-              </div>
-            )}
+              {todayAttendance?.clockInTime && (
+                <div style={{ marginTop: '0.75rem', fontSize: '0.75rem', color: 'var(--text-secondary)', textAlign: 'center' }}>
+                  Masuk: {todayAttendance.clockInTime}
+                  {todayAttendance.clockOutTime && ` • Keluar: ${todayAttendance.clockOutTime}`}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Quick Actions Grid */}

@@ -203,13 +203,15 @@ export default function MainLayout({ children }: { children: ReactNode }) {
           Skip to main content
         </a>
 
-        <Sidebar
-          ref={sidebarRef}
-          isOpen={isSidebarOpen}
-          onMouseEnter={handleSidebarMouseEnter}
-          onClick={handleSidebarClick}
-          onNavClick={handleNavClick}
-        />
+        <div className="desktop-only">
+          <Sidebar
+            ref={sidebarRef}
+            isOpen={isSidebarOpen}
+            onMouseEnter={handleSidebarMouseEnter}
+            onClick={handleSidebarClick}
+            onNavClick={handleNavClick}
+          />
+        </div>
         <TopNav onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)} />
         <main
           id="main-content"

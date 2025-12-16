@@ -24,10 +24,10 @@ interface BottomNavProps {
   onMoreClick?: () => void;
 }
 
-export default function BottomNav({ 
-  items = defaultNavItems, 
+export default function BottomNav({
+  items = defaultNavItems,
   showMore = true,
-  onMoreClick 
+  onMoreClick
 }: BottomNavProps) {
   const pathname = usePathname();
 
@@ -36,9 +36,9 @@ export default function BottomNav({
   };
 
   return (
-    <nav className="bottom-nav" role="navigation" aria-label="Bottom navigation">
+    <nav className="bottom-nav mobile-only" role="navigation" aria-label="Bottom navigation">
       {items.map((item) => {
-        const isActive = pathname === item.href || 
+        const isActive = pathname === item.href ||
           (item.href !== '/' && pathname?.startsWith(item.href));
         const Icon = item.icon;
 
@@ -54,15 +54,15 @@ export default function BottomNav({
           </Link>
         );
       })}
-      
+
       {showMore && (
         <button
-          className="bottom-nav-item"
+          className={`bottom-nav-item ${pathname?.startsWith('/more') ? 'active' : ''}`}
           onClick={handleMoreClick}
           aria-label="More options"
         >
           <MoreHorizontal size={24} />
-          <span>More</span>
+          <span>Menu</span>
         </button>
       )}
     </nav>

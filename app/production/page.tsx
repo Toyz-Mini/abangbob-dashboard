@@ -235,38 +235,65 @@ export default function ProductionPage() {
           </div>
 
           {todayLogs.length > 0 ? (
-            <div className="table-responsive">
-              <table className="table">
-                <thead>
-                  <tr>
-                    <th>Item</th>
-                    <th>Kuantiti Dihasilkan</th>
-                    <th>Sisa/Buangan</th>
-                    <th>Catatan</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {todayLogs.map(log => (
-                    <tr key={log.id}>
-                      <td style={{ fontWeight: 600 }}>{log.item}</td>
-                      <td>
+            <>
+              {/* Mobile Card View */}
+              <div className="mobile-only">
+                {todayLogs.map(log => (
+                  <div key={log.id} className="mobile-card">
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                      <div style={{ fontWeight: 600, fontSize: '1rem' }}>{log.item}</div>
+                      <div>
                         {log.quantityProduced > 0 && (
-                          <span style={{ color: 'var(--success)', fontWeight: 600 }}>+{log.quantityProduced}</span>
+                          <span className="badge badge-success">+{log.quantityProduced} Unit</span>
                         )}
-                      </td>
-                      <td>
                         {log.wasteAmount > 0 && (
-                          <span style={{ color: 'var(--danger)', fontWeight: 600 }}>-{log.wasteAmount}</span>
+                          <span className="badge badge-danger">-{log.wasteAmount} Sisa</span>
                         )}
-                      </td>
-                      <td style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
-                        {log.notes || '-'}
-                      </td>
+                      </div>
+                    </div>
+                    {log.notes && (
+                      <div style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: 'var(--text-secondary)', background: 'var(--bg-secondary)', padding: '0.5rem', borderRadius: 'var(--radius-sm)' }}>
+                        <span style={{ fontWeight: 500 }}>Catatan:</span> {log.notes}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {/* Desktop Table View */}
+              <div className="table-responsive desktop-only">
+                <table className="table">
+                  <thead>
+                    <tr>
+                      <th>Item</th>
+                      <th>Kuantiti Dihasilkan</th>
+                      <th>Sisa/Buangan</th>
+                      <th>Catatan</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {todayLogs.map(log => (
+                      <tr key={log.id}>
+                        <td style={{ fontWeight: 600 }}>{log.item}</td>
+                        <td>
+                          {log.quantityProduced > 0 && (
+                            <span style={{ color: 'var(--success)', fontWeight: 600 }}>+{log.quantityProduced}</span>
+                          )}
+                        </td>
+                        <td>
+                          {log.wasteAmount > 0 && (
+                            <span style={{ color: 'var(--danger)', fontWeight: 600 }}>-{log.wasteAmount}</span>
+                          )}
+                        </td>
+                        <td style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
+                          {log.notes || '-'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
           ) : (
             <p style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '2rem' }}>
               Tiada log production hari ini. Klik "Log Production" untuk mula.
@@ -458,6 +485,6 @@ export default function ProductionPage() {
           </div>
         </Modal>
       </div>
-    </MainLayout>
+    </MainLayout >
   );
 }

@@ -286,7 +286,61 @@ export default function InventoryPage() {
             <div className="card-subtitle">{t('common.total')}: {inventory.length} items</div>
           </div>
 
-          <div className="table-responsive">
+          {/* Mobile Card View */}
+          <div className="mobile-only">
+            {filteredStock.map((item) => (
+              <div key={item.id} className="mobile-card">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <div>
+                    <div style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--text-primary)' }}>{item.name}</div>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{item.category} • {item.unit}</div>
+                  </div>
+                  <div className={`badge ${getStockStatus(item).badge}`}>
+                    {item.currentQuantity} {item.unit}
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.5rem', fontSize: '0.9rem' }}>
+                  <div style={{ color: 'var(--text-secondary)' }}>
+                    Min: {item.minQuantity}
+                  </div>
+                  <div style={{ fontWeight: 600 }}>
+                    BND {item.cost.toFixed(2)}
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid var(--border-light)' }}>
+                  <button
+                    className="btn btn-outline btn-sm"
+                    style={{ flex: 1 }}
+                    onClick={() => openAdjustModal(item)}
+                  >
+                    <ArrowUp size={14} style={{ marginRight: '4px' }} />
+                    Laras
+                  </button>
+                  <button
+                    className="btn btn-outline btn-sm"
+                    onClick={() => {
+                      setSelectedItem(item);
+                      setModalType('history');
+                    }}
+                  >
+                    <History size={14} />
+                  </button>
+                  {canDeleteItems && (
+                    <button
+                      className="btn btn-outline btn-sm text-danger"
+                      onClick={() => deleteStockItem(item.id)}
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="table-container desktop-only">
             <table className="table">
               <thead>
                 <tr>
