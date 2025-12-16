@@ -4,6 +4,7 @@ import { useState, useMemo, useCallback } from 'react';
 import MainLayout from '@/components/MainLayout';
 import { useInventory } from '@/lib/store';
 import { useInventoryRealtime } from '@/lib/supabase/realtime-hooks';
+import { useAuth } from '@/lib/contexts/AuthContext';
 import { useTranslation } from '@/lib/contexts/LanguageContext';
 import { StockItem } from '@/lib/types';
 import Modal from '@/components/Modal';
@@ -35,6 +36,11 @@ export default function InventoryPage() {
   }, [refreshInventory]);
 
   useInventoryRealtime(handleInventoryChange);
+
+  const { user, isStaffLoggedIn, currentStaff } = useAuth();
+  const role = user ? 'Admin' : (isStaffLoggedIn && currentStaff ? currentStaff.role : null);
+  const canDeleteItems = role === 'Admin' || role === 'Manager'; // Simplified check matching requirements
+
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('All');
   const [modalType, setModalType] = useState<ModalType>(null);
@@ -230,10 +236,12 @@ export default function InventoryPage() {
                 {t('inventory.subtitle')}
               </p>
             </div>
-            <button className="btn btn-primary" onClick={openAddModal}>
-              <Plus size={18} />
-              {t('inventory.addItem')}
-            </button>
+            {canDeleteItems && (
+              <button className="btn btn-primary" onClick={openAddModal}>
+                <Plus size={18} />
+                {t('inventory.addItem')}
+              </button>
+            )}
           </div>
         </div>
 
@@ -311,40 +319,41 @@ export default function InventoryPage() {
                         </span>
                       </td>
                       <td>
-                        <div style={{ display: 'flex', gap: '0.25rem' }}>
+                        <div className="flex gap-2 justify-end">
                           <button
-                            className="btn btn-sm btn-outline"
+                            className="btn-icon btn-ghost-primary"
                             onClick={() => openAdjustModal(item)}
-                            title="Adjust Stock"
-                            style={{ padding: '0.25rem 0.5rem' }}
+                            title="Laras Stok"
                           >
                             <ArrowUp size={14} />
-                            <ArrowDown size={14} />
                           </button>
+
                           <button
-                            className="btn btn-sm btn-outline"
+                            className="btn-icon btn-ghost"
                             onClick={() => openHistoryModal(item)}
-                            title="View History"
-                            style={{ padding: '0.25rem 0.5rem' }}
+                            title="Lihat Sejarah"
                           >
                             <History size={14} />
                           </button>
-                          <button
-                            className="btn btn-sm btn-outline"
-                            onClick={() => openEditModal(item)}
-                            title="Edit"
-                            style={{ padding: '0.25rem 0.5rem' }}
-                          >
-                            <Edit2 size={14} />
-                          </button>
-                          <button
-                            className="btn btn-sm btn-outline"
-                            onClick={() => openDeleteModal(item)}
-                            title="Delete"
-                            style={{ padding: '0.25rem 0.5rem', color: 'var(--danger)' }}
-                          >
-                            <Trash2 size={14} />
-                          </button>
+
+                          {canDeleteItems && (
+                            <>
+                              <button
+                                className="btn-icon btn-ghost"
+                                onClick={() => openEditModal(item)}
+                                title="Edit Item"
+                              >
+                                <Edit2 size={14} />
+                              </button>
+                              <button
+                                className="btn-icon btn-ghost-danger"
+                                onClick={() => deleteStockItem(item.id)}
+                                title="Padam Item"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -739,6 +748,6 @@ export default function InventoryPage() {
           )}
         </Modal>
       </div>
-    </MainLayout>
+    </MainLayout >
   );
 }

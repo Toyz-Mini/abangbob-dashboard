@@ -32,8 +32,13 @@ const WASTE_REASONS = [
   'Lain-lain'
 ];
 
+import { useAuth } from '@/lib/contexts/AuthContext';
+
 export default function ProductionPage() {
   const { productionLogs, addProductionLog, refreshProductionLogs, isInitialized } = useStore();
+  const { user, isStaffLoggedIn, currentStaff } = useAuth();
+  const role = user ? 'Admin' : (isStaffLoggedIn && currentStaff ? currentStaff.role : null);
+  const canDeleteLogs = role === 'Admin' || role === 'Manager';
 
   const handleProductionLogsChange = useCallback(() => {
     refreshProductionLogs();

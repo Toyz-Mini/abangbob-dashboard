@@ -75,6 +75,7 @@ export default function LoginPage() {
     if (result.success) {
       // Check if staff role should go to staff portal
       const staffMember = staff.find(s => s.id === selectedStaffId);
+      // Explicitly check role or default to checking permissions
       if (staffMember?.role === 'Staff') {
         router.push('/staff-portal');
       } else {

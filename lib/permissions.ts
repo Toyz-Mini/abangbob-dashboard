@@ -116,14 +116,22 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
 
   Staff: [
     // Limited access - primarily operational
-    { category: 'dashboard', actions: ['view'] },
+    // REMOVED: { category: 'dashboard', actions: ['view'] },
     { category: 'pos', actions: ['view', 'create'] },
     { category: 'kds', actions: ['view', 'edit'] },
     { category: 'delivery', actions: ['view'] },
-    { category: 'inventory', actions: ['view'] },
-    { category: 'production', actions: ['view', 'create'] },
+    { category: 'inventory', actions: ['view'] }, // Removed 'create', 'edit', 'delete' if previously present, but strictly only 'view' or 'edit' allowed? User said "add and deduct" which implies 'edit' or 'create' stock transactions. 'inventory' actions usually mean managing items. Adding stock is usually 'edit'.
+    // User said: "dia hanya boleh tambah dan tolak." (Add and subtract stock). This is typically done via 'adjustStock' which might be 'edit'.
+    // Let's check what 'actions' are used for.
+    // In ROLE_PERMISSIONS for Admin: inventory actions: ['view', 'create', 'edit', 'delete', 'export']
+    // Staff should have: ['view', 'edit']? Or 'create' if they can add new items? Usually staff don't add new SKUs.
+    // User said "access staff tak sepatutnya dia boleh delete stock". Implies they CAN do other things.
+    // So let's give 'view', 'edit' (for stock adjustment).
+    { category: 'inventory', actions: ['view', 'edit'] },
+
+    { category: 'production', actions: ['view', 'create', 'edit'] }, // Can add (create), but not delete.
     { category: 'equipment', actions: ['view', 'create'] },
-    { category: 'recipes', actions: ['view'] },
+    // REMOVED: { category: 'recipes', actions: ['view'] }, 
     { category: 'timeclock', actions: ['view', 'create'] },
     { category: 'schedule', actions: ['view'] },
     { category: 'leave', actions: ['view', 'create'] },
@@ -139,7 +147,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
 // Navigation items that should be visible to each role
 export const NAV_VISIBILITY: Record<string, UserRole[]> = {
   // Main
-  '/': ['Admin', 'Manager', 'Staff'],
+  '/': ['Admin', 'Manager'], // REMOVED Staff
 
   // Staff Portal - All
   '/staff-portal': ['Admin', 'Manager', 'Staff'],

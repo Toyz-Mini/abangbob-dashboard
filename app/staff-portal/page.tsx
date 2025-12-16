@@ -201,9 +201,9 @@ export default function StaffPortalPage() {
   const claimRequests = getStaffClaimRequests(staffId);
   const staffRequests = getStaffRequestsByStaff(staffId);
 
-  const pendingLeaveCount = leaveRequests.filter(r => r.status === 'pending').length;
-  const pendingClaimCount = claimRequests.filter(r => r.status === 'pending').length;
-  const pendingRequestCount = staffRequests.filter(r => r.status === 'pending').length;
+  const pendingLeaveCount = leaveRequests?.filter(r => r.status === 'pending').length || 0;
+  const pendingClaimCount = claimRequests?.filter(r => r.status === 'pending').length || 0;
+  const pendingRequestCount = staffRequests?.filter(r => r.status === 'pending').length || 0;
   const totalPending = pendingLeaveCount + pendingClaimCount + pendingRequestCount;
 
   // Get announcements - handle 'Admin' role by treating as 'Manager'
@@ -559,7 +559,7 @@ export default function StaffPortalPage() {
         {/* Leave Balance & Pending Requests */}
         <div className="grid grid-cols-1 md:grid-cols-2" style={{ gap: '1.5rem' }}>
           {/* Leave Balance */}
-          {leaveBalance && (
+          {leaveBalance && leaveBalance.annual && (
             <div className="card">
               <div className="card-header">
                 <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -576,19 +576,19 @@ export default function StaffPortalPage() {
                   label="Tahunan"
                 />
                 <LeaveBalanceRing
-                  balance={leaveBalance.medical.balance}
-                  total={leaveBalance.medical.entitled}
+                  balance={leaveBalance.medical?.balance || 0}
+                  total={leaveBalance.medical?.entitled || 0}
                   type="medical"
                   label="Sakit"
                 />
                 <LeaveBalanceRing
-                  balance={leaveBalance.emergency.balance}
-                  total={leaveBalance.emergency.entitled}
+                  balance={leaveBalance.emergency?.balance || 0}
+                  total={leaveBalance.emergency?.entitled || 0}
                   type="emergency"
                   label="Kecemasan"
                 />
                 <LeaveBalanceRing
-                  balance={leaveBalance.unpaid.taken}
+                  balance={leaveBalance.unpaid?.taken || 0}
                   total={5}
                   type="unpaid"
                   label="Tanpa Gaji"

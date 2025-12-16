@@ -53,8 +53,11 @@ export default function RouteGuard({ children }: { children: React.ReactNode }) 
         } else {
             setAuthorized(false);
             // Determine invalid access
-            // If staff tries to access /finance -> redirect to /
-            router.push('/');
+            if (role === 'Staff') {
+                router.push('/staff-portal');
+            } else {
+                router.push('/');
+            }
         }
 
     }, [pathname, user, isStaffLoggedIn, currentStaff, loading, router]);
