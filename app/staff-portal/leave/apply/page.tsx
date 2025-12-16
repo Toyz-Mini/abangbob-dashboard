@@ -13,7 +13,7 @@ import {
   Calendar,
   Send
 } from 'lucide-react';
-import PremiumBackButton from '@/components/PremiumBackButton';
+
 import { DocumentUpload } from '@/components/staff-portal';
 
 // Demo: Using staff ID 2 as the logged-in user
@@ -117,7 +117,7 @@ export default function ApplyLeavePage() {
       <div className="animate-fade-in">
         {/* Header */}
         <div className="page-header">
-          <PremiumBackButton href="/staff-portal/leave" label="Kembali ke Cuti" />
+
           <h1 className="page-title" style={{ marginTop: '0.5rem' }}>
             Mohon Cuti
           </h1>

@@ -13,7 +13,7 @@ import {
   Send,
   DollarSign
 } from 'lucide-react';
-import PremiumBackButton from '@/components/PremiumBackButton';
+
 import { DocumentUpload } from '@/components/staff-portal';
 
 // Demo: Using staff ID 2 as the logged-in user
@@ -92,7 +92,7 @@ export default function NewClaimPage() {
       <div className="animate-fade-in">
         {/* Header */}
         <div className="page-header">
-          <PremiumBackButton href="/staff-portal/claims" label="Kembali ke Tuntutan" />
+
           <h1 className="page-title" style={{ marginTop: '0.5rem' }}>
             Tuntutan Baru
           </h1>

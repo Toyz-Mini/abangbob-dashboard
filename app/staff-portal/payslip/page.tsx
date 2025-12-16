@@ -17,7 +17,7 @@ import {
   ChevronDown,
   Printer
 } from 'lucide-react';
-import PremiumBackButton from '@/components/PremiumBackButton';
+
 
 const CURRENT_STAFF_ID = '2';
 
@@ -113,7 +113,7 @@ export default function PayslipPage() {
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
           <div>
-            <PremiumBackButton href="/staff-portal" label="Kembali ke Portal" />
+
             <h1 style={{ fontSize: '1.75rem', fontWeight: 700, marginTop: '0.5rem' }}>
               Slip Gaji
             </h1>

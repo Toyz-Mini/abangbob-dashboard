@@ -14,7 +14,7 @@ import {
   Moon,
   Calendar
 } from 'lucide-react';
-import PremiumBackButton from '@/components/PremiumBackButton';
+
 
 // Demo: Using staff ID 2 (Siti Nurhaliza) as the logged-in user
 const CURRENT_STAFF_ID = '2';
@@ -59,7 +59,7 @@ export default function ChecklistHistoryPage() {
       <div className="animate-fade-in">
         {/* Header */}
         <div style={{ marginBottom: '1.5rem' }}>
-          <PremiumBackButton href="/staff-portal/checklist" label="Kembali ke Checklist" />
+
           <h1 style={{ fontSize: '1.75rem', fontWeight: 700, marginTop: '0.5rem' }}>
             Sejarah Checklist
           </h1>

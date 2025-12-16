@@ -19,7 +19,7 @@ import {
   AlertCircle,
   ChevronRight
 } from 'lucide-react';
-import PremiumBackButton from '@/components/PremiumBackButton';
+
 
 // Demo: Using staff ID 2 as the logged-in user
 const CURRENT_STAFF_ID = '2';
@@ -125,7 +125,7 @@ export default function LeavePage() {
         <div className="page-header">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
             <div>
-              <PremiumBackButton href="/staff-portal" label="Kembali ke Portal" />
+
               <h1 className="page-title" style={{ marginTop: '0.5rem' }}>
                 Pengurusan Cuti
               </h1>

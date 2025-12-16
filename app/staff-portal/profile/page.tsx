@@ -31,7 +31,7 @@ import {
   Camera,
   LogOut
 } from 'lucide-react';
-import PremiumBackButton from '@/components/PremiumBackButton';
+
 
 // Demo: Using staff ID 2 as the logged-in user
 const CURRENT_STAFF_ID = '2';
@@ -91,7 +91,7 @@ export default function ProfilePage() {
       <div className="staff-portal animate-fade-in">
         {/* Header */}
         <div style={{ marginBottom: '1.5rem' }}>
-          <PremiumBackButton href="/staff-portal" label="Kembali ke Portal" />
+
         </div>
 
         {/* Profile Header Card */}
