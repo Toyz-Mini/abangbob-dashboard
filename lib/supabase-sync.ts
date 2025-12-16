@@ -1654,7 +1654,7 @@ export async function loadAllDataFromSupabase() {
 // ============ ATTENDANCE OPERATIONS WRAPPER ============
 
 export async function clockIn(data: any) {
-  if (!isSupabaseSyncEnabled()) return { success: false, error: 'Supabase disabled' };
+  if (!isSupabaseSyncEnabled()) return { success: false, error: 'Supabase disabled', data: null };
   return await attendanceOps.clockIn(data);
 }
 
