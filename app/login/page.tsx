@@ -135,12 +135,15 @@ export default function LoginPage() {
           {/* Logo Glow Effect */}
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-32 bg-primary/20 blur-[60px] rounded-full -z-10" />
 
-          <div className="w-24 h-24 mb-6 relative hover-lift transition-all duration-500">
+          <div className="w-24 h-24 mb-6 relative hover-lift transition-all duration-500 rounded-full overflow-hidden shrink-0">
             <div className="absolute inset-0 bg-white/10 rounded-full blur-xl animate-pulse" />
             <img
               src="/logo.png"
               alt="Abang Bob"
+              width="96"
+              height="96"
               className="w-full h-full object-contain relative z-10 drop-shadow-xl"
+              style={{ maxWidth: '100%', maxHeight: '100%' }}
             />
           </div>
 
