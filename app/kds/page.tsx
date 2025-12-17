@@ -459,7 +459,7 @@ export default function KDSPage() {
           </div>
         </div>
       </div>
-      </div>
+
 
       <style jsx>{`
         .kds-mobile-tabs {
