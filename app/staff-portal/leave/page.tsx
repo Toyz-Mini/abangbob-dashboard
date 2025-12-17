@@ -158,31 +158,31 @@ export default function LeavePage() {
 
             <div className="grid grid-cols-2 md:grid-cols-4 staff-stagger" style={{ gap: '1rem' }}>
               <LeaveBalanceRing
-                balance={leaveBalance.annual.balance}
-                total={leaveBalance.annual.entitled}
+                balance={leaveBalance.annual?.balance || 0}
+                total={leaveBalance.annual?.entitled || 0}
                 type="annual"
                 label="Cuti Tahunan"
-                detail={`Diambil: ${leaveBalance.annual.taken} | Pending: ${leaveBalance.annual.pending}`}
+                detail={`Diambil: ${leaveBalance.annual?.taken || 0} | Pending: ${leaveBalance.annual?.pending || 0}`}
               />
 
               <LeaveBalanceRing
-                balance={leaveBalance.medical.balance}
-                total={leaveBalance.medical.entitled}
+                balance={leaveBalance.medical?.balance || 0}
+                total={leaveBalance.medical?.entitled || 0}
                 type="medical"
                 label="Cuti Sakit"
-                detail={`Diambil: ${leaveBalance.medical.taken}`}
+                detail={`Diambil: ${leaveBalance.medical?.taken || 0}`}
               />
 
               <LeaveBalanceRing
-                balance={leaveBalance.emergency.balance}
-                total={leaveBalance.emergency.entitled}
+                balance={leaveBalance.emergency?.balance || 0}
+                total={leaveBalance.emergency?.entitled || 0}
                 type="emergency"
                 label="Cuti Kecemasan"
-                detail={`Diambil: ${leaveBalance.emergency.taken}`}
+                detail={`Diambil: ${leaveBalance.emergency?.taken || 0}`}
               />
 
               <LeaveBalanceRing
-                balance={leaveBalance.unpaid.taken}
+                balance={leaveBalance.unpaid?.taken || 0}
                 total={5}
                 type="unpaid"
                 label="Tanpa Gaji"

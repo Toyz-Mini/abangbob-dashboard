@@ -23,8 +23,8 @@ import {
 } from 'lucide-react';
 
 
-// Demo: Using staff ID 2 as the logged-in user
-const CURRENT_STAFF_ID = '2';
+import { useAuth } from '@/lib/contexts/AuthContext';
+
 
 export default function ClaimsPage() {
   const { staff, isInitialized } = useStaff();
@@ -38,8 +38,14 @@ export default function ClaimsPage() {
 
   useClaimRequestsRealtime(handleClaimChange);
 
-  const currentStaff = staff.find(s => s.id === CURRENT_STAFF_ID);
-  const claimRequests = getStaffClaimRequests(CURRENT_STAFF_ID);
+  /* 
+   * FIXED: Use real logged in user from AuthContext
+   */
+  const { currentStaff: authStaff, user } = useAuth();
+  const staffId = authStaff?.id || user?.id || '';
+
+  const currentStaff = staff.find(s => s.id === staffId);
+  const claimRequests = getStaffClaimRequests(staffId);
 
   // Sort by date descending
   const sortedRequests = useMemo(() => {
