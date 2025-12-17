@@ -1225,7 +1225,7 @@ export async function fetchChecklistTemplates(type?: 'opening' | 'closing') {
     .from('checklist_templates')
     .select('*')
     .eq('is_active', true)
-    .order('order_num', { ascending: true });
+    .order('created_at', { ascending: true });
 
   if (type) query = query.eq('type', type);
 
