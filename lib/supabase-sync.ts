@@ -1576,7 +1576,10 @@ export async function loadAllDataFromSupabase() {
       attendance: getResult(8, []),
       suppliers: getResult(9, []),
       purchaseOrders: getResult(10, []),
-      recipes: getResult(11, []),
+      recipes: getResult<any[]>(11, []).map(r => ({
+        ...r,
+        menuItemName: getResult<any[]>(2, []).find(m => m.id === r.menuItemId)?.name || 'Unknown'
+      })),
       shifts: getResult(12, []),
       schedules: getResult(13, []),
       promotions: getResult(14, []),

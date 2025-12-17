@@ -1143,7 +1143,9 @@ export async function insertRecipe(recipe: any) {
   const supabase = getSupabaseClient();
   if (!supabase) throw new Error('Supabase not connected');
 
-  const snakeCasedRecipe = toSnakeCase(recipe);
+  // Remove fields that are not in the database table
+  const { menuItemName, isProcessing, isActive, ...dbRecipe } = recipe;
+  const snakeCasedRecipe = toSnakeCase(dbRecipe);
 
   // @ts-ignore
   const { data, error } = await supabase

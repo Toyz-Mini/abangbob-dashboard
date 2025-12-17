@@ -1670,9 +1670,16 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const refreshRecipes = useCallback(async () => {
     try {
       const data = await VoidRefundOps.fetchRecipes();
-      if (data) setRecipes(data);
+      if (data) {
+        // Enrich with menu items names as they are not in the DB table
+        const enriched = data.map((r: any) => ({
+          ...r,
+          menuItemName: menuItems.find(m => m.id === r.menuItemId)?.name || 'Unknown'
+        }));
+        setRecipes(enriched);
+      }
     } catch (error) { console.error('Failed to refresh recipes', error); }
-  }, []);
+  }, [menuItems]);
 
   const refreshNotifications = useCallback(async () => {
     try {
