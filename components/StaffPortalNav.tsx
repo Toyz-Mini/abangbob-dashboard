@@ -9,7 +9,9 @@ import {
   Plane,
   User,
   Monitor,
-  History
+  History,
+  Home,
+  MoreHorizontal
 } from 'lucide-react';
 import { useState } from 'react';
 import Sheet from './Sheet';
