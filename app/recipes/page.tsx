@@ -290,7 +290,7 @@ export default function RecipesPage() {
       <div className="animate-fade-in">
         <LivePageHeader
           title="Recipe Costing"
-          subtitle="Kira kos bahan dan margin keuntungan setiap menu"
+          subtitle={`Kira kos bahan (Total: ${recipes.length} resepi)`}
           rightContent={
             <PremiumButton onClick={openAddModal} icon={Plus}>
               Tambah Resepi

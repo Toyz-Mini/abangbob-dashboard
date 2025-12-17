@@ -1937,10 +1937,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     };
     console.log('[addRecipe] Adding new recipe:', newRecipe.menuItemName, newRecipe.id);
     setRecipes(prev => {
-      console.log('[addRecipe] Previous recipes count:', prev.length);
-      const updated = [newRecipe, ...prev];
-      console.log('[addRecipe] Updated recipes count:', updated.length);
-      return updated;
+      // DEBUG: Remove later
+      console.log('Adding recipe, prev:', prev.length);
+      alert('Debug: Adding recipe. Count before: ' + prev.length);
+      return [newRecipe, ...prev];
     });
     // Sync to Supabase
     SupabaseSync.syncAddRecipe(newRecipe);
