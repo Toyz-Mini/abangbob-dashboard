@@ -205,19 +205,25 @@ export default function RecipesPage() {
       totalCost: i.quantity * i.costPerUnit,
     }));
 
-    await addRecipe({
-      menuItemId: formData.menuItemId,
-      menuItemName: formData.menuItemName,
-      sellingPrice: formData.sellingPrice,
-      ingredients,
-      instructions: formData.instructions.trim() || undefined,
-      prepTime: formData.prepTime,
-      yieldQuantity: formData.yieldQuantity,
-      yieldUnit: formData.yieldUnit,
-    });
+    try {
+      await addRecipe({
+        menuItemId: formData.menuItemId,
+        menuItemName: formData.menuItemName,
+        sellingPrice: formData.sellingPrice,
+        ingredients,
+        instructions: formData.instructions.trim() || undefined,
+        prepTime: formData.prepTime,
+        yieldQuantity: formData.yieldQuantity,
+        yieldUnit: formData.yieldUnit,
+      });
 
-    closeModal();
-    window.location.reload(); // Force reload to show new data immediately
+      closeModal();
+      window.location.reload(); // Force reload to show new data immediately
+    } catch (e: any) {
+      alert(`Gagal menambah resepi: ${e.message || 'Error tidak diketahui'}. Sila semak console.`);
+      console.error(e);
+      setIsProcessing(false);
+    }
   };
 
   const handleEditRecipe = async () => {

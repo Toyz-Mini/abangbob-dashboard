@@ -1944,7 +1944,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       await SupabaseSync.syncAddRecipe(newRecipe);
     } catch (error) {
       console.error('Sync failed', error);
-      // We don't revert optimistic update to keep UI responsive, but in reload strategy it doesn't matter
+      throw error; // Rethrow so UI knows
     }
   }, []);
 
