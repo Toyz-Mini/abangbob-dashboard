@@ -333,7 +333,7 @@ interface StoreState {
   voidRefundRequests: VoidRefundRequest[];
   getOrderHistory: (filters?: Partial<OrderHistoryFilters>) => OrderHistoryItem[];
   getOrderById: (orderId: string) => OrderHistoryItem | undefined;
-  requestVoid: (orderId: string, reason: string, requestedBy: string, requestedByName: string) => { success: boolean; error?: string };
+  requestVoid: (orderId: string, reason: string, requestedBy: string, requestedByName: string) => Promise<{ success: boolean; error?: string }>;
   requestRefund: (orderId: string, amount: number, reason: string, requestedBy: string, requestedByName: string, items?: RefundItem[]) => Promise<{ success: boolean; error?: string }>;
   approveVoidRefund: (requestId: string, approvedBy: string, approvedByName: string) => Promise<{ success: boolean; error?: string }>;
   rejectVoidRefund: (requestId: string, rejectedBy: string, rejectedByName: string, reason: string) => Promise<void>;
@@ -2607,18 +2607,21 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     return orderHistory.find(o => o.id === orderId);
   }, [orderHistory]);
 
-  const requestVoid = useCallback((
+  const requestVoid = useCallback(async (
     orderId: string,
     reason: string,
     requestedBy: string,
     requestedByName: string
-  ): { success: boolean; error?: string } => {
-    const order = orderHistory.find(o => o.id === orderId);
+  ): Promise<{ success: boolean; error?: string }> => {
+    // Check both orderHistory and active orders
+    const order = orderHistory.find(o => o.id === orderId) || orders.find(o => o.id === orderId);
+
     if (!order) {
+      console.error(`requestVoid: Order ${orderId} not found in history (${orderHistory.length}) or active orders (${orders.length})`);
       return { success: false, error: 'Order not found' };
     }
 
-    if (order.voidRefundStatus !== 'none') {
+    if ((order as any).voidRefundStatus && (order as any).voidRefundStatus !== 'none') {
       return { success: false, error: 'Order already has a pending or completed void/refund request' };
     }
 
@@ -2628,7 +2631,6 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       orderNumber: order.orderNumber,
       type: 'void',
       reason,
-      amount: order.total,
       requestedBy,
       requestedByName,
       requestedAt: new Date().toISOString(),
@@ -2636,17 +2638,32 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       salesReversed: false,
       inventoryReversed: false,
       createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
     };
 
-    setVoidRefundRequests(prev => [...prev, newRequest]);
-    setOrderHistory(prev => prev.map(o =>
+    // Sync to Supabase
+    try {
+      const supabaseRequest = await VoidRefundOps.insertVoidRefundRequest(newRequest);
+      if (supabaseRequest && supabaseRequest.id) {
+        newRequest.id = supabaseRequest.id;
+      }
+    } catch (error) {
+      console.error('Failed to sync void request to Supabase:', error);
+    }
+
+    setVoidRefundRequests(prev => [newRequest, ...prev]);
+
+    // Update local state
+    const updateOrder = (o: any) =>
       o.id === orderId
-        ? { ...o, voidRefundStatus: 'pending_void' as const, pendingRequest: newRequest }
-        : o
-    ));
+        ? { ...o, pendingRequest: newRequest, voidRefundStatus: 'pending_void' as any }
+        : o;
+
+    setOrderHistory(prev => prev.map(updateOrder));
+    setOrders(prev => prev.map(updateOrder));
 
     return { success: true };
-  }, [orderHistory]);
+  }, [orderHistory, orders, cashFlows]);
 
   const requestRefund = useCallback(async (
     orderId: string,
@@ -2656,12 +2673,15 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     requestedByName: string,
     items?: RefundItem[]
   ): Promise<{ success: boolean; error?: string }> => {
-    const order = orderHistory.find(o => o.id === orderId);
+    // Check both orderHistory and active orders
+    const order = orderHistory.find(o => o.id === orderId) || orders.find(o => o.id === orderId);
+
     if (!order) {
+      console.error(`requestRefund: Order ${orderId} not found in history (${orderHistory.length}) or active orders (${orders.length})`);
       return { success: false, error: 'Order not found' };
     }
 
-    if (order.voidRefundStatus !== 'none') {
+    if ((order as any).voidRefundStatus && (order as any).voidRefundStatus !== 'none') {
       return { success: false, error: 'Order already has a pending or completed void/refund request' };
     }
 
@@ -2682,6 +2702,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       salesReversed: false,
       inventoryReversed: false,
       createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
     };
 
     // Sync to Supabase
@@ -2695,15 +2716,19 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       // Continue with local storage as fallback
     }
 
-    setVoidRefundRequests(prev => [...prev, newRequest]);
-    setOrderHistory(prev => prev.map(o =>
+    setVoidRefundRequests(prev => [newRequest, ...prev]);
+
+    // Update local state
+    const updateOrder = (o: any) =>
       o.id === orderId
-        ? { ...o, voidRefundStatus: 'pending_refund' as const, pendingRequest: newRequest }
-        : o
-    ));
+        ? { ...o, pendingRequest: newRequest, voidRefundStatus: isPartial ? 'pending_refund' : 'pending_refund' as any }
+        : o;
+
+    setOrderHistory(prev => prev.map(updateOrder));
+    setOrders(prev => prev.map(updateOrder));
 
     return { success: true };
-  }, [orderHistory]);
+  }, [orderHistory, orders, cashFlows]);
 
   const approveVoidRefund = useCallback(async (
     requestId: string,
@@ -2719,7 +2744,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       return { success: false, error: 'Request is not pending' };
     }
 
-    const order = orderHistory.find(o => o.id === request.orderId);
+    // Check both orderHistory and active orders
+    const order = orderHistory.find(o => o.id === request.orderId) || orders.find(o => o.id === request.orderId);
+
     if (!order) {
       return { success: false, error: 'Order not found' };
     }
@@ -2750,11 +2777,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         : r
     ));
 
-    // Update order status
+    // Update order status (in both lists)
     const newStatus = request.type === 'void' ? 'voided' :
       request.type === 'partial_refund' ? 'partial_refund' : 'refunded';
 
-    setOrderHistory(prev => prev.map(o =>
+    const updateOrder = (o: any) =>
       o.id === request.orderId
         ? {
           ...o,
@@ -2767,8 +2794,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           ),
           pendingRequest: undefined
         }
-        : o
-    ));
+        : o;
+
+    setOrderHistory(prev => prev.map(updateOrder));
+    setOrders(prev => prev.map(updateOrder));
 
     // Reverse sales - update cash flow
     const today = new Date().toISOString().split('T')[0];
@@ -2815,7 +2844,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }
 
     return { success: true };
-  }, [voidRefundRequests, orderHistory, cashFlows]);
+  }, [voidRefundRequests, orderHistory, orders, cashFlows]);
 
   const rejectVoidRefund = useCallback(async (
     requestId: string,
@@ -2841,11 +2870,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         : r
     ));
 
-    setOrderHistory(prev => prev.map(o =>
+    const updateOrder = (o: any) =>
       o.id === request.orderId
         ? { ...o, voidRefundStatus: 'none' as const, pendingRequest: undefined }
-        : o
-    ));
+        : o;
+
+    setOrderHistory(prev => prev.map(updateOrder));
+    setOrders(prev => prev.map(updateOrder));
+
 
     // Sync to Supabase
     try {
