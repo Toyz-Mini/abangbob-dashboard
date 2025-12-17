@@ -50,6 +50,7 @@ export default function OrderHistoryPage() {
     rejectVoidRefund,
     refreshVoidRefundRequests,
     isInitialized: historyInitialized,
+    voidRefundRequests,
   } = useOrderHistory();
 
   const { currentStaff } = useAuth();
@@ -101,13 +102,40 @@ export default function OrderHistoryPage() {
   // Convert orders to OrderHistoryItem format and apply filters
   const filteredOrders = useMemo(() => {
     // Transform orders to OrderHistoryItem format
-    let historyItems: OrderHistoryItem[] = orders.map((order: Order) => ({
-      ...order,
-      voidRefundStatus: 'none' as const,
-      refundAmount: 0,
-      cashierId: order.staffId,
-      cashierName: order.staffId || 'Unknown',
-    }));
+    let historyItems: OrderHistoryItem[] = orders.map((order: Order) => {
+      // Find relevant void/refund requests
+      // We prioritize approved requests to show actual status
+      const approvedRequests = voidRefundRequests.filter(r => r.orderId === order.id && r.status === 'approved');
+
+      let voidRefundStatus: 'none' | 'pending_void' | 'pending_refund' | 'voided' | 'refunded' | 'partial_refund' = 'none';
+      let refundAmount = 0;
+
+      if (approvedRequests.length > 0) {
+        // Check for void (highest priority)
+        const hasVoid = approvedRequests.some(r => r.type === 'void');
+        if (hasVoid) {
+          voidRefundStatus = 'voided';
+        } else {
+          // Check for refunds
+          const hasRefund = approvedRequests.some(r => r.type === 'refund');
+          const hasPartial = approvedRequests.some(r => r.type === 'partial_refund');
+
+          if (hasRefund) voidRefundStatus = 'refunded';
+          else if (hasPartial) voidRefundStatus = 'partial_refund';
+
+          // Calculate total refunded amount
+          refundAmount = approvedRequests.reduce((sum, r) => sum + (r.amount || 0), 0);
+        }
+      }
+
+      return {
+        ...order,
+        voidRefundStatus,
+        refundAmount,
+        cashierId: order.staffId,
+        cashierName: order.staffId || 'Unknown',
+      };
+    });
 
     // Apply date filter
     if (filters.dateRange?.start && filters.dateRange?.end) {
@@ -141,7 +169,7 @@ export default function OrderHistoryPage() {
     historyItems.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
     return historyItems;
-  }, [orders, filters, canViewAll, currentStaff]);
+  }, [orders, filters, canViewAll, currentStaff, voidRefundRequests]);
 
   // Get pending requests for Manager/Admin
   const pendingRequests = getPendingVoidRefundRequests();
