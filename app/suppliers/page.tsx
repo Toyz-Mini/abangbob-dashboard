@@ -150,8 +150,9 @@ export default function SuppliersPage() {
   };
 
   const openCreatePOModal = (supplierId?: string) => {
+    const firstSupplierId = (suppliers && suppliers.length > 0) ? suppliers[0]?.id : '';
     setPoForm({
-      supplierId: supplierId || (suppliers[0]?.id || ''),
+      supplierId: supplierId || firstSupplierId || '',
       items: [],
       notes: '',
       expectedDelivery: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
@@ -229,7 +230,7 @@ export default function SuppliersPage() {
   };
 
   const handleWhatsAppPO = (po: PurchaseOrder) => {
-    const supplier = suppliers.find(s => s.id === po.supplierId);
+    const supplier = (suppliers || []).find(s => s.id === po.supplierId);
     if (!supplier) return;
 
     const message = `*PURCHASE ORDER #${po.poNumber}*
@@ -238,19 +239,19 @@ Hi ${supplier.contactPerson},
 
 I would like to place an order:
 
-${po.items.map(i => `- ${i.stockItemName}: ${i.quantity} ${i.unit}`).join('\n')}
+${(po.items || []).map(i => `- ${i.stockItemName}: ${i.quantity} ${i.unit}`).join('\n')}
 
-*Total Amount: BND ${po.total.toFixed(2)}*
+*Total Amount: BND ${(po.total || 0).toFixed(2)}*
 
 Please confirm. Thank you!`;
 
     const encodedMessage = encodeURIComponent(message);
-    const phone = supplier.phone.replace(/\D/g, ''); // Remove non-digits
+    const phone = (supplier.phone || '').replace(/\D/g, ''); // Remove non-digits
     window.open(`https://wa.me/${phone}?text=${encodedMessage}`, '_blank');
   };
 
   const handleEmailPO = (po: PurchaseOrder) => {
-    const supplier = suppliers.find(s => s.id === po.supplierId);
+    const supplier = (suppliers || []).find(s => s.id === po.supplierId);
     if (!supplier?.email) {
       alert('Tiada email untuk supplier ini');
       return;
@@ -392,22 +393,22 @@ Thank you.`;
       return;
     }
 
-    const selectedSupplier = suppliers.find(s => s.id === poForm.supplierId);
+    const selectedSupplier = (suppliers || []).find(s => s.id === poForm.supplierId);
     if (!selectedSupplier) return;
 
-    const supplierItems = inventory.filter(item =>
+    const supplierItems = (inventory || []).filter(item =>
       // Filter by supplier name since StockItem only has 'supplier' string field
       // We match it against the selected supplier's name
-      item.supplier === selectedSupplier.name
+      item?.supplier === selectedSupplier.name
     );
 
-    const itemsToOrder = supplierItems.filter(item => item.currentQuantity <= item.minQuantity)
+    const itemsToOrder = supplierItems.filter(item => item?.currentQuantity <= item?.minQuantity)
       .map(item => ({
         stockItemId: item.id,
         stockItemName: item.name,
-        quantity: Math.max(item.minQuantity * 2 - item.currentQuantity, item.minQuantity), // Order enough to reach 2x min
+        quantity: Math.max((item?.minQuantity || 1) * 2 - (item?.currentQuantity || 0), item?.minQuantity || 1), // Order enough to reach 2x min
         unit: item.unit,
-        unitPrice: item.cost,
+        unitPrice: item?.cost || 0,
       }));
 
     if (itemsToOrder.length === 0) {
@@ -430,7 +431,7 @@ Thank you.`;
     setIsProcessing(true);
     await new Promise(resolve => setTimeout(resolve, 500));
 
-    const supplier = suppliers.find(s => s.id === poForm.supplierId);
+    const supplier = (suppliers || []).find(s => s.id === poForm.supplierId);
     const items: PurchaseOrderItem[] = poForm.items.map(i => ({
       stockItemId: i.stockItemId,
       stockItemName: i.stockItemName,
