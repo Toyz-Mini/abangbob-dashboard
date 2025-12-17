@@ -191,6 +191,7 @@ interface StoreState {
   deleteSupplier: (id: string) => void;
   addPurchaseOrder: (po: Omit<PurchaseOrder, 'id' | 'poNumber' | 'createdAt' | 'updatedAt'>) => Promise<PurchaseOrder>;
   updatePurchaseOrderStatus: (id: string, status: PurchaseOrder['status']) => void;
+  markPurchaseOrderAsPaid: (id: string, amount?: number) => Promise<void>;
   refreshSuppliers: () => Promise<void>;
   refreshPurchaseOrders: () => Promise<void>;
 
@@ -1897,6 +1898,29 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     ));
   }, [purchaseOrders, inventory]);
 
+  const markPurchaseOrderAsPaid = useCallback(async (id: string, amount?: number) => {
+    try {
+      // Sync to Supabase
+      const result = await SupabaseSync.syncMarkPurchaseOrderAsPaid(id, amount);
+
+      // Update local state
+      setPurchaseOrders(prev => prev.map(po =>
+        po.id === id
+          ? {
+            ...po,
+            paymentStatus: 'paid' as const,
+            paidAmount: amount ?? po.total,
+            paidAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          }
+          : po
+      ));
+    } catch (error) {
+      console.error('Failed to mark PO as paid:', error);
+      throw error;
+    }
+  }, []);
+
   // Recipe actions
   const addRecipe = useCallback((recipeData: Omit<Recipe, 'id' | 'createdAt' | 'updatedAt' | 'totalCost' | 'profitMargin'>) => {
     const totalCost = recipeData.ingredients.reduce((sum, ing) => sum + ing.totalCost, 0);
@@ -3532,6 +3556,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     deleteSupplier,
     addPurchaseOrder,
     updatePurchaseOrderStatus,
+    markPurchaseOrderAsPaid,
     refreshSuppliers,
     refreshPurchaseOrders,
 
@@ -3826,6 +3851,7 @@ export function useSuppliers() {
     deleteSupplier: store.deleteSupplier,
     addPurchaseOrder: store.addPurchaseOrder,
     updatePurchaseOrderStatus: store.updatePurchaseOrderStatus,
+    markPurchaseOrderAsPaid: store.markPurchaseOrderAsPaid,
     refreshSuppliers: store.refreshSuppliers,
     refreshPurchaseOrders: store.refreshPurchaseOrders,
     inventory: store.inventory,

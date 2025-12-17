@@ -864,6 +864,31 @@ export async function updatePurchaseOrder(id: string, updates: any) {
   return toCamelCase(data);
 }
 
+export async function markPurchaseOrderAsPaid(id: string, amount?: number) {
+  const supabase = getSupabaseClient();
+  if (!supabase) throw new Error('Supabase not connected');
+
+  const updates: any = {
+    payment_status: 'paid',
+    paid_at: new Date().toISOString(),
+  };
+
+  if (amount !== undefined) {
+    updates.paid_amount = amount;
+  }
+
+  // @ts-ignore - Type conversion handled at runtime
+  const { data, error } = await supabase
+    .from('purchase_orders')
+    .update(updates)
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return toCamelCase(data);
+}
+
 // ============ INVENTORY LOGS OPERATIONS ============
 
 export async function fetchInventoryLogs(stockItemId?: string) {

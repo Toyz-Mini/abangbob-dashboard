@@ -592,6 +592,17 @@ export async function syncUpdatePurchaseOrder(id: string, updates: any) {
   }
 }
 
+export async function syncMarkPurchaseOrderAsPaid(id: string, amount?: number) {
+  if (!isSupabaseSyncEnabled()) return null;
+
+  try {
+    return await ops.markPurchaseOrderAsPaid(id, amount);
+  } catch (error) {
+    console.error('Failed to mark purchase order as paid in Supabase:', error);
+    return null;
+  }
+}
+
 export async function loadPurchaseOrdersFromSupabase() {
   if (!isSupabaseSyncEnabled()) return [];
 

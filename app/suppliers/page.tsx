@@ -488,6 +488,7 @@ Thank you.`;
       tax: 0,
       total: subtotal,
       status: 'draft',
+      paymentStatus: 'pending',
       expectedDelivery: poForm.expectedDelivery || undefined,
       notes: poForm.notes.trim() || undefined,
     });

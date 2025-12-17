@@ -471,6 +471,7 @@ export interface Supplier {
   leadTimeDays: number;
   rating: number; // 1-5
   status: 'active' | 'inactive';
+  category?: string[]; // Tags like "Ayam", "Minyak", "Packaging"
   notes?: string;
   createdAt: string;
 }
@@ -485,6 +486,9 @@ export interface PurchaseOrder {
   tax: number;
   total: number;
   status: 'draft' | 'sent' | 'confirmed' | 'received' | 'cancelled';
+  paymentStatus: 'pending' | 'partial' | 'paid'; // Payment tracking
+  paidAmount?: number; // Amount paid so far
+  paidAt?: string; // When payment was made
   expectedDelivery?: string;
   actualDelivery?: string;
   notes?: string;
