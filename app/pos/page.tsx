@@ -827,14 +827,24 @@ export default function POSPage() {
                 </div>
               </div>
 
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <div style={{
+                display: 'flex',
+                justifyContent: 'flex-end',
+                gap: '0.75rem',
+                marginTop: '1.5rem',
+                paddingTop: '1rem',
+                borderTop: '1px solid var(--gray-200)'
+              }}>
                 <button
                   className="btn btn-outline"
                   onClick={() => {
                     setModalType(null);
                     setSelectedItemForModifiers(null);
                   }}
-                  style={{ flex: 1 }}
+                  style={{
+                    minWidth: '100px',
+                    padding: '0.5rem 1rem'
+                  }}
                 >
                   Batal
                 </button>
@@ -842,7 +852,11 @@ export default function POSPage() {
                   className="btn btn-primary"
                   onClick={handleAddWithModifiers}
                   disabled={!validateModifiers()}
-                  style={{ flex: 1 }}
+                  style={{
+                    minWidth: '160px',
+                    padding: '0.5rem 1.25rem',
+                    fontWeight: 600
+                  }}
                 >
                   Tambah ke Keranjang
                 </button>
@@ -1154,11 +1168,21 @@ export default function POSPage() {
             </div>
           )}
 
-          <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1.5rem' }}>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'flex-end',
+            gap: '0.75rem',
+            marginTop: '1.5rem',
+            paddingTop: '1rem',
+            borderTop: '1px solid var(--gray-200)'
+          }}>
             <button
               onClick={() => setModalType(null)}
               className="btn btn-outline"
-              style={{ flex: 1 }}
+              style={{
+                minWidth: '100px',
+                padding: '0.5rem 1rem'
+              }}
               disabled={isProcessing}
             >
               Batal
@@ -1166,13 +1190,20 @@ export default function POSPage() {
             <button
               onClick={() => proceedToPayment()}
               className={`btn btn-primary ${isProcessing ? 'loading' : ''}`}
-              style={{ flex: 1 }}
+              style={{
+                minWidth: '160px',
+                padding: '0.5rem 1.25rem',
+                fontWeight: 600,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
               disabled={isProcessing}
             >
               {isProcessing ? (
                 <>
                   <LoadingSpinner size="sm" />
-                  Memproses...
+                  <span style={{ marginLeft: '0.5rem' }}>Memproses...</span>
                 </>
               ) : (
                 `Bayar BND ${cartTotal.toFixed(2)}`
