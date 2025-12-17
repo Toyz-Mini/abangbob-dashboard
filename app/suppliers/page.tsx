@@ -748,39 +748,86 @@ Thank you.`;
           <div className="grid grid-cols-1 lg:grid-cols-2" style={{ gap: '1.5rem' }}>
             <div className="card">
               <div className="card-header">
-                <div className="card-title">PO Aktif</div>
-                <div className="card-subtitle">{pendingPOs.length} orders</div>
+                <div>
+                  <div className="card-title">PO Aktif</div>
+                  <div className="card-subtitle">{pendingPOs.filter(po =>
+                    !poSearchTerm.trim() ||
+                    po.poNumber.toLowerCase().includes(poSearchTerm.toLowerCase()) ||
+                    po.supplierName.toLowerCase().includes(poSearchTerm.toLowerCase())
+                  ).length} orders</div>
+                </div>
+                <input
+                  type="text"
+                  className="form-input"
+                  placeholder="Cari PO..."
+                  value={poSearchTerm}
+                  onChange={(e) => setPoSearchTerm(e.target.value)}
+                  style={{ maxWidth: '180px', fontSize: '0.875rem' }}
+                />
               </div>
               {pendingPOs.length > 0 ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                  {pendingPOs.map(po => (
-                    <div
-                      key={po.id}
-                      style={{
-                        padding: '1rem',
-                        border: '1px solid var(--gray-200)',
-                        borderRadius: 'var(--radius-md)',
-                        cursor: 'pointer'
-                      }}
-                      onClick={() => openViewPOModal(po)}
-                    >
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                        <strong>{po.poNumber}</strong>
-                        <span className={`badge ${po.status === 'draft' ? 'badge-warning' :
-                          po.status === 'sent' ? 'badge-info' :
-                            'badge-success'
-                          }`}>
-                          {po.status}
-                        </span>
+                  {pendingPOs
+                    .filter(po =>
+                      !poSearchTerm.trim() ||
+                      po.poNumber.toLowerCase().includes(poSearchTerm.toLowerCase()) ||
+                      po.supplierName.toLowerCase().includes(poSearchTerm.toLowerCase())
+                    )
+                    .map(po => (
+                      <div
+                        key={po.id}
+                        style={{
+                          padding: '1rem',
+                          border: '1px solid var(--gray-200)',
+                          borderRadius: 'var(--radius-md)',
+                          cursor: 'pointer'
+                        }}
+                        onClick={() => openViewPOModal(po)}
+                      >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                          <strong>{po.poNumber}</strong>
+                          <span className={`badge ${po.status === 'draft' ? 'badge-warning' :
+                            po.status === 'sent' ? 'badge-info' :
+                              'badge-success'
+                            }`}>
+                            {po.status}
+                          </span>
+                        </div>
+                        <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+                          {po.supplierName}
+                        </div>
+                        <div style={{ fontSize: '0.875rem', marginTop: '0.5rem' }}>
+                          <strong>BND {po.total.toFixed(2)}</strong> • {po.items.length} item
+                        </div>
+                        {/* Quick Status Buttons */}
+                        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.75rem' }}>
+                          {po.status === 'draft' && (
+                            <button
+                              className="btn btn-sm btn-outline"
+                              onClick={(e) => { e.stopPropagation(); updatePurchaseOrderStatus(po.id, 'sent'); }}
+                            >
+                              <Send size={12} /> Hantar
+                            </button>
+                          )}
+                          {po.status === 'sent' && (
+                            <button
+                              className="btn btn-sm btn-outline"
+                              onClick={(e) => { e.stopPropagation(); updatePurchaseOrderStatus(po.id, 'confirmed'); }}
+                            >
+                              <CheckCircle size={12} /> Confirm
+                            </button>
+                          )}
+                          {po.status === 'confirmed' && (
+                            <button
+                              className="btn btn-sm btn-success"
+                              onClick={(e) => { e.stopPropagation(); updatePurchaseOrderStatus(po.id, 'received'); }}
+                            >
+                              <CheckCircle size={12} /> Terima
+                            </button>
+                          )}
+                        </div>
                       </div>
-                      <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
-                        {po.supplierName}
-                      </div>
-                      <div style={{ fontSize: '0.875rem', marginTop: '0.5rem' }}>
-                        <strong>BND {po.total.toFixed(2)}</strong> • {po.items.length} item
-                      </div>
-                    </div>
-                  ))}
+                    ))}
                 </div>
               ) : (
                 <p style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '2rem' }}>
