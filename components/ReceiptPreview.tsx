@@ -49,11 +49,11 @@ const SAMPLE_ORDER: Order = {
   createdAt: new Date().toISOString(),
 };
 
-export default function ReceiptPreview({ 
-  settings, 
+export default function ReceiptPreview({
+  settings,
   sampleOrder,
   width,
-  scale = 1 
+  scale = 1
 }: ReceiptPreviewProps) {
   const mergedSettings = useMemo(() => ({
     ...DEFAULT_RECEIPT_SETTINGS,
@@ -78,14 +78,14 @@ export default function ReceiptPreview({
   const subtotal = order.items?.reduce((sum, item) => sum + (item.itemTotal * item.quantity), 0) || 0;
 
   return (
-    <div 
+    <div
       className="receipt-preview-container"
       style={{
         transform: `scale(${scale})`,
         transformOrigin: 'top center',
       }}
     >
-      <div 
+      <div
         className="receipt-preview"
         style={{
           width: `${pixelWidth}px`,
@@ -102,11 +102,11 @@ export default function ReceiptPreview({
         {/* Logo Top */}
         {mergedSettings.showLogoTop && mergedSettings.logoTopUrl && (
           <div style={{ textAlign: 'center', marginBottom: '8px' }}>
-            <img 
-              src={mergedSettings.logoTopUrl} 
+            <img
+              src={mergedSettings.logoTopUrl}
               alt="Logo"
-              style={{ 
-                maxWidth: '80%', 
+              style={{
+                maxWidth: '80%',
                 maxHeight: '60px',
                 objectFit: 'contain',
               }}
@@ -116,8 +116,8 @@ export default function ReceiptPreview({
 
         {/* Business Name & Tagline */}
         <div style={{ textAlign: 'center', marginBottom: '8px' }}>
-          <div style={{ 
-            fontSize: receiptWidth === '58mm' ? '14px' : '16px', 
+          <div style={{
+            fontSize: receiptWidth === '58mm' ? '14px' : '16px',
             fontWeight: 'bold',
             letterSpacing: '1px',
           }}>
@@ -129,7 +129,7 @@ export default function ReceiptPreview({
             </div>
           )}
           {mergedSettings.businessAddress && (
-            <div style={{ 
+            <div style={{
               fontSize: receiptWidth === '58mm' ? '8px' : '9px',
               marginTop: '2px',
               color: '#666',
@@ -146,8 +146,8 @@ export default function ReceiptPreview({
 
         {/* Header Text */}
         {mergedSettings.headerText && (
-          <div style={{ 
-            textAlign: 'center', 
+          <div style={{
+            textAlign: 'center',
             marginBottom: '8px',
             fontSize: receiptWidth === '58mm' ? '9px' : '10px',
             whiteSpace: 'pre-line',
@@ -157,23 +157,23 @@ export default function ReceiptPreview({
         )}
 
         {/* Divider */}
-        <div style={{ 
-          borderTop: '1px dashed #000', 
-          margin: '8px 0' 
+        <div style={{
+          borderTop: '1px dashed #000',
+          margin: '8px 0'
         }} />
 
         {/* Order Info */}
         <div style={{ marginBottom: '4px' }}>
           <strong>No: {order.orderNumber}</strong>
         </div>
-        <div style={{ 
-          fontSize: receiptWidth === '58mm' ? '8px' : '9px', 
+        <div style={{
+          fontSize: receiptWidth === '58mm' ? '8px' : '9px',
           color: '#666',
           marginBottom: '4px',
         }}>
           {formatDate(order.createdAt || new Date().toISOString())}
         </div>
-        
+
         {/* Customer Info */}
         {mergedSettings.showCustomerName && order.customerName && (
           <div style={{ marginBottom: '2px' }}>
@@ -185,23 +185,23 @@ export default function ReceiptPreview({
             Tel: {order.customerPhone}
           </div>
         )}
-        
+
         <div style={{ marginBottom: '4px' }}>
           {order.orderType === 'takeaway' ? 'Bungkus (Takeaway)' : 'GoMamam'}
         </div>
 
         {/* Divider */}
-        <div style={{ 
-          borderTop: '1px dashed #000', 
-          margin: '8px 0' 
+        <div style={{
+          borderTop: '1px dashed #000',
+          margin: '8px 0'
         }} />
 
         {/* Items */}
         <div style={{ marginBottom: '8px' }}>
           {order.items?.map((item, idx) => (
             <div key={idx} style={{ marginBottom: '6px' }}>
-              <div style={{ 
-                display: 'flex', 
+              <div style={{
+                display: 'flex',
                 justifyContent: 'space-between',
                 fontWeight: 500,
               }}>
@@ -209,8 +209,8 @@ export default function ReceiptPreview({
                 <span>BND {(item.itemTotal * item.quantity).toFixed(2)}</span>
               </div>
               {item.selectedModifiers?.length > 0 && (
-                <div style={{ 
-                  paddingLeft: '12px', 
+                <div style={{
+                  paddingLeft: '12px',
                   fontSize: receiptWidth === '58mm' ? '8px' : '9px',
                   color: '#666',
                 }}>
@@ -224,15 +224,15 @@ export default function ReceiptPreview({
         </div>
 
         {/* Divider */}
-        <div style={{ 
-          borderTop: '1px dashed #000', 
-          margin: '8px 0' 
+        <div style={{
+          borderTop: '1px dashed #000',
+          margin: '8px 0'
         }} />
 
         {/* Totals */}
         <div style={{ marginBottom: '4px' }}>
-          <div style={{ 
-            display: 'flex', 
+          <div style={{
+            display: 'flex',
             justifyContent: 'space-between',
             fontSize: receiptWidth === '58mm' ? '9px' : '10px',
           }}>
@@ -240,8 +240,8 @@ export default function ReceiptPreview({
             <span>BND {subtotal.toFixed(2)}</span>
           </div>
         </div>
-        <div style={{ 
-          display: 'flex', 
+        <div style={{
+          display: 'flex',
           justifyContent: 'space-between',
           fontWeight: 'bold',
           fontSize: receiptWidth === '58mm' ? '12px' : '14px',
@@ -253,29 +253,29 @@ export default function ReceiptPreview({
 
         {/* Payment Method */}
         {order.paymentMethod && (
-          <div style={{ 
-            textAlign: 'center', 
+          <div style={{
+            textAlign: 'center',
             marginTop: '8px',
             fontSize: receiptWidth === '58mm' ? '9px' : '10px',
             padding: '4px',
             background: '#f0f0f0',
             borderRadius: '2px',
           }}>
-            Bayar: {order.paymentMethod === 'cash' ? 'TUNAI' : 
-                    order.paymentMethod === 'card' ? 'KAD' :
-                    order.paymentMethod === 'qr' ? 'QR CODE' : 'E-WALLET'}
+            Bayar: {order.paymentMethod === 'cash' ? 'TUNAI' :
+              order.paymentMethod === 'card' ? 'KAD' :
+                order.paymentMethod === 'qr' ? 'QR CODE' : 'E-WALLET'}
           </div>
         )}
 
         {/* Divider */}
-        <div style={{ 
-          borderTop: '1px dashed #000', 
-          margin: '8px 0' 
+        <div style={{
+          borderTop: '1px dashed #000',
+          margin: '8px 0'
         }} />
 
         {/* Custom Message */}
         {mergedSettings.customMessage && (
-          <div style={{ 
+          <div style={{
             textAlign: 'center',
             fontSize: receiptWidth === '58mm' ? '9px' : '10px',
             fontStyle: 'italic',
@@ -291,7 +291,7 @@ export default function ReceiptPreview({
 
         {/* Footer Text */}
         {mergedSettings.footerText && (
-          <div style={{ 
+          <div style={{
             textAlign: 'center',
             marginBottom: '8px',
             whiteSpace: 'pre-line',
@@ -303,7 +303,7 @@ export default function ReceiptPreview({
 
         {/* Social Media */}
         {mergedSettings.showSocialMedia && (
-          <div style={{ 
+          <div style={{
             textAlign: 'center',
             fontSize: receiptWidth === '58mm' ? '8px' : '9px',
             color: '#666',
@@ -318,7 +318,7 @@ export default function ReceiptPreview({
 
         {/* QR Code Placeholder */}
         {mergedSettings.showQrCode && mergedSettings.qrCodeUrl && (
-          <div style={{ 
+          <div style={{
             textAlign: 'center',
             marginBottom: '8px',
           }}>
@@ -337,7 +337,7 @@ export default function ReceiptPreview({
               [QR CODE]
             </div>
             {mergedSettings.qrCodeLabel && (
-              <div style={{ 
+              <div style={{
                 fontSize: receiptWidth === '58mm' ? '7px' : '8px',
                 color: '#666',
                 marginTop: '2px',
@@ -351,11 +351,11 @@ export default function ReceiptPreview({
         {/* Logo Bottom */}
         {mergedSettings.showLogoBottom && mergedSettings.logoBottomUrl && (
           <div style={{ textAlign: 'center', marginTop: '8px' }}>
-            <img 
-              src={mergedSettings.logoBottomUrl} 
+            <img
+              src={mergedSettings.logoBottomUrl}
               alt="Logo"
-              style={{ 
-                maxWidth: '60%', 
+              style={{
+                maxWidth: '60%',
                 maxHeight: '40px',
                 objectFit: 'contain',
               }}
@@ -364,7 +364,7 @@ export default function ReceiptPreview({
         )}
 
         {/* Receipt End */}
-        <div style={{ 
+        <div style={{
           textAlign: 'center',
           marginTop: '12px',
           fontSize: receiptWidth === '58mm' ? '7px' : '8px',
@@ -388,21 +388,21 @@ export default function ReceiptPreview({
           position: absolute;
           left: 0;
           right: 0;
-          height: 10px;
-          background: linear-gradient(
-            135deg,
-            transparent 33.33%,
-            #fff 33.33%,
-            #fff 66.66%,
-            transparent 66.66%
-          );
-          background-size: 10px 100%;
+          height: 12px;
         }
         .receipt-preview::before {
-          top: -10px;
+          top: -12px;
+          background-image: linear-gradient(45deg, transparent 50%, #fff 50%), linear-gradient(-45deg, transparent 50%, #fff 50%);
+          background-size: 12px 12px;
+          background-position: bottom left;
+          background-repeat: repeat-x;
         }
         .receipt-preview::after {
-          bottom: -10px;
+          bottom: -12px;
+          background-image: linear-gradient(45deg, transparent 50%, #fff 50%), linear-gradient(-45deg, transparent 50%, #fff 50%);
+          background-size: 12px 12px;
+          background-position: top left;
+          background-repeat: repeat-x;
           transform: rotate(180deg);
         }
       `}</style>

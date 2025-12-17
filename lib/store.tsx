@@ -12,7 +12,8 @@ import { MOCK_MENU, MOCK_MODIFIER_GROUPS, MOCK_MODIFIER_OPTIONS } from './menu-d
 import { MOCK_STAFF_KPI, MOCK_LEAVE_RECORDS, MOCK_TRAINING_RECORDS, MOCK_OT_RECORDS, MOCK_CUSTOMER_REVIEWS, calculateOverallScore, calculateBonus, DEFAULT_KPI_CONFIG } from './kpi-data';
 import { MOCK_CHECKLIST_TEMPLATES, MOCK_CHECKLIST_COMPLETIONS, MOCK_LEAVE_BALANCES, MOCK_LEAVE_REQUESTS, MOCK_CLAIM_REQUESTS, MOCK_STAFF_REQUESTS, MOCK_ANNOUNCEMENTS, MOCK_SHIFTS, MOCK_SCHEDULES, generateMockSchedules } from './staff-portal-data';
 import * as SupabaseSync from './supabase-sync';
-import { isSupabaseConfigured, getConnectionState, checkSupabaseConnection } from './supabase/client';
+import { isSupabaseConfigured, getConnectionState, checkSupabaseConnection, getSupabaseClient } from './supabase/client';
+import { RealtimeChannel } from '@supabase/supabase-js';
 import { logSyncError, logSyncSuccess } from './utils/sync-logger';
 import * as PaymentTaxSync from './supabase/payment-tax-sync';
 import * as VoidRefundOps from './supabase/operations';
@@ -715,6 +716,59 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     };
 
     initializeData();
+  }, []);
+
+  // Realtime Subscriptions
+  useEffect(() => {
+    // Only subscribe if Supabase is configured
+    if (!isSupabaseConfigured()) return;
+
+    const supabase = getSupabaseClient();
+    if (!supabase) return;
+
+    console.log('[Realtime] Setting up subscriptions...');
+
+    const channels: RealtimeChannel[] = [];
+
+    // Generic subscription helper
+    const subscribeToTable = <T extends { id: string }>(
+      tableName: string,
+      setter: React.Dispatch<React.SetStateAction<T[]>>
+    ) => {
+      const channel = supabase.channel(`${tableName}_global_sync`)
+        .on('postgres_changes', { event: '*', schema: 'public', table: tableName }, (payload) => {
+          // console.log(`[Realtime] ${tableName} event:`, payload.eventType);
+
+          if (payload.eventType === 'INSERT') {
+            const newItem = VoidRefundOps.toCamelCase(payload.new) as T;
+            setter(prev => [...prev, newItem]);
+          } else if (payload.eventType === 'UPDATE') {
+            const updatedItem = VoidRefundOps.toCamelCase(payload.new) as T;
+            setter(prev => prev.map(item => item.id === updatedItem.id ? updatedItem : item));
+          } else if (payload.eventType === 'DELETE') {
+            const deletedId = (payload.old as any).id;
+            setter(prev => prev.filter(item => item.id !== deletedId));
+          }
+        })
+        .subscribe();
+      channels.push(channel);
+    };
+
+    // Subscriptions
+    subscribeToTable('orders', setOrders);
+    subscribeToTable('inventory', setInventory);
+    subscribeToTable('staff', setStaff);
+    subscribeToTable('attendance', setAttendance);
+    subscribeToTable('menu_items', setMenuItems);
+    subscribeToTable('shifts', setShifts);
+    subscribeToTable('schedules', setSchedules);
+    subscribeToTable('customers', setCustomers);
+
+    // Cleanup
+    return () => {
+      console.log('[Realtime] Cleaning up subscriptions...');
+      channels.forEach(channel => supabase.removeChannel(channel));
+    };
   }, []);
 
   // Persist to localStorage when state changes

@@ -8,8 +8,8 @@ import {
   CheckSquare,
   Plane,
   User,
-  Home,
-  MoreHorizontal
+  Monitor,
+  History
 } from 'lucide-react';
 import { useState } from 'react';
 import Sheet from './Sheet';
@@ -30,10 +30,16 @@ export default function StaffPortalNav({ currentPage, pendingCount = 0 }: StaffP
       id: 'home'
     },
     {
-      href: '/staff-portal/schedule',
-      icon: Calendar,
-      label: 'Jadual',
-      id: 'schedule'
+      href: '/pos',
+      icon: Monitor,
+      label: 'POS',
+      id: 'pos'
+    },
+    {
+      href: '/order-history',
+      icon: History,
+      label: 'History',
+      id: 'orders'
     },
     {
       href: '/staff-portal/checklist',
@@ -41,19 +47,12 @@ export default function StaffPortalNav({ currentPage, pendingCount = 0 }: StaffP
       label: 'Checklist',
       id: 'checklist'
     },
-    {
-      href: '/staff-portal/leave',
-      icon: Plane,
-      label: 'Cuti',
-      id: 'leave',
-      badge: pendingCount > 0 ? pendingCount : undefined
-    },
-    {
-      href: '/staff-portal/profile',
-      icon: User,
-      label: 'Profil',
-      id: 'profile'
-    },
+    // {
+    //   href: '/staff-portal/profile',
+    //   icon: User,
+    //   label: 'Profil',
+    //   id: 'profile'
+    // },
   ];
 
   const isActive = (href: string, id: string) => {
@@ -71,9 +70,31 @@ export default function StaffPortalNav({ currentPage, pendingCount = 0 }: StaffP
 
   // Additional menu items for the sheet
   const moreMenuItems = [
-    // { href: '/staff-portal/history', label: 'History', icon: Clock, color: 'var(--text-secondary)' },
-    { href: '/settings', label: 'Tetapan', icon: User, color: 'var(--text-secondary)' },
-    // Add other relevant links here
+    {
+      href: '/staff-portal/schedule',
+      label: 'Jadual',
+      icon: Calendar,
+      color: 'var(--primary)'
+    },
+    {
+      href: '/staff-portal/leave',
+      label: 'Cuti',
+      icon: Plane,
+      color: 'var(--success)',
+      badge: pendingCount
+    },
+    {
+      href: '/staff-portal/profile',
+      label: 'Profil',
+      icon: User,
+      color: 'var(--info)'
+    },
+    {
+      href: '/settings',
+      label: 'Tetapan',
+      icon: MoreHorizontal,
+      color: 'var(--text-secondary)'
+    },
   ];
 
   return (
@@ -91,8 +112,8 @@ export default function StaffPortalNav({ currentPage, pendingCount = 0 }: StaffP
             >
               <Icon size={22} />
               <span>{item.label}</span>
-              {item.badge && (
-                <span className="nav-badge">{item.badge}</span>
+              {item.id === 'leave' && pendingCount > 0 && (
+                <span className="nav-badge">{pendingCount}</span>
               )}
             </Link>
           );
@@ -121,35 +142,58 @@ export default function StaffPortalNav({ currentPage, pendingCount = 0 }: StaffP
           gap: '1rem',
           padding: '0.5rem 0'
         }}>
-          <Link
-            href="/settings"
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '0.5rem',
-              textDecoration: 'none',
-              color: 'var(--text-primary)',
-            }}
-            onClick={() => setIsMenuOpen(false)}
-          >
-            <div style={{
-              width: '50px',
-              height: '50px',
-              borderRadius: '16px',
-              background: 'var(--bg-secondary)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'var(--text-primary)',
-            }}>
-              <User size={24} />
-            </div>
-            <span style={{ fontSize: '0.7rem', fontWeight: 600, textAlign: 'center' }}>
-              Tetapan
-            </span>
-          </Link>
+          {moreMenuItems.map((item, idx) => {
+            const Icon = item.icon;
+            return (
+              <Link
+                key={idx}
+                href={item.href}
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.5rem',
+                  textDecoration: 'none',
+                  color: 'var(--text-primary)',
+                  position: 'relative'
+                }}
+                onClick={() => setIsMenuOpen(false)}
+              >
+                <div style={{
+                  width: '50px',
+                  height: '50px',
+                  borderRadius: '16px',
+                  background: 'var(--bg-secondary)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: item.color || 'var(--text-primary)',
+                }}>
+                  <Icon size={24} />
+                </div>
+                <span style={{ fontSize: '0.7rem', fontWeight: 600, textAlign: 'center' }}>
+                  {item.label}
+                </span>
+                {item.badge && item.badge > 0 && (
+                  <span style={{
+                    position: 'absolute',
+                    top: '-5px',
+                    right: '10px',
+                    background: 'var(--error)',
+                    color: 'white',
+                    fontSize: '0.6rem',
+                    padding: '2px 6px',
+                    borderRadius: '10px',
+                    fontWeight: 'bold',
+                    boxShadow: '0 2px 5px rgba(0,0,0,0.2)'
+                  }}>
+                    {item.badge}
+                  </span>
+                )}
+              </Link>
+            );
+          })}
         </div>
       </Sheet>
     </>
