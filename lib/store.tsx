@@ -1336,7 +1336,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
               console.log(`[Inventory] Updating ${stockItem.name}: ${stockItem.currentQuantity} -> ${newQuantity}`);
 
               // Sync to Supabase
-              SupabaseSync.syncUpdateInventoryItem(stockItem.id, {
+              SupabaseSync.syncUpdateStockItem(stockItem.id, {
                 currentQuantity: newQuantity
               }).catch(err => console.error('Failed to sync inventory deduction:', err));
 
