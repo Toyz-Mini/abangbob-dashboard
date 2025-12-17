@@ -40,7 +40,9 @@ export default function RecipesPage() {
   const [modalType, setModalType] = useState<ModalType>(null);
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+
   const [searchTerm, setSearchTerm] = useState('');
+  const [ingredientSearchTerm, setIngredientSearchTerm] = useState('');
 
   // Form state
   const [formData, setFormData] = useState({
@@ -591,20 +593,63 @@ export default function RecipesPage() {
 
           <div className="form-group">
             <label className="form-label">Tambah Bahan dari Inventori</label>
-            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', maxHeight: '120px', overflowY: 'auto' }}>
-              {inventory.map(item => (
-                <button
-                  key={item.id}
-                  className="btn btn-sm btn-outline"
-                  onClick={() => addIngredient({ id: item.id, name: item.name, unit: item.unit, cost: item.cost })}
-                  disabled={formData.ingredients.some(i => i.stockItemId === item.id)}
-                  style={{
-                    opacity: formData.ingredients.some(i => i.stockItemId === item.id) ? 0.5 : 1
-                  }}
-                >
-                  + {item.name}
-                </button>
-              ))}
+
+            {/* Search Ingredient */}
+            <div style={{ position: 'relative', marginBottom: '0.75rem' }}>
+              <Search size={16} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
+              <input
+                type="text"
+                className="form-input"
+                placeholder="Cari bahan (cth: Ayam, Garam)..."
+                value={ingredientSearchTerm}
+                onChange={(e) => setIngredientSearchTerm(e.target.value)}
+                style={{ paddingLeft: '2.25rem' }}
+              />
+            </div>
+
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))',
+              gap: '0.5rem',
+              maxHeight: '200px',
+              overflowY: 'auto',
+              padding: '0.25rem',
+              border: '1px solid var(--border-light)',
+              borderRadius: 'var(--radius-md)',
+              background: 'var(--bg-secondary)'
+            }}>
+              {inventory
+                .filter(item => item.name.toLowerCase().includes(ingredientSearchTerm.toLowerCase()))
+                .map(item => {
+                  const isSelected = formData.ingredients.some(i => i.stockItemId === item.id);
+                  return (
+                    <button
+                      key={item.id}
+                      className={`btn btn-sm ${isSelected ? 'btn-ghost-secondary' : 'btn-outline'}`}
+                      onClick={() => addIngredient({ id: item.id, name: item.name, unit: item.unit, cost: item.cost })}
+                      disabled={isSelected}
+                      style={{
+                        justifyContent: 'flex-start',
+                        textAlign: 'left',
+                        height: 'auto',
+                        padding: '0.5rem',
+                        opacity: isSelected ? 0.6 : 1,
+                        background: isSelected ? 'var(--gray-200)' : 'var(--bg-card)'
+                      }}
+                    >
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', width: '100%' }}>
+                        <span style={{ fontWeight: 500, fontSize: '0.85rem' }}>{item.name}</span>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{item.unit}</span>
+                      </div>
+                      {!isSelected && <Plus size={14} style={{ marginLeft: 'auto', flexShrink: 0 }} />}
+                    </button>
+                  );
+                })}
+              {inventory.filter(item => item.name.toLowerCase().includes(ingredientSearchTerm.toLowerCase())).length === 0 && (
+                <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '1rem', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+                  Tiada bahan dijumpai.
+                </div>
+              )}
             </div>
           </div>
 
