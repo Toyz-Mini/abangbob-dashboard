@@ -1945,10 +1945,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     // Sync to Supabase
     SupabaseSync.syncAddRecipe(newRecipe).then(result => {
       console.log('[addRecipe] Supabase sync result:', result);
+      if (result) {
+        refreshRecipes(); // Refresh to get the real ID and data from server
+      }
     }).catch(err => {
       console.error('[addRecipe] Supabase sync error:', err);
     });
-  }, []);
+  }, [refreshRecipes]);
 
   const updateRecipe = useCallback((id: string, updates: Partial<Recipe>) => {
     setRecipes(prev => prev.map(r => r.id === id ? { ...r, ...updates, updatedAt: new Date().toISOString() } : r));
