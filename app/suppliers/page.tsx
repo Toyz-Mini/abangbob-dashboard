@@ -58,10 +58,7 @@ export default function SuppliersPage() {
     setIsMounted(true);
   }, []);
 
-  // Hydration safety check
-  if (!isMounted) {
-    return null; // Or a loading spinner
-  }
+
 
   const handleSuppliersChange = useCallback(() => {
     refreshSuppliers();
@@ -473,6 +470,8 @@ Thank you.`;
       </div>
     );
   };
+
+  if (!isMounted) return null;
 
   if (!isInitialized) {
     return (
