@@ -29,7 +29,7 @@ export function toSnakeCase(obj: any): any {
   if (obj === null || typeof obj !== 'object') {
     return obj;
   }
-  
+
   const snakeCased: any = {};
   for (const [key, value] of Object.entries(obj)) {
     const snakeKey = key.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
@@ -46,7 +46,7 @@ export function toCamelCase(obj: any): any {
   if (obj === null || typeof obj !== 'object') {
     return obj;
   }
-  
+
   const camelCased: any = {};
   for (const [key, value] of Object.entries(obj)) {
     const camelKey = key.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
@@ -223,7 +223,7 @@ export async function insertStaff(staff: any) {
     .single();
 
   if (error) throw error;
-  
+
   // Merge extended_data back into returned object
   const result = toCamelCase(data);
   if (result.extendedData) {
@@ -260,7 +260,7 @@ export async function updateStaff(id: string, updates: any) {
 
   // If there are extended fields, fetch current extended_data and merge
   let finalUpdate: any = toSnakeCase(baseFields);
-  
+
   if (Object.keys(extendedFields).length > 0) {
     // Fetch current extended_data
     const { data: currentData } = await supabase
@@ -270,7 +270,7 @@ export async function updateStaff(id: string, updates: any) {
       .single();
 
     const currentExtendedData = currentData?.extended_data || {};
-    
+
     // Merge with new extended fields
     finalUpdate.extended_data = {
       ...currentExtendedData,
@@ -287,7 +287,7 @@ export async function updateStaff(id: string, updates: any) {
     .single();
 
   if (error) throw error;
-  
+
   // Merge extended_data back into returned object
   const result = toCamelCase(data);
   if (result.extendedData) {
@@ -915,7 +915,8 @@ export async function fetchProductionLogs(startDate?: string, endDate?: string) 
   let query = supabase
     .from('production_logs')
     .select('*')
-    .order('date', { ascending: false });
+    // .order('date', { ascending: false }); // date column doesn't exist
+    .order('created_at', { ascending: false });
 
   if (startDate) query = query.gte('date', startDate);
   if (endDate) query = query.lte('date', endDate);
@@ -1026,9 +1027,9 @@ export async function fetchCashFlows(startDate?: string, endDate?: string) {
   if (!supabase) return [];
 
   let query = supabase
-    .from('daily_cash_flows')
+    .from('cash_flows')
     .select('*')
-    .order('date', { ascending: false });
+    .order('created_at', { ascending: false });
 
   if (startDate) query = query.gte('date', startDate);
   if (endDate) query = query.lte('date', endDate);
@@ -1051,7 +1052,7 @@ export async function insertCashFlow(cashFlow: any) {
 
   // @ts-ignore
   const { data, error } = await supabase
-    .from('daily_cash_flows')
+    .from('cash_flows')
     .insert(snakeCasedCashFlow)
     .select()
     .single();
@@ -1066,7 +1067,7 @@ export async function updateCashFlow(id: string, updates: any) {
 
   // @ts-ignore
   const { data, error } = await supabase
-    .from('daily_cash_flows')
+    .from('cash_flows')
     .update(toSnakeCase(updates))
     .eq('id', id)
     .select()
@@ -1084,7 +1085,7 @@ export async function upsertCashFlowByDate(date: string, cashFlow: any) {
 
   // @ts-ignore
   const { data, error } = await supabase
-    .from('daily_cash_flows')
+    .from('cash_flows')
     .upsert(snakeCasedCashFlow, { onConflict: 'date,outlet_id' })
     .select()
     .single();
@@ -1103,7 +1104,7 @@ export async function fetchRecipes() {
     .from('recipes')
     .select('*')
     .eq('is_active', true)
-    .order('menu_item_name', { ascending: true });
+    .order('id', { ascending: true });
 
   if (error) {
     console.error('Error fetching recipes:', error);
@@ -1203,7 +1204,7 @@ export async function updateVoidRefundRequest(id: string, updates: any) {
   if (!supabase) throw new Error('Supabase not connected');
 
   // @ts-ignore
-  const { data, error} = await supabase
+  const { data, error } = await supabase
     .from('void_refund_requests')
     .update(toSnakeCase(updates))
     .eq('id', id)
@@ -1224,7 +1225,7 @@ export async function fetchChecklistTemplates(type?: 'opening' | 'closing') {
     .from('checklist_templates')
     .select('*')
     .eq('is_active', true)
-    .order('order_num', { ascending: true });
+    .order('order', { ascending: true });
 
   if (type) query = query.eq('type', type);
 
@@ -1290,7 +1291,7 @@ export async function fetchChecklistCompletions(startDate?: string, endDate?: st
   let query = supabase
     .from('checklist_completions')
     .select('*')
-    .order('date', { ascending: false });
+    .order('created_at', { ascending: false });
 
   if (startDate) query = query.gte('date', startDate);
   if (endDate) query = query.lte('date', endDate);
@@ -1624,7 +1625,8 @@ export async function fetchOilTrackers() {
   const { data, error } = await supabase
     .from('oil_trackers')
     .select('*')
-    .order('name', { ascending: true });
+    // .order('name', { ascending: true }); // name column doesn't exist, likely fryer_name or just skip order
+    .order('fryer_id', { ascending: true });
 
   if (error) {
     console.error('Error fetching oil trackers:', error);
@@ -1740,7 +1742,7 @@ export async function fetchOilActionHistory(fryerId?: string) {
   let query = supabase
     .from('oil_action_history')
     .select('*')
-    .order('action_at', { ascending: false });
+    .order('created_at', { ascending: false });
 
   if (fryerId) query = query.eq('fryer_id', fryerId);
 
@@ -2082,7 +2084,7 @@ export async function fetchScheduleEntries(startDate?: string, endDate?: string)
   if (!supabase) return [];
 
   let query = supabase
-    .from('schedule_entries')
+    .from('schedules')
     .select('*')
     .order('date', { ascending: true });
 
@@ -2107,7 +2109,7 @@ export async function insertScheduleEntry(entry: any) {
 
   // @ts-ignore
   const { data, error } = await supabase
-    .from('schedule_entries')
+    .from('schedules')
     .insert(snakeCasedEntry)
     .select()
     .single();
@@ -2122,7 +2124,7 @@ export async function updateScheduleEntry(id: string, updates: any) {
 
   // @ts-ignore
   const { data, error } = await supabase
-    .from('schedule_entries')
+    .from('schedules')
     .update(toSnakeCase(updates))
     .eq('id', id)
     .select()
@@ -2137,7 +2139,7 @@ export async function deleteScheduleEntry(id: string) {
   if (!supabase) throw new Error('Supabase not connected');
 
   const { error } = await supabase
-    .from('schedule_entries')
+    .from('schedules')
     .delete()
     .eq('id', id);
 
