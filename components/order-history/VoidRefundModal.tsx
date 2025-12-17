@@ -317,23 +317,45 @@ export default function VoidRefundModal({
         </div>
 
         {/* Action Buttons */}
-        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+        {/* Action Buttons */}
+        <div style={{
+          display: 'flex',
+          justifyContent: 'flex-end',
+          gap: '0.75rem',
+          marginTop: '1.5rem',
+          paddingTop: '1rem',
+          borderTop: '1px solid var(--gray-200)'
+        }}>
           <button
             className="btn btn-outline"
             onClick={onClose}
-            style={{ flex: 1 }}
             disabled={isSubmitting}
+            style={{
+              minWidth: '100px',
+              padding: '0.5rem 1rem'
+            }}
           >
             Batal
           </button>
           <button
             className="btn btn-danger"
             onClick={handleSubmit}
-            style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.5rem',
+              minWidth: '140px',
+              padding: '0.5rem 1.25rem'
+            }}
             disabled={isSubmitting || !reason.trim()}
           >
-            {mode === 'void' ? <XCircle size={16} /> : <RefreshCw size={16} />}
-            {isSubmitting ? 'Menghantar...' : (mode === 'void' ? 'Hantar Request Void' : 'Hantar Request Refund')}
+            {isSubmitting ? (
+              <RefreshCw size={16} className="animate-spin" />
+            ) : (
+              mode === 'void' ? <XCircle size={16} /> : <RefreshCw size={16} />
+            )}
+            {isSubmitting ? 'Menghantar...' : (mode === 'void' ? 'Request Void' : 'Request Refund')}
           </button>
         </div>
       </div>
