@@ -384,11 +384,13 @@ Thank you.`;
       return;
     }
 
+    const selectedSupplier = suppliers.find(s => s.id === poForm.supplierId);
+    if (!selectedSupplier) return;
+
     const supplierItems = inventory.filter(item =>
-      // Filter by supplier if item has supplier field, otherwise include all or refine logic
-      // Assuming naive matching for now or robust if supplier field exists
-      item.supplierId === poForm.supplierId ||
-      (!item.supplierId && item.supplier === suppliers.find(s => s.id === poForm.supplierId)?.name)
+      // Filter by supplier name since StockItem only has 'supplier' string field
+      // We match it against the selected supplier's name
+      item.supplier === selectedSupplier.name
     );
 
     const itemsToOrder = supplierItems.filter(item => item.currentQuantity <= item.minQuantity)
