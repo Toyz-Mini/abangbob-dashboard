@@ -111,6 +111,44 @@ export default function SuppliersPage() {
   const pendingPOs = (purchaseOrders || []).filter(po => ['draft', 'sent', 'confirmed'].includes(po?.status));
   const completedPOs = (purchaseOrders || []).filter(po => po?.status === 'received');
 
+  // Dashboard Widget Calculations - MUST be at component body level (not inside JSX)
+  const monthlySpend = useMemo(() => {
+    const now = new Date();
+    return (purchaseOrders || [])
+      .filter(po => {
+        if (!po?.createdAt) return false;
+        const d = new Date(po.createdAt);
+        return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear() && po.status !== 'cancelled';
+      })
+      .reduce((sum, po) => sum + (po?.total || 0), 0)
+      .toFixed(2);
+  }, [purchaseOrders]);
+
+  const pendingPayments = useMemo(() => {
+    return (purchaseOrders || [])
+      .filter(po => po?.status === 'received')
+      .reduce((sum, po) => sum + (po?.total || 0), 0)
+      .toFixed(2);
+  }, [purchaseOrders]);
+
+  const topSupplier = useMemo(() => {
+    const spendBySupplier: Record<string, number> = {};
+    (purchaseOrders || []).forEach(po => {
+      if (po?.status !== 'cancelled') {
+        spendBySupplier[po.supplierName] = (spendBySupplier[po.supplierName] || 0) + (po.total || 0);
+      }
+    });
+    const top = Object.entries(spendBySupplier).sort((a, b) => b[1] - a[1])[0];
+    return top ? top[0] : '-';
+  }, [purchaseOrders]);
+
+  const receivedThisMonth = useMemo(() => {
+    const now = new Date();
+    return (purchaseOrders || []).filter(po =>
+      po?.status === 'received' && po?.createdAt && new Date(po.createdAt).getMonth() === now.getMonth()
+    ).length;
+  }, [purchaseOrders]);
+
   const openAddSupplierModal = () => {
     setSupplierForm({
       name: '',
@@ -519,20 +557,10 @@ Thank you.`;
               <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', fontWeight: 600 }}>BELANJA BULAN INI</div>
             </div>
             <div style={{ fontSize: '1.5rem', fontWeight: 700 }}>
-              BND {useMemo(() => {
-                const now = new Date();
-                return (purchaseOrders || [])
-                  .filter(po => {
-                    if (!po?.createdAt) return false;
-                    const d = new Date(po.createdAt);
-                    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear() && po.status !== 'cancelled';
-                  })
-                  .reduce((sum, po) => sum + (po?.total || 0), 0)
-                  .toFixed(2);
-              }, [purchaseOrders])}
+              BND {monthlySpend}
             </div>
             <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
-              {(purchaseOrders || []).filter(po => po?.status === 'received' && po?.createdAt && new Date(po.createdAt).getMonth() === new Date().getMonth()).length} order diterima
+              {receivedThisMonth} order diterima
             </div>
           </div>
 
@@ -545,14 +573,7 @@ Thank you.`;
               <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', fontWeight: 600 }}>BAYARAN TERTUNGGAK</div>
             </div>
             <div style={{ fontSize: '1.5rem', fontWeight: 700 }}>
-              BND {useMemo(() => {
-                return (purchaseOrders || [])
-                  .filter(po => po?.status === 'received') // Assuming received = invoice accepted
-                  // In a real app we'd check if it's actually PAID. For now we just show total received "payable" value
-                  // Or we can filter by terms logic
-                  .reduce((sum, po) => sum + (po?.total || 0), 0)
-                  .toFixed(2);
-              }, [purchaseOrders])}
+              BND {pendingPayments}
             </div>
             <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
               Items Received, Payment Pending
@@ -568,16 +589,7 @@ Thank you.`;
               <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', fontWeight: 600 }}>TOP SUPPLIER</div>
             </div>
             <div style={{ fontSize: '1.1rem', fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              {useMemo(() => {
-                const spendBySupplier: Record<string, number> = {};
-                (purchaseOrders || []).forEach(po => {
-                  if (po?.status !== 'cancelled') {
-                    spendBySupplier[po.supplierName] = (spendBySupplier[po.supplierName] || 0) + (po.total || 0);
-                  }
-                });
-                const top = Object.entries(spendBySupplier).sort((a, b) => b[1] - a[1])[0];
-                return top ? top[0] : '-';
-              }, [purchaseOrders])}
+              {topSupplier}
             </div>
             <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
               Highest volume this month
