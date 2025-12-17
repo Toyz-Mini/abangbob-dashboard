@@ -165,7 +165,7 @@ export default function KDSPage() {
       padding: isFullscreen ? '1rem' : '1.5rem'
     }}>
       {/* Header */}
-      <div style={{
+      <div className="kds-header" style={{
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
@@ -193,9 +193,9 @@ export default function KDSPage() {
           </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+        <div className="kds-controls" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           {/* Stats */}
-          <div style={{ display: 'flex', gap: '1rem' }}>
+          <div className="kds-stats-desktop" style={{ display: 'flex', gap: '1rem' }}>
             <div style={{
               padding: '0.5rem 1rem',
               background: '#fef3c7',
@@ -499,6 +499,23 @@ export default function KDSPage() {
         @media (max-width: 1024px) {
           .kds-mobile-tabs {
             display: flex;
+          }
+
+          .kds-header {
+            flex-direction: column;
+            gap: 1rem;
+            align-items: stretch !important;
+            padding: 1rem !important;
+            margin-bottom: 0.75rem !important;
+          }
+
+          .kds-stats-desktop {
+            display: none !important;
+          }
+
+          .kds-controls {
+            justify-content: space-between;
+            width: 100%;
           }
 
           .kds-grid {
