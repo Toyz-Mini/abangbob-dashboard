@@ -1305,8 +1305,51 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     };
     setOrderHistory(prev => [historyItem, ...prev]);
 
+    // AUTOMATIC INVENTORY DEDUCTION LOGIC
+    // Check if ordered items have recipes and deduct ingredients from inventory
+    if (recipes.length > 0 && inventory.length > 0) {
+      const inventoryUpdates = new Map<string, number>();
+
+      newOrder.items.forEach(cartItem => {
+        // Find recipe for this item
+        const recipe = recipes.find(r => r.menuItemId === cartItem.id);
+
+        if (recipe) {
+          console.log(`[Inventory] Deducting ingredients for ${cartItem.name} (Recipe found)`);
+
+          recipe.ingredients.forEach(ingredient => {
+            const currentDeduction = inventoryUpdates.get(ingredient.stockItemId) || 0;
+            // Total deduction = ingredient quantity per item * item quantity in cart
+            const deductionAmount = ingredient.quantity * cartItem.quantity;
+            inventoryUpdates.set(ingredient.stockItemId, currentDeduction + deductionAmount);
+          });
+        }
+      });
+
+      // Apply updates if any
+      if (inventoryUpdates.size > 0) {
+        setInventory(prevInventory => {
+          return prevInventory.map(stockItem => {
+            const deduction = inventoryUpdates.get(stockItem.id);
+            if (deduction) {
+              const newQuantity = stockItem.currentQuantity - deduction;
+              console.log(`[Inventory] Updating ${stockItem.name}: ${stockItem.currentQuantity} -> ${newQuantity}`);
+
+              // Sync to Supabase
+              SupabaseSync.syncUpdateInventoryItem(stockItem.id, {
+                currentQuantity: newQuantity
+              }).catch(err => console.error('Failed to sync inventory deduction:', err));
+
+              return { ...stockItem, currentQuantity: newQuantity };
+            }
+            return stockItem;
+          });
+        });
+      }
+    }
+
     return newOrder;
-  }, []);
+  }, [recipes, inventory]);
 
   const updateOrderStatus = useCallback(async (orderId: string, status: Order['status'], staffId?: string) => {
     setOrders(prev => prev.map(order => {
