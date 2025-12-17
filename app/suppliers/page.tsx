@@ -98,18 +98,18 @@ export default function SuppliersPage() {
 
   // Get low stock items for reorder suggestions
   const lowStockItems = useMemo(() => {
-    return inventory.filter(item => item.currentQuantity <= item.minQuantity);
+    return (inventory || []).filter(item => item?.currentQuantity <= item?.minQuantity);
   }, [inventory]);
 
   // Filter suppliers
-  const filteredSuppliers = suppliers.filter(s =>
-    s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    s.contactPerson.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredSuppliers = (suppliers || []).filter(s =>
+    (s?.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (s?.contactPerson || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   // Filter POs by status
-  const pendingPOs = purchaseOrders.filter(po => ['draft', 'sent', 'confirmed'].includes(po.status));
-  const completedPOs = purchaseOrders.filter(po => po.status === 'received');
+  const pendingPOs = (purchaseOrders || []).filter(po => ['draft', 'sent', 'confirmed'].includes(po?.status));
+  const completedPOs = (purchaseOrders || []).filter(po => po?.status === 'received');
 
   const openAddSupplierModal = () => {
     setSupplierForm({
@@ -520,17 +520,18 @@ Thank you.`;
             <div style={{ fontSize: '1.5rem', fontWeight: 700 }}>
               BND {useMemo(() => {
                 const now = new Date();
-                return purchaseOrders
+                return (purchaseOrders || [])
                   .filter(po => {
+                    if (!po?.createdAt) return false;
                     const d = new Date(po.createdAt);
                     return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear() && po.status !== 'cancelled';
                   })
-                  .reduce((sum, po) => sum + po.total, 0)
+                  .reduce((sum, po) => sum + (po?.total || 0), 0)
                   .toFixed(2);
               }, [purchaseOrders])}
             </div>
             <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
-              {purchaseOrders.filter(po => po.status === 'received' && new Date(po.createdAt).getMonth() === new Date().getMonth()).length} order diterima
+              {(purchaseOrders || []).filter(po => po?.status === 'received' && po?.createdAt && new Date(po.createdAt).getMonth() === new Date().getMonth()).length} order diterima
             </div>
           </div>
 
@@ -544,11 +545,11 @@ Thank you.`;
             </div>
             <div style={{ fontSize: '1.5rem', fontWeight: 700 }}>
               BND {useMemo(() => {
-                return purchaseOrders
-                  .filter(po => po.status === 'received') // Assuming received = invoice accepted
+                return (purchaseOrders || [])
+                  .filter(po => po?.status === 'received') // Assuming received = invoice accepted
                   // In a real app we'd check if it's actually PAID. For now we just show total received "payable" value
                   // Or we can filter by terms logic
-                  .reduce((sum, po) => sum + po.total, 0)
+                  .reduce((sum, po) => sum + (po?.total || 0), 0)
                   .toFixed(2);
               }, [purchaseOrders])}
             </div>
@@ -568,9 +569,9 @@ Thank you.`;
             <div style={{ fontSize: '1.1rem', fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {useMemo(() => {
                 const spendBySupplier: Record<string, number> = {};
-                purchaseOrders.forEach(po => {
-                  if (po.status !== 'cancelled') {
-                    spendBySupplier[po.supplierName] = (spendBySupplier[po.supplierName] || 0) + po.total;
+                (purchaseOrders || []).forEach(po => {
+                  if (po?.status !== 'cancelled') {
+                    spendBySupplier[po.supplierName] = (spendBySupplier[po.supplierName] || 0) + (po.total || 0);
                   }
                 });
                 const top = Object.entries(spendBySupplier).sort((a, b) => b[1] - a[1])[0];
