@@ -16,8 +16,8 @@ import {
 
 import { DocumentUpload } from '@/components/staff-portal';
 
-// Demo: Using staff ID 2 as the logged-in user
-const CURRENT_STAFF_ID = '2';
+import { useAuth } from '@/lib/contexts/AuthContext';
+
 
 const CLAIM_TYPES: ClaimType[] = [
   'medical',
@@ -35,7 +35,13 @@ export default function NewClaimPage() {
   const { staff, isInitialized } = useStaff();
   const { addClaimRequest } = useStaffPortal();
 
-  const currentStaff = staff.find(s => s.id === CURRENT_STAFF_ID);
+  /* 
+   * FIXED: Use real logged in user from AuthContext
+   */
+  const { currentStaff: authStaff, user } = useAuth();
+  const staffId = authStaff?.id || user?.id || '';
+
+  const currentStaff = staff.find(s => s.id === staffId);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [form, setForm] = useState({
@@ -63,7 +69,7 @@ export default function NewClaimPage() {
     await new Promise(resolve => setTimeout(resolve, 500));
 
     addClaimRequest({
-      staffId: CURRENT_STAFF_ID,
+      staffId: staffId,
       staffName: currentStaff?.name || '',
       type: form.type,
       amount,
