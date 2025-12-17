@@ -221,12 +221,20 @@ export default function ReceiptPreview({
               )}
               {item.selectedModifiers?.length > 0 && (
                 <div style={{
-                  paddingLeft: '12px',
-                  fontSize: receiptWidth === '58mm' ? '8px' : '9px',
-                  color: '#666',
+                  paddingLeft: '8px',
+                  fontSize: receiptWidth === '58mm' ? '9px' : '10px',
+                  lineHeight: '1.4',
+                  marginTop: '4px'
                 }}>
                   {item.selectedModifiers.map((mod, i) => (
-                    <div key={i}>- {mod.groupName?.replace('Pilih ', '')}: {mod.optionName}</div>
+                    <div key={i} style={{ display: 'flex', alignItems: 'flex-start' }}>
+                      <span style={{ color: '#555', marginRight: '4px', minWidth: '60px' }}>
+                        - {mod.groupName?.replace('Pilih ', '').replace('Flavour ', '')}:
+                      </span>
+                      <span style={{ fontWeight: 700, color: '#000' }}>
+                        {mod.optionName}
+                      </span>
+                    </div>
                   ))}
                 </div>
               )}

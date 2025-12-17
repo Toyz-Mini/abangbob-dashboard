@@ -553,7 +553,7 @@ function OrderCard({
                           border: '1px solid #f59e0b'
                         }}
                       >
-                        {mod.groupName ? `${mod.groupName.replace('Pilih ', '')}: ` : ''}{mod.optionName}
+                        {mod.groupName ? `${mod.groupName.replace('Pilih ', '').replace('Flavour ', '')}: ` : ''}<b>{mod.optionName}</b>
                       </span>
                     ))}
                   </div>

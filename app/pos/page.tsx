@@ -604,7 +604,7 @@ export default function POSPage() {
                               <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
                                 {item.selectedModifiers.map((mod, i) => (
                                   <div key={i}>
-                                    - {mod.groupName?.replace('Pilih ', '') || ''}: {mod.optionName}
+                                    - {mod.groupName?.replace('Pilih ', '').replace('Flavour ', '') || ''}: <b>{mod.optionName}</b>
                                     {mod.extraPrice > 0 && ` (+$${mod.extraPrice.toFixed(2)})`}
                                   </div>
                                 ))}
@@ -809,7 +809,7 @@ export default function POSPage() {
                 </div>
                 {tempSelectedModifiers.filter(m => m.extraPrice > 0).map((mod, i) => (
                   <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
-                    <span>+ {mod.groupName?.replace('Pilih ', '')}: {mod.optionName}</span>
+                    <span>+ {mod.groupName?.replace('Pilih ', '').replace('Flavour ', '')}: <b>{mod.optionName}</b></span>
                     <span>+BND {mod.extraPrice.toFixed(2)}</span>
                   </div>
                 ))}
@@ -1351,7 +1351,7 @@ export default function POSPage() {
                         {item.quantity}x {item.name}
                         {item.selectedModifiers.length > 0 && (
                           <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', paddingLeft: '0.5rem' }}>
-                            {item.selectedModifiers.map(m => `${m.groupName?.replace('Pilih ', '') || ''}: ${m.optionName}`).join(', ')}
+                            {item.selectedModifiers.map(m => `${m.groupName?.replace('Pilih ', '').replace('Flavour ', '') || ''}: ${m.optionName}`).join(', ')}
                           </div>
                         )}
                       </div>
