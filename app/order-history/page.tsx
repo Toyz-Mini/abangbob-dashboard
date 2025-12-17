@@ -103,16 +103,19 @@ export default function OrderHistoryPage() {
   if (typeof window !== 'undefined') {
     (window as any).__DEBUG_REQUESTS__ = voidRefundRequests;
   }
-
   // Convert orders to OrderHistoryItem format and apply filters
   const filteredOrders = useMemo(() => {
     // Transform orders to OrderHistoryItem format
     let historyItems: OrderHistoryItem[] = orders.map((order: Order) => {
       // Find relevant void/refund requests
-      // We prioritize approved requests to show actual status
-      const approvedRequests = voidRefundRequests.filter(r =>
-        r.orderId === order.id &&
-        (r.status === 'approved' || r.status?.toLowerCase() === 'approved')
+      const orderRequests = voidRefundRequests.filter(r => r.orderId === order.id);
+
+      const approvedRequests = orderRequests.filter(r =>
+        r.status === 'approved' || r.status?.toLowerCase() === 'approved'
+      );
+
+      const pendingRequests = orderRequests.filter(r =>
+        r.status === 'pending' || r.status?.toLowerCase() === 'pending'
       );
 
       let voidRefundStatus: 'none' | 'pending_void' | 'pending_refund' | 'voided' | 'refunded' | 'partial_refund' = 'none';
