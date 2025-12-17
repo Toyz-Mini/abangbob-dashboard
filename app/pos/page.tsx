@@ -610,7 +610,7 @@ export default function POSPage() {
                             </div>
                             {item.selectedModifiers.length > 0 && (
                               <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
-                                {item.selectedModifiers.map((mod, i) => (
+                                {item.selectedModifiers?.map((mod, i) => (
                                   <div key={i}>
                                     - {mod.groupName?.replace('Pilih ', '').replace('Flavour ', '') || ''}: <b>{mod.optionName}</b>
                                     {mod.extraPrice > 0 && ` (+$${mod.extraPrice.toFixed(2)})`}
@@ -1283,21 +1283,21 @@ export default function POSPage() {
                 />
               </div>
 
-              <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1.5rem' }}>
-                <button
-                  onClick={() => setModalType(null)}
-                  className="btn btn-outline"
-                  style={{ flex: 1 }}
-                >
-                  Tutup
-                </button>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '1.5rem' }}>
                 <button
                   onClick={() => handlePrintReceipt()}
                   className="btn btn-primary"
-                  style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
+                  style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', padding: '0.875rem' }}
                 >
                   <Printer size={18} />
                   Cetak Resit
+                </button>
+                <button
+                  onClick={() => setModalType(null)}
+                  className="btn btn-outline"
+                  style={{ width: '100%', padding: '0.875rem' }}
+                >
+                  Tutup
                 </button>
               </div>
 
@@ -1359,7 +1359,7 @@ export default function POSPage() {
                         {item.quantity}x {item.name}
                         {item.selectedModifiers.length > 0 && (
                           <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', paddingLeft: '0.5rem' }}>
-                            {item.selectedModifiers.map(m => `${m.groupName?.replace('Pilih ', '').replace('Flavour ', '') || ''}: ${m.optionName}`).join(', ')}
+                            {item.selectedModifiers?.map(m => `${m.groupName?.replace('Pilih ', '').replace('Flavour ', '') || ''}: ${m.optionName}`).join(', ')}
                           </div>
                         )}
                       </div>
