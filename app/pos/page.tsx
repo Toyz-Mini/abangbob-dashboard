@@ -991,18 +991,32 @@ export default function POSPage() {
           )}
 
           {/* Action Buttons */}
-          <div style={{ display: 'flex', gap: '0.75rem' }}>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'flex-end',
+            gap: '0.75rem',
+            marginTop: '1.5rem',
+            paddingTop: '1rem',
+            borderTop: '1px solid var(--gray-200)'
+          }}>
             <button
               onClick={() => setModalType(null)}
               className="btn btn-outline"
-              style={{ flex: 1 }}
+              style={{
+                minWidth: '100px',
+                padding: '0.5rem 1rem'
+              }}
             >
-              Kembali ke Menu
+              Kembali
             </button>
             <button
               onClick={() => setModalType('checkout')}
               className="btn btn-primary"
-              style={{ flex: 1 }}
+              style={{
+                minWidth: '160px',
+                padding: '0.5rem 1.25rem',
+                fontWeight: 600
+              }}
             >
               Teruskan Checkout
             </button>
