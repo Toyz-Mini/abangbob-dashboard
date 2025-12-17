@@ -20,8 +20,8 @@ import {
   Send
 } from 'lucide-react';
 
-// Demo: Using staff ID 2 as the logged-in user
-const CURRENT_STAFF_ID = '2';
+import { useAuth } from '@/lib/contexts/AuthContext';
+
 
 const REQUEST_CATEGORIES: RequestCategory[] = [
   'shift_swap',
@@ -46,8 +46,14 @@ export default function RequestsPage() {
 
   useStaffRequestsRealtime(handleStaffRequestsChange);
 
-  const currentStaff = staff.find(s => s.id === CURRENT_STAFF_ID);
-  const requests = getStaffRequestsByStaff(CURRENT_STAFF_ID);
+  /* 
+   * FIXED: Use real logged in user from AuthContext
+   */
+  const { currentStaff: authStaff, user } = useAuth();
+  const staffId = authStaff?.id || user?.id || '';
+
+  const currentStaff = staff.find(s => s.id === staffId);
+  const requests = getStaffRequestsByStaff(staffId);
 
   const [showModal, setShowModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -75,7 +81,7 @@ export default function RequestsPage() {
     await new Promise(resolve => setTimeout(resolve, 500));
 
     addStaffRequest({
-      staffId: CURRENT_STAFF_ID,
+      staffId: staffId,
       staffName: currentStaff?.name || '',
       category: form.category,
       title: form.title.trim(),

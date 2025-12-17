@@ -21,8 +21,8 @@ import {
 } from 'lucide-react';
 
 
-// Demo: Using staff ID 2 as the logged-in user
-const CURRENT_STAFF_ID = '2';
+import { useAuth } from '@/lib/contexts/AuthContext';
+
 
 // Leave Balance Ring Component
 function LeaveBalanceRing({
@@ -95,9 +95,15 @@ export default function LeavePage() {
 
   useLeaveRequestsRealtime(handleLeaveChange);
 
-  const currentStaff = staff.find(s => s.id === CURRENT_STAFF_ID);
-  const leaveBalance = getLeaveBalance(CURRENT_STAFF_ID);
-  const leaveRequests = getStaffLeaveRequests(CURRENT_STAFF_ID);
+  /* 
+   * FIXED: Use real logged in user from AuthContext
+   */
+  const { currentStaff: authStaff, user } = useAuth();
+  const staffId = authStaff?.id || user?.id || '';
+
+  const currentStaff = staff.find(s => s.id === staffId);
+  const leaveBalance = getLeaveBalance(staffId);
+  const leaveRequests = getStaffLeaveRequests(staffId);
 
   // Sort by date descending
   const sortedRequests = useMemo(() => {

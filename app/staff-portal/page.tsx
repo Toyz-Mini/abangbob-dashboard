@@ -519,6 +519,15 @@ export default function StaffPortalPage() {
               <div className="staff-action-label" style={{ fontSize: '0.75rem' }}>Payslip</div>
             </Link>
 
+            {/* Requests (Lain-lain / OT) */}
+            <Link href="/staff-portal/requests" className="staff-action-card compact" style={{ flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '0.75rem' }}>
+              <div className="staff-action-icon requests" style={{ width: '40px', height: '40px', marginBottom: '0.5rem', background: 'var(--blue-100)', color: 'var(--blue-600)', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%' }}>
+                <FileText size={18} />
+              </div>
+              <div className="staff-action-label" style={{ fontSize: '0.75rem' }}>Lain-lain</div>
+              {pendingRequestCount > 0 && <span className="notification-dot" />}
+            </Link>
+
             {/* Profile */}
             <Link href="/staff-portal/profile" className="staff-action-card compact" style={{ flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '0.75rem' }}>
               <div className="staff-action-icon profile" style={{ width: '40px', height: '40px', marginBottom: '0.5rem' }}>
