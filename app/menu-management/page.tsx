@@ -3,9 +3,9 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import MainLayout from '@/components/MainLayout';
-import { useMenu, useMenuCategories } from '@/lib/store';
+import { useMenu, useMenuCategories, useInventory } from '@/lib/store';
 import { useMenuRealtime, useModifiersRealtime } from '@/lib/supabase/realtime-hooks';
-import { MenuItem, ModifierGroup, ModifierOption, MenuCategory } from '@/lib/types';
+import { MenuItem, ModifierGroup, ModifierOption, MenuCategory, StockItem } from '@/lib/types';
 import Modal from '@/components/Modal';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import {
@@ -60,6 +60,9 @@ export default function MenuManagementPage() {
     deleteMenuCategory,
     getActiveCategories,
   } = useMenuCategories();
+
+  // Inventory for linking ingredients
+  const { inventory } = useInventory();
 
   // Realtime subscriptions for menu and modifiers
   const handleMenuChange = useCallback(() => {
@@ -150,7 +153,12 @@ export default function MenuManagementPage() {
     name: '',
     extraPrice: 0,
     isAvailable: true,
+    ingredients: [] as { stockItemId: string; quantity: number }[],
   });
+
+  // Ingredient Selection State (for Option Modal)
+  const [selectedStockId, setSelectedStockId] = useState('');
+  const [selectedStockQty, setSelectedStockQty] = useState(1);
 
   // Category Form
   const [categoryForm, setCategoryForm] = useState({
@@ -249,7 +257,10 @@ export default function MenuManagementPage() {
       name: '',
       extraPrice: 0,
       isAvailable: true,
+      ingredients: [],
     });
+    setSelectedStockId('');
+    setSelectedStockQty(1);
     setModalType('add-option');
   };
 
@@ -260,7 +271,10 @@ export default function MenuManagementPage() {
       name: option.name,
       extraPrice: option.extraPrice,
       isAvailable: option.isAvailable,
+      ingredients: option.ingredients || [],
     });
+    setSelectedStockId('');
+    setSelectedStockQty(1);
     setModalType('edit-option');
   };
 
@@ -424,6 +438,7 @@ export default function MenuManagementPage() {
       name: optionForm.name.trim(),
       extraPrice: optionForm.extraPrice,
       isAvailable: optionForm.isAvailable,
+      ingredients: optionForm.ingredients,
     });
 
     closeModal();
@@ -440,9 +455,37 @@ export default function MenuManagementPage() {
       name: optionForm.name.trim(),
       extraPrice: optionForm.extraPrice,
       isAvailable: optionForm.isAvailable,
+      ingredients: optionForm.ingredients,
     });
 
     closeModal();
+  };
+
+  // Ingredient Helpers
+  const handleAddIngredient = () => {
+    if (!selectedStockId || selectedStockQty <= 0) return;
+
+    // Check if already added
+    if (optionForm.ingredients.some(i => i.stockItemId === selectedStockId)) {
+      alert('Ingredient already added');
+      return;
+    }
+
+    setOptionForm(prev => ({
+      ...prev,
+      ingredients: [...prev.ingredients, { stockItemId: selectedStockId, quantity: selectedStockQty }]
+    }));
+
+    // Reset selection
+    setSelectedStockId('');
+    setSelectedStockQty(1);
+  };
+
+  const handleRemoveIngredient = (index: number) => {
+    setOptionForm(prev => ({
+      ...prev,
+      ingredients: prev.ingredients.filter((_, i) => i !== index)
+    }));
   };
 
   const handleDeleteOption = async () => {
@@ -1352,6 +1395,65 @@ export default function MenuManagementPage() {
                 style={{ flex: 1 }}
               >
                 Unavailable
+              </button>
+            </div>
+          </div>
+
+          {/* Ingredient Inventory Deduction */}
+          <div style={{ marginTop: '1.5rem', borderTop: '1px solid var(--gray-200)', paddingTop: '1rem' }}>
+            <label className="form-label" style={{ fontWeight: 600 }}>Deduct Inventory (Recipe)</label>
+            <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
+              Select stock items to deduct when this modifier is selected.
+            </div>
+
+            {/* List of added ingredients */}
+            {optionForm.ingredients.length > 0 && (
+              <div style={{ marginBottom: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                {optionForm.ingredients.map((ing, idx) => {
+                  const stockItem = inventory.find(s => s.id === ing.stockItemId);
+                  return (
+                    <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--gray-50)', padding: '0.5rem', borderRadius: '4px', fontSize: '0.875rem' }}>
+                      <span>{stockItem?.name || 'Unknown Item'} <span style={{ color: 'var(--text-secondary)' }}>x {ing.quantity} {stockItem?.unit}</span></span>
+                      <button type="button" onClick={() => handleRemoveIngredient(idx)} style={{ color: 'var(--danger)', background: 'none', border: 'none', cursor: 'pointer' }}><X size={14} /></button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Add new ingredient */}
+            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end' }}>
+              <div style={{ flex: 1 }}>
+                <select
+                  className="form-select"
+                  value={selectedStockId}
+                  onChange={e => setSelectedStockId(e.target.value)}
+                  style={{ fontSize: '0.875rem' }}
+                >
+                  <option value="">Select Stock Item...</option>
+                  {inventory.map(item => <option key={item.id} value={item.id}>{item.name} ({item.unit})</option>)}
+                </select>
+              </div>
+              <div style={{ width: '80px' }}>
+                <input
+                  type="number"
+                  className="form-input"
+                  placeholder="Qty"
+                  value={selectedStockQty}
+                  onChange={e => setSelectedStockQty(Number(e.target.value))}
+                  min="0.1"
+                  step="0.1"
+                  style={{ fontSize: '0.875rem' }}
+                />
+              </div>
+              <button
+                type="button"
+                className="btn btn-outline"
+                onClick={handleAddIngredient}
+                disabled={!selectedStockId}
+                style={{ height: '38px', padding: '0 10px' }}
+              >
+                <Plus size={16} />
               </button>
             </div>
           </div>

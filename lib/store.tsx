@@ -1325,6 +1325,21 @@ export function StoreProvider({ children }: { children: ReactNode }) {
             inventoryUpdates.set(ingredient.stockItemId, currentDeduction + deductionAmount);
           });
         }
+
+        // Deduct Modifier Ingredients
+        if (cartItem.selectedModifiers && cartItem.selectedModifiers.length > 0) {
+          cartItem.selectedModifiers.forEach((mod: any) => {
+            const modifierOption = modifierOptions.find(m => m.id === mod.id);
+            if (modifierOption && modifierOption.ingredients && modifierOption.ingredients.length > 0) {
+              console.log(`[Inventory] Deducting ingredients for modifier ${modifierOption.name}`);
+              modifierOption.ingredients.forEach(ingredient => {
+                const currentDeduction = inventoryUpdates.get(ingredient.stockItemId) || 0;
+                const deductionAmount = ingredient.quantity * cartItem.quantity;
+                inventoryUpdates.set(ingredient.stockItemId, currentDeduction + deductionAmount);
+              });
+            }
+          });
+        }
       });
 
       // Apply updates if any

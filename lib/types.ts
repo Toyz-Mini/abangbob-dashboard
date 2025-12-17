@@ -35,6 +35,10 @@ export interface ModifierOption {
   name: string;           // "Extra Cheese"
   extraPrice: number;     // 0 jika percuma, 1.00 jika +$1
   isAvailable: boolean;
+  ingredients?: {
+    stockItemId: string;
+    quantity: number;
+  }[];
 }
 
 export interface SelectedModifier {
