@@ -602,10 +602,11 @@ export default function POSPage() {
                             </div>
                             {item.selectedModifiers.length > 0 && (
                               <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
-                                <div key={i}>
-                                  - {mod.groupName?.replace('Pilih ', '') || ''}: {mod.optionName}
-                                  {mod.extraPrice > 0 && ` (+$${mod.extraPrice.toFixed(2)})`}
-                                </div>
+                                {item.selectedModifiers.map((mod, i) => (
+                                  <div key={i}>
+                                    - {mod.groupName?.replace('Pilih ', '') || ''}: {mod.optionName}
+                                    {mod.extraPrice > 0 && ` (+$${mod.extraPrice.toFixed(2)})`}
+                                  </div>
                                 ))}
                               </div>
                             )}
