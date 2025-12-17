@@ -86,7 +86,7 @@ export default function VoidRefundModal({
       let result;
 
       if (mode === 'void') {
-        result = requestVoid(order.id, reason, requestedBy, requestedByName);
+        result = await requestVoid(order.id, reason, requestedBy, requestedByName);
       } else {
         // Build items to refund for partial refund
         const itemsToRefund: RefundItem[] = [];
