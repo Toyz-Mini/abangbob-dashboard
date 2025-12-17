@@ -5,10 +5,11 @@ import MainLayout from '@/components/MainLayout';
 import { useStaffPortal, useStaff } from '@/lib/store';
 import { useStaffRequestsRealtime } from '@/lib/supabase/realtime-hooks';
 import { getRequestCategoryLabel, getStatusLabel, getStatusColor } from '@/lib/staff-portal-data';
-import { RequestCategory } from '@/lib/types';
+import { RequestCategory, StaffRequest } from '@/lib/types';
 import Modal from '@/components/Modal';
 import Link from 'next/link';
 import LoadingSpinner from '@/components/LoadingSpinner';
+import RequestDetailModal from '@/components/staff-portal/RequestDetailModal';
 import {
   FileText,
   Plus,
@@ -63,6 +64,15 @@ export default function RequestsPage() {
     description: '',
     priority: 'medium' as 'low' | 'medium' | 'high',
   });
+
+  // State for detail modal
+  const [selectedRequest, setSelectedRequest] = useState<StaffRequest | null>(null);
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
+
+  const handleViewDetail = (request: StaffRequest) => {
+    setSelectedRequest(request);
+    setIsDetailOpen(true);
+  };
 
   // Sort by date descending
   const sortedRequests = useMemo(() => {
@@ -148,11 +158,22 @@ export default function RequestsPage() {
               {sortedRequests.map(request => (
                 <div
                   key={request.id}
+                  onClick={() => handleViewDetail(request)}
                   style={{
                     padding: '1rem',
                     borderRadius: 'var(--radius-md)',
                     background: 'var(--gray-50)',
-                    border: '1px solid var(--gray-200)'
+                    border: '1px solid var(--gray-200)',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = 'var(--primary)';
+                    e.currentTarget.style.backgroundColor = '#fff';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = 'var(--gray-200)';
+                    e.currentTarget.style.backgroundColor = 'var(--gray-50)';
                   }}
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem', flexWrap: 'wrap' }}>
@@ -185,6 +206,10 @@ export default function RequestsPage() {
                         <Clock size={10} style={{ marginRight: '0.25rem', display: 'inline' }} />
                         {new Date(request.createdAt).toLocaleDateString('ms-MY')}
                       </div>
+
+                      <div style={{ fontSize: '0.7rem', color: 'var(--primary)', marginTop: '0.25rem', fontWeight: 500 }}>
+                        Lihat Butiran
+                      </div>
                     </div>
                   </div>
 
@@ -209,6 +234,13 @@ export default function RequestsPage() {
             </div>
           )}
         </div>
+
+        {/* Detail Modal */}
+        <RequestDetailModal
+          isOpen={isDetailOpen}
+          onClose={() => setIsDetailOpen(false)}
+          request={selectedRequest}
+        />
 
         {/* New Request Modal */}
         <Modal
@@ -297,7 +329,3 @@ export default function RequestsPage() {
     </MainLayout>
   );
 }
-
-
-
-

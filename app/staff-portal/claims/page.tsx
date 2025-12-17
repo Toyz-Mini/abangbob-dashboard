@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useCallback } from 'react';
+import { useMemo, useCallback, useState } from 'react';
 import MainLayout from '@/components/MainLayout';
 import { useStaffPortal, useStaff } from '@/lib/store';
 import { useClaimRequestsRealtime } from '@/lib/supabase/realtime-hooks';
@@ -21,9 +21,9 @@ import {
   CreditCard,
   FileText
 } from 'lucide-react';
-
-
 import { useAuth } from '@/lib/contexts/AuthContext';
+import ClaimDetailModal from '@/components/staff-portal/ClaimDetailModal';
+import { ClaimRequest } from '@/lib/types';
 
 
 export default function ClaimsPage() {
@@ -46,6 +46,15 @@ export default function ClaimsPage() {
 
   const currentStaff = staff.find(s => s.id === staffId);
   const claimRequests = getStaffClaimRequests(staffId);
+
+  // State for detail modal
+  const [selectedClaim, setSelectedClaim] = useState<ClaimRequest | null>(null);
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
+
+  const handleViewDetail = (claim: ClaimRequest) => {
+    setSelectedClaim(claim);
+    setIsDetailOpen(true);
+  };
 
   // Sort by date descending
   const sortedRequests = useMemo(() => {
@@ -135,13 +144,24 @@ export default function ClaimsPage() {
                 <div
                   key={claim.id}
                   className="staff-info-row"
+                  onClick={() => handleViewDetail(claim)}
                   style={{
                     flexDirection: 'column',
                     alignItems: 'stretch',
                     gap: '0.75rem',
                     padding: '1rem',
                     borderRadius: 'var(--radius-lg)',
-                    border: '1px solid var(--border-color)'
+                    border: '1px solid var(--border-color)',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = 'var(--primary)';
+                    e.currentTarget.style.backgroundColor = 'var(--gray-50)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = 'var(--border-color)';
+                    e.currentTarget.style.backgroundColor = 'transparent';
                   }}
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem', flexWrap: 'wrap' }}>
@@ -181,6 +201,10 @@ export default function ClaimsPage() {
                         <Clock size={10} />
                         {new Date(claim.createdAt).toLocaleDateString('ms-MY')}
                       </div>
+
+                      <div style={{ fontSize: '0.7rem', color: 'var(--primary)', marginTop: '0.25rem', fontWeight: 500 }}>
+                        Lihat Butiran
+                      </div>
                     </div>
                   </div>
 
@@ -200,6 +224,13 @@ export default function ClaimsPage() {
             </div>
           )}
         </div>
+
+        {/* Detail Modal */}
+        <ClaimDetailModal
+          isOpen={isDetailOpen}
+          onClose={() => setIsDetailOpen(false)}
+          claim={selectedClaim}
+        />
 
         {/* Bottom Navigation */}
         <StaffPortalNav pendingCount={pendingCount} />

@@ -7,6 +7,9 @@ import { useLeaveRequestsRealtime, useClaimRequestsRealtime, useStaffRequestsRea
 import { getLeaveTypeLabel, getClaimTypeLabel, getRequestCategoryLabel, getStatusLabel, getStatusColor } from '@/lib/staff-portal-data';
 import Modal from '@/components/Modal';
 import LoadingSpinner from '@/components/LoadingSpinner';
+import ClaimDetailModal from '@/components/staff-portal/ClaimDetailModal';
+import RequestDetailModal from '@/components/staff-portal/RequestDetailModal';
+import { ClaimRequest, StaffRequest } from '@/lib/types';
 import {
   CheckCircle,
   XCircle,
@@ -26,18 +29,25 @@ type TabType = 'leave' | 'claims' | 'requests';
 
 export default function ApprovalsPage() {
   const {
+    // Leave
+    leaveRequests,
     getPendingLeaveRequests,
-    getPendingClaimRequests,
-    getPendingStaffRequests,
     approveLeaveRequest,
     rejectLeaveRequest,
+    refreshLeaveRequests,
+    // Claims
+    claimRequests,
+    getPendingClaimRequests,
     approveClaimRequest,
     rejectClaimRequest,
+    refreshClaimRequests,
+    // Requests
+    staffRequests,
+    getPendingStaffRequests,
     completeStaffRequest,
     rejectStaffRequest,
-    refreshLeaveRequests,
-    refreshClaimRequests,
     refreshStaffRequests,
+    // Common
     isInitialized
   } = useStaffPortal();
 
@@ -62,14 +72,27 @@ export default function ApprovalsPage() {
   useStaffRequestsRealtime(handleStaffRequestsChange);
 
   const [activeTab, setActiveTab] = useState<TabType>('leave');
+  const [viewMode, setViewMode] = useState<'pending' | 'history'>('pending');
+
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState<{ type: TabType; id: string } | null>(null);
   const [rejectReason, setRejectReason] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
 
+  // Detail Modals State
+  const [selectedClaim, setSelectedClaim] = useState<ClaimRequest | null>(null);
+  const [isClaimModalOpen, setIsClaimModalOpen] = useState(false);
+  const [selectedRequest, setSelectedRequest] = useState<StaffRequest | null>(null);
+  const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
+
   const pendingLeave = getPendingLeaveRequests();
   const pendingClaims = getPendingClaimRequests();
   const pendingRequests = getPendingStaffRequests();
+
+  // History Data
+  const historyLeave = leaveRequests.filter(r => r.status !== 'pending').sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  const historyClaims = claimRequests.filter(r => r.status !== 'pending').sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  const historyRequests = staffRequests.filter(r => r.status !== 'pending').sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
   const totalPending = pendingLeave.length + pendingClaims.length + pendingRequests.length;
 
@@ -81,8 +104,10 @@ export default function ApprovalsPage() {
       approveLeaveRequest(id, CURRENT_APPROVER_ID, CURRENT_APPROVER_NAME);
     } else if (type === 'claims') {
       approveClaimRequest(id, CURRENT_APPROVER_ID, CURRENT_APPROVER_NAME);
+      setIsClaimModalOpen(false); // Close modal if open
     } else {
       completeStaffRequest(id, 'Diluluskan');
+      setIsRequestModalOpen(false); // Close modal if open
     }
 
     setIsProcessing(false);
@@ -107,13 +132,25 @@ export default function ApprovalsPage() {
       rejectLeaveRequest(selectedItem.id, CURRENT_APPROVER_ID, CURRENT_APPROVER_NAME, rejectReason);
     } else if (selectedItem.type === 'claims') {
       rejectClaimRequest(selectedItem.id, CURRENT_APPROVER_ID, CURRENT_APPROVER_NAME, rejectReason);
+      setIsClaimModalOpen(false);
     } else {
       rejectStaffRequest(selectedItem.id, rejectReason);
+      setIsRequestModalOpen(false);
     }
 
     setIsProcessing(false);
     setShowRejectModal(false);
     setSelectedItem(null);
+  };
+
+  const openClaimDetail = (claim: ClaimRequest) => {
+    setSelectedClaim(claim);
+    setIsClaimModalOpen(true);
+  };
+
+  const openRequestDetail = (request: StaffRequest) => {
+    setSelectedRequest(request);
+    setIsRequestModalOpen(true);
   };
 
   if (!isInitialized) {
@@ -126,17 +163,193 @@ export default function ApprovalsPage() {
     );
   }
 
+  // Helper to render lists
+  const renderList = (data: any[], type: TabType, isHistory: boolean) => {
+    if (data.length === 0) {
+      return (
+        <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>
+          Tiada rekod {isHistory ? 'history' : 'pending'}
+        </div>
+      );
+    }
+
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        {data.map(item => (
+          <div
+            key={item.id}
+            onClick={() => {
+              if (type === 'claims') openClaimDetail(item);
+              if (type === 'requests') openRequestDetail(item);
+            }}
+            style={{
+              padding: '1rem',
+              borderRadius: 'var(--radius-md)',
+              background: 'var(--gray-50)',
+              border: '1px solid var(--gray-200)',
+              cursor: (type === 'claims' || type === 'requests') ? 'pointer' : 'default',
+              transition: 'all 0.2s',
+            }}
+            onMouseEnter={(e) => {
+              if (type === 'claims' || type === 'requests') {
+                e.currentTarget.style.borderColor = 'var(--primary)';
+                e.currentTarget.style.backgroundColor = '#fff';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (type === 'claims' || type === 'requests') {
+                e.currentTarget.style.borderColor = 'var(--gray-200)';
+                e.currentTarget.style.backgroundColor = 'var(--gray-50)';
+              }
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem', flexWrap: 'wrap' }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>
+                  {item.staffName}
+                </div>
+
+                {/* Specific details based on type */}
+                {type === 'leave' && (
+                  <>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                      <span className="badge badge-info" style={{ fontSize: '0.7rem' }}>
+                        {getLeaveTypeLabel(item.type)}
+                      </span>
+                      <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+                        {item.duration} hari
+                      </span>
+                    </div>
+                    <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <Calendar size={14} />
+                      {item.startDate} - {item.endDate}
+                    </div>
+                    {item.reason && (
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-light)', marginTop: '0.5rem' }}>
+                        Sebab: {item.reason}
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {type === 'claims' && (
+                  <>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                      <span className="badge badge-info" style={{ fontSize: '0.7rem' }}>
+                        {getClaimTypeLabel(item.type)}
+                      </span>
+                      <span style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--primary)' }}>
+                        BND {item.amount.toFixed(2)}
+                      </span>
+                    </div>
+                    <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+                      {item.description}
+                    </div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--primary)', marginTop: '0.25rem' }}>
+                      <FileText size={10} style={{ display: 'inline', marginRight: '4px' }} />
+                      Klik untuk lihat butiran & resit
+                    </div>
+                  </>
+                )}
+
+                {type === 'requests' && (
+                  <>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                      <span className="badge badge-secondary" style={{ fontSize: '0.7rem' }}>
+                        {getRequestCategoryLabel(item.category)}
+                      </span>
+                      <span className={`badge badge-${item.priority === 'high' ? 'danger' : item.priority === 'medium' ? 'warning' : 'info'}`} style={{ fontSize: '0.65rem' }}>
+                        {item.priority === 'high' ? 'Urgent' : item.priority === 'medium' ? 'Sederhana' : 'Rendah'}
+                      </span>
+                    </div>
+                    <div style={{ fontWeight: 500, marginBottom: '0.25rem' }}>
+                      {item.title}
+                    </div>
+                    <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+                      {item.description}
+                    </div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--primary)', marginTop: '0.25rem' }}>
+                      <FileText size={10} style={{ display: 'inline', marginRight: '4px' }} />
+                      Klik untuk lihat butiran
+                    </div>
+                  </>
+                )}
+
+                <div style={{ fontSize: '0.7rem', color: 'var(--text-light)', marginTop: '0.5rem' }}>
+                  <Clock size={10} style={{ display: 'inline', marginRight: '0.25rem' }} />
+                  {new Date(item.createdAt).toLocaleDateString('ms-MY')}
+                  {isHistory && (
+                    <span className={`badge badge-${getStatusColor(item.status)}`} style={{ marginLeft: '0.5rem', fontSize: '0.7rem' }}>
+                      {getStatusLabel(item.status)}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Actions - Only for Pending */}
+              {!isHistory && (
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <button
+                    className="btn btn-success btn-sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleApprove(type, item.id);
+                    }}
+                    disabled={isProcessing}
+                  >
+                    <CheckCircle size={16} />
+                    {type === 'requests' ? 'Selesai' : 'Lulus'}
+                  </button>
+                  <button
+                    className="btn btn-danger btn-sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      openRejectModal(type, item.id);
+                    }}
+                    disabled={isProcessing}
+                  >
+                    <XCircle size={16} />
+                    Tolak
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
   return (
     <MainLayout>
       <div className="animate-fade-in">
         {/* Header */}
-        <div style={{ marginBottom: '2rem' }}>
-          <h1 style={{ fontSize: '2rem', fontWeight: 700, marginBottom: '0.5rem' }}>
-            Approval Center
-          </h1>
-          <p style={{ color: 'var(--text-secondary)' }}>
-            {totalPending} permohonan menunggu kelulusan
-          </p>
+        <div style={{ marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+          <div>
+            <h1 style={{ fontSize: '2rem', fontWeight: 700, marginBottom: '0.5rem' }}>
+              Approval Center
+            </h1>
+            <p style={{ color: 'var(--text-secondary)' }}>
+              {totalPending} permohonan menunggu kelulusan
+            </p>
+          </div>
+
+          <div style={{ display: 'flex', background: 'var(--gray-100)', padding: '0.25rem', borderRadius: 'var(--radius-md)' }}>
+            <button
+              className={`btn btn-sm ${viewMode === 'pending' ? 'btn-white shadow-sm' : 'btn-ghost'}`}
+              onClick={() => setViewMode('pending')}
+              style={{ borderRadius: 'var(--radius-sm)' }}
+            >
+              Menunggu ({totalPending})
+            </button>
+            <button
+              className={`btn btn-sm ${viewMode === 'history' ? 'btn-white shadow-sm' : 'btn-ghost'}`}
+              onClick={() => setViewMode('history')}
+              style={{ borderRadius: 'var(--radius-sm)' }}
+            >
+              Sejarah
+            </button>
+          </div>
         </div>
 
         {/* Tabs */}
@@ -146,21 +359,21 @@ export default function ApprovalsPage() {
             onClick={() => setActiveTab('leave')}
           >
             <Plane size={18} />
-            Cuti ({pendingLeave.length})
+            Cuti {viewMode === 'pending' ? `(${pendingLeave.length})` : ''}
           </button>
           <button
             className={`btn ${activeTab === 'claims' ? 'btn-primary' : 'btn-outline'}`}
             onClick={() => setActiveTab('claims')}
           >
             <DollarSign size={18} />
-            Tuntutan ({pendingClaims.length})
+            Tuntutan {viewMode === 'pending' ? `(${pendingClaims.length})` : ''}
           </button>
           <button
             className={`btn ${activeTab === 'requests' ? 'btn-primary' : 'btn-outline'}`}
             onClick={() => setActiveTab('requests')}
           >
             <FileText size={18} />
-            Permohonan Lain ({pendingRequests.length})
+            Permohonan Lain {viewMode === 'pending' ? `(${pendingRequests.length})` : ''}
           </button>
         </div>
 
@@ -168,209 +381,18 @@ export default function ApprovalsPage() {
         <div className="card">
           <div className="card-header">
             <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <AlertCircle size={20} color="var(--warning)" />
-              Menunggu Kelulusan
+              {viewMode === 'pending' ? (
+                <AlertCircle size={20} color="var(--warning)" />
+              ) : (
+                <Clock size={20} color="var(--text-secondary)" />
+              )}
+              {viewMode === 'pending' ? 'Menunggu Kelulusan' : 'Sejarah Permohonan'}
             </div>
           </div>
 
-          {/* Leave Tab */}
-          {activeTab === 'leave' && (
-            pendingLeave.length > 0 ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                {pendingLeave.map(request => (
-                  <div
-                    key={request.id}
-                    style={{
-                      padding: '1rem',
-                      borderRadius: 'var(--radius-md)',
-                      background: 'var(--gray-50)',
-                      border: '1px solid var(--gray-200)'
-                    }}
-                  >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem', flexWrap: 'wrap' }}>
-                      <div style={{ flex: 1 }}>
-                        <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>
-                          {request.staffName}
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                          <span className="badge badge-info" style={{ fontSize: '0.7rem' }}>
-                            {getLeaveTypeLabel(request.type)}
-                          </span>
-                          <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
-                            {request.duration} hari
-                          </span>
-                        </div>
-                        <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                          <Calendar size={14} />
-                          {request.startDate} - {request.endDate}
-                        </div>
-                        {request.reason && (
-                          <div style={{ fontSize: '0.75rem', color: 'var(--text-light)', marginTop: '0.5rem' }}>
-                            Sebab: {request.reason}
-                          </div>
-                        )}
-                        <div style={{ fontSize: '0.7rem', color: 'var(--text-light)', marginTop: '0.5rem' }}>
-                          <Clock size={10} style={{ display: 'inline', marginRight: '0.25rem' }} />
-                          Dihantar: {new Date(request.createdAt).toLocaleDateString('ms-MY')}
-                        </div>
-                      </div>
-
-                      <div style={{ display: 'flex', gap: '0.5rem' }}>
-                        <button
-                          className="btn btn-success btn-sm"
-                          onClick={() => handleApprove('leave', request.id)}
-                          disabled={isProcessing}
-                        >
-                          <CheckCircle size={16} />
-                          Lulus
-                        </button>
-                        <button
-                          className="btn btn-danger btn-sm"
-                          onClick={() => openRejectModal('leave', request.id)}
-                          disabled={isProcessing}
-                        >
-                          <XCircle size={16} />
-                          Tolak
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>
-                Tiada permohonan cuti pending
-              </div>
-            )
-          )}
-
-          {/* Claims Tab */}
-          {activeTab === 'claims' && (
-            pendingClaims.length > 0 ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                {pendingClaims.map(claim => (
-                  <div
-                    key={claim.id}
-                    style={{
-                      padding: '1rem',
-                      borderRadius: 'var(--radius-md)',
-                      background: 'var(--gray-50)',
-                      border: '1px solid var(--gray-200)'
-                    }}
-                  >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem', flexWrap: 'wrap' }}>
-                      <div style={{ flex: 1 }}>
-                        <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>
-                          {claim.staffName}
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                          <span className="badge badge-info" style={{ fontSize: '0.7rem' }}>
-                            {getClaimTypeLabel(claim.type)}
-                          </span>
-                          <span style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--primary)' }}>
-                            BND {claim.amount.toFixed(2)}
-                          </span>
-                        </div>
-                        <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
-                          {claim.description}
-                        </div>
-                        <div style={{ fontSize: '0.7rem', color: 'var(--text-light)', marginTop: '0.5rem' }}>
-                          Tarikh: {claim.claimDate}
-                        </div>
-                      </div>
-
-                      <div style={{ display: 'flex', gap: '0.5rem' }}>
-                        <button
-                          className="btn btn-success btn-sm"
-                          onClick={() => handleApprove('claims', claim.id)}
-                          disabled={isProcessing}
-                        >
-                          <CheckCircle size={16} />
-                          Lulus
-                        </button>
-                        <button
-                          className="btn btn-danger btn-sm"
-                          onClick={() => openRejectModal('claims', claim.id)}
-                          disabled={isProcessing}
-                        >
-                          <XCircle size={16} />
-                          Tolak
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>
-                Tiada tuntutan pending
-              </div>
-            )
-          )}
-
-          {/* Requests Tab */}
-          {activeTab === 'requests' && (
-            pendingRequests.length > 0 ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                {pendingRequests.map(request => (
-                  <div
-                    key={request.id}
-                    style={{
-                      padding: '1rem',
-                      borderRadius: 'var(--radius-md)',
-                      background: 'var(--gray-50)',
-                      border: '1px solid var(--gray-200)'
-                    }}
-                  >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem', flexWrap: 'wrap' }}>
-                      <div style={{ flex: 1 }}>
-                        <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>
-                          {request.staffName}
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                          <span className="badge badge-secondary" style={{ fontSize: '0.7rem' }}>
-                            {getRequestCategoryLabel(request.category)}
-                          </span>
-                          <span className={`badge badge-${request.priority === 'high' ? 'danger' : request.priority === 'medium' ? 'warning' : 'info'}`} style={{ fontSize: '0.65rem' }}>
-                            {request.priority === 'high' ? 'Urgent' : request.priority === 'medium' ? 'Sederhana' : 'Rendah'}
-                          </span>
-                        </div>
-                        <div style={{ fontWeight: 500, marginBottom: '0.25rem' }}>
-                          {request.title}
-                        </div>
-                        <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
-                          {request.description}
-                        </div>
-                      </div>
-
-                      <div style={{ display: 'flex', gap: '0.5rem' }}>
-                        <button
-                          className="btn btn-success btn-sm"
-                          onClick={() => handleApprove('requests', request.id)}
-                          disabled={isProcessing}
-                        >
-                          <CheckCircle size={16} />
-                          Selesai
-                        </button>
-                        <button
-                          className="btn btn-danger btn-sm"
-                          onClick={() => openRejectModal('requests', request.id)}
-                          disabled={isProcessing}
-                        >
-                          <XCircle size={16} />
-                          Tolak
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>
-                Tiada permohonan pending
-              </div>
-            )
-          )}
+          {activeTab === 'leave' && renderList(viewMode === 'pending' ? pendingLeave : historyLeave, 'leave', viewMode === 'history')}
+          {activeTab === 'claims' && renderList(viewMode === 'pending' ? pendingClaims : historyClaims, 'claims', viewMode === 'history')}
+          {activeTab === 'requests' && renderList(viewMode === 'pending' ? pendingRequests : historyRequests, 'requests', viewMode === 'history')}
         </div>
 
         {/* Reject Modal */}
@@ -410,11 +432,29 @@ export default function ApprovalsPage() {
             </button>
           </div>
         </Modal>
+
+        {/* Claim Detail Modal */}
+        <ClaimDetailModal
+          isOpen={isClaimModalOpen}
+          onClose={() => setIsClaimModalOpen(false)}
+          claim={selectedClaim}
+          isApprover={true}
+          isProcessing={isProcessing}
+          onApprove={(id) => handleApprove('claims', id)}
+          onReject={(id) => openRejectModal('claims', id)}
+        />
+
+        {/* Request Detail Modal */}
+        <RequestDetailModal
+          isOpen={isRequestModalOpen}
+          onClose={() => setIsRequestModalOpen(false)}
+          request={selectedRequest}
+          isApprover={true}
+          isProcessing={isProcessing}
+          onApprove={(id) => handleApprove('requests', id)}
+          onReject={(id) => openRejectModal('requests', id)}
+        />
       </div>
     </MainLayout>
   );
 }
-
-
-
-
