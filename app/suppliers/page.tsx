@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import MainLayout from '@/components/MainLayout';
 import { useSuppliers } from '@/lib/store';
 import { useSuppliersRealtime } from '@/lib/supabase/realtime-hooks';
@@ -51,6 +51,17 @@ export default function SuppliersPage() {
     refreshPurchaseOrders,
     isInitialized
   } = useSuppliers();
+
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  // Hydration safety check
+  if (!isMounted) {
+    return null; // Or a loading spinner
+  }
 
   const handleSuppliersChange = useCallback(() => {
     refreshSuppliers();
