@@ -47,6 +47,7 @@ export default function SuppliersPage() {
     deleteSupplier,
     addPurchaseOrder,
     updatePurchaseOrderStatus,
+    markPurchaseOrderAsPaid,
     refreshSuppliers,
     refreshPurchaseOrders,
     isInitialized
@@ -73,6 +74,7 @@ export default function SuppliersPage() {
   const [selectedPO, setSelectedPO] = useState<PurchaseOrder | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [poSearchTerm, setPoSearchTerm] = useState('');
 
   // Supplier form
   const [supplierForm, setSupplierForm] = useState({
@@ -126,9 +128,15 @@ export default function SuppliersPage() {
 
   const pendingPayments = useMemo(() => {
     return (purchaseOrders || [])
-      .filter(po => po?.status === 'received')
-      .reduce((sum, po) => sum + (po?.total || 0), 0)
+      .filter(po => po?.status === 'received' && po?.paymentStatus !== 'paid')
+      .reduce((sum, po) => sum + (po?.total || 0) - (po?.paidAmount || 0), 0)
       .toFixed(2);
+  }, [purchaseOrders]);
+
+  const unpaidPOsCount = useMemo(() => {
+    return (purchaseOrders || []).filter(po =>
+      po?.status === 'received' && po?.paymentStatus !== 'paid'
+    ).length;
   }, [purchaseOrders]);
 
   const topSupplier = useMemo(() => {
@@ -1389,6 +1397,44 @@ Thank you.`;
                       <CheckCircle size={16} />
                       Mark Received
                     </button>
+                  )}
+                </div>
+              )}
+
+              {/* Mark as Paid - Only for received orders that aren't paid yet */}
+              {selectedPO.status === 'received' && selectedPO.paymentStatus !== 'paid' && (
+                <div style={{ marginTop: '1rem', padding: '1rem', backgroundColor: 'var(--warning-bg)', borderRadius: 'var(--radius-md)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                    <span style={{ fontWeight: 600, color: 'var(--warning)' }}>
+                      Belum Dibayar
+                    </span>
+                    <span style={{ fontWeight: 700 }}>BND {selectedPO.total.toFixed(2)}</span>
+                  </div>
+                  <button
+                    className="btn btn-success"
+                    onClick={() => {
+                      if (confirm(`Tandakan PO ${selectedPO.poNumber} sebagai SUDAH BAYAR (BND ${selectedPO.total.toFixed(2)})?`)) {
+                        markPurchaseOrderAsPaid(selectedPO.id, selectedPO.total);
+                        closeModal();
+                      }
+                    }}
+                    style={{ width: '100%' }}
+                  >
+                    <CreditCard size={16} />
+                    Tandakan Sudah Bayar
+                  </button>
+                </div>
+              )}
+
+              {/* Show paid status if already paid */}
+              {selectedPO.status === 'received' && selectedPO.paymentStatus === 'paid' && (
+                <div style={{ marginTop: '1rem', padding: '1rem', backgroundColor: 'var(--success-bg)', borderRadius: 'var(--radius-md)', textAlign: 'center' }}>
+                  <CheckCircle size={20} color="var(--success)" style={{ marginBottom: '0.25rem' }} />
+                  <div style={{ fontWeight: 600, color: 'var(--success)' }}>Sudah Dibayar</div>
+                  {selectedPO.paidAt && (
+                    <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                      {new Date(selectedPO.paidAt).toLocaleDateString('ms-MY')}
+                    </div>
                   )}
                 </div>
               )}
