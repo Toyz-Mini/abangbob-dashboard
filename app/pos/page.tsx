@@ -259,6 +259,14 @@ export default function POSPage() {
       return;
     }
 
+    // Validate cash payment
+    if (paymentMethod === 'cash') {
+      if (!cashReceived || cashReceived < cartTotal) {
+        showToast('Sila masukkan jumlah bayaran yang mencukupi', 'error');
+        return;
+      }
+    }
+
     // Check network connectivity
     if (!isOnline()) {
       setNetworkError('Tiada sambungan internet. Sila semak rangkaian anda.');

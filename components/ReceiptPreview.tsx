@@ -386,6 +386,8 @@ export default function ReceiptPreview({
                 maxWidth: '60%',
                 maxHeight: '40px',
                 objectFit: 'contain',
+                display: 'block',
+                margin: '0 auto'
               }}
             />
           </div>
