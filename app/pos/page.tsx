@@ -602,10 +602,10 @@ export default function POSPage() {
                             </div>
                             {item.selectedModifiers.length > 0 && (
                               <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
-                                {item.selectedModifiers.map((mod, i) => (
-                                    - {mod.groupName?.replace('Pilih ', '') || ''}: {mod.optionName}
-                                    {mod.extraPrice > 0 && ` (+$${mod.extraPrice.toFixed(2)})`}
-                                  </div>
+                                <div key={i}>
+                                  - {mod.groupName?.replace('Pilih ', '') || ''}: {mod.optionName}
+                                  {mod.extraPrice > 0 && ` (+$${mod.extraPrice.toFixed(2)})`}
+                                </div>
                                 ))}
                               </div>
                             )}
@@ -650,1000 +650,1000 @@ export default function POSPage() {
                         </div>
                       </div>
                     ))}
-                </div>
+                  </div>
 
-              {/* Discount */}
+                  {/* Discount */}
+                  <div style={{
+                    padding: '0.75rem',
+                    background: 'var(--gray-100)',
+                    borderRadius: 'var(--radius-md)',
+                    marginBottom: '1rem'
+                  }}>
+                    <label style={{ fontSize: '0.875rem', fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>
+                      Diskaun (%)
+                    </label>
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                      {[0, 5, 10, 15, 20].map(percent => (
+                        <button
+                          key={percent}
+                          onClick={() => setDiscountPercent(percent)}
+                          className={`btn btn-sm ${discountPercent === percent ? 'btn-primary' : 'btn-outline'}`}
+                          style={{ flex: 1, padding: '0.5rem' }}
+                        >
+                          {percent}%
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div style={{
+                    paddingTop: '1rem',
+                    borderTop: '2px solid var(--gray-300)',
+                    marginTop: '0.5rem'
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', fontSize: '0.875rem' }}>
+                      <span>Subtotal:</span>
+                      <span>BND {cartSubtotal.toFixed(2)}</span>
+                    </div>
+                    {discountPercent > 0 && (
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', fontSize: '0.875rem', color: 'var(--success)' }}>
+                        <span>Diskaun ({discountPercent}%):</span>
+                        <span>-BND {discountAmount.toFixed(2)}</span>
+                      </div>
+                    )}
+                    <div style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      fontSize: '1.25rem',
+                      fontWeight: 700,
+                      marginBottom: '1rem'
+                    }}>
+                      <span>Jumlah:</span>
+                      <span>BND {cartTotal.toFixed(2)}</span>
+                    </div>
+                    <button
+                      onClick={handleCheckout}
+                      className="btn btn-primary"
+                      style={{ width: '100%' }}
+                    >
+                      Checkout
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Modifier Selection Modal */}
+        <Modal
+          isOpen={modalType === 'modifiers'}
+          onClose={() => {
+            setModalType(null);
+            setSelectedItemForModifiers(null);
+            setTempSelectedModifiers([]);
+          }}
+          title={`Pilih Options - ${selectedItemForModifiers?.name}`}
+          maxWidth="450px"
+        >
+          {selectedItemForModifiers && (
+            <>
+              <div style={{ marginBottom: '1rem' }}>
+                <div style={{ fontWeight: 700, fontSize: '1.1rem' }}>{selectedItemForModifiers.name}</div>
+                <div style={{ color: 'var(--primary)', fontWeight: 600 }}>BND {selectedItemForModifiers.price.toFixed(2)}</div>
+              </div>
+
+              {selectedItemForModifiers.modifierGroupIds.map(groupId => {
+                const group = modifierGroups.find(g => g.id === groupId);
+                if (!group) return null;
+
+                const options = getOptionsForGroup(groupId).filter(opt => opt.isAvailable);
+                const selectedCount = tempSelectedModifiers.filter(m => m.groupId === groupId).length;
+
+                return (
+                  <div key={groupId} style={{ marginBottom: '1.5rem' }}>
+                    <div style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      marginBottom: '0.75rem'
+                    }}>
+                      <div>
+                        <span style={{ fontWeight: 600 }}>{group.name}</span>
+                        {group.isRequired && (
+                          <span style={{ color: 'var(--danger)', marginLeft: '0.5rem', fontSize: '0.75rem' }}>
+                            * Wajib
+                          </span>
+                        )}
+                      </div>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                        {selectedCount}/{group.maxSelection}
+                      </span>
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                      {options.map(option => {
+                        const isSelected = tempSelectedModifiers.some(m => m.optionId === option.id);
+                        return (
+                          <button
+                            key={option.id}
+                            onClick={() => toggleModifierOption(group, option)}
+                            style={{
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'center',
+                              padding: '0.75rem 1rem',
+                              border: isSelected ? '2px solid var(--primary)' : '1px solid var(--gray-300)',
+                              borderRadius: 'var(--radius-md)',
+                              background: isSelected ? 'var(--primary-light)' : 'white',
+                              cursor: 'pointer',
+                              transition: 'all 0.2s'
+                            }}
+                          >
+                            <span style={{ fontWeight: isSelected ? 600 : 400 }}>{option.name}</span>
+                            <span style={{
+                              fontWeight: 600,
+                              color: option.extraPrice > 0 ? 'var(--success)' : 'var(--text-secondary)'
+                            }}>
+                              {option.extraPrice > 0 ? `+BND ${option.extraPrice.toFixed(2)}` : 'Free'}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+
+              {/* Total Preview */}
               <div style={{
-                padding: '0.75rem',
+                padding: '1rem',
                 background: 'var(--gray-100)',
                 borderRadius: 'var(--radius-md)',
                 marginBottom: '1rem'
               }}>
-                <label style={{ fontSize: '0.875rem', fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>
-                  Diskaun (%)
-                </label>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  {[0, 5, 10, 15, 20].map(percent => (
-                    <button
-                      key={percent}
-                      onClick={() => setDiscountPercent(percent)}
-                      className={`btn btn-sm ${discountPercent === percent ? 'btn-primary' : 'btn-outline'}`}
-                      style={{ flex: 1, padding: '0.5rem' }}
-                    >
-                      {percent}%
-                    </button>
-                  ))}
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                  <span>Harga Asas:</span>
+                  <span>BND {selectedItemForModifiers.price.toFixed(2)}</span>
                 </div>
-              </div>
-
-              <div style={{
-                paddingTop: '1rem',
-                borderTop: '2px solid var(--gray-300)',
-                marginTop: '0.5rem'
-              }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', fontSize: '0.875rem' }}>
-                  <span>Subtotal:</span>
-                  <span>BND {cartSubtotal.toFixed(2)}</span>
-                </div>
-                {discountPercent > 0 && (
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', fontSize: '0.875rem', color: 'var(--success)' }}>
-                    <span>Diskaun ({discountPercent}%):</span>
-                    <span>-BND {discountAmount.toFixed(2)}</span>
+                {tempSelectedModifiers.filter(m => m.extraPrice > 0).map((mod, i) => (
+                  <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+                    <span>+ {mod.groupName?.replace('Pilih ', '')}: {mod.optionName}</span>
+                    <span>+BND {mod.extraPrice.toFixed(2)}</span>
                   </div>
-                )}
+                ))}
                 <div style={{
                   display: 'flex',
                   justifyContent: 'space-between',
-                  fontSize: '1.25rem',
                   fontWeight: 700,
-                  marginBottom: '1rem'
+                  fontSize: '1.1rem',
+                  paddingTop: '0.5rem',
+                  borderTop: '1px dashed var(--gray-300)',
+                  marginTop: '0.5rem'
                 }}>
                   <span>Jumlah:</span>
-                  <span>BND {cartTotal.toFixed(2)}</span>
+                  <span>BND {(selectedItemForModifiers.price + tempSelectedModifiers.reduce((sum, m) => sum + m.extraPrice, 0)).toFixed(2)}</span>
                 </div>
+              </div>
+
+              <div style={{
+                display: 'flex',
+                justifyContent: 'flex-end',
+                gap: '0.75rem',
+                marginTop: '1.5rem',
+                paddingTop: '1rem',
+                borderTop: '1px solid var(--gray-200)'
+              }}>
                 <button
-                  onClick={handleCheckout}
-                  className="btn btn-primary"
-                  style={{ width: '100%' }}
+                  className="btn btn-outline"
+                  onClick={() => {
+                    setModalType(null);
+                    setSelectedItemForModifiers(null);
+                  }}
+                  style={{
+                    minWidth: '100px',
+                    padding: '0.5rem 1rem'
+                  }}
                 >
-                  Checkout
+                  Batal
+                </button>
+                <button
+                  className="btn btn-primary"
+                  onClick={handleAddWithModifiers}
+                  disabled={!validateModifiers()}
+                  style={{
+                    minWidth: '160px',
+                    padding: '0.5rem 1.25rem',
+                    fontWeight: 600
+                  }}
+                >
+                  Tambah ke Keranjang
                 </button>
               </div>
             </>
-              )}
-          </div>
-        </div>
-      </div>
+          )}
+        </Modal>
 
-      {/* Modifier Selection Modal */}
-      <Modal
-        isOpen={modalType === 'modifiers'}
-        onClose={() => {
-          setModalType(null);
-          setSelectedItemForModifiers(null);
-          setTempSelectedModifiers([]);
-        }}
-        title={`Pilih Options - ${selectedItemForModifiers?.name}`}
-        maxWidth="450px"
-      >
-        {selectedItemForModifiers && (
-          <>
-            <div style={{ marginBottom: '1rem' }}>
-              <div style={{ fontWeight: 700, fontSize: '1.1rem' }}>{selectedItemForModifiers.name}</div>
-              <div style={{ color: 'var(--primary)', fontWeight: 600 }}>BND {selectedItemForModifiers.price.toFixed(2)}</div>
-            </div>
-
-            {selectedItemForModifiers.modifierGroupIds.map(groupId => {
-              const group = modifierGroups.find(g => g.id === groupId);
-              if (!group) return null;
-
-              const options = getOptionsForGroup(groupId).filter(opt => opt.isAvailable);
-              const selectedCount = tempSelectedModifiers.filter(m => m.groupId === groupId).length;
-
-              return (
-                <div key={groupId} style={{ marginBottom: '1.5rem' }}>
-                  <div style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    marginBottom: '0.75rem'
-                  }}>
-                    <div>
-                      <span style={{ fontWeight: 600 }}>{group.name}</span>
-                      {group.isRequired && (
-                        <span style={{ color: 'var(--danger)', marginLeft: '0.5rem', fontSize: '0.75rem' }}>
-                          * Wajib
-                        </span>
-                      )}
-                    </div>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                      {selectedCount}/{group.maxSelection}
-                    </span>
-                  </div>
-
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                    {options.map(option => {
-                      const isSelected = tempSelectedModifiers.some(m => m.optionId === option.id);
-                      return (
-                        <button
-                          key={option.id}
-                          onClick={() => toggleModifierOption(group, option)}
-                          style={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                            padding: '0.75rem 1rem',
-                            border: isSelected ? '2px solid var(--primary)' : '1px solid var(--gray-300)',
-                            borderRadius: 'var(--radius-md)',
-                            background: isSelected ? 'var(--primary-light)' : 'white',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s'
-                          }}
-                        >
-                          <span style={{ fontWeight: isSelected ? 600 : 400 }}>{option.name}</span>
-                          <span style={{
-                            fontWeight: 600,
-                            color: option.extraPrice > 0 ? 'var(--success)' : 'var(--text-secondary)'
-                          }}>
-                            {option.extraPrice > 0 ? `+BND ${option.extraPrice.toFixed(2)}` : 'Free'}
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              );
-            })}
-
-            {/* Total Preview */}
-            <div style={{
-              padding: '1rem',
-              background: 'var(--gray-100)',
-              borderRadius: 'var(--radius-md)',
-              marginBottom: '1rem'
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                <span>Harga Asas:</span>
-                <span>BND {selectedItemForModifiers.price.toFixed(2)}</span>
-              </div>
-              {tempSelectedModifiers.filter(m => m.extraPrice > 0).map((mod, i) => (
-                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
-                  <span>+ {mod.groupName?.replace('Pilih ', '')}: {mod.optionName}</span>
-                  <span>+BND {mod.extraPrice.toFixed(2)}</span>
-                </div>
-              ))}
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                fontWeight: 700,
-                fontSize: '1.1rem',
-                paddingTop: '0.5rem',
-                borderTop: '1px dashed var(--gray-300)',
-                marginTop: '0.5rem'
-              }}>
-                <span>Jumlah:</span>
-                <span>BND {(selectedItemForModifiers.price + tempSelectedModifiers.reduce((sum, m) => sum + m.extraPrice, 0)).toFixed(2)}</span>
-              </div>
-            </div>
-
-            <div style={{
-              display: 'flex',
-              justifyContent: 'flex-end',
-              gap: '0.75rem',
-              marginTop: '1.5rem',
-              paddingTop: '1rem',
-              borderTop: '1px solid var(--gray-200)'
-            }}>
-              <button
-                className="btn btn-outline"
-                onClick={() => {
-                  setModalType(null);
-                  setSelectedItemForModifiers(null);
-                }}
-                style={{
-                  minWidth: '100px',
-                  padding: '0.5rem 1rem'
-                }}
-              >
-                Batal
-              </button>
-              <button
-                className="btn btn-primary"
-                onClick={handleAddWithModifiers}
-                disabled={!validateModifiers()}
-                style={{
-                  minWidth: '160px',
-                  padding: '0.5rem 1.25rem',
-                  fontWeight: 600
-                }}
-              >
-                Tambah ke Keranjang
-              </button>
-            </div>
-          </>
-        )}
-      </Modal>
-
-      {/* Upsell Modal - Product Cards */}
-      <Modal
-        isOpen={modalType === 'upsell'}
-        onClose={() => setModalType(null)}
-        title="Tambah Lagi?"
-        maxWidth="550px"
-      >
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '0.5rem',
-          marginBottom: '1.25rem',
-          padding: '0.75rem 1rem',
-          background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)',
-          borderRadius: 'var(--radius-md)',
-          color: '#92400e'
-        }}>
-          <Sparkles size={20} />
-          <span style={{ fontWeight: 500 }}>Jangan lupa minuman! Pilih di bawah:</span>
-        </div>
-
-        {/* Product Grid */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(2, 1fr)',
-          gap: '0.75rem',
-          marginBottom: '1.5rem'
-        }}>
-          {upsellSuggestions.map(item => (
-            <div
-              key={item.id}
-              style={{
-                background: 'white',
-                border: '2px solid var(--gray-200)',
-                borderRadius: 'var(--radius-lg)',
-                padding: '1rem',
-                textAlign: 'center',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = 'var(--primary)';
-                e.currentTarget.style.transform = 'translateY(-2px)';
-                e.currentTarget.style.boxShadow = 'var(--shadow-md)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = 'var(--gray-200)';
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = 'none';
-              }}
-              onClick={() => {
-                handleItemClick(item);
-              }}
-            >
-              {/* Icon */}
-              <div style={{
-                width: '56px',
-                height: '56px',
-                background: 'linear-gradient(135deg, var(--primary-light) 0%, #e0e7ff 100%)',
-                borderRadius: '50%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                margin: '0 auto 0.75rem',
-                color: 'var(--primary)'
-              }}>
-                <Coffee size={28} />
-              </div>
-
-              {/* Name */}
-              <div style={{ fontWeight: 600, fontSize: '0.95rem', marginBottom: '0.25rem' }}>
-                {item.name}
-              </div>
-
-              {/* Price */}
-              <div style={{
-                color: 'var(--primary)',
-                fontWeight: 700,
-                fontSize: '1.1rem',
-                marginBottom: '0.75rem'
-              }}>
-                BND {item.price.toFixed(2)}
-              </div>
-
-              {/* Add Button */}
-              <button
-                className="btn btn-primary btn-sm"
-                style={{
-                  width: '100%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '0.35rem'
-                }}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleItemClick(item);
-                }}
-              >
-                <Plus size={16} />
-                Tambah
-              </button>
-            </div>
-          ))}
-        </div>
-
-        {/* Added Items Feedback */}
-        {cart.filter(c => upsellSuggestions.some(u => u.id === c.id)).length > 0 && (
+        {/* Upsell Modal - Product Cards */}
+        <Modal
+          isOpen={modalType === 'upsell'}
+          onClose={() => setModalType(null)}
+          title="Tambah Lagi?"
+          maxWidth="550px"
+        >
           <div style={{
-            padding: '0.75rem 1rem',
-            background: '#d1fae5',
-            borderRadius: 'var(--radius-md)',
-            marginBottom: '1rem',
             display: 'flex',
             alignItems: 'center',
             gap: '0.5rem',
-            color: '#065f46'
+            marginBottom: '1.25rem',
+            padding: '0.75rem 1rem',
+            background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)',
+            borderRadius: 'var(--radius-md)',
+            color: '#92400e'
           }}>
-            <CheckCircle size={18} />
-            <span style={{ fontWeight: 500 }}>
-              {cart.filter(c => upsellSuggestions.some(u => u.id === c.id)).reduce((sum, c) => sum + c.quantity, 0)} minuman ditambah
-            </span>
+            <Sparkles size={20} />
+            <span style={{ fontWeight: 500 }}>Jangan lupa minuman! Pilih di bawah:</span>
           </div>
-        )}
 
-        {/* Action Buttons */}
-        <div style={{
-          display: 'flex',
-          justifyContent: 'flex-end',
-          gap: '0.75rem',
-          marginTop: '1.5rem',
-          paddingTop: '1rem',
-          borderTop: '1px solid var(--gray-200)'
-        }}>
-          <button
-            onClick={() => setModalType(null)}
-            className="btn btn-outline"
-            style={{
-              minWidth: '100px',
-              padding: '0.5rem 1rem'
-            }}
-          >
-            Kembali
-          </button>
-          <button
-            onClick={() => setModalType('checkout')}
-            className="btn btn-primary"
-            style={{
-              minWidth: '160px',
-              padding: '0.5rem 1.25rem',
-              fontWeight: 600
-            }}
-          >
-            Teruskan Checkout
-          </button>
-        </div>
-      </Modal>
-
-      {/* Checkout Modal */}
-      <Modal
-        isOpen={modalType === 'checkout'}
-        onClose={() => !isProcessing && setModalType(null)}
-        title="Checkout"
-        subtitle={`Jumlah: BND ${cartTotal.toFixed(2)}`}
-        maxWidth="500px"
-      >
-        <div className="form-group">
-          <label className="form-label">Jenis Pesanan *</label>
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <button
-              onClick={() => setOrderType('takeaway')}
-              className={`btn ${orderType === 'takeaway' ? 'btn-primary' : 'btn-outline'}`}
-              style={{ flex: 1 }}
-            >
-              Takeaway
-            </button>
-            <button
-              onClick={() => setOrderType('gomamam')}
-              className={`btn ${orderType === 'gomamam' ? 'btn-primary' : 'btn-outline'}`}
-              style={{ flex: 1 }}
-            >
-              GoMamam
-            </button>
-          </div>
-        </div>
-
-        {/* Customer Name - Optional for personalization */}
-        <div className="form-group">
-          <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <User size={16} />
-            Nama Pelanggan
-          </label>
-          <input
-            type="text"
-            className="form-input"
-            value={customerName}
-            onChange={(e) => setCustomerName(e.target.value)}
-            placeholder="Masukkan nama (optional)"
-          />
-          <small style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>
-            Untuk personalize receipt dengan nama pelanggan
-          </small>
-        </div>
-
-        <div className="form-group">
-          <label className="form-label">Nombor Telefon *</label>
-          <input
-            type="tel"
-            className="form-input"
-            value={customerPhone}
-            onChange={(e) => setCustomerPhone(e.target.value)}
-            placeholder="+6737123456"
-            required
-          />
-          <small style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>
-            Wajib untuk checkout (Default: Brunei +673)
-          </small>
-        </div>
-
-        {/* Payment Method Selection */}
-        <div className="form-group">
-          <label className="form-label">Kaedah Pembayaran *</label>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem' }}>
-            {enabledPaymentMethods.map((pm) => (
-              <button
-                key={pm.id}
-                type="button"
-                onClick={() => setPaymentMethod(pm.code)}
-                className={`btn ${paymentMethod === pm.code ? 'btn-primary' : 'btn-outline'}`}
-                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
+          {/* Product Grid */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(2, 1fr)',
+            gap: '0.75rem',
+            marginBottom: '1.5rem'
+          }}>
+            {upsellSuggestions.map(item => (
+              <div
+                key={item.id}
+                style={{
+                  background: 'white',
+                  border: '2px solid var(--gray-200)',
+                  borderRadius: 'var(--radius-lg)',
+                  padding: '1rem',
+                  textAlign: 'center',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = 'var(--primary)';
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.boxShadow = 'var(--shadow-md)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = 'var(--gray-200)';
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = 'none';
+                }}
+                onClick={() => {
+                  handleItemClick(item);
+                }}
               >
-                {pm.icon && <span style={{ fontSize: '1.2rem' }}>{pm.icon}</span>}
-                {pm.name}
-              </button>
+                {/* Icon */}
+                <div style={{
+                  width: '56px',
+                  height: '56px',
+                  background: 'linear-gradient(135deg, var(--primary-light) 0%, #e0e7ff 100%)',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  margin: '0 auto 0.75rem',
+                  color: 'var(--primary)'
+                }}>
+                  <Coffee size={28} />
+                </div>
+
+                {/* Name */}
+                <div style={{ fontWeight: 600, fontSize: '0.95rem', marginBottom: '0.25rem' }}>
+                  {item.name}
+                </div>
+
+                {/* Price */}
+                <div style={{
+                  color: 'var(--primary)',
+                  fontWeight: 700,
+                  fontSize: '1.1rem',
+                  marginBottom: '0.75rem'
+                }}>
+                  BND {item.price.toFixed(2)}
+                </div>
+
+                {/* Add Button */}
+                <button
+                  className="btn btn-primary btn-sm"
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.35rem'
+                  }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleItemClick(item);
+                  }}
+                >
+                  <Plus size={16} />
+                  Tambah
+                </button>
+              </div>
             ))}
           </div>
-          {enabledPaymentMethods.length === 0 && (
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginTop: '0.5rem' }}>
-              Tiada kaedah pembayaran aktif. Sila tetapkan dalam Settings.
-            </p>
-          )}
-        </div>
 
-        {/* Cash Amount Input - Show only for cash payment */}
-        {paymentMethod === 'cash' && (
-          <div className="form-group" style={{
-            background: 'var(--gray-100)',
-            padding: '1rem',
-            borderRadius: 'var(--radius-md)',
-            marginTop: '0.5rem'
+          {/* Added Items Feedback */}
+          {cart.filter(c => upsellSuggestions.some(u => u.id === c.id)).length > 0 && (
+            <div style={{
+              padding: '0.75rem 1rem',
+              background: '#d1fae5',
+              borderRadius: 'var(--radius-md)',
+              marginBottom: '1rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              color: '#065f46'
+            }}>
+              <CheckCircle size={18} />
+              <span style={{ fontWeight: 500 }}>
+                {cart.filter(c => upsellSuggestions.some(u => u.id === c.id)).reduce((sum, c) => sum + c.quantity, 0)} minuman ditambah
+              </span>
+            </div>
+          )}
+
+          {/* Action Buttons */}
+          <div style={{
+            display: 'flex',
+            justifyContent: 'flex-end',
+            gap: '0.75rem',
+            marginTop: '1.5rem',
+            paddingTop: '1rem',
+            borderTop: '1px solid var(--gray-200)'
           }}>
-            <label className="form-label" style={{ marginBottom: '0.5rem' }}>
-              Jumlah Diterima (BND)
+            <button
+              onClick={() => setModalType(null)}
+              className="btn btn-outline"
+              style={{
+                minWidth: '100px',
+                padding: '0.5rem 1rem'
+              }}
+            >
+              Kembali
+            </button>
+            <button
+              onClick={() => setModalType('checkout')}
+              className="btn btn-primary"
+              style={{
+                minWidth: '160px',
+                padding: '0.5rem 1.25rem',
+                fontWeight: 600
+              }}
+            >
+              Teruskan Checkout
+            </button>
+          </div>
+        </Modal>
+
+        {/* Checkout Modal */}
+        <Modal
+          isOpen={modalType === 'checkout'}
+          onClose={() => !isProcessing && setModalType(null)}
+          title="Checkout"
+          subtitle={`Jumlah: BND ${cartTotal.toFixed(2)}`}
+          maxWidth="500px"
+        >
+          <div className="form-group">
+            <label className="form-label">Jenis Pesanan *</label>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <button
+                onClick={() => setOrderType('takeaway')}
+                className={`btn ${orderType === 'takeaway' ? 'btn-primary' : 'btn-outline'}`}
+                style={{ flex: 1 }}
+              >
+                Takeaway
+              </button>
+              <button
+                onClick={() => setOrderType('gomamam')}
+                className={`btn ${orderType === 'gomamam' ? 'btn-primary' : 'btn-outline'}`}
+                style={{ flex: 1 }}
+              >
+                GoMamam
+              </button>
+            </div>
+          </div>
+
+          {/* Customer Name - Optional for personalization */}
+          <div className="form-group">
+            <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <User size={16} />
+              Nama Pelanggan
             </label>
             <input
-              type="number"
+              type="text"
               className="form-input"
-              placeholder="0.00"
-              value={cashReceived || ''}
-              onChange={(e) => setCashReceived(Number(e.target.value))}
-              min="0"
-              step="0.01"
-              style={{ fontSize: '1.25rem', fontWeight: 700, textAlign: 'center' }}
+              value={customerName}
+              onChange={(e) => setCustomerName(e.target.value)}
+              placeholder="Masukkan nama (optional)"
             />
-            {cashReceived > 0 && (
-              <div style={{
-                marginTop: '0.75rem',
-                padding: '0.75rem',
-                background: cashReceived >= cartTotal ? 'var(--success-light, #d1fae5)' : 'var(--danger-light, #fee2e2)',
-                borderRadius: 'var(--radius-sm)',
-                textAlign: 'center'
-              }}>
-                <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>
-                  Baki
-                </div>
+            <small style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>
+              Untuk personalize receipt dengan nama pelanggan
+            </small>
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Nombor Telefon *</label>
+            <input
+              type="tel"
+              className="form-input"
+              value={customerPhone}
+              onChange={(e) => setCustomerPhone(e.target.value)}
+              placeholder="+6737123456"
+              required
+            />
+            <small style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>
+              Wajib untuk checkout (Default: Brunei +673)
+            </small>
+          </div>
+
+          {/* Payment Method Selection */}
+          <div className="form-group">
+            <label className="form-label">Kaedah Pembayaran *</label>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem' }}>
+              {enabledPaymentMethods.map((pm) => (
+                <button
+                  key={pm.id}
+                  type="button"
+                  onClick={() => setPaymentMethod(pm.code)}
+                  className={`btn ${paymentMethod === pm.code ? 'btn-primary' : 'btn-outline'}`}
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
+                >
+                  {pm.icon && <span style={{ fontSize: '1.2rem' }}>{pm.icon}</span>}
+                  {pm.name}
+                </button>
+              ))}
+            </div>
+            {enabledPaymentMethods.length === 0 && (
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginTop: '0.5rem' }}>
+                Tiada kaedah pembayaran aktif. Sila tetapkan dalam Settings.
+              </p>
+            )}
+          </div>
+
+          {/* Cash Amount Input - Show only for cash payment */}
+          {paymentMethod === 'cash' && (
+            <div className="form-group" style={{
+              background: 'var(--gray-100)',
+              padding: '1rem',
+              borderRadius: 'var(--radius-md)',
+              marginTop: '0.5rem'
+            }}>
+              <label className="form-label" style={{ marginBottom: '0.5rem' }}>
+                Jumlah Diterima (BND)
+              </label>
+              <input
+                type="number"
+                className="form-input"
+                placeholder="0.00"
+                value={cashReceived || ''}
+                onChange={(e) => setCashReceived(Number(e.target.value))}
+                min="0"
+                step="0.01"
+                style={{ fontSize: '1.25rem', fontWeight: 700, textAlign: 'center' }}
+              />
+              {cashReceived > 0 && (
                 <div style={{
-                  fontSize: '1.5rem',
-                  fontWeight: 700,
-                  color: cashReceived >= cartTotal ? 'var(--success)' : 'var(--danger)'
+                  marginTop: '0.75rem',
+                  padding: '0.75rem',
+                  background: cashReceived >= cartTotal ? 'var(--success-light, #d1fae5)' : 'var(--danger-light, #fee2e2)',
+                  borderRadius: 'var(--radius-sm)',
+                  textAlign: 'center'
                 }}>
-                  BND {(cashReceived - cartTotal).toFixed(2)}
+                  <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>
+                    Baki
+                  </div>
+                  <div style={{
+                    fontSize: '1.5rem',
+                    fontWeight: 700,
+                    color: cashReceived >= cartTotal ? 'var(--success)' : 'var(--danger)'
+                  }}>
+                    BND {(cashReceived - cartTotal).toFixed(2)}
+                  </div>
+                  {cashReceived < cartTotal && (
+                    <div style={{ fontSize: '0.75rem', color: 'var(--danger)', marginTop: '0.25rem' }}>
+                      Kurang BND {(cartTotal - cashReceived).toFixed(2)}
+                    </div>
+                  )}
                 </div>
-                {cashReceived < cartTotal && (
-                  <div style={{ fontSize: '0.75rem', color: 'var(--danger)', marginTop: '0.25rem' }}>
-                    Kurang BND {(cartTotal - cashReceived).toFixed(2)}
+              )}
+              {/* Quick cash buttons */}
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(3, 1fr)',
+                gap: '0.5rem',
+                marginTop: '0.75rem'
+              }}>
+                {[5, 10, 20, 50, 100].map(amount => (
+                  <button
+                    key={amount}
+                    type="button"
+                    onClick={() => setCashReceived(amount)}
+                    className="btn btn-sm btn-outline"
+                  >
+                    ${amount}
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => setCashReceived(Math.ceil(cartTotal))}
+                  className="btn btn-sm btn-primary"
+                >
+                  Tepat
+                </button>
+              </div>
+            </div>
+          )}
+
+          <div style={{
+            display: 'flex',
+            justifyContent: 'flex-end',
+            gap: '0.75rem',
+            marginTop: '1.5rem',
+            paddingTop: '1rem',
+            borderTop: '1px solid var(--gray-200)'
+          }}>
+            <button
+              onClick={() => setModalType(null)}
+              className="btn btn-outline"
+              style={{
+                minWidth: '100px',
+                padding: '0.5rem 1rem'
+              }}
+              disabled={isProcessing}
+            >
+              Batal
+            </button>
+            <button
+              onClick={() => proceedToPayment()}
+              className={`btn btn-primary ${isProcessing ? 'loading' : ''}`}
+              style={{
+                minWidth: '160px',
+                padding: '0.5rem 1.25rem',
+                fontWeight: 600,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+              disabled={isProcessing}
+            >
+              {isProcessing ? (
+                <>
+                  <LoadingSpinner size="sm" />
+                  <span style={{ marginLeft: '0.5rem' }}>Memproses...</span>
+                </>
+              ) : (
+                `Bayar BND ${cartTotal.toFixed(2)}`
+              )}
+            </button>
+          </div>
+        </Modal>
+
+        {/* Receipt Modal */}
+        <Modal
+          isOpen={modalType === 'receipt'}
+          onClose={() => setModalType(null)}
+          title="Pesanan Berjaya!"
+          maxWidth="450px"
+        >
+          {lastOrder && (
+            <>
+              <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+                <div style={{
+                  width: '60px',
+                  height: '60px',
+                  background: '#d1fae5',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  margin: '0 auto 1rem'
+                }}>
+                  <CheckCircle size={30} color="var(--success)" />
+                </div>
+                <div style={{ fontSize: '1.5rem', fontWeight: 700 }}>{lastOrder.orderNumber}</div>
+                {lastOrder.customerName && (
+                  <div style={{ fontSize: '1rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
+                    Pelanggan: {lastOrder.customerName}
                   </div>
                 )}
               </div>
-            )}
-            {/* Quick cash buttons */}
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(3, 1fr)',
-              gap: '0.5rem',
-              marginTop: '0.75rem'
-            }}>
-              {[5, 10, 20, 50, 100].map(amount => (
-                <button
-                  key={amount}
-                  type="button"
-                  onClick={() => setCashReceived(amount)}
-                  className="btn btn-sm btn-outline"
-                >
-                  ${amount}
-                </button>
-              ))}
-              <button
-                type="button"
-                onClick={() => setCashReceived(Math.ceil(cartTotal))}
-                className="btn btn-sm btn-primary"
+
+              {/* Receipt Preview */}
+              <div
+                ref={receiptRef}
+                style={{
+                  background: '#e5e5e5',
+                  padding: '1rem',
+                  borderRadius: 'var(--radius-md)',
+                  display: 'flex',
+                  justifyContent: 'center',
+                }}
               >
-                Tepat
-              </button>
-            </div>
-          </div>
-        )}
+                <ReceiptPreview
+                  settings={receiptSettings}
+                  sampleOrder={lastOrder}
+                  width={receiptSettings.receiptWidth}
+                  scale={0.85}
+                />
+              </div>
 
-        <div style={{
-          display: 'flex',
-          justifyContent: 'flex-end',
-          gap: '0.75rem',
-          marginTop: '1.5rem',
-          paddingTop: '1rem',
-          borderTop: '1px solid var(--gray-200)'
-        }}>
-          <button
-            onClick={() => setModalType(null)}
-            className="btn btn-outline"
-            style={{
-              minWidth: '100px',
-              padding: '0.5rem 1rem'
-            }}
-            disabled={isProcessing}
-          >
-            Batal
-          </button>
-          <button
-            onClick={() => proceedToPayment()}
-            className={`btn btn-primary ${isProcessing ? 'loading' : ''}`}
-            style={{
-              minWidth: '160px',
-              padding: '0.5rem 1.25rem',
-              fontWeight: 600,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}
-            disabled={isProcessing}
-          >
-            {isProcessing ? (
-              <>
-                <LoadingSpinner size="sm" />
-                <span style={{ marginLeft: '0.5rem' }}>Memproses...</span>
-              </>
-            ) : (
-              `Bayar BND ${cartTotal.toFixed(2)}`
-            )}
-          </button>
-        </div>
-      </Modal>
+              <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1.5rem' }}>
+                <button
+                  onClick={() => setModalType(null)}
+                  className="btn btn-outline"
+                  style={{ flex: 1 }}
+                >
+                  Tutup
+                </button>
+                <button
+                  onClick={() => handlePrintReceipt()}
+                  className="btn btn-primary"
+                  style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
+                >
+                  <Printer size={18} />
+                  Cetak Resit
+                </button>
+              </div>
 
-      {/* Receipt Modal */}
-      <Modal
-        isOpen={modalType === 'receipt'}
-        onClose={() => setModalType(null)}
-        title="Pesanan Berjaya!"
-        maxWidth="450px"
-      >
-        {lastOrder && (
-          <>
-            <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+              {/* Printer Status Indicator */}
               <div style={{
-                width: '60px',
-                height: '60px',
-                background: '#d1fae5',
-                borderRadius: '50%',
+                marginTop: '1rem',
+                padding: '0.5rem 0.75rem',
+                background: thermalPrinter.isConnected() ? '#d1fae5' : 'var(--gray-100)',
+                borderRadius: 'var(--radius-md)',
+                fontSize: '0.75rem',
+                textAlign: 'center',
+                color: thermalPrinter.isConnected() ? '#059669' : 'var(--text-secondary)',
+              }}>
+                {thermalPrinter.isConnected()
+                  ? '✓ Thermal printer disambung - cetak terus ke printer'
+                  : 'Tiada thermal printer - akan cetak melalui browser'}
+              </div>
+            </>
+          )}
+        </Modal>
+
+        {/* Order Queue Modal */}
+        <Modal
+          isOpen={modalType === 'queue'}
+          onClose={() => setModalType(null)}
+          title="Order Queue"
+          subtitle="Kitchen Display"
+          maxWidth="800px"
+        >
+          <div className="grid grid-cols-1 md:grid-cols-3" style={{ gap: '1rem' }}>
+            {/* Pending */}
+            <div>
+              <h4 style={{
+                fontSize: '1rem',
+                fontWeight: 600,
+                marginBottom: '0.75rem',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center',
-                margin: '0 auto 1rem'
+                gap: '0.5rem',
+                color: 'var(--warning)'
               }}>
-                <CheckCircle size={30} color="var(--success)" />
-              </div>
-              <div style={{ fontSize: '1.5rem', fontWeight: 700 }}>{lastOrder.orderNumber}</div>
-              {lastOrder.customerName && (
-                <div style={{ fontSize: '1rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
-                  Pelanggan: {lastOrder.customerName}
-                </div>
-              )}
-            </div>
-
-            {/* Receipt Preview */}
-            <div
-              ref={receiptRef}
-              style={{
-                background: '#e5e5e5',
-                padding: '1rem',
-                borderRadius: 'var(--radius-md)',
-                display: 'flex',
-                justifyContent: 'center',
-              }}
-            >
-              <ReceiptPreview
-                settings={receiptSettings}
-                sampleOrder={lastOrder}
-                width={receiptSettings.receiptWidth}
-                scale={0.85}
-              />
-            </div>
-
-            <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1.5rem' }}>
-              <button
-                onClick={() => setModalType(null)}
-                className="btn btn-outline"
-                style={{ flex: 1 }}
-              >
-                Tutup
-              </button>
-              <button
-                onClick={() => handlePrintReceipt()}
-                className="btn btn-primary"
-                style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
-              >
-                <Printer size={18} />
-                Cetak Resit
-              </button>
-            </div>
-
-            {/* Printer Status Indicator */}
-            <div style={{
-              marginTop: '1rem',
-              padding: '0.5rem 0.75rem',
-              background: thermalPrinter.isConnected() ? '#d1fae5' : 'var(--gray-100)',
-              borderRadius: 'var(--radius-md)',
-              fontSize: '0.75rem',
-              textAlign: 'center',
-              color: thermalPrinter.isConnected() ? '#059669' : 'var(--text-secondary)',
-            }}>
-              {thermalPrinter.isConnected()
-                ? '✓ Thermal printer disambung - cetak terus ke printer'
-                : 'Tiada thermal printer - akan cetak melalui browser'}
-            </div>
-          </>
-        )}
-      </Modal>
-
-      {/* Order Queue Modal */}
-      <Modal
-        isOpen={modalType === 'queue'}
-        onClose={() => setModalType(null)}
-        title="Order Queue"
-        subtitle="Kitchen Display"
-        maxWidth="800px"
-      >
-        <div className="grid grid-cols-1 md:grid-cols-3" style={{ gap: '1rem' }}>
-          {/* Pending */}
-          <div>
-            <h4 style={{
-              fontSize: '1rem',
-              fontWeight: 600,
-              marginBottom: '0.75rem',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              color: 'var(--warning)'
-            }}>
-              <Clock size={18} />
-              Pending ({pendingOrders.length})
-            </h4>
-            <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
-              {pendingOrders.map(order => (
-                <div key={order.id} style={{
-                  background: '#fef3c7',
-                  padding: '0.75rem',
-                  borderRadius: 'var(--radius-md)',
-                  marginBottom: '0.5rem'
-                }}>
-                  <div style={{ fontWeight: 700, marginBottom: '0.25rem' }}>{order.orderNumber}</div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
-                    {order.orderType === 'takeaway' ? 'Takeaway' : 'GoMamam'}
-                  </div>
-                  {order.items.map((item, idx) => (
-                    <div key={idx} style={{ fontSize: '0.875rem' }}>
-                      {item.quantity}x {item.name}
-                      {item.selectedModifiers.length > 0 && (
-                        <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', paddingLeft: '0.5rem' }}>
-                          {item.selectedModifiers.map(m => `${m.groupName?.replace('Pilih ', '') || ''}: ${m.optionName}`).join(', ')}
-                        </div>
-                      )}
+                <Clock size={18} />
+                Pending ({pendingOrders.length})
+              </h4>
+              <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
+                {pendingOrders.map(order => (
+                  <div key={order.id} style={{
+                    background: '#fef3c7',
+                    padding: '0.75rem',
+                    borderRadius: 'var(--radius-md)',
+                    marginBottom: '0.5rem'
+                  }}>
+                    <div style={{ fontWeight: 700, marginBottom: '0.25rem' }}>{order.orderNumber}</div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
+                      {order.orderType === 'takeaway' ? 'Takeaway' : 'GoMamam'}
                     </div>
-                  ))}
-                  <button
-                    onClick={() => updateOrderStatus(order.id, 'preparing')}
-                    className="btn btn-sm btn-primary"
-                    style={{ width: '100%', marginTop: '0.5rem' }}
-                  >
-                    Start Preparing
-                  </button>
-                </div>
-              ))}
-              {pendingOrders.length === 0 && (
-                <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', textAlign: 'center' }}>Tiada pesanan</p>
-              )}
-            </div>
-          </div>
-
-          {/* Preparing */}
-          <div>
-            <h4 style={{
-              fontSize: '1rem',
-              fontWeight: 600,
-              marginBottom: '0.75rem',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              color: '#1e40af'
-            }}>
-              <ChefHat size={18} />
-              Preparing ({preparingOrders.length})
-            </h4>
-            <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
-              {preparingOrders.map(order => (
-                <div key={order.id} style={{
-                  background: '#dbeafe',
-                  padding: '0.75rem',
-                  borderRadius: 'var(--radius-md)',
-                  marginBottom: '0.5rem'
-                }}>
-                  <div style={{ fontWeight: 700, marginBottom: '0.25rem' }}>{order.orderNumber}</div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
-                    {order.orderType === 'takeaway' ? 'Takeaway' : 'GoMamam'}
+                    {order.items.map((item, idx) => (
+                      <div key={idx} style={{ fontSize: '0.875rem' }}>
+                        {item.quantity}x {item.name}
+                        {item.selectedModifiers.length > 0 && (
+                          <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', paddingLeft: '0.5rem' }}>
+                            {item.selectedModifiers.map(m => `${m.groupName?.replace('Pilih ', '') || ''}: ${m.optionName}`).join(', ')}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                    <button
+                      onClick={() => updateOrderStatus(order.id, 'preparing')}
+                      className="btn btn-sm btn-primary"
+                      style={{ width: '100%', marginTop: '0.5rem' }}
+                    >
+                      Start Preparing
+                    </button>
                   </div>
-                  {order.items.map((item, idx) => (
-                    <div key={idx} style={{ fontSize: '0.875rem' }}>
-                      {item.quantity}x {item.name}
-                    </div>
-                  ))}
-                  <button
-                    onClick={() => updateOrderStatus(order.id, 'ready')}
-                    className="btn btn-sm btn-secondary"
-                    style={{ width: '100%', marginTop: '0.5rem' }}
-                  >
-                    Mark Ready
-                  </button>
-                </div>
-              ))}
-              {preparingOrders.length === 0 && (
-                <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', textAlign: 'center' }}>Tiada pesanan</p>
-              )}
-            </div>
-          </div>
-
-          {/* Ready */}
-          <div>
-            <h4 style={{
-              fontSize: '1rem',
-              fontWeight: 600,
-              marginBottom: '0.75rem',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              color: 'var(--success)'
-            }}>
-              <CheckCircle size={18} />
-              Ready ({readyOrders.length})
-            </h4>
-            <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
-              {readyOrders.map(order => (
-                <div key={order.id} style={{
-                  background: '#d1fae5',
-                  padding: '0.75rem',
-                  borderRadius: 'var(--radius-md)',
-                  marginBottom: '0.5rem'
-                }}>
-                  <div style={{ fontWeight: 700, marginBottom: '0.25rem' }}>{order.orderNumber}</div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
-                    {order.orderType === 'takeaway' ? 'Takeaway' : 'GoMamam'}
-                  </div>
-                  {order.items.map((item, idx) => (
-                    <div key={idx} style={{ fontSize: '0.875rem' }}>
-                      {item.quantity}x {item.name}
-                    </div>
-                  ))}
-                  <button
-                    onClick={() => updateOrderStatus(order.id, 'completed')}
-                    className="btn btn-sm btn-outline"
-                    style={{ width: '100%', marginTop: '0.5rem' }}
-                  >
-                    Complete
-                  </button>
-                </div>
-              ))}
-              {readyOrders.length === 0 && (
-                <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', textAlign: 'center' }}>Tiada pesanan</p>
-              )}
-            </div>
-          </div>
-        </div>
-
-        <div style={{ marginTop: '1.5rem' }}>
-          <button className="btn btn-outline" onClick={() => setModalType(null)} style={{ width: '100%' }}>
-            Tutup
-          </button>
-        </div>
-      </Modal>
-
-      {/* Order History Modal */}
-      <Modal
-        isOpen={modalType === 'history'}
-        onClose={() => setModalType(null)}
-        title="Sejarah Pesanan Hari Ini"
-        subtitle={`${todayOrders.length} pesanan`}
-        maxWidth="700px"
-      >
-        <div style={{ maxHeight: '500px', overflowY: 'auto' }}>
-          {todayOrders.length > 0 ? (
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>No. Pesanan</th>
-                  <th>Items</th>
-                  <th>Total</th>
-                  <th>Jenis</th>
-                  <th>Status</th>
-                  <th>Masa</th>
-                  <th>Tindakan</th>
-                </tr>
-              </thead>
-              <tbody>
-                {todayOrders.map(order => (
-                  <tr key={order.id}>
-                    <td style={{ fontWeight: 600 }}>{order.orderNumber}</td>
-                    <td style={{ fontSize: '0.875rem' }}>
-                      {order.items.map(i => `${i.quantity}x ${i.name}`).join(', ')}
-                    </td>
-                    <td style={{ fontWeight: 600 }}>BND {order.total.toFixed(2)}</td>
-                    <td>
-                      <span className="badge badge-info" style={{ fontSize: '0.7rem' }}>
-                        {order.orderType}
-                      </span>
-                    </td>
-                    <td>
-                      <span className={`badge ${order.status === 'completed' ? 'badge-success' :
-                        order.status === 'ready' ? 'badge-success' :
-                          order.status === 'preparing' ? 'badge-info' : 'badge-warning'
-                        }`} style={{ fontSize: '0.7rem' }}>
-                        {order.status}
-                      </span>
-                    </td>
-                    <td style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                      {new Date(order.createdAt).toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit' })}
-                    </td>
-                    <td>
-                      <button
-                        onClick={() => handlePrintReceipt(order)}
-                        className="btn btn-sm btn-outline"
-                        style={{ padding: '0.25rem 0.5rem', minWidth: 'auto' }}
-                        title="Cetak Semula Resit"
-                      >
-                        <Printer size={14} />
-                      </button>
-                    </td>
-                  </tr>
                 ))}
-              </tbody>
-            </table>
-          ) : (
-            <p style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '2rem' }}>
-              Tiada pesanan hari ini
-            </p>
-          )}
-        </div>
+                {pendingOrders.length === 0 && (
+                  <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', textAlign: 'center' }}>Tiada pesanan</p>
+                )}
+              </div>
+            </div>
 
-        <div style={{
-          marginTop: '1.5rem',
-          paddingTop: '1rem',
-          borderTop: '1px solid var(--gray-200)',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center'
-        }}>
-          <div>
-            <strong>Jumlah Jualan Hari Ini:</strong>
-            <span style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--primary)', marginLeft: '0.5rem' }}>
-              BND {todayOrders.reduce((sum, o) => sum + o.total, 0).toFixed(2)}
-            </span>
+            {/* Preparing */}
+            <div>
+              <h4 style={{
+                fontSize: '1rem',
+                fontWeight: 600,
+                marginBottom: '0.75rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                color: '#1e40af'
+              }}>
+                <ChefHat size={18} />
+                Preparing ({preparingOrders.length})
+              </h4>
+              <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
+                {preparingOrders.map(order => (
+                  <div key={order.id} style={{
+                    background: '#dbeafe',
+                    padding: '0.75rem',
+                    borderRadius: 'var(--radius-md)',
+                    marginBottom: '0.5rem'
+                  }}>
+                    <div style={{ fontWeight: 700, marginBottom: '0.25rem' }}>{order.orderNumber}</div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
+                      {order.orderType === 'takeaway' ? 'Takeaway' : 'GoMamam'}
+                    </div>
+                    {order.items.map((item, idx) => (
+                      <div key={idx} style={{ fontSize: '0.875rem' }}>
+                        {item.quantity}x {item.name}
+                      </div>
+                    ))}
+                    <button
+                      onClick={() => updateOrderStatus(order.id, 'ready')}
+                      className="btn btn-sm btn-secondary"
+                      style={{ width: '100%', marginTop: '0.5rem' }}
+                    >
+                      Mark Ready
+                    </button>
+                  </div>
+                ))}
+                {preparingOrders.length === 0 && (
+                  <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', textAlign: 'center' }}>Tiada pesanan</p>
+                )}
+              </div>
+            </div>
+
+            {/* Ready */}
+            <div>
+              <h4 style={{
+                fontSize: '1rem',
+                fontWeight: 600,
+                marginBottom: '0.75rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                color: 'var(--success)'
+              }}>
+                <CheckCircle size={18} />
+                Ready ({readyOrders.length})
+              </h4>
+              <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
+                {readyOrders.map(order => (
+                  <div key={order.id} style={{
+                    background: '#d1fae5',
+                    padding: '0.75rem',
+                    borderRadius: 'var(--radius-md)',
+                    marginBottom: '0.5rem'
+                  }}>
+                    <div style={{ fontWeight: 700, marginBottom: '0.25rem' }}>{order.orderNumber}</div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
+                      {order.orderType === 'takeaway' ? 'Takeaway' : 'GoMamam'}
+                    </div>
+                    {order.items.map((item, idx) => (
+                      <div key={idx} style={{ fontSize: '0.875rem' }}>
+                        {item.quantity}x {item.name}
+                      </div>
+                    ))}
+                    <button
+                      onClick={() => updateOrderStatus(order.id, 'completed')}
+                      className="btn btn-sm btn-outline"
+                      style={{ width: '100%', marginTop: '0.5rem' }}
+                    >
+                      Complete
+                    </button>
+                  </div>
+                ))}
+                {readyOrders.length === 0 && (
+                  <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', textAlign: 'center' }}>Tiada pesanan</p>
+                )}
+              </div>
+            </div>
           </div>
-          <button className="btn btn-outline" onClick={() => setModalType(null)}>
-            Tutup
-          </button>
-        </div>
-      </Modal>
 
-      {/* Network Error Modal */}
-      <Modal
-        isOpen={modalType === 'network-error'}
-        onClose={handleCancelPayment}
-        title="Ralat Rangkaian"
-        maxWidth="400px"
-      >
-        <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+          <div style={{ marginTop: '1.5rem' }}>
+            <button className="btn btn-outline" onClick={() => setModalType(null)} style={{ width: '100%' }}>
+              Tutup
+            </button>
+          </div>
+        </Modal>
+
+        {/* Order History Modal */}
+        <Modal
+          isOpen={modalType === 'history'}
+          onClose={() => setModalType(null)}
+          title="Sejarah Pesanan Hari Ini"
+          subtitle={`${todayOrders.length} pesanan`}
+          maxWidth="700px"
+        >
+          <div style={{ maxHeight: '500px', overflowY: 'auto' }}>
+            {todayOrders.length > 0 ? (
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>No. Pesanan</th>
+                    <th>Items</th>
+                    <th>Total</th>
+                    <th>Jenis</th>
+                    <th>Status</th>
+                    <th>Masa</th>
+                    <th>Tindakan</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {todayOrders.map(order => (
+                    <tr key={order.id}>
+                      <td style={{ fontWeight: 600 }}>{order.orderNumber}</td>
+                      <td style={{ fontSize: '0.875rem' }}>
+                        {order.items.map(i => `${i.quantity}x ${i.name}`).join(', ')}
+                      </td>
+                      <td style={{ fontWeight: 600 }}>BND {order.total.toFixed(2)}</td>
+                      <td>
+                        <span className="badge badge-info" style={{ fontSize: '0.7rem' }}>
+                          {order.orderType}
+                        </span>
+                      </td>
+                      <td>
+                        <span className={`badge ${order.status === 'completed' ? 'badge-success' :
+                          order.status === 'ready' ? 'badge-success' :
+                            order.status === 'preparing' ? 'badge-info' : 'badge-warning'
+                          }`} style={{ fontSize: '0.7rem' }}>
+                          {order.status}
+                        </span>
+                      </td>
+                      <td style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                        {new Date(order.createdAt).toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit' })}
+                      </td>
+                      <td>
+                        <button
+                          onClick={() => handlePrintReceipt(order)}
+                          className="btn btn-sm btn-outline"
+                          style={{ padding: '0.25rem 0.5rem', minWidth: 'auto' }}
+                          title="Cetak Semula Resit"
+                        >
+                          <Printer size={14} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <p style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '2rem' }}>
+                Tiada pesanan hari ini
+              </p>
+            )}
+          </div>
+
           <div style={{
-            width: '70px',
-            height: '70px',
-            background: '#fef3c7',
-            borderRadius: '50%',
+            marginTop: '1.5rem',
+            paddingTop: '1rem',
+            borderTop: '1px solid var(--gray-200)',
             display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            margin: '0 auto 1rem'
+            justifyContent: 'space-between',
+            alignItems: 'center'
           }}>
-            <WifiOff size={35} color="#d97706" />
+            <div>
+              <strong>Jumlah Jualan Hari Ini:</strong>
+              <span style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--primary)', marginLeft: '0.5rem' }}>
+                BND {todayOrders.reduce((sum, o) => sum + o.total, 0).toFixed(2)}
+              </span>
+            </div>
+            <button className="btn btn-outline" onClick={() => setModalType(null)}>
+              Tutup
+            </button>
           </div>
-          <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.5rem', color: 'var(--warning)' }}>
-            Masalah Sambungan
-          </h3>
-          <p style={{ color: 'var(--text-secondary)', marginBottom: '1rem' }}>
-            {networkError || 'Ralat rangkaian berlaku semasa memproses pembayaran.'}
-          </p>
+        </Modal>
 
-          {retryCount > 0 && (
+        {/* Network Error Modal */}
+        <Modal
+          isOpen={modalType === 'network-error'}
+          onClose={handleCancelPayment}
+          title="Ralat Rangkaian"
+          maxWidth="400px"
+        >
+          <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
             <div style={{
-              background: 'var(--gray-100)',
-              padding: '0.75rem',
+              width: '70px',
+              height: '70px',
+              background: '#fef3c7',
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 1rem'
+            }}>
+              <WifiOff size={35} color="#d97706" />
+            </div>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.5rem', color: 'var(--warning)' }}>
+              Masalah Sambungan
+            </h3>
+            <p style={{ color: 'var(--text-secondary)', marginBottom: '1rem' }}>
+              {networkError || 'Ralat rangkaian berlaku semasa memproses pembayaran.'}
+            </p>
+
+            {retryCount > 0 && (
+              <div style={{
+                background: 'var(--gray-100)',
+                padding: '0.75rem',
+                borderRadius: 'var(--radius-md)',
+                marginBottom: '1rem',
+                fontSize: '0.875rem'
+              }}>
+                <AlertTriangle size={16} color="var(--warning)" style={{ marginRight: '0.5rem' }} />
+                Percubaan semula: {retryCount}/2
+              </div>
+            )}
+
+            <div style={{
+              background: '#fef3c7',
+              padding: '1rem',
               borderRadius: 'var(--radius-md)',
               marginBottom: '1rem',
-              fontSize: '0.875rem'
+              textAlign: 'left',
+              fontSize: '0.875rem',
+              color: '#92400e'
             }}>
-              <AlertTriangle size={16} color="var(--warning)" style={{ marginRight: '0.5rem' }} />
-              Percubaan semula: {retryCount}/2
+              <strong>Apa yang boleh anda lakukan:</strong>
+              <ul style={{ marginTop: '0.5rem', paddingLeft: '1.25rem' }}>
+                <li>Semak sambungan internet anda</li>
+                <li>Cuba semula dalam beberapa saat</li>
+                <li>Jika masalah berterusan, hubungi sokongan</li>
+              </ul>
             </div>
-          )}
-
-          <div style={{
-            background: '#fef3c7',
-            padding: '1rem',
-            borderRadius: 'var(--radius-md)',
-            marginBottom: '1rem',
-            textAlign: 'left',
-            fontSize: '0.875rem',
-            color: '#92400e'
-          }}>
-            <strong>Apa yang boleh anda lakukan:</strong>
-            <ul style={{ marginTop: '0.5rem', paddingLeft: '1.25rem' }}>
-              <li>Semak sambungan internet anda</li>
-              <li>Cuba semula dalam beberapa saat</li>
-              <li>Jika masalah berterusan, hubungi sokongan</li>
-            </ul>
           </div>
-        </div>
 
-        <div style={{ display: 'flex', gap: '0.5rem' }}>
-          <button
-            onClick={handleCancelPayment}
-            className="btn btn-outline"
-            style={{ flex: 1 }}
-          >
-            Batal
-          </button>
-          <button
-            onClick={handleRetryPayment}
-            className="btn btn-primary"
-            style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
-            disabled={isProcessing}
-          >
-            {isProcessing ? (
-              <>
-                <LoadingSpinner size="sm" />
-                Cuba Semula...
-              </>
-            ) : (
-              <>
-                <RefreshCw size={18} />
-                Cuba Semula
-              </>
-            )}
-          </button>
-        </div>
-      </Modal>
-    </div>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <button
+              onClick={handleCancelPayment}
+              className="btn btn-outline"
+              style={{ flex: 1 }}
+            >
+              Batal
+            </button>
+            <button
+              onClick={handleRetryPayment}
+              className="btn btn-primary"
+              style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
+              disabled={isProcessing}
+            >
+              {isProcessing ? (
+                <>
+                  <LoadingSpinner size="sm" />
+                  Cuba Semula...
+                </>
+              ) : (
+                <>
+                  <RefreshCw size={18} />
+                  Cuba Semula
+                </>
+              )}
+            </button>
+          </div>
+        </Modal>
+      </div>
     </MainLayout >
   );
 }
