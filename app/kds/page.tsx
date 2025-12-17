@@ -459,11 +459,9 @@ export default function KDSPage() {
           </div>
         </div>
       </div>
-    </div>
-  );
-}
+      </div>
 
-<style jsx>{`
+      <style jsx>{`
         .kds-mobile-tabs {
           display: none;
           margin-bottom: 1rem;
