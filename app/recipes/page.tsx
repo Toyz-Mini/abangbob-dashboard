@@ -36,7 +36,7 @@ export default function RecipesPage() {
     refreshRecipes();
   }, [refreshRecipes]);
 
-  useRecipesRealtime(handleRecipesChange);
+  // useRecipesRealtime(handleRecipesChange);
   const [modalType, setModalType] = useState<ModalType>(null);
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
