@@ -105,7 +105,10 @@ export default function OrderHistoryPage() {
     let historyItems: OrderHistoryItem[] = orders.map((order: Order) => {
       // Find relevant void/refund requests
       // We prioritize approved requests to show actual status
-      const approvedRequests = voidRefundRequests.filter(r => r.orderId === order.id && r.status === 'approved');
+      const approvedRequests = voidRefundRequests.filter(r =>
+        r.orderId === order.id &&
+        (r.status === 'approved' || r.status?.toLowerCase() === 'approved')
+      );
 
       let voidRefundStatus: 'none' | 'pending_void' | 'pending_refund' | 'voided' | 'refunded' | 'partial_refund' = 'none';
       let refundAmount = 0;
