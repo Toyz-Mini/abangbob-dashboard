@@ -197,7 +197,7 @@ interface StoreState {
 
   // Recipes
   recipes: Recipe[];
-  addRecipe: (recipe: Omit<Recipe, 'id' | 'createdAt' | 'updatedAt' | 'totalCost' | 'profitMargin'>) => void;
+  addRecipe: (recipe: Omit<Recipe, 'id' | 'createdAt' | 'updatedAt' | 'totalCost' | 'profitMargin'>) => Promise<void>;
   updateRecipe: (id: string, updates: Partial<Recipe>) => void;
   deleteRecipe: (id: string) => void;
   refreshRecipes: () => Promise<void>;
@@ -1922,7 +1922,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // Recipe actions
-  const addRecipe = useCallback((recipeData: Omit<Recipe, 'id' | 'createdAt' | 'updatedAt' | 'totalCost' | 'profitMargin'>) => {
+  const addRecipe = useCallback(async (recipeData: Omit<Recipe, 'id' | 'createdAt' | 'updatedAt' | 'totalCost' | 'profitMargin'>) => {
     const totalCost = recipeData.ingredients.reduce((sum, ing) => sum + ing.totalCost, 0);
     const profitMargin = recipeData.sellingPrice > 0
       ? ((recipeData.sellingPrice - totalCost) / recipeData.sellingPrice) * 100
@@ -1935,15 +1935,17 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
-    console.log('[addRecipe] Adding new recipe:', newRecipe.menuItemName, newRecipe.id);
-    setRecipes(prev => {
-      // DEBUG: Remove later
-      console.log('Adding recipe, prev:', prev.length);
-      alert('Debug: Adding recipe. Count before: ' + prev.length);
-      return [newRecipe, ...prev];
-    });
-    // Sync to Supabase
-    SupabaseSync.syncAddRecipe(newRecipe);
+
+    // Optimistic update
+    setRecipes(prev => [newRecipe, ...prev]);
+
+    // Sync and wait
+    try {
+      await SupabaseSync.syncAddRecipe(newRecipe);
+    } catch (error) {
+      console.error('Sync failed', error);
+      // We don't revert optimistic update to keep UI responsive, but in reload strategy it doesn't matter
+    }
   }, []);
 
   const updateRecipe = useCallback((id: string, updates: Partial<Recipe>) => {

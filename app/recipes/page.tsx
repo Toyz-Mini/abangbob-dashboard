@@ -36,7 +36,7 @@ export default function RecipesPage() {
     refreshRecipes();
   }, [refreshRecipes]);
 
-  // useRecipesRealtime(handleRecipesChange);
+  useRecipesRealtime(handleRecipesChange);
   const [modalType, setModalType] = useState<ModalType>(null);
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -205,7 +205,7 @@ export default function RecipesPage() {
       totalCost: i.quantity * i.costPerUnit,
     }));
 
-    addRecipe({
+    await addRecipe({
       menuItemId: formData.menuItemId,
       menuItemName: formData.menuItemName,
       sellingPrice: formData.sellingPrice,
@@ -217,6 +217,7 @@ export default function RecipesPage() {
     });
 
     closeModal();
+    window.location.reload(); // Force reload to show new data immediately
   };
 
   const handleEditRecipe = async () => {
@@ -290,7 +291,7 @@ export default function RecipesPage() {
       <div className="animate-fade-in">
         <LivePageHeader
           title="Recipe Costing"
-          subtitle={`Kira kos bahan (Total: ${recipes.length} resepi)`}
+          subtitle="Kira kos bahan dan margin keuntungan setiap menu"
           rightContent={
             <PremiumButton onClick={openAddModal} icon={Plus}>
               Tambah Resepi
