@@ -92,6 +92,18 @@ export default function StaffPortalNav({ currentPage, pendingCount = 0 }: StaffP
       color: 'var(--info)'
     },
     {
+      href: '/kds',
+      label: 'Kitchen',
+      icon: Monitor,
+      color: 'var(--warning)'
+    },
+    {
+      href: '/order-display',
+      label: 'Queue',
+      icon: Clock,
+      color: 'var(--primary)'
+    },
+    {
       href: '/settings',
       label: 'Tetapan',
       icon: MoreHorizontal,
