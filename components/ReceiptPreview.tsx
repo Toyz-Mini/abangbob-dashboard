@@ -109,6 +109,8 @@ export default function ReceiptPreview({
                 maxWidth: '80%',
                 maxHeight: '60px',
                 objectFit: 'contain',
+                display: 'block',
+                margin: '0 auto'
               }}
             />
           </div>
@@ -210,28 +212,35 @@ export default function ReceiptPreview({
               </div>
               {item.description && (
                 <div style={{
-                  fontSize: receiptWidth === '58mm' ? '8px' : '9px',
-                  color: '#666',
+                  fontSize: receiptWidth === '58mm' ? '7px' : '8px',
+                  color: '#888',
                   fontStyle: 'italic',
-                  marginBottom: '2px',
-                  whiteSpace: 'pre-wrap'
+                  marginBottom: '4px',
+                  whiteSpace: 'pre-wrap',
+                  lineHeight: '1.2'
                 }}>
                   {item.description}
                 </div>
               )}
               {item.selectedModifiers?.length > 0 && (
                 <div style={{
-                  paddingLeft: '8px',
+                  paddingLeft: '0px',
                   fontSize: receiptWidth === '58mm' ? '9px' : '10px',
-                  lineHeight: '1.4',
+                  lineHeight: '1.5',
                   marginTop: '4px'
                 }}>
                   {item.selectedModifiers.map((mod, i) => (
-                    <div key={i} style={{ display: 'flex', alignItems: 'flex-start' }}>
-                      <span style={{ color: '#555', marginRight: '4px', minWidth: '60px' }}>
+                    <div key={i} style={{ display: 'flex', alignItems: 'baseline' }}>
+                      <span style={{
+                        color: '#666',
+                        marginRight: '4px',
+                        minWidth: receiptWidth === '58mm' ? '85px' : '100px',
+                        display: 'inline-block',
+                        fontSize: receiptWidth === '58mm' ? '8px' : '9px'
+                      }}>
                         - {mod.groupName?.replace('Pilih ', '').replace('Flavour ', '')}:
                       </span>
-                      <span style={{ fontWeight: 700, color: '#000' }}>
+                      <span style={{ fontWeight: 800, color: '#000' }}>
                         {mod.optionName}
                       </span>
                     </div>
