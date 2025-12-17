@@ -1864,14 +1864,20 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       updatedAt: new Date().toISOString(),
     };
     setRecipes(prev => [newRecipe, ...prev]);
+    // Sync to Supabase
+    SupabaseSync.syncAddRecipe(newRecipe);
   }, []);
 
   const updateRecipe = useCallback((id: string, updates: Partial<Recipe>) => {
     setRecipes(prev => prev.map(r => r.id === id ? { ...r, ...updates, updatedAt: new Date().toISOString() } : r));
+    // Sync to Supabase
+    SupabaseSync.syncUpdateRecipe(id, updates);
   }, []);
 
   const deleteRecipe = useCallback((id: string) => {
     setRecipes(prev => prev.filter(r => r.id !== id));
+    // Sync to Supabase
+    SupabaseSync.syncDeleteRecipe(id);
   }, []);
 
   // Shift & Schedule actions
