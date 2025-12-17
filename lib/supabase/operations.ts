@@ -1143,17 +1143,8 @@ export async function insertRecipe(recipe: any) {
   const supabase = getSupabaseClient();
   if (!supabase) throw new Error('Supabase not connected');
 
-  // Remove fields that are missing in the live database schema
-  const {
-    menuItemName,
-    isProcessing,
-    isActive,
-    prepTime,
-    yieldQuantity,
-    yieldUnit,
-    instructions,
-    ...dbRecipe
-  } = recipe;
+  // Remove fields that are not in the database table (menuItemName handled via join, others fixed via schema update)
+  const { menuItemName, isProcessing, isActive, ...dbRecipe } = recipe;
   const snakeCasedRecipe = toSnakeCase(dbRecipe);
 
   // @ts-ignore
