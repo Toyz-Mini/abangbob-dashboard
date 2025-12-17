@@ -644,9 +644,13 @@ export async function syncAddRecipe(recipe: any) {
   if (!isSupabaseSyncEnabled()) return null;
 
   try {
-    return await ops.insertRecipe(recipe);
-  } catch (error) {
-    console.error('Failed to sync recipe to Supabase:', error);
+    console.log('[syncAddRecipe] Syncing recipe:', recipe);
+    const result = await ops.insertRecipe(recipe);
+    console.log('[syncAddRecipe] Success:', result);
+    return result;
+  } catch (error: any) {
+    console.error('[syncAddRecipe] Failed to sync recipe to Supabase:', error);
+    console.error('[syncAddRecipe] Error details:', error?.message, error?.code, error?.details);
     return null;
   }
 }

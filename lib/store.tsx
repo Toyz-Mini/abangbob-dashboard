@@ -1935,9 +1935,19 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
-    setRecipes(prev => [newRecipe, ...prev]);
+    console.log('[addRecipe] Adding new recipe:', newRecipe.menuItemName, newRecipe.id);
+    setRecipes(prev => {
+      console.log('[addRecipe] Previous recipes count:', prev.length);
+      const updated = [newRecipe, ...prev];
+      console.log('[addRecipe] Updated recipes count:', updated.length);
+      return updated;
+    });
     // Sync to Supabase
-    SupabaseSync.syncAddRecipe(newRecipe);
+    SupabaseSync.syncAddRecipe(newRecipe).then(result => {
+      console.log('[addRecipe] Supabase sync result:', result);
+    }).catch(err => {
+      console.error('[addRecipe] Supabase sync error:', err);
+    });
   }, []);
 
   const updateRecipe = useCallback((id: string, updates: Partial<Recipe>) => {
