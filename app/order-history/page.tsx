@@ -99,6 +99,11 @@ export default function OrderHistoryPage() {
   const canViewAll = canViewAllOrders(userRole);
   const canExportData = canExport(userRole, 'order-history');
 
+  // TEMPORARY DEBUG: Expose request count to UI
+  if (typeof window !== 'undefined') {
+    (window as any).__DEBUG_REQUESTS__ = voidRefundRequests;
+  }
+
   // Convert orders to OrderHistoryItem format and apply filters
   const filteredOrders = useMemo(() => {
     // Transform orders to OrderHistoryItem format

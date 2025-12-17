@@ -648,7 +648,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       if (supabaseConnected) {
         try {
           const voidRefundData = await VoidRefundOps.fetchVoidRefundRequests();
-          if (voidRefundData && voidRefundData.length > 0) {
+          // Trust Supabase data if it exists (even if empty array)
+          if (Array.isArray(voidRefundData)) {
             setVoidRefundRequests(voidRefundData);
           } else {
             setVoidRefundRequests(getFromStorage(STORAGE_KEYS.VOID_REFUND_REQUESTS, MOCK_VOID_REFUND_REQUESTS));
