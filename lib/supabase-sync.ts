@@ -651,7 +651,7 @@ export async function syncAddRecipe(recipe: any) {
   } catch (error: any) {
     console.error('[syncAddRecipe] Failed to sync recipe to Supabase:', error);
     console.error('[syncAddRecipe] Error details:', error?.message, error?.code, error?.details);
-    return null;
+    throw error; // Rethrow to notify UI
   }
 }
 
