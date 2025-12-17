@@ -208,6 +208,17 @@ export default function ReceiptPreview({
                 <span>{item.quantity}x {item.name}</span>
                 <span>BND {(item.itemTotal * item.quantity).toFixed(2)}</span>
               </div>
+              {item.description && (
+                <div style={{
+                  fontSize: receiptWidth === '58mm' ? '8px' : '9px',
+                  color: '#666',
+                  fontStyle: 'italic',
+                  marginBottom: '2px',
+                  whiteSpace: 'pre-wrap'
+                }}>
+                  {item.description}
+                </div>
+              )}
               {item.selectedModifiers?.length > 0 && (
                 <div style={{
                   paddingLeft: '12px',
@@ -215,7 +226,7 @@ export default function ReceiptPreview({
                   color: '#666',
                 }}>
                   {item.selectedModifiers.map((mod, i) => (
-                    <div key={i}>+ {mod.optionName}</div>
+                    <div key={i}>- {mod.groupName?.replace('Pilih ', '')}: {mod.optionName}</div>
                   ))}
                 </div>
               )}

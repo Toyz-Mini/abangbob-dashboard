@@ -529,6 +529,11 @@ function OrderCard({
                 <span style={{ fontWeight: 600, fontSize: '0.9rem', display: 'block' }}>
                   {item.name}
                 </span>
+                {item.description && (
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontStyle: 'italic', marginBottom: '0.25rem' }}>
+                    {item.description}
+                  </div>
+                )}
                 {/* Show modifiers/flavours */}
                 {item.selectedModifiers && item.selectedModifiers.length > 0 && (
                   <div style={{ marginTop: '0.25rem' }}>
@@ -548,7 +553,7 @@ function OrderCard({
                           border: '1px solid #f59e0b'
                         }}
                       >
-                        {mod.optionName}
+                        {mod.groupName ? `${mod.groupName.replace('Pilih ', '')}: ` : ''}{mod.optionName}
                       </span>
                     ))}
                   </div>
