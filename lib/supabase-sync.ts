@@ -1501,42 +1501,7 @@ export async function loadAllDataFromSupabase() {
   }
 
   try {
-    const [
-      inventory,
-      staff,
-      menuItems,
-      modifierGroups,
-      modifierOptions,
-      orders,
-      customers,
-      expenses,
-      attendance,
-      suppliers,
-      purchaseOrders,
-      recipes,
-      shifts,
-      schedules,
-      promotions,
-      notifications,
-      productionLogs,
-      deliveryOrders,
-      cashFlows,
-      staffKPI,
-      leaveRecords,
-      trainingRecords,
-      otRecords,
-      customerReviews,
-      checklistTemplates,
-      checklistCompletions,
-      leaveBalances,
-      leaveRequests,
-      claimRequests,
-      staffRequests,
-      announcements,
-      oilTrackers,
-      oilChangeRequests,
-      oilActionHistory,
-    ] = await Promise.all([
+    const results = await Promise.allSettled([
       ops.fetchInventory(),
       ops.fetchStaff(),
       ops.fetchMenuItems(),
@@ -1573,47 +1538,57 @@ export async function loadAllDataFromSupabase() {
       ops.fetchOilActionHistory(),
     ]);
 
+    // Helper to get value or default
+    const getResult = <T>(index: number, defaultValue: T): T => {
+      const result = results[index];
+      if (result.status === 'fulfilled') {
+        return result.value as T;
+      } else {
+        console.error(`Failed to load data at index ${index}:`, result.reason);
+        return defaultValue;
+      }
+    };
+
     return {
-      inventory,
-      staff,
-      menuItems,
-      modifierGroups,
-      modifierOptions,
-      orders,
-      customers,
-      expenses,
-      attendance,
-      suppliers,
-      purchaseOrders,
-      recipes,
-      shifts,
-      schedules,
-      promotions,
-      notifications,
-      productionLogs,
-      deliveryOrders,
-      cashFlows,
-      staffKPI,
-      leaveRecords,
-      trainingRecords,
-      otRecords,
-      customerReviews,
-      checklistTemplates,
-      checklistCompletions,
-      leaveBalances,
-      leaveRequests,
-      claimRequests,
-      staffRequests,
-      announcements,
-      oilTrackers,
-      oilChangeRequests,
-      oilActionHistory,
+      inventory: getResult(0, []),
+      staff: getResult(1, []),
+      menuItems: getResult(2, []),
+      modifierGroups: getResult(3, []),
+      modifierOptions: getResult(4, []),
+      orders: getResult(5, []),
+      customers: getResult(6, []),
+      expenses: getResult(7, []),
+      attendance: getResult(8, []),
+      suppliers: getResult(9, []),
+      purchaseOrders: getResult(10, []),
+      recipes: getResult(11, []),
+      shifts: getResult(12, []),
+      schedules: getResult(13, []),
+      promotions: getResult(14, []),
+      notifications: getResult(15, []),
+      productionLogs: getResult(16, []),
+      deliveryOrders: getResult(17, []),
+      cashFlows: getResult(18, []),
+      staffKPI: getResult(19, []),
+      leaveRecords: getResult(20, []),
+      trainingRecords: getResult(21, []),
+      otRecords: getResult(22, []),
+      customerReviews: getResult(23, []),
+      checklistTemplates: getResult(24, []),
+      checklistCompletions: getResult(25, []),
+      leaveBalances: getResult(26, []),
+      leaveRequests: getResult(27, []),
+      claimRequests: getResult(28, []),
+      staffRequests: getResult(29, []),
+      announcements: getResult(30, []),
+      oilTrackers: getResult(31, []),
+      oilChangeRequests: getResult(32, []),
+      oilActionHistory: getResult(33, []),
     };
   } catch (error) {
-    console.error('Failed to load data from Supabase:', error);
+    console.error('Critical failure in loadAllDataFromSupabase:', error);
     return {
       inventory: [],
-      inventoryLogs: [],
       staff: [],
       menuItems: [],
       modifierGroups: [],
@@ -1647,6 +1622,8 @@ export async function loadAllDataFromSupabase() {
       oilTrackers: [],
       oilChangeRequests: [],
       oilActionHistory: [],
+      // missing inventoryLogs in original catch return, adding it
+      inventoryLogs: [],
     };
   }
 }
