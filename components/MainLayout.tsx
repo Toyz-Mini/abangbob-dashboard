@@ -7,6 +7,7 @@ import TopNav from './TopNav';
 import Breadcrumb from './Breadcrumb';
 import CommandPalette, { useCommandPalette } from './CommandPalette';
 import BottomNav, { useBottomNav } from './BottomNav';
+import StaffPortalNav from './StaffPortalNav';
 import Sheet from './Sheet';
 // import { useTranslation } from '@/lib/contexts/LanguageContext'; // Removed as t is not strictly needed for basic labels or we can add it properly
 import {
@@ -245,8 +246,15 @@ export default function MainLayout({ children }: { children: ReactNode }) {
           onClose={commandPalette.close}
         />
 
-        {/* Bottom Navigation (Mobile) - Hide on Staff Portal as it has its own nav */}
-        {!pathname?.startsWith('/staff-portal') && (
+        {/* Bottom Navigation (Mobile) */}
+        {pathname?.startsWith('/staff-portal') ? (
+          // Page handles its own nav (already inside /staff-portal/page.tsx)
+          null
+        ) : isStaffLoggedIn ? (
+          // If staff is browsing other pages (like POS/History), show Staff Nav
+          <StaffPortalNav />
+        ) : (
+          // Otherwise show Admin/Manager Nav
           <BottomNav
             items={bottomNavItems}
             showMore={true}
