@@ -33,6 +33,7 @@ export default function KDSPage() {
   const [lastOrderCount, setLastOrderCount] = useState(0);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [selectedStaffId, setSelectedStaffId] = useState<string>('');
+  const [activeTab, setActiveTab] = useState<OrderColumn>('pending');
 
   // Subscribe to realtime order changes
   const handleOrderChange = useCallback(() => {
@@ -277,19 +278,42 @@ export default function KDSPage() {
         </div>
       </div>
 
+      {/* Mobile Tabs */}
+      <div className="kds-mobile-tabs">
+        <button
+          className={`tab-btn ${activeTab === 'pending' ? 'active' : ''}`}
+          onClick={() => setActiveTab('pending')}
+          style={{ borderColor: '#f59e0b', color: activeTab === 'pending' ? '#92400e' : '#666' }}
+        >
+          {t('kds.pending')} ({pendingOrders.length})
+        </button>
+        <button
+          className={`tab-btn ${activeTab === 'preparing' ? 'active' : ''}`}
+          onClick={() => setActiveTab('preparing')}
+          style={{ borderColor: '#3b82f6', color: activeTab === 'preparing' ? '#1e40af' : '#666' }}
+        >
+          {t('kds.preparing')} ({preparingOrders.length})
+        </button>
+        <button
+          className={`tab-btn ${activeTab === 'ready' ? 'active' : ''}`}
+          onClick={() => setActiveTab('ready')}
+          style={{ borderColor: '#10b981', color: activeTab === 'ready' ? '#065f46' : '#666' }}
+        >
+          {t('kds.ready')} ({readyOrders.length})
+        </button>
+      </div>
+
       {/* Order Columns */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(3, 1fr)',
+      <div className="kds-grid" style={{
         gap: '1rem',
         height: isFullscreen ? 'calc(100vh - 120px)' : 'calc(100vh - 200px)'
       }}>
         {/* Pending Column */}
-        <div style={{
+        <div className={`kds-column ${activeTab === 'pending' ? 'active' : ''}`} style={{
           background: 'var(--bg-primary)',
           borderRadius: 'var(--radius-lg)',
           overflow: 'hidden',
-          display: 'flex',
+          display: 'flex', // Default display, will be overridden by CSS for mobile
           flexDirection: 'column'
         }}>
           <div style={{
@@ -335,7 +359,7 @@ export default function KDSPage() {
         </div>
 
         {/* Preparing Column */}
-        <div style={{
+        <div className={`kds-column ${activeTab === 'preparing' ? 'active' : ''}`} style={{
           background: 'var(--bg-primary)',
           borderRadius: 'var(--radius-lg)',
           overflow: 'hidden',
@@ -385,7 +409,7 @@ export default function KDSPage() {
         </div>
 
         {/* Ready Column */}
-        <div style={{
+        <div className={`kds-column ${activeTab === 'ready' ? 'active' : ''}`} style={{
           background: 'var(--bg-primary)',
           borderRadius: 'var(--radius-lg)',
           overflow: 'hidden',
@@ -436,6 +460,65 @@ export default function KDSPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+<style jsx>{`
+        .kds-mobile-tabs {
+          display: none;
+          margin-bottom: 1rem;
+          gap: 0.5rem;
+          overflow-x: auto;
+          white-space: nowrap;
+          padding-bottom: 4px;
+        }
+        
+        .tab-btn {
+          flex: 1;
+          padding: 0.75rem 1rem;
+          background: white;
+          border: 1px solid #e5e7eb;
+          border-bottom: 3px solid transparent;
+          border-radius: var(--radius-md);
+          font-weight: 600;
+          font-size: 0.875rem;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+        
+        .tab-btn.active {
+          background: #f9fafb;
+          transform: translateY(-2px);
+          box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .kds-grid {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+        }
+
+        /* Mobile Responsive Styles */
+        @media (max-width: 1024px) {
+          .kds-mobile-tabs {
+            display: flex;
+          }
+
+          .kds-grid {
+            display: block; /* Stack or just show one */
+            grid-template-columns: 1fr;
+          }
+
+          .kds-column {
+            display: none !important;
+            height: 100%;
+          }
+
+          .kds-column.active {
+            display: flex !important;
+          }
+        }
+      `}</style>
+    </div >
   );
 }
 
