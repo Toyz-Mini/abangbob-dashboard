@@ -274,6 +274,20 @@ export function useOilTrackersRealtime(onOilTrackerChange: RealtimeChangeHandler
 }
 
 /**
+ * Subscribe to purchase_orders table changes
+ */
+export function usePurchaseOrdersRealtime(onPurchaseOrderChange: RealtimeChangeHandler) {
+  return useSupabaseRealtime('purchase_orders', onPurchaseOrderChange);
+}
+
+/**
+ * Subscribe to modifier_groups table changes
+ */
+export function useModifierGroupsRealtime(onModifierGroupChange: RealtimeChangeHandler) {
+  return useSupabaseRealtime('modifier_groups', onModifierGroupChange);
+}
+
+/**
  * Check if realtime is enabled and working
  */
 export async function testRealtimeConnection(): Promise<boolean> {

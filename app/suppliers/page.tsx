@@ -23,7 +23,8 @@ import {
   CheckCircle,
   Send,
   CreditCard,
-  X
+  X,
+  Printer,
 } from 'lucide-react';
 
 type ModalType = 'add-supplier' | 'edit-supplier' | 'delete-supplier' | 'create-po' | 'view-po' | null;
@@ -162,6 +163,107 @@ export default function SuppliersPage() {
     setIsProcessing(false);
   };
 
+  const handlePrintPO = (po: PurchaseOrder) => {
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>PO #${po.poNumber}</title>
+          <style>
+            body { font-family: sans-serif; padding: 20px; }
+            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+            th { background-color: #f2f2f2; }
+            .header { margin-bottom: 30px; }
+            .total { margin-top: 20px; text-align: right; font-weight: bold; font-size: 1.2em; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>Purchase Order</h1>
+            <p><strong>PO Number:</strong> ${po.poNumber}</p>
+            <p><strong>Supplier:</strong> ${po.supplierName}</p>
+            <p><strong>Date:</strong> ${new Date(po.createdAt).toLocaleDateString()}</p>
+            <p><strong>Status:</strong> ${po.status.toUpperCase()}</p>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Item</th>
+                <th>Quantity</th>
+                <th>Unit Price</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${po.items.map(item => `
+                <tr>
+                  <td>${item.stockItemName}</td>
+                  <td>${item.quantity} ${item.unit}</td>
+                  <td>BND ${item.unitPrice.toFixed(2)}</td>
+                  <td>BND ${item.totalPrice.toFixed(2)}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+          <div class="total">
+            TOTAL: BND ${po.total.toFixed(2)}
+          </div>
+          <script>
+            window.onload = function() { window.print(); }
+          </script>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+  };
+
+  const handleWhatsAppPO = (po: PurchaseOrder) => {
+    const supplier = suppliers.find(s => s.id === po.supplierId);
+    if (!supplier) return;
+
+    const message = `*PURCHASE ORDER #${po.poNumber}*
+    
+Hi ${supplier.contactPerson},
+
+I would like to place an order:
+
+${po.items.map(i => `- ${i.stockItemName}: ${i.quantity} ${i.unit}`).join('\n')}
+
+*Total Amount: BND ${po.total.toFixed(2)}*
+
+Please confirm. Thank you!`;
+
+    const encodedMessage = encodeURIComponent(message);
+    const phone = supplier.phone.replace(/\D/g, ''); // Remove non-digits
+    window.open(`https://wa.me/${phone}?text=${encodedMessage}`, '_blank');
+  };
+
+  const handleEmailPO = (po: PurchaseOrder) => {
+    const supplier = suppliers.find(s => s.id === po.supplierId);
+    if (!supplier?.email) {
+      alert('Tiada email untuk supplier ini');
+      return;
+    }
+
+    const subject = `Purchase Order - ${po.poNumber}`;
+    const body = `Hi ${supplier.contactPerson},
+
+Please find our purchase order details below:
+
+PO Number: ${po.poNumber}
+Total Amount: BND ${po.total.toFixed(2)}
+
+Items:
+${po.items.map(i => `- ${i.stockItemName}: ${i.quantity} ${i.unit} @ BND ${i.unitPrice}`).join('%0D%0A')}
+
+Thank you.`;
+
+    window.open(`mailto:${supplier.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`);
+  };
+
   const handleAddSupplier = async () => {
     if (!supplierForm.name.trim() || !supplierForm.phone.trim()) {
       alert('Sila masukkan nama dan nombor telefon');
@@ -231,6 +333,18 @@ export default function SuppliersPage() {
         )
       }));
     } else {
+      // Price Watch: Check if price has increased
+      if (stockItem.cost > 0 && stockItem.cost * 1.1 < stockItem.cost) { // Wait, logic should be: if new cost > old cost * 1.1
+        // Actually, the `stockItem` passed here IS the inventory item with the old cost. 
+        // But `addItemToPO` uses `stockItem.cost` as the default `unitPrice` for the PO.
+        // So a warning only makes sense if the USER changes the price manually later, OR if we had a separate "Supplier Price List" which we don't.
+        // However, the user might be manually setting the price in the form? No, `addItemToPO` takes `cost`.
+
+        // Let's refine: The requirement is "If new price is > 10% higher than last collected cost". 
+        // Since `addItemToPO` defaults to current `stockItem.cost`, the variance happens if the user EDITS the price in the form.
+        // So I should add the warning in the RENDER logic of the table row in the modal.
+      }
+
       setPoForm(prev => ({
         ...prev,
         items: [...prev.items, {
@@ -262,6 +376,39 @@ export default function SuppliersPage() {
         )
       }));
     }
+  };
+
+  const handleAutoFill = () => {
+    if (!poForm.supplierId) {
+      alert('Sila pilih supplier dahulu');
+      return;
+    }
+
+    const supplierItems = inventory.filter(item =>
+      // Filter by supplier if item has supplier field, otherwise include all or refine logic
+      // Assuming naive matching for now or robust if supplier field exists
+      item.supplierId === poForm.supplierId ||
+      (!item.supplierId && item.supplier === suppliers.find(s => s.id === poForm.supplierId)?.name)
+    );
+
+    const itemsToOrder = supplierItems.filter(item => item.currentQuantity <= item.minQuantity)
+      .map(item => ({
+        stockItemId: item.id,
+        stockItemName: item.name,
+        quantity: Math.max(item.minQuantity * 2 - item.currentQuantity, item.minQuantity), // Order enough to reach 2x min
+        unit: item.unit,
+        unitPrice: item.cost,
+      }));
+
+    if (itemsToOrder.length === 0) {
+      alert('Tiada item dari supplier ini yang perlu di-restock.');
+      return;
+    }
+
+    setPoForm(prev => ({
+      ...prev,
+      items: itemsToOrder
+    }));
   };
 
   const handleCreatePO = async () => {
@@ -345,6 +492,82 @@ export default function SuppliersPage() {
               <Plus size={18} />
               Tambah Supplier
             </button>
+          </div>
+        </div>
+
+        {/* Financial Dashboard Widgets */}
+        <div className="grid grid-cols-1 md:grid-cols-3" style={{ gap: '1rem', marginBottom: '2rem' }}>
+          {/* Total Spend This Month */}
+          <div className="card">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
+              <div style={{ padding: '0.5rem', background: 'var(--primary-light)', borderRadius: '50%', color: 'var(--primary)' }}>
+                <CreditCard size={20} />
+              </div>
+              <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', fontWeight: 600 }}>BELANJA BULAN INI</div>
+            </div>
+            <div style={{ fontSize: '1.5rem', fontWeight: 700 }}>
+              BND {useMemo(() => {
+                const now = new Date();
+                return purchaseOrders
+                  .filter(po => {
+                    const d = new Date(po.createdAt);
+                    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear() && po.status !== 'cancelled';
+                  })
+                  .reduce((sum, po) => sum + po.total, 0)
+                  .toFixed(2);
+              }, [purchaseOrders])}
+            </div>
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
+              {purchaseOrders.filter(po => po.status === 'received' && new Date(po.createdAt).getMonth() === new Date().getMonth()).length} order diterima
+            </div>
+          </div>
+
+          {/* Pending Payments (Net Terms) */}
+          <div className="card">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
+              <div style={{ padding: '0.5rem', background: '#fee2e2', borderRadius: '50%', color: 'var(--danger)' }}>
+                <Clock size={20} />
+              </div>
+              <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', fontWeight: 600 }}>BAYARAN TERTUNGGAK</div>
+            </div>
+            <div style={{ fontSize: '1.5rem', fontWeight: 700 }}>
+              BND {useMemo(() => {
+                return purchaseOrders
+                  .filter(po => po.status === 'received') // Assuming received = invoice accepted
+                  // In a real app we'd check if it's actually PAID. For now we just show total received "payable" value
+                  // Or we can filter by terms logic
+                  .reduce((sum, po) => sum + po.total, 0)
+                  .toFixed(2);
+              }, [purchaseOrders])}
+            </div>
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
+              Items Received, Payment Pending
+            </div>
+          </div>
+
+          {/* Top Supplier */}
+          <div className="card">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
+              <div style={{ padding: '0.5rem', background: '#fef3c7', borderRadius: '50%', color: '#d97706' }}>
+                <Star size={20} />
+              </div>
+              <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', fontWeight: 600 }}>TOP SUPPLIER</div>
+            </div>
+            <div style={{ fontSize: '1.1rem', fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {useMemo(() => {
+                const spendBySupplier: Record<string, number> = {};
+                purchaseOrders.forEach(po => {
+                  if (po.status !== 'cancelled') {
+                    spendBySupplier[po.supplierName] = (spendBySupplier[po.supplierName] || 0) + po.total;
+                  }
+                });
+                const top = Object.entries(spendBySupplier).sort((a, b) => b[1] - a[1])[0];
+                return top ? top[0] : '-';
+              }, [purchaseOrders])}
+            </div>
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
+              Highest volume this month
+            </div>
           </div>
         </div>
 
@@ -900,13 +1123,23 @@ export default function SuppliersPage() {
             <select
               className="form-select"
               value={poForm.supplierId}
-              onChange={(e) => setPoForm(prev => ({ ...prev, supplierId: e.target.value }))}
+              onChange={(e) => setPoForm(prev => ({ ...prev, supplierId: e.target.value, items: [] }))}
             >
               <option value="">Pilih Supplier</option>
               {suppliers.filter(s => s.status === 'active').map(s => (
                 <option key={s.id} value={s.id}>{s.name}</option>
               ))}
             </select>
+            {poForm.supplierId && (
+              <button
+                className="btn btn-sm btn-outline"
+                onClick={handleAutoFill}
+                style={{ marginTop: '0.5rem', width: '100%', borderColor: 'var(--primary)', color: 'var(--primary)' }}
+              >
+                <AlertTriangle size={14} style={{ marginRight: '0.25rem' }} />
+                Smart Auto-Fill (Low Stock Only)
+              </button>
+            )}
           </div>
 
           <div className="form-group">
@@ -951,7 +1184,25 @@ export default function SuppliersPage() {
                           style={{ width: '80px' }}
                         />
                       </td>
-                      <td>BND {item.unitPrice.toFixed(2)}</td>
+                      <td>
+                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                          <span>BND {item.unitPrice.toFixed(2)}</span>
+                          {(() => {
+                            const stockItem = inventory.find(i => i.id === item.stockItemId);
+                            // If collecting a new price that is > 10% higher than historical cost
+                            if (stockItem && stockItem.cost > 0 && item.unitPrice > stockItem.cost * 1.1) {
+                              const diffPercent = ((item.unitPrice - stockItem.cost) / stockItem.cost) * 100;
+                              return (
+                                <span style={{ fontSize: '0.75rem', color: 'var(--warning)', display: 'flex', alignItems: 'center' }}>
+                                  <AlertTriangle size={10} style={{ marginRight: '2px' }} />
+                                  +{diffPercent.toFixed(0)}% vs avg
+                                </span>
+                              );
+                            }
+                            return null;
+                          })()}
+                        </div>
+                      </td>
                       <td style={{ fontWeight: 600 }}>BND {(item.quantity * item.unitPrice).toFixed(2)}</td>
                       <td>
                         <button
@@ -1050,6 +1301,34 @@ export default function SuppliersPage() {
                     </tr>
                   </tfoot>
                 </table>
+
+                {/* Additional Actions */}
+                <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
+                  <button
+                    className="btn btn-sm btn-outline"
+                    onClick={() => handlePrintPO(selectedPO)}
+                    style={{ flex: 1 }}
+                  >
+                    <Printer size={14} />
+                    Print / PDF
+                  </button>
+                  <button
+                    className="btn btn-sm btn-outline"
+                    onClick={() => handleWhatsAppPO(selectedPO)}
+                    style={{ flex: 1, borderColor: '#25D366', color: '#25D366' }}
+                  >
+                    <Phone size={14} />
+                    WhatsApp
+                  </button>
+                  <button
+                    className="btn btn-sm btn-outline"
+                    onClick={() => handleEmailPO(selectedPO)}
+                    style={{ flex: 1 }}
+                  >
+                    <Mail size={14} />
+                    Email
+                  </button>
+                </div>
               </div>
 
               {selectedPO.status !== 'received' && selectedPO.status !== 'cancelled' && (

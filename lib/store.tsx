@@ -1838,16 +1838,64 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const updatePurchaseOrderStatus = useCallback(async (id: string, status: PurchaseOrder['status']) => {
-    const updates = { status, updatedAt: new Date().toISOString() };
+    // Check if status is changing to 'received' to trigger inventory update
+    const po = purchaseOrders.find(p => p.id === id);
+    const isReceiving = status === 'received' && po?.status !== 'received';
+
+    const updates = {
+      status,
+      updatedAt: new Date().toISOString(),
+      actualDelivery: isReceiving ? new Date().toISOString() : undefined
+    };
 
     // Sync to Supabase
     await SupabaseSync.syncUpdatePurchaseOrder(id, updates);
 
-    // Update local state
-    setPurchaseOrders(prev => prev.map(po =>
-      po.id === id ? { ...po, ...updates } : po
+    // If receiving, update inventory stock
+    if (isReceiving && po) {
+      // We need to update inventory for each item
+      // This is a bit complex as we need to update multiple items
+      // For now, we'll update local state and call sync for each
+      // Ideally this should be a transaction on the backend
+
+      po.items.forEach(async (item) => {
+        const stockItem = inventory.find(i => i.id === item.stockItemId);
+        if (stockItem) {
+          const newQuantity = stockItem.currentQuantity + item.quantity;
+
+          // Update local inventory
+          setInventory(prev => prev.map(i =>
+            i.id === item.stockItemId
+              ? { ...i, currentQuantity: newQuantity }
+              : i
+          ));
+
+          // Sync inventory update
+          await SupabaseSync.syncUpdateStockItem(item.stockItemId, { currentQuantity: newQuantity });
+
+          // Add log
+          const log: InventoryLog = {
+            id: generateUUID(),
+            stockItemId: item.stockItemId,
+            stockItemName: item.stockItemName,
+            quantity: item.quantity,
+            previousQuantity: stockItem.currentQuantity,
+            newQuantity: newQuantity,
+            reason: `PO Received #${po.poNumber}`,
+            type: 'in',
+            createdAt: new Date().toISOString(),
+          };
+          setInventoryLogs(prev => [log, ...prev]);
+          await SupabaseSync.syncAddInventoryLog(log);
+        }
+      });
+    }
+
+    // Update local PO state
+    setPurchaseOrders(prev => prev.map(currPO =>
+      currPO.id === id ? { ...currPO, ...updates } : currPO
     ));
-  }, []);
+  }, [purchaseOrders, inventory]);
 
   // Recipe actions
   const addRecipe = useCallback((recipeData: Omit<Recipe, 'id' | 'createdAt' | 'updatedAt' | 'totalCost' | 'profitMargin'>) => {
@@ -1938,14 +1986,20 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       createdAt: new Date().toISOString(),
     };
     setPromotions(prev => [newPromo, ...prev]);
+    // Sync to Supabase
+    SupabaseSync.syncAddPromotion(newPromo);
   }, []);
 
   const updatePromotion = useCallback((id: string, updates: Partial<Promotion>) => {
     setPromotions(prev => prev.map(p => p.id === id ? { ...p, ...updates } : p));
+    // Sync to Supabase
+    SupabaseSync.syncUpdatePromotion(id, updates);
   }, []);
 
   const deletePromotion = useCallback((id: string) => {
     setPromotions(prev => prev.filter(p => p.id !== id));
+    // Sync to Supabase
+    SupabaseSync.syncDeletePromotion(id);
   }, []);
 
   const validatePromoCode = useCallback((code: string): Promotion | null => {
@@ -1969,10 +2023,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       createdAt: new Date().toISOString(),
     };
     setNotifications(prev => [newNotif, ...prev]);
+    // Sync to Supabase
+    SupabaseSync.syncAddNotification(newNotif);
   }, []);
 
   const markNotificationRead = useCallback((id: string) => {
     setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
+    // Sync to Supabase
+    SupabaseSync.syncUpdateNotification(id, { isRead: true });
   }, []);
 
   const markAllNotificationsRead = useCallback(() => {
@@ -1981,6 +2039,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   const deleteNotification = useCallback((id: string) => {
     setNotifications(prev => prev.filter(n => n.id !== id));
+    // Sync to Supabase
+    SupabaseSync.syncDeleteNotification(id);
   }, []);
 
   const getUnreadCount = useCallback((): number => {
