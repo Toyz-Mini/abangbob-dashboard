@@ -210,7 +210,7 @@ export default function ShiftWizardModal({ isOpen, onClose, mode }: ShiftWizardM
     const renderStep1_Stock = () => (
         <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
             <div className="bg-amber-50 p-3 rounded-lg border border-amber-100 text-amber-800 text-sm mb-2">
-                Sila kira stok fizikal untuk barang kritikal (Critical Items) ini.
+                Sila kira stok fizikal untuk barang kritikal ini. (Blind Count - Sistem tidak menunjuk kuantiti sebenar).
             </div>
 
             <div className="max-h-[300px] overflow-y-auto pr-2 space-y-3">
@@ -218,7 +218,7 @@ export default function ShiftWizardModal({ isOpen, onClose, mode }: ShiftWizardM
                     <div key={item.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100">
                         <div>
                             <div className="font-bold text-gray-800">{item.name}</div>
-                            <div className="text-xs text-gray-500">System: {item.currentQuantity} {item.unit}</div>
+                            <div className="text-xs text-gray-500">Unit: {item.unit}</div>
                         </div>
                         <div className="flex items-center gap-2">
                             <input
@@ -226,7 +226,7 @@ export default function ShiftWizardModal({ isOpen, onClose, mode }: ShiftWizardM
                                 value={stockCounts[item.id] || ''}
                                 onChange={e => setStockCounts(prev => ({ ...prev, [item.id]: e.target.value }))}
                                 className="form-input w-24 text-center font-bold !bg-white !text-gray-900 !border-gray-300"
-                                placeholder={item.currentQuantity.toString()}
+                                placeholder="?"
                             />
                             <span className="text-xs font-bold text-gray-500 w-8">{item.unit}</span>
                         </div>
