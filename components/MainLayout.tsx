@@ -305,11 +305,18 @@ export default function MainLayout({ children }: { children: ReactNode }) {
         {pathname?.startsWith('/staff-portal') ? (
           // Page handles its own nav (already inside /staff-portal/page.tsx)
           null
+        ) : userRole === 'Admin' ? (
+          // Admin gets Admin/Manager Nav
+          <BottomNav
+            items={filteredBottomNavItems}
+            showMore={true}
+            onMoreClick={bottomNav.openMore}
+          />
         ) : isStaffLoggedIn ? (
           // If staff is browsing other pages (like POS/History), show Staff Nav
           <StaffPortalNav />
         ) : (
-          // Otherwise show Admin/Manager Nav
+          // Otherwise show Admin/Manager Nav (fallback)
           <BottomNav
             items={filteredBottomNavItems}
             showMore={true}
