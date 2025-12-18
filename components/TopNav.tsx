@@ -19,6 +19,7 @@ export default function TopNav({ onMenuClick }: TopNavProps) {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
 
   const { resolvedTheme, toggleTheme } = useTheme();
@@ -47,6 +48,14 @@ export default function TopNav({ onMenuClick }: TopNavProps) {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // Track mobile viewport
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
   const handleThemeToggle = () => {
     toggleTheme();
     playSound('notification');
@@ -73,9 +82,11 @@ export default function TopNav({ onMenuClick }: TopNavProps) {
   return (
     <div className="top-nav">
       <div className="top-nav-left">
-        <button onClick={onMenuClick} className="mobile-menu-btn icon-btn hidden md:flex">
-          <Menu size={24} />
-        </button>
+        {!isMobile && (
+          <button onClick={onMenuClick} className="mobile-menu-btn icon-btn">
+            <Menu size={24} />
+          </button>
+        )}
 
         {/* Logo untuk mobile */}
         <img
