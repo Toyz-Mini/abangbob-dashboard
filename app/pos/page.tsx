@@ -325,8 +325,15 @@ export default function POSPage() {
   };
 
   const proceedToPayment = async (retrying: boolean = false) => {
-    if (!customerPhone || customerPhone.length < 8) {
-      showToast('Sila masukkan nombor telefon yang sah (minimum 8 digit)', 'error');
+    // Robust validation: Strip country code to check if actual digits exist
+    // default countryCode is +673 (4 chars). If user typed nothing, length is 4.
+    // We want to ensure they have at least 3-4 digits of actual number.
+    const phoneDigits = customerPhone.replace(countryCode, '').trim();
+
+    if (!phoneDigits || phoneDigits.length < 3) {
+      showToast('⚠️ Sila masukkan nombor telefon pelanggan dahulu.', 'error');
+      // Look for the input to focus it? 
+      // simple return is enough as toast explains it.
       return;
     }
 
@@ -1509,7 +1516,7 @@ export default function POSPage() {
                 alignItems: 'center',
                 justifyContent: 'center'
               }}
-              disabled={isProcessing || customerPhone.length < 5}
+              disabled={isProcessing}
             >
               {isProcessing ? (
                 <>
