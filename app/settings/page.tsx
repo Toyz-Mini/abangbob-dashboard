@@ -673,10 +673,20 @@ export default function SettingsPage() {
   };
 
   const handleTestDrawer = async () => {
+    if (printerSettings.useRawbt) {
+      alert('Untuk mode RawBT, sila gunakan butang "Test Print" untuk menguji drawer (drawer dibuka selepas print).');
+      return;
+    }
+
     if (thermalPrinter.isConnected()) {
       try {
-        await thermalPrinter.openCashDrawer();
-        alert('Cash drawer telah dibuka!');
+        // Try Pin 2
+        await thermalPrinter.openCashDrawer(2);
+        // Wait 100ms
+        await new Promise(r => setTimeout(r, 100));
+        // Try Pin 5
+        await thermalPrinter.openCashDrawer(5);
+        alert('Signal buka drawer dihantar ke Pin 2 & 5!');
       } catch (error) {
         console.error('Drawer error:', error);
         alert('Gagal membuka drawer. Sila pastikan drawer disambung ke printer.');
@@ -1368,8 +1378,17 @@ export default function SettingsPage() {
                     style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flex: 1 }}
                   >
                     <DollarSign size={16} />
-                    Test Cash Drawer
+                    Test Cash Drawer (Pin 2 & 5)
                   </button>
+                </div>
+
+                <div style={{ marginTop: '1rem', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+                  <strong>Masalah Printer Tak Detect?</strong>
+                  <ul style={{ paddingLeft: '1.25rem', marginTop: '0.5rem' }}>
+                    <li>Jika menggunakan Android, pastikan guna <strong>OTG Adapter</strong> yang berkualiti (Ugreen/Baseus) dan sambung USB.</li>
+                    <li>Pastikan Baud Rate betul (Standard: 9600, XPrinter: 115200).</li>
+                    <li>Kalau guna Windows/Mac, pastikan driver printer <strong>TIDAK installed</strong> (atau pause print spooler) sebab driver akan block Web Serial.</li>
+                  </ul>
                 </div>
 
                 {/* Help Section */}
