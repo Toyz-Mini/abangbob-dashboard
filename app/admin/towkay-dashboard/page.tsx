@@ -8,31 +8,32 @@ import {
 } from 'lucide-react';
 import { getTowkayStats, TowkayStats, calculateTowkayStats } from '@/lib/towkay-metrics';
 import { formatCurrency } from '@/lib/utils';
-import { useStore, useOrders, useInventory, useStaff } from '@/lib/store';
+import { useStore, useOrders, useInventory, useStaff, useKPI } from '@/lib/store';
 
 export default function TowkayDashboard() {
     const [stats, setStats] = useState<TowkayStats | null>(null);
     const [currentTime, setCurrentTime] = useState(new Date());
 
-    const { state } = useStore();
-    const { getTodayOrders } = useOrders();
+    const { cashRegisters } = useStore();
+    const { orders } = useOrders();
     const { inventoryLogs } = useInventory();
     const { staff } = useStaff();
+    const { staffKPI } = useKPI();
 
     // Re-calculate stats whenever underlying data changes
     useEffect(() => {
         // Prepare Data Context
         const dataContext = {
-            orders: state.orders,
-            inventoryLogs: state.inventoryLogs || [], // Ensure fallback if undefined
-            cashRegisters: state.cashRegisters || [],
-            staff: staff,
-            staffKPI: state.staffKPI || []
+            orders: orders || [],
+            inventoryLogs: inventoryLogs || [], // Ensure fallback if undefined
+            cashRegisters: cashRegisters || [],
+            staff: staff || [],
+            staffKPI: staffKPI || []
         };
 
         const calculatedStats = calculateTowkayStats(dataContext);
         setStats(calculatedStats);
-    }, [state.orders, state.inventoryLogs, state.cashRegisters, staff, state.staffKPI]);
+    }, [orders, inventoryLogs, cashRegisters, staff, staffKPI]);
 
     useEffect(() => {
         // Simulate live clock
