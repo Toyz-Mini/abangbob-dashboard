@@ -49,7 +49,19 @@ export default function MainLayout({ children }: { children: ReactNode }) {
   const { user, isStaffLoggedIn, currentStaff } = useAuth();
 
   // Determine role for mobile menu filtering
-  const userRole: UserRole | null = user ? 'Admin' : (isStaffLoggedIn && currentStaff ? currentStaff.role : null);
+  // If user is accessing admin routes, treat as Admin for UI purposes
+  const isUserAdmin = !!user || pathname?.startsWith('/admin');
+  const userRole: UserRole | null = isUserAdmin ? 'Admin' : (isStaffLoggedIn && currentStaff ? currentStaff.role : null);
+
+  // Debug role detection
+  useEffect(() => {
+    console.log('[MainLayout] Role Detection:', {
+      hasUser: !!user,
+      isStaffLoggedIn,
+      path: pathname,
+      determinedRole: userRole
+    });
+  }, [user, isStaffLoggedIn, pathname, userRole]);
 
   // Open sidebar on mount if desktop
   useEffect(() => {
