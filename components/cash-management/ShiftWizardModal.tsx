@@ -165,14 +165,15 @@ export default function ShiftWizardModal({ isOpen, onClose, mode }: ShiftWizardM
                     {mode === 'open' ? 'Masukkan Duit Float (Opening)' : 'Kira Duit Cashier (Closing)'}
                 </label>
                 <div className="relative">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold">$</span>
+                    <span className="absolute left-6 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-xl">$</span>
                     <input
                         type="number"
                         autoFocus
                         value={amount}
                         onChange={e => setAmount(e.target.value)}
-                        className="form-input pl-8 text-2xl font-bold !bg-white !text-gray-900 !border-gray-300 h-14"
+                        className="form-input pl-10 text-2xl font-bold !bg-white !text-gray-900 !border-gray-300 h-16 w-full"
                         placeholder="0.00"
+                        style={{ paddingLeft: '2.5rem' }}
                     />
                 </div>
                 {mode === 'close' && amount && (
