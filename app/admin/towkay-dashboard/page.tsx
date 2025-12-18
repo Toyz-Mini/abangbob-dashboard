@@ -6,34 +6,40 @@ import {
     Zap, Brain, Crown, User, Calendar, ArrowRight, DollarSign,
     Activity, Search, Filter, Radio, Target, Clock, AlertOctagon
 } from 'lucide-react';
-import { TowkayStats, calculateTowkayStats } from '@/lib/towkay-metrics';
+import { TowkayStats, calculateTowkayStats, DataContext } from '@/lib/towkay-metrics';
 import { formatCurrency } from '@/lib/utils';
-import { useStore, useOrders, useInventory, useStaff, useKPI } from '@/lib/store';
+import { useStore, useOrders, useInventory, useStaff, useKPI, useSchedules, useMenu } from '@/lib/store';
 
 export default function TowkayDashboard() {
     const [stats, setStats] = useState<TowkayStats | null>(null);
     const [currentTime, setCurrentTime] = useState(new Date());
 
-    const { cashRegisters } = useStore();
+    const { cashRegisters, attendance } = useStore();
     const { orders } = useOrders();
-    const { inventoryLogs } = useInventory();
+    const { inventoryLogs, inventory } = useInventory();
     const { staff } = useStaff();
     const { staffKPI } = useKPI();
+    const { schedules, shifts } = useSchedules();
+    const { menuItems } = useMenu();
 
     // Re-calculate stats whenever underlying data changes
     useEffect(() => {
-        // Prepare Data Context
-        const dataContext = {
+        const dataContext: DataContext = {
             orders: orders || [],
-            inventoryLogs: inventoryLogs || [], // Ensure fallback if undefined
+            inventoryLogs: inventoryLogs || [],
             cashRegisters: cashRegisters || [],
             staff: staff || [],
-            staffKPI: staffKPI || []
+            staffKPI: staffKPI || [],
+            attendance: attendance || [],
+            schedules: schedules || [],
+            shifts: shifts || [],
+            menuItems: menuItems || [],
+            inventory: inventory || []
         };
 
         const calculatedStats = calculateTowkayStats(dataContext);
         setStats(calculatedStats);
-    }, [orders, inventoryLogs, cashRegisters, staff, staffKPI]);
+    }, [orders, inventoryLogs, cashRegisters, staff, staffKPI, attendance, schedules, shifts, menuItems, inventory]);
 
     useEffect(() => {
         // Simulate live clock
