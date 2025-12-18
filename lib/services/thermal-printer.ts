@@ -498,11 +498,13 @@ class ThermalPrinterService {
       // Get Base64 data
       const base64Data = this.getBufferBase64();
 
-      // Construct RawBT intent URL
-      // Use 'base64,' prefix so RawBT knows to decode it
-      const intentUrl = `intent:base64,${base64Data}#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter;end;`;
+      // Construct RawBT URL using simpler scheme
+      // Format: rawbt:base64,DATA
+      const intentUrl = `rawbt:base64,${base64Data}`;
 
-      // Open intent
+      console.log('Opening RawBT URL:', intentUrl.substring(0, 50) + '...');
+
+      // Open URL
       window.location.href = intentUrl;
     } catch (error) {
       console.error('RawBT Print Error:', error);
