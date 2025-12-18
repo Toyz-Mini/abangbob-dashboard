@@ -6,8 +6,8 @@ import {
     Zap, Brain, Crown, User, Calendar, ArrowRight, DollarSign,
     Activity, Search, Filter, Radio, Target, Clock, AlertOctagon
 } from 'lucide-react';
-import { getTowkayStats, TowkayStats } from '../../lib/towkay-metrics';
-import { formatCurrency } from '../../lib/utils';
+import { getTowkayStats, TowkayStats } from '@/lib/towkay-metrics';
+import { formatCurrency } from '@/lib/utils';
 
 export default function TowkayDashboard() {
     const [stats, setStats] = useState<TowkayStats | null>(null);
