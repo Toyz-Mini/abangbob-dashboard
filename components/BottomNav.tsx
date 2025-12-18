@@ -62,7 +62,7 @@ export default function BottomNav({
           aria-label="More options"
         >
           <MoreHorizontal size={24} />
-          <span>Menu</span>
+          <span>Lagi</span>
         </button>
       )}
     </nav>

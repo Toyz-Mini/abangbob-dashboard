@@ -297,7 +297,7 @@ export default function MainLayout({ children }: { children: ReactNode }) {
         ) : (
           // Otherwise show Admin/Manager Nav
           <BottomNav
-            items={bottomNavItems}
+            items={filteredBottomNavItems}
             showMore={true}
             onMoreClick={bottomNav.openMore}
           />
