@@ -1278,7 +1278,7 @@ export default function NewStaffPage() {
           Klik atau seret fail untuk muat naik. Dokumen akan disimpan dengan selamat.
         </p>
 
-        <div className="document-upload-grid-modern">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {documentTypes.map((docType) => {
             const file = uploadedDocs[docType.id as keyof typeof uploadedDocs];
             const isDragging = dragOver === docType.id;
@@ -1287,58 +1287,66 @@ export default function NewStaffPage() {
             return (
               <div
                 key={docType.id}
-                className={`doc-upload-card ${isDragging ? 'dragging' : ''} ${hasFile ? 'has-file' : ''}`}
+                className={`transition-all duration-200 border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center text-center cursor-pointer group ${hasFile
+                    ? 'border-green-500 bg-green-50'
+                    : isDragging
+                      ? 'border-primary bg-primary-50 scale-[1.02]'
+                      : 'border-gray-300 hover:border-primary hover:bg-gray-50'
+                  }`}
+                style={{ minHeight: '200px' }}
                 onDragOver={(e) => handleDragOver(e, docType.id)}
                 onDragLeave={handleDragLeave}
                 onDrop={(e) => handleDrop(e, docType.id)}
+                onClick={() => document.getElementById(`file-${docType.id}`)?.click()}
               >
-                <div className="doc-card-header">
-                  <h4 className="doc-label">{docType.label}</h4>
-                  {hasFile && (
-                    <button
-                      type="button"
-                      className="doc-delete-btn"
-                      onClick={() => handleFileSelect(docType.id, null)}
-                      title="Padam"
-                    >
-                      <X size={16} />
-                    </button>
-                  )}
-                </div>
-
-                <div className="doc-upload-area">
+                <div className="flex flex-col items-center gap-3">
                   {hasFile ? (
                     <>
-                      <div className="doc-preview">
-                        {file!.type.startsWith('image/') ? (
-                          <div className="doc-image-preview">
-                            <img
-                              src={URL.createObjectURL(file!)}
-                              alt={docType.label}
-                              onLoad={(e) => URL.revokeObjectURL((e.target as HTMLImageElement).src)}
-                            />
-                          </div>
-                        ) : (
-                          <div className="doc-file-icon">
-                            <FileText size={48} />
-                          </div>
-                        )}
+                      <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center text-green-600 mb-1">
+                        <Check size={24} strokeWidth={3} />
                       </div>
-                      <div className="doc-file-info">
-                        <Check size={16} className="doc-check-icon" />
-                        <p className="doc-filename">{file!.name}</p>
-                        <p className="doc-filesize">{formatFileSize(file!.size)}</p>
+                      <div className="w-full overflow-hidden">
+                        <p className="font-semibold text-gray-900 truncate max-w-full px-2">
+                          {file!.name}
+                        </p>
+                        <p className="text-xs text-green-600 font-medium mt-1">
+                          {formatFileSize(file!.size)} • Berjaya dimuat naik
+                        </p>
                       </div>
+                      <button
+                        type="button"
+                        className="mt-2 text-xs text-red-500 hover:text-red-700 font-medium hover:underline py-1 px-3"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleFileSelect(docType.id, null);
+                        }}
+                      >
+                        Padam Fail
+                      </button>
                     </>
                   ) : (
                     <>
-                      <div className="doc-upload-icon">
-                        <Upload size={40} />
+                      <div className={`p-4 rounded-full mb-1 transition-colors ${isDragging ? 'bg-primary-100 text-primary' : 'bg-gray-100 text-gray-400 group-hover:bg-primary-50 group-hover:text-primary'}`}>
+                        {docType.id.includes('ic') ? (
+                          <div className="relative">
+                            <FileText size={28} />
+                            <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-0.5">
+                              <User size={12} className="text-current" />
+                            </div>
+                          </div>
+                        ) : (
+                          <FileText size={32} />
+                        )}
                       </div>
-                      <p className="doc-upload-text">
-                        Seret & lepas atau klik untuk pilih
-                      </p>
-                      <p className="doc-upload-hint">{docType.hint}</p>
+                      <div>
+                        <h4 className="font-semibold text-gray-900">{docType.label}</h4>
+                        <p className="text-xs text-gray-500 mt-1 max-w-[200px] mx-auto">
+                          {isDragging ? 'Lepaskan fail di sini' : docType.hint}
+                        </p>
+                      </div>
+                      <span className="mt-2 text-xs font-medium text-primary px-3 py-1.5 rounded-full bg-primary-50 group-hover:bg-primary-100 transition-colors">
+                        Pilih Fail
+                      </span>
                     </>
                   )}
                 </div>
@@ -1348,10 +1356,10 @@ export default function NewStaffPage() {
                   id={`file-${docType.id}`}
                   accept={docType.accept}
                   style={{ display: 'none' }}
+                  onClick={(e) => e.stopPropagation()} // Prevent double trigger
                   onChange={(e) => {
                     const selectedFile = e.target.files?.[0];
                     if (selectedFile) {
-                      // Validate file size
                       if (selectedFile.size > 5 * 1024 * 1024) {
                         alert('Fail terlalu besar. Maksimum 5MB.');
                         e.target.value = '';
@@ -1361,16 +1369,6 @@ export default function NewStaffPage() {
                     }
                   }}
                 />
-
-                {!hasFile && (
-                  <button
-                    type="button"
-                    className="btn btn-outline btn-sm doc-browse-btn"
-                    onClick={() => document.getElementById(`file-${docType.id}`)?.click()}
-                  >
-                    Pilih Fail
-                  </button>
-                )}
               </div>
             );
           })}
