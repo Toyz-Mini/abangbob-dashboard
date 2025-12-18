@@ -153,7 +153,7 @@ export default function RegisterModal({ isOpen, onClose, mode }: RegisterModalPr
                                 required
                                 value={amount}
                                 onChange={(e) => setAmount(e.target.value)}
-                                className="block w-full pl-8 pr-4 py-3 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-lg font-bold"
+                                className="form-input pl-8 text-lg font-bold"
                                 placeholder="0.00"
                                 autoFocus
                             />
@@ -176,7 +176,7 @@ export default function RegisterModal({ isOpen, onClose, mode }: RegisterModalPr
                             value={notes}
                             onChange={(e) => setNotes(e.target.value)}
                             rows={2}
-                            className="block w-full px-4 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm"
+                            className="form-input text-sm"
                             placeholder={mode === 'open' ? "Contoh: Duit pecah secukupnya" : "Contoh: Ada duit syiling extra"}
                         />
                     </div>
