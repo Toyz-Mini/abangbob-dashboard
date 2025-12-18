@@ -107,11 +107,22 @@ export default function TowkayDashboard() {
                             <span className="text-slate-500 text-xs uppercase">vs Previous Shift</span>
                         </div>
 
-                        {/* Micro Chart Mockup */}
-                        <div className="absolute bottom-0 left-0 w-full h-1/3 flex items-end gap-1 px-6 pb-4 opacity-30">
-                            {[40, 60, 45, 70, 85, 65, 90, 80, 50, 60, 75, 100].map((h, i) => (
-                                <div key={i} className="flex-1 bg-cyan-500/50 hover:bg-cyan-400 transition-colors rounded-t-sm" style={{ height: `${h}%` }}></div>
-                            ))}
+                        {/* Revenue Forecast Mini Chart */}
+                        <div className="absolute bottom-0 left-0 w-full h-1/3 flex items-end gap-1 px-6 pb-4 opacity-50">
+                            {stats.revenueForecast.slice(0, 7).map((forecast, i) => {
+                                const maxSales = Math.max(...stats.revenueForecast.map(f => f.predictedSales), 1);
+                                const heightPercent = (forecast.predictedSales / maxSales) * 100;
+                                return (
+                                    <div key={i} className="flex-1 flex flex-col items-center gap-1">
+                                        <div
+                                            className={`w-full rounded-t-sm transition-colors ${forecast.trend === 'up' ? 'bg-green-500/60 hover:bg-green-400' : forecast.trend === 'down' ? 'bg-red-500/60 hover:bg-red-400' : 'bg-cyan-500/60 hover:bg-cyan-400'}`}
+                                            style={{ height: `${Math.max(heightPercent, 10)}%` }}
+                                            title={`${forecast.date}: BND ${forecast.predictedSales}`}
+                                        ></div>
+                                        <span className="text-[8px] text-slate-500">{forecast.date.slice(-2)}</span>
+                                    </div>
+                                );
+                            })}
                         </div>
                     </div>
 
@@ -255,10 +266,13 @@ export default function TowkayDashboard() {
                         </div>
                     </div>
 
-                    {/* 6. TICKER FOOTER (System Logs) */}
+                    {/* 6. TICKER FOOTER (System Logs + Anomaly Alerts) */}
                     <div className="col-span-12 row-span-1 border-t border-slate-800 bg-black flex items-center px-4 overflow-hidden">
                         <div className="text-[10px] font-mono text-slate-500 whitespace-nowrap animate-marquee">
-                            LOG: [21:40:05] SYSTEM CHECK OK ... [21:40:02] KITCHEN PRINTER 2 ONLINE ... [21:39:55] NEW ORDER #10394 RECEIVED ... [21:39:40] STAFF SARA CLOCKED IN ... [21:39:12] INVENTORY SYNC COMPLETED
+                            {stats.anomalies.length > 0
+                                ? stats.anomalies.map(a => `⚠️ ${a.title}: ${a.description}`).join(' ... ')
+                                : `✅ SYSTEM CHECK OK ... 📦 ${stats.quickActions.lowStockItems} Low Stock Items ... 👥 ${stats.quickActions.staffOnDuty} Staff On Duty ... 📊 Avg Prep: ${stats.operations.avgPrepTime}m ... 🕐 Peak: ${stats.operations.peakHour}`
+                            }
                         </div>
                     </div>
 
