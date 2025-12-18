@@ -14,7 +14,7 @@ interface ShiftWizardModalProps {
 }
 
 export default function ShiftWizardModal({ isOpen, onClose, mode }: ShiftWizardModalProps) {
-    const { openRegister, closeRegister, currentRegister, inventory, adjustStock, getTodayOrders } = useStore();
+    const { openRegister, closeRegister, currentRegister, inventory, adjustStock, getTodayOrders, orders } = useStore();
     const { user, currentStaff } = useAuth();
 
     // Steps: 0: Cash, 1: Stock, 2: Review
@@ -49,7 +49,7 @@ export default function ShiftWizardModal({ isOpen, onClose, mode }: ShiftWizardM
     let totalSales = 0;
     if (mode === 'close' && currentRegister) {
         // Simple calculation
-        const { orders } = useStore.getState();
+        // const { orders } = useStore.getState(); // Removed: Accessing via hook instead
         const sessionOrders = orders.filter(o =>
             o.status === 'completed' &&
             o.paymentMethod === 'cash' &&
