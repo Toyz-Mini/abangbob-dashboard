@@ -20,7 +20,7 @@ import {
   markTransactionSubmitted,
 } from '@/lib/services';
 import ReceiptPreview from '@/components/ReceiptPreview';
-import { ArrowLeft, UtensilsCrossed, Sandwich, Coffee, History, Printer, Clock, ChefHat, CheckCircle, ShoppingBag, Plus, Minus, X, Sparkles, AlertTriangle, User, DollarSign, CreditCard, QrCode, Wallet, WifiOff, RefreshCw, MessageCircle, Check } from 'lucide-react';
+import { ArrowLeft, UtensilsCrossed, Sandwich, Coffee, History, Printer, Clock, ChefHat, CheckCircle, ShoppingBag, Plus, Minus, X, Sparkles, AlertTriangle, User, DollarSign, CreditCard, QrCode, Wallet, WifiOff, RefreshCw, MessageCircle, Check, Globe } from 'lucide-react';
 import Modal from '@/components/Modal';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import StatCard from '@/components/StatCard';
@@ -132,6 +132,7 @@ export default function POSPage() {
   // Power Features State
   const { playSound } = useSound();
   const [sendToWhatsapp, setSendToWhatsapp] = useState(true);
+  const [countryCode, setCountryCode] = useState('+673');
 
   // Load receipt settings on mount
   useEffect(() => {
@@ -1177,30 +1178,73 @@ export default function POSPage() {
                 <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1.5 flex items-center gap-1.5">
                   <User size={12} /> No Telefon (Wajib)
                 </label>
-                <div className="relative group transition-all duration-200 focus-within:ring-2 ring-primary/20 rounded-md">
+                <div className="relative group transition-all duration-200 focus-within:ring-2 ring-primary/20 rounded-md flex">
+                  {/* Country Code Selector */}
+                  <div className="relative border-r border-gray-200 bg-gray-50 rounded-l-md transition-colors hover:bg-gray-100">
+                    <select
+                      value={countryCode}
+                      onChange={(e) => {
+                        const newCode = e.target.value;
+                        setCountryCode(newCode);
+                        // Re-trigger lookup with new code if number exists
+                        const numberOnly = customerPhone.replace(countryCode, '');
+                        if (numberOnly) {
+                          const fullPhone = `${newCode}${numberOnly}`;
+                          setCustomerPhone(fullPhone);
+                          const found = customers.find(c => c.phone === fullPhone);
+                          if (found) {
+                            setSelectedCustomer(found);
+                            setCustomerName(found.name);
+                          } else {
+                            setSelectedCustomer(null);
+                            setCustomerName('');
+                          }
+                        }
+                      }}
+                      className="appearance-none bg-transparent h-full pl-3 pr-8 font-bold text-gray-600 text-sm focus:outline-none cursor-pointer w-[85px]"
+                      style={{ textAlignLast: 'center' }}
+                    >
+                      <option value="+673">🇧🇳 +673</option>
+                      <option value="+60">🇲🇾 +60</option>
+                      <option value="+62">🇮🇩 +62</option>
+                      <option value="+65">🇸🇬 +65</option>
+                    </select>
+                    <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+                      <Globe size={12} />
+                    </div>
+                  </div>
+
                   <input
                     type="tel"
-                    className="form-input pl-16 py-3 font-mono text-xl w-full bg-gray-50 border-gray-200 focus:bg-white transition-colors tracking-wide"
-                    value={customerPhone.replace('+673', '')}
+                    className="form-input py-3 px-4 font-mono text-xl w-full bg-gray-50 border-none focus:ring-0 focus:bg-white transition-colors tracking-wide rounded-r-md"
+                    value={customerPhone.replace(countryCode, '')} // Clean display
                     onChange={(e) => {
                       // Remove non-digits
                       let val = e.target.value.replace(/\D/g, '');
 
-                      // Smart Space Masking (e.g. 8881234 -> 888 1234)
-                      if (val.length > 3) {
-                        val = val.slice(0, 3) + ' ' + val.slice(3);
+                      // Smart Space Masking based on country code
+                      if (countryCode === '+673') {
+                        if (val.length > 3) val = val.slice(0, 3) + ' ' + val.slice(3);
+                      } else if (countryCode === '+60') {
+                        if (val.length > 3) val = val.slice(0, 3) + ' ' + val.slice(3); // 012 3456789
+                      } else {
+                        // Generic spacing
+                        if (val.length > 4) val = val.slice(0, 4) + ' ' + val.slice(4);
                       }
 
-                      const fullPhone = `+673${val.replace(/\s/g, '')}`;
+                      // Keep spaces for display logic, but strip for value
+                      const displayVal = val;
+                      const rawVal = val.replace(/\s/g, '');
+
+                      const fullPhone = `${countryCode}${rawVal}`;
                       setCustomerPhone(fullPhone);
 
                       // Auto lookup
-                      const rawPhone = fullPhone; // use internal format
-                      const found = customers.find(c => c.phone === rawPhone);
+                      const found = customers.find(c => c.phone === fullPhone);
                       if (found) {
                         setSelectedCustomer(found);
                         setCustomerName(found.name);
-                        playSound('notification'); // Subtle feedback finding customer
+                        playSound('notification');
                       } else {
                         if (selectedCustomer) {
                           setSelectedCustomer(null);
@@ -1211,20 +1255,17 @@ export default function POSPage() {
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
                         e.preventDefault();
-                        // Try to jump to payment if valid
                         if (customerPhone.length >= 8) {
                           proceedToPayment();
                         }
                       }
                     }}
-                    placeholder="888 8888"
+                    placeholder={countryCode === '+673' ? "888 8888" : "12 3456789"}
                     autoFocus
                   />
-                  <div className="absolute left-0 top-0 bottom-0 w-14 flex items-center justify-center bg-gray-100 border-r border-gray-200 rounded-l-md text-gray-500 font-bold text-sm select-none">
-                    +673
-                  </div>
+
                   {selectedCustomer && (
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2 text-success animate-in zoom-in duration-300">
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 text-success animate-in zoom-in duration-300 pointer-events-none">
                       <CheckCircle size={22} fill="#d1fae5" />
                     </div>
                   )}
