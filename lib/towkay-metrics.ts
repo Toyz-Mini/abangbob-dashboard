@@ -162,8 +162,7 @@ export function calculateTowkayStats(data: DataContext): TowkayStats {
             name: s.name,
             role: s.role,
             points: points,
-            badges: points > 800 ? ['🔥 Top Performer'] : [],
-            avatarUrl: s.avatarUrl
+            badges: points > 800 ? ['🔥 Top Performer'] : []
         };
     }).sort((a, b) => b.points - a.points);
 
