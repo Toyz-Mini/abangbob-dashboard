@@ -1163,117 +1163,62 @@ export default function POSPage() {
               Maklumat Pelanggan
             </label>
 
-            {!selectedCustomer ? (
-              <div style={{ position: 'relative', marginBottom: '1rem' }}>
-                <input
-                  type="text"
-                  className="form-input"
-                  placeholder="Cari pelanggan (Nama/Tel)..."
-                  value={customerSearch}
-                  onChange={(e) => {
-                    setCustomerSearch(e.target.value);
-                    setShowCustomerResults(true);
-                  }}
-                  onFocus={() => setShowCustomerResults(true)}
-                  style={{ borderColor: 'var(--primary)' }}
-                />
-                {showCustomerResults && customerSearch && (
-                  <div style={{
-                    position: 'absolute',
-                    top: '100%',
-                    left: 0,
-                    right: 0,
-                    background: 'white',
-                    border: '1px solid var(--gray-300)',
-                    borderRadius: 'var(--radius-md)',
-                    zIndex: 10,
-                    boxShadow: 'var(--shadow-lg)',
-                    maxHeight: '200px',
-                    overflowY: 'auto'
-                  }}>
-                    {filteredCustomers.length > 0 ? (
-                      filteredCustomers.map(c => (
-                        <div
-                          key={c.id}
-                          onClick={() => handleSelectCustomer(c)}
-                          style={{
-                            padding: '0.75rem',
-                            borderBottom: '1px solid var(--gray-100)',
-                            cursor: 'pointer',
-                            transition: 'background 0.2s'
-                          }}
-                          onMouseEnter={e => e.currentTarget.style.background = 'var(--gray-50)'}
-                          onMouseLeave={e => e.currentTarget.style.background = 'white'}
-                        >
-                          <div style={{ fontWeight: 600 }}>{c.name}</div>
-                          <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', display: 'flex', justifyContent: 'space-between' }}>
-                            <span>{c.phone}</span>
-                            <span style={{ color: 'var(--primary)', fontWeight: 600 }}>{c.loyaltyPoints} Pts</span>
-                          </div>
-                        </div>
-                      ))
-                    ) : (
-                      <div style={{ padding: '0.75rem', color: 'var(--text-secondary)', textAlign: 'center' }}>
-                        Tiada rekod jumpa (Guna input manual di bawah)
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div style={{
-                background: 'linear-gradient(135deg, var(--primary-light) 0%, #e0e7ff 100%)',
-                padding: '0.75rem',
-                borderRadius: 'var(--radius-md)',
-                marginBottom: '1rem',
-                border: '1px solid var(--primary)',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center'
-              }}>
-                <div>
-                  <div style={{ fontWeight: 700, color: 'var(--primary)' }}>
-                    {selectedCustomer.name}
-                    <span className={`badge badge-${selectedCustomer.segment === 'vip' ? 'warning' : 'info'}`} style={{ marginLeft: '0.5rem', fontSize: '0.7rem' }}>
-                      {selectedCustomer.segment.toUpperCase()}
-                    </span>
-                  </div>
-                  <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                    {selectedCustomer.phone} • <b>{selectedCustomer.loyaltyPoints} Points</b>
-                  </div>
-                </div>
-                <button
-                  onClick={handleClearCustomer}
-                  className="btn btn-sm btn-outline"
-                  style={{ color: 'var(--danger)', borderColor: 'var(--danger)' }}
-                >
-                  <X size={14} />
-                </button>
-              </div>
-            )}
-
-            {/* Manual fallback fields (always visible but populated) */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+            <div className="grid gap-3">
+              {/* Phone Input with Auto-Lookup */}
               <div>
+                <label className="text-xs font-bold uppercase text-gray-500 mb-1 block">No Telefon (Wajib)</label>
+                <div className="relative">
+                  <input
+                    type="tel"
+                    className="form-input pl-14 font-mono text-lg w-full"
+                    value={customerPhone.replace('+673', '')}
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/\D/g, '');
+                      const fullPhone = `+673${val}`;
+                      setCustomerPhone(fullPhone);
+
+                      // Auto lookup
+                      const found = customers.find(c => c.phone === fullPhone);
+                      if (found) {
+                        setSelectedCustomer(found);
+                        setCustomerName(found.name);
+                      } else {
+                        if (selectedCustomer) {
+                          setSelectedCustomer(null);
+                          setCustomerName('');
+                        }
+                      }
+                    }}
+                    placeholder="888 8888"
+                    autoFocus
+                  />
+                  <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-mono text-lg pointer-events-none">
+                    +673
+                  </div>
+                  {selectedCustomer && (
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 text-green-500 animate-pulse">
+                      <CheckCircle size={20} />
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Name Input */}
+              <div>
+                <label className="text-xs font-bold uppercase text-gray-500 mb-1 block">Nama (Pilihan)</label>
                 <input
                   type="text"
-                  className="form-input"
+                  className="form-input w-full"
                   value={customerName}
                   onChange={(e) => setCustomerName(e.target.value)}
-                  placeholder="Nama"
-                  readOnly={!!selectedCustomer}
+                  placeholder="Nama Pelanggan"
                 />
-              </div>
-              <div>
-                <input
-                  type="tel"
-                  className="form-input"
-                  value={customerPhone}
-                  onChange={(e) => setCustomerPhone(e.target.value)}
-                  placeholder="Tel (+673...)"
-                  required
-                  readOnly={!!selectedCustomer}
-                />
+                {selectedCustomer && (
+                  <div className="text-xs text-green-600 mt-1 flex items-center gap-1 font-medium">
+                    <Sparkles size={12} />
+                    Pelanggan Dijumpai: {selectedCustomer.name} • {selectedCustomer.loyaltyPoints} Pts
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -1446,7 +1391,7 @@ export default function POSPage() {
                 alignItems: 'center',
                 justifyContent: 'center'
               }}
-              disabled={isProcessing}
+              disabled={isProcessing || customerPhone.length < 5}
             >
               {isProcessing ? (
                 <>
