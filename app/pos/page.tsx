@@ -1212,7 +1212,7 @@ export default function POSPage() {
 
                   <input
                     type="tel"
-                    className="form-input !border-none !ring-0 !shadow-none py-3 px-4 font-mono text-xl w-full bg-white transition-colors tracking-wide"
+                    className="form-input !border-none !ring-0 !shadow-none py-3 pl-2 pr-4 font-mono text-xl w-full bg-white transition-colors tracking-wide"
                     value={customerPhone.replace(countryCode, '')} // Clean display
                     onChange={(e) => {
                       // Remove non-digits
