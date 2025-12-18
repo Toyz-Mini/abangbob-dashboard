@@ -8,7 +8,8 @@ import { useAuth } from '@/lib/contexts/AuthContext';
 import { useTranslation } from '@/lib/contexts/LanguageContext';
 import { StockItem } from '@/lib/types';
 import Modal from '@/components/Modal';
-import { AlertTriangle, Plus, Edit2, Trash2, ArrowUp, ArrowDown, History, Package, LayoutGrid, List as ListIcon, Search, Filter } from 'lucide-react';
+import { AlertTriangle, Plus, Edit2, Trash2, ArrowUp, ArrowDown, History, Package, LayoutGrid, List as ListIcon, Search, Filter, ClipboardList } from 'lucide-react';
+import VarianceReportModal from '@/components/inventory/VarianceReportModal';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import LivePageHeader from '@/components/LivePageHeader';
 import GlassCard from '@/components/GlassCard';
@@ -46,6 +47,7 @@ export default function InventoryPage() {
   // const canDeleteItems = role === 'Admin' || role === 'Manager';
   const canDeleteItems = true;
 
+  const [showVarianceModal, setShowVarianceModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('All');
   const [modalType, setModalType] = useState<ModalType>(null);
@@ -276,9 +278,14 @@ export default function InventoryPage() {
           subtitle={t('inventory.subtitle')}
           rightContent={
             canDeleteItems && (
-              <PremiumButton onClick={openAddModal} icon={Plus}>
-                {t('inventory.addItem')}
-              </PremiumButton>
+              <div className="flex gap-2">
+                <PremiumButton onClick={() => setShowVarianceModal(true)} variant="secondary" icon={ClipboardList}>
+                  Variance Report
+                </PremiumButton>
+                <PremiumButton onClick={openAddModal} icon={Plus}>
+                  {t('inventory.addItem')}
+                </PremiumButton>
+              </div>
             )
           }
         />
@@ -819,6 +826,12 @@ export default function InventoryPage() {
             </button>
           </div>
         </Modal>
+
+        {/* Variance Report Modal */}
+        <VarianceReportModal
+          isOpen={showVarianceModal}
+          onClose={() => setShowVarianceModal(false)}
+        />
 
         {/* History Modal */}
         <Modal
