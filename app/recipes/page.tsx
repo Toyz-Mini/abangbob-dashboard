@@ -685,8 +685,8 @@ export default function RecipesPage() {
                             className="form-input"
                             value={ing.quantity}
                             onChange={(e) => updateIngredientQuantity(ing.stockItemId, Number(e.target.value))}
-                            min="0.1"
-                            step="0.1"
+                            min="0.001"
+                            step="0.001"
                             style={{ width: '80px' }}
                           />
                         </td>
