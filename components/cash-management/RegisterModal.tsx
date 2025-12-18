@@ -153,7 +153,7 @@ export default function RegisterModal({ isOpen, onClose, mode }: RegisterModalPr
                                 required
                                 value={amount}
                                 onChange={(e) => setAmount(e.target.value)}
-                                className="form-input pl-8 text-lg font-bold"
+                                className="form-input pl-8 text-lg font-bold !bg-white !text-gray-900 !border-gray-300"
                                 placeholder="0.00"
                                 autoFocus
                             />
@@ -176,7 +176,7 @@ export default function RegisterModal({ isOpen, onClose, mode }: RegisterModalPr
                             value={notes}
                             onChange={(e) => setNotes(e.target.value)}
                             rows={2}
-                            className="form-input text-sm"
+                            className="form-input text-sm !bg-white !text-gray-900 !border-gray-300"
                             placeholder={mode === 'open' ? "Contoh: Duit pecah secukupnya" : "Contoh: Ada duit syiling extra"}
                         />
                     </div>
