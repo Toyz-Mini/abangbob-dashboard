@@ -53,6 +53,42 @@ export interface AISchedulerSuggestion {
     reason: string;
 }
 
+export interface RevenueForecast {
+    date: string;
+    predictedSales: number;
+    confidence: 'low' | 'medium' | 'high';
+    trend: 'up' | 'down' | 'stable';
+}
+
+export interface ChurnRiskCustomer {
+    customerId: string;
+    name: string;
+    phone?: string;
+    lastVisit: string;
+    daysSinceVisit: number;
+    totalSpent: number;
+    visitCount: number;
+}
+
+export interface AnomalyAlert {
+    id: string;
+    type: 'sales_spike' | 'sales_drop' | 'unusual_void' | 'inventory_anomaly';
+    severity: 'low' | 'medium' | 'high';
+    title: string;
+    description: string;
+    value: string;
+    timestamp: string;
+}
+
+export interface QuickActionsSummary {
+    pendingLeaveRequests: number;
+    pendingClaimRequests: number;
+    pendingVoidRequests: number;
+    lowStockItems: number;
+    staffOnDuty: number;
+    todayBirthdays: string[];
+}
+
 export interface TowkayStats {
     financial: {
         realtimeProfit: number;
@@ -68,6 +104,11 @@ export interface TowkayStats {
     staffLeaderboard: StaffLeaderboardEntry[];
     aiScheduler: AISchedulerSuggestion[];
     stockoutWarnings: { itemName: string; daysLeft: number; urgency: 'low' | 'medium' | 'high' }[];
+    // God Mode 2.0
+    revenueForecast: RevenueForecast[];
+    churnRisk: ChurnRiskCustomer[];
+    anomalies: AnomalyAlert[];
+    quickActions: QuickActionsSummary;
 }
 
 export interface DataContext {
@@ -421,6 +462,98 @@ export function calculateTowkayStats(data: DataContext): TowkayStats {
     }).sort((a, b) => b.points - a.points);
 
     // =====================
+    // 8. REVENUE FORECAST (God Mode 2.0)
+    // =====================
+    const revenueForecast: RevenueForecast[] = [];
+
+    // Calculate average daily sales from last 7 days
+    const last7Days: Record<string, number> = {};
+    for (let i = 0; i < 7; i++) {
+        const d = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+        const dateStr = d.toISOString().split('T')[0];
+        const daySales = orders
+            .filter(o => o.createdAt?.startsWith(dateStr) && o.status !== 'cancelled')
+            .reduce((sum, o) => sum + (o.total || 0), 0);
+        last7Days[dateStr] = daySales;
+    }
+
+    const avgDailySales = Object.values(last7Days).reduce((a, b) => a + b, 0) / 7;
+    const salesTrend = dailySales > avgDailySales * 1.1 ? 'up' : dailySales < avgDailySales * 0.9 ? 'down' : 'stable';
+
+    // Predict next 7 days
+    for (let i = 1; i <= 7; i++) {
+        const futureDate = new Date(now.getTime() + i * 24 * 60 * 60 * 1000);
+        const dayOfWeek = futureDate.getDay();
+        // Weekend bump: +20%
+        const weekendMultiplier = (dayOfWeek === 0 || dayOfWeek === 6) ? 1.2 : 1.0;
+        revenueForecast.push({
+            date: futureDate.toISOString().split('T')[0],
+            predictedSales: Math.round(avgDailySales * weekendMultiplier),
+            confidence: avgDailySales > 100 ? 'high' : avgDailySales > 50 ? 'medium' : 'low',
+            trend: salesTrend
+        });
+    }
+
+    // =====================
+    // 9. ANOMALY DETECTION (God Mode 2.0)
+    // =====================
+    const anomalies: AnomalyAlert[] = [];
+
+    // Check for sales spike/drop
+    if (dailySales > avgDailySales * 1.5) {
+        anomalies.push({
+            id: 'anomaly-spike',
+            type: 'sales_spike',
+            severity: 'medium',
+            title: 'Sales Spike Detected',
+            description: `Today's sales are ${Math.round((dailySales / avgDailySales - 1) * 100)}% above average.`,
+            value: `+${Math.round((dailySales / avgDailySales - 1) * 100)}%`,
+            timestamp: now.toISOString()
+        });
+    } else if (dailySales < avgDailySales * 0.5 && hoursOpen > 4) {
+        anomalies.push({
+            id: 'anomaly-drop',
+            type: 'sales_drop',
+            severity: 'high',
+            title: 'Sales Drop Alert',
+            description: `Today's sales are ${Math.round((1 - dailySales / avgDailySales) * 100)}% below average.`,
+            value: `-${Math.round((1 - dailySales / avgDailySales) * 100)}%`,
+            timestamp: now.toISOString()
+        });
+    }
+
+    // Unusual void pattern
+    if (cancelledOrders.length > 3 && cancelledOrders.length > todayOrders.length * 0.2) {
+        anomalies.push({
+            id: 'anomaly-void',
+            type: 'unusual_void',
+            severity: 'high',
+            title: 'Unusual Void Pattern',
+            description: `${Math.round(cancelledOrders.length / todayOrders.length * 100)}% of orders voided - investigate.`,
+            value: `${cancelledOrders.length} voids`,
+            timestamp: now.toISOString()
+        });
+    }
+
+    // =====================
+    // 10. QUICK ACTIONS SUMMARY (God Mode 2.0)
+    // =====================
+    const quickActions: QuickActionsSummary = {
+        pendingLeaveRequests: 0, // Would need leaveRequests in DataContext
+        pendingClaimRequests: 0, // Would need claimRequests in DataContext
+        pendingVoidRequests: 0,  // Would need voidRequests in DataContext
+        lowStockItems: stockoutWarnings.filter(s => s.urgency === 'high' || s.urgency === 'medium').length,
+        staffOnDuty: staffOnDuty,
+        todayBirthdays: [] // Would need staff birthDates
+    };
+
+    // =====================
+    // 11. CHURN RISK (God Mode 2.0) - Placeholder
+    // =====================
+    // Note: Requires Customer data in DataContext to implement
+    const churnRisk: ChurnRiskCustomer[] = [];
+
+    // =====================
     // RETURN AGGREGATED STATS
     // =====================
     return {
@@ -445,6 +578,11 @@ export function calculateTowkayStats(data: DataContext): TowkayStats {
         opportunities,
         staffLeaderboard: leaderboard,
         aiScheduler: aiScheduler.slice(0, 5),
-        stockoutWarnings: stockoutWarnings.slice(0, 5)
+        stockoutWarnings: stockoutWarnings.slice(0, 5),
+        // God Mode 2.0
+        revenueForecast,
+        churnRisk,
+        anomalies,
+        quickActions
     };
 }
