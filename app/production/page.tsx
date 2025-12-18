@@ -381,12 +381,11 @@ export default function ProductionPage() {
             />
           </div>
 
-          <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1.5rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '2rem', paddingTop: '1rem', borderTop: '1px solid var(--border-light)' }}>
             <button
-              className="btn btn-outline"
+              className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
               onClick={() => setShowAddLogModal(false)}
               disabled={isProcessing}
-              style={{ flex: 1 }}
             >
               Batal
             </button>
@@ -394,7 +393,7 @@ export default function ProductionPage() {
               className="btn btn-primary"
               onClick={handleAddProductionLog}
               disabled={isProcessing || logForm.quantityProduced <= 0}
-              style={{ flex: 1 }}
+              style={{ minWidth: '120px' }}
             >
               {isProcessing ? (
                 <>
@@ -480,12 +479,11 @@ export default function ProductionPage() {
             </div>
           )}
 
-          <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1.5rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '2rem', paddingTop: '1rem', borderTop: '1px solid var(--border-light)' }}>
             <button
-              className="btn btn-outline"
+              className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
               onClick={() => setShowWasteModal(false)}
               disabled={isProcessing}
-              style={{ flex: 1 }}
             >
               Batal
             </button>
@@ -493,7 +491,7 @@ export default function ProductionPage() {
               className="btn btn-danger"
               onClick={handleAddWasteLog}
               disabled={isProcessing || wasteForm.wasteAmount <= 0}
-              style={{ flex: 1 }}
+              style={{ minWidth: '140px' }}
             >
               {isProcessing ? (
                 <>
