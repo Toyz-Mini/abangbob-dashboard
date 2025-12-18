@@ -1197,8 +1197,7 @@ export default function POSPage() {
                           }
                         }
                       }}
-                      className="appearance-none bg-transparent h-full pl-3 pr-8 font-bold text-gray-700 text-sm focus:outline-none cursor-pointer w-[90px]"
-                      style={{ textAlignLast: 'center' }}
+                      className="appearance-none bg-transparent h-full pl-3 pr-8 font-bold text-gray-700 text-sm focus:outline-none cursor-pointer w-[110px]"
                     >
                       <option value="+673">🇧🇳 +673</option>
                       <option value="+60">🇲🇾 +60</option>
@@ -1212,7 +1211,7 @@ export default function POSPage() {
 
                   <input
                     type="tel"
-                    className="form-input !border-none !ring-0 !shadow-none py-3 pl-2 pr-4 font-mono text-xl w-full bg-white transition-colors tracking-wide"
+                    className="form-input !border-none !ring-0 !shadow-none py-3 !pl-3 pr-4 font-mono text-xl w-full bg-white transition-colors tracking-wide"
                     value={customerPhone.replace(countryCode, '')} // Clean display
                     onChange={(e) => {
                       // Remove non-digits
