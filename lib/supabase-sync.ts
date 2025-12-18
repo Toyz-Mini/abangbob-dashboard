@@ -644,6 +644,30 @@ export async function loadPurchaseOrdersFromSupabase() {
   }
 }
 
+// ============ CASH FLOWS SYNC ============
+
+export async function syncUpsertCashFlow(cashFlow: any) {
+  if (!isSupabaseSyncEnabled()) return null;
+
+  try {
+    return await ops.upsertCashFlow(cashFlow);
+  } catch (error) {
+    console.error('Failed to sync cash flow to Supabase:', error);
+    return null;
+  }
+}
+
+export async function loadCashFlowsFromSupabase(startDate?: string, endDate?: string) {
+  if (!isSupabaseSyncEnabled()) return [];
+
+  try {
+    return await ops.fetchCashFlows(startDate, endDate);
+  } catch (error) {
+    console.error('Failed to load cash flows from Supabase:', error);
+    return [];
+  }
+}
+
 // ============ INVENTORY LOGS SYNC ============
 
 export async function syncAddInventoryLog(log: any) {
@@ -959,40 +983,6 @@ export async function loadDeliveryOrdersFromSupabase() {
   }
 }
 
-// ============ CASH FLOWS SYNC ============
-
-export async function syncAddCashFlow(cashFlow: any) {
-  if (!isSupabaseSyncEnabled()) return null;
-
-  try {
-    return await ops.insertCashFlow(cashFlow);
-  } catch (error) {
-    console.error('Failed to sync cash flow to Supabase:', error);
-    return null;
-  }
-}
-
-export async function syncUpdateCashFlow(id: string, updates: any) {
-  if (!isSupabaseSyncEnabled()) return null;
-
-  try {
-    return await ops.updateCashFlow(id, updates);
-  } catch (error) {
-    console.error('Failed to update cash flow in Supabase:', error);
-    return null;
-  }
-}
-
-export async function loadCashFlowsFromSupabase() {
-  if (!isSupabaseSyncEnabled()) return [];
-
-  try {
-    return await ops.fetchCashFlows();
-  } catch (error) {
-    console.error('Failed to load cash flows from Supabase:', error);
-    return [];
-  }
-}
 
 // ============ STAFF KPI SYNC ============
 

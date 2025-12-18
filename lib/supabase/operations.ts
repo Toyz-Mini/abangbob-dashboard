@@ -1102,16 +1102,16 @@ export async function updateCashFlow(id: string, updates: any) {
   return toCamelCase(data);
 }
 
-export async function upsertCashFlowByDate(date: string, cashFlow: any) {
+export async function upsertCashFlow(cashFlow: any) {
   const supabase = getSupabaseClient();
   if (!supabase) throw new Error('Supabase not connected');
 
-  const snakeCasedCashFlow = toSnakeCase({ ...cashFlow, date });
+  const snakeCased = toSnakeCase(cashFlow);
 
   // @ts-ignore
   const { data, error } = await supabase
     .from('cash_flows')
-    .upsert(snakeCasedCashFlow, { onConflict: 'date,outlet_id' })
+    .upsert(snakeCased, { onConflict: 'date' })
     .select()
     .single();
 

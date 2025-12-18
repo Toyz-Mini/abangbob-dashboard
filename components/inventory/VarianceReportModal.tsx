@@ -18,7 +18,7 @@ export default function VarianceReportModal({ isOpen, onClose }: VarianceReportM
         // - type: 'adjust' (Manual adjustments)
         // - reason: "Shift Opening Count" or "Shift Closing Count"
         return inventoryLogs.filter(log =>
-            log.type === 'adjust' ||
+            log.type === 'adjustment' ||
             log.reason.toLowerCase().includes('shift')
         ).map(log => {
             // Find current cost for value calculation
@@ -29,7 +29,7 @@ export default function VarianceReportModal({ isOpen, onClose }: VarianceReportM
             // If type is 'out' or negative adjust -> Loss
             // If type is 'in' or positive adjust -> Gain
             let quantityChange = 0;
-            if (log.type === 'adjust') {
+            if (log.type === 'adjustment') {
                 // Determine direction based on prev vs new
                 quantityChange = log.newQuantity - log.previousQuantity;
             } else if (log.type === 'in') {

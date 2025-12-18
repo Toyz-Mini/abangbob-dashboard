@@ -792,6 +792,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     subscribeToTable('shifts', setShifts);
     subscribeToTable('schedules', setSchedules);
     subscribeToTable('customers', setCustomers);
+    subscribeToTable('checklist_templates', setChecklistTemplates);
+    subscribeToTable('checklist_completions', setChecklistCompletions);
+    subscribeToTable('leave_requests', setLeaveRequests);
+    subscribeToTable('claim_requests', setClaimRequests);
+    subscribeToTable('staff_requests', setStaffRequests);
+    subscribeToTable('staff_kpi', setStaffKPI);
+    subscribeToTable('announcements', setAnnouncements);
 
     // Cleanup
     return () => {
@@ -1684,7 +1691,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     setCashFlows(prev => {
       const existing = prev.find(cf => cf.date === date);
       if (existing) {
-        return prev.map(cf => cf.date === date ? { ...cf, ...data } : cf);
+        const updatedItem = { ...existing, ...data };
+        // Sync to Supabase
+        SupabaseSync.syncUpsertCashFlow(updatedItem);
+        return prev.map(cf => cf.date === date ? updatedItem : cf);
       } else {
         const newCf: DailyCashFlow = {
           id: generateUUID(),
@@ -1697,6 +1707,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           closingCash: 0,
           ...data,
         };
+        // Sync to Supabase
+        SupabaseSync.syncUpsertCashFlow(newCf);
         return [newCf, ...prev];
       }
     });
@@ -2324,45 +2336,62 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, [staffKPI]);
 
   const updateStaffKPI = useCallback((staffId: string, period: string, metrics: Partial<KPIMetrics>) => {
-    setStaffKPI(prev => {
-      const existing = prev.find(k => k.staffId === staffId && k.period === period);
-      if (existing) {
-        const updatedMetrics = { ...existing.metrics, ...metrics };
-        const overallScore = calculateOverallScore(updatedMetrics);
-        const bonusAmount = calculateBonus(overallScore);
-        return prev.map(k =>
-          k.id === existing.id
-            ? { ...k, metrics: updatedMetrics, overallScore, bonusAmount, updatedAt: new Date().toISOString() }
-            : k
-        );
-      } else {
-        const defaultMetrics: KPIMetrics = {
-          mealPrepTime: 0,
-          attendance: 0,
-          emergencyLeave: 100,
-          upselling: 0,
-          customerRating: 0,
-          wasteReduction: 0,
-          trainingComplete: 0,
-          otWillingness: 0,
-          ...metrics,
-        };
-        const overallScore = calculateOverallScore(defaultMetrics);
-        const bonusAmount = calculateBonus(overallScore);
-        const newKPI: StaffKPI = {
-          id: generateUUID(),
-          staffId,
-          period,
-          metrics: defaultMetrics,
-          overallScore,
-          bonusAmount,
-          rank: prev.filter(k => k.period === period).length + 1,
-          updatedAt: new Date().toISOString(),
-        };
-        return [...prev, newKPI];
-      }
-    });
-  }, []);
+    // Determine if we are updating existing or creating new
+    // We do this OUTSIDE setStaffKPI to capture the object for sync
+    const existingIndex = staffKPI.findIndex(k => k.staffId === staffId && k.period === period);
+
+    let kpiToSync: StaffKPI;
+
+    if (existingIndex >= 0) {
+      const existing = staffKPI[existingIndex];
+      const updatedMetrics = { ...existing.metrics, ...metrics };
+      const overallScore = calculateOverallScore(updatedMetrics);
+      const bonusAmount = calculateBonus(overallScore);
+
+      kpiToSync = {
+        ...existing,
+        metrics: updatedMetrics,
+        overallScore,
+        bonusAmount,
+        updatedAt: new Date().toISOString()
+      };
+
+      setStaffKPI(prev => prev.map(k => k.id === existing.id ? kpiToSync : k));
+    } else {
+      const defaultMetrics: KPIMetrics = {
+        mealPrepTime: 0,
+        attendance: 0,
+        emergencyLeave: 100,
+        upselling: 0,
+        customerRating: 0,
+        wasteReduction: 0,
+        trainingComplete: 0,
+        otWillingness: 0,
+        ...metrics,
+      };
+      const overallScore = calculateOverallScore(defaultMetrics);
+      const bonusAmount = calculateBonus(overallScore);
+
+      // Calculate rank (approximate)
+      const currentPeriodCount = staffKPI.filter(k => k.period === period).length;
+
+      kpiToSync = {
+        id: generateUUID(),
+        staffId,
+        period,
+        metrics: defaultMetrics,
+        overallScore,
+        bonusAmount,
+        rank: currentPeriodCount + 1,
+        updatedAt: new Date().toISOString(),
+      };
+
+      setStaffKPI(prev => [...prev, kpiToSync]);
+    }
+
+    // Sync to Supabase
+    SupabaseSync.syncUpsertStaffKPI(kpiToSync);
+  }, [staffKPI]);
 
   const recalculateKPIRankings = useCallback((period: string) => {
     setStaffKPI(prev => {
@@ -2446,14 +2475,20 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       createdAt: new Date().toISOString(),
     };
     setChecklistTemplates(prev => [...prev, newTemplate]);
+    // Sync to Supabase
+    SupabaseSync.syncAddChecklistTemplate(newTemplate);
   }, []);
 
   const updateChecklistTemplate = useCallback((id: string, updates: Partial<ChecklistItemTemplate>) => {
     setChecklistTemplates(prev => prev.map(t => t.id === id ? { ...t, ...updates } : t));
+    // Sync to Supabase
+    SupabaseSync.syncUpdateChecklistTemplate(id, updates);
   }, []);
 
   const deleteChecklistTemplate = useCallback((id: string) => {
     setChecklistTemplates(prev => prev.filter(t => t.id !== id));
+    // Sync to Supabase
+    SupabaseSync.syncDeleteChecklistTemplate(id);
   }, []);
 
   const getChecklistTemplatesByType = useCallback((type: 'opening' | 'closing'): ChecklistItemTemplate[] => {
@@ -2480,6 +2515,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       status: 'in_progress',
     };
     setChecklistCompletions(prev => [...prev, newCompletion]);
+    // Sync to Supabase
+    SupabaseSync.syncAddChecklistCompletion(newCompletion);
     return newCompletion;
   }, [checklistTemplates]);
 
@@ -2639,10 +2676,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       createdAt: new Date().toISOString(),
     };
     setClaimRequests(prev => [newClaim, ...prev]);
+    // Sync to Supabase
+    SupabaseSync.syncAddClaimRequest(newClaim);
   }, []);
 
   const updateClaimRequest = useCallback((id: string, updates: Partial<ClaimRequest>) => {
     setClaimRequests(prev => prev.map(c => c.id === id ? { ...c, ...updates } : c));
+    // Sync to Supabase
+    SupabaseSync.syncUpdateClaimRequest(id, updates);
   }, []);
 
   const approveClaimRequest = useCallback((id: string, approverId: string, approverName: string) => {
@@ -2677,6 +2718,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       if (c.id !== id) return c;
       return { ...c, status: 'paid' as const, paidAt: new Date().toISOString() };
     }));
+    // Sync to Supabase
+    SupabaseSync.syncUpdateClaimRequest(id, {
+      status: 'paid',
+      paidAt: new Date().toISOString()
+    });
   }, []);
 
   const getStaffClaimRequests = useCallback((staffId: string): ClaimRequest[] => {
@@ -2695,10 +2741,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       createdAt: new Date().toISOString(),
     };
     setStaffRequests(prev => [newRequest, ...prev]);
+    // Sync to Supabase
+    SupabaseSync.syncAddStaffRequest(newRequest);
   }, []);
 
   const updateStaffRequest = useCallback((id: string, updates: Partial<StaffRequest>) => {
     setStaffRequests(prev => prev.map(r => r.id === id ? { ...r, ...updates } : r));
+    // Sync to Supabase
+    SupabaseSync.syncUpdateStaffRequest(id, updates);
   }, []);
 
   const completeStaffRequest = useCallback((id: string, responseNote?: string) => {
