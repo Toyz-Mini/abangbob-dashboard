@@ -1882,11 +1882,13 @@ export default function POSPage() {
       {/* Register Modal */}
       <RegisterModal
         isOpen={registerModalOpen}
-        onClose={() => {
-          if (!currentRegister) {
-            router.push('/'); // Redirect to home if they cancel opening
-          } else {
+        onClose={(success) => {
+          // If explicitly successful, or if register is set, do not redirect
+          if (success || currentRegister) {
             setRegisterModalOpen(false);
+          } else {
+            // Only redirect if NOT successful AND no register
+            router.push('/');
           }
         }}
         mode={registerModalMode}

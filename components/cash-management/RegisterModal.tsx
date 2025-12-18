@@ -8,7 +8,7 @@ import { X, DollarSign, Calculator, Lock, Unlock, AlertTriangle } from 'lucide-r
 
 interface RegisterModalProps {
     isOpen: boolean;
-    onClose: () => void;
+    onClose: (success?: boolean) => void;
     mode: 'open' | 'close';
 }
 
@@ -57,7 +57,7 @@ export default function RegisterModal({ isOpen, onClose, mode }: RegisterModalPr
                 const result = await closeRegister(numericAmount, staffId, notes);
                 if (!result.success) throw new Error(result.error);
             }
-            onClose();
+            onClose(true);
         } catch (err: any) {
             console.error('Register action failed:', err);
             setError(err.message || 'Ralat berlaku. Sila cuba lagi.');
@@ -111,7 +111,7 @@ export default function RegisterModal({ isOpen, onClose, mode }: RegisterModalPr
                             </p>
                         </div>
                     </div>
-                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors">
+                    <button onClick={() => onClose()} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors">
                         <X size={24} />
                     </button>
                 </div>
@@ -191,7 +191,7 @@ export default function RegisterModal({ isOpen, onClose, mode }: RegisterModalPr
                     <div className="flex gap-3 pt-2">
                         <button
                             type="button"
-                            onClick={onClose}
+                            onClick={() => onClose()}
                             className="flex-1 py-3 px-4 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 font-medium transition-colors"
                         >
                             Batal
