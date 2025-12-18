@@ -388,7 +388,29 @@ export default function InventoryPage() {
                       </div>
                       <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>BND {item.cost.toFixed(2)} / {item.unit}</div>
                     </div>
-                    <StockLevelRing percentage={ringPercentage} color={status.badge} />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                      {canDeleteItems && (
+                        <div style={{ display: 'flex', gap: '0.25rem' }}>
+                          <button
+                            className="btn-icon btn-ghost"
+                            onClick={() => openEditModal(item)}
+                            title="Edit Item"
+                            style={{ width: '28px', height: '28px' }}
+                          >
+                            <Edit2 size={14} />
+                          </button>
+                          <button
+                            className="btn-icon btn-ghost-danger"
+                            onClick={() => openDeleteModal(item)}
+                            title="Padam Item"
+                            style={{ width: '28px', height: '28px' }}
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      )}
+                      <StockLevelRing percentage={ringPercentage} color={status.badge} />
+                    </div>
                   </div>
 
                   <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem', marginTop: 'auto' }}>
@@ -409,26 +431,7 @@ export default function InventoryPage() {
                       <History size={14} />
                     </PremiumButton>
                   </div>
-                  {canDeleteItems && (
-                    <div style={{ position: 'absolute', top: '0.75rem', right: '0.75rem', display: 'flex', gap: '0.25rem' }}>
-                      <button
-                        className="btn-icon btn-ghost"
-                        onClick={() => openEditModal(item)}
-                        title="Edit Item"
-                        style={{ width: '28px', height: '28px' }}
-                      >
-                        <Edit2 size={14} />
-                      </button>
-                      <button
-                        className="btn-icon btn-ghost-danger"
-                        onClick={() => openDeleteModal(item)}
-                        title="Padam Item"
-                        style={{ width: '28px', height: '28px' }}
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
-                  )}
+
 
                 </GlassCard>
               );
