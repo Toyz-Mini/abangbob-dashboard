@@ -17,6 +17,7 @@ import { RealtimeChannel } from '@supabase/supabase-js';
 import { logSyncError, logSyncSuccess } from './utils/sync-logger';
 import * as PaymentTaxSync from './supabase/payment-tax-sync';
 import * as VoidRefundOps from './supabase/operations';
+import { useCashRegistersRealtime } from './supabase/realtime-hooks';
 
 // Helper function to generate UUID for Supabase compatibility
 function generateUUID(): string {
