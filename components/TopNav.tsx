@@ -24,7 +24,7 @@ export default function TopNav({ onMenuClick }: TopNavProps) {
   const { resolvedTheme, toggleTheme } = useTheme();
   const { settings, toggleSound, playSound } = useSound();
   const { language, toggleLanguage, t } = useLanguage();
-  const { language, toggleLanguage, t } = useLanguage();
+
   const { getUnreadCount, refreshNotifications } = useNotifications();
   const { currentStaff, logoutStaff, signOut } = useAuth();
 
