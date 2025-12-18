@@ -112,18 +112,7 @@ const STORAGE_KEYS = {
 };
 
 // Inventory log type for tracking stock changes
-export interface InventoryLog {
-  id: string;
-  stockItemId: string;
-  stockItemName: string;
-  type: 'in' | 'out' | 'adjustment' | 'initial';
-  quantity: number;
-  previousQuantity: number;
-  newQuantity: number;
-  reason: string;
-  createdAt: string;
-  createdBy?: string;
-}
+
 
 interface StoreState {
   // Inventory

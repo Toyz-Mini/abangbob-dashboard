@@ -6,18 +6,37 @@ import {
     Zap, Brain, Crown, User, Calendar, ArrowRight, DollarSign,
     Activity, Search, Filter, Radio, Target, Clock, AlertOctagon
 } from 'lucide-react';
-import { getTowkayStats, TowkayStats } from '@/lib/towkay-metrics';
+import { getTowkayStats, TowkayStats, calculateTowkayStats } from '@/lib/towkay-metrics';
 import { formatCurrency } from '@/lib/utils';
+import { useStore, useOrders, useInventory, useStaff } from '@/lib/store';
 
 export default function TowkayDashboard() {
     const [stats, setStats] = useState<TowkayStats | null>(null);
     const [currentTime, setCurrentTime] = useState(new Date());
 
+    const { state } = useStore();
+    const { getTodayOrders } = useOrders();
+    const { inventoryLogs } = useInventory();
+    const { staff } = useStaff();
+
+    // Re-calculate stats whenever underlying data changes
+    useEffect(() => {
+        // Prepare Data Context
+        const dataContext = {
+            orders: state.orders,
+            inventoryLogs: state.inventoryLogs || [], // Ensure fallback if undefined
+            cashRegisters: state.cashRegisters || [],
+            staff: staff,
+            staffKPI: state.staffKPI || []
+        };
+
+        const calculatedStats = calculateTowkayStats(dataContext);
+        setStats(calculatedStats);
+    }, [state.orders, state.inventoryLogs, state.cashRegisters, staff, state.staffKPI]);
+
     useEffect(() => {
         // Simulate live clock
         const timer = setInterval(() => setCurrentTime(new Date()), 1000);
-        const data = getTowkayStats();
-        setStats(data);
         return () => clearInterval(timer);
     }, []);
 
