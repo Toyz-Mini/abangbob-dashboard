@@ -370,7 +370,14 @@ export default function InventoryPage() {
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <div>
                       <div className="badge badge-sm" style={{ marginBottom: '0.5rem' }}>{item.category}</div>
-                      <h3 style={{ fontWeight: 700, fontSize: '1.1rem', marginBottom: '0.25rem' }}>{item.name}</h3>
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 style={{ fontWeight: 700, fontSize: '1.1rem', margin: 0 }}>{item.name}</h3>
+                        {item.countDaily && (
+                          <span className="text-xs bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded border border-purple-200 font-medium" title="Dikira Setiap Hari">
+                            Daily
+                          </span>
+                        )}
+                      </div>
                       <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>BND {item.cost.toFixed(2)} / {item.unit}</div>
                     </div>
                     <StockLevelRing percentage={ringPercentage} color={status.badge} />
@@ -432,7 +439,16 @@ export default function InventoryPage() {
                     const status = getStockStatus(item);
                     return (
                       <tr key={item.id}>
-                        <td style={{ fontWeight: 600 }}>{item.name}</td>
+                        <td style={{ fontWeight: 600 }}>
+                          <div className="flex items-center gap-2">
+                            {item.name}
+                            {item.countDaily && (
+                              <span className="text-xs bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded border border-purple-200 font-medium">
+                                Daily
+                              </span>
+                            )}
+                          </div>
+                        </td>
                         <td className="hidden-mobile">{item.category}</td>
                         <td>{item.currentQuantity}</td>
                         <td className="hidden-mobile">{item.minQuantity}</td>
