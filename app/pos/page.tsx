@@ -1212,7 +1212,17 @@ export default function POSPage() {
                   <input
                     type="tel"
                     className="form-input !border-none !ring-0 !shadow-none py-3 !pl-3 pr-4 font-mono text-xl w-full bg-white transition-colors tracking-wide"
-                    value={customerPhone.replace(countryCode, '')} // Clean display
+                    value={(() => {
+                      const raw = customerPhone.replace(countryCode, '');
+                      if (!raw) return '';
+                      // Re-apply mask for display
+                      if (countryCode === '+673' || countryCode === '+60') {
+                        if (raw.length > 3) return raw.slice(0, 3) + ' ' + raw.slice(3);
+                      } else {
+                        if (raw.length > 4) return raw.slice(0, 4) + ' ' + raw.slice(4);
+                      }
+                      return raw;
+                    })()}
                     onChange={(e) => {
                       // Remove non-digits
                       let val = e.target.value.replace(/\D/g, '');
