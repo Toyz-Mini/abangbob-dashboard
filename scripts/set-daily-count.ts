@@ -9,7 +9,8 @@ async function setDailyCountItems() {
     }
 
     // First, get some items
-    const { data: items } = await supabase.from('inventory').select('id, name').limit(5);
+    const { data } = await supabase.from('inventory').select('id, name').limit(5);
+    const items = data as any[];
 
     if (!items || items.length === 0) {
         console.log('No inventory items found');
