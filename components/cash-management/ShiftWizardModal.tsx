@@ -31,6 +31,17 @@ export default function ShiftWizardModal({ isOpen, onClose, mode }: ShiftWizardM
     // Filter "Critical" items that need counting
     const criticalItems = inventory.filter(item => item.countDaily);
 
+    // DEBUG: Log inventory state
+    useEffect(() => {
+        if (isOpen) {
+            console.log('[ShiftWizard] Inventory Size:', inventory.length);
+            console.log('[ShiftWizard] Critical Items:', criticalItems.length);
+            if (inventory.length > 0) {
+                console.log('[ShiftWizard] Sample Item:', inventory[0]);
+            }
+        }
+    }, [isOpen, inventory, criticalItems]);
+
     // Reset when opening
     useEffect(() => {
         if (isOpen) {
