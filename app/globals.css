@@ -2417,9 +2417,10 @@ body {
 @media (max-width: 768px) {
   .topnav-logo {
     display: block;
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
+  }
+
+  .top-nav-left {
+    justify-content: center;
   }
 }
 
