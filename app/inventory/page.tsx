@@ -604,12 +604,13 @@ export default function InventoryPage() {
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm font-medium">BND</span>
                 <input
                   type="number"
-                  className="form-input pl-12"
+                  className="form-input"
                   value={formData.cost}
                   onChange={(e) => setFormData(prev => ({ ...prev, cost: Number(e.target.value) }))}
                   min="0"
                   step="0.01"
                   placeholder="0.00"
+                  style={{ paddingLeft: '3.5rem' }}
                 />
               </div>
             </div>
@@ -645,12 +646,11 @@ export default function InventoryPage() {
             </div>
           </div>
 
-          <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1.5rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '2rem', paddingTop: '1rem', borderTop: '1px solid var(--border-light)' }}>
             <button
-              className="btn btn-outline"
+              className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
               onClick={closeModal}
               disabled={isProcessing}
-              style={{ flex: 1 }}
             >
               Batal
             </button>
@@ -658,7 +658,7 @@ export default function InventoryPage() {
               className="btn btn-primary"
               onClick={modalType === 'add' ? handleAddStock : handleEditStock}
               disabled={isProcessing}
-              style={{ flex: 1 }}
+              style={{ minWidth: '120px' }}
             >
               {isProcessing ? (
                 <>
@@ -666,7 +666,7 @@ export default function InventoryPage() {
                   Memproses...
                 </>
               ) : (
-                modalType === 'add' ? 'Tambah' : 'Simpan'
+                modalType === 'add' ? 'Tambah Item' : 'Simpan Perubahan'
               )}
             </button>
           </div>
