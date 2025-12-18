@@ -3,7 +3,7 @@
 import { useState, useRef, useMemo, useEffect, useCallback } from 'react';
 import RouteGuard from '@/components/RouteGuard';
 import { useOrders, useMenu, useInventory, usePaymentMethods, useCustomers } from '@/lib/store';
-import { useMenuRealtime, useInventoryRealtime, useModifiersRealtime } from '@/lib/supabase/realtime-hooks';
+import { useMenuRealtime, useInventoryRealtime, useModifiersRealtime, useOrdersRealtime } from '@/lib/supabase/realtime-hooks';
 import { useTranslation } from '@/lib/contexts/LanguageContext';
 import { useToast } from '@/lib/contexts/ToastContext';
 import { useSound } from '@/lib/contexts/SoundContext';
@@ -24,7 +24,7 @@ import { ArrowLeft, UtensilsCrossed, Sandwich, Coffee, History, Printer, Clock, 
 import Modal from '@/components/Modal';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import StatCard from '@/components/StatCard';
-import RegisterModal from '@/components/cash-management/RegisterModal';
+import ShiftWizardModal from '@/components/cash-management/ShiftWizardModal';
 import RegisterStatus from '@/components/cash-management/RegisterStatus';
 import { useRouter } from 'next/navigation';
 import { useStore } from '@/lib/store';
@@ -32,7 +32,7 @@ import { useStore } from '@/lib/store';
 type ModalType = 'upsell' | 'checkout' | 'receipt' | 'history' | 'queue' | 'modifiers' | 'network-error' | null;
 
 export default function POSPage() {
-  const { orders, addOrder, updateOrderStatus, getTodayOrders, isInitialized } = useOrders();
+
   const { menuItems, modifierGroups, modifierOptions, getOptionsForGroup, refreshMenu } = useMenu();
   const { inventory, adjustStock, refreshInventory } = useInventory();
   const { paymentMethods, isInitialized: paymentMethodsInitialized } = usePaymentMethods();
@@ -67,6 +67,24 @@ export default function POSPage() {
     refreshInventory();
   }, [refreshInventory]);
 
+  const handleOrdersChange = useCallback(() => {
+    console.log('[Realtime] Orders change detected, refreshing...');
+    // We can refresh orders if needed, but POS primarily reads orders via getTodayOrders() which uses store state.
+    // However, if we want the "History" or "Pending" list to update, we need refreshOrders.
+    // Wait, POS page gets orders from useOrders(), which wraps store.orders.
+    // store.orders is updated by refreshOrders().
+    // So we just need to call refreshOrders() from the store.
+    // But useOrders() exposes refreshOrders.
+    // Let's use it.
+  }, []);
+
+  // We need to destructure refreshOrders from useOrders first
+  const { orders, addOrder, updateOrderStatus, getTodayOrders, refreshOrders, isInitialized } = useOrders();
+
+  useOrdersRealtime(useCallback(() => {
+    console.log('[POS Realtime] Orders refreshed');
+    refreshOrders();
+  }, [refreshOrders]));
   useMenuRealtime(handleMenuChange);
   useInventoryRealtime(handleInventoryChange);
   useModifiersRealtime(handleMenuChange); // Modifiers also refresh menu
@@ -1949,8 +1967,8 @@ export default function POSPage() {
           </div>
         </Modal>
       </div>
-      {/* Register Modal */}
-      <RegisterModal
+      {/* Shift Wizard Modal */}
+      <ShiftWizardModal
         isOpen={registerModalOpen}
         onClose={(success) => {
           // If explicitly successful, or if register is set, do not redirect

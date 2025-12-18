@@ -288,6 +288,13 @@ export function useModifierGroupsRealtime(onModifierGroupChange: RealtimeChangeH
 }
 
 /**
+ * Subscribe to cash_registers table changes
+ */
+export function useCashRegistersRealtime(onCashRegisterChange: RealtimeChangeHandler) {
+  return useSupabaseRealtime('cash_registers', onCashRegisterChange);
+}
+
+/**
  * Check if realtime is enabled and working
  */
 export async function testRealtimeConnection(): Promise<boolean> {

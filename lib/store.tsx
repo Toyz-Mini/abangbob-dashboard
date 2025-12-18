@@ -387,7 +387,9 @@ interface StoreState {
   currentRegister: CashRegister | null; // Currently open register
   openRegister: (startCash: number, staffId: string, notes?: string) => Promise<{ success: boolean; error?: string }>;
   closeRegister: (actualCash: number, staffId: string, notes?: string) => Promise<{ success: boolean; error?: string }>;
+  closeRegister: (actualCash: number, staffId: string, notes?: string) => Promise<{ success: boolean; error?: string }>;
   checkRegisterStatus: (staffId: string) => void;
+  refreshCashRegisters: () => Promise<void>;
 
   // Utility
   isInitialized: boolean;
@@ -3687,6 +3689,32 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }
   }, [cashRegisters, currentRegister]);
 
+  // Refresh cash registers from Supabase
+  const refreshCashRegisters = useCallback(async () => {
+    try {
+      if (isSupabaseConfigured()) {
+        const supabaseRegisters = await VoidRefundOps.fetchCashRegisters();
+        if (supabaseRegisters) {
+          setCashRegisters(supabaseRegisters);
+          // Also update current register
+          const open = supabaseRegisters.find((r: CashRegister) => r.status === 'open');
+          setCurrentRegister(open || null);
+          setToStorage(STORAGE_KEYS.CASH_REGISTERS, supabaseRegisters);
+          console.log('[Realtime] Cash registers refreshed:', supabaseRegisters.length);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to refresh cash registers:', error);
+    }
+  }, []);
+
+  const handleCashRegisterChange = useCallback(() => {
+    console.log('[Realtime] Cash register change detected, refreshing...');
+    refreshCashRegisters();
+  }, [refreshCashRegisters]);
+
+  useCashRegistersRealtime(handleCashRegisterChange);
+
   const value: StoreState = {
     // Inventory
     inventory,
@@ -3951,6 +3979,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     openRegister,
     closeRegister,
     checkRegisterStatus,
+    refreshCashRegisters,
 
     // Utility
     isInitialized,

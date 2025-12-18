@@ -9,6 +9,7 @@ import { useLanguage } from '@/lib/contexts/LanguageContext';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import Link from 'next/link';
 import { useNotifications } from '@/lib/store';
+import { useNotificationsRealtime } from '@/lib/supabase/realtime-hooks';
 
 interface TopNavProps {
   onMenuClick?: () => void;
@@ -23,8 +24,14 @@ export default function TopNav({ onMenuClick }: TopNavProps) {
   const { resolvedTheme, toggleTheme } = useTheme();
   const { settings, toggleSound, playSound } = useSound();
   const { language, toggleLanguage, t } = useLanguage();
-  const { getUnreadCount } = useNotifications();
+  const { language, toggleLanguage, t } = useLanguage();
+  const { getUnreadCount, refreshNotifications } = useNotifications();
   const { currentStaff, logoutStaff, signOut } = useAuth();
+
+  useNotificationsRealtime(() => {
+    console.log('[TopNav Realtime] Notifications refreshed');
+    refreshNotifications();
+  });
 
   const unreadCount = getUnreadCount();
 
