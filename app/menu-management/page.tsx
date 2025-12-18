@@ -656,92 +656,171 @@ export default function MenuManagementPage() {
             </div>
 
             {filteredMenuItems.length > 0 ? (
-              <div className="card">
-                <div className="table-responsive">
-                  <table className="table">
-                    <thead>
-                      <tr>
-                        <th>Menu</th>
-                        <th>Kategori</th>
-                        <th>Harga</th>
-                        <th>Modifiers</th>
-                        <th>Status</th>
-                        <th>Tindakan</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredMenuItems.map(item => (
-                        <tr key={item.id}>
-                          <td>
-                            <div style={{ fontWeight: 600 }}>{item.name}</div>
-                            {item.description && (
-                              <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                                {item.description}
-                              </div>
-                            )}
-                          </td>
-                          <td>
-                            <span className="badge badge-info">{item.category}</span>
-                          </td>
-                          <td style={{ fontWeight: 600 }}>BND {item.price.toFixed(2)}</td>
-                          <td>
-                            {item.modifierGroupIds.length > 0 ? (
-                              <div style={{ display: 'flex', gap: '0.25rem', flexWrap: 'wrap' }}>
-                                {item.modifierGroupIds.map(gid => {
-                                  const group = modifierGroups.find(g => g.id === gid);
-                                  return group ? (
-                                    <span key={gid} className="badge badge-warning" style={{ fontSize: '0.65rem' }}>
-                                      {group.name}
-                                    </span>
-                                  ) : null;
-                                })}
-                              </div>
-                            ) : (
-                              <span style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>-</span>
-                            )}
-                          </td>
-                          <td>
-                            <button
-                              onClick={() => toggleMenuItemAvailability(item.id)}
-                              style={{
-                                background: 'none',
-                                border: 'none',
-                                cursor: 'pointer',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '0.25rem',
-                                color: item.isAvailable ? 'var(--success)' : 'var(--danger)'
-                              }}
-                            >
-                              {item.isAvailable ? <ToggleRight size={24} /> : <ToggleLeft size={24} />}
-                              <span style={{ fontSize: '0.75rem' }}>
-                                {item.isAvailable ? 'Available' : 'Sold Out'}
-                              </span>
-                            </button>
-                          </td>
-                          <td>
-                            <div style={{ display: 'flex', gap: '0.25rem' }}>
-                              <button
-                                className="btn btn-sm btn-outline"
-                                onClick={() => openEditMenuModal(item)}
-                              >
-                                <Edit2 size={14} />
-                              </button>
-                              <button
-                                className="btn btn-sm btn-outline"
-                                onClick={() => openDeleteMenuModal(item)}
-                                style={{ color: 'var(--danger)' }}
-                              >
-                                <Trash2 size={14} />
-                              </button>
-                            </div>
-                          </td>
+              <>
+                {/* Desktop Table View */}
+                <div className="card hidden md:block">
+                  <div className="table-responsive">
+                    <table className="table">
+                      <thead>
+                        <tr>
+                          <th>Menu</th>
+                          <th>Kategori</th>
+                          <th>Harga</th>
+                          <th>Modifiers</th>
+                          <th>Status</th>
+                          <th>Tindakan</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody>
+                        {filteredMenuItems.map(item => (
+                          <tr key={item.id}>
+                            <td>
+                              <div style={{ fontWeight: 600 }}>{item.name}</div>
+                              {item.description && (
+                                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                                  {item.description}
+                                </div>
+                              )}
+                            </td>
+                            <td>
+                              <span className="badge badge-info">{item.category}</span>
+                            </td>
+                            <td style={{ fontWeight: 600 }}>BND {item.price.toFixed(2)}</td>
+                            <td>
+                              {item.modifierGroupIds.length > 0 ? (
+                                <div style={{ display: 'flex', gap: '0.25rem', flexWrap: 'wrap' }}>
+                                  {item.modifierGroupIds.map(gid => {
+                                    const group = modifierGroups.find(g => g.id === gid);
+                                    return group ? (
+                                      <span key={gid} className="badge badge-warning" style={{ fontSize: '0.65rem' }}>
+                                        {group.name}
+                                      </span>
+                                    ) : null;
+                                  })}
+                                </div>
+                              ) : (
+                                <span style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>-</span>
+                              )}
+                            </td>
+                            <td>
+                              <button
+                                onClick={() => toggleMenuItemAvailability(item.id)}
+                                style={{
+                                  background: 'none',
+                                  border: 'none',
+                                  cursor: 'pointer',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '0.25rem',
+                                  color: item.isAvailable ? 'var(--success)' : 'var(--danger)'
+                                }}
+                              >
+                                {item.isAvailable ? <ToggleRight size={24} /> : <ToggleLeft size={24} />}
+                                <span style={{ fontSize: '0.75rem' }}>
+                                  {item.isAvailable ? 'Available' : 'Sold Out'}
+                                </span>
+                              </button>
+                            </td>
+                            <td>
+                              <div style={{ display: 'flex', gap: '0.25rem' }}>
+                                <button
+                                  className="btn btn-sm btn-outline"
+                                  onClick={() => openEditMenuModal(item)}
+                                >
+                                  <Edit2 size={14} />
+                                </button>
+                                <button
+                                  className="btn btn-sm btn-outline"
+                                  onClick={() => openDeleteMenuModal(item)}
+                                  style={{ color: 'var(--danger)' }}
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
-              </div>
+
+                {/* Mobile Card View */}
+                <div className="md:hidden space-y-4">
+                  {filteredMenuItems.map(item => (
+                    <div key={item.id} className="card p-4">
+                      {/* Header: Name & Price */}
+                      <div className="flex justify-between items-start mb-2">
+                        <div>
+                          <h3 className="font-bold text-lg text-gray-900 dark:text-gray-100">{item.name}</h3>
+                          <span className="badge badge-info mt-1">{item.category}</span>
+                        </div>
+                        <div className="text-xl font-bold text-primary">
+                          BND {item.price.toFixed(2)}
+                        </div>
+                      </div>
+
+                      {/* Description */}
+                      {item.description && (
+                        <p className="text-sm text-gray-500 mb-3 line-clamp-2">
+                          {item.description}
+                        </p>
+                      )}
+
+                      <div className="border-t border-gray-100 dark:border-gray-800 my-3"></div>
+
+                      {/* Modifiers Section */}
+                      {item.modifierGroupIds.length > 0 && (
+                        <div className="mb-4">
+                          <p className="text-xs font-semibold text-gray-400 uppercase mb-2">Modifiers</p>
+                          <div className="flex flex-wrap gap-2">
+                            {item.modifierGroupIds.map(gid => {
+                              const group = modifierGroups.find(g => g.id === gid);
+                              return group ? (
+                                <span key={gid} className="badge badge-warning text-xs">
+                                  {group.name}
+                                </span>
+                              ) : null;
+                            })}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Actions Footer */}
+                      <div className="flex items-center justify-between mt-4 gap-3">
+                        {/* Status Toggle */}
+                        <button
+                          onClick={() => toggleMenuItemAvailability(item.id)}
+                          className={`flex items-center gap-2 px-3 py-2 rounded-lg border ${item.isAvailable
+                            ? 'border-green-200 bg-green-50 text-green-700 dark:bg-green-900/20 dark:border-green-800 dark:text-green-400'
+                            : 'border-red-200 bg-red-50 text-red-700 dark:bg-red-900/20 dark:border-red-800 dark:text-red-400'
+                            }`}
+                        >
+                          {item.isAvailable ? <ToggleRight size={20} /> : <ToggleLeft size={20} />}
+                          <span className="text-sm font-medium">
+                            {item.isAvailable ? 'On Menu' : 'Sold Out'}
+                          </span>
+                        </button>
+
+                        <div className="flex gap-2">
+                          <button
+                            className="p-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+                            onClick={() => openEditMenuModal(item)}
+                          >
+                            <Edit2 size={20} />
+                          </button>
+                          <button
+                            className="p-2 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 dark:border-red-900/50 dark:text-red-400 dark:hover:bg-red-900/20"
+                            onClick={() => openDeleteMenuModal(item)}
+                          >
+                            <Trash2 size={20} />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
             ) : (
               <div className="card" style={{ textAlign: 'center', padding: '3rem' }}>
                 <UtensilsCrossed size={48} color="var(--gray-400)" style={{ marginBottom: '1rem' }} />
