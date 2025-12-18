@@ -1167,26 +1167,22 @@ export default function POSPage() {
 
           {/* Customer Selection or Input */}
           <div className="form-group">
-            <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <User size={16} />
-              Maklumat Pelanggan
-            </label>
-
             <div className="grid gap-4">
               {/* Phone Input with Premium Styling & Masking */}
               <div className="bg-white rounded-lg p-1">
                 <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1.5 flex items-center gap-1.5">
                   <User size={12} /> No Telefon (Wajib)
                 </label>
-                <div className="relative group transition-all duration-200 focus-within:ring-2 ring-primary/20 rounded-md flex">
+                {/* Unified Input Group Container with Border */}
+                <div className="relative group transition-all duration-200 border border-gray-300 focus-within:border-primary focus-within:ring-4 ring-primary/10 rounded-lg flex overflow-hidden">
                   {/* Country Code Selector */}
-                  <div className="relative border-r border-gray-200 bg-gray-50 rounded-l-md transition-colors hover:bg-gray-100">
+                  <div className="relative border-r border-gray-200 bg-gray-50 transition-colors hover:bg-gray-100 shrink-0">
                     <select
                       value={countryCode}
                       onChange={(e) => {
                         const newCode = e.target.value;
                         setCountryCode(newCode);
-                        // Re-trigger lookup with new code if number exists
+                        // Re-trigger lookup
                         const numberOnly = customerPhone.replace(countryCode, '');
                         if (numberOnly) {
                           const fullPhone = `${newCode}${numberOnly}`;
@@ -1201,7 +1197,7 @@ export default function POSPage() {
                           }
                         }
                       }}
-                      className="appearance-none bg-transparent h-full pl-3 pr-8 font-bold text-gray-600 text-sm focus:outline-none cursor-pointer w-[85px]"
+                      className="appearance-none bg-transparent h-full pl-3 pr-8 font-bold text-gray-700 text-sm focus:outline-none cursor-pointer w-[90px]"
                       style={{ textAlignLast: 'center' }}
                     >
                       <option value="+673">🇧🇳 +673</option>
@@ -1209,14 +1205,14 @@ export default function POSPage() {
                       <option value="+62">🇮🇩 +62</option>
                       <option value="+65">🇸🇬 +65</option>
                     </select>
-                    <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+                    <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-gray-500">
                       <Globe size={12} />
                     </div>
                   </div>
 
                   <input
                     type="tel"
-                    className="form-input py-3 px-4 font-mono text-xl w-full bg-gray-50 border-none focus:ring-0 focus:bg-white transition-colors tracking-wide rounded-r-md"
+                    className="form-input !border-none !ring-0 !shadow-none py-3 px-4 font-mono text-xl w-full bg-white transition-colors tracking-wide"
                     value={customerPhone.replace(countryCode, '')} // Clean display
                     onChange={(e) => {
                       // Remove non-digits
