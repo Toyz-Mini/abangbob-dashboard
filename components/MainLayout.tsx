@@ -9,6 +9,7 @@ import CommandPalette, { useCommandPalette } from './CommandPalette';
 import BottomNav, { useBottomNav } from './BottomNav';
 import StaffPortalNav from './StaffPortalNav';
 import Sheet from './Sheet';
+import SessionMonitor from './SessionMonitor';
 // import { useTranslation } from '@/lib/contexts/LanguageContext'; // Removed as t is not strictly needed for basic labels or we can add it properly
 import {
   Truck,
@@ -382,6 +383,9 @@ export default function MainLayout({ children }: { children: ReactNode }) {
             ))}
           </div>
         </Sheet>
+
+        {/* Session Timeout Monitor */}
+        <SessionMonitor timeoutMinutes={15} warningSeconds={60} />
       </div>
     </RouteGuard>
   );

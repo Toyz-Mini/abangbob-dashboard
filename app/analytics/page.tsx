@@ -40,27 +40,22 @@ import Link from 'next/link';
 
 type AnalyticsTab = 'overview' | 'sales' | 'menu' | 'staff' | 'profit';
 
+import { startOfMonth, subDays, format } from 'date-fns';
+import { DateRangePicker, type DateRange } from '@/components/DateRangePicker';
+
 export default function AnalyticsPage() {
   const { orders, productionLogs, inventory, staff, attendance, deliveryOrders, menuItems, isInitialized } = useStore();
   const { showToast } = useToast();
-  const [dateRange, setDateRange] = useState<'7d' | '30d' | '90d'>('30d');
+  // Default to last 30 days
+  const [dateRange, setDateRange] = useState<DateRange>({
+    from: subDays(new Date(), 30),
+    to: new Date()
+  });
   const [activeTab, setActiveTab] = useState<AnalyticsTab>('overview');
   const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7));
   const [isExporting, setIsExporting] = useState(false);
 
-  // Calculate date range
-  const getDateRange = () => {
-    const end = new Date();
-    const start = new Date();
-    switch (dateRange) {
-      case '7d': start.setDate(start.getDate() - 7); break;
-      case '30d': start.setDate(start.getDate() - 30); break;
-      case '90d': start.setDate(start.getDate() - 90); break;
-    }
-    return { start, end };
-  };
-
-  const { start: rangeStart, end: rangeEnd } = getDateRange();
+  const { from: rangeStart, to: rangeEnd } = dateRange;
 
   // Filter orders by date range
   const filteredOrders = useMemo(() => {
@@ -225,11 +220,13 @@ export default function AnalyticsPage() {
 
   // Compare with previous period
   const previousPeriodComparison = useMemo(() => {
-    const days = dateRange === '7d' ? 7 : dateRange === '30d' ? 30 : 90;
-    const prevStart = new Date(rangeStart);
-    prevStart.setDate(prevStart.getDate() - days);
-    const prevEnd = new Date(rangeStart);
-    prevEnd.setDate(prevEnd.getDate() - 1);
+    if (!rangeStart || !rangeEnd) return { revenueChange: 0, orderChange: 0 };
+
+    // Calculate duration in days
+    const duration = Math.ceil((rangeEnd.getTime() - rangeStart.getTime()) / (1000 * 60 * 60 * 24));
+
+    const prevEnd = subDays(rangeStart, 1);
+    const prevStart = subDays(prevEnd, duration);
 
     const prevOrders = orders.filter(o => {
       const orderDate = new Date(o.createdAt);
@@ -249,7 +246,7 @@ export default function AnalyticsPage() {
       : 100;
 
     return { revenueChange, orderChange };
-  }, [orders, rangeStart, dateRange, salesAnalytics]);
+  }, [orders, rangeStart, rangeEnd, salesAnalytics]);
 
   // Waste analytics
   const wasteAnalytics = useMemo(() => {
@@ -295,7 +292,7 @@ export default function AnalyticsPage() {
           { key: 'orders', label: 'Bilangan Pesanan' },
           { key: 'avgOrderValue', label: 'Purata Pesanan', format: 'currency' },
         ];
-        filename = `sales_analytics_${dateRange}_${new Date().toISOString().split('T')[0]}`;
+        filename = `sales_analytics_${format(rangeStart, 'yyyy-MM-dd')}_to_${format(rangeEnd, 'yyyy-MM-dd')}`;
       } else if (activeTab === 'menu') {
         // Export menu performance
         data = menuPerformance.map(item => ({
@@ -316,7 +313,7 @@ export default function AnalyticsPage() {
           { key: 'profit', label: 'Untung (BND)', format: 'currency' },
           { key: 'margin', label: 'Margin (%)' },
         ];
-        filename = `menu_performance_${dateRange}_${new Date().toISOString().split('T')[0]}`;
+        filename = `menu_performance_${format(rangeStart, 'yyyy-MM-dd')}_to_${format(rangeEnd, 'yyyy-MM-dd')}`;
       } else if (activeTab === 'staff') {
         // Export staff productivity
         data = staffProductivity.map(s => ({
@@ -337,7 +334,7 @@ export default function AnalyticsPage() {
           { key: 'rating', label: 'Rating' },
           { key: 'efficiency', label: 'Efisiensi (%)' },
         ];
-        filename = `staff_productivity_${dateRange}_${new Date().toISOString().split('T')[0]}`;
+        filename = `staff_productivity_${format(rangeStart, 'yyyy-MM-dd')}_to_${format(rangeEnd, 'yyyy-MM-dd')}`;
       } else if (activeTab === 'profit') {
         // Export profit margins
         data = profitData.map(day => ({
@@ -354,7 +351,7 @@ export default function AnalyticsPage() {
           { key: 'profit', label: 'Untung (BND)', format: 'currency' },
           { key: 'margin', label: 'Margin (%)' },
         ];
-        filename = `profit_margin_${dateRange}_${new Date().toISOString().split('T')[0]}`;
+        filename = `profit_margin_${format(rangeStart, 'yyyy-MM-dd')}_to_${format(rangeEnd, 'yyyy-MM-dd')}`;
       }
 
       if (data.length > 0) {
@@ -388,7 +385,7 @@ export default function AnalyticsPage() {
             status: o.status,
             createdAt: o.createdAt,
           })),
-          `${dateRange === '7d' ? '7 Hari Lepas' : dateRange === '30d' ? '30 Hari Lepas' : '90 Hari Lepas'}`
+          `${format(rangeStart, 'dd MMM')} - ${format(rangeEnd, 'dd MMM yyyy')}`
         );
         printReport(report);
         showToast('Laporan PDF dijana', 'success');
@@ -473,25 +470,12 @@ export default function AnalyticsPage() {
                 Laporan Terperinci
               </Link>
 
-              {/* Date Range Buttons */}
-              <button
-                onClick={() => setDateRange('7d')}
-                className={`btn btn-sm ${dateRange === '7d' ? 'btn-primary' : 'btn-outline'}`}
-              >
-                7 Hari
-              </button>
-              <button
-                onClick={() => setDateRange('30d')}
-                className={`btn btn-sm ${dateRange === '30d' ? 'btn-primary' : 'btn-outline'}`}
-              >
-                30 Hari
-              </button>
-              <button
-                onClick={() => setDateRange('90d')}
-                className={`btn btn-sm ${dateRange === '90d' ? 'btn-primary' : 'btn-outline'}`}
-              >
-                90 Hari
-              </button>
+              {/* Date Range Picker */}
+              <DateRangePicker
+                date={dateRange}
+                onSelect={setDateRange}
+                className="w-full md:w-auto"
+              />
             </div>
           </div>
         </div>

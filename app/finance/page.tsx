@@ -23,9 +23,14 @@ import {
   FileText,
   ArrowUpRight,
   ArrowDownRight,
-  Receipt
+  Receipt,
+  Download
 } from 'lucide-react';
 import StatCard from '@/components/StatCard';
+import { exportToCSV, type ExportColumn } from '@/lib/services';
+import { useToast } from '@/lib/contexts/ToastContext';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 type ModalType = 'add' | 'edit' | 'delete' | 'cashflow' | null;
 type ViewMode = 'expenses' | 'cashflow' | 'pnl';
@@ -58,9 +63,9 @@ export default function FinancePage() {
     refreshCashFlows();
   }, [refreshCashFlows]);
 
-  useExpensesRealtime(handleExpensesChange);
   useCashFlowsRealtime(handleCashFlowsChange);
   const { t, language } = useTranslation();
+  const { showToast } = useToast();
 
   const [viewMode, setViewMode] = useState<ViewMode>('expenses');
   const [modalType, setModalType] = useState<ModalType>(null);
@@ -68,6 +73,7 @@ export default function FinancePage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [filterMonth, setFilterMonth] = useState(new Date().toISOString().slice(0, 7));
   const [filterCategory, setFilterCategory] = useState<ExpenseCategory | 'all'>('all');
+  const [isExporting, setIsExporting] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -262,6 +268,150 @@ export default function FinancePage() {
     closeModal();
   };
 
+  // Export Handlers
+  const handleExportCSV = async () => {
+    setIsExporting(true);
+    try {
+      let data: any[] = [];
+      let columns: ExportColumn[] = [];
+      let filename = '';
+
+      if (viewMode === 'expenses') {
+        data = filteredExpenses.map(e => ({
+          date: e.date,
+          category: getCategoryLabel(e.category),
+          description: e.description,
+          amount: e.amount,
+          vendor: e.vendor || '-',
+          paymentMethod: e.paymentMethod
+        }));
+        columns = [
+          { key: 'date', label: 'Tarikh' },
+          { key: 'category', label: 'Kategori' },
+          { key: 'description', label: 'Keterangan' },
+          { key: 'amount', label: 'Jumlah (BND)', format: 'currency' },
+          { key: 'vendor', label: 'Vendor' },
+          { key: 'paymentMethod', label: 'Bayaran' }
+        ];
+        filename = `expenses_${filterMonth}`;
+      } else if (viewMode === 'cashflow') {
+        data = cashFlows.slice(0, 30).map(c => ({
+          date: c.date.split('T')[0],
+          opening: c.openingCash,
+          salesCash: c.salesCash,
+          salesCard: c.salesCard,
+          expenses: c.expensesCash,
+          closing: c.closingCash
+        }));
+        columns = [
+          { key: 'date', label: 'Tarikh' },
+          { key: 'opening', label: 'Buka (BND)', format: 'currency' },
+          { key: 'salesCash', label: 'Jualan Tunai (BND)', format: 'currency' },
+          { key: 'salesCard', label: 'Jualan Kad (BND)', format: 'currency' },
+          { key: 'expenses', label: 'Belanja (BND)', format: 'currency' },
+          { key: 'closing', label: 'Tutup (BND)', format: 'currency' }
+        ];
+        filename = `cashflow_${filterMonth}`;
+      } else if (viewMode === 'pnl') {
+        const pnl = calculatePnL;
+        data = [
+          { item: 'Hasil Jualan', amount: pnl.revenue },
+          { item: 'Kos Bahan Mentah (COGS)', amount: -pnl.estimatedCOGS },
+          { item: 'Untung Kasar', amount: pnl.grossProfit },
+          ...Object.entries(pnl.expenses).filter(([k]) => k !== 'ingredients').map(([k, v]) => ({
+            item: `Belanja: ${getCategoryLabel(k as ExpenseCategory)}`, amount: -(v as number)
+          })),
+          { item: 'Jumlah Perbelanjaan', amount: -pnl.totalExpenses },
+          { item: 'Untung/Rugi Bersih', amount: pnl.netProfit },
+          { item: 'Margin Keuntungan (%)', amount: pnl.profitMargin }
+        ];
+        columns = [
+          { key: 'item', label: 'Perkara' },
+          { key: 'amount', label: 'Jumlah (BND)', format: 'currency' }
+        ];
+        filename = `pnl_${filterMonth}`;
+      }
+
+      if (data.length > 0) {
+        exportToCSV({ filename, columns, data, includeTimestamp: true });
+        showToast('Berjaya export CSV', 'success');
+      }
+    } catch (e) {
+      console.error(e);
+      showToast('Gagal export CSV', 'error');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleExportPDF = () => {
+    setIsExporting(true);
+    try {
+      const doc = new jsPDF();
+
+      doc.setFontSize(18);
+      doc.text(viewMode === 'pnl' ? 'Penyata Untung & Rugi' : viewMode === 'cashflow' ? 'Laporan Aliran Tunai' : 'Laporan Perbelanjaan', 14, 20);
+      doc.setFontSize(12);
+      doc.text(`Bulan: ${filterMonth}`, 14, 30);
+      doc.text(`Dicetak: ${new Date().toLocaleString()}`, 14, 36);
+
+      if (viewMode === 'expenses') {
+        autoTable(doc, {
+          startY: 45,
+          head: [['Tarikh', 'Kategori', 'Keterangan', 'Jumlah', 'Vendor']],
+          body: filteredExpenses.map(e => [
+            e.date,
+            getCategoryLabel(e.category),
+            e.description,
+            `BND ${e.amount.toFixed(2)}`,
+            e.vendor || '-'
+          ]),
+          foot: [['', '', 'JUMLAH', `BND ${monthlyExpenseTotal.toFixed(2)}`, '']],
+        });
+      } else if (viewMode === 'cashflow') {
+        autoTable(doc, {
+          startY: 45,
+          head: [['Tarikh', 'Buka', 'Jualan Tunai', 'Jualan Kad', 'Belanja', 'Tutup']],
+          body: cashFlows.slice(0, 14).map(c => [
+            c.date.split('T')[0],
+            c.openingCash.toFixed(2),
+            c.salesCash.toFixed(2),
+            c.salesCard.toFixed(2),
+            c.expensesCash.toFixed(2),
+            c.closingCash.toFixed(2)
+          ])
+        });
+      } else if (viewMode === 'pnl') {
+        const pnl = calculatePnL;
+        autoTable(doc, {
+          startY: 45,
+          head: [['Perkara', 'Jumlah (BND)']],
+          body: [
+            ['Hasil Jualan', pnl.revenue.toFixed(2)],
+            ['(-) Kos Bahan Mentah', pnl.estimatedCOGS.toFixed(2)],
+            ['= Untung Kasar', pnl.grossProfit.toFixed(2)],
+            [{ content: 'Perbelanjaan Operasi:', colSpan: 2, styles: { fillColor: [240, 240, 240], fontStyle: 'bold' } }],
+            ...Object.entries(pnl.expenses).filter(([k]) => k !== 'ingredients').map(([k, v]) => [
+              `   ${getCategoryLabel(k as ExpenseCategory)}`, (v as number).toFixed(2)
+            ]),
+            ['(-) Jumlah Perbelanjaan', pnl.totalExpenses.toFixed(2)],
+            ['= Untung/Rugi Bersih', { content: pnl.netProfit.toFixed(2), styles: { fontStyle: 'bold', textColor: pnl.netProfit >= 0 ? [0, 128, 0] : [255, 0, 0] } }],
+            ['Margin Keuntungan', `${pnl.profitMargin.toFixed(1)}%`]
+          ]
+        });
+      }
+
+      doc.save(`finance_report_${viewMode}_${filterMonth}.pdf`);
+      showToast('Berjaya export PDF', 'success');
+
+    } catch (e) {
+      console.error(e);
+      showToast('Gagal export PDF', 'error');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   if (!isInitialized) {
     return (
       <MainLayout>
@@ -286,6 +436,22 @@ export default function FinancePage() {
               </p>
             </div>
             <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <div style={{ display: 'flex', gap: '0.25rem', marginRight: '0.5rem' }}>
+                <button
+                  className="btn btn-sm btn-outline"
+                  onClick={handleExportCSV}
+                  disabled={isExporting}
+                >
+                  <Download size={16} /> CSV
+                </button>
+                <button
+                  className="btn btn-sm btn-outline"
+                  onClick={handleExportPDF}
+                  disabled={isExporting}
+                >
+                  <FileText size={16} /> PDF
+                </button>
+              </div>
               <button className="btn btn-outline" onClick={openCashFlowModal}>
                 <Wallet size={18} />
                 {t('finance.cashFlowToday')}

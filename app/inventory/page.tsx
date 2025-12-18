@@ -8,12 +8,14 @@ import { useAuth } from '@/lib/contexts/AuthContext';
 import { useTranslation } from '@/lib/contexts/LanguageContext';
 import { StockItem } from '@/lib/types';
 import Modal from '@/components/Modal';
-import { AlertTriangle, Plus, Edit2, Trash2, ArrowUp, ArrowDown, History, Package, LayoutGrid, List as ListIcon, Search, Filter, ClipboardList } from 'lucide-react';
+import { AlertTriangle, Plus, Edit2, Trash2, ArrowUp, ArrowDown, History, Package, LayoutGrid, List as ListIcon, Search, Filter, ClipboardList, Upload } from 'lucide-react';
 import VarianceReportModal from '@/components/inventory/VarianceReportModal';
+import StockImporter from '@/components/StockImporter';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import LivePageHeader from '@/components/LivePageHeader';
 import GlassCard from '@/components/GlassCard';
 import PremiumButton from '@/components/PremiumButton';
+import { useToast } from '@/lib/contexts/ToastContext';
 
 type ModalType = 'add' | 'edit' | 'adjust' | 'delete' | 'history' | null;
 
@@ -32,6 +34,7 @@ const ADJUSTMENT_REASONS = [
 export default function InventoryPage() {
   const { inventory, inventoryLogs, addStockItem, updateStockItem, deleteStockItem, adjustStock, refreshInventory, isInitialized } = useInventory();
   const { t, language } = useTranslation();
+  const { showToast } = useToast();
 
   // Realtime subscription for inventory
   const handleInventoryChange = useCallback(() => {
@@ -47,12 +50,16 @@ export default function InventoryPage() {
   const canDeleteItems = role === 'Admin' || role === 'Manager';
 
   const [showVarianceModal, setShowVarianceModal] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('All');
   const [modalType, setModalType] = useState<ModalType>(null);
   const [selectedItem, setSelectedItem] = useState<StockItem | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('grid');
+
+  // ... (existing form states)
+
 
   // Form states
   const [formData, setFormData] = useState({
@@ -277,11 +284,30 @@ export default function InventoryPage() {
           subtitle={t('inventory.subtitle')}
           rightContent={
             canDeleteItems && (
-              <div className="flex gap-2">
-                <PremiumButton onClick={() => setShowVarianceModal(true)} variant="secondary" icon={ClipboardList}>
-                  Variance Report
+              <div className="flex gap-2 w-full sm:w-auto">
+                <PremiumButton
+                  onClick={() => setShowImportModal(true)}
+                  variant="secondary"
+                  icon={Upload}
+                  className="flex-1 sm:flex-none"
+                >
+                  Import (CSV)
                 </PremiumButton>
-                <PremiumButton onClick={openAddModal} icon={Plus}>
+                <PremiumButton
+                  onClick={() => setShowVarianceModal(true)}
+                  variant="secondary"
+                  icon={ClipboardList}
+                  className="flex-1 sm:flex-none"
+                  style={{ borderColor: 'var(--warning)', color: 'var(--warning)' }}
+                >
+                  Variance Check
+                </PremiumButton>
+                <PremiumButton
+                  onClick={openAddModal}
+                  variant="primary"
+                  icon={Plus}
+                  className="flex-1 sm:flex-none"
+                >
                   {t('inventory.addItem')}
                 </PremiumButton>
               </div>
@@ -939,6 +965,15 @@ export default function InventoryPage() {
             </>
           )}
         </Modal>
+        {showImportModal && (
+          <StockImporter
+            onClose={() => setShowImportModal(false)}
+            onSuccess={() => {
+              setShowImportModal(false);
+              showToast('Import berjaya!', 'success');
+            }}
+          />
+        )}
       </div>
     </MainLayout >
   );

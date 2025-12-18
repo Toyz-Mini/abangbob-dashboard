@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import { useStore } from '@/lib/store';
 
-type LoginMode = 'select' | 'email' | 'pin';
+type LoginMode = 'select' | 'email' | 'pin' | '2fa';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -33,6 +33,13 @@ export default function LoginPage() {
   const [pin, setPin] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // 2FA State
+  const [twoFaPin, setTwoFaPin] = useState('');
+  const [pendingAdminUser, setPendingAdminUser] = useState<string | null>(null);
+
+  // 2FA Master PIN (configurable - in production, this would be in secure settings)
+  const ADMIN_2FA_PIN = '1234'; // Default 2FA PIN - change in settings
 
   // Redirect if already logged in
   useEffect(() => {
@@ -49,12 +56,37 @@ export default function LoginPage() {
     const result = await signInWithEmail(email, password);
 
     if (result.success) {
-      router.push('/');
+      // Trigger 2FA step for Admin
+      setPendingAdminUser(email);
+      setMode('2fa');
+      setLoading(false);
     } else {
       setError(result.error || 'Login gagal');
+      setLoading(false);
     }
+  };
 
-    setLoading(false);
+  const handle2FAVerify = (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+
+    if (twoFaPin === ADMIN_2FA_PIN) {
+      // 2FA success - proceed to dashboard
+      router.push('/');
+    } else {
+      setError('PIN 2FA tidak sah. Sila cuba lagi.');
+      setTwoFaPin('');
+    }
+  };
+
+  const handle2FAPinInput = (digit: string) => {
+    if (twoFaPin.length < 4) {
+      setTwoFaPin(prev => prev + digit);
+    }
+  };
+
+  const handle2FAPinBackspace = () => {
+    setTwoFaPin(prev => prev.slice(0, -1));
   };
 
   const handlePinLogin = async (e: React.FormEvent) => {
@@ -291,6 +323,94 @@ export default function LoginPage() {
                 >
                   Log Masuk Dashboard
                 </PremiumButton>
+              </form>
+            )}
+
+            {/* 2FA Verification Step */}
+            {mode === '2fa' && (
+              <form className="w-full animate-slide-up" onSubmit={handle2FAVerify}>
+                <div className="mb-6 text-center">
+                  <div className="w-16 h-16 rounded-full bg-orange-100 flex items-center justify-center mx-auto mb-4">
+                    <Lock size={28} className="text-orange-600" />
+                  </div>
+                  <h3 className="font-bold text-lg text-gray-900">Pengesahan 2FA</h3>
+                  <p className="text-sm text-gray-500 mt-1">Masukkan PIN keselamatan 4 digit</p>
+                  <p className="text-xs text-gray-400 mt-1">{pendingAdminUser}</p>
+                </div>
+
+                {error && (
+                  <div className="mb-6 w-full p-3 rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm flex items-center gap-3 animate-shake">
+                    <EyeOff size={16} className="text-red-500 shrink-0" />
+                    <p>{error}</p>
+                  </div>
+                )}
+
+                {/* 2FA PIN Dots */}
+                <div className="flex justify-center gap-6 mb-8 h-4">
+                  {[0, 1, 2, 3].map(i => (
+                    <div
+                      key={i}
+                      className={`w-3 h-3 rounded-full transition-all duration-300 ${twoFaPin.length > i
+                        ? 'bg-orange-500 shadow-[0_0_15px_rgba(249,115,22,0.4)] scale-125'
+                        : 'bg-gray-300'
+                        }`}
+                    />
+                  ))}
+                </div>
+
+                {/* 2FA PIN Pad */}
+                <div className="flex flex-wrap justify-center gap-3 md:gap-6 max-w-[220px] md:max-w-[260px] mx-auto mb-8">
+                  {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(digit => (
+                    <button
+                      key={digit}
+                      type="button"
+                      className="w-12 h-12 md:w-16 md:h-16 rounded-full bg-white hover:bg-orange-50 border border-gray-200 hover:border-orange-300 shadow-sm text-lg md:text-2xl font-light text-gray-800 transition-all active:scale-95 flex items-center justify-center"
+                      onClick={() => handle2FAPinInput(digit.toString())}
+                    >
+                      {digit}
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    className="w-12 h-12 md:w-16 md:h-16 rounded-full hover:bg-red-50 text-red-500/70 hover:text-red-600 transition-all flex items-center justify-center"
+                    onClick={() => setTwoFaPin('')}
+                  >
+                    <span className="text-[10px] md:text-xs font-bold tracking-widest">CLR</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="w-12 h-12 md:w-16 md:h-16 rounded-full bg-white hover:bg-orange-50 border border-gray-200 hover:border-orange-300 shadow-sm text-lg md:text-2xl font-light text-gray-800 transition-all active:scale-95 flex items-center justify-center"
+                    onClick={() => handle2FAPinInput('0')}
+                  >
+                    0
+                  </button>
+                  <button
+                    type="button"
+                    className="w-12 h-12 md:w-16 md:h-16 rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-all flex items-center justify-center"
+                    onClick={handle2FAPinBackspace}
+                  >
+                    <ArrowLeft size={20} className="md:w-6 md:h-6" />
+                  </button>
+                </div>
+
+                <PremiumButton
+                  type="submit"
+                  variant="primary"
+                  size="lg"
+                  className="w-full shadow-lg shadow-orange-500/20 hover:shadow-orange-500/40"
+                  style={{ background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)' }}
+                  disabled={twoFaPin.length !== 4}
+                >
+                  Sahkan PIN
+                </PremiumButton>
+
+                <button
+                  type="button"
+                  className="mt-4 w-full text-center text-sm text-gray-500 hover:text-gray-700"
+                  onClick={() => { setMode('email'); setTwoFaPin(''); setPendingAdminUser(null); }}
+                >
+                  Batal dan kembali
+                </button>
               </form>
             )}
 

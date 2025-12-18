@@ -410,6 +410,24 @@ export default function PromotionsPage() {
                       </button>
                     </div>
                   )}
+                  {/* Time-based display */}
+                  {(promo.startTime || promo.endTime) && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--primary)' }}>
+                      <Clock size={14} />
+                      <span style={{ fontWeight: 500 }}>
+                        {promo.startTime} - {promo.endTime}
+                      </span>
+                      <span className="badge badge-info" style={{ fontSize: '0.6rem' }}>Happy Hour</span>
+                    </div>
+                  )}
+                  {promo.daysOfWeek && promo.daysOfWeek.length > 0 && promo.daysOfWeek.length < 7 && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                      <span>📅</span>
+                      <span>
+                        {promo.daysOfWeek.map(d => ['Ahd', 'Isn', 'Sel', 'Rab', 'Kha', 'Jum', 'Sab'][d]).join(', ')}
+                      </span>
+                    </div>
+                  )}
                   {promo.minPurchase && promo.minPurchase > 0 && (
                     <div style={{ color: 'var(--text-secondary)' }}>
                       Min. pembelian: BND {promo.minPurchase}
@@ -626,6 +644,51 @@ export default function PromotionsPage() {
                 </button>
               ))}
             </div>
+          </div>
+
+          {/* Time-based Promotion (Happy Hour) */}
+          <div className="form-group">
+            <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <Clock size={14} />
+              Masa Sah (Kosong = Sepanjang Hari)
+            </label>
+            <div className="grid grid-cols-2" style={{ gap: '0.5rem' }}>
+              <div>
+                <input
+                  type="time"
+                  className="form-input"
+                  value={formData.startTime}
+                  onChange={(e) => setFormData(prev => ({ ...prev, startTime: e.target.value }))}
+                  placeholder="Mula"
+                />
+                <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Mula</span>
+              </div>
+              <div>
+                <input
+                  type="time"
+                  className="form-input"
+                  value={formData.endTime}
+                  onChange={(e) => setFormData(prev => ({ ...prev, endTime: e.target.value }))}
+                  placeholder="Tamat"
+                />
+                <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Tamat</span>
+              </div>
+            </div>
+            {formData.startTime && formData.endTime && (
+              <div style={{
+                marginTop: '0.5rem',
+                padding: '0.5rem',
+                background: 'var(--primary-light)',
+                borderRadius: 'var(--radius-sm)',
+                fontSize: '0.8rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem'
+              }}>
+                <Zap size={14} color="var(--primary)" />
+                <span>Happy Hour: {formData.startTime} - {formData.endTime}</span>
+              </div>
+            )}
           </div>
 
           <div className="form-group">

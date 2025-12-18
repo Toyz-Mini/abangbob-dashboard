@@ -89,6 +89,18 @@ export interface QuickActionsSummary {
     todayBirthdays: string[];
 }
 
+export interface AutoReorderSuggestion {
+    itemId: string;
+    itemName: string;
+    currentQty: number;
+    minQty: number;
+    suggestedQty: number;
+    estimatedCost: number;
+    supplier?: string;
+    urgency: 'low' | 'medium' | 'high';
+    reason: string;
+}
+
 export interface TowkayStats {
     financial: {
         realtimeProfit: number;
@@ -104,11 +116,11 @@ export interface TowkayStats {
     staffLeaderboard: StaffLeaderboardEntry[];
     aiScheduler: AISchedulerSuggestion[];
     stockoutWarnings: { itemName: string; daysLeft: number; urgency: 'low' | 'medium' | 'high' }[];
-    // God Mode 2.0
     revenueForecast: RevenueForecast[];
     churnRisk: ChurnRiskCustomer[];
     anomalies: AnomalyAlert[];
     quickActions: QuickActionsSummary;
+    autoReorder: AutoReorderSuggestion[];
 }
 
 export interface DataContext {
@@ -391,6 +403,66 @@ export function calculateTowkayStats(data: DataContext): TowkayStats {
     }
 
     // =====================
+    // 5.5 AUTO-REORDER SUGGESTIONS
+    // =====================
+    const autoReorder: AutoReorderSuggestion[] = [];
+
+    if (inventory.length > 0) {
+        // Analyze usage from inventory logs
+        const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
+        const recentLogs = inventoryLogs.filter(log =>
+            log.createdAt >= sevenDaysAgo &&
+            (log.type === 'out' || log.type === 'adjustment')
+        );
+
+        // Calculate daily usage per item (only count 'out' transactions)
+        const usageByItem: Record<string, number> = {};
+        recentLogs.forEach(log => {
+            if (log.type === 'out') {
+                usageByItem[log.stockItemId] = (usageByItem[log.stockItemId] || 0) + log.quantity;
+            } else if (log.type === 'adjustment' && log.newQuantity < log.previousQuantity) {
+                const consumed = log.previousQuantity - log.newQuantity;
+                usageByItem[log.stockItemId] = (usageByItem[log.stockItemId] || 0) + consumed;
+            }
+        });
+
+        inventory.forEach(item => {
+            const weeklyUsage = usageByItem[item.id] || 0;
+            const dailyUsage = weeklyUsage / 7;
+            const daysOfStock = dailyUsage > 0 ? item.currentQuantity / dailyUsage : 999;
+
+            // Suggest reorder if will run out within 5 days or below minQty
+            if ((daysOfStock <= 5 && dailyUsage > 0) || item.currentQuantity <= item.minQuantity) {
+                // Calculate suggested order (enough for 14 days + buffer)
+                const targetStock = Math.ceil(dailyUsage * 14) + item.minQuantity;
+                const suggestedQty = Math.max(item.minQuantity, targetStock - item.currentQuantity);
+
+                if (suggestedQty > 0) {
+                    autoReorder.push({
+                        itemId: item.id,
+                        itemName: item.name,
+                        currentQty: item.currentQuantity,
+                        minQty: item.minQuantity,
+                        suggestedQty: Math.ceil(suggestedQty),
+                        estimatedCost: suggestedQty * item.cost,
+                        supplier: item.supplier,
+                        urgency: daysOfStock <= 1 ? 'high' : daysOfStock <= 3 ? 'medium' : 'low',
+                        reason: item.currentQuantity <= item.minQuantity
+                            ? 'Di bawah kuantiti minimum'
+                            : `Dijangka habis dalam ${Math.ceil(daysOfStock)} hari`
+                    });
+                }
+            }
+        });
+
+        // Sort by urgency
+        autoReorder.sort((a, b) => {
+            const urgencyOrder: Record<string, number> = { high: 0, medium: 1, low: 2 };
+            return urgencyOrder[a.urgency] - urgencyOrder[b.urgency];
+        });
+    }
+
+    // =====================
     // 6. AI SCHEDULER
     // =====================
     const aiScheduler: AISchedulerSuggestion[] = [];
@@ -583,6 +655,7 @@ export function calculateTowkayStats(data: DataContext): TowkayStats {
         revenueForecast,
         churnRisk,
         anomalies,
-        quickActions
+        quickActions,
+        autoReorder: autoReorder.slice(0, 10)
     };
 }

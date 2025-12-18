@@ -89,6 +89,11 @@ export interface StockItem {
   cost: number;
   supplier?: string;
   countDaily?: boolean; // Critical item to be counted during opening/closing
+  // Tracking
+  updatedAt?: string;
+  lastRestockDate?: string;
+  sku?: string;
+  location?: string;
 }
 
 // ==================== STAFF PROFILE TYPES ====================
@@ -617,6 +622,8 @@ export interface Notification {
   isRead: boolean;
   createdAt: string;
   expiresAt?: string;
+  targetRole?: UserRole;
+  targetStaffId?: string;
 }
 
 // ==================== SETTINGS TYPES ====================

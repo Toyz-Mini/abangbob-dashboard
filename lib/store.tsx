@@ -350,6 +350,9 @@ interface StoreState {
   getOilActionHistory: (fryerId: string) => OilActionHistory[];
   refreshOilTrackers: () => Promise<void>;
 
+  // Inventory
+  bulkUpsertStock: (items: Partial<StockItem>[]) => void;
+
   // Menu Categories
   menuCategories: MenuCategory[];
   addMenuCategory: (category: Omit<MenuCategory, 'id' | 'createdAt'>) => void;
@@ -527,7 +530,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         mockData: T[],
         entityName: string
       ): { data: T[]; source: DataSource } => {
-        // If Supabase is connected, trust it even if empty (user may have deleted all items)
+        // If Supabase is connected and returns data (even empty), trust the source
         if (supabaseConnected && supabaseArr !== undefined) {
           if (supabaseArr.length > 0) {
             console.log(`[Data Init] ${entityName}: Loaded ${supabaseArr.length} items from Supabase`);
@@ -1140,6 +1143,38 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       return prev.map(i =>
         i.id === id ? { ...i, currentQuantity: newQuantity } : i
       );
+    });
+  }, []);
+
+  const bulkUpsertStock = useCallback((items: Partial<StockItem>[]) => {
+    setInventory(prev => {
+      const newInventory = [...prev];
+      items.forEach(item => {
+        if (!item.name) return;
+        const existingIndex = newInventory.findIndex(i => i.name.toLowerCase() === item.name?.toLowerCase()); // Match by name loosely
+        if (existingIndex >= 0) {
+          newInventory[existingIndex] = { ...newInventory[existingIndex], ...item, updatedAt: new Date().toISOString() };
+          // Sync update to Supabase
+          SupabaseSync.syncUpdateStockItem(newInventory[existingIndex].id, item).catch(err => console.error('Failed to sync bulk update:', err));
+        } else {
+          const newItem: StockItem = {
+            id: generateUUID(),
+            name: item.name!,
+            category: item.category || 'other',
+            currentQuantity: item.currentQuantity || 0,
+            unit: item.unit || 'unit',
+            minQuantity: item.minQuantity || 10,
+            cost: item.cost || 0,
+            supplier: item.supplier,
+            lastRestockDate: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          };
+          newInventory.push(newItem);
+          // Sync add to Supabase
+          SupabaseSync.syncAddStockItem(newItem).catch(err => console.error('Failed to sync bulk add:', err));
+        }
+      });
+      return newInventory;
     });
   }, []);
 
@@ -1856,7 +1891,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       console.error('Failed to sync customer to Supabase:', error);
     }
 
-    setCustomers(prev => [newCustomer, ...prev]);
+    setCustomers(prev => [...prev, newCustomer]);
     return newCustomer;
   }, []);
 
@@ -1887,7 +1922,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
     // If Supabase sync succeeded, use the returned data (with proper UUID), otherwise use local data
     const finalSupplier = syncedSupplier || newSupplier;
-    setSuppliers(prev => [finalSupplier, ...prev]);
+    setSuppliers(prev => [...prev, finalSupplier]);
   }, []);
 
   const updateSupplier = useCallback(async (id: string, updates: Partial<Supplier>) => {
@@ -2406,7 +2441,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       id: generateUUID(),
       createdAt: new Date().toISOString(),
     };
-    setLeaveRecords(prev => [newLeave, ...prev]);
+    setLeaveRecords(prev => [...prev, newLeave]);
   }, []);
 
   const updateLeaveRecord = useCallback((id: string, updates: Partial<LeaveRecord>) => {
@@ -2418,7 +2453,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       ...training,
       id: generateUUID(),
     };
-    setTrainingRecords(prev => [newTraining, ...prev]);
+    setTrainingRecords(prev => [...prev, newTraining]);
   }, []);
 
   const updateTrainingRecord = useCallback((id: string, updates: Partial<TrainingRecord>) => {
@@ -2431,7 +2466,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       id: generateUUID(),
       createdAt: new Date().toISOString(),
     };
-    setOTRecords(prev => [newOT, ...prev]);
+    setOTRecords(prev => [...prev, newOT]);
   }, []);
 
   const updateOTRecord = useCallback((id: string, updates: Partial<OTRecord>) => {
@@ -2577,6 +2612,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const approveLeaveRequest = useCallback((id: string, approverId: string, approverName: string) => {
+    const request = leaveRequests.find(r => r.id === id); // Find the request before state update
     setLeaveRequests(prev => prev.map(r => {
       if (r.id !== id) return r;
       return {
@@ -2588,7 +2624,6 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       };
     }));
     // Update leave balance
-    const request = leaveRequests.find(r => r.id === id);
     if (request) {
       setLeaveBalances(prev => prev.map(lb => {
         if (lb.staffId !== request.staffId) return lb;
@@ -2614,11 +2649,20 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           updatedAt: new Date().toISOString(),
         };
       }));
+
+      // Notification for staff
+      addNotification({
+        type: 'system',
+        title: 'Permohonan Cuti Diluluskan',
+        message: `Permohonan cuti anda untuk ${request.type} dari ${request.startDate} hingga ${request.endDate} telah diluluskan.`,
+        priority: 'medium',
+        targetStaffId: request.staffId,
+      });
     }
-  }, [leaveRequests]);
+  }, [leaveRequests, addNotification]);
 
   const rejectLeaveRequest = useCallback((id: string, approverId: string, approverName: string, reason: string) => {
-    const request = leaveRequests.find(r => r.id === id);
+    const request = leaveRequests.find(r => r.id === id); // Find the request before state update
     setLeaveRequests(prev => prev.map(r => {
       if (r.id !== id) return r;
       return {
@@ -2646,8 +2690,17 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           updatedAt: new Date().toISOString(),
         };
       }));
+
+      // Notification for staff
+      addNotification({
+        type: 'system',
+        title: 'Permohonan Cuti Ditolak',
+        message: `Permohonan cuti anda untuk ${request.type} dari ${request.startDate} hingga ${request.endDate} telah ditolak. Sebab: ${reason}`,
+        priority: 'high',
+        targetStaffId: request.staffId,
+      });
     }
-  }, [leaveRequests]);
+  }, [leaveRequests, addNotification]);
 
   const getStaffLeaveRequests = useCallback((staffId: string): LeaveRequest[] => {
     return leaveRequests.filter(r => r.staffId === staffId);
@@ -3768,6 +3821,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     updateStockItem,
     deleteStockItem,
     adjustStock,
+    bulkUpsertStock,
     refreshInventory,
 
     // Staff
