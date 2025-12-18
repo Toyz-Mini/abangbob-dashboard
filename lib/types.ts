@@ -701,6 +701,7 @@ export interface PrinterSettings {
   paperWidth: ReceiptWidth;
   autoCut: boolean;
   openDrawerOnCashPayment: boolean;
+  useRawbt?: boolean; // For Android RawBT fallback
 }
 
 // Default receipt settings

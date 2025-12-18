@@ -206,8 +206,16 @@ class ThermalPrinterService {
     }
   }
 
+  private buffer: Uint8Array[] = [];
+  private captureMode: boolean = false;
+
   // Send raw command to printer
   async sendCommand(command: Uint8Array): Promise<void> {
+    if (this.captureMode) {
+      this.buffer.push(command);
+      return;
+    }
+
     if (!this.connection?.writer) {
       throw new Error('Printer not connected');
     }
@@ -304,7 +312,7 @@ class ThermalPrinterService {
 
   // Kick open the cash drawer
   async openCashDrawer(pin: 2 | 5 = 2): Promise<void> {
-    if (!this.connection) {
+    if (!this.connection && !this.captureMode) { // Added captureMode check
       throw new Error('Printer not connected');
     }
 
@@ -448,6 +456,64 @@ class ThermalPrinterService {
     await this.cutPaper();
   }
 
+  // ==================== RAW BT PRINTING ====================
+
+  // Convert buffer to Base64 string safely
+  private getBufferBase64(): string {
+    // Combine all chunks into one Uint8Array
+    const totalLength = this.buffer.reduce((acc, chunk) => acc + chunk.length, 0);
+    const combined = new Uint8Array(totalLength);
+    let offset = 0;
+    for (const chunk of this.buffer) {
+      combined.set(chunk, offset);
+      offset += chunk.length;
+    }
+
+    // Convert to binary string
+    let binary = '';
+    const len = combined.byteLength;
+    for (let i = 0; i < len; i++) {
+      binary += String.fromCharCode(combined[i]);
+    }
+
+    // Convert to Base64
+    return window.btoa(binary);
+  }
+
+  // Print using RawBT App (Android)
+  async printWithRawBT(order: Order, receiptSettings: ReceiptSettings): Promise<void> {
+    try {
+      // Enable capture mode
+      this.captureMode = true;
+      this.buffer = [];
+
+      // Generate receipt commands in memory
+      await this.printReceipt(order, receiptSettings);
+
+      // Open cash drawer if enabled
+      if (receiptSettings.openCashDrawer && order.paymentMethod === 'cash') {
+        await this.openCashDrawer();
+      }
+
+      // Get Base64 data
+      const base64Data = this.getBufferBase64();
+
+      // Construct RawBT intent URL
+      // S.data = base64 data
+      const intentUrl = `intent:${base64Data}#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter;S.data=${base64Data};end;`;
+
+      // Open intent
+      window.location.href = intentUrl;
+    } catch (error) {
+      console.error('RawBT Print Error:', error);
+      alert('Gagal membuka RawBT. Sila pastikan app RawBT installed.');
+    } finally {
+      // Disable capture mode
+      this.captureMode = false;
+      this.buffer = [];
+    }
+  }
+
   // ==================== FALLBACK BROWSER PRINTING ====================
 
   // Generate HTML for browser printing (fallback when no thermal printer)
@@ -576,6 +642,11 @@ class ThermalPrinterService {
 
   // Smart print - use thermal if connected, else browser
   async print(order: Order, receiptSettings: ReceiptSettings): Promise<void> {
+    if (this.settings.useRawbt) {
+      await this.printWithRawBT(order, receiptSettings);
+      return;
+    }
+
     if (this.isConnected()) {
       await this.printReceipt(order, receiptSettings);
 

@@ -1145,7 +1145,12 @@ export default function SettingsPage() {
                     </div>
                   </div>
 
-                  {printerSettings.isConnected ? (
+                  {printerSettings.useRawbt ? (
+                    <div style={{ padding: '0.75rem 1rem', background: '#ecfdf5', color: '#047857', borderRadius: 'var(--radius-md)', display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 500 }}>
+                      <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981' }} />
+                      Mode RawBT Aktif
+                    </div>
+                  ) : printerSettings.isConnected ? (
                     <button
                       className="btn btn-outline"
                       onClick={handleDisconnectPrinter}
@@ -1220,6 +1225,47 @@ export default function SettingsPage() {
                   <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
                     Jika printer keluar aksara pelik atau kosong, cuba tukar baud rate.
                   </div>
+                </div>
+
+                {/* RawBT Setting (Android) */}
+                <div style={{ padding: '1rem', background: 'var(--gray-100)', borderRadius: 'var(--radius-md)', marginTop: '1rem' }}>
+                  <label style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    cursor: 'pointer'
+                  }}>
+                    <div>
+                      <div style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        Guna RawBT (Android)
+                        <span style={{ fontSize: '0.75rem', padding: '0.1rem 0.4rem', background: '#e0f2fe', color: '#0369a1', borderRadius: '4px' }}>Recommended for Android</span>
+                      </div>
+                      <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+                        Gunakan app RawBT bila direct USB connection gagal dikesan browser.
+                      </div>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={printerSettings.useRawbt || false}
+                      onChange={(e) => {
+                        const useRawbt = e.target.checked;
+                        setPrinterSettings(prev => ({ ...prev, useRawbt }));
+                        // Update service immediately
+                        thermalPrinter.updateSettings({ ...printerSettings, useRawbt });
+                      }}
+                      style={{ width: '20px', height: '20px' }}
+                    />
+                  </label>
+                  {printerSettings.useRawbt && (
+                    <div style={{ marginTop: '0.75rem', fontSize: '0.875rem', color: 'var(--text-secondary)', padding: '0.75rem', background: '#fff', borderRadius: 'var(--radius-sm)', border: '1px solid var(--gray-200)' }}>
+                      <strong>Cara Guna:</strong>
+                      <ol style={{ paddingLeft: '1.25rem', margin: '0.5rem 0' }}>
+                        <li>Install app <strong>RawBT Printer</strong> dari Play Store.</li>
+                        <li>Setup printer dalam RawBT (USB/Bluetooth).</li>
+                        <li>Tekan butang "Test Print" di bawah untuk cuba.</li>
+                      </ol>
+                    </div>
+                  )}
                 </div>
 
                 {/* Auto-cut Setting */}
