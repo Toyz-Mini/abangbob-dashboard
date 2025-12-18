@@ -42,7 +42,9 @@ export default function InventoryPage() {
 
   const { user, isStaffLoggedIn, currentStaff } = useAuth();
   const role = user ? 'Admin' : (isStaffLoggedIn && currentStaff ? currentStaff.role : null);
-  const canDeleteItems = role === 'Admin' || role === 'Manager'; // Simplified check matching requirements
+  // TEMPORARY: Allow all users to edit for setup/testing
+  // const canDeleteItems = role === 'Admin' || role === 'Manager';
+  const canDeleteItems = true;
 
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('All');
