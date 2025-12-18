@@ -1361,11 +1361,13 @@ body {
 
   .top-nav {
     left: 0;
-    display: none; /* Hide TopNav on mobile - using bottom nav instead */
+    display: none !important;
+    /* Force hide TopNav on mobile */
   }
 
   .main-content {
-    margin-top: 0; /* Remove top margin since TopNav is hidden */
+    margin-top: 0;
+    /* Remove top margin since TopNav is hidden */
   }
 
   .grid-cols-2,
@@ -10722,6 +10724,7 @@ html {
     padding-bottom: 120px !important;
   }
 }
+
 /* --- Premium Login Animations --- */
 
 @keyframes scaleIn {
@@ -10729,6 +10732,7 @@ html {
     opacity: 0;
     transform: scale(0.95);
   }
+
   to {
     opacity: 1;
     transform: scale(1);
@@ -10744,6 +10748,7 @@ html {
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -10755,10 +10760,13 @@ html {
 }
 
 @keyframes pulseSlow {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 0.4;
     transform: scale(1);
   }
+
   50% {
     opacity: 0.7;
     transform: scale(1.05);
@@ -10770,11 +10778,27 @@ html {
 }
 
 @keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  20% { transform: translateX(-4px); }
-  40% { transform: translateX(4px); }
-  60% { transform: translateX(-2px); }
-  80% { transform: translateX(2px); }
+
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+
+  20% {
+    transform: translateX(-4px);
+  }
+
+  40% {
+    transform: translateX(4px);
+  }
+
+  60% {
+    transform: translateX(-2px);
+  }
+
+  80% {
+    transform: translateX(2px);
+  }
 }
 
 .animate-shake {
@@ -10785,14 +10809,17 @@ html {
 .custom-scrollbar::-webkit-scrollbar {
   width: 4px;
 }
+
 .custom-scrollbar::-webkit-scrollbar-track {
   background: rgba(255, 255, 255, 0.05);
   border-radius: 4px;
 }
+
 .custom-scrollbar::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.2);
   border-radius: 4px;
 }
+
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.3);
 }

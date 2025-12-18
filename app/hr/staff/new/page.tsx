@@ -48,6 +48,14 @@ import {
   X,
   Check,
   Cloud,
+  Monitor,
+  ShoppingCart,
+  Boxes,
+  Receipt,
+  CreditCard,
+  PieChart,
+  Users,
+  Key
 } from 'lucide-react';
 import Link from 'next/link';
 import LoadingSpinner from '@/components/LoadingSpinner';
@@ -1058,164 +1066,198 @@ export default function NewStaffPage() {
     </div>
   );
 
-  const renderPermissionsTab = () => (
-    <div className="form-section">
-      <h3 className="section-title">Tahap Akses</h3>
+  const renderPermissionsTab = () => {
+    const roles = [
+      {
+        id: 'staff',
+        label: 'Staff',
+        icon: <User size={24} />,
+        description: 'Akses asas untuk operasi harian',
+        color: 'text-blue-600',
+        bg: 'bg-blue-50',
+        border: 'border-blue-200'
+      },
+      {
+        id: 'manager',
+        label: 'Manager',
+        icon: <Briefcase size={24} />,
+        description: 'Akses penuh untuk pengurusan & laporan',
+        color: 'text-purple-600',
+        bg: 'bg-purple-50',
+        border: 'border-purple-200'
+      }
+    ];
 
-      <div className="form-group">
-        <label className="form-label">Tahap Akses</label>
-        <select
-          className="form-select"
-          value={formData.accessLevel || 'staff'}
-          onChange={(e) => updateForm('accessLevel', e.target.value as AccessLevel)}
-        >
-          <option value="staff">Staff</option>
-          <option value="manager">Manager</option>
-          <option value="admin">Admin</option>
-        </select>
+    const permissionGroups = [
+      {
+        title: 'Operasi',
+        permissions: [
+          { id: 'canAccessPOS', label: 'Akses POS', icon: <ShoppingCart size={18} /> },
+          { id: 'canAccessKDS', label: 'Kitchen Display', icon: <Monitor size={18} /> },
+          { id: 'canManageMenu', label: 'Urus Menu', icon: <FileText size={18} /> },
+        ]
+      },
+      {
+        title: 'Pengurusan',
+        permissions: [
+          { id: 'canManageStaff', label: 'Urus Staf', icon: <Users size={18} /> },
+          { id: 'canAccessInventory', label: 'Inventori', icon: <Boxes size={18} /> },
+          { id: 'canViewReports', label: 'Lihat Laporan', icon: <PieChart size={18} /> },
+        ]
+      },
+      {
+        title: 'Kewangan & Kelulusan',
+        permissions: [
+          { id: 'canAccessFinance', label: 'Kewangan', icon: <DollarSign size={18} /> },
+          { id: 'canApproveLeave', label: 'Lulus Cuti', icon: <Calendar size={18} /> },
+          { id: 'canApproveClaims', label: 'Lulus Tuntutan', icon: <Receipt size={18} /> },
+          { id: 'canGiveDiscount', label: 'Beri Diskaun', icon: <PercentageIcon size={18} /> }, // Using explicit icon below
+          { id: 'canVoidTransaction', label: 'Void Transaksi', icon: <X size={18} /> },
+        ]
+      }
+    ];
+
+    return (
+      <div className="space-y-8">
+        {/* Role Selection */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {roles.map((role) => {
+            const isSelected = formData.accessLevel === role.id;
+            return (
+              <div
+                key={role.id}
+                onClick={() => updateForm('accessLevel', role.id as AccessLevel)}
+                className={`relative p-6 rounded-xl border-2 cursor-pointer transition-all duration-200 ${isSelected
+                    ? `border-${role.color.split('-')[1]}-500 ${role.bg}`
+                    : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                  }`}
+              >
+                <div className="flex items-start gap-4">
+                  <div className={`p-3 rounded-lg bg-white shadow-sm ${role.color}`}>
+                    {role.icon}
+                  </div>
+                  <div>
+                    <h4 className={`font-bold text-lg ${isSelected ? 'text-gray-900' : 'text-gray-700'}`}>
+                      {role.label}
+                    </h4>
+                    <p className="text-sm text-gray-500 mt-1">
+                      {role.description}
+                    </p>
+                  </div>
+                  {isSelected && (
+                    <div className="absolute top-4 right-4 text-blue-600">
+                      <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center text-white">
+                        <Check size={14} strokeWidth={3} />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Detailed Permissions */}
+        <div>
+          <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
+            <Key size={20} className="text-primary" />
+            Kebenaran Khusus
+          </h3>
+
+          <div className="grid grid-cols-1 gap-8">
+            {permissionGroups.map((group) => (
+              <div key={group.title} className="bg-gray-50 rounded-xl p-5 border border-gray-100">
+                <h4 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-4 border-b border-gray-200 pb-2">
+                  {group.title}
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {group.permissions.map((perm) => (
+                    <label
+                      key={perm.id}
+                      className={`flex items-center gap-3 p-3 rounded-lg border transition-all cursor-pointer ${formData.permissions?.[perm.id as keyof StaffPermissions]
+                          ? 'bg-white border-primary shadow-sm ring-1 ring-primary/20'
+                          : 'bg-white border-gray-200 hover:border-gray-300'
+                        }`}
+                    >
+                      <div className={`p-2 rounded-md ${formData.permissions?.[perm.id as keyof StaffPermissions]
+                          ? 'bg-primary-50 text-primary'
+                          : 'bg-gray-100 text-gray-400'
+                        }`}>
+                        {perm.id === 'canGiveDiscount' ? <DollarSign size={18} /> : perm.icon}
+                      </div>
+
+                      <div className="flex-1">
+                        <span className={`text-sm font-medium ${formData.permissions?.[perm.id as keyof StaffPermissions]
+                            ? 'text-gray-900'
+                            : 'text-gray-500'
+                          }`}>
+                          {perm.label}
+                        </span>
+                      </div>
+
+                      <div className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          className="sr-only peer"
+                          checked={formData.permissions?.[perm.id as keyof StaffPermissions] as boolean || false}
+                          onChange={(e) => updateNestedForm('permissions', perm.id, e.target.checked)}
+                        />
+                        <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
+                      </div>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Dynamic Fields based on Permissions */}
+        {formData.permissions?.canGiveDiscount && (
+          <div className="animate-fade-in bg-yellow-50 border border-yellow-200 rounded-xl p-6">
+            <div className="flex items-start gap-4">
+              <div className="p-3 bg-yellow-100 text-yellow-700 rounded-lg">
+                <DollarSign size={24} />
+              </div>
+              <div className="flex-1">
+                <h4 className="font-bold text-gray-900 mb-1">Tetapan Diskaun</h4>
+                <p className="text-sm text-gray-600 mb-4">
+                  Tetapkan had maksimum diskaun yang boleh diberikan oleh staf ini.
+                </p>
+
+                <div className="flex items-center gap-3">
+                  <div className="w-full max-w-[200px]">
+                    <label className="text-xs text-gray-500 font-semibold uppercase mb-1 block">
+                      Max Diskaun (%)
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        className="form-input pr-8"
+                        value={formData.permissions?.maxDiscountPercent || 0}
+                        onChange={(e) => updateNestedForm('permissions', 'maxDiscountPercent', Number(e.target.value))}
+                        min="0"
+                        max="100"
+                      />
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium">%</span>
+                    </div>
+                  </div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={formData.permissions?.maxDiscountPercent || 0}
+                    onChange={(e) => updateNestedForm('permissions', 'maxDiscountPercent', Number(e.target.value))}
+                    className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
-
-      <h3 className="section-title" style={{ marginTop: '2rem' }}>Kebenaran Khusus</h3>
-
-      <div className="permissions-grid">
-        <div className="permission-item">
-          <label className="permission-label">
-            <input
-              type="checkbox"
-              checked={formData.permissions?.canAccessPOS || false}
-              onChange={(e) => updateNestedForm('permissions', 'canAccessPOS', e.target.checked)}
-            />
-            <span>Akses ke POS</span>
-          </label>
-        </div>
-
-        <div className="permission-item">
-          <label className="permission-label">
-            <input
-              type="checkbox"
-              checked={formData.permissions?.canAccessKDS || false}
-              onChange={(e) => updateNestedForm('permissions', 'canAccessKDS', e.target.checked)}
-            />
-            <span>Akses ke Kitchen Display</span>
-          </label>
-        </div>
-
-        <div className="permission-item">
-          <label className="permission-label">
-            <input
-              type="checkbox"
-              checked={formData.permissions?.canAccessInventory || false}
-              onChange={(e) => updateNestedForm('permissions', 'canAccessInventory', e.target.checked)}
-            />
-            <span>Akses ke Inventori</span>
-          </label>
-        </div>
-
-        <div className="permission-item">
-          <label className="permission-label">
-            <input
-              type="checkbox"
-              checked={formData.permissions?.canAccessFinance || false}
-              onChange={(e) => updateNestedForm('permissions', 'canAccessFinance', e.target.checked)}
-            />
-            <span>Akses ke Kewangan</span>
-          </label>
-        </div>
-
-        <div className="permission-item">
-          <label className="permission-label">
-            <input
-              type="checkbox"
-              checked={formData.permissions?.canManageMenu || false}
-              onChange={(e) => updateNestedForm('permissions', 'canManageMenu', e.target.checked)}
-            />
-            <span>Urus Menu</span>
-          </label>
-        </div>
-
-        <div className="permission-item">
-          <label className="permission-label">
-            <input
-              type="checkbox"
-              checked={formData.permissions?.canManageStaff || false}
-              onChange={(e) => updateNestedForm('permissions', 'canManageStaff', e.target.checked)}
-            />
-            <span>Urus Staf</span>
-          </label>
-        </div>
-
-        <div className="permission-item">
-          <label className="permission-label">
-            <input
-              type="checkbox"
-              checked={formData.permissions?.canApproveLeave || false}
-              onChange={(e) => updateNestedForm('permissions', 'canApproveLeave', e.target.checked)}
-            />
-            <span>Lulus Permohonan Cuti</span>
-          </label>
-        </div>
-
-        <div className="permission-item">
-          <label className="permission-label">
-            <input
-              type="checkbox"
-              checked={formData.permissions?.canApproveClaims || false}
-              onChange={(e) => updateNestedForm('permissions', 'canApproveClaims', e.target.checked)}
-            />
-            <span>Lulus Tuntutan</span>
-          </label>
-        </div>
-
-        <div className="permission-item">
-          <label className="permission-label">
-            <input
-              type="checkbox"
-              checked={formData.permissions?.canViewReports || false}
-              onChange={(e) => updateNestedForm('permissions', 'canViewReports', e.target.checked)}
-            />
-            <span>Lihat Laporan</span>
-          </label>
-        </div>
-
-        <div className="permission-item">
-          <label className="permission-label">
-            <input
-              type="checkbox"
-              checked={formData.permissions?.canGiveDiscount || false}
-              onChange={(e) => updateNestedForm('permissions', 'canGiveDiscount', e.target.checked)}
-            />
-            <span>Beri Diskaun</span>
-          </label>
-        </div>
-
-        <div className="permission-item">
-          <label className="permission-label">
-            <input
-              type="checkbox"
-              checked={formData.permissions?.canVoidTransaction || false}
-              onChange={(e) => updateNestedForm('permissions', 'canVoidTransaction', e.target.checked)}
-            />
-            <span>Void Transaksi</span>
-          </label>
-        </div>
-      </div>
-
-      {formData.permissions?.canGiveDiscount && (
-        <div className="form-group" style={{ marginTop: '1rem' }}>
-          <label className="form-label">Had Diskaun Maksimum (%)</label>
-          <input
-            type="number"
-            className="form-input"
-            value={formData.permissions?.maxDiscountPercent || 0}
-            onChange={(e) => updateNestedForm('permissions', 'maxDiscountPercent', Number(e.target.value))}
-            min="0"
-            max="100"
-            style={{ maxWidth: '150px' }}
-          />
-        </div>
-      )}
-    </div>
-  );
+    );
+  };
 
   const renderDocumentsTab = () => {
     const handleFileSelect = (docType: string, file: File | null) => {
@@ -1288,10 +1330,10 @@ export default function NewStaffPage() {
               <div
                 key={docType.id}
                 className={`transition-all duration-200 border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center text-center cursor-pointer group ${hasFile
-                    ? 'border-green-500 bg-green-50'
-                    : isDragging
-                      ? 'border-primary bg-primary-50 scale-[1.02]'
-                      : 'border-gray-300 hover:border-primary hover:bg-gray-50'
+                  ? 'border-green-500 bg-green-50'
+                  : isDragging
+                    ? 'border-primary bg-primary-50 scale-[1.02]'
+                    : 'border-gray-300 hover:border-primary hover:bg-gray-50'
                   }`}
                 style={{ minHeight: '200px' }}
                 onDragOver={(e) => handleDragOver(e, docType.id)}
