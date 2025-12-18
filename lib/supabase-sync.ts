@@ -5,6 +5,7 @@
 import { getSupabaseClient, getConnectionState } from './supabase/client';
 import * as ops from './supabase/operations';
 import * as attendanceOps from './supabase/attendance-sync';
+import { addToSyncQueue } from './sync-queue';
 import {
   logSyncSuccess,
   logSyncError,
@@ -117,6 +118,9 @@ export async function syncUpdateStockItem(id: string, updates: any) {
     return await ops.updateInventoryItem(id, updates);
   } catch (error) {
     console.error('Failed to update inventory item in Supabase:', error);
+    // Offline Queue
+    addToSyncQueue({ id, table: 'inventory', action: 'UPDATE', payload: updates });
+    console.log('Saved to offline queue (Inventory)');
     return null;
   }
 }
@@ -138,6 +142,19 @@ export async function loadInventoryFromSupabase() {
     return await ops.fetchInventory();
   } catch (error) {
     console.error('Failed to load inventory from Supabase:', error);
+    return [];
+  }
+}
+
+// ============ CASH REGISTER SYNC ============
+
+export async function loadCashRegistersFromSupabase() {
+  if (!isSupabaseSyncEnabled()) return [];
+
+  try {
+    return await ops.fetchCashRegisters();
+  } catch (error) {
+    console.error('Failed to load cash registers from Supabase:', error);
     return [];
   }
 }
@@ -382,6 +399,9 @@ export async function syncAddOrder(order: any) {
     return await ops.insertOrder(order);
   } catch (error) {
     console.error('Failed to sync order to Supabase:', error);
+    // Offline Queue
+    addToSyncQueue({ id: order.id, table: 'orders', action: 'CREATE', payload: order });
+    console.log('Saved to offline queue (Order)');
     return null;
   }
 }
@@ -417,6 +437,12 @@ export async function syncAddCustomer(customer: any) {
     return await ops.insertCustomer(customer);
   } catch (error) {
     console.error('Failed to sync customer to Supabase:', error);
+    // Offline Queue - Generate ID if missing or use existing? 
+    // Usually customer object here has ID from generic UUID generator in Store
+    if (customer.id) {
+      addToSyncQueue({ id: customer.id, table: 'customers', action: 'CREATE', payload: customer });
+      console.log('Saved to offline queue (Customer)');
+    }
     return null;
   }
 }
@@ -428,6 +454,7 @@ export async function syncUpdateCustomer(id: string, updates: any) {
     return await ops.updateCustomer(id, updates);
   } catch (error) {
     console.error('Failed to update customer in Supabase:', error);
+    addToSyncQueue({ id, table: 'customers', action: 'UPDATE', payload: updates });
     return null;
   }
 }
@@ -1550,7 +1577,9 @@ export async function loadAllDataFromSupabase() {
       ops.fetchAnnouncements(),
       ops.fetchOilTrackers(),
       ops.fetchOilChangeRequests(),
+      ops.fetchOilChangeRequests(),
       ops.fetchOilActionHistory(),
+      ops.fetchCashRegisters(), // Index 34
     ]);
 
     // Helper to get value or default
@@ -1559,7 +1588,7 @@ export async function loadAllDataFromSupabase() {
       if (result.status === 'fulfilled') {
         return result.value as T;
       } else {
-        console.error(`Failed to load data at index ${index}:`, result.reason);
+        console.error(`Failed to load data at index ${index}: `, result.reason);
         return defaultValue;
       }
     };
@@ -1602,6 +1631,7 @@ export async function loadAllDataFromSupabase() {
       oilTrackers: getResult(31, []),
       oilChangeRequests: getResult(32, []),
       oilActionHistory: getResult(33, []),
+      cashRegisters: getResult(34, []),
     };
   } catch (error) {
     console.error('Critical failure in loadAllDataFromSupabase:', error);

@@ -2,11 +2,11 @@
 
 import { useState, useRef, useMemo, useEffect, useCallback } from 'react';
 import MainLayout from '@/components/MainLayout';
-import { useOrders, useMenu, useInventory, usePaymentMethods } from '@/lib/store';
+import { useOrders, useMenu, useInventory, usePaymentMethods, useCustomers } from '@/lib/store';
 import { useMenuRealtime, useInventoryRealtime, useModifiersRealtime } from '@/lib/supabase/realtime-hooks';
 import { useTranslation } from '@/lib/contexts/LanguageContext';
 import { useToast } from '@/lib/contexts/ToastContext';
-import { CartItem, Order, MenuItem, SelectedModifier, ReceiptSettings, DEFAULT_RECEIPT_SETTINGS } from '@/lib/types';
+import { CartItem, Order, MenuItem, SelectedModifier, ReceiptSettings, DEFAULT_RECEIPT_SETTINGS, Customer } from '@/lib/types';
 import { getUpsellSuggestions } from '@/lib/menu-data';
 import {
   thermalPrinter,
@@ -23,6 +23,10 @@ import { UtensilsCrossed, Sandwich, Coffee, History, Printer, Clock, ChefHat, Ch
 import Modal from '@/components/Modal';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import StatCard from '@/components/StatCard';
+import RegisterModal from '@/components/cash-management/RegisterModal';
+import RegisterStatus from '@/components/cash-management/RegisterStatus';
+import { useRouter } from 'next/navigation';
+import { useStore } from '@/lib/store';
 
 type ModalType = 'upsell' | 'checkout' | 'receipt' | 'history' | 'queue' | 'modifiers' | 'network-error' | null;
 
@@ -31,8 +35,25 @@ export default function POSPage() {
   const { menuItems, modifierGroups, modifierOptions, getOptionsForGroup, refreshMenu } = useMenu();
   const { inventory, adjustStock, refreshInventory } = useInventory();
   const { paymentMethods, isInitialized: paymentMethodsInitialized } = usePaymentMethods();
+  const { customers } = useCustomers();
   const { t, language } = useTranslation();
   const { showToast } = useToast();
+  const router = useRouter();
+
+  // Cash Register State
+  const { currentRegister, isInitialized: storeInitialized } = useStore();
+  const [registerModalOpen, setRegisterModalOpen] = useState(false);
+  const [registerModalMode, setRegisterModalMode] = useState<'open' | 'close'>('open');
+
+  // Enforce Open Register
+  useEffect(() => {
+    if (storeInitialized && !currentRegister) {
+      setRegisterModalMode('open');
+      setRegisterModalOpen(true);
+    }
+  }, [storeInitialized, currentRegister]);
+
+  // Realtime subscriptions for menu, inventory, and modifiers
 
   // Realtime subscriptions for menu, inventory, and modifiers
   const handleMenuChange = useCallback(() => {
@@ -59,6 +80,8 @@ export default function POSPage() {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [cart, setCart] = useState<CartItem[]>([]);
   const [modalType, setModalType] = useState<ModalType>(null);
+
+  // Checkout State
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('+673');
   const [orderType, setOrderType] = useState<'takeaway' | 'gomamam'>('takeaway');
@@ -67,8 +90,38 @@ export default function POSPage() {
   const [lastOrder, setLastOrder] = useState<Order | null>(null);
   const [discountPercent, setDiscountPercent] = useState(0);
   const [cashReceived, setCashReceived] = useState<number>(0);
+  const [usePoints, setUsePoints] = useState(false); // Loyalty Redemption Toggle
   const [receiptSettings, setReceiptSettings] = useState<ReceiptSettings>(DEFAULT_RECEIPT_SETTINGS);
   const receiptRef = useRef<HTMLDivElement>(null);
+
+  // Customer Selection State
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [customerSearch, setCustomerSearch] = useState('');
+  const [showCustomerResults, setShowCustomerResults] = useState(false);
+
+  // Filter customers for search
+  const filteredCustomers = useMemo(() => {
+    if (!customerSearch) return [];
+    const searchLower = customerSearch.toLowerCase();
+    return customers.filter(c =>
+      c.name.toLowerCase().includes(searchLower) ||
+      c.phone.includes(searchLower)
+    ).slice(0, 5);
+  }, [customers, customerSearch]);
+
+  const handleSelectCustomer = (customer: Customer) => {
+    setSelectedCustomer(customer);
+    setCustomerName(customer.name);
+    setCustomerPhone(customer.phone);
+    setCustomerSearch('');
+    setShowCustomerResults(false);
+  };
+
+  const handleClearCustomer = () => {
+    setSelectedCustomer(null);
+    setCustomerName('');
+    setCustomerPhone('+673');
+  };
 
   // Network recovery state
   const [currentTransactionId, setCurrentTransactionId] = useState<string | null>(null);
@@ -166,7 +219,19 @@ export default function POSPage() {
   // Calculate cart totals
   const cartSubtotal = cart.reduce((sum, item) => sum + (item.itemTotal * item.quantity), 0);
   const discountAmount = (cartSubtotal * discountPercent) / 100;
+
   const cartTotal = cartSubtotal - discountAmount;
+
+  // Loyalty Redemption Calculation (100 Points = $1)
+  const maxRedemptionValue = useMemo(() => {
+    if (!selectedCustomer) return 0;
+    const pointsValue = selectedCustomer.loyaltyPoints / 100;
+    return Math.min(cartTotal, pointsValue);
+  }, [selectedCustomer, cartTotal]);
+
+  const redemptionAmount = usePoints ? maxRedemptionValue : 0;
+  const pointsToRedeem = usePoints ? Math.ceil(redemptionAmount * 100) : 0; // Displayed points
+  const finalPayable = Math.max(0, cartTotal - redemptionAmount);
 
   // Toggle modifier option
   const toggleModifierOption = (group: typeof modifierGroups[0], option: typeof modifierOptions[0]) => {
@@ -261,9 +326,12 @@ export default function POSPage() {
 
     // Validate cash payment
     if (paymentMethod === 'cash') {
-      if (!cashReceived || cashReceived < cartTotal) {
-        showToast('Sila masukkan jumlah bayaran yang mencukupi', 'error');
-        return;
+      // Validate cash payment
+      if (paymentMethod === 'cash') {
+        if (!cashReceived || cashReceived < finalPayable) {
+          showToast('Sila masukkan jumlah bayaran yang mencukupi', 'error');
+          return;
+        }
       }
     }
 
@@ -324,9 +392,12 @@ export default function POSPage() {
       // Create order with customer name and payment method
       const newOrder = await addOrder({
         items: cart,
-        total: cartTotal,
+        total: cartTotal, // Store original total
         customerName: customerName || undefined,
         customerPhone,
+        customerId: selectedCustomer?.id,
+        redeemedPoints: pointsToRedeem > 0 ? pointsToRedeem : undefined,
+        redemptionAmount: redemptionAmount > 0 ? redemptionAmount : undefined,
         orderType,
         paymentMethod,
         status: 'pending',
@@ -380,6 +451,7 @@ export default function POSPage() {
       setPaymentMethod('cash');
       setDiscountPercent(0);
       setCashReceived(0);
+      setUsePoints(false); // Reset redemption
       setCurrentTransactionId(null);
       setRetryCount(0);
     } catch (error) {
@@ -443,7 +515,17 @@ export default function POSPage() {
             <h1 className="page-title">
               {t('pos.title')}
             </h1>
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+              <RegisterStatus
+                onOpenClick={() => {
+                  setRegisterModalMode('open');
+                  setRegisterModalOpen(true);
+                }}
+                onCloseClick={() => {
+                  setRegisterModalMode('close');
+                  setRegisterModalOpen(true);
+                }}
+              />
               <button className="btn btn-outline" onClick={() => setModalType('queue')}>
                 <ChefHat size={18} />
                 {t('pos.orderQueue')} ({pendingOrders.length + preparingOrders.length})
@@ -1036,7 +1118,7 @@ export default function POSPage() {
           isOpen={modalType === 'checkout'}
           onClose={() => !isProcessing && setModalType(null)}
           title="Checkout"
-          subtitle={`Jumlah: BND ${cartTotal.toFixed(2)}`}
+          subtitle={`Jumlah Perlu Dibayar: BND ${finalPayable.toFixed(2)}`}
           maxWidth="500px"
         >
           <div className="form-group">
@@ -1059,37 +1141,126 @@ export default function POSPage() {
             </div>
           </div>
 
-          {/* Customer Name - Optional for personalization */}
+          {/* Customer Selection or Input */}
           <div className="form-group">
             <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <User size={16} />
-              Nama Pelanggan
+              Maklumat Pelanggan
             </label>
-            <input
-              type="text"
-              className="form-input"
-              value={customerName}
-              onChange={(e) => setCustomerName(e.target.value)}
-              placeholder="Masukkan nama (optional)"
-            />
-            <small style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>
-              Untuk personalize receipt dengan nama pelanggan
-            </small>
-          </div>
 
-          <div className="form-group">
-            <label className="form-label">Nombor Telefon *</label>
-            <input
-              type="tel"
-              className="form-input"
-              value={customerPhone}
-              onChange={(e) => setCustomerPhone(e.target.value)}
-              placeholder="+6737123456"
-              required
-            />
-            <small style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>
-              Wajib untuk checkout (Default: Brunei +673)
-            </small>
+            {!selectedCustomer ? (
+              <div style={{ position: 'relative', marginBottom: '1rem' }}>
+                <input
+                  type="text"
+                  className="form-input"
+                  placeholder="Cari pelanggan (Nama/Tel)..."
+                  value={customerSearch}
+                  onChange={(e) => {
+                    setCustomerSearch(e.target.value);
+                    setShowCustomerResults(true);
+                  }}
+                  onFocus={() => setShowCustomerResults(true)}
+                  style={{ borderColor: 'var(--primary)' }}
+                />
+                {showCustomerResults && customerSearch && (
+                  <div style={{
+                    position: 'absolute',
+                    top: '100%',
+                    left: 0,
+                    right: 0,
+                    background: 'white',
+                    border: '1px solid var(--gray-300)',
+                    borderRadius: 'var(--radius-md)',
+                    zIndex: 10,
+                    boxShadow: 'var(--shadow-lg)',
+                    maxHeight: '200px',
+                    overflowY: 'auto'
+                  }}>
+                    {filteredCustomers.length > 0 ? (
+                      filteredCustomers.map(c => (
+                        <div
+                          key={c.id}
+                          onClick={() => handleSelectCustomer(c)}
+                          style={{
+                            padding: '0.75rem',
+                            borderBottom: '1px solid var(--gray-100)',
+                            cursor: 'pointer',
+                            transition: 'background 0.2s'
+                          }}
+                          onMouseEnter={e => e.currentTarget.style.background = 'var(--gray-50)'}
+                          onMouseLeave={e => e.currentTarget.style.background = 'white'}
+                        >
+                          <div style={{ fontWeight: 600 }}>{c.name}</div>
+                          <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', display: 'flex', justifyContent: 'space-between' }}>
+                            <span>{c.phone}</span>
+                            <span style={{ color: 'var(--primary)', fontWeight: 600 }}>{c.loyaltyPoints} Pts</span>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div style={{ padding: '0.75rem', color: 'var(--text-secondary)', textAlign: 'center' }}>
+                        Tiada rekod jumpa (Guna input manual di bawah)
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div style={{
+                background: 'linear-gradient(135deg, var(--primary-light) 0%, #e0e7ff 100%)',
+                padding: '0.75rem',
+                borderRadius: 'var(--radius-md)',
+                marginBottom: '1rem',
+                border: '1px solid var(--primary)',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center'
+              }}>
+                <div>
+                  <div style={{ fontWeight: 700, color: 'var(--primary)' }}>
+                    {selectedCustomer.name}
+                    <span className={`badge badge-${selectedCustomer.segment === 'vip' ? 'warning' : 'info'}`} style={{ marginLeft: '0.5rem', fontSize: '0.7rem' }}>
+                      {selectedCustomer.segment.toUpperCase()}
+                    </span>
+                  </div>
+                  <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                    {selectedCustomer.phone} • <b>{selectedCustomer.loyaltyPoints} Points</b>
+                  </div>
+                </div>
+                <button
+                  onClick={handleClearCustomer}
+                  className="btn btn-sm btn-outline"
+                  style={{ color: 'var(--danger)', borderColor: 'var(--danger)' }}
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            )}
+
+            {/* Manual fallback fields (always visible but populated) */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+              <div>
+                <input
+                  type="text"
+                  className="form-input"
+                  value={customerName}
+                  onChange={(e) => setCustomerName(e.target.value)}
+                  placeholder="Nama"
+                  readOnly={!!selectedCustomer}
+                />
+              </div>
+              <div>
+                <input
+                  type="tel"
+                  className="form-input"
+                  value={customerPhone}
+                  onChange={(e) => setCustomerPhone(e.target.value)}
+                  placeholder="Tel (+673...)"
+                  required
+                  readOnly={!!selectedCustomer}
+                />
+              </div>
+            </div>
           </div>
 
           {/* Payment Method Selection */}
@@ -1116,6 +1287,46 @@ export default function POSPage() {
             )}
           </div>
 
+          {/* Loyalty Redemption Toggle */}
+          {selectedCustomer && selectedCustomer.loyaltyPoints > 0 && (
+            <div className="form-group" style={{
+              background: 'linear-gradient(to right, #fef3c7, #fff)',
+              padding: '0.75rem',
+              borderRadius: 'var(--radius-md)',
+              border: '1px solid #fcd34d'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <div style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <Sparkles size={16} color="#d97706" fill="#d97706" />
+                    Tebus Mata Ganjaran
+                  </div>
+                  <div style={{ fontSize: '0.8rem', color: '#92400e' }}>
+                    Ada {selectedCustomer.loyaltyPoints} mata (Max tebus: ${maxRedemptionValue.toFixed(2)})
+                  </div>
+                </div>
+                <label className="switch" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    checked={usePoints}
+                    onChange={(e) => setUsePoints(e.target.checked)}
+                    style={{ accentColor: 'var(--primary)', width: '1.2rem', height: '1.2rem' }}
+                  />
+                  <span style={{ fontWeight: 600 }}>Guna</span>
+                </label>
+              </div>
+
+              {usePoints && (
+                <div style={{ marginTop: '0.5rem', paddingTop: '0.5rem', borderTop: '1px dashed #fcd34d', fontSize: '0.875rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', color: '#92400e' }}>
+                    <span>Tebus {pointsToRedeem} mata:</span>
+                    <span style={{ fontWeight: 700 }}>- BND {redemptionAmount.toFixed(2)}</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Cash Amount Input - Show only for cash payment */}
           {paymentMethod === 'cash' && (
             <div className="form-group" style={{
@@ -1141,7 +1352,7 @@ export default function POSPage() {
                 <div style={{
                   marginTop: '0.75rem',
                   padding: '0.75rem',
-                  background: cashReceived >= cartTotal ? 'var(--success-light, #d1fae5)' : 'var(--danger-light, #fee2e2)',
+                  background: cashReceived >= finalPayable ? 'var(--success-light, #d1fae5)' : 'var(--danger-light, #fee2e2)',
                   borderRadius: 'var(--radius-sm)',
                   textAlign: 'center'
                 }}>
@@ -1151,13 +1362,13 @@ export default function POSPage() {
                   <div style={{
                     fontSize: '1.5rem',
                     fontWeight: 700,
-                    color: cashReceived >= cartTotal ? 'var(--success)' : 'var(--danger)'
+                    color: cashReceived >= finalPayable ? 'var(--success)' : 'var(--danger)'
                   }}>
-                    BND {(cashReceived - cartTotal).toFixed(2)}
+                    BND {(cashReceived - finalPayable).toFixed(2)}
                   </div>
-                  {cashReceived < cartTotal && (
+                  {cashReceived < finalPayable && (
                     <div style={{ fontSize: '0.75rem', color: 'var(--danger)', marginTop: '0.25rem' }}>
-                      Kurang BND {(cartTotal - cashReceived).toFixed(2)}
+                      Kurang BND {(finalPayable - cashReceived).toFixed(2)}
                     </div>
                   )}
                 </div>
@@ -1181,7 +1392,7 @@ export default function POSPage() {
                 ))}
                 <button
                   type="button"
-                  onClick={() => setCashReceived(Math.ceil(cartTotal))}
+                  onClick={() => setCashReceived(Math.ceil(finalPayable))}
                   className="btn btn-sm btn-primary"
                 >
                   Tepat
@@ -1228,7 +1439,7 @@ export default function POSPage() {
                   <span style={{ marginLeft: '0.5rem' }}>Memproses...</span>
                 </>
               ) : (
-                `Bayar BND ${cartTotal.toFixed(2)}`
+                `Bayar BND ${finalPayable.toFixed(2)}`
               )}
             </button>
           </div>
@@ -1653,6 +1864,18 @@ export default function POSPage() {
           </div>
         </Modal>
       </div>
+      {/* Register Modal */}
+      <RegisterModal
+        isOpen={registerModalOpen}
+        onClose={() => {
+          if (!currentRegister) {
+            router.push('/'); // Redirect to home if they cancel opening
+          } else {
+            setRegisterModalOpen(false);
+          }
+        }}
+        mode={registerModalMode}
+      />
     </MainLayout >
   );
 }

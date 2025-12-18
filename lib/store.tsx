@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
-import { StockItem, StaffProfile, AttendanceRecord, Order, ProductionLog, DeliveryOrder, Expense, DailyCashFlow, Customer, Supplier, PurchaseOrder, Recipe, Shift, ScheduleEntry, Promotion, Notification, MenuItem, ModifierGroup, ModifierOption, StaffKPI, LeaveRecord, TrainingRecord, OTRecord, CustomerReview, KPIMetrics, ChecklistItemTemplate, ChecklistCompletion, LeaveBalance, LeaveRequest, ClaimRequest, StaffRequest, Announcement, OrderHistoryItem, VoidRefundRequest, VoidRefundType, OrderHistoryFilters, RefundItem, OilTracker, OilChangeRequest, OilActionHistory, OilActionType, MenuCategory, PaymentMethodConfig, TaxRate, DEFAULT_MENU_CATEGORIES, DEFAULT_PAYMENT_METHODS, DEFAULT_TAX_RATES } from './types';
+import { StockItem, StaffProfile, AttendanceRecord, Order, ProductionLog, DeliveryOrder, Expense, DailyCashFlow, Customer, Supplier, PurchaseOrder, Recipe, Shift, ScheduleEntry, Promotion, Notification, MenuItem, ModifierGroup, ModifierOption, StaffKPI, LeaveRecord, TrainingRecord, OTRecord, CustomerReview, KPIMetrics, ChecklistItemTemplate, ChecklistCompletion, LeaveBalance, LeaveRequest, ClaimRequest, StaffRequest, Announcement, OrderHistoryItem, VoidRefundRequest, VoidRefundType, OrderHistoryFilters, RefundItem, OilTracker, OilChangeRequest, OilActionHistory, OilActionType, MenuCategory, PaymentMethodConfig, TaxRate, CashRegister, DEFAULT_MENU_CATEGORIES, DEFAULT_PAYMENT_METHODS, DEFAULT_TAX_RATES } from './types';
 import { MOCK_ORDER_HISTORY, MOCK_VOID_REFUND_REQUESTS, ORDER_HISTORY_STORAGE_KEYS } from './order-history-data';
 import { MOCK_STOCK } from './inventory-data';
 import { MOCK_STAFF, MOCK_ATTENDANCE, MOCK_PAYROLL } from './hr-data';
@@ -107,6 +107,7 @@ const STORAGE_KEYS = {
   MENU_CATEGORIES: 'abangbob_menu_categories',
   PAYMENT_METHODS: 'abangbob_payment_methods',
   TAX_RATES: 'abangbob_tax_rates',
+  CASH_REGISTERS: 'abangbob_cash_registers',
 };
 
 // Inventory log type for tracking stock changes
@@ -381,6 +382,13 @@ interface StoreState {
   getDefaultTaxRate: () => TaxRate | undefined;
   getActiveTaxRates: () => TaxRate[];
 
+  // Cash Register (Shift)
+  cashRegisters: CashRegister[]; // History of registers
+  currentRegister: CashRegister | null; // Currently open register
+  openRegister: (startCash: number, staffId: string, notes?: string) => Promise<{ success: boolean; error?: string }>;
+  closeRegister: (actualCash: number, staffId: string, notes?: string) => Promise<{ success: boolean; error?: string }>;
+  checkRegisterStatus: (staffId: string) => void;
+
   // Utility
   isInitialized: boolean;
 }
@@ -485,6 +493,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [menuCategories, setMenuCategories] = useState<MenuCategory[]>([]);
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethodConfig[]>([]);
   const [taxRates, setTaxRates] = useState<TaxRate[]>([]);
+
+  // Cash Register state
+  const [cashRegisters, setCashRegisters] = useState<CashRegister[]>([]);
+  const [currentRegister, setCurrentRegister] = useState<CashRegister | null>(null);
 
   // Initialize from Supabase first, fallback to localStorage
   useEffect(() => {
@@ -598,6 +610,18 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
       // Extended data - now also from Supabase (using supabaseConnected flag for consistency)
       setInventoryLogs(getFromStorage(STORAGE_KEYS.INVENTORY_LOGS, [])); // TODO: Add to Supabase later
+
+      // Load Cash Registers
+      const registersResult = getDataWithSource(supabaseData.cashRegisters as CashRegister[], STORAGE_KEYS.CASH_REGISTERS, [], 'Cash Registers');
+      setCashRegisters(registersResult.data);
+
+      // Check for open register
+      const openReg = registersResult.data.find((r: CashRegister) => r.status === 'open');
+      if (openReg) {
+        console.log('[Data Init] Found open register session:', openReg.id);
+        setCurrentRegister(openReg);
+      }
+
       setProductionLogs(supabaseConnected && supabaseData.productionLogs?.length > 0 ? supabaseData.productionLogs : getFromStorage(STORAGE_KEYS.PRODUCTION_LOGS, MOCK_PRODUCTION_LOGS));
       setDeliveryOrders(supabaseConnected && supabaseData.deliveryOrders?.length > 0 ? supabaseData.deliveryOrders : getFromStorage(STORAGE_KEYS.DELIVERY_ORDERS, MOCK_DELIVERY_ORDERS));
       setCashFlows(supabaseConnected && supabaseData.cashFlows?.length > 0 ? supabaseData.cashFlows : getFromStorage(STORAGE_KEYS.CASH_FLOWS, MOCK_CASH_FLOWS));
@@ -1019,6 +1043,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }
   }, [taxRates, isInitialized]);
 
+  // Cash Registers persistence
+  useEffect(() => {
+    if (isInitialized) {
+      setToStorage(STORAGE_KEYS.CASH_REGISTERS, cashRegisters);
+    }
+  }, [cashRegisters, isInitialized]);
+
   // Inventory actions
   const addStockItem = useCallback(async (item: Omit<StockItem, 'id'>) => {
     const newItem: StockItem = {
@@ -1271,6 +1302,27 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     return { success: true, message: `Clock out berjaya pada ${now}` };
   }, [attendance]);
 
+  // Customer Loyalty Actions (Moved here for dependency access in addOrder)
+  const addLoyaltyPoints = useCallback((customerId: string, points: number) => {
+    setCustomers(prev => prev.map(c => {
+      if (c.id === customerId) {
+        const newPoints = c.loyaltyPoints + points;
+        const newSegment = newPoints >= 500 ? 'vip' : newPoints >= 100 ? 'regular' : 'new';
+        return { ...c, loyaltyPoints: newPoints, segment: newSegment };
+      }
+      return c;
+    }));
+  }, []);
+
+  const redeemLoyaltyPoints = useCallback((customerId: string, points: number): boolean => {
+    const customer = customers.find(c => c.id === customerId);
+    if (!customer || customer.loyaltyPoints < points) return false;
+    setCustomers(prev => prev.map(c =>
+      c.id === customerId ? { ...c, loyaltyPoints: c.loyaltyPoints - points } : c
+    ));
+    return true;
+  }, [customers]);
+
   // Order actions
   const addOrder = useCallback(async (orderData: Omit<Order, 'id' | 'orderNumber'>): Promise<Order> => {
     const timestamp = Date.now();
@@ -1364,8 +1416,30 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       }
     }
 
+
+
+    // LOYALTY SYSTEM: Redemption and Earning
+    if (newOrder.customerId) {
+      // 1. Deduct Redeemed Points
+      if (newOrder.redeemedPoints && newOrder.redeemedPoints > 0) {
+        redeemLoyaltyPoints(newOrder.customerId, newOrder.redeemedPoints);
+        console.log(`[Loyalty] Redeemed ${newOrder.redeemedPoints} points from customer ${newOrder.customerId}`);
+      }
+
+      // 2. Award Points on Net Spend (Total - Redemption)
+      // Policy: 1 Point = $1 spend
+      const redemptionValue = newOrder.redemptionAmount || 0;
+      const netTotal = Math.max(0, newOrder.total - redemptionValue);
+      const pointsToEarn = Math.floor(netTotal);
+
+      if (pointsToEarn > 0) {
+        addLoyaltyPoints(newOrder.customerId, pointsToEarn);
+        console.log(`[Loyalty] Awarded ${pointsToEarn} points to customer ${newOrder.customerId} (Net Spend: $${netTotal.toFixed(2)})`);
+      }
+    }
+
     return newOrder;
-  }, [recipes, inventory]);
+  }, [recipes, inventory, addLoyaltyPoints, redeemLoyaltyPoints]);
 
   const updateOrderStatus = useCallback(async (orderId: string, status: Order['status'], staffId?: string) => {
     setOrders(prev => prev.map(order => {
@@ -1788,25 +1862,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     setCustomers(prev => prev.map(c => c.id === id ? { ...c, ...updates } : c));
   }, []);
 
-  const addLoyaltyPoints = useCallback((customerId: string, points: number) => {
-    setCustomers(prev => prev.map(c => {
-      if (c.id === customerId) {
-        const newPoints = c.loyaltyPoints + points;
-        const newSegment = newPoints >= 500 ? 'vip' : newPoints >= 100 ? 'regular' : 'new';
-        return { ...c, loyaltyPoints: newPoints, segment: newSegment };
-      }
-      return c;
-    }));
-  }, []);
 
-  const redeemLoyaltyPoints = useCallback((customerId: string, points: number): boolean => {
-    const customer = customers.find(c => c.id === customerId);
-    if (!customer || customer.loyaltyPoints < points) return false;
-    setCustomers(prev => prev.map(c =>
-      c.id === customerId ? { ...c, loyaltyPoints: c.loyaltyPoints - points } : c
-    ));
-    return true;
-  }, [customers]);
 
   // Supplier actions
   const addSupplier = useCallback(async (supplierData: Omit<Supplier, 'id' | 'createdAt' | 'rating'>) => {
@@ -2851,6 +2907,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     const isPartial = items && items.length > 0 && amount < order.total;
 
     const newRequest: VoidRefundRequest = {
+      ...order, // Copy order details for context
       id: generateUUID(),
       orderId,
       orderNumber: order.orderNumber,
@@ -3518,6 +3575,118 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     return taxRates.filter(r => r.isActive);
   }, [taxRates]);
 
+  // Cash Register Functions
+  const openRegister = useCallback(async (startCash: number, staffId: string, notes?: string): Promise<{ success: boolean; error?: string }> => {
+    // Check if already open
+    if (currentRegister) {
+      return { success: false, error: 'Register already open' };
+    }
+
+    const newRegister: CashRegister = {
+      id: generateUUID(),
+      openedAt: new Date().toISOString(),
+      openedBy: staffId,
+      startCash,
+      status: 'open',
+      notes,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    try {
+      // Try Supabase first
+      if (isSupabaseConfigured()) {
+        try {
+          await VoidRefundOps.insertCashRegister(newRegister);
+        } catch (error) {
+          console.error('Supabase open register error:', error);
+          throw error;
+        }
+      }
+
+      // Update Local State
+      const updatedRegisters = [newRegister, ...cashRegisters];
+      setCashRegisters(updatedRegisters);
+      setCurrentRegister(newRegister);
+      setToStorage(STORAGE_KEYS.CASH_REGISTERS, updatedRegisters);
+
+      return { success: true };
+    } catch (error) {
+      console.error('Open register error:', error);
+      // Fallback to local if just network error? For now, we allow local open
+      // In strict mode we might block. Assuming generic offline support:
+      const updatedRegisters = [newRegister, ...cashRegisters];
+      setCashRegisters(updatedRegisters);
+      setCurrentRegister(newRegister);
+      setToStorage(STORAGE_KEYS.CASH_REGISTERS, updatedRegisters);
+      return { success: true };
+    }
+  }, [cashRegisters, currentRegister]);
+
+  const closeRegister = useCallback(async (actualCash: number, staffId: string, notes?: string): Promise<{ success: boolean; error?: string }> => {
+    if (!currentRegister) {
+      return { success: false, error: 'No open register to close' };
+    }
+
+    const closedRegister: CashRegister = {
+      ...currentRegister,
+      closedAt: new Date().toISOString(),
+      closedBy: staffId,
+      endCash: actualCash,
+      status: 'closed',
+      notes: notes || currentRegister.notes,
+      updatedAt: new Date().toISOString(),
+      // Variance calculation would happen here or backend
+      variance: actualCash - currentRegister.startCash // Simplified variance (Actual - Start). Real logic needs Sales Total.
+      // Logic: Variance = Actual - (Start + Sales - Expenses)
+      // We will handle sophisticated variance calculation in the UI or backend.
+    };
+
+    try {
+      // Try Supabase first
+      if (isSupabaseConfigured()) {
+        try {
+          await VoidRefundOps.updateCashRegister(currentRegister.id, {
+            closedAt: closedRegister.closedAt,
+            closedBy: closedRegister.closedBy,
+            endCash: closedRegister.endCash,
+            status: 'closed',
+            notes: closedRegister.notes,
+            variance: closedRegister.variance,
+            updatedAt: closedRegister.updatedAt
+          });
+        } catch (error) {
+          console.error('Supabase close register error:', error);
+          throw error;
+        }
+      }
+
+      const updatedRegisters = cashRegisters.map(r => r.id === currentRegister.id ? closedRegister : r);
+      setCashRegisters(updatedRegisters);
+      setCurrentRegister(null);
+      setToStorage(STORAGE_KEYS.CASH_REGISTERS, updatedRegisters);
+
+      return { success: true };
+    } catch (error) {
+      console.error('Close register error:', error);
+      // Local Fallback
+      const updatedRegisters = cashRegisters.map(r => r.id === currentRegister.id ? closedRegister : r);
+      setCashRegisters(updatedRegisters);
+      setCurrentRegister(null);
+      setToStorage(STORAGE_KEYS.CASH_REGISTERS, updatedRegisters);
+      return { success: true };
+    }
+  }, [cashRegisters, currentRegister]);
+
+  const checkRegisterStatus = useCallback((staffId: string) => {
+    // This is primarily used to re-sync or check permission
+    // For now we rely on the state `currentRegister`
+    const open = cashRegisters.find(r => r.status === 'open');
+    if (open && !currentRegister) {
+      setCurrentRegister(open);
+    }
+  }, [cashRegisters, currentRegister]);
+
   const value: StoreState = {
     // Inventory
     inventory,
@@ -3775,6 +3944,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     deleteTaxRate,
     getDefaultTaxRate,
     getActiveTaxRates,
+
+    // Cash Register
+    cashRegisters,
+    currentRegister,
+    openRegister,
+    closeRegister,
+    checkRegisterStatus,
 
     // Utility
     isInitialized,

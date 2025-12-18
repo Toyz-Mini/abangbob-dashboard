@@ -63,8 +63,11 @@ export interface Order {
   subtotal?: number;
   discount?: number;
   tax?: number;
+  customerId?: string;          // Link ke registered customer
   customerName?: string;        // Nama pelanggan untuk personalize receipt
   customerPhone?: string;
+  redeemedPoints?: number;      // Points redeemed for this order
+  redemptionAmount?: number;    // Value deducted in currency (BND)
   orderType: 'takeaway' | 'gomamam' | 'dine-in' | 'delivery';
   status: 'pending' | 'preparing' | 'ready' | 'completed' | 'cancelled';
   paymentMethod?: PaymentMethod;
@@ -404,6 +407,24 @@ export interface DailyCashFlow {
   closedAt?: string;
 }
 
+export interface CashRegister {
+  id: string;
+  openedAt: string;
+  closedAt?: string;
+  openedBy: string; // Staff ID
+  closedBy?: string; // Staff ID
+  startCash: number;
+  endCash?: number;
+  expectedCash?: number;
+  actualCash?: number;
+  variance?: number;
+  notes?: string;
+  status: 'open' | 'closed';
+  outletId?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface ProfitLossReport {
   period: string; // YYYY-MM format
   revenue: {
@@ -676,6 +697,7 @@ export interface PrinterSettings {
   productId?: number;
   ipAddress?: string;
   port?: number;
+  baudRate?: number; // Added baudRate
   paperWidth: ReceiptWidth;
   autoCut: boolean;
   openDrawerOnCashPayment: boolean;
@@ -720,6 +742,7 @@ export const DEFAULT_PRINTER_SETTINGS: PrinterSettings = {
   isConnected: false,
   connectionType: 'browser',
   paperWidth: '80mm',
+  baudRate: 9600, // Default baud rate
   autoCut: true,
   openDrawerOnCashPayment: true,
 };

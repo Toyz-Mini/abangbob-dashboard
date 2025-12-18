@@ -607,6 +607,8 @@ export default function SettingsPage() {
   const handleConnectPrinter = async () => {
     setIsPrinterConnecting(true);
     try {
+      // Update settings before connecting (passes baudRate)
+      thermalPrinter.updateSettings(printerSettings);
       const connected = await thermalPrinter.connect();
       if (connected) {
         setPrinterSettings(prev => ({ ...prev, isConnected: true }));
@@ -1180,20 +1182,43 @@ export default function SettingsPage() {
                   <div style={{ display: 'flex', gap: '0.5rem' }}>
                     <button
                       type="button"
-                      className={`btn ${printerSettings.paperWidth === '58mm' ? 'btn-primary' : 'btn-outline'}`}
-                      onClick={() => setPrinterSettings(prev => ({ ...prev, paperWidth: '58mm' }))}
+                      className={`btn ${receiptSettings.receiptWidth === '58mm' ? 'btn-primary' : 'btn-outline'}`}
+                      onClick={() => {
+                        setPrinterSettings(prev => ({ ...prev, paperWidth: '58mm' }));
+                        setReceiptSettings(prev => ({ ...prev, receiptWidth: '58mm' }));
+                      }}
                       style={{ flex: 1 }}
                     >
                       58mm (Kecil)
                     </button>
                     <button
                       type="button"
-                      className={`btn ${printerSettings.paperWidth === '80mm' ? 'btn-primary' : 'btn-outline'}`}
-                      onClick={() => setPrinterSettings(prev => ({ ...prev, paperWidth: '80mm' }))}
+                      className={`btn ${receiptSettings.receiptWidth === '80mm' ? 'btn-primary' : 'btn-outline'}`}
+                      onClick={() => {
+                        setPrinterSettings(prev => ({ ...prev, paperWidth: '80mm' }));
+                        setReceiptSettings(prev => ({ ...prev, receiptWidth: '80mm' }));
+                      }}
                       style={{ flex: 1 }}
                     >
                       80mm (Standard)
                     </button>
+                  </div>
+                </div>
+
+                {/* Baud Rate Setting */}
+                <div className="form-group">
+                  <label className="form-label">Baud Rate (Connection Speed)</label>
+                  <select
+                    className="form-select"
+                    value={printerSettings.baudRate || 9600}
+                    onChange={(e) => setPrinterSettings(prev => ({ ...prev, baudRate: Number(e.target.value) }))}
+                  >
+                    {[9600, 19200, 38400, 57600, 115200].map(rate => (
+                      <option key={rate} value={rate}>{rate} bps</option>
+                    ))}
+                  </select>
+                  <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
+                    Jika printer keluar aksara pelik atau kosong, cuba tukar baud rate.
                   </div>
                 </div>
 
@@ -1239,8 +1264,11 @@ export default function SettingsPage() {
                     </div>
                     <input
                       type="checkbox"
-                      checked={printerSettings.openDrawerOnCashPayment}
-                      onChange={(e) => setPrinterSettings(prev => ({ ...prev, openDrawerOnCashPayment: e.target.checked }))}
+                      checked={receiptSettings.openCashDrawer}
+                      onChange={(e) => {
+                        setPrinterSettings(prev => ({ ...prev, openDrawerOnCashPayment: e.target.checked }));
+                        setReceiptSettings(prev => ({ ...prev, openCashDrawer: e.target.checked }));
+                      }}
                       style={{ width: '20px', height: '20px' }}
                     />
                   </label>

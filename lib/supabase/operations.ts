@@ -2339,4 +2339,56 @@ export async function markAllNotificationsAsRead(targetUserId?: string) {
   if (error) throw error;
 }
 
+// ============ CASH REGISTER OPERATIONS ============
+
+export async function fetchCashRegisters() {
+  const supabase = getSupabaseClient();
+  if (!supabase) return [];
+
+  const { data, error } = await supabase
+    .from('cash_registers')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching cash registers:', error);
+    return [];
+  }
+
+  return toCamelCase(data || []);
+}
+
+export async function insertCashRegister(register: any) {
+  const supabase = getSupabaseClient();
+  if (!supabase) throw new Error('Supabase not connected');
+
+  const snakeCased = toSnakeCase(register);
+
+  // @ts-ignore
+  const { data, error } = await supabase
+    .from('cash_registers')
+    .insert(snakeCased)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return toCamelCase(data);
+}
+
+export async function updateCashRegister(id: string, updates: any) {
+  const supabase = getSupabaseClient();
+  if (!supabase) throw new Error('Supabase not connected');
+
+  // @ts-ignore
+  const { data, error } = await supabase
+    .from('cash_registers')
+    .update(toSnakeCase(updates))
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return toCamelCase(data);
+}
+
 

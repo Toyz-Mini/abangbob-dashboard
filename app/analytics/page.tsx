@@ -33,8 +33,10 @@ import {
   Flame,
   LineChart,
   Download,
-  FileText
+  FileText,
+  Table
 } from 'lucide-react';
+import Link from 'next/link';
 
 type AnalyticsTab = 'overview' | 'sales' | 'menu' | 'staff' | 'profit';
 
@@ -464,6 +466,12 @@ export default function AnalyticsPage() {
                   PDF
                 </button>
               </div>
+
+              {/* Detailed Report Link */}
+              <Link href="/analytics/sales-report" className="btn btn-sm btn-primary flex items-center gap-2 mr-2">
+                <Table size={16} />
+                Laporan Terperinci
+              </Link>
 
               {/* Date Range Buttons */}
               <button

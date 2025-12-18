@@ -39,26 +39,26 @@ interface AuthContextType {
   // Supabase Auth (for admin/owner login)
   user: User | null;
   session: Session | null;
-  
+
   // Staff PIN Auth (for POS/clock-in)
   currentStaff: StaffProfile | null;
   isStaffLoggedIn: boolean;
-  
+
   // Loading states
   loading: boolean;
-  
+
   // Auth methods - errorKey can be used for translation
   signInWithEmail: (email: string, password: string) => Promise<{ success: boolean; error?: string; errorKey?: string }>;
   signUp: (email: string, password: string, name: string) => Promise<{ success: boolean; error?: string; errorKey?: string }>;
   signOut: () => Promise<void>;
-  
+
   // Staff PIN methods
   loginWithPin: (staffId: string, pin: string) => Promise<{ success: boolean; error?: string; errorKey?: string }>;
   logoutStaff: () => void;
-  
+
   // Supabase status
   isSupabaseConnected: boolean;
-  
+
   // Lockout status
   isLocked: boolean;
   lockoutRemainingTime: number;
@@ -73,7 +73,7 @@ const STAFF_SESSION_KEY = 'abangbob_current_staff';
 // Helper functions for lockout management
 function getLoginAttempts(): LoginAttempts {
   if (typeof window === 'undefined') return { count: 0, lastAttempt: 0 };
-  
+
   try {
     const stored = localStorage.getItem(LOGIN_ATTEMPTS_KEY);
     if (!stored) return { count: 0, lastAttempt: 0 };
@@ -90,7 +90,7 @@ function setLoginAttempts(attempts: LoginAttempts): void {
 
 function getLockoutExpiry(): number {
   if (typeof window === 'undefined') return 0;
-  
+
   try {
     const stored = localStorage.getItem(LOCKOUT_EXPIRY_KEY);
     return stored ? parseInt(stored, 10) : 0;
@@ -116,7 +116,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [currentStaff, setCurrentStaff] = useState<StaffProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [isSupabaseConnected, setIsSupabaseConnected] = useState(false);
-  
+
   // Lockout state
   const [isLocked, setIsLocked] = useState(false);
   const [lockoutRemainingTime, setLockoutRemainingTime] = useState(0);
@@ -126,7 +126,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const checkLockoutStatus = useCallback(() => {
     const lockoutExpiry = getLockoutExpiry();
     const now = Date.now();
-    
+
     if (lockoutExpiry > now) {
       setIsLocked(true);
       setLockoutRemainingTime(Math.ceil((lockoutExpiry - now) / 1000));
@@ -134,12 +134,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } else {
       setIsLocked(false);
       setLockoutRemainingTime(0);
-      
+
       // If lockout expired, clear it
       if (lockoutExpiry > 0) {
         clearLockoutStorage();
       }
-      
+
       const attempts = getLoginAttempts();
       setLoginAttemptsRemaining(MAX_LOGIN_ATTEMPTS - attempts.count);
     }
@@ -149,9 +149,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const recordFailedAttempt = useCallback(() => {
     const attempts = getLoginAttempts();
     const newCount = attempts.count + 1;
-    
+
     setLoginAttempts({ count: newCount, lastAttempt: Date.now() });
-    
+
     if (newCount >= MAX_LOGIN_ATTEMPTS) {
       const lockoutExpiry = Date.now() + LOCKOUT_DURATION;
       setLockoutExpiry(lockoutExpiry);
@@ -182,7 +182,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Update lockout timer
   useEffect(() => {
     if (!isLocked || lockoutRemainingTime <= 0) return;
-    
+
     const timer = setInterval(() => {
       setLockoutRemainingTime(prev => {
         if (prev <= 1) {
@@ -192,17 +192,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return prev - 1;
       });
     }, 1000);
-    
+
     return () => clearInterval(timer);
   }, [isLocked, lockoutRemainingTime, clearLockout]);
 
   // Initialize auth state
   useEffect(() => {
     // Check lockout status on mount
+    // Check lockout status on mount
     checkLockoutStatus();
-    
+
     const supabase = getSupabaseClient();
-    
+
     if (!supabase) {
       setLoading(false);
       return;
@@ -243,13 +244,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Check if locked out
     if (isLocked) {
       const minutes = Math.ceil(lockoutRemainingTime / 60);
-      return { 
-        success: false, 
-        error: `Akaun dikunci. Sila cuba lagi dalam ${minutes} minit.`, 
-        errorKey: AUTH_ERROR_KEYS.ACCOUNT_LOCKED 
+      return {
+        success: false,
+        error: `Akaun dikunci. Sila cuba lagi dalam ${minutes} minit.`,
+        errorKey: AUTH_ERROR_KEYS.ACCOUNT_LOCKED
       };
     }
-    
+
     const supabase = getSupabaseClient();
     if (!supabase) {
       return { success: false, error: 'Supabase not configured', errorKey: AUTH_ERROR_KEYS.SUPABASE_NOT_CONFIGURED };
@@ -264,7 +265,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (error) {
         recordFailedAttempt();
         const remaining = loginAttemptsRemaining - 1;
-        const errorMsg = remaining > 0 
+        const errorMsg = remaining > 0
           ? `${error.message}. ${remaining} percubaan lagi sebelum dikunci.`
           : error.message;
         return { success: false, error: errorMsg };
@@ -333,7 +334,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!staff) {
         recordFailedAttempt();
         const remaining = loginAttemptsRemaining - 1;
-        const errorMsg = remaining > 0 
+        const errorMsg = remaining > 0
           ? `ID atau PIN tidak sah. ${remaining} percubaan lagi sebelum dikunci.`
           : 'ID atau PIN tidak sah.';
         return { success: false, error: errorMsg, errorKey: AUTH_ERROR_KEYS.INVALID_CREDENTIALS };
@@ -367,13 +368,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Check if locked out
     if (isLocked) {
       const minutes = Math.ceil(lockoutRemainingTime / 60);
-      return { 
-        success: false, 
-        error: `Akaun dikunci. Sila cuba lagi dalam ${minutes} minit.`, 
-        errorKey: AUTH_ERROR_KEYS.ACCOUNT_LOCKED 
+      return {
+        success: false,
+        error: `Akaun dikunci. Sila cuba lagi dalam ${minutes} minit.`,
+        errorKey: AUTH_ERROR_KEYS.ACCOUNT_LOCKED
       };
     }
-    
+
     const supabase = getSupabaseClient();
 
     // Try Supabase first

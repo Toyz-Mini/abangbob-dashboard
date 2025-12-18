@@ -32,11 +32,15 @@ import {
 import { usePathname } from 'next/navigation';
 import RouteGuard from './RouteGuard';
 import { useAuth } from '@/lib/contexts/AuthContext';
+import { useToast } from '@/lib/contexts/ToastContext';
 import { canViewNavItem, type UserRole } from '@/lib/permissions';
+import { processSyncQueue } from '@/lib/sync-queue';
+import * as ops from '@/lib/supabase/operations';
 
 export default function MainLayout({ children }: { children: ReactNode }) {
   // Default to closed to prevent flash on mobile
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const { showToast } = useToast();
   const sidebarRef = useRef<HTMLElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
@@ -51,6 +55,36 @@ export default function MainLayout({ children }: { children: ReactNode }) {
     if (window.innerWidth >= 768) {
       setIsSidebarOpen(true);
     }
+
+    // Offline Sync Recovery
+    const handleOnline = async () => {
+      console.log('Online detected: Processing sync queue...');
+      try {
+        const { successCount, failCount } = await processSyncQueue(ops);
+        if (successCount > 0) {
+          showToast(`Berjaya sync ${successCount} data offline`, 'success');
+        }
+        if (failCount > 0) {
+          showToast(`Gagal sync ${failCount} data. Akan cuba lagi nanti.`, 'error');
+        }
+      } catch (err) {
+        console.error('Sync queue error:', err);
+      }
+    };
+
+    window.addEventListener('online', handleOnline);
+
+    // Initial check
+    if (typeof navigator !== 'undefined' && navigator.onLine) {
+      // Small delay to allow app to hydrate
+      setTimeout(() => {
+        handleOnline();
+      }, 5000);
+    }
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+    };
   }, []);
 
   // Command palette state

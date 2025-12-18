@@ -49,12 +49,12 @@ const DLE = 0x10;
 export const ESCPOS = {
   // Initialize printer
   INIT: new Uint8Array([ESC, 0x40]),
-  
+
   // Text alignment
   ALIGN_LEFT: new Uint8Array([ESC, 0x61, 0x00]),
   ALIGN_CENTER: new Uint8Array([ESC, 0x61, 0x01]),
   ALIGN_RIGHT: new Uint8Array([ESC, 0x61, 0x02]),
-  
+
   // Text formatting
   BOLD_ON: new Uint8Array([ESC, 0x45, 0x01]),
   BOLD_OFF: new Uint8Array([ESC, 0x45, 0x00]),
@@ -64,39 +64,39 @@ export const ESCPOS = {
   DOUBLE_WIDTH_ON: new Uint8Array([ESC, 0x21, 0x20]),
   DOUBLE_SIZE_ON: new Uint8Array([ESC, 0x21, 0x30]),
   NORMAL_SIZE: new Uint8Array([ESC, 0x21, 0x00]),
-  
+
   // Font selection
   FONT_A: new Uint8Array([ESC, 0x4D, 0x00]),
   FONT_B: new Uint8Array([ESC, 0x4D, 0x01]),
-  
+
   // Line spacing
   LINE_SPACING_DEFAULT: new Uint8Array([ESC, 0x32]),
   LINE_SPACING_SET: (n: number) => new Uint8Array([ESC, 0x33, n]),
-  
+
   // Paper control
   LINE_FEED: new Uint8Array([0x0A]),
   CARRIAGE_RETURN: new Uint8Array([0x0D]),
   FEED_LINES: (n: number) => new Uint8Array([ESC, 0x64, n]),
-  
+
   // Cut paper
   PARTIAL_CUT: new Uint8Array([GS, 0x56, 0x01]),
   FULL_CUT: new Uint8Array([GS, 0x56, 0x00]),
   FULL_CUT_FEED: new Uint8Array([GS, 0x56, 0x41, 0x03]),
-  
+
   // Cash drawer
   KICK_DRAWER_PIN2: new Uint8Array([ESC, 0x70, 0x00, 0x19, 0xFA]),
   KICK_DRAWER_PIN5: new Uint8Array([ESC, 0x70, 0x01, 0x19, 0xFA]),
-  
+
   // Character set
   CHARSET_PC437: new Uint8Array([ESC, 0x74, 0x00]),
   CHARSET_PC850: new Uint8Array([ESC, 0x74, 0x02]),
   CHARSET_PC860: new Uint8Array([ESC, 0x74, 0x03]),
-  
+
   // Barcode
   BARCODE_HEIGHT: (n: number) => new Uint8Array([GS, 0x68, n]),
   BARCODE_WIDTH: (n: number) => new Uint8Array([GS, 0x77, n]),
   BARCODE_POSITION: (n: number) => new Uint8Array([GS, 0x48, n]), // 0=none, 1=above, 2=below, 3=both
-  
+
   // QR Code
   QR_MODEL: new Uint8Array([GS, 0x28, 0x6B, 0x04, 0x00, 0x31, 0x41, 0x32, 0x00]),
   QR_SIZE: (n: number) => new Uint8Array([GS, 0x28, 0x6B, 0x03, 0x00, 0x31, 0x43, n]),
@@ -145,10 +145,10 @@ class ThermalPrinterService {
     try {
       // Request port from user
       const port = await navigator.serial.requestPort();
-      
-      // Open the port with common thermal printer baud rate
-      await port.open({ 
-        baudRate: 9600,
+
+      // Open the port with configurable baud rate
+      await port.open({
+        baudRate: this.settings.baudRate || 9600,
         dataBits: 8,
         stopBits: 1,
         parity: 'none',
@@ -307,7 +307,7 @@ class ThermalPrinterService {
     if (!this.connection) {
       throw new Error('Printer not connected');
     }
-    
+
     const command = pin === 2 ? ESCPOS.KICK_DRAWER_PIN2 : ESCPOS.KICK_DRAWER_PIN5;
     await this.sendCommand(command);
   }
@@ -322,10 +322,10 @@ class ThermalPrinterService {
     await this.sendCommand(ESCPOS.INIT);
 
     // Business name
-    await this.printText(receiptSettings.businessName, { 
-      align: 'center', 
-      bold: true, 
-      doubleWidth: true 
+    await this.printText(receiptSettings.businessName, {
+      align: 'center',
+      bold: true,
+      doubleWidth: true
     });
 
     // Tagline
@@ -357,7 +357,7 @@ class ThermalPrinterService {
     // Order info
     await this.printText(`No: ${order.orderNumber}`, { bold: true });
     await this.printText(new Date(order.createdAt).toLocaleString('ms-MY'));
-    
+
     // Customer info
     if (receiptSettings.showCustomerName && order.customerName) {
       await this.printText(`Pelanggan: ${order.customerName}`);
@@ -374,7 +374,7 @@ class ThermalPrinterService {
     for (const item of order.items) {
       const itemTotal = (item.itemTotal * item.quantity).toFixed(2);
       await this.printTwoColumn(`${item.quantity}x ${item.name}`, `BND ${itemTotal}`, width);
-      
+
       // Modifiers
       if (item.selectedModifiers?.length > 0) {
         for (const mod of item.selectedModifiers) {
@@ -394,8 +394,8 @@ class ThermalPrinterService {
     // Payment method
     if (order.paymentMethod) {
       const paymentLabel = order.paymentMethod === 'cash' ? 'TUNAI' :
-                          order.paymentMethod === 'card' ? 'KAD' :
-                          order.paymentMethod === 'qr' ? 'QR CODE' : 'E-WALLET';
+        order.paymentMethod === 'card' ? 'KAD' :
+          order.paymentMethod === 'qr' ? 'QR CODE' : 'E-WALLET';
       await this.printText(`Bayar: ${paymentLabel}`, { align: 'center' });
     }
 
@@ -453,7 +453,7 @@ class ThermalPrinterService {
   // Generate HTML for browser printing (fallback when no thermal printer)
   generatePrintHTML(order: Order, receiptSettings: ReceiptSettings): string {
     const width = receiptSettings.receiptWidth === '58mm' ? '58mm' : '80mm';
-    
+
     const formatDate = (dateStr: string) => {
       return new Date(dateStr).toLocaleString('ms-MY', {
         day: '2-digit',
@@ -564,7 +564,7 @@ class ThermalPrinterService {
   printWithBrowser(order: Order, receiptSettings: ReceiptSettings): void {
     const html = this.generatePrintHTML(order, receiptSettings);
     const printWindow = window.open('', '_blank');
-    
+
     if (printWindow) {
       printWindow.document.write(html);
       printWindow.document.close();
@@ -578,7 +578,7 @@ class ThermalPrinterService {
   async print(order: Order, receiptSettings: ReceiptSettings): Promise<void> {
     if (this.isConnected()) {
       await this.printReceipt(order, receiptSettings);
-      
+
       // Open cash drawer for cash payments
       if (receiptSettings.openCashDrawer && order.paymentMethod === 'cash') {
         await this.openCashDrawer();
