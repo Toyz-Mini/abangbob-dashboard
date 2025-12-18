@@ -410,14 +410,23 @@ export default function InventoryPage() {
                     </PremiumButton>
                   </div>
                   {canDeleteItems && (
-                    <div style={{ position: 'absolute', top: '1rem', right: '1rem', opacity: 0 }} className="group-hover:opacity-100 transition-opacity">
-                      {/* Hidden delete for clean UI, maybe add to a menu? For now keeping it simple or accessible via edit */}
-                    </div>
-                  )}
-                  {canDeleteItems && (
-                    <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
-                      <button className="text-sm text-primary hover:underline" onClick={() => openEditModal(item)}>Edit</button>
-                      <button className="text-sm text-danger hover:underline" onClick={() => openDeleteModal(item)}>Padam</button>
+                    <div style={{ position: 'absolute', top: '0.75rem', right: '0.75rem', display: 'flex', gap: '0.25rem' }}>
+                      <button
+                        className="btn-icon btn-ghost"
+                        onClick={() => openEditModal(item)}
+                        title="Edit Item"
+                        style={{ width: '28px', height: '28px' }}
+                      >
+                        <Edit2 size={14} />
+                      </button>
+                      <button
+                        className="btn-icon btn-ghost-danger"
+                        onClick={() => openDeleteModal(item)}
+                        title="Padam Item"
+                        style={{ width: '28px', height: '28px' }}
+                      >
+                        <Trash2 size={14} />
+                      </button>
                     </div>
                   )}
 
@@ -585,17 +594,21 @@ export default function InventoryPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2" style={{ gap: '1rem' }}>
+          <div className="grid grid-cols-2 gap-4">
             <div className="form-group">
-              <label className="form-label">Kos per Unit (BND)</label>
-              <input
-                type="number"
-                className="form-input"
-                value={formData.cost}
-                onChange={(e) => setFormData(prev => ({ ...prev, cost: Number(e.target.value) }))}
-                min="0"
-                step="0.01"
-              />
+              <label className="form-label">Kos per Unit</label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm font-medium">BND</span>
+                <input
+                  type="number"
+                  className="form-input pl-12"
+                  value={formData.cost}
+                  onChange={(e) => setFormData(prev => ({ ...prev, cost: Number(e.target.value) }))}
+                  min="0"
+                  step="0.01"
+                  placeholder="0.00"
+                />
+              </div>
             </div>
 
             <div className="form-group">
@@ -605,24 +618,28 @@ export default function InventoryPage() {
                 className="form-input"
                 value={formData.supplier}
                 onChange={(e) => setFormData(prev => ({ ...prev, supplier: e.target.value }))}
-                placeholder="Nama supplier (optional)"
+                placeholder="Nama supplier"
               />
             </div>
           </div>
 
-          <div className="form-group" style={{ marginTop: '1rem' }}>
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                className="w-5 h-5 rounded border-gray-300 text-primary focus:ring-primary"
-                checked={formData.countDaily}
-                onChange={(e) => setFormData(prev => ({ ...prev, countDaily: e.target.checked }))}
-              />
-              <span className="text-gray-700 font-medium">Dikira Setiap Hari (Daily Count)</span>
-            </label>
-            <p className="text-xs text-gray-500 mt-1 ml-7">
-              Item ini akan muncul dalam wizard "Buka/Tutup Kedai" untuk pengiraan wajib.
-            </p>
+          <div
+            className={`form-group mt-4 p-3 rounded-lg border transition-colors cursor-pointer ${formData.countDaily ? 'bg-purple-50 border-purple-200' : 'bg-gray-50 border-gray-200 hover:border-gray-300'}`}
+            onClick={() => setFormData(prev => ({ ...prev, countDaily: !prev.countDaily }))}
+          >
+            <div className="flex items-start gap-3">
+              <div className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center transition-colors ${formData.countDaily ? 'bg-purple-600 border-purple-600' : 'bg-white border-gray-300'}`}>
+                {formData.countDaily && <ArrowUp size={14} className="text-white transform rotate-45" strokeWidth={3} />}
+              </div>
+              <div>
+                <span className={`font-medium block ${formData.countDaily ? 'text-purple-900' : 'text-gray-700'}`}>
+                  Audit Setiap Hari (Daily Count)
+                </span>
+                <p className={`text-xs mt-0.5 ${formData.countDaily ? 'text-purple-700' : 'text-gray-500'}`}>
+                  Wajib dikira semasa Opening/Closing kedai
+                </p>
+              </div>
+            </div>
           </div>
 
           <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1.5rem' }}>
