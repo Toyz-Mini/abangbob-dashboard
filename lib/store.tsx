@@ -387,7 +387,7 @@ interface StoreState {
   currentRegister: CashRegister | null; // Currently open register
   openRegister: (startCash: number, staffId: string, notes?: string) => Promise<{ success: boolean; error?: string }>;
   closeRegister: (actualCash: number, staffId: string, notes?: string) => Promise<{ success: boolean; error?: string }>;
-  closeRegister: (actualCash: number, staffId: string, notes?: string) => Promise<{ success: boolean; error?: string }>;
+
   checkRegisterStatus: (staffId: string) => void;
   refreshCashRegisters: () => Promise<void>;
 
