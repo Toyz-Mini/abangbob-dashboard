@@ -664,40 +664,44 @@ export default function RecipesPage() {
             <div style={{ marginBottom: '1rem' }}>
               <label className="form-label">Senarai Bahan</label>
               <div className="table-responsive">
-                <table className="table">
-                  <thead>
+                <table className="table" style={{ fontSize: '0.9rem' }}>
+                  <thead style={{ background: 'var(--bg-secondary)', textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: '0.05em' }}>
                     <tr>
-                      <th>Bahan</th>
-                      <th>Kuantiti</th>
-                      <th>Unit</th>
-                      <th>Kos/Unit</th>
-                      <th>Jumlah</th>
-                      <th></th>
+                      <th style={{ padding: '0.75rem 1rem', width: '35%' }}>Bahan</th>
+                      <th style={{ padding: '0.75rem 1rem', width: '20%' }}>Kuantiti</th>
+                      <th style={{ padding: '0.75rem 1rem', width: '15%' }}>Kos/Unit</th>
+                      <th style={{ padding: '0.75rem 1rem', textAlign: 'right', width: '20%' }}>Jumlah</th>
+                      <th style={{ padding: '0.75rem 1rem', width: '10%' }}></th>
                     </tr>
                   </thead>
                   <tbody>
                     {formData.ingredients.map(ing => (
-                      <tr key={ing.stockItemId}>
-                        <td>{ing.stockItemName}</td>
-                        <td>
-                          <input
-                            type="number"
-                            className="form-input"
-                            value={ing.quantity}
-                            onChange={(e) => updateIngredientQuantity(ing.stockItemId, Number(e.target.value))}
-                            min="0.001"
-                            step="0.001"
-                            style={{ width: '80px' }}
-                          />
+                      <tr key={ing.stockItemId} style={{ borderBottom: '1px solid var(--border-light)' }}>
+                        <td style={{ padding: '0.5rem 1rem' }}>
+                          <div style={{ fontWeight: 500 }}>{ing.stockItemName}</div>
+                          <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{ing.unit}</div>
                         </td>
-                        <td>{ing.unit}</td>
-                        <td>BND {ing.costPerUnit.toFixed(2)}</td>
-                        <td style={{ fontWeight: 600 }}>BND {(ing.quantity * ing.costPerUnit).toFixed(2)}</td>
-                        <td>
+                        <td style={{ padding: '0.5rem 1rem' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <input
+                              type="number"
+                              className="form-input form-input-sm"
+                              value={ing.quantity}
+                              onChange={(e) => updateIngredientQuantity(ing.stockItemId, Number(e.target.value))}
+                              min="0.001"
+                              step="0.001"
+                              style={{ width: '70px', padding: '4px 8px', textAlign: 'right', fontSize: '0.9rem' }}
+                            />
+                            <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{ing.unit}</span>
+                          </div>
+                        </td>
+                        <td style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}>BND {ing.costPerUnit.toFixed(2)}</td>
+                        <td style={{ padding: '0.5rem 1rem', textAlign: 'right', fontWeight: 600 }}>BND {(ing.quantity * ing.costPerUnit).toFixed(2)}</td>
+                        <td style={{ padding: '0.5rem 1rem', textAlign: 'right' }}>
                           <button
-                            className="btn btn-sm btn-outline"
+                            className="btn-icon btn-ghost-danger btn-sm"
                             onClick={() => removeIngredient(ing.stockItemId)}
-                            style={{ color: 'var(--danger)' }}
+                            title="Padam"
                           >
                             <Trash2 size={14} />
                           </button>
