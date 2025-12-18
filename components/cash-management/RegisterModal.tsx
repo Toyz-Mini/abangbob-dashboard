@@ -94,24 +94,24 @@ export default function RegisterModal({ isOpen, onClose, mode }: RegisterModalPr
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-            <div className="w-full max-w-md bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+            <div className="w-full max-w-md !bg-white rounded-xl shadow-2xl border border-gray-200 overflow-hidden">
 
                 {/* Header */}
-                <div className={`p-6 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between ${mode === 'open' ? 'bg-green-50 dark:bg-green-900/20' : 'bg-amber-50 dark:bg-amber-900/20'}`}>
+                <div className={`p-6 border-b border-gray-100 flex items-center justify-between ${mode === 'open' ? 'bg-green-50' : 'bg-amber-50'}`}>
                     <div className="flex items-center gap-3">
                         <div className={`p-2 rounded-lg ${mode === 'open' ? 'bg-green-100 text-green-600' : 'bg-amber-100 text-amber-600'}`}>
                             {mode === 'open' ? <Unlock size={24} /> : <Lock size={24} />}
                         </div>
                         <div>
-                            <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">
+                            <h2 className="text-xl font-bold !text-gray-900">
                                 {mode === 'open' ? 'Buka Register' : 'Tutup Register'}
                             </h2>
-                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                            <p className="text-sm !text-gray-500">
                                 {mode === 'open' ? 'Masukkan duit float permulaan' : 'Sahkan duit tunai terkini'}
                             </p>
                         </div>
                     </div>
-                    <button onClick={() => onClose()} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors">
+                    <button onClick={() => onClose()} className="text-gray-400 hover:text-gray-600 transition-colors">
                         <X size={24} />
                     </button>
                 </div>
@@ -140,7 +140,7 @@ export default function RegisterModal({ isOpen, onClose, mode }: RegisterModalPr
                     )}
 
                     <div className="space-y-2">
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        <label className="block text-sm font-medium !text-gray-700">
                             {mode === 'open' ? 'Jumlah Float (BND)' : 'Jumlah Tunai Di Tangan (BND)'}
                         </label>
                         <div className="relative">
@@ -169,7 +169,7 @@ export default function RegisterModal({ isOpen, onClose, mode }: RegisterModalPr
                     </div>
 
                     <div className="space-y-2">
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        <label className="block text-sm font-medium !text-gray-700">
                             Nota (Optional)
                         </label>
                         <textarea
