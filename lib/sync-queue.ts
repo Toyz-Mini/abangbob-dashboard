@@ -3,6 +3,7 @@ export type SyncTable =
     | 'orders'
     | 'customers'
     | 'inventory'
+    | 'inventory_logs'
     | 'modifiers'
     | 'modifier_options'
     | 'recipes'

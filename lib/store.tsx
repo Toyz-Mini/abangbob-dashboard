@@ -1136,6 +1136,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       };
       setInventoryLogs(prevLogs => [log, ...prevLogs]);
 
+      // Sync log to Supabase
+      SupabaseSync.syncAddInventoryLog(log).catch(err =>
+        console.error('Failed to sync log:', err)
+      );
+
       return prev.map(i =>
         i.id === id ? { ...i, currentQuantity: newQuantity } : i
       );

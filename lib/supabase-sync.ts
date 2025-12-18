@@ -135,6 +135,9 @@ export async function syncDeleteStockItem(id: string) {
   }
 }
 
+// function moved to inventory section
+
+
 export async function loadInventoryFromSupabase() {
   if (!isSupabaseSyncEnabled()) return [];
 
@@ -650,6 +653,9 @@ export async function syncAddInventoryLog(log: any) {
     return await ops.insertInventoryLog(log);
   } catch (error) {
     console.error('Failed to sync inventory log to Supabase:', error);
+    // Offline Queue
+    addToSyncQueue({ id: log.id, table: 'inventory_logs', action: 'CREATE', payload: log });
+    console.log('Saved to offline queue (Inventory Log)');
     return null;
   }
 }
