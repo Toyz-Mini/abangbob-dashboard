@@ -469,6 +469,30 @@ export default function SettingsPage() {
     loadSettings();
   }, [DAYS_OF_WEEK]);
 
+  // Load Printer Settings from localStorage on mount
+  useEffect(() => {
+    const savedPrinterSettings = localStorage.getItem('abangbob_printer_settings');
+    if (savedPrinterSettings) {
+      try {
+        const parsed = JSON.parse(savedPrinterSettings);
+        // Reset connection status on load, but keep preferences
+        const restored = { ...parsed, isConnected: false };
+        setPrinterSettings(restored);
+        thermalPrinter.updateSettings(restored);
+        console.log('[Settings Page] Restored printer settings from localStorage');
+      } catch (e) {
+        console.error('Failed to parse printer settings', e);
+      }
+    }
+  }, []);
+
+  // Save Printer Settings to localStorage on change
+  useEffect(() => {
+    // Save everything except connection status
+    const toSave = { ...printerSettings, isConnected: false };
+    localStorage.setItem('abangbob_printer_settings', JSON.stringify(toSave));
+  }, [printerSettings]);
+
   // Notification settings
   const [notificationSettings, setNotificationSettings] = useState({
     lowStockAlert: true,
