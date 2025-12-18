@@ -55,7 +55,8 @@ import {
   CreditCard,
   PieChart,
   Users,
-  Key
+  Key,
+  Percent
 } from 'lucide-react';
 import Link from 'next/link';
 import LoadingSpinner from '@/components/LoadingSpinner';
@@ -1111,7 +1112,7 @@ export default function NewStaffPage() {
           { id: 'canAccessFinance', label: 'Kewangan', icon: <DollarSign size={18} /> },
           { id: 'canApproveLeave', label: 'Lulus Cuti', icon: <Calendar size={18} /> },
           { id: 'canApproveClaims', label: 'Lulus Tuntutan', icon: <Receipt size={18} /> },
-          { id: 'canGiveDiscount', label: 'Beri Diskaun', icon: <PercentageIcon size={18} /> }, // Using explicit icon below
+          { id: 'canGiveDiscount', label: 'Beri Diskaun', icon: <Percent size={18} /> }, // Using explicit icon below
           { id: 'canVoidTransaction', label: 'Void Transaksi', icon: <X size={18} /> },
         ]
       }
@@ -1128,8 +1129,8 @@ export default function NewStaffPage() {
                 key={role.id}
                 onClick={() => updateForm('accessLevel', role.id as AccessLevel)}
                 className={`relative p-6 rounded-xl border-2 cursor-pointer transition-all duration-200 ${isSelected
-                    ? `border-${role.color.split('-')[1]}-500 ${role.bg}`
-                    : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                  ? `border-${role.color.split('-')[1]}-500 ${role.bg}`
+                  : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
                   }`}
               >
                 <div className="flex items-start gap-4">
@@ -1175,21 +1176,21 @@ export default function NewStaffPage() {
                     <label
                       key={perm.id}
                       className={`flex items-center gap-3 p-3 rounded-lg border transition-all cursor-pointer ${formData.permissions?.[perm.id as keyof StaffPermissions]
-                          ? 'bg-white border-primary shadow-sm ring-1 ring-primary/20'
-                          : 'bg-white border-gray-200 hover:border-gray-300'
+                        ? 'bg-white border-primary shadow-sm ring-1 ring-primary/20'
+                        : 'bg-white border-gray-200 hover:border-gray-300'
                         }`}
                     >
                       <div className={`p-2 rounded-md ${formData.permissions?.[perm.id as keyof StaffPermissions]
-                          ? 'bg-primary-50 text-primary'
-                          : 'bg-gray-100 text-gray-400'
+                        ? 'bg-primary-50 text-primary'
+                        : 'bg-gray-100 text-gray-400'
                         }`}>
                         {perm.id === 'canGiveDiscount' ? <DollarSign size={18} /> : perm.icon}
                       </div>
 
                       <div className="flex-1">
                         <span className={`text-sm font-medium ${formData.permissions?.[perm.id as keyof StaffPermissions]
-                            ? 'text-gray-900'
-                            : 'text-gray-500'
+                          ? 'text-gray-900'
+                          : 'text-gray-500'
                           }`}>
                           {perm.label}
                         </span>
