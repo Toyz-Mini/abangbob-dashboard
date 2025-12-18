@@ -40,6 +40,7 @@ export const MOCK_STOCK: StockItem[] = [
     unit: 'pcs',
     cost: 0.50,
     supplier: 'Supplier C',
+    countDaily: true, // Added based on instruction
   },
   {
     id: '5',
@@ -60,6 +61,7 @@ export const MOCK_STOCK: StockItem[] = [
     unit: 'pcs',
     cost: 0.80,
     supplier: 'Supplier D',
+    countDaily: true, // Added based on instruction
   },
   {
     id: '7',
@@ -70,6 +72,7 @@ export const MOCK_STOCK: StockItem[] = [
     unit: 'slices',
     cost: 1.20,
     supplier: 'Supplier E',
+    countDaily: true, // Added based on instruction
   },
   {
     id: '8',

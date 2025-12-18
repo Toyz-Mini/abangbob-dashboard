@@ -88,6 +88,7 @@ export interface StockItem {
   unit: string;
   cost: number;
   supplier?: string;
+  countDaily?: boolean; // Critical item to be counted during opening/closing
 }
 
 // ==================== STAFF PROFILE TYPES ====================

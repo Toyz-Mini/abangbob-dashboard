@@ -60,6 +60,7 @@ export default function InventoryPage() {
     unit: 'kg',
     cost: 0,
     supplier: '',
+    countDaily: false,
   });
 
   // Adjustment form states
@@ -95,6 +96,7 @@ export default function InventoryPage() {
       unit: 'kg',
       cost: 0,
       supplier: '',
+      countDaily: false,
     });
     setModalType('add');
   };
@@ -109,6 +111,7 @@ export default function InventoryPage() {
       unit: item.unit,
       cost: item.cost,
       supplier: item.supplier || '',
+      countDaily: item.countDaily || false,
     });
     setModalType('edit');
   };
@@ -157,6 +160,7 @@ export default function InventoryPage() {
       unit: formData.unit,
       cost: formData.cost,
       supplier: formData.supplier.trim() || undefined,
+      countDaily: formData.countDaily,
     });
 
     closeModal();
@@ -179,6 +183,7 @@ export default function InventoryPage() {
       unit: formData.unit,
       cost: formData.cost,
       supplier: formData.supplier.trim() || undefined,
+      countDaily: formData.countDaily,
     });
 
     closeModal();
@@ -579,6 +584,21 @@ export default function InventoryPage() {
                 placeholder="Nama supplier (optional)"
               />
             </div>
+          </div>
+
+          <div className="form-group" style={{ marginTop: '1rem' }}>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                className="w-5 h-5 rounded border-gray-300 text-primary focus:ring-primary"
+                checked={formData.countDaily}
+                onChange={(e) => setFormData(prev => ({ ...prev, countDaily: e.target.checked }))}
+              />
+              <span className="text-gray-700 font-medium">Dikira Setiap Hari (Daily Count)</span>
+            </label>
+            <p className="text-xs text-gray-500 mt-1 ml-7">
+              Item ini akan muncul dalam wizard "Buka/Tutup Kedai" untuk pengiraan wajib.
+            </p>
           </div>
 
           <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1.5rem' }}>
