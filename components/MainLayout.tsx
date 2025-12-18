@@ -26,7 +26,8 @@ import {
   LayoutDashboard,
   ShoppingCart,
   Package,
-  Users
+  Users,
+  BookOpen
 } from 'lucide-react';
 
 import { usePathname } from 'next/navigation';
@@ -239,14 +240,20 @@ export default function MainLayout({ children }: { children: ReactNode }) {
   ].filter(item => canViewNavItem(userRole, item.href));
 
   // Determine Bottom Nav Items based on Role
-  const bottomNavItems = [
-    // Show Staff Portal only if role is Staff (or maybe for everyone as Home?)
-    // For Staff, Home is /staff-portal. For Admin, Home is /
+  const bottomNavItems = userRole === 'Admin' ? [
+    { href: '/admin/towkay-dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { href: '/menu-management', label: 'Menu', icon: BookOpen },
+    { href: '/finance', label: 'Kewangan', icon: DollarSign },
+    { href: '/analytics', label: 'Analitik', icon: BarChart3 },
+  ] : [
     { href: userRole === 'Staff' ? '/staff-portal' : '/', label: 'Home', icon: LayoutDashboard },
     { href: '/pos', label: 'POS', icon: ShoppingCart },
     { href: '/inventory', label: 'Inventori', icon: Package },
     { href: '/hr', label: 'HR', icon: Users },
-  ].filter(item => canViewNavItem(userRole, item.href));
+  ];
+
+  // Filter based on permissions (though Admin usually sees all)
+  const filteredBottomNavItems = bottomNavItems.filter(item => canViewNavItem(userRole, item.href));
 
   return (
     <RouteGuard>
