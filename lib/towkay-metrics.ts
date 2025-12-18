@@ -272,7 +272,7 @@ export function calculateTowkayStats(data: DataContext): TowkayStats {
         const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
         const recentOrders = orders.filter(o => o.createdAt >= sevenDaysAgo);
         const soldItemIds = new Set<string>();
-        recentOrders.forEach(o => o.items?.forEach(item => soldItemIds.add(item.menuItemId)));
+        recentOrders.forEach(o => o.items?.forEach(item => soldItemIds.add(item.id)));
 
         const zombieItems = menuItems.filter(m => m.isAvailable && !soldItemIds.has(m.id));
         if (zombieItems.length > 0) {
