@@ -1361,14 +1361,15 @@ body {
 
   .top-nav {
     left: 0;
-    display: none !important;
-    /* Force hide TopNav on mobile */
+    /* display: flex;  TopNav is visible by default */
   }
 
-  .main-content {
-    margin-top: 0;
-    /* Remove top margin since TopNav is hidden */
+  .mobile-menu-btn {
+    display: none !important;
+    /* Hide ONLY the hamburger menu on mobile */
   }
+
+  /* .main-content margin is handled by default styles */
 
   .grid-cols-2,
   .grid-cols-3,
