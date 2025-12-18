@@ -73,7 +73,7 @@ export default function TopNav({ onMenuClick }: TopNavProps) {
   return (
     <div className="top-nav">
       <div className="top-nav-left">
-        <button onClick={onMenuClick} className="mobile-menu-btn icon-btn desktop-only">
+        <button onClick={onMenuClick} className="mobile-menu-btn icon-btn hidden md:flex">
           <Menu size={24} />
         </button>
 
