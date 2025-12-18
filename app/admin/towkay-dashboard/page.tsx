@@ -6,7 +6,7 @@ import {
     Zap, Brain, Crown, User, Calendar, ArrowRight, DollarSign,
     Activity, Search, Filter, Radio, Target, Clock, AlertOctagon
 } from 'lucide-react';
-import { getTowkayStats, TowkayStats, calculateTowkayStats } from '@/lib/towkay-metrics';
+import { TowkayStats, calculateTowkayStats } from '@/lib/towkay-metrics';
 import { formatCurrency } from '@/lib/utils';
 import { useStore, useOrders, useInventory, useStaff, useKPI } from '@/lib/store';
 

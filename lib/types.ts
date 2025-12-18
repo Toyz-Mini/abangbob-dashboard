@@ -1290,3 +1290,18 @@ export interface Outlet {
   createdAt?: string;
 }
 
+// ==================== INVENTORY TYPES ====================
+
+export interface InventoryLog {
+  id: string;
+  stockItemId: string;
+  stockItemName: string;
+  type: 'in' | 'out' | 'adjustment' | 'initial';
+  quantity: number;
+  previousQuantity: number;
+  newQuantity: number;
+  reason: string;
+  createdAt: string;
+  createdBy?: string;
+}
+
