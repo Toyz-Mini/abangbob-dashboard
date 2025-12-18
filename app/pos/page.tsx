@@ -6,6 +6,7 @@ import { useOrders, useMenu, useInventory, usePaymentMethods, useCustomers } fro
 import { useMenuRealtime, useInventoryRealtime, useModifiersRealtime } from '@/lib/supabase/realtime-hooks';
 import { useTranslation } from '@/lib/contexts/LanguageContext';
 import { useToast } from '@/lib/contexts/ToastContext';
+import { useSound } from '@/lib/contexts/SoundContext';
 import { CartItem, Order, MenuItem, SelectedModifier, ReceiptSettings, DEFAULT_RECEIPT_SETTINGS, Customer } from '@/lib/types';
 import { getUpsellSuggestions } from '@/lib/menu-data';
 import {
@@ -19,7 +20,7 @@ import {
   markTransactionSubmitted,
 } from '@/lib/services';
 import ReceiptPreview from '@/components/ReceiptPreview';
-import { ArrowLeft, UtensilsCrossed, Sandwich, Coffee, History, Printer, Clock, ChefHat, CheckCircle, ShoppingBag, Plus, Minus, X, Sparkles, AlertTriangle, User, DollarSign, CreditCard, QrCode, Wallet, WifiOff, RefreshCw } from 'lucide-react';
+import { ArrowLeft, UtensilsCrossed, Sandwich, Coffee, History, Printer, Clock, ChefHat, CheckCircle, ShoppingBag, Plus, Minus, X, Sparkles, AlertTriangle, User, DollarSign, CreditCard, QrCode, Wallet, WifiOff, RefreshCw, MessageCircle, Check } from 'lucide-react';
 import Modal from '@/components/Modal';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import StatCard from '@/components/StatCard';
@@ -127,6 +128,10 @@ export default function POSPage() {
   const [currentTransactionId, setCurrentTransactionId] = useState<string | null>(null);
   const [networkError, setNetworkError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
+
+  // Power Features State
+  const { playSound } = useSound();
+  const [sendToWhatsapp, setSendToWhatsapp] = useState(true);
 
   // Load receipt settings on mount
   useEffect(() => {
@@ -428,6 +433,9 @@ export default function POSPage() {
 
       // Show success toast
       showToast(`Pesanan ${newOrder.orderNumber} berjaya!`, 'success');
+
+      // Play "Ka-ching" sound
+      playSound(paymentMethod === 'cash' ? 'payment' : 'success');
 
       // Auto-print if enabled
       if (receiptSettings.autoPrint && newOrder) {
@@ -1163,25 +1171,36 @@ export default function POSPage() {
               Maklumat Pelanggan
             </label>
 
-            <div className="grid gap-3">
-              {/* Phone Input with Auto-Lookup */}
-              <div>
-                <label className="text-xs font-bold uppercase text-gray-500 mb-1 block">No Telefon (Wajib)</label>
-                <div className="relative">
+            <div className="grid gap-4">
+              {/* Phone Input with Premium Styling & Masking */}
+              <div className="bg-white rounded-lg p-1">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1.5 flex items-center gap-1.5">
+                  <User size={12} /> No Telefon (Wajib)
+                </label>
+                <div className="relative group transition-all duration-200 focus-within:ring-2 ring-primary/20 rounded-md">
                   <input
                     type="tel"
-                    className="form-input pl-14 font-mono text-lg w-full"
+                    className="form-input pl-16 py-3 font-mono text-xl w-full bg-gray-50 border-gray-200 focus:bg-white transition-colors tracking-wide"
                     value={customerPhone.replace('+673', '')}
                     onChange={(e) => {
-                      const val = e.target.value.replace(/\D/g, '');
-                      const fullPhone = `+673${val}`;
+                      // Remove non-digits
+                      let val = e.target.value.replace(/\D/g, '');
+
+                      // Smart Space Masking (e.g. 8881234 -> 888 1234)
+                      if (val.length > 3) {
+                        val = val.slice(0, 3) + ' ' + val.slice(3);
+                      }
+
+                      const fullPhone = `+673${val.replace(/\s/g, '')}`;
                       setCustomerPhone(fullPhone);
 
                       // Auto lookup
-                      const found = customers.find(c => c.phone === fullPhone);
+                      const rawPhone = fullPhone; // use internal format
+                      const found = customers.find(c => c.phone === rawPhone);
                       if (found) {
                         setSelectedCustomer(found);
                         setCustomerName(found.name);
+                        playSound('notification'); // Subtle feedback finding customer
                       } else {
                         if (selectedCustomer) {
                           setSelectedCustomer(null);
@@ -1189,36 +1208,76 @@ export default function POSPage() {
                         }
                       }
                     }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        // Try to jump to payment if valid
+                        if (customerPhone.length >= 8) {
+                          proceedToPayment();
+                        }
+                      }
+                    }}
                     placeholder="888 8888"
                     autoFocus
                   />
-                  <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-mono text-lg pointer-events-none">
+                  <div className="absolute left-0 top-0 bottom-0 w-14 flex items-center justify-center bg-gray-100 border-r border-gray-200 rounded-l-md text-gray-500 font-bold text-sm select-none">
                     +673
                   </div>
                   {selectedCustomer && (
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2 text-green-500 animate-pulse">
-                      <CheckCircle size={20} />
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 text-success animate-in zoom-in duration-300">
+                      <CheckCircle size={22} fill="#d1fae5" />
                     </div>
                   )}
                 </div>
               </div>
 
-              {/* Name Input */}
-              <div>
-                <label className="text-xs font-bold uppercase text-gray-500 mb-1 block">Nama (Pilihan)</label>
-                <input
-                  type="text"
-                  className="form-input w-full"
-                  value={customerName}
-                  onChange={(e) => setCustomerName(e.target.value)}
-                  placeholder="Nama Pelanggan"
-                />
-                {selectedCustomer && (
-                  <div className="text-xs text-green-600 mt-1 flex items-center gap-1 font-medium">
-                    <Sparkles size={12} />
-                    Pelanggan Dijumpai: {selectedCustomer.name} • {selectedCustomer.loyaltyPoints} Pts
+              {/* Customer Flashback Card */}
+              {selectedCustomer && (
+                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-lg p-3 flex justify-between items-center animate-in slide-in-from-top-2 duration-300 shadow-sm">
+                  <div>
+                    <div className="text-xs font-bold text-blue-800 uppercase tracking-wide mb-1 flex items-center gap-1">
+                      <Sparkles size={12} /> Member Found
+                    </div>
+                    <div className="text-sm font-semibold text-gray-800">
+                      {selectedCustomer.name}
+                    </div>
+                    <div className="text-xs text-gray-500 mt-0.5">
+                      Last Visit: {selectedCustomer.lastOrderAt ? new Date(selectedCustomer.lastOrderAt).toLocaleDateString('ms-MY', { day: 'numeric', month: 'short' }) : 'Baru'} • <span className="font-bold text-primary">{selectedCustomer.loyaltyPoints} Pts</span>
+                    </div>
                   </div>
-                )}
+                  <div className="text-right">
+                    <span className={`badge ${selectedCustomer.segment === 'vip' ? 'badge-warning' : 'badge-info'} font-bold`}>
+                      {selectedCustomer.segment.toUpperCase()}
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* Name Input & WhatsApp Toggle */}
+              <div className="grid grid-cols-[1fr_auto] gap-3 items-end">
+                <div>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1.5">Nama (Pilihan)</label>
+                  <input
+                    type="text"
+                    className="form-input w-full bg-gray-50 focus:bg-white border-gray-200"
+                    value={customerName}
+                    onChange={(e) => setCustomerName(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') proceedToPayment();
+                    }}
+                    placeholder="Nama Pelanggan"
+                  />
+                </div>
+
+                <div
+                  className={`border rounded-lg p-2.5 cursor-pointer transition-all duration-200 flex flex-col items-center justify-center w-[70px] h-[46px] ${sendToWhatsapp && customerPhone.length > 5 ? 'bg-green-50 border-green-200 text-green-700' : 'bg-gray-50 border-gray-200 text-gray-400'}`}
+                  onClick={() => setSendToWhatsapp(!sendToWhatsapp)}
+                >
+                  <div className="flex items-center gap-1">
+                    <MessageCircle size={18} />
+                    {sendToWhatsapp && <Check size={12} strokeWidth={4} />}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -1333,27 +1392,40 @@ export default function POSPage() {
                   )}
                 </div>
               )}
-              {/* Quick cash buttons */}
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(3, 1fr)',
-                gap: '0.5rem',
-                marginTop: '0.75rem'
-              }}>
-                {[5, 10, 20, 50, 100].map(amount => (
-                  <button
-                    key={amount}
-                    type="button"
-                    onClick={() => setCashReceived(amount)}
-                    className="btn btn-sm btn-outline"
-                  >
-                    ${amount}
-                  </button>
-                ))}
+              {/* Smart Cash Buttons */}
+              <div className="grid grid-cols-4 gap-2 mt-3">
+                {(() => {
+                  const suggestions = new Set<number>();
+                  suggestions.add(Math.ceil(finalPayable)); // Exact/Ceil
+                  suggestions.add(Math.ceil(finalPayable / 5) * 5);
+                  suggestions.add(Math.ceil(finalPayable / 10) * 10);
+                  suggestions.add(50);
+                  suggestions.add(100);
+
+                  // Filter valid options and sort
+                  const validSuggestions = Array.from(suggestions)
+                    .filter(amt => amt >= finalPayable)
+                    .sort((a, b) => a - b)
+                    .slice(0, 4);
+
+                  return validSuggestions.map(amount => (
+                    <button
+                      key={amount}
+                      type="button"
+                      onClick={() => setCashReceived(amount)}
+                      className="btn btn-sm btn-outline h-12 text-lg font-bold hover:bg-primary hover:text-white transition-colors"
+                    >
+                      ${amount}
+                    </button>
+                  ));
+                })()}
+                {/* Manual "Exact" button as fallback if needed, but Smart Logic usually covers it. 
+                    Let's adapt "Tepat" to be the exact finalPayable if not already covered, or just keep it as a utility. 
+                */}
                 <button
                   type="button"
-                  onClick={() => setCashReceived(Math.ceil(finalPayable))}
-                  className="btn btn-sm btn-primary"
+                  onClick={() => setCashReceived(finalPayable)}
+                  className="btn btn-sm btn-primary h-12 font-bold"
                 >
                   Tepat
                 </button>
