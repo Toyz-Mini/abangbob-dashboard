@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useMemo, useEffect, useCallback } from 'react';
-import MainLayout from '@/components/MainLayout';
+import RouteGuard from '@/components/RouteGuard';
 import { useOrders, useMenu, useInventory, usePaymentMethods, useCustomers } from '@/lib/store';
 import { useMenuRealtime, useInventoryRealtime, useModifiersRealtime } from '@/lib/supabase/realtime-hooks';
 import { useTranslation } from '@/lib/contexts/LanguageContext';
@@ -19,7 +19,7 @@ import {
   markTransactionSubmitted,
 } from '@/lib/services';
 import ReceiptPreview from '@/components/ReceiptPreview';
-import { UtensilsCrossed, Sandwich, Coffee, History, Printer, Clock, ChefHat, CheckCircle, ShoppingBag, Plus, Minus, X, Sparkles, AlertTriangle, User, DollarSign, CreditCard, QrCode, Wallet, WifiOff, RefreshCw } from 'lucide-react';
+import { ArrowLeft, UtensilsCrossed, Sandwich, Coffee, History, Printer, Clock, ChefHat, CheckCircle, ShoppingBag, Plus, Minus, X, Sparkles, AlertTriangle, User, DollarSign, CreditCard, QrCode, Wallet, WifiOff, RefreshCw } from 'lucide-react';
 import Modal from '@/components/Modal';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import StatCard from '@/components/StatCard';
@@ -499,22 +499,37 @@ export default function POSPage() {
 
   if (!isInitialized) {
     return (
-      <MainLayout>
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
+      <RouteGuard>
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', background: 'var(--bg-secondary)' }}>
           <LoadingSpinner />
         </div>
-      </MainLayout>
+      </RouteGuard>
     );
   }
 
   return (
-    <MainLayout>
-      <div className="animate-fade-in">
+    <RouteGuard>
+      <div className="pos-standalone animate-fade-in" style={{
+        minHeight: '100vh',
+        background: 'var(--bg-secondary)',
+        padding: '1.5rem',
+        paddingBottom: '2rem' // Extra padding for bottom
+      }}>
         <div className="page-header">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
-            <h1 className="page-title">
-              {t('pos.title')}
-            </h1>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <button
+                onClick={() => router.push('/')}
+                className="btn btn-ghost"
+                style={{ padding: '0.5rem' }}
+                title={t('common.back')}
+              >
+                <ArrowLeft size={24} />
+              </button>
+              <h1 className="page-title" style={{ margin: 0 }}>
+                {t('pos.title')}
+              </h1>
+            </div>
             <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
               <RegisterStatus
                 onOpenClick={() => {
@@ -1876,6 +1891,6 @@ export default function POSPage() {
         }}
         mode={registerModalMode}
       />
-    </MainLayout >
+    </RouteGuard>
   );
 }
