@@ -222,21 +222,23 @@ export default function MainLayout({ children }: { children: ReactNode }) {
   }, [handleRipple]);
 
   // Mobile Menu Items - Standardized Brand Colors
-  const mobileMenuItems = [
-    { href: '/staff-portal', label: 'Portal', icon: LayoutDashboard, color: 'var(--primary)' }, // Staff Portal Home
-    { href: '/delivery', label: 'Delivery', icon: Truck, color: 'var(--primary)' }, // Red
-    { href: '/production', label: 'Produksi', icon: Factory, color: 'var(--secondary)' }, // Gold
-    { href: '/kds', label: 'KDS', icon: Tv, color: 'var(--text-primary)' }, // Dark
-    // Recipes removed for staff in permissions.ts
-    { href: '/recipes', label: 'Resipi', icon: ChefHat, color: 'var(--primary)' },
-    { href: '/suppliers', label: 'Stok', icon: Boxes, color: 'var(--secondary)' },
-    { href: '/finance', label: 'Kewangan', icon: DollarSign, color: 'var(--text-primary)' },
+  // Determine items for the "More" menu
+  // If Admin: Show items not in the bottom nav (Inventory, HR, Settings, etc.)
+  // If Staff: Show items from staff portal logic
+  const mobileMenuItems = userRole === 'Admin' ? [
+    { href: '/inventory', label: 'Inventori', icon: Package, color: 'var(--primary)' },
+    { href: '/hr', label: 'HR', icon: Users, color: 'var(--text-primary)' },
+    { href: '/pos', label: 'POS', icon: ShoppingCart, color: 'var(--secondary)' },
     { href: '/customers', label: 'Pelanggan', icon: UserCheck, color: 'var(--primary)' },
-    { href: '/analytics', label: 'Analitik', icon: BarChart3, color: 'var(--secondary)' },
-    { href: '/audit-log', label: 'Audit', icon: FileText, color: 'var(--text-secondary)' }, // Grey
-    { href: '/notifications', label: 'Notifikasi', icon: Bell, color: 'var(--warning)' }, // Keep warning for alerts
     { href: '/settings', label: 'Tetapan', icon: Settings, color: 'var(--text-secondary)' },
-    { href: '/help', label: 'Bantuan', icon: HelpCircle, color: 'var(--info)' }, // Keep info for help
+    { href: '/help', label: 'Bantuan', icon: HelpCircle, color: 'var(--info)' },
+  ] : [
+    { href: '/staff-portal', label: 'Portal', icon: LayoutDashboard, color: 'var(--primary)' },
+    { href: '/delivery', label: 'Delivery', icon: Truck, color: 'var(--primary)' },
+    { href: '/production', label: 'Produksi', icon: Factory, color: 'var(--secondary)' },
+    { href: '/kds', label: 'KDS', icon: Tv, color: 'var(--text-primary)' },
+    { href: '/notifications', label: 'Notifikasi', icon: Bell, color: 'var(--warning)' },
+    { href: '/settings', label: 'Tetapan', icon: Settings, color: 'var(--text-secondary)' },
   ].filter(item => canViewNavItem(userRole, item.href));
 
   // Determine Bottom Nav Items based on Role
@@ -307,7 +309,7 @@ export default function MainLayout({ children }: { children: ReactNode }) {
         <Sheet
           isOpen={bottomNav.isMoreOpen}
           onClose={bottomNav.closeMore}
-          title="Menu Tambahan"
+          title={userRole === 'Admin' ? "Menu" : "Menu Staff"}
           position="bottom"
         >
           <div style={{
