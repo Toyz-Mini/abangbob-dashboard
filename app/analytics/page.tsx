@@ -38,7 +38,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 
-type AnalyticsTab = 'overview' | 'sales' | 'menu' | 'staff' | 'profit';
+type AnalyticsTab = 'overview' | 'sales' | 'menu' | 'staff' | 'profit' | 'customer';
 
 import { startOfMonth, subDays, format } from 'date-fns';
 import { DateRangePicker, type DateRange } from '@/components/DateRangePicker';
@@ -462,6 +462,7 @@ export default function AnalyticsPage() {
     { id: 'menu' as const, label: 'Menu Performance', icon: Grid3X3 },
     { id: 'staff' as const, label: 'Produktiviti Staf', icon: Users },
     { id: 'profit' as const, label: 'Profit & Margin', icon: LineChart },
+    { id: 'customer' as const, label: 'Customer Analytics', icon: Activity },
   ];
 
   return (
@@ -862,6 +863,185 @@ export default function AnalyticsPage() {
                 </div>
               </div>
               <ProfitMarginChart data={profitData} />
+            </div>
+          </div>
+        )}
+
+        {/* Customer Analytics Tab */}
+        {activeTab === 'customer' && (
+          <div className="grid grid-cols-1" style={{ gap: '1.5rem' }}>
+            {/* Customer Metrics */}
+            <div className="content-grid cols-4 mb-lg">
+              <StatCard
+                label="Total Customers"
+                value={(() => {
+                  const uniquePhones = new Set(filteredOrders.map(o => o.customerPhone).filter(Boolean));
+                  return uniquePhones.size;
+                })()}
+                change="pelanggan unik"
+                changeType="neutral"
+                icon={Users}
+                gradient="primary"
+              />
+              <StatCard
+                label="New Customers"
+                value={(() => {
+                  const phones = filteredOrders.map(o => o.customerPhone).filter((p): p is string => Boolean(p));
+                  const firstAppearance: Record<string, string> = {};
+                  orders.forEach(o => {
+                    if (o.customerPhone && (!firstAppearance[o.customerPhone] || o.createdAt < firstAppearance[o.customerPhone])) {
+                      firstAppearance[o.customerPhone] = o.createdAt;
+                    }
+                  });
+                  return phones.filter(p => {
+                    const firstDate = firstAppearance[p];
+                    return firstDate && new Date(firstDate) >= rangeStart && new Date(firstDate) <= rangeEnd;
+                  }).length;
+                })()}
+                change="pelanggan baru"
+                changeType="positive"
+                icon={Activity}
+                gradient="accent"
+              />
+              <StatCard
+                label="Repeat Rate"
+                value={(() => {
+                  const phoneCounts: Record<string, number> = {};
+                  filteredOrders.forEach(o => {
+                    if (o.customerPhone) {
+                      phoneCounts[o.customerPhone] = (phoneCounts[o.customerPhone] || 0) + 1;
+                    }
+                  });
+                  const total = Object.keys(phoneCounts).length;
+                  const repeats = Object.values(phoneCounts).filter(c => c > 1).length;
+                  return total > 0 ? `${Math.round((repeats / total) * 100)}%` : '0%';
+                })()}
+                change="pelanggan kembali"
+                changeType="positive"
+                icon={TrendingUp}
+                gradient="success"
+              />
+              <StatCard
+                label="Avg Visits"
+                value={(() => {
+                  const phoneCounts: Record<string, number> = {};
+                  filteredOrders.forEach(o => {
+                    if (o.customerPhone) {
+                      phoneCounts[o.customerPhone] = (phoneCounts[o.customerPhone] || 0) + 1;
+                    }
+                  });
+                  const total = Object.keys(phoneCounts).length;
+                  const totalVisits = Object.values(phoneCounts).reduce((a, b) => a + b, 0);
+                  return total > 0 ? (totalVisits / total).toFixed(1) : '0';
+                })()}
+                change="purata lawatan"
+                changeType="neutral"
+                icon={Star}
+              />
+            </div>
+
+            {/* Customer Segments */}
+            <div className="card">
+              <div className="card-header">
+                <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <Users size={20} color="var(--primary)" />
+                  Customer Segments
+                </div>
+                <div className="card-subtitle">
+                  Pembahagian pelanggan mengikut frequency
+                </div>
+              </div>
+              <div className="grid grid-cols-3" style={{ gap: '1rem', marginTop: '1rem' }}>
+                {(() => {
+                  const phoneCounts: Record<string, number> = {};
+                  filteredOrders.forEach(o => {
+                    if (o.customerPhone) {
+                      phoneCounts[o.customerPhone] = (phoneCounts[o.customerPhone] || 0) + 1;
+                    }
+                  });
+                  const vals = Object.values(phoneCounts);
+                  const newCustomers = vals.filter(c => c === 1).length;
+                  const regulars = vals.filter(c => c >= 2 && c <= 5).length;
+                  const vips = vals.filter(c => c > 5).length;
+                  const total = vals.length || 1;
+
+                  return (
+                    <>
+                      <div style={{ textAlign: 'center', padding: '1.5rem', background: 'var(--primary-light)', borderRadius: 'var(--radius-lg)' }}>
+                        <div style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--primary)' }}>{newCustomers}</div>
+                        <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>New (1 visit)</div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--primary)' }}>{Math.round((newCustomers / total) * 100)}%</div>
+                      </div>
+                      <div style={{ textAlign: 'center', padding: '1.5rem', background: 'var(--warning-light)', borderRadius: 'var(--radius-lg)' }}>
+                        <div style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--warning)' }}>{regulars}</div>
+                        <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>Regular (2-5)</div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--warning)' }}>{Math.round((regulars / total) * 100)}%</div>
+                      </div>
+                      <div style={{ textAlign: 'center', padding: '1.5rem', background: 'var(--success-light)', borderRadius: 'var(--radius-lg)' }}>
+                        <div style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--success)' }}>{vips}</div>
+                        <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>VIP (5+)</div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--success)' }}>{Math.round((vips / total) * 100)}%</div>
+                      </div>
+                    </>
+                  );
+                })()}
+              </div>
+            </div>
+
+            {/* Top Customers */}
+            <div className="card">
+              <div className="card-header">
+                <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <Star size={20} color="var(--warning)" />
+                  Top Customers
+                </div>
+                <div className="card-subtitle">
+                  Pelanggan dengan spending tertinggi
+                </div>
+              </div>
+              <div style={{ overflowX: 'auto' }}>
+                <table className="table">
+                  <thead>
+                    <tr>
+                      <th>Rank</th>
+                      <th>Customer</th>
+                      <th className="text-center">Orders</th>
+                      <th className="text-right">Total Spent</th>
+                      <th className="text-right">Avg Order</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(() => {
+                      const customerStats: Record<string, { phone: string; name: string; orders: number; total: number }> = {};
+                      filteredOrders.forEach(o => {
+                        const phone = o.customerPhone || 'Walk-in';
+                        if (!customerStats[phone]) {
+                          customerStats[phone] = { phone, name: o.customerName || phone, orders: 0, total: 0 };
+                        }
+                        customerStats[phone].orders++;
+                        customerStats[phone].total += o.total;
+                      });
+                      return Object.values(customerStats)
+                        .sort((a, b) => b.total - a.total)
+                        .slice(0, 10)
+                        .map((c, idx) => (
+                          <tr key={c.phone}>
+                            <td>
+                              {idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `#${idx + 1}`}
+                            </td>
+                            <td>
+                              <div style={{ fontWeight: 600 }}>{c.name}</div>
+                              <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{c.phone}</div>
+                            </td>
+                            <td className="text-center">{c.orders}</td>
+                            <td className="text-right font-mono" style={{ fontWeight: 600 }}>BND {c.total.toFixed(2)}</td>
+                            <td className="text-right font-mono">{(c.total / c.orders).toFixed(2)}</td>
+                          </tr>
+                        ));
+                    })()}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         )}
