@@ -297,6 +297,99 @@ class ThermalPrinterService {
     await this.sendCommand(ESCPOS.ALIGN_LEFT);
   }
 
+  // ==================== IMAGE PRINTING ====================
+
+  // Print an image from URL (logo)
+  async printImage(imageUrl: string, maxWidth: number = 384): Promise<void> {
+    try {
+      // Load image
+      const img = await this.loadImage(imageUrl);
+
+      // Create canvas for image processing
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      if (!ctx) throw new Error('Cannot create canvas context');
+
+      // Calculate dimensions (maintain aspect ratio, max width for thermal printer)
+      let width = Math.min(img.width, maxWidth);
+      let height = Math.round((width / img.width) * img.height);
+
+      // Width must be multiple of 8 for ESC/POS
+      width = Math.floor(width / 8) * 8;
+
+      canvas.width = width;
+      canvas.height = height;
+
+      // Draw image (white background for transparency)
+      ctx.fillStyle = 'white';
+      ctx.fillRect(0, 0, width, height);
+      ctx.drawImage(img, 0, 0, width, height);
+
+      // Get pixel data
+      const imageData = ctx.getImageData(0, 0, width, height);
+      const pixels = imageData.data;
+
+      // Convert to monochrome bitmap (1 bit per pixel)
+      const bytesPerLine = width / 8;
+      const bitmap: number[] = [];
+
+      for (let y = 0; y < height; y++) {
+        for (let byteIndex = 0; byteIndex < bytesPerLine; byteIndex++) {
+          let byte = 0;
+          for (let bit = 0; bit < 8; bit++) {
+            const x = byteIndex * 8 + bit;
+            const pixelIndex = (y * width + x) * 4;
+
+            // Calculate grayscale
+            const r = pixels[pixelIndex];
+            const g = pixels[pixelIndex + 1];
+            const b = pixels[pixelIndex + 2];
+            const gray = 0.299 * r + 0.587 * g + 0.114 * b;
+
+            // Threshold (< 128 = black = printed)
+            if (gray < 128) {
+              byte |= (0x80 >> bit);
+            }
+          }
+          bitmap.push(byte);
+        }
+      }
+
+      // Build GS v 0 command
+      // Format: GS v 0 m xL xH yL yH d1...dk
+      // m = 0 (normal), xL/xH = width in bytes, yL/yH = height in pixels
+      const xL = bytesPerLine % 256;
+      const xH = Math.floor(bytesPerLine / 256);
+      const yL = height % 256;
+      const yH = Math.floor(height / 256);
+
+      // Center the image
+      await this.sendCommand(ESCPOS.ALIGN_CENTER);
+
+      // Send GS v 0 command with bitmap data
+      const command = new Uint8Array([0x1D, 0x76, 0x30, 0x00, xL, xH, yL, yH, ...bitmap]);
+      await this.sendCommand(command);
+
+      // Reset alignment
+      await this.sendCommand(ESCPOS.ALIGN_LEFT);
+
+    } catch (error) {
+      console.error('Error printing image:', error);
+      // Silently fail - logo is optional
+    }
+  }
+
+  // Helper to load image from URL
+  private loadImage(url: string): Promise<HTMLImageElement> {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => resolve(img);
+      img.onerror = () => reject(new Error(`Failed to load image: ${url}`));
+      img.src = url;
+    });
+  }
+
   // Feed paper lines
   async feedLines(lines: number = 1): Promise<void> {
     await this.sendCommand(ESCPOS.FEED_LINES(lines));
@@ -328,6 +421,12 @@ class ThermalPrinterService {
 
     // Initialize
     await this.sendCommand(ESCPOS.INIT);
+
+    // Logo at top
+    if (receiptSettings.showLogoTop && receiptSettings.logoTopUrl) {
+      await this.printImage(receiptSettings.logoTopUrl, width === '58mm' ? 200 : 384);
+      await this.feedLines(1);
+    }
 
     // Business name
     await this.printText(receiptSettings.businessName, {
