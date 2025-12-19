@@ -621,6 +621,85 @@ class ThermalPrinterService {
     }
   }
 
+  // ==================== WEB BLUETOOTH PRINTING (EXPERIMENTAL) ====================
+
+  // Print using Web Bluetooth API (Chrome Android/Desktop)
+  // Direct connection to printer without external apps
+  async printWithBluetooth(order: Order, receiptSettings: ReceiptSettings): Promise<void> {
+    try {
+      console.log('Initiating Bluetooth print...');
+
+      // Standard Thermal Printer Service UUIDs
+      // Many cheap thermal printers use these UUIDs or 16-bit short UUIDs
+      const PRINT_SERVICE_UUID = '000018f0-0000-1000-8000-00805f9b34fb';
+      const WRITE_CHAR_UUID = '00002af1-0000-1000-8000-00805f9b34fb';
+
+      // Request device
+      const device = await (navigator as any).bluetooth.requestDevice({
+        filters: [{ services: [PRINT_SERVICE_UUID] }],
+        optionalServices: [PRINT_SERVICE_UUID, '000018f0-0000-1000-8000-00805f9b34fb'] // Add common variants if needed
+      });
+
+      if (!device) {
+        throw new Error('No device selected');
+      }
+
+      console.log('Bluetooth Device Selected:', device.name);
+
+      // Connect to GATT
+      const server = await device.gatt.connect();
+      console.log('Connected to GATT Server');
+
+      // Get Primary Service
+      const service = await server.getPrimaryService(PRINT_SERVICE_UUID);
+      console.log('Got Primary Service');
+
+      // Get Characteristic
+      const characteristic = await service.getCharacteristic(WRITE_CHAR_UUID);
+      console.log('Got Write Characteristic');
+
+      // Generate receipt data
+      this.buffer = [];
+      await this.printReceipt(order, receiptSettings);
+
+      // Open drawer if needed
+      if (receiptSettings.openCashDrawer && order.paymentMethod === 'cash') {
+        await this.openCashDrawer();
+      }
+
+      // Send data in chunks (Bluetooth has MTU limits, usually ~20 bytes, but can be negotiated higher. Safe chunk size: 512 bytes)
+      // Note: WriteWithoutResponse is faster if supported, but WriteWithResponse is safer
+      // Flatten buffer
+      const totalLength = this.buffer.reduce((acc, val) => acc + val.length, 0);
+      const data = new Uint8Array(totalLength);
+      let offset = 0;
+      for (const chunk of this.buffer) {
+        data.set(chunk, offset);
+        offset += chunk.length;
+      }
+      const CHUNK_SIZE = 100; // Conservative chunk size
+
+      for (let i = 0; i < data.length; i += CHUNK_SIZE) {
+        const chunk = data.slice(i, i + CHUNK_SIZE);
+        await characteristic.writeValue(chunk); // writeValueWithResponse is default for writeValue
+      }
+
+      console.log('Print Complete via Bluetooth');
+
+      // Disconnect after printing to save battery/connection slots
+      // Optional: keep connected if printing frequent receipts
+      if (device.gatt.connected) {
+        device.gatt.disconnect();
+      }
+
+    } catch (error) {
+      console.error('Bluetooth Print Error:', error);
+      alert('Bluetooth Print Failed: ' + (error as any).message + '\n\nMake sure Bluetooth is ON and printer is paired for the first time.');
+    } finally {
+      this.buffer = [];
+    }
+  }
+
   // ==================== FALLBACK BROWSER PRINTING ====================
 
   // Generate HTML for browser printing (fallback when no thermal printer)
@@ -781,6 +860,9 @@ class ThermalPrinterService {
         }
         return;
 
+      case 'bluetooth':
+        await this.printWithBluetooth(order, receiptSettings);
+        break;
       case 'browser':
       default:
         this.printWithBrowser(order, receiptSettings);

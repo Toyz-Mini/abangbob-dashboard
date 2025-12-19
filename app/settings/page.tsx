@@ -1330,6 +1330,7 @@ export default function SettingsPage() {
                     <option value="browser">🌐 Browser Print Dialog (Universal)</option>
                     <option value="nokoprint">📱 NokoPrint (Android)</option>
                     <option value="posprinter">🖨️ POS Printer (Android - ESC/POS)</option>
+                    <option value="bluetooth">🔵 Bluetooth Direct (Experimental)</option>
                     <option value="rawbt">📲 RawBT (Android - Legacy)</option>
                     <option value="webserial">🔌 Web Serial USB (Chrome Desktop Only)</option>
                   </select>
@@ -1356,6 +1357,20 @@ export default function SettingsPage() {
                         </ol>
                         <div style={{ color: 'var(--success)', marginTop: '0.5rem' }}>
                           ✅ Support banyak thermal printers termasuk Zywell!
+                        </div>
+                      </div>
+                    )}
+                    {printerSettings.printMethod === 'bluetooth' && (
+                      <div>
+                        <strong>🔵 Bluetooth Direct Setup:</strong>
+                        <ol style={{ paddingLeft: '1.25rem', margin: '0.5rem 0' }}>
+                          <li>Open Chrome Settings → <strong>Site Settings</strong></li>
+                          <li>Enable <strong>Bluetooth scanning</strong></li>
+                          <li>Turn on Bluetooth & Pair printer with Android first</li>
+                          <li>Tekan Print → Chrome akan tanya device → Pilih Printer</li>
+                        </ol>
+                        <div style={{ color: 'var(--warning)', marginTop: '0.5rem' }}>
+                          ⚠️ Experimental feature. Works best on Chrome Android.
                         </div>
                       </div>
                     )}
