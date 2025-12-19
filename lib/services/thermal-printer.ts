@@ -573,7 +573,7 @@ class ThermalPrinterService {
 
   // ==================== POSPRINTER PRINTING ====================
 
-  // Print using PosPrinter App (Android) - Generic ESC/POS printing
+  // Print using POS Printer App (Android) - Generic ESC/POS printing
   async printWithPosPrinter(order: Order, receiptSettings: ReceiptSettings): Promise<void> {
     try {
       // Enable capture mode
@@ -595,7 +595,7 @@ class ThermalPrinterService {
       // Package: com.pzolee.posprinter
       const intentUrl = `intent://print?data=${encodeURIComponent(base64Data)}#Intent;scheme=posprinter;package=com.pzolee.posprinter;end`;
 
-      console.log('Opening PosPrinter intent...');
+      console.log('Opening POS Printer intent...');
 
       // Try opening via intent
       const intentLink = document.createElement('a');
@@ -612,8 +612,8 @@ class ThermalPrinterService {
       }, 500);
 
     } catch (error) {
-      console.error('PosPrinter Error:', error);
-      alert('Gagal membuka PosPrinter. Sila pastikan app PosPrinter installed dari Play Store.');
+      console.error('POS Printer Error:', error);
+      alert('Gagal membuka POS Printer. Sila pastikan app POS Printer installed dari Play Store.');
     } finally {
       // Disable capture mode
       this.captureMode = false;

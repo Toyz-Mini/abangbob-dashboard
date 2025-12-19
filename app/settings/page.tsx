@@ -1329,7 +1329,7 @@ export default function SettingsPage() {
                   >
                     <option value="browser">🌐 Browser Print Dialog (Universal)</option>
                     <option value="nokoprint">📱 NokoPrint (Android)</option>
-                    <option value="posprinter">🖨️ PosPrinter (Android - ESC/POS)</option>
+                    <option value="posprinter">🖨️ POS Printer (Android - ESC/POS)</option>
                     <option value="rawbt">📲 RawBT (Android - Legacy)</option>
                     <option value="webserial">🔌 Web Serial USB (Chrome Desktop Only)</option>
                   </select>
@@ -1348,9 +1348,9 @@ export default function SettingsPage() {
                     )}
                     {printerSettings.printMethod === 'posprinter' && (
                       <div>
-                        <strong>🖨️ PosPrinter Setup:</strong>
+                        <strong>🖨️ POS Printer Setup:</strong>
                         <ol style={{ paddingLeft: '1.25rem', margin: '0.5rem 0' }}>
-                          <li>Install <strong>PosPrinter</strong> dari Play Store</li>
+                          <li>Install <strong>POS Printer</strong> dari Play Store</li>
                           <li>Add printer → pilih Generic ESC/POS</li>
                           <li>Setup USB atau Bluetooth connection</li>
                         </ol>
