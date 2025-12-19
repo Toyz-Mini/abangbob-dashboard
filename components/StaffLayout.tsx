@@ -62,6 +62,7 @@ export default function StaffLayout({ children, showHeader = true }: StaffLayout
           align-items: center;
           justify-content: space-between;
           padding: 0.75rem 1rem;
+          padding-top: calc(env(safe-area-inset-top, 24px) + 0.75rem);
           background: white;
           box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
           position: sticky;
