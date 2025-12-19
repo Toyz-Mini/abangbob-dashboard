@@ -1328,7 +1328,8 @@ export default function SettingsPage() {
                     style={{ width: '100%', marginBottom: '0.5rem' }}
                   >
                     <option value="browser">🌐 Browser Print Dialog (Universal)</option>
-                    <option value="nokoprint">📱 NokoPrint (Android - Recommended)</option>
+                    <option value="nokoprint">📱 NokoPrint (Android)</option>
+                    <option value="posprinter">🖨️ PosPrinter (Android - ESC/POS)</option>
                     <option value="rawbt">📲 RawBT (Android - Legacy)</option>
                     <option value="webserial">🔌 Web Serial USB (Chrome Desktop Only)</option>
                   </select>
@@ -1343,6 +1344,19 @@ export default function SettingsPage() {
                           <li>Add printer dalam NokoPrint (USB/Bluetooth)</li>
                           <li>Bila print, NokoPrint akan buka secara automatik</li>
                         </ol>
+                      </div>
+                    )}
+                    {printerSettings.printMethod === 'posprinter' && (
+                      <div>
+                        <strong>🖨️ PosPrinter Setup:</strong>
+                        <ol style={{ paddingLeft: '1.25rem', margin: '0.5rem 0' }}>
+                          <li>Install <strong>PosPrinter</strong> dari Play Store</li>
+                          <li>Add printer → pilih Generic ESC/POS</li>
+                          <li>Setup USB atau Bluetooth connection</li>
+                        </ol>
+                        <div style={{ color: 'var(--success)', marginTop: '0.5rem' }}>
+                          ✅ Support banyak thermal printers termasuk Zywell!
+                        </div>
                       </div>
                     )}
                     {printerSettings.printMethod === 'rawbt' && (

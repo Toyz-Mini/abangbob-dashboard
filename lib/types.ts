@@ -701,7 +701,7 @@ export interface ReceiptSettings {
 // ==================== PRINTER SETTINGS TYPES ====================
 
 export type PrinterConnectionType = 'usb' | 'network' | 'bluetooth' | 'browser';
-export type PrintMethod = 'webserial' | 'rawbt' | 'nokoprint' | 'browser';
+export type PrintMethod = 'webserial' | 'rawbt' | 'nokoprint' | 'posprinter' | 'browser';
 
 export interface PrinterSettings {
   isConnected: boolean;

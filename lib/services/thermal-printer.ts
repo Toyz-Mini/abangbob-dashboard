@@ -571,6 +571,56 @@ class ThermalPrinterService {
     }
   }
 
+  // ==================== POSPRINTER PRINTING ====================
+
+  // Print using PosPrinter App (Android) - Generic ESC/POS printing
+  async printWithPosPrinter(order: Order, receiptSettings: ReceiptSettings): Promise<void> {
+    try {
+      // Enable capture mode
+      this.captureMode = true;
+      this.buffer = [];
+
+      // Generate receipt commands in memory
+      await this.printReceipt(order, receiptSettings);
+
+      // Open cash drawer if enabled
+      if (receiptSettings.openCashDrawer && order.paymentMethod === 'cash') {
+        await this.openCashDrawer();
+      }
+
+      // Get Base64 data
+      const base64Data = this.getBufferBase64();
+
+      // PosPrinter uses intent scheme  
+      // Package: com.pzolee.posprinter
+      const intentUrl = `intent://print?data=${encodeURIComponent(base64Data)}#Intent;scheme=posprinter;package=com.pzolee.posprinter;end`;
+
+      console.log('Opening PosPrinter intent...');
+
+      // Try opening via intent
+      const intentLink = document.createElement('a');
+      intentLink.href = intentUrl;
+      intentLink.style.display = 'none';
+      document.body.appendChild(intentLink);
+      intentLink.click();
+      document.body.removeChild(intentLink);
+
+      // Fallback: try simpler URL scheme after delay
+      setTimeout(() => {
+        const simpleUrl = `posprinter://print?data=${encodeURIComponent(base64Data)}`;
+        window.location.href = simpleUrl;
+      }, 500);
+
+    } catch (error) {
+      console.error('PosPrinter Error:', error);
+      alert('Gagal membuka PosPrinter. Sila pastikan app PosPrinter installed dari Play Store.');
+    } finally {
+      // Disable capture mode
+      this.captureMode = false;
+      this.buffer = [];
+    }
+  }
+
   // ==================== FALLBACK BROWSER PRINTING ====================
 
   // Generate HTML for browser printing (fallback when no thermal printer)
@@ -709,6 +759,10 @@ class ThermalPrinterService {
     switch (method) {
       case 'nokoprint':
         await this.printWithNokoPrint(order, receiptSettings);
+        return;
+
+      case 'posprinter':
+        await this.printWithPosPrinter(order, receiptSettings);
         return;
 
       case 'rawbt':
