@@ -1312,45 +1312,71 @@ export default function SettingsPage() {
                   </div>
                 </div>
 
-                {/* RawBT Setting (Android) */}
+                {/* Print Method Selection */}
                 <div style={{ padding: '1rem', background: 'var(--gray-100)', borderRadius: 'var(--radius-md)', marginTop: '1rem' }}>
-                  <label style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    cursor: 'pointer'
-                  }}>
-                    <div>
-                      <div style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        Guna RawBT (Android)
-                        <span style={{ fontSize: '0.75rem', padding: '0.1rem 0.4rem', background: '#e0f2fe', color: '#0369a1', borderRadius: '4px' }}>Recommended for Android</span>
+                  <div style={{ fontWeight: 600, marginBottom: '0.75rem' }}>
+                    🖨️ Kaedah Print (Android/Desktop)
+                  </div>
+                  <select
+                    className="input"
+                    value={printerSettings.printMethod || 'browser'}
+                    onChange={(e) => {
+                      const printMethod = e.target.value as 'webserial' | 'rawbt' | 'nokoprint' | 'browser';
+                      setPrinterSettings(prev => ({ ...prev, printMethod, useRawbt: printMethod === 'rawbt' }));
+                      thermalPrinter.updateSettings({ ...printerSettings, printMethod, useRawbt: printMethod === 'rawbt' });
+                    }}
+                    style={{ width: '100%', marginBottom: '0.5rem' }}
+                  >
+                    <option value="browser">🌐 Browser Print Dialog (Universal)</option>
+                    <option value="nokoprint">📱 NokoPrint (Android - Recommended)</option>
+                    <option value="rawbt">📲 RawBT (Android - Legacy)</option>
+                    <option value="webserial">🔌 Web Serial USB (Chrome Desktop Only)</option>
+                  </select>
+
+                  {/* Help text based on selection */}
+                  <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.5rem', padding: '0.75rem', background: '#fff', borderRadius: 'var(--radius-sm)', border: '1px solid var(--gray-200)' }}>
+                    {printerSettings.printMethod === 'nokoprint' && (
+                      <div>
+                        <strong>📱 NokoPrint Setup:</strong>
+                        <ol style={{ paddingLeft: '1.25rem', margin: '0.5rem 0' }}>
+                          <li>Install <strong>NokoPrint</strong> dari Play Store</li>
+                          <li>Add printer dalam NokoPrint (USB/Bluetooth)</li>
+                          <li>Bila print, NokoPrint akan buka secara automatik</li>
+                        </ol>
                       </div>
-                      <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
-                        Gunakan app RawBT bila direct USB connection gagal dikesan browser.
+                    )}
+                    {printerSettings.printMethod === 'rawbt' && (
+                      <div>
+                        <strong>📲 RawBT Setup:</strong>
+                        <ol style={{ paddingLeft: '1.25rem', margin: '0.5rem 0' }}>
+                          <li>Install <strong>RawBT</strong> dari Play Store</li>
+                          <li>Setup printer dalam RawBT (USB/Bluetooth)</li>
+                          <li>Set default printer dalam RawBT</li>
+                        </ol>
                       </div>
-                    </div>
-                    <input
-                      type="checkbox"
-                      checked={printerSettings.useRawbt || false}
-                      onChange={(e) => {
-                        const useRawbt = e.target.checked;
-                        setPrinterSettings(prev => ({ ...prev, useRawbt }));
-                        // Update service immediately
-                        thermalPrinter.updateSettings({ ...printerSettings, useRawbt });
-                      }}
-                      style={{ width: '20px', height: '20px' }}
-                    />
-                  </label>
-                  {printerSettings.useRawbt && (
-                    <div style={{ marginTop: '0.75rem', fontSize: '0.875rem', color: 'var(--text-secondary)', padding: '0.75rem', background: '#fff', borderRadius: 'var(--radius-sm)', border: '1px solid var(--gray-200)' }}>
-                      <strong>Cara Guna:</strong>
-                      <ol style={{ paddingLeft: '1.25rem', margin: '0.5rem 0' }}>
-                        <li>Install app <strong>RawBT Printer</strong> dari Play Store.</li>
-                        <li>Setup printer dalam RawBT (USB/Bluetooth).</li>
-                        <li>Tekan butang "Test Print" di bawah untuk cuba.</li>
-                      </ol>
-                    </div>
-                  )}
+                    )}
+                    {printerSettings.printMethod === 'webserial' && (
+                      <div>
+                        <strong>🔌 Web Serial Setup:</strong>
+                        <ol style={{ paddingLeft: '1.25rem', margin: '0.5rem 0' }}>
+                          <li>Gunakan Chrome/Edge pada laptop/PC</li>
+                          <li>Connect printer via USB</li>
+                          <li>Klik "Connect Printer" di atas</li>
+                        </ol>
+                        <div style={{ color: 'var(--warning)', marginTop: '0.5rem' }}>
+                          ⚠️ Tidak support Android!
+                        </div>
+                      </div>
+                    )}
+                    {(!printerSettings.printMethod || printerSettings.printMethod === 'browser') && (
+                      <div>
+                        <strong>🌐 Browser Print:</strong>
+                        <p style={{ margin: '0.5rem 0' }}>
+                          Standard browser print dialog. Pilih printer Bluetooth/WiFi yang sudah paired dengan device.
+                        </p>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {/* Auto-cut Setting */}

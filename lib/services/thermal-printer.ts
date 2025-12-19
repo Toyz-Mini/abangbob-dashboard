@@ -520,6 +520,57 @@ class ThermalPrinterService {
     }
   }
 
+  // ==================== NOKOPRINT PRINTING ====================
+
+  // Print using NokoPrint App (Android) - Better quality than RawBT
+  async printWithNokoPrint(order: Order, receiptSettings: ReceiptSettings): Promise<void> {
+    try {
+      // Enable capture mode
+      this.captureMode = true;
+      this.buffer = [];
+
+      // Generate receipt commands in memory
+      await this.printReceipt(order, receiptSettings);
+
+      // Open cash drawer if enabled
+      if (receiptSettings.openCashDrawer && order.paymentMethod === 'cash') {
+        await this.openCashDrawer();
+      }
+
+      // Get Base64 data
+      const base64Data = this.getBufferBase64();
+
+      // NokoPrint uses intent scheme
+      // Format: intent://print?data=BASE64#Intent;scheme=nokoprint;package=com.nokoprint;end
+      const intentUrl = `intent://print?data=${encodeURIComponent(base64Data)}#Intent;scheme=nokoprint;package=com.nokoprint;end`;
+
+      console.log('Opening NokoPrint intent...');
+
+      // Try opening via intent first
+      const intentLink = document.createElement('a');
+      intentLink.href = intentUrl;
+      intentLink.style.display = 'none';
+      document.body.appendChild(intentLink);
+      intentLink.click();
+      document.body.removeChild(intentLink);
+
+      // Fallback: try simpler URL scheme after a short delay
+      setTimeout(() => {
+        // Simple URL scheme fallback
+        const simpleUrl = `nokoprint://print?data=${encodeURIComponent(base64Data)}`;
+        window.location.href = simpleUrl;
+      }, 500);
+
+    } catch (error) {
+      console.error('NokoPrint Error:', error);
+      alert('Gagal membuka NokoPrint. Sila pastikan app NokoPrint installed dari Play Store.');
+    } finally {
+      // Disable capture mode
+      this.captureMode = false;
+      this.buffer = [];
+    }
+  }
+
   // ==================== FALLBACK BROWSER PRINTING ====================
 
   // Generate HTML for browser printing (fallback when no thermal printer)
@@ -651,22 +702,35 @@ class ThermalPrinterService {
     }
   }
 
-  // Smart print - use thermal if connected, else browser
+  // Smart print - use configured method or fallback
   async print(order: Order, receiptSettings: ReceiptSettings): Promise<void> {
-    if (this.settings.useRawbt) {
-      await this.printWithRawBT(order, receiptSettings);
-      return;
-    }
+    const method = this.settings.printMethod || (this.settings.useRawbt ? 'rawbt' : 'browser');
 
-    if (this.isConnected()) {
-      await this.printReceipt(order, receiptSettings);
+    switch (method) {
+      case 'nokoprint':
+        await this.printWithNokoPrint(order, receiptSettings);
+        return;
 
-      // Open cash drawer for cash payments
-      if (receiptSettings.openCashDrawer && order.paymentMethod === 'cash') {
-        await this.openCashDrawer();
-      }
-    } else {
-      this.printWithBrowser(order, receiptSettings);
+      case 'rawbt':
+        await this.printWithRawBT(order, receiptSettings);
+        return;
+
+      case 'webserial':
+        if (this.isConnected()) {
+          await this.printReceipt(order, receiptSettings);
+          if (receiptSettings.openCashDrawer && order.paymentMethod === 'cash') {
+            await this.openCashDrawer();
+          }
+        } else {
+          // Fallback to browser if not connected
+          this.printWithBrowser(order, receiptSettings);
+        }
+        return;
+
+      case 'browser':
+      default:
+        this.printWithBrowser(order, receiptSettings);
+        return;
     }
   }
 

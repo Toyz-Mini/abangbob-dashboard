@@ -701,6 +701,7 @@ export interface ReceiptSettings {
 // ==================== PRINTER SETTINGS TYPES ====================
 
 export type PrinterConnectionType = 'usb' | 'network' | 'bluetooth' | 'browser';
+export type PrintMethod = 'webserial' | 'rawbt' | 'nokoprint' | 'browser';
 
 export interface PrinterSettings {
   isConnected: boolean;
@@ -710,11 +711,12 @@ export interface PrinterSettings {
   productId?: number;
   ipAddress?: string;
   port?: number;
-  baudRate?: number; // Added baudRate
+  baudRate?: number;
   paperWidth: ReceiptWidth;
   autoCut: boolean;
   openDrawerOnCashPayment: boolean;
-  useRawbt?: boolean; // For Android RawBT fallback
+  useRawbt?: boolean; // Legacy - use printMethod instead
+  printMethod?: PrintMethod; // Print method selector
 }
 
 // ==================== PIXEL & ANALYTICS SETTINGS ====================
