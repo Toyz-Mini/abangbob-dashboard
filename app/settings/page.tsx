@@ -1342,7 +1342,8 @@ export default function SettingsPage() {
                         <strong>📱 NokoPrint Setup:</strong>
                         <ol style={{ paddingLeft: '1.25rem', margin: '0.5rem 0' }}>
                           <li>Install <strong>NokoPrint</strong> dari Play Store</li>
-                          <li>Add printer dalam NokoPrint (USB/Bluetooth)</li>
+                          <li>Add printer dalam NokoPrint (Pilih <strong>USB</strong> atau Bluetooth)</li>
+                          <li>Sambung kabel USB OTG jika perlu</li>
                           <li>Bila print, NokoPrint akan buka secara automatik</li>
                         </ol>
                       </div>
@@ -1353,7 +1354,7 @@ export default function SettingsPage() {
                         <ol style={{ paddingLeft: '1.25rem', margin: '0.5rem 0' }}>
                           <li>Install <strong>POS Printer</strong> dari Play Store</li>
                           <li>Add printer → pilih Generic ESC/POS</li>
-                          <li>Setup USB atau Bluetooth connection</li>
+                          <li>Pilih Connection Type: <strong>USB</strong> (Sambung cable OTG)</li>
                         </ol>
                         <div style={{ color: 'var(--success)', marginTop: '0.5rem' }}>
                           ✅ Support banyak thermal printers termasuk Zywell!
@@ -1379,7 +1380,7 @@ export default function SettingsPage() {
                         <strong>📲 RawBT Setup:</strong>
                         <ol style={{ paddingLeft: '1.25rem', margin: '0.5rem 0' }}>
                           <li>Install <strong>RawBT</strong> dari Play Store</li>
-                          <li>Setup printer dalam RawBT (USB/Bluetooth)</li>
+                          <li>Buka RawBT → Settings → Connection Method → <strong>USB</strong></li>
                           <li>Set default printer dalam RawBT</li>
                         </ol>
                       </div>

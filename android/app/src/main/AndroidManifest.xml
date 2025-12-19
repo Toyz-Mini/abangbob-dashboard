@@ -1,5 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Required for Android 11+ to launch external apps via intent -->
+    <queries>
+        <package android:name="ru.a402d.rawbtprinter" />
+        <package android:name="com.nokoprint" />
+        <package android:name="com.pzolee.posprinter" />
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="rawbt" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="nokoprint" />
+        </intent>
+    </queries>
 
     <application
         android:allowBackup="true"
