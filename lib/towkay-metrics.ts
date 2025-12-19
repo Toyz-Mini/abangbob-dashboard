@@ -1,4 +1,4 @@
-import { InventoryLog, Order, StaffProfile, CashRegister, StaffKPI, AttendanceRecord, ScheduleEntry, Shift, MenuItem, StockItem } from './types';
+import { InventoryLog, Order, StaffProfile, CashRegister, StaffKPI, AttendanceRecord, ScheduleEntry, Shift, MenuItem, StockItem, Customer } from './types';
 
 // ============ TYPES ============
 
@@ -134,6 +134,7 @@ export interface DataContext {
     shifts?: Shift[];
     menuItems?: MenuItem[];
     inventory?: StockItem[];
+    customers?: Customer[];
 }
 
 // ============ CONSTANTS ============
@@ -620,10 +621,34 @@ export function calculateTowkayStats(data: DataContext): TowkayStats {
     };
 
     // =====================
-    // 11. CHURN RISK (God Mode 2.0) - Placeholder
+    // 11. CHURN RISK (God Mode 2.0)
     // =====================
-    // Note: Requires Customer data in DataContext to implement
     const churnRisk: ChurnRiskCustomer[] = [];
+    const customers = data.customers || [];
+    const churnNow = new Date();
+
+    customers.forEach(customer => {
+        if (!customer.lastOrderAt) return;
+
+        const lastVisit = new Date(customer.lastOrderAt);
+        const daysSinceVisit = Math.floor((churnNow.getTime() - lastVisit.getTime()) / (1000 * 60 * 60 * 24));
+
+        // Consider at risk if haven't visited in 30+ days and was previously regular
+        if (daysSinceVisit >= 30 && customer.totalOrders >= 3) {
+            churnRisk.push({
+                customerId: customer.id,
+                name: customer.name,
+                phone: customer.phone,
+                lastVisit: customer.lastOrderAt,
+                daysSinceVisit,
+                totalSpent: customer.totalSpent,
+                visitCount: customer.totalOrders
+            });
+        }
+    });
+
+    // Sort by days since visit (most at-risk first)
+    churnRisk.sort((a, b) => b.daysSinceVisit - a.daysSinceVisit);
 
     // =====================
     // RETURN AGGREGATED STATS

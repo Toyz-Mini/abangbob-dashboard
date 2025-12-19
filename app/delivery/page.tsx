@@ -8,8 +8,16 @@ import { useDeliveryOrdersRealtime } from '@/lib/supabase/realtime-hooks';
 import { DeliveryOrder } from '@/lib/types';
 import Modal from '@/components/Modal';
 import LoadingSpinner from '@/components/LoadingSpinner';
-import { Volume2, VolumeX, Printer, Bell, RefreshCw, ShoppingBag, ChefHat, CheckCircle, Truck } from 'lucide-react';
+import { Volume2, VolumeX, Printer, Bell, RefreshCw, ShoppingBag, ChefHat, CheckCircle, Truck, UserPlus } from 'lucide-react';
 import StatCard from '@/components/StatCard';
+
+// Sample driver list (in production, this would come from API)
+const AVAILABLE_DRIVERS = [
+  { id: 'd1', name: 'Ahmad', phone: '0812345678', plate: 'BKC 1234' },
+  { id: 'd2', name: 'Rahman', phone: '0812345679', plate: 'BKC 5678' },
+  { id: 'd3', name: 'Faizal', phone: '0812345670', plate: 'BKC 9012' },
+  { id: 'd4', name: 'Syafiq', phone: '0812345671', plate: 'BKC 3456' },
+];
 
 export default function DeliveryHubPage() {
   const { deliveryOrders, updateDeliveryStatus, refreshDeliveryOrders, isInitialized } = useStore();
@@ -24,7 +32,9 @@ export default function DeliveryHubPage() {
 
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [showSlipModal, setShowSlipModal] = useState(false);
+  const [showDriverModal, setShowDriverModal] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<DeliveryOrder | null>(null);
+  const [selectedDriver, setSelectedDriver] = useState<string>('');
   const [lastOrderCount, setLastOrderCount] = useState(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const slipRef = useRef<HTMLDivElement>(null);
@@ -195,6 +205,22 @@ export default function DeliveryHubPage() {
                         style={{ padding: '0.25rem 0.5rem' }}
                       >
                         <Printer size={14} />
+                      </button>
+                    )}
+                    {/* Assign Driver Button */}
+                    {(status === 'ready' || status === 'preparing') && !order.driverName && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedOrder(order);
+                          setSelectedDriver('');
+                          setShowDriverModal(true);
+                        }}
+                        className="btn btn-sm btn-outline"
+                        title="Assign Driver"
+                        style={{ padding: '0.25rem 0.5rem', color: 'var(--warning)' }}
+                      >
+                        <UserPlus size={14} />
                       </button>
                     )}
                     {nextStatus && (
@@ -463,6 +489,80 @@ export default function DeliveryHubPage() {
                 >
                   <Printer size={18} />
                   Cetak Slip
+                </button>
+              </div>
+            </>
+          )}
+        </Modal>
+
+        {/* Driver Assignment Modal */}
+        <Modal
+          isOpen={showDriverModal}
+          onClose={() => setShowDriverModal(false)}
+          title="Assign Driver"
+          maxWidth="400px"
+        >
+          {selectedOrder && (
+            <>
+              <div style={{ marginBottom: '1rem' }}>
+                <div style={{ fontWeight: 600, fontSize: '0.9rem', marginBottom: '0.5rem' }}>
+                  Order: #{selectedOrder.id.slice(-6)}
+                </div>
+                <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                  {selectedOrder.customerName} • {selectedOrder.items.length} items
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Pilih Driver</label>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  {AVAILABLE_DRIVERS.map(driver => (
+                    <button
+                      key={driver.id}
+                      onClick={() => setSelectedDriver(driver.id)}
+                      className={`btn ${selectedDriver === driver.id ? 'btn-primary' : 'btn-outline'}`}
+                      style={{ justifyContent: 'flex-start', textAlign: 'left' }}
+                    >
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontWeight: 600 }}>{driver.name}</div>
+                        <div style={{ fontSize: '0.75rem', opacity: 0.8 }}>
+                          📞 {driver.phone} • 🚗 {driver.plate}
+                        </div>
+                      </div>
+                      {selectedDriver === driver.id && <CheckCircle size={16} />}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1.5rem' }}>
+                <button
+                  onClick={() => setShowDriverModal(false)}
+                  className="btn btn-outline"
+                  style={{ flex: 1 }}
+                >
+                  Batal
+                </button>
+                <button
+                  onClick={() => {
+                    if (selectedDriver && selectedOrder) {
+                      const driver = AVAILABLE_DRIVERS.find(d => d.id === selectedDriver);
+                      if (driver) {
+                        // Update order with driver info (simulated - in production this would call API)
+                        console.log(`Assigned driver ${driver.name} to order ${selectedOrder.id}`);
+                        // For now, we just close the modal - in production this would update the order
+                        setShowDriverModal(false);
+                        // Show success feedback
+                        alert(`Driver ${driver.name} telah di-assign untuk order #${selectedOrder.id.slice(-6)}`);
+                      }
+                    }
+                  }}
+                  className="btn btn-primary"
+                  style={{ flex: 1 }}
+                  disabled={!selectedDriver}
+                >
+                  <UserPlus size={18} />
+                  Assign Driver
                 </button>
               </div>
             </>

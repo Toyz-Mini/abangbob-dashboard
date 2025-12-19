@@ -342,6 +342,35 @@ export default function TowkayDashboard() {
                         )}
                     </div>
 
+                    {/* 5D. CUSTOMER CHURN RISK */}
+                    <div className="col-span-12 lg:col-span-4 row-span-3 bg-slate-900/50 border border-pink-500/30 rounded-xl p-5">
+                        <h3 className="text-pink-400 text-xs font-mono uppercase tracking-widest mb-4 flex items-center gap-2">
+                            <User size={14} /> Customer Churn Risk
+                        </h3>
+                        {stats.churnRisk && stats.churnRisk.length > 0 ? (
+                            <div className="space-y-2 max-h-48 overflow-y-auto">
+                                {stats.churnRisk.slice(0, 5).map((customer, idx) => (
+                                    <div key={customer.customerId} className="flex items-center justify-between p-3 rounded-lg bg-pink-500/10 border border-pink-500/20">
+                                        <div className="flex-1">
+                                            <div className="text-sm font-medium text-pink-300">{customer.name}</div>
+                                            <div className="text-[11px] text-slate-500">
+                                                {customer.phone} • {customer.visitCount} visits • BND {customer.totalSpent.toFixed(0)}
+                                            </div>
+                                        </div>
+                                        <div className="text-right">
+                                            <div className="text-lg font-mono font-bold text-pink-400">{customer.daysSinceVisit}d</div>
+                                            <div className="text-[10px] text-slate-500">since visit</div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="text-slate-600 text-center py-8 font-mono">
+                                ✅ No at-risk customers
+                            </div>
+                        )}
+                    </div>
+
                     {/* 6. TICKER FOOTER (System Logs + Anomaly Alerts) */}
                     <div className="col-span-12 row-span-1 border-t border-slate-800 bg-black flex items-center px-4 overflow-hidden">
                         <div className="text-[10px] font-mono text-slate-500 whitespace-nowrap animate-marquee">
