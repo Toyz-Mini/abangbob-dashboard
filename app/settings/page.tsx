@@ -64,10 +64,36 @@ import { checkSupabaseConnection } from '@/lib/supabase/client';
 import { loadSettingsFromSupabase, saveSettingsToSupabase, loadSettingsFromLocalStorage } from '@/lib/supabase/settings-sync';
 import { PixelSettings, PixelConfig, DEFAULT_PIXEL_SETTINGS } from '@/lib/types';
 import { pixelTracker } from '@/lib/services/pixel-tracker';
+import { FileText, Building2 } from 'lucide-react';
 
-type SettingSection = 'outlet' | 'operations' | 'receipt' | 'printer' | 'data' | 'notifications' | 'supabase' | 'payment' | 'tax' | 'appearance' | 'security' | 'locations' | 'pixel';
+type SettingSection = 'outlet' | 'operations' | 'receipt' | 'printer' | 'data' | 'notifications' | 'supabase' | 'payment' | 'tax' | 'appearance' | 'security' | 'locations' | 'pixel' | 'payslip';
 type PaymentModalType = 'add-payment' | 'edit-payment' | 'delete-payment' | null;
 type TaxModalType = 'add-tax' | 'edit-tax' | 'delete-tax' | null;
+
+// Payslip Branding Interface
+interface PayslipBranding {
+  companyName: string;
+  companyLogo: string;
+  companyAddress: string;
+  companyPhone: string;
+  companyEmail: string;
+  companyRegNo: string;
+  showLogo: boolean;
+  primaryColor: string;
+  footerNote: string;
+}
+
+const DEFAULT_PAYSLIP_BRANDING: PayslipBranding = {
+  companyName: 'ABANGBOB SDN BHD',
+  companyLogo: '/logo.png',
+  companyAddress: 'Lot 123, Jalan Utama, Kampung Baru, B1234, Brunei Darussalam',
+  companyPhone: '+673 123 4567',
+  companyEmail: 'hr@abangbob.com',
+  companyRegNo: 'RC/00012345',
+  showLogo: true,
+  primaryColor: '#4F46E5',
+  footerNote: 'Ini adalah slip gaji yang dijana secara automatik. Sila simpan untuk rekod anda.'
+};
 
 // Sync Debug Section Component
 function SyncDebugSection() {
@@ -414,6 +440,15 @@ export default function SettingsPage() {
   // Pixel settings
   const [pixelSettings, setPixelSettings] = useState<PixelSettings>(DEFAULT_PIXEL_SETTINGS);
 
+  // Payslip branding settings
+  const [payslipBranding, setPayslipBranding] = useState<PayslipBranding>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('payslipBranding');
+      if (saved) return JSON.parse(saved);
+    }
+    return DEFAULT_PAYSLIP_BRANDING;
+  });
+
   // New pixel input state
   const [newPixelInputs, setNewPixelInputs] = useState({
     facebook: { id: '', name: '' },
@@ -638,6 +673,7 @@ export default function SettingsPage() {
     { id: 'security', labelKey: 'settings.security', icon: Lock },
     { id: 'notifications', labelKey: 'settings.notifications', icon: Bell },
     { id: 'pixel', labelKey: 'Pixel & Analytics', icon: BarChart3 },
+    { id: 'payslip', labelKey: 'Slip Gaji', icon: FileText },
     { id: 'supabase', labelKey: 'settings.supabaseCloud', icon: Cloud },
     { id: 'data', labelKey: 'settings.dataBackup', icon: Database },
   ];
@@ -2394,6 +2430,235 @@ export default function SettingsPage() {
                     </div>
                   </div>
                 </div>
+              </div>
+            )}
+
+            {/* Payslip Branding Settings */}
+            {activeSection === 'payslip' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                <div className="card">
+                  <div className="card-header">
+                    <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <FileText size={20} color="var(--primary)" />
+                      Tetapan Slip Gaji
+                    </div>
+                    <div className="card-subtitle">
+                      Customize branding dan maklumat syarikat pada slip gaji
+                    </div>
+                  </div>
+                </div>
+
+                {/* Company Information */}
+                <div className="card">
+                  <div className="card-header">
+                    <div className="card-title">🏢 Maklumat Syarikat</div>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                    <div className="form-group">
+                      <label className="form-label">Nama Syarikat</label>
+                      <input
+                        type="text"
+                        className="input"
+                        value={payslipBranding.companyName}
+                        onChange={(e) => setPayslipBranding(prev => ({ ...prev, companyName: e.target.value }))}
+                        placeholder="ABANGBOB SDN BHD"
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">No. Pendaftaran</label>
+                      <input
+                        type="text"
+                        className="input"
+                        value={payslipBranding.companyRegNo}
+                        onChange={(e) => setPayslipBranding(prev => ({ ...prev, companyRegNo: e.target.value }))}
+                        placeholder="RC/00012345"
+                      />
+                    </div>
+                    <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                      <label className="form-label">Alamat</label>
+                      <textarea
+                        className="input"
+                        value={payslipBranding.companyAddress}
+                        onChange={(e) => setPayslipBranding(prev => ({ ...prev, companyAddress: e.target.value }))}
+                        placeholder="Alamat penuh syarikat"
+                        rows={2}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Telefon</label>
+                      <input
+                        type="text"
+                        className="input"
+                        value={payslipBranding.companyPhone}
+                        onChange={(e) => setPayslipBranding(prev => ({ ...prev, companyPhone: e.target.value }))}
+                        placeholder="+673 123 4567"
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Email HR</label>
+                      <input
+                        type="email"
+                        className="input"
+                        value={payslipBranding.companyEmail}
+                        onChange={(e) => setPayslipBranding(prev => ({ ...prev, companyEmail: e.target.value }))}
+                        placeholder="hr@company.com"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Logo & Design */}
+                <div className="card">
+                  <div className="card-header">
+                    <div className="card-title">🎨 Logo & Design</div>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                    <div className="form-group">
+                      <label className="form-label">URL Logo</label>
+                      <input
+                        type="text"
+                        className="input"
+                        value={payslipBranding.companyLogo}
+                        onChange={(e) => setPayslipBranding(prev => ({ ...prev, companyLogo: e.target.value }))}
+                        placeholder="/logo.png atau https://..."
+                      />
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
+                        Letak file dalam /public folder atau gunakan URL penuh
+                      </div>
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Warna Utama</label>
+                      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                        <input
+                          type="color"
+                          value={payslipBranding.primaryColor}
+                          onChange={(e) => setPayslipBranding(prev => ({ ...prev, primaryColor: e.target.value }))}
+                          style={{ width: '50px', height: '40px', border: 'none', cursor: 'pointer' }}
+                        />
+                        <input
+                          type="text"
+                          className="input"
+                          value={payslipBranding.primaryColor}
+                          onChange={(e) => setPayslipBranding(prev => ({ ...prev, primaryColor: e.target.value }))}
+                          style={{ flex: 1 }}
+                        />
+                      </div>
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Tunjuk Logo</label>
+                      <button
+                        type="button"
+                        onClick={() => setPayslipBranding(prev => ({ ...prev, showLogo: !prev.showLogo }))}
+                        className={`btn ${payslipBranding.showLogo ? 'btn-primary' : 'btn-outline'}`}
+                        style={{ width: '100%' }}
+                      >
+                        {payslipBranding.showLogo ? (
+                          <><ToggleRight size={18} /> Logo Aktif</>
+                        ) : (
+                          <><ToggleLeft size={18} /> Logo Tersembunyi</>
+                        )}
+                      </button>
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Preview Logo</label>
+                      <div style={{
+                        width: '80px',
+                        height: '80px',
+                        borderRadius: 'var(--radius-md)',
+                        background: 'var(--gray-100)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        border: '2px dashed var(--border-light)',
+                        overflow: 'hidden'
+                      }}>
+                        {payslipBranding.companyLogo ? (
+                          <img
+                            src={payslipBranding.companyLogo}
+                            alt="Logo"
+                            style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).style.display = 'none';
+                            }}
+                          />
+                        ) : (
+                          <Building2 size={32} color="var(--text-secondary)" />
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Footer Note */}
+                <div className="card">
+                  <div className="card-header">
+                    <div className="card-title">📝 Nota Footer</div>
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Nota di bawah slip gaji</label>
+                    <textarea
+                      className="input"
+                      value={payslipBranding.footerNote}
+                      onChange={(e) => setPayslipBranding(prev => ({ ...prev, footerNote: e.target.value }))}
+                      placeholder="Nota atau disclaimer..."
+                      rows={3}
+                    />
+                  </div>
+                </div>
+
+                {/* Preview & Save */}
+                <div className="card" style={{ background: `${payslipBranding.primaryColor}10` }}>
+                  <div className="card-header">
+                    <div className="card-title">👁️ Preview Header</div>
+                  </div>
+                  <div style={{
+                    padding: '1rem',
+                    background: 'white',
+                    borderRadius: 'var(--radius-md)',
+                    border: `2px solid ${payslipBranding.primaryColor}`
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.5rem' }}>
+                      {payslipBranding.showLogo && (
+                        <div style={{
+                          width: '50px',
+                          height: '50px',
+                          background: 'var(--gray-100)',
+                          borderRadius: 'var(--radius-sm)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}>
+                          <Building2 size={24} color={payslipBranding.primaryColor} />
+                        </div>
+                      )}
+                      <div>
+                        <h3 style={{ color: payslipBranding.primaryColor, fontWeight: 700, margin: 0 }}>
+                          {payslipBranding.companyName || 'Nama Syarikat'}
+                        </h3>
+                        <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                          {payslipBranding.companyRegNo || 'No. Pendaftaran'}
+                        </div>
+                      </div>
+                    </div>
+                    <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                      {payslipBranding.companyAddress || 'Alamat syarikat'}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Save Button */}
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={() => {
+                    localStorage.setItem('payslipBranding', JSON.stringify(payslipBranding));
+                    alert('Tetapan slip gaji berjaya disimpan!');
+                  }}
+                  style={{ alignSelf: 'flex-start' }}
+                >
+                  <Save size={18} />
+                  Simpan Tetapan
+                </button>
               </div>
             )}
 
