@@ -183,12 +183,28 @@ export default function FinancePage() {
   const openCashFlowModal = () => {
     const today = getTodayCashFlow();
     if (today) {
+      // Load existing today's record
       setCashFlowData({
         openingCash: today.openingCash,
         salesCash: today.salesCash,
         salesCard: today.salesCard,
         salesEwallet: today.salesEwallet,
         expensesCash: today.expensesCash,
+      });
+    } else {
+      // No record for today - find yesterday/last record's closing balance as today's opening
+      const sortedFlows = [...cashFlows].sort((a, b) =>
+        new Date(b.date).getTime() - new Date(a.date).getTime()
+      );
+      const lastRecord = sortedFlows[0];
+      const openingFromYesterday = lastRecord?.closingCash ?? 500; // Default to 500 if no history
+
+      setCashFlowData({
+        openingCash: openingFromYesterday,
+        salesCash: 0,
+        salesCard: 0,
+        salesEwallet: 0,
+        expensesCash: 0,
       });
     }
     setModalType('cashflow');
