@@ -5,11 +5,11 @@ import MainLayout from '@/components/MainLayout';
 import { useKPI } from '@/lib/store';
 import { KPI_METRICS_CONFIG, getRankTier, getScoreColor, DEFAULT_KPI_CONFIG } from '@/lib/kpi-data';
 import Link from 'next/link';
-import { 
-  Trophy, 
-  Medal, 
-  Star, 
-  TrendingUp, 
+import {
+  Trophy,
+  Medal,
+  Star,
+  TrendingUp,
   TrendingDown,
   ChevronRight,
   Calendar,
@@ -24,27 +24,27 @@ import StatCard from '@/components/StatCard';
 
 export default function KPIDashboardPage() {
   const { staffKPI, staff, getKPILeaderboard, isInitialized } = useKPI();
-  
+
   const currentMonth = new Date().toISOString().slice(0, 7);
   const lastMonth = new Date(new Date().setMonth(new Date().getMonth() - 1)).toISOString().slice(0, 7);
-  
+
   const [selectedPeriod, setSelectedPeriod] = useState(currentMonth);
-  
+
   const leaderboard = getKPILeaderboard(selectedPeriod);
-  
+
   // Get staff info for display
   const getStaffInfo = (staffId: string) => {
     return staff.find(s => s.id === staffId);
   };
-  
+
   // Calculate average KPI score
-  const avgScore = leaderboard.length > 0 
+  const avgScore = leaderboard.length > 0
     ? Math.round(leaderboard.reduce((sum, k) => sum + k.overallScore, 0) / leaderboard.length)
     : 0;
-  
+
   // Total bonus payout
   const totalBonus = leaderboard.reduce((sum, k) => sum + k.bonusAmount, 0);
-  
+
   // Top performer
   const topPerformer = leaderboard[0];
   const topPerformerInfo = topPerformer ? getStaffInfo(topPerformer.staffId) : null;
@@ -80,11 +80,11 @@ export default function KPIDashboardPage() {
               Prestasi staf dan ranking bulanan
             </p>
           </div>
-          
+
           {/* Period Selector */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <Calendar size={18} color="var(--text-secondary)" />
-            <select 
+            <select
               value={selectedPeriod}
               onChange={(e) => setSelectedPeriod(e.target.value)}
               className="input"
@@ -144,24 +144,24 @@ export default function KPIDashboardPage() {
                 Top 3 Bulan Ini
               </div>
             </div>
-            
+
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', padding: '1rem 0' }}>
               {leaderboard.slice(0, 3).map((kpi, idx) => {
                 const staffInfo = getStaffInfo(kpi.staffId);
                 const tier = getRankTier(kpi.overallScore);
                 const medals = ['🥇', '🥈', '🥉'];
                 const podiumColors = ['#fbbf24', '#94a3b8', '#d97706'];
-                
+
                 return (
-                  <Link 
-                    key={kpi.id} 
-                    href={`/hr/kpi/${kpi.staffId}`}
+                  <Link
+                    key={kpi.id}
+                    href={`/hr/kpi/details?id=${kpi.staffId}`}
                     style={{ textDecoration: 'none', color: 'inherit' }}
                   >
-                    <div 
-                      style={{ 
-                        display: 'flex', 
-                        alignItems: 'center', 
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
                         gap: '1rem',
                         padding: '1rem',
                         background: idx === 0 ? 'linear-gradient(135deg, rgba(251, 191, 36, 0.15), rgba(245, 158, 11, 0.1))' : 'var(--gray-50)',
@@ -172,7 +172,7 @@ export default function KPIDashboardPage() {
                       }}
                       className="hover-lift"
                     >
-                      <div style={{ 
+                      <div style={{
                         fontSize: '2rem',
                         minWidth: '48px',
                         textAlign: 'center'
@@ -181,8 +181,8 @@ export default function KPIDashboardPage() {
                       </div>
                       <div style={{ flex: 1 }}>
                         <div style={{ fontWeight: 600, fontSize: '1.1rem' }}>{staffInfo?.name}</div>
-                        <div style={{ 
-                          fontSize: '0.75rem', 
+                        <div style={{
+                          fontSize: '0.75rem',
                           color: tier.color,
                           display: 'flex',
                           alignItems: 'center',
@@ -192,8 +192,8 @@ export default function KPIDashboardPage() {
                         </div>
                       </div>
                       <div style={{ textAlign: 'right' }}>
-                        <div style={{ 
-                          fontSize: '1.5rem', 
+                        <div style={{
+                          fontSize: '1.5rem',
                           fontWeight: 700,
                           color: getScoreColor(kpi.overallScore)
                         }}>
@@ -207,10 +207,10 @@ export default function KPIDashboardPage() {
                   </Link>
                 );
               })}
-              
+
               {leaderboard.length === 0 && (
-                <div style={{ 
-                  textAlign: 'center', 
+                <div style={{
+                  textAlign: 'center',
                   padding: '2rem',
                   color: 'var(--text-secondary)'
                 }}>
@@ -232,7 +232,7 @@ export default function KPIDashboardPage() {
                 {leaderboard.length} staf aktif
               </div>
             </div>
-            
+
             <div style={{ overflowX: 'auto' }}>
               <table className="table">
                 <thead>
@@ -250,25 +250,25 @@ export default function KPIDashboardPage() {
                   {leaderboard.map((kpi) => {
                     const staffInfo = getStaffInfo(kpi.staffId);
                     const tier = getRankTier(kpi.overallScore);
-                    
+
                     // Get last month score for trend
                     const lastMonthKPI = staffKPI.find(k => k.staffId === kpi.staffId && k.period === lastMonth);
                     const scoreDiff = lastMonthKPI ? kpi.overallScore - lastMonthKPI.overallScore : 0;
-                    
+
                     return (
                       <tr key={kpi.id}>
                         <td>
-                          <div style={{ 
-                            display: 'flex', 
-                            alignItems: 'center', 
+                          <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
                             justifyContent: 'center',
                             width: '32px',
                             height: '32px',
                             borderRadius: '50%',
-                            background: kpi.rank <= 3 
-                              ? kpi.rank === 1 ? '#fef3c7' 
-                              : kpi.rank === 2 ? '#f1f5f9' 
-                              : '#fef3c7'
+                            background: kpi.rank <= 3
+                              ? kpi.rank === 1 ? '#fef3c7'
+                                : kpi.rank === 2 ? '#f1f5f9'
+                                  : '#fef3c7'
                               : 'var(--gray-100)',
                             fontWeight: 700,
                             fontSize: kpi.rank <= 3 ? '0.875rem' : '0.75rem',
@@ -284,7 +284,7 @@ export default function KPIDashboardPage() {
                           </div>
                         </td>
                         <td style={{ textAlign: 'center' }}>
-                          <span style={{ 
+                          <span style={{
                             padding: '0.25rem 0.75rem',
                             borderRadius: '9999px',
                             fontSize: '0.75rem',
@@ -296,8 +296,8 @@ export default function KPIDashboardPage() {
                           </span>
                         </td>
                         <td style={{ textAlign: 'right' }}>
-                          <span style={{ 
-                            fontWeight: 700, 
+                          <span style={{
+                            fontWeight: 700,
                             fontSize: '1.1rem',
                             color: getScoreColor(kpi.overallScore)
                           }}>
@@ -311,9 +311,9 @@ export default function KPIDashboardPage() {
                         </td>
                         <td>
                           {scoreDiff !== 0 && (
-                            <div style={{ 
-                              display: 'flex', 
-                              alignItems: 'center', 
+                            <div style={{
+                              display: 'flex',
+                              alignItems: 'center',
                               gap: '0.25rem',
                               color: scoreDiff > 0 ? 'var(--success)' : 'var(--danger)',
                               fontSize: '0.875rem'
@@ -324,7 +324,7 @@ export default function KPIDashboardPage() {
                           )}
                         </td>
                         <td>
-                          <Link href={`/hr/kpi/${kpi.staffId}`} className="btn btn-ghost btn-sm">
+                          <Link href={`/hr/kpi/details?id=${kpi.staffId}`} className="btn btn-ghost btn-sm">
                             <ChevronRight size={18} />
                           </Link>
                         </td>
@@ -333,10 +333,10 @@ export default function KPIDashboardPage() {
                   })}
                 </tbody>
               </table>
-              
+
               {leaderboard.length === 0 && (
-                <div style={{ 
-                  textAlign: 'center', 
+                <div style={{
+                  textAlign: 'center',
                   padding: '3rem',
                   color: 'var(--text-secondary)'
                 }}>
@@ -354,27 +354,27 @@ export default function KPIDashboardPage() {
             <div className="card-title">Metrik KPI</div>
             <div className="card-subtitle">8 metrik yang dinilai untuk setiap staf</div>
           </div>
-          
+
           <div className="grid grid-cols-2 md:grid-cols-4" style={{ gap: '1rem' }}>
             {KPI_METRICS_CONFIG.map((metric) => (
-              <div 
+              <div
                 key={metric.key}
-                style={{ 
+                style={{
                   padding: '1rem',
                   borderRadius: 'var(--radius-md)',
                   background: 'var(--gray-50)',
                   border: '1px solid var(--gray-200)'
                 }}
               >
-                <div style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
                   gap: '0.5rem',
                   marginBottom: '0.5rem'
                 }}>
-                  <div style={{ 
-                    width: '8px', 
-                    height: '8px', 
+                  <div style={{
+                    width: '8px',
+                    height: '8px',
                     borderRadius: '50%',
                     background: metric.color
                   }} />
@@ -383,8 +383,8 @@ export default function KPIDashboardPage() {
                 <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: 0 }}>
                   {metric.description}
                 </p>
-                <div style={{ 
-                  fontSize: '0.7rem', 
+                <div style={{
+                  fontSize: '0.7rem',
                   color: 'var(--text-secondary)',
                   marginTop: '0.5rem',
                   padding: '0.25rem 0.5rem',
