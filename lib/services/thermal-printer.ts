@@ -383,10 +383,14 @@ class ThermalPrinterService {
       const itemTotal = (item.itemTotal * item.quantity).toFixed(2);
       await this.printTwoColumn(`${item.quantity}x ${item.name}`, `BND ${itemTotal}`, width);
 
-      // Modifiers
+      // Modifiers - show group name + option for better context
       if (item.selectedModifiers?.length > 0) {
         for (const mod of item.selectedModifiers) {
-          await this.printText(`  + ${mod.optionName}`);
+          // Format: "Enoki Original" instead of just "Original"
+          const modifierLabel = mod.groupName
+            ? `${mod.groupName} ${mod.optionName}`.replace(/flavou?r/i, '').trim()
+            : mod.optionName;
+          await this.printText(`  + ${modifierLabel}`);
         }
       }
     }
@@ -585,7 +589,12 @@ class ThermalPrinterService {
       <span>${item.quantity}x ${item.name}</span>
       <span>BND ${(item.itemTotal * item.quantity).toFixed(2)}</span>
     </div>
-    ${item.selectedModifiers?.map(mod => `<div class="modifier">+ ${mod.optionName}</div>`).join('') || ''}
+    ${item.selectedModifiers?.map(mod => {
+      const modifierLabel = mod.groupName
+        ? `${mod.groupName} ${mod.optionName}`.replace(/flavou?r/i, '').trim()
+        : mod.optionName;
+      return `<div class="modifier">+ ${modifierLabel}</div>`;
+    }).join('') || ''}
   `).join('')}
   
   <div class="divider"></div>
