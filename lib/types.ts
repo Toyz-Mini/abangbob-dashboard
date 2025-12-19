@@ -593,7 +593,7 @@ export interface Promotion {
   id: string;
   name: string;
   description?: string;
-  type: 'percentage' | 'fixed_amount' | 'bogo' | 'free_item';
+  type: 'percentage' | 'fixed_amount' | 'bogo' | 'free_item' | 'buy_x_get_y';
   value: number;
   minPurchase?: number;
   maxDiscount?: number;
@@ -608,6 +608,11 @@ export interface Promotion {
   usageCount: number;
   status: 'active' | 'inactive' | 'expired';
   createdAt: string;
+  // Buy X Get Y fields
+  buyQuantity?: number; // e.g. Buy 2
+  getQuantity?: number; // e.g. Get 1
+  getFreeItemId?: string; // ID of free item (null = same item)
+  getDiscountPercent?: number; // e.g. 50% off the free item (100 = totally free)
 }
 
 // ==================== NOTIFICATION TYPES ====================

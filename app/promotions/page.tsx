@@ -28,6 +28,7 @@ const PROMO_TYPES = [
   { value: 'percentage', label: 'Diskaun %', icon: Percent },
   { value: 'fixed_amount', label: 'Potongan Tetap', icon: Tag },
   { value: 'bogo', label: 'Buy 1 Get 1', icon: Gift },
+  { value: 'buy_x_get_y', label: 'Buy X Get Y', icon: Gift },
   { value: 'free_item', label: 'Item Percuma', icon: Zap },
 ];
 
@@ -62,7 +63,7 @@ export default function PromotionsPage() {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    type: 'percentage' as 'percentage' | 'fixed_amount' | 'bogo' | 'free_item',
+    type: 'percentage' as 'percentage' | 'fixed_amount' | 'bogo' | 'free_item' | 'buy_x_get_y',
     value: 10,
     minPurchase: 0,
     maxDiscount: 0,
@@ -75,6 +76,11 @@ export default function PromotionsPage() {
     endTime: '',
     usageLimit: 0,
     status: 'active' as 'active' | 'inactive',
+    // Buy X Get Y fields
+    buyQuantity: 2,
+    getQuantity: 1,
+    getFreeItemId: '',
+    getDiscountPercent: 100, // 100 = free
   });
 
   // Calculate metrics
@@ -129,6 +135,10 @@ export default function PromotionsPage() {
       endTime: '',
       usageLimit: 0,
       status: 'active',
+      buyQuantity: 2,
+      getQuantity: 1,
+      getFreeItemId: '',
+      getDiscountPercent: 100,
     });
     setModalType('add');
   };
@@ -151,6 +161,10 @@ export default function PromotionsPage() {
       endTime: promo.endTime || '',
       usageLimit: promo.usageLimit || 0,
       status: promo.status as 'active' | 'inactive',
+      buyQuantity: promo.buyQuantity || 2,
+      getQuantity: promo.getQuantity || 1,
+      getFreeItemId: promo.getFreeItemId || '',
+      getDiscountPercent: promo.getDiscountPercent ?? 100,
     });
     setModalType('edit');
   };
@@ -519,7 +533,7 @@ export default function PromotionsPage() {
                 return (
                   <button
                     key={type.value}
-                    onClick={() => setFormData(prev => ({ ...prev, type: type.value as 'percentage' | 'fixed_amount' | 'bogo' | 'free_item' }))}
+                    onClick={() => setFormData(prev => ({ ...prev, type: type.value as typeof formData.type }))}
                     className={`btn ${formData.type === type.value ? 'btn-primary' : 'btn-outline'}`}
                     style={{ justifyContent: 'flex-start' }}
                   >
@@ -558,6 +572,73 @@ export default function PromotionsPage() {
                   />
                 </div>
               )}
+            </div>
+          )}
+
+          {/* Buy X Get Y Fields */}
+          {formData.type === 'buy_x_get_y' && (
+            <div className="card" style={{ padding: '1rem', marginBottom: '1rem', background: 'var(--primary-light)', border: '1px solid var(--primary)' }}>
+              <div style={{ fontWeight: 600, marginBottom: '1rem', color: 'var(--primary)' }}>
+                <Gift size={16} style={{ display: 'inline', marginRight: '0.5rem' }} />
+                Setup Buy X Get Y
+              </div>
+              <div className="grid grid-cols-2" style={{ gap: '1rem' }}>
+                <div className="form-group">
+                  <label className="form-label">Beli Berapa?</label>
+                  <input
+                    type="number"
+                    className="form-input"
+                    value={formData.buyQuantity}
+                    onChange={(e) => setFormData(prev => ({ ...prev, buyQuantity: Number(e.target.value) }))}
+                    min="1"
+                    placeholder="cth: 2"
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Dapat Berapa?</label>
+                  <input
+                    type="number"
+                    className="form-input"
+                    value={formData.getQuantity}
+                    onChange={(e) => setFormData(prev => ({ ...prev, getQuantity: Number(e.target.value) }))}
+                    min="1"
+                    placeholder="cth: 1"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2" style={{ gap: '1rem', marginTop: '1rem' }}>
+                <div className="form-group">
+                  <label className="form-label">Item Percuma</label>
+                  <select
+                    className="form-input"
+                    value={formData.getFreeItemId}
+                    onChange={(e) => setFormData(prev => ({ ...prev, getFreeItemId: e.target.value }))}
+                  >
+                    <option value="">Item Sama</option>
+                    {MOCK_MENU.map(item => (
+                      <option key={item.id} value={item.id}>{item.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Diskaun %</label>
+                  <input
+                    type="number"
+                    className="form-input"
+                    value={formData.getDiscountPercent}
+                    onChange={(e) => setFormData(prev => ({ ...prev, getDiscountPercent: Number(e.target.value) }))}
+                    min="0"
+                    max="100"
+                    placeholder="100 = Percuma"
+                  />
+                  <small style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>
+                    100% = Percuma, 50% = Separuh Harga
+                  </small>
+                </div>
+              </div>
+              <div style={{ marginTop: '1rem', padding: '0.75rem', background: 'var(--gray-100)', borderRadius: '8px', fontSize: '0.875rem' }}>
+                <strong>Preview:</strong> Beli {formData.buyQuantity}, Dapat {formData.getQuantity} {formData.getDiscountPercent === 100 ? 'PERCUMA' : `dengan diskaun ${formData.getDiscountPercent}%`}
+              </div>
             </div>
           )}
 

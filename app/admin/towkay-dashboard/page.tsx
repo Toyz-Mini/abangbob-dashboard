@@ -266,6 +266,82 @@ export default function TowkayDashboard() {
                         </div>
                     </div>
 
+                    {/* 5B. STAFF PERFORMANCE COMPARISON */}
+                    <div className="col-span-12 lg:col-span-6 row-span-3 bg-slate-900/50 border border-slate-700/50 rounded-xl p-5">
+                        <h3 className="text-slate-400 text-xs font-mono uppercase tracking-widest mb-4 flex items-center gap-2">
+                            <Activity size={14} /> Staff Performance Comparison
+                        </h3>
+                        <div className="space-y-3">
+                            {stats.staffLeaderboard.map((member, idx) => {
+                                const maxPoints = Math.max(...stats.staffLeaderboard.map(s => s.points), 1);
+                                const widthPercent = (member.points / maxPoints) * 100;
+                                const colors = ['bg-cyan-500', 'bg-purple-500', 'bg-pink-500', 'bg-green-500', 'bg-yellow-500'];
+                                return (
+                                    <div key={member.name} className="flex items-center gap-3">
+                                        <div className="w-6 text-center">
+                                            {idx === 0 ? <Crown size={16} className="text-yellow-400" /> : <span className="text-slate-500 text-sm">{idx + 1}</span>}
+                                        </div>
+                                        <div className="w-24 text-sm text-slate-300 truncate">{member.name}</div>
+                                        <div className="flex-1 h-6 bg-slate-800 rounded-full overflow-hidden">
+                                            <div
+                                                className={`h-full ${colors[idx % colors.length]} transition-all duration-500 flex items-center justify-end pr-2`}
+                                                style={{ width: `${widthPercent}%` }}
+                                            >
+                                                <span className="text-[10px] font-mono font-bold text-white">{member.points} XP</span>
+                                            </div>
+                                        </div>
+                                        <div className="w-20 text-right">
+                                            <span className={`text-xs px-2 py-0.5 rounded ${member.badges?.[0] ? 'bg-yellow-500/20 text-yellow-400' : 'bg-slate-800 text-slate-500'}`}>
+                                                {member.badges?.[0] || '-'}
+                                            </span>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    {/* 5C. AUTO-REORDER SUGGESTIONS */}
+                    <div className="col-span-12 lg:col-span-6 row-span-3 bg-slate-900/50 border border-orange-500/30 rounded-xl p-5">
+                        <h3 className="text-orange-400 text-xs font-mono uppercase tracking-widest mb-4 flex items-center gap-2">
+                            <AlertTriangle size={14} /> Auto-Reorder Suggestions
+                        </h3>
+                        {stats.autoReorder && stats.autoReorder.length > 0 ? (
+                            <div className="space-y-2 max-h-48 overflow-y-auto">
+                                {stats.autoReorder.slice(0, 5).map((item, idx) => (
+                                    <div key={idx} className={`flex items-center justify-between p-3 rounded-lg border ${item.urgency === 'high' ? 'bg-red-500/10 border-red-500/30' :
+                                        item.urgency === 'medium' ? 'bg-orange-500/10 border-orange-500/30' :
+                                            'bg-slate-800/50 border-slate-700/30'
+                                        }`}>
+                                        <div className="flex-1">
+                                            <div className="flex items-center gap-2">
+                                                <span className={`text-sm font-medium ${item.urgency === 'high' ? 'text-red-400' :
+                                                    item.urgency === 'medium' ? 'text-orange-400' :
+                                                        'text-slate-300'
+                                                    }`}>{item.itemName}</span>
+                                                <span className={`text-[10px] uppercase px-1.5 py-0.5 rounded ${item.urgency === 'high' ? 'bg-red-500/20 text-red-300' :
+                                                    item.urgency === 'medium' ? 'bg-orange-500/20 text-orange-300' :
+                                                        'bg-slate-700 text-slate-400'
+                                                    }`}>{item.urgency}</span>
+                                            </div>
+                                            <div className="text-[11px] text-slate-500 mt-1">
+                                                Stock: {item.currentQty} / Min: {item.minQty} • {item.reason}
+                                            </div>
+                                        </div>
+                                        <div className="text-right">
+                                            <div className="text-sm font-mono text-white">+{item.suggestedQty}</div>
+                                            <div className="text-[10px] text-slate-500">≈ RM{item.estimatedCost?.toFixed(0) || '?'}</div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="text-slate-600 text-center py-8 font-mono">
+                                ✅ All stock levels optimal
+                            </div>
+                        )}
+                    </div>
+
                     {/* 6. TICKER FOOTER (System Logs + Anomaly Alerts) */}
                     <div className="col-span-12 row-span-1 border-t border-slate-800 bg-black flex items-center px-4 overflow-hidden">
                         <div className="text-[10px] font-mono text-slate-500 whitespace-nowrap animate-marquee">

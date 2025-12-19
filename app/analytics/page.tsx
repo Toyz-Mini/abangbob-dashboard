@@ -56,6 +56,16 @@ export default function AnalyticsPage() {
   const [isExporting, setIsExporting] = useState(false);
 
   const { from: rangeStart, to: rangeEnd } = dateRange;
+  const [comparisonMode, setComparisonMode] = useState(false);
+
+  // Calculate previous period (same duration before rangeStart)
+  const previousPeriod = useMemo(() => {
+    const duration = rangeEnd.getTime() - rangeStart.getTime();
+    return {
+      from: new Date(rangeStart.getTime() - duration),
+      to: new Date(rangeStart.getTime() - 1)
+    };
+  }, [rangeStart, rangeEnd]);
 
   // Filter orders by date range
   const filteredOrders = useMemo(() => {
@@ -64,6 +74,15 @@ export default function AnalyticsPage() {
       return orderDate >= rangeStart && orderDate <= rangeEnd;
     });
   }, [orders, rangeStart, rangeEnd]);
+
+  // Filter orders for previous period (for comparison)
+  const previousOrders = useMemo(() => {
+    if (!comparisonMode) return [];
+    return orders.filter(o => {
+      const orderDate = new Date(o.createdAt);
+      return orderDate >= previousPeriod.from && orderDate <= previousPeriod.to;
+    });
+  }, [orders, previousPeriod, comparisonMode]);
 
   // Sales Analytics
   const salesAnalytics = useMemo(() => {
@@ -75,6 +94,24 @@ export default function AnalyticsPage() {
 
     return { totalRevenue, totalOrders, avgOrderValue, completionRate };
   }, [filteredOrders]);
+
+  // Previous period analytics (for comparison)
+  const previousAnalytics = useMemo(() => {
+    if (!comparisonMode) return null;
+    const totalRevenue = previousOrders.reduce((sum, o) => sum + o.total, 0);
+    const totalOrders = previousOrders.length;
+    const avgOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+    const completedOrders = previousOrders.filter(o => o.status === 'completed').length;
+    const completionRate = totalOrders > 0 ? (completedOrders / totalOrders) * 100 : 0;
+
+    return { totalRevenue, totalOrders, avgOrderValue, completionRate };
+  }, [previousOrders, comparisonMode]);
+
+  // Calculate change percentage
+  const getChangePercent = (current: number, previous: number | undefined) => {
+    if (!previous || previous === 0) return null;
+    return ((current - previous) / previous) * 100;
+  };
 
   // Daily sales trend
   const dailySalesTrend = useMemo(() => {
@@ -470,6 +507,16 @@ export default function AnalyticsPage() {
                 Laporan Terperinci
               </Link>
 
+              {/* Comparison Toggle */}
+              <button
+                onClick={() => setComparisonMode(!comparisonMode)}
+                className={`btn btn-sm ${comparisonMode ? 'btn-primary' : 'btn-outline'} flex items-center gap-2 mr-2`}
+                title="Bandingkan dengan tempoh sebelum"
+              >
+                <TrendingUp size={16} />
+                {comparisonMode ? 'Comparison ON' : 'Bandingkan'}
+              </button>
+
               {/* Date Range Picker */}
               <DateRangePicker
                 date={dateRange}
@@ -477,6 +524,13 @@ export default function AnalyticsPage() {
                 className="w-full md:w-auto"
               />
             </div>
+
+            {/* Comparison Period Info */}
+            {comparisonMode && (
+              <div style={{ marginTop: '0.5rem', padding: '0.5rem 1rem', background: 'var(--primary-light)', borderRadius: '8px', fontSize: '0.8rem', color: 'var(--primary)' }}>
+                📊 Bandingkan dengan: {format(previousPeriod.from, 'dd MMM')} - {format(previousPeriod.to, 'dd MMM yyyy')}
+              </div>
+            )}
           </div>
         </div>
 
