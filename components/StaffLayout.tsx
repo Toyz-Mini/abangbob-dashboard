@@ -6,45 +6,52 @@ import { useRouter } from 'next/navigation';
 import { LogOut, User } from 'lucide-react';
 
 interface StaffLayoutProps {
-    children: ReactNode;
-    showHeader?: boolean;
+  children: ReactNode;
+  showHeader?: boolean;
 }
 
 export default function StaffLayout({ children, showHeader = true }: StaffLayoutProps) {
-    const { currentStaff, logoutStaff, isStaffLoggedIn } = useAuth();
-    const router = useRouter();
+  const { currentStaff, logoutStaff, isStaffLoggedIn } = useAuth();
+  const router = useRouter();
 
-    const handleLogout = () => {
-        logoutStaff();
-        router.push('/staff-login');
-    };
+  const handleLogout = async () => {
+    console.log('[StaffLayout] Logout button clicked');
+    try {
+      logoutStaff();
+      console.log('[StaffLayout] logoutStaff called successfully');
+      // Force reload to clear any cached state
+      window.location.href = '/staff-login';
+    } catch (error) {
+      console.error('[StaffLayout] Logout error:', error);
+    }
+  };
 
-    return (
-        <div className="staff-layout">
-            {/* Simple Header */}
-            {showHeader && (
-                <header className="staff-header">
-                    <div className="staff-header-left">
-                        <div className="staff-header-avatar">
-                            {currentStaff?.name?.charAt(0)?.toUpperCase() || 'S'}
-                        </div>
-                        <div className="staff-header-info">
-                            <div className="staff-header-name">{currentStaff?.name || 'Staff'}</div>
-                            <div className="staff-header-role">{currentStaff?.role || 'Staff'}</div>
-                        </div>
-                    </div>
-                    <button className="staff-logout-btn" onClick={handleLogout}>
-                        <LogOut size={20} />
-                    </button>
-                </header>
-            )}
+  return (
+    <div className="staff-layout">
+      {/* Simple Header */}
+      {showHeader && (
+        <header className="staff-header">
+          <div className="staff-header-left">
+            <div className="staff-header-avatar">
+              {currentStaff?.name?.charAt(0)?.toUpperCase() || 'S'}
+            </div>
+            <div className="staff-header-info">
+              <div className="staff-header-name">{currentStaff?.name || 'Staff'}</div>
+              <div className="staff-header-role">{currentStaff?.role || 'Staff'}</div>
+            </div>
+          </div>
+          <button type="button" className="staff-logout-btn" onClick={handleLogout}>
+            <LogOut size={20} />
+          </button>
+        </header>
+      )}
 
-            {/* Main Content */}
-            <main className="staff-main">
-                {children}
-            </main>
+      {/* Main Content */}
+      <main className="staff-main">
+        {children}
+      </main>
 
-            <style jsx>{`
+      <style jsx>{`
         .staff-layout {
           min-height: 100vh;
           background: #f5f5f5;
@@ -117,6 +124,6 @@ export default function StaffLayout({ children, showHeader = true }: StaffLayout
           padding-bottom: 100px; /* Space for bottom nav */
         }
       `}</style>
-        </div>
-    );
+    </div>
+  );
 }
