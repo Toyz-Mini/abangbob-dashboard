@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import MainLayout from '@/components/MainLayout';
-import { useStaff } from '@/lib/store';
+import { useStaff, useStore } from '@/lib/store';
 import Link from 'next/link';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import StaffPortalNav from '@/components/StaffPortalNav';
@@ -15,11 +15,37 @@ import {
   TrendingUp,
   TrendingDown,
   ChevronDown,
-  Printer
+  Printer,
+  Building2
 } from 'lucide-react';
 
 
 const CURRENT_STAFF_ID = '2';
+
+// Payslip Settings (can be loaded from settings in production)
+interface PayslipBranding {
+  companyName: string;
+  companyLogo: string;
+  companyAddress: string;
+  companyPhone: string;
+  companyEmail: string;
+  companyRegNo: string;
+  showLogo: boolean;
+  primaryColor: string;
+  footerNote: string;
+}
+
+const DEFAULT_PAYSLIP_BRANDING: PayslipBranding = {
+  companyName: 'ABANGBOB SDN BHD',
+  companyLogo: '/logo.png', // Default logo path
+  companyAddress: 'Lot 123, Jalan Utama, Kampung Baru, B1234, Brunei Darussalam',
+  companyPhone: '+673 123 4567',
+  companyEmail: 'hr@abangbob.com',
+  companyRegNo: 'RC/00012345',
+  showLogo: true,
+  primaryColor: '#4F46E5',
+  footerNote: 'Ini adalah slip gaji yang dijana secara automatik. Sila simpan untuk rekod anda.'
+};
 
 interface PayslipData {
   month: string;
@@ -85,6 +111,15 @@ export default function PayslipPage() {
   const { staff, isInitialized } = useStaff();
   const [selectedPayslip, setSelectedPayslip] = useState<PayslipData | null>(mockPayslips[0]);
   const [expandedMonth, setExpandedMonth] = useState<string | null>(mockPayslips[0]?.month);
+
+  // Get branding from localStorage or use defaults
+  const [branding, setBranding] = useState<PayslipBranding>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('payslipBranding');
+      if (saved) return JSON.parse(saved);
+    }
+    return DEFAULT_PAYSLIP_BRANDING;
+  });
 
   const currentStaff = staff.find(s => s.id === CURRENT_STAFF_ID);
 
@@ -159,6 +194,59 @@ export default function PayslipPage() {
           <div style={{ gridColumn: 'span 2' }}>
             {selectedPayslip && (
               <div className="card payslip-detail-card">
+                {/* Company Branding Header */}
+                <div style={{
+                  background: `linear-gradient(135deg, ${branding.primaryColor}10 0%, ${branding.primaryColor}05 100%)`,
+                  borderBottom: `2px solid ${branding.primaryColor}`,
+                  padding: '1.5rem',
+                  marginBottom: '1rem',
+                  borderRadius: 'var(--radius-lg) var(--radius-lg) 0 0'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
+                    {branding.showLogo && (
+                      <div style={{
+                        width: '60px',
+                        height: '60px',
+                        borderRadius: 'var(--radius-md)',
+                        background: 'white',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        border: '1px solid var(--border-light)',
+                        overflow: 'hidden'
+                      }}>
+                        {branding.companyLogo ? (
+                          <img
+                            src={branding.companyLogo}
+                            alt="Logo"
+                            style={{ width: '50px', height: '50px', objectFit: 'contain' }}
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).style.display = 'none';
+                              (e.target as HTMLImageElement).parentElement!.innerHTML = '<span style="font-size: 1.5rem; font-weight: 700; color: var(--primary)">AB</span>';
+                            }}
+                          />
+                        ) : (
+                          <Building2 size={28} color={branding.primaryColor} />
+                        )}
+                      </div>
+                    )}
+                    <div>
+                      <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: branding.primaryColor, marginBottom: '0.25rem' }}>
+                        {branding.companyName}
+                      </h2>
+                      <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                        {branding.companyRegNo}
+                      </div>
+                    </div>
+                  </div>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+                    <div>{branding.companyAddress}</div>
+                    <div style={{ textAlign: 'right' }}>
+                      📞 {branding.companyPhone} | ✉️ {branding.companyEmail}
+                    </div>
+                  </div>
+                </div>
+
                 <div className="payslip-header">
                   <div>
                     <h2>Slip Gaji</h2>
@@ -263,6 +351,22 @@ export default function PayslipPage() {
                   <FileText size={14} />
                   <span>Caruman Majikan EPF: BND {selectedPayslip.epfEmployer.toFixed(2)}</span>
                 </div>
+
+                {/* Footer Note */}
+                {branding.footerNote && (
+                  <div style={{
+                    marginTop: '1rem',
+                    padding: '0.75rem',
+                    background: 'var(--gray-50)',
+                    borderRadius: 'var(--radius-md)',
+                    fontSize: '0.8rem',
+                    color: 'var(--text-secondary)',
+                    textAlign: 'center',
+                    fontStyle: 'italic'
+                  }}>
+                    {branding.footerNote}
+                  </div>
+                )}
               </div>
             )}
           </div>
