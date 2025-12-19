@@ -418,6 +418,78 @@ export default function HRDashboardPage() {
                 </div>
               </GlassCard>
             )}
+
+            {/* Overtime Report */}
+            <GlassCard className="animate-slide-up" style={{ animationDelay: '0.5s' }}>
+              <div className="card-header border-b border-gray-100 pb-2 mb-2">
+                <div className="card-title text-base flex items-center gap-2">
+                  <Clock size={16} color="var(--warning)" /> Overtime Report
+                </div>
+              </div>
+              <div className="flex flex-col gap-2">
+                {/* Calculate overtime for completed staff */}
+                {(() => {
+                  const overtimeData = completedStaff.map(staffMember => {
+                    const record = getStaffAttendanceToday(staffMember.id);
+                    if (!record?.clockInTime || !record?.clockOutTime) return null;
+
+                    // Parse times (assume HH:MM format)
+                    const parseTime = (timeStr: string) => {
+                      const [hours, minutes] = timeStr.split(':').map(Number);
+                      return hours * 60 + minutes;
+                    };
+
+                    const clockIn = parseTime(record.clockInTime);
+                    const clockOut = parseTime(record.clockOutTime);
+                    const totalMinutes = clockOut - clockIn;
+                    const regularMinutes = 8 * 60; // 8 hours regular
+                    const overtimeMinutes = Math.max(0, totalMinutes - regularMinutes);
+
+                    return {
+                      name: staffMember.name,
+                      totalHours: (totalMinutes / 60).toFixed(1),
+                      overtimeHours: (overtimeMinutes / 60).toFixed(1),
+                      overtimeMinutes,
+                      rate: staffMember.overtimeRate || 1.5
+                    };
+                  }).filter(Boolean).filter((d: any) => d.overtimeMinutes > 0) as any[];
+
+                  if (overtimeData.length === 0) {
+                    return (
+                      <div className="text-center text-secondary py-4" style={{ fontSize: '0.85rem' }}>
+                        Tiada overtime hari ini
+                      </div>
+                    );
+                  }
+
+                  const totalOvertimeHours = overtimeData.reduce((sum: number, d: any) => sum + parseFloat(d.overtimeHours), 0);
+
+                  return (
+                    <>
+                      {overtimeData.slice(0, 5).map((data: any, idx: number) => (
+                        <div key={idx} className="flex justify-between items-center text-sm p-2 rounded" style={{ background: 'var(--warning-light)' }}>
+                          <span style={{ fontWeight: 500 }}>{data.name}</span>
+                          <div style={{ textAlign: 'right' }}>
+                            <div style={{ fontWeight: 600, color: 'var(--warning)' }}>
+                              +{data.overtimeHours}j OT
+                            </div>
+                            <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>
+                              Total: {data.totalHours}j @ {data.rate}x
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                      <div style={{ marginTop: '0.5rem', padding: '0.75rem', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-md)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>Total OT Hari Ini</span>
+                        <span style={{ fontWeight: 700, color: 'var(--warning)', fontSize: '1.1rem' }}>
+                          {totalOvertimeHours.toFixed(1)} jam
+                        </span>
+                      </div>
+                    </>
+                  );
+                })()}
+              </div>
+            </GlassCard>
           </div>
         </div>
       </div>
