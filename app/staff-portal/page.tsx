@@ -6,6 +6,7 @@ import { useStaffPortal, useStaff } from '@/lib/store';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { getLeaveTypeLabel, getStatusLabel, getStatusColor } from '@/lib/staff-portal-data';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import {
   Clock,
@@ -139,8 +140,17 @@ function LeaveBalanceRing({
 }
 
 export default function StaffPortalPage() {
+  const router = useRouter();
+
   // Get current logged-in staff from AuthContext
   const { currentStaff: authStaff, isStaffLoggedIn, user } = useAuth();
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!isStaffLoggedIn && !user) {
+      router.push('/staff-login');
+    }
+  }, [isStaffLoggedIn, user, router]);
 
   const {
     staff,

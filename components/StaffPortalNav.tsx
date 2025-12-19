@@ -32,16 +32,10 @@ export default function StaffPortalNav({ currentPage, pendingCount = 0 }: StaffP
       id: 'home'
     },
     {
-      href: '/pos',
-      icon: Monitor,
-      label: 'POS',
-      id: 'pos'
-    },
-    {
-      href: '/order-history',
-      icon: History,
-      label: 'History',
-      id: 'orders'
+      href: '/staff-portal/schedule',
+      icon: Calendar,
+      label: 'Jadual',
+      id: 'schedule'
     },
     {
       href: '/staff-portal/checklist',
@@ -49,12 +43,12 @@ export default function StaffPortalNav({ currentPage, pendingCount = 0 }: StaffP
       label: 'Checklist',
       id: 'checklist'
     },
-    // {
-    //   href: '/staff-portal/profile',
-    //   icon: User,
-    //   label: 'Profil',
-    //   id: 'profile'
-    // },
+    {
+      href: '/staff-portal/leave',
+      icon: Plane,
+      label: 'Cuti',
+      id: 'leave'
+    },
   ];
 
   const isActive = (href: string, id: string) => {
@@ -70,44 +64,31 @@ export default function StaffPortalNav({ currentPage, pendingCount = 0 }: StaffP
   // State for mobile menu
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  // Additional menu items for the sheet
+  // Additional menu items for the sheet (staff-only)
   const moreMenuItems = [
     {
-      href: '/staff-portal/schedule',
-      label: 'Jadual',
-      icon: Calendar,
-      color: 'var(--primary)'
+      href: '/staff-portal/claims',
+      label: 'Tuntutan',
+      icon: History,
+      color: 'var(--success)'
     },
     {
-      href: '/staff-portal/leave',
-      label: 'Cuti',
-      icon: Plane,
-      color: 'var(--success)',
-      badge: pendingCount
+      href: '/staff-portal/payslip',
+      label: 'Payslip',
+      icon: User,
+      color: 'var(--info)'
     },
     {
       href: '/staff-portal/profile',
       label: 'Profil',
       icon: User,
-      color: 'var(--info)'
-    },
-    {
-      href: '/kds',
-      label: 'Kitchen',
-      icon: Monitor,
-      color: 'var(--warning)'
-    },
-    {
-      href: '/order-display',
-      label: 'Queue',
-      icon: Clock,
       color: 'var(--primary)'
     },
     {
-      href: '/settings',
-      label: 'Tetapan',
-      icon: MoreHorizontal,
-      color: 'var(--text-secondary)'
+      href: '/staff-portal/swap-shift',
+      label: 'Tukar Shift',
+      icon: Calendar,
+      color: 'var(--warning)'
     },
   ];
 
@@ -189,22 +170,6 @@ export default function StaffPortalNav({ currentPage, pendingCount = 0 }: StaffP
                 <span style={{ fontSize: '0.7rem', fontWeight: 600, textAlign: 'center' }}>
                   {item.label}
                 </span>
-                {item.badge && item.badge > 0 && (
-                  <span style={{
-                    position: 'absolute',
-                    top: '-5px',
-                    right: '10px',
-                    background: 'var(--error)',
-                    color: 'white',
-                    fontSize: '0.6rem',
-                    padding: '2px 6px',
-                    borderRadius: '10px',
-                    fontWeight: 'bold',
-                    boxShadow: '0 2px 5px rgba(0,0,0,0.2)'
-                  }}>
-                    {item.badge}
-                  </span>
-                )}
               </Link>
             );
           })}
