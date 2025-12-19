@@ -1,8 +1,8 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-    appId: 'com.abangbob.staff',
-    appName: 'AbangBob Staff',
+    appId: 'com.abangbob.manager',
+    appName: 'AbangBob Manager',
     webDir: 'out',
     server: {
         allowNavigation: ['*']
