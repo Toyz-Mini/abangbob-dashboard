@@ -55,14 +55,17 @@ import {
   Activity,
   XCircle,
   MapPin,
+  BarChart3,
 } from 'lucide-react';
 import SupabaseStatusIndicator from '@/components/SupabaseStatusIndicator';
 import { getDataSourceInfo, DataSource } from '@/lib/store';
 import { getSyncLogs, getSyncStats, clearSyncLogs, SyncLogEntry } from '@/lib/utils/sync-logger';
 import { checkSupabaseConnection } from '@/lib/supabase/client';
 import { loadSettingsFromSupabase, saveSettingsToSupabase, loadSettingsFromLocalStorage } from '@/lib/supabase/settings-sync';
+import { PixelSettings, PixelConfig, DEFAULT_PIXEL_SETTINGS } from '@/lib/types';
+import { pixelTracker } from '@/lib/services/pixel-tracker';
 
-type SettingSection = 'outlet' | 'operations' | 'receipt' | 'printer' | 'data' | 'notifications' | 'supabase' | 'payment' | 'tax' | 'appearance' | 'security' | 'locations';
+type SettingSection = 'outlet' | 'operations' | 'receipt' | 'printer' | 'data' | 'notifications' | 'supabase' | 'payment' | 'tax' | 'appearance' | 'security' | 'locations' | 'pixel';
 type PaymentModalType = 'add-payment' | 'edit-payment' | 'delete-payment' | null;
 type TaxModalType = 'add-tax' | 'edit-tax' | 'delete-tax' | null;
 
@@ -408,6 +411,17 @@ export default function SettingsPage() {
   const [printerSettings, setPrinterSettings] = useState<PrinterSettings>(DEFAULT_PRINTER_SETTINGS);
   const [isPrinterConnecting, setIsPrinterConnecting] = useState(false);
 
+  // Pixel settings
+  const [pixelSettings, setPixelSettings] = useState<PixelSettings>(DEFAULT_PIXEL_SETTINGS);
+
+  // New pixel input state
+  const [newPixelInputs, setNewPixelInputs] = useState({
+    facebook: { id: '', name: '' },
+    tiktok: { id: '', name: '' },
+    ga4: { id: '', name: '' },
+    gtm: { id: '', name: '' },
+  });
+
   // Load saved receipt settings on mount (from Supabase with localStorage fallback)
   useEffect(() => {
     const loadSettings = async () => {
@@ -623,6 +637,7 @@ export default function SettingsPage() {
     { id: 'appearance', labelKey: 'settings.appearance', icon: Palette },
     { id: 'security', labelKey: 'settings.security', icon: Lock },
     { id: 'notifications', labelKey: 'settings.notifications', icon: Bell },
+    { id: 'pixel', labelKey: 'Pixel & Analytics', icon: BarChart3 },
     { id: 'supabase', labelKey: 'settings.supabaseCloud', icon: Cloud },
     { id: 'data', labelKey: 'settings.dataBackup', icon: Database },
   ];
@@ -1970,6 +1985,414 @@ export default function SettingsPage() {
                       style={{ width: '20px', height: '20px' }}
                     />
                   </label>
+                </div>
+              </div>
+            )}
+
+            {/* Pixel & Analytics Settings */}
+            {activeSection === 'pixel' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                {/* Facebook/Meta Pixel */}
+                <div className="card">
+                  <div className="card-header">
+                    <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <Facebook size={20} style={{ color: '#1877f2' }} />
+                      Facebook / Meta Pixel
+                    </div>
+                    <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+                      Track purchases & conversions untuk FB/IG Ads
+                    </div>
+                  </div>
+                  <div className="card-body">
+                    {/* List existing pixels */}
+                    {pixelSettings.facebookPixels.map((pixel, idx) => (
+                      <div key={pixel.id} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem', padding: '0.75rem', background: 'var(--gray-100)', borderRadius: '8px' }}>
+                        <input
+                          type="checkbox"
+                          checked={pixel.enabled}
+                          onChange={(e) => {
+                            const updated = [...pixelSettings.facebookPixels];
+                            updated[idx].enabled = e.target.checked;
+                            setPixelSettings(prev => ({ ...prev, facebookPixels: updated }));
+                          }}
+                          style={{ width: '20px', height: '20px' }}
+                        />
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontWeight: 500 }}>{pixel.name || `Pixel ${idx + 1}`}</div>
+                          <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontFamily: 'monospace' }}>{pixel.id}</div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const updated = pixelSettings.facebookPixels.filter((_, i) => i !== idx);
+                            setPixelSettings(prev => ({ ...prev, facebookPixels: updated }));
+                          }}
+                          style={{ padding: '0.5rem', background: 'var(--error)', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    ))}
+                    {/* Add new pixel */}
+                    <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+                      <input
+                        type="text"
+                        placeholder="Pixel ID (cth: 1234567890123456)"
+                        value={newPixelInputs.facebook.id}
+                        onChange={(e) => setNewPixelInputs(prev => ({ ...prev, facebook: { ...prev.facebook, id: e.target.value } }))}
+                        className="input"
+                        style={{ flex: 2 }}
+                      />
+                      <input
+                        type="text"
+                        placeholder="Label (optional)"
+                        value={newPixelInputs.facebook.name}
+                        onChange={(e) => setNewPixelInputs(prev => ({ ...prev, facebook: { ...prev.facebook, name: e.target.value } }))}
+                        className="input"
+                        style={{ flex: 1 }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (newPixelInputs.facebook.id.trim()) {
+                            setPixelSettings(prev => ({
+                              ...prev,
+                              facebookPixels: [...prev.facebookPixels, { id: newPixelInputs.facebook.id.trim(), name: newPixelInputs.facebook.name.trim() || undefined, enabled: true }]
+                            }));
+                            setNewPixelInputs(prev => ({ ...prev, facebook: { id: '', name: '' } }));
+                          }
+                        }}
+                        className="btn btn-primary"
+                        style={{ padding: '0.5rem 1rem' }}
+                      >
+                        <Plus size={16} /> Tambah
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* TikTok Pixel */}
+                <div className="card">
+                  <div className="card-header">
+                    <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <span style={{ fontSize: '1.25rem' }}>🎵</span>
+                      TikTok Pixel
+                    </div>
+                    <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+                      Track TikTok Ads performance
+                    </div>
+                  </div>
+                  <div className="card-body">
+                    {pixelSettings.tiktokPixels.map((pixel, idx) => (
+                      <div key={pixel.id} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem', padding: '0.75rem', background: 'var(--gray-100)', borderRadius: '8px' }}>
+                        <input
+                          type="checkbox"
+                          checked={pixel.enabled}
+                          onChange={(e) => {
+                            const updated = [...pixelSettings.tiktokPixels];
+                            updated[idx].enabled = e.target.checked;
+                            setPixelSettings(prev => ({ ...prev, tiktokPixels: updated }));
+                          }}
+                          style={{ width: '20px', height: '20px' }}
+                        />
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontWeight: 500 }}>{pixel.name || `Pixel ${idx + 1}`}</div>
+                          <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontFamily: 'monospace' }}>{pixel.id}</div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const updated = pixelSettings.tiktokPixels.filter((_, i) => i !== idx);
+                            setPixelSettings(prev => ({ ...prev, tiktokPixels: updated }));
+                          }}
+                          style={{ padding: '0.5rem', background: 'var(--error)', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    ))}
+                    <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+                      <input
+                        type="text"
+                        placeholder="Pixel ID"
+                        value={newPixelInputs.tiktok.id}
+                        onChange={(e) => setNewPixelInputs(prev => ({ ...prev, tiktok: { ...prev.tiktok, id: e.target.value } }))}
+                        className="input"
+                        style={{ flex: 2 }}
+                      />
+                      <input
+                        type="text"
+                        placeholder="Label (optional)"
+                        value={newPixelInputs.tiktok.name}
+                        onChange={(e) => setNewPixelInputs(prev => ({ ...prev, tiktok: { ...prev.tiktok, name: e.target.value } }))}
+                        className="input"
+                        style={{ flex: 1 }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (newPixelInputs.tiktok.id.trim()) {
+                            setPixelSettings(prev => ({
+                              ...prev,
+                              tiktokPixels: [...prev.tiktokPixels, { id: newPixelInputs.tiktok.id.trim(), name: newPixelInputs.tiktok.name.trim() || undefined, enabled: true }]
+                            }));
+                            setNewPixelInputs(prev => ({ ...prev, tiktok: { id: '', name: '' } }));
+                          }
+                        }}
+                        className="btn btn-primary"
+                        style={{ padding: '0.5rem 1rem' }}
+                      >
+                        <Plus size={16} /> Tambah
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Google Analytics 4 */}
+                <div className="card">
+                  <div className="card-header">
+                    <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <BarChart3 size={20} style={{ color: '#e37400' }} />
+                      Google Analytics 4
+                    </div>
+                    <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+                      Website traffic & behavior analytics
+                    </div>
+                  </div>
+                  <div className="card-body">
+                    {pixelSettings.googleAnalytics.map((pixel, idx) => (
+                      <div key={pixel.id} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem', padding: '0.75rem', background: 'var(--gray-100)', borderRadius: '8px' }}>
+                        <input
+                          type="checkbox"
+                          checked={pixel.enabled}
+                          onChange={(e) => {
+                            const updated = [...pixelSettings.googleAnalytics];
+                            updated[idx].enabled = e.target.checked;
+                            setPixelSettings(prev => ({ ...prev, googleAnalytics: updated }));
+                          }}
+                          style={{ width: '20px', height: '20px' }}
+                        />
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontWeight: 500 }}>{pixel.name || `GA4 ${idx + 1}`}</div>
+                          <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontFamily: 'monospace' }}>{pixel.id}</div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const updated = pixelSettings.googleAnalytics.filter((_, i) => i !== idx);
+                            setPixelSettings(prev => ({ ...prev, googleAnalytics: updated }));
+                          }}
+                          style={{ padding: '0.5rem', background: 'var(--error)', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    ))}
+                    <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+                      <input
+                        type="text"
+                        placeholder="Measurement ID (G-XXXXXXXXXX)"
+                        value={newPixelInputs.ga4.id}
+                        onChange={(e) => setNewPixelInputs(prev => ({ ...prev, ga4: { ...prev.ga4, id: e.target.value } }))}
+                        className="input"
+                        style={{ flex: 2 }}
+                      />
+                      <input
+                        type="text"
+                        placeholder="Label (optional)"
+                        value={newPixelInputs.ga4.name}
+                        onChange={(e) => setNewPixelInputs(prev => ({ ...prev, ga4: { ...prev.ga4, name: e.target.value } }))}
+                        className="input"
+                        style={{ flex: 1 }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (newPixelInputs.ga4.id.trim()) {
+                            setPixelSettings(prev => ({
+                              ...prev,
+                              googleAnalytics: [...prev.googleAnalytics, { id: newPixelInputs.ga4.id.trim(), name: newPixelInputs.ga4.name.trim() || undefined, enabled: true }]
+                            }));
+                            setNewPixelInputs(prev => ({ ...prev, ga4: { id: '', name: '' } }));
+                          }
+                        }}
+                        className="btn btn-primary"
+                        style={{ padding: '0.5rem 1rem' }}
+                      >
+                        <Plus size={16} /> Tambah
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Google Tag Manager */}
+                <div className="card">
+                  <div className="card-header">
+                    <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <span style={{ fontSize: '1.25rem' }}>🏷️</span>
+                      Google Tag Manager
+                    </div>
+                    <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+                      Advanced tag management
+                    </div>
+                  </div>
+                  <div className="card-body">
+                    {pixelSettings.googleTagManager.map((pixel, idx) => (
+                      <div key={pixel.id} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem', padding: '0.75rem', background: 'var(--gray-100)', borderRadius: '8px' }}>
+                        <input
+                          type="checkbox"
+                          checked={pixel.enabled}
+                          onChange={(e) => {
+                            const updated = [...pixelSettings.googleTagManager];
+                            updated[idx].enabled = e.target.checked;
+                            setPixelSettings(prev => ({ ...prev, googleTagManager: updated }));
+                          }}
+                          style={{ width: '20px', height: '20px' }}
+                        />
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontWeight: 500 }}>{pixel.name || `GTM ${idx + 1}`}</div>
+                          <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontFamily: 'monospace' }}>{pixel.id}</div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const updated = pixelSettings.googleTagManager.filter((_, i) => i !== idx);
+                            setPixelSettings(prev => ({ ...prev, googleTagManager: updated }));
+                          }}
+                          style={{ padding: '0.5rem', background: 'var(--error)', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    ))}
+                    <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+                      <input
+                        type="text"
+                        placeholder="Container ID (GTM-XXXXXXX)"
+                        value={newPixelInputs.gtm.id}
+                        onChange={(e) => setNewPixelInputs(prev => ({ ...prev, gtm: { ...prev.gtm, id: e.target.value } }))}
+                        className="input"
+                        style={{ flex: 2 }}
+                      />
+                      <input
+                        type="text"
+                        placeholder="Label (optional)"
+                        value={newPixelInputs.gtm.name}
+                        onChange={(e) => setNewPixelInputs(prev => ({ ...prev, gtm: { ...prev.gtm, name: e.target.value } }))}
+                        className="input"
+                        style={{ flex: 1 }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (newPixelInputs.gtm.id.trim()) {
+                            setPixelSettings(prev => ({
+                              ...prev,
+                              googleTagManager: [...prev.googleTagManager, { id: newPixelInputs.gtm.id.trim(), name: newPixelInputs.gtm.name.trim() || undefined, enabled: true }]
+                            }));
+                            setNewPixelInputs(prev => ({ ...prev, gtm: { id: '', name: '' } }));
+                          }
+                        }}
+                        className="btn btn-primary"
+                        style={{ padding: '0.5rem 1rem' }}
+                      >
+                        <Plus size={16} /> Tambah
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Event Tracking Options */}
+                <div className="card">
+                  <div className="card-header">
+                    <div className="card-title">Event Tracking Options</div>
+                    <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+                      Pilih events yang nak ditrack
+                    </div>
+                  </div>
+                  <div className="card-body" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.75rem', background: 'var(--gray-100)', borderRadius: '8px' }}>
+                      <div>
+                        <div style={{ fontWeight: 500 }}>Page Views</div>
+                        <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Track bila user navigate ke page lain</div>
+                      </div>
+                      <input
+                        type="checkbox"
+                        checked={pixelSettings.trackPageViews}
+                        onChange={(e) => setPixelSettings(prev => ({ ...prev, trackPageViews: e.target.checked }))}
+                        style={{ width: '20px', height: '20px' }}
+                      />
+                    </label>
+                    <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.75rem', background: 'var(--gray-100)', borderRadius: '8px' }}>
+                      <div>
+                        <div style={{ fontWeight: 500 }}>Purchases</div>
+                        <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Track bila order complete (paling penting!)</div>
+                      </div>
+                      <input
+                        type="checkbox"
+                        checked={pixelSettings.trackPurchases}
+                        onChange={(e) => setPixelSettings(prev => ({ ...prev, trackPurchases: e.target.checked }))}
+                        style={{ width: '20px', height: '20px' }}
+                      />
+                    </label>
+                    <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.75rem', background: 'var(--gray-100)', borderRadius: '8px' }}>
+                      <div>
+                        <div style={{ fontWeight: 500 }}>Add to Cart</div>
+                        <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Track bila add item ke POS</div>
+                      </div>
+                      <input
+                        type="checkbox"
+                        checked={pixelSettings.trackAddToCart}
+                        onChange={(e) => setPixelSettings(prev => ({ ...prev, trackAddToCart: e.target.checked }))}
+                        style={{ width: '20px', height: '20px' }}
+                      />
+                    </label>
+                    <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.75rem', background: 'var(--gray-100)', borderRadius: '8px' }}>
+                      <div>
+                        <div style={{ fontWeight: 500 }}>Initiate Checkout</div>
+                        <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Track bila mula checkout process</div>
+                      </div>
+                      <input
+                        type="checkbox"
+                        checked={pixelSettings.trackCheckout}
+                        onChange={(e) => setPixelSettings(prev => ({ ...prev, trackCheckout: e.target.checked }))}
+                        style={{ width: '20px', height: '20px' }}
+                      />
+                    </label>
+                    <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.75rem', background: 'var(--gray-100)', borderRadius: '8px' }}>
+                      <div>
+                        <div style={{ fontWeight: 500 }}>🐛 Debug Mode</div>
+                        <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Log semua events ke console (untuk testing)</div>
+                      </div>
+                      <input
+                        type="checkbox"
+                        checked={pixelSettings.debugMode}
+                        onChange={(e) => setPixelSettings(prev => ({ ...prev, debugMode: e.target.checked }))}
+                        style={{ width: '20px', height: '20px' }}
+                      />
+                    </label>
+                  </div>
+                </div>
+
+                {/* Status Summary */}
+                <div className="card" style={{ background: 'var(--primary-light)' }}>
+                  <div className="card-body">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+                      <div style={{ fontWeight: 600, color: 'var(--primary)' }}>Active Pixels:</div>
+                      <span style={{ padding: '0.25rem 0.75rem', background: '#1877f2', color: 'white', borderRadius: '999px', fontSize: '0.8rem' }}>
+                        FB: {pixelSettings.facebookPixels.filter(p => p.enabled).length}
+                      </span>
+                      <span style={{ padding: '0.25rem 0.75rem', background: '#000', color: 'white', borderRadius: '999px', fontSize: '0.8rem' }}>
+                        TikTok: {pixelSettings.tiktokPixels.filter(p => p.enabled).length}
+                      </span>
+                      <span style={{ padding: '0.25rem 0.75rem', background: '#e37400', color: 'white', borderRadius: '999px', fontSize: '0.8rem' }}>
+                        GA4: {pixelSettings.googleAnalytics.filter(p => p.enabled).length}
+                      </span>
+                      <span style={{ padding: '0.25rem 0.75rem', background: '#4285f4', color: 'white', borderRadius: '999px', fontSize: '0.8rem' }}>
+                        GTM: {pixelSettings.googleTagManager.filter(p => p.enabled).length}
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </div>
             )}

@@ -712,6 +712,49 @@ export interface PrinterSettings {
   useRawbt?: boolean; // For Android RawBT fallback
 }
 
+// ==================== PIXEL & ANALYTICS SETTINGS ====================
+
+export interface PixelConfig {
+  id: string;
+  name?: string; // Optional label for multiple pixels
+  enabled: boolean;
+}
+
+export interface PixelSettings {
+  // Facebook/Meta Pixel - supports multiple
+  facebookPixels: PixelConfig[];
+
+  // TikTok Pixel - supports multiple
+  tiktokPixels: PixelConfig[];
+
+  // Google Analytics 4 - supports multiple
+  googleAnalytics: PixelConfig[];
+
+  // Google Tag Manager - supports multiple
+  googleTagManager: PixelConfig[];
+
+  // Event tracking options
+  trackPageViews: boolean;
+  trackPurchases: boolean;
+  trackAddToCart: boolean;
+  trackCheckout: boolean;
+
+  // Debug mode (logs events to console)
+  debugMode: boolean;
+}
+
+export const DEFAULT_PIXEL_SETTINGS: PixelSettings = {
+  facebookPixels: [],
+  tiktokPixels: [],
+  googleAnalytics: [],
+  googleTagManager: [],
+  trackPageViews: true,
+  trackPurchases: true,
+  trackAddToCart: true,
+  trackCheckout: true,
+  debugMode: false,
+};
+
 // Default receipt settings
 export const DEFAULT_RECEIPT_SETTINGS: ReceiptSettings = {
   logoTopUrl: '',
