@@ -4,9 +4,9 @@
 -- Issue: 
 -- 1. Operation Settings (Operating Hours) resetting to "preset"
 -- 2. Cashier/Finance sessions not saving (opening/closing cash)
--- 3. Shift records might not be saving
+-- 3. Shift records not saving
 --
--- Root Cause: RLS policies were likely dropped or too restrictive, preventing UPDATE/INSERT.
+-- Root Cause: RLS policies were dropped or too restrictive.
 
 -- =====================================================
 -- 1. OUTLET SETTINGS (Operating Hours, etc.)
@@ -27,7 +27,7 @@ ADD COLUMN IF NOT EXISTS appearance JSONB DEFAULT '{}'::jsonb,
 ADD COLUMN IF NOT EXISTS security JSONB DEFAULT '{}'::jsonb;
 
 -- =====================================================
--- 2. DAILY CASH FLOWS (Cashier Opening/Closing)
+-- 2. DAILY CASH FLOWS (Finance Dashboard)
 -- =====================================================
 DROP POLICY IF EXISTS "Anyone can view cash flows" ON public.daily_cash_flows;
 DROP POLICY IF EXISTS "Staff can create cash flows" ON public.daily_cash_flows;
@@ -38,7 +38,20 @@ CREATE POLICY "Authenticated users can manage cash flows" ON public.daily_cash_f
   FOR ALL TO authenticated USING (true) WITH CHECK (true);
 
 -- =====================================================
--- 3. SHIFTS (Staff Shifts)
+-- 3. CASH REGISTERS (POS Sessions / Wizard)
+-- =====================================================
+-- IMPORTANT: This was missing write access, causing "Opening Wizard" loop on refresh
+DROP POLICY IF EXISTS "Managers can view all cash registers" ON public.cash_registers;
+DROP POLICY IF EXISTS "Staff can view their own cash registers" ON public.cash_registers;
+DROP POLICY IF EXISTS "Staff can insert their own cash registers" ON public.cash_registers;
+DROP POLICY IF EXISTS "Staff can update their own cash registers" ON public.cash_registers;
+DROP POLICY IF EXISTS "Authenticated users can manage cash registers" ON public.cash_registers;
+
+CREATE POLICY "Authenticated users can manage cash registers" ON public.cash_registers
+  FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+-- =====================================================
+-- 4. SHIFTS (Staff Shifts)
 -- =====================================================
 DROP POLICY IF EXISTS "Authenticated users can manage shifts" ON public.shifts;
 
@@ -46,7 +59,7 @@ CREATE POLICY "Authenticated users can manage shifts" ON public.shifts
   FOR ALL TO authenticated USING (true) WITH CHECK (true);
 
 -- =====================================================
--- 4. OTHER AFFECTED TABLES
+-- 5. OTHER AFFECTED TABLES
 -- =====================================================
 -- Suppliers
 DROP POLICY IF EXISTS "Authenticated users can manage suppliers" ON public.suppliers;
@@ -71,5 +84,5 @@ CREATE POLICY "Authenticated users can manage modifier_options" ON public.modifi
 -- Success message
 DO $$
 BEGIN
-  RAISE NOTICE 'Fixed persistence for Settings, Cashier, Shifts, and Operations tables.';
+  RAISE NOTICE 'Fixed persistence for Settings, Cashier (POS), Finance, Shifts, and Operations tables.';
 END $$;
