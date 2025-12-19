@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import MainLayout from '@/components/MainLayout';
+import StaffLayout from '@/components/StaffLayout';
 import { useStaffPortal, useStaff } from '@/lib/store';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { getLeaveTypeLabel, getStatusLabel, getStatusColor } from '@/lib/staff-portal-data';
@@ -320,11 +320,11 @@ export default function StaffPortalPage() {
 
   if (!isInitialized || !currentStaff) {
     return (
-      <MainLayout>
+      <StaffLayout>
         <div className="loading-container">
           <LoadingSpinner />
         </div>
-      </MainLayout>
+      </StaffLayout>
     );
   }
 
@@ -332,7 +332,7 @@ export default function StaffPortalPage() {
   const hasCompletedShift = !!(todayAttendance?.clockInTime && todayAttendance?.clockOutTime);
 
   return (
-    <MainLayout>
+    <StaffLayout>
       <div className="staff-portal animate-fade-in">
         {/* Dark Mode Toggle */}
         <DarkModeToggle />
@@ -711,6 +711,6 @@ export default function StaffPortalPage() {
         {/* Bottom Navigation for Mobile */}
         <StaffPortalNav currentPage="home" pendingCount={totalPending} />
       </div>
-    </MainLayout >
+    </StaffLayout>
   );
 }
