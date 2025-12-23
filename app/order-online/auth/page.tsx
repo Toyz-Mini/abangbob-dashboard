@@ -11,18 +11,33 @@ export default function OrderAuthPage() {
     const { customers, addCustomer } = useStore();
 
     const [step, setStep] = useState<'phone' | 'register'>('phone');
+    const [countryCode, setCountryCode] = useState('+673');
     const [phoneNumber, setPhoneNumber] = useState('');
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
 
+    // Country codes list
+    const countryCodes = [
+        { code: '+673', country: 'Brunei' },
+        { code: '+60', country: 'Malaysia' },
+        { code: '+62', country: 'Indonesia' },
+        { code: '+65', country: 'Singapore' },
+    ];
+
     const handlePhoneSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (phoneNumber.length < 8) {
+        if (phoneNumber.length < 4) {
             setError('Sila masukkan nombor telefon yang sah.');
             return;
         }
+
+        // Combine country code and phone number for storage/lookup
+        // Remove leading 0 if present to avoid +6730123...
+        const cleanedNumber = phoneNumber.startsWith('0') ? phoneNumber.substring(1) : phoneNumber;
+        const fullPhoneNumber = `${countryCode}${cleanedNumber}`;
+
         setError('');
         setIsLoading(true);
 
@@ -30,7 +45,7 @@ export default function OrderAuthPage() {
         await new Promise(resolve => setTimeout(resolve, 800));
 
         // Check if customer exists in store
-        const existingCustomer = customers.find(c => c.phone === phoneNumber);
+        const existingCustomer = customers.find(c => c.phone === fullPhoneNumber);
 
         if (existingCustomer) {
             // Login success
@@ -53,12 +68,15 @@ export default function OrderAuthPage() {
         }
         setIsLoading(true);
 
+        const cleanedNumber = phoneNumber.startsWith('0') ? phoneNumber.substring(1) : phoneNumber;
+        const fullPhoneNumber = `${countryCode}${cleanedNumber}`;
+
         // Create new customer
         try {
             const newCustomer = await addCustomer({
                 name,
                 email,
-                phone: phoneNumber
+                phone: fullPhoneNumber
             });
 
             if (typeof window !== 'undefined') {
@@ -99,18 +117,40 @@ export default function OrderAuthPage() {
                         >
                             <div className="space-y-1">
                                 <label className="text-sm font-bold text-gray-700 ml-1">Nombor Telefon</label>
-                                <div className="relative">
-                                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
-                                        <Phone size={20} />
+                                <div className="relative flex items-center gap-2">
+                                    {/* Country Code Selector */}
+                                    <div className="relative">
+                                        <select
+                                            value={countryCode}
+                                            onChange={(e) => setCountryCode(e.target.value)}
+                                            className="appearance-none bg-white border border-gray-200 rounded-2xl py-4 pl-4 pr-8 text-lg font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#CC1512] focus:border-transparent shadow-sm min-w-[100px]"
+                                        >
+                                            {countryCodes.map((c) => (
+                                                <option key={c.code} value={c.code}>{c.code}</option>
+                                            ))}
+                                        </select>
+                                        {/* Dropdown Arrow */}
+                                        <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+                                            <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                <path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                            </svg>
+                                        </div>
                                     </div>
-                                    <input
-                                        type="tel"
-                                        value={phoneNumber}
-                                        onChange={(e) => setPhoneNumber(e.target.value)}
-                                        placeholder="0123456789"
-                                        className="w-full bg-white border border-gray-200 rounded-2xl py-4 pl-12 pr-4 text-lg focus:outline-none focus:ring-2 focus:ring-[#CC1512] focus:border-transparent shadow-sm"
-                                        autoFocus
-                                    />
+
+                                    {/* Phone Input */}
+                                    <div className="relative flex-1">
+                                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
+                                            <Phone size={20} />
+                                        </div>
+                                        <input
+                                            type="tel"
+                                            value={phoneNumber}
+                                            onChange={(e) => setPhoneNumber(e.target.value)}
+                                            placeholder="8123456"
+                                            className="w-full bg-white border border-gray-200 rounded-2xl py-4 pl-12 pr-4 text-lg focus:outline-none focus:ring-2 focus:ring-[#CC1512] focus:border-transparent shadow-sm"
+                                            autoFocus
+                                        />
+                                    </div>
                                 </div>
                             </div>
 
