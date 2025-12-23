@@ -31,9 +31,9 @@ export async function createSession(
 
         // Create/update session
         await pool.query(
-            `INSERT INTO "active_sessions" ("id", "userId", "deviceInfo", "ipAddress", "lastActive")
+            `INSERT INTO "active_sessions" ("id", "user_id", "device_info", "ip_address", "last_active")
        VALUES ($1, $2, $3, $4, NOW())
-       ON CONFLICT ("id") DO UPDATE SET "lastActive" = NOW()`,
+       ON CONFLICT ("id") DO UPDATE SET "last_active" = NOW()`,
             [sessionId, userId, deviceInfo || 'Unknown Device', ipAddress || 'unknown']
         );
     } catch (error) {
@@ -47,7 +47,7 @@ export async function createSession(
 export async function updateSessionActivity(sessionId: string): Promise<void> {
     try {
         await pool.query(
-            `UPDATE "active_sessions" SET "lastActive" = NOW() WHERE "id" = $1`,
+            `UPDATE "active_sessions" SET "last_active" = NOW() WHERE "id" = $1`,
             [sessionId]
         );
     } catch (error) {
@@ -61,13 +61,13 @@ export async function updateSessionActivity(sessionId: string): Promise<void> {
 export async function validateSession(sessionId: string): Promise<boolean> {
     try {
         const result = await pool.query(
-            `SELECT "lastActive" FROM "active_sessions" WHERE "id" = $1`,
+            `SELECT "last_active" FROM "active_sessions" WHERE "id" = $1`,
             [sessionId]
         );
 
         if (result.rowCount === 0) return false;
 
-        const lastActive = new Date(result.rows[0].lastActive);
+        const lastActive = new Date(result.rows[0].last_active);
         const idleTime = (Date.now() - lastActive.getTime()) / 1000 / 60;
 
         if (idleTime > SESSION_IDLE_TIMEOUT_MINUTES) {
@@ -99,7 +99,7 @@ export async function deleteSession(sessionId: string): Promise<void> {
  */
 export async function deleteAllUserSessions(userId: string): Promise<void> {
     try {
-        await pool.query(`DELETE FROM "active_sessions" WHERE "userId" = $1`, [userId]);
+        await pool.query(`DELETE FROM "active_sessions" WHERE "user_id" = $1`, [userId]);
     } catch (error) {
         console.error('Delete all sessions error:', error);
     }
@@ -112,8 +112,8 @@ export async function getUserSessions(userId: string): Promise<ActiveSession[]> 
     try {
         const result = await pool.query(
             `SELECT * FROM "active_sessions" 
-       WHERE "userId" = $1 
-       ORDER BY "lastActive" DESC`,
+       WHERE "user_id" = $1 
+       ORDER BY "last_active" DESC`,
             [userId]
         );
         return result.rows;
@@ -130,8 +130,8 @@ async function enforceSessionLimit(userId: string): Promise<void> {
     try {
         const result = await pool.query(
             `SELECT id FROM "active_sessions" 
-       WHERE "userId" = $1 
-       ORDER BY "lastActive" ASC`,
+       WHERE "user_id" = $1 
+       ORDER BY "last_active" ASC`,
             [userId]
         );
 
@@ -155,7 +155,7 @@ export async function cleanupExpiredSessions(): Promise<number> {
     try {
         const result = await pool.query(
             `DELETE FROM "active_sessions" 
-       WHERE "lastActive" < NOW() - INTERVAL '${SESSION_IDLE_TIMEOUT_MINUTES} minutes'
+       WHERE "last_active" < NOW() - INTERVAL '${SESSION_IDLE_TIMEOUT_MINUTES} minutes'
        RETURNING id`
         );
         return result.rowCount || 0;

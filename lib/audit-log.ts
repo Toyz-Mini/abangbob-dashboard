@@ -37,7 +37,7 @@ export async function createAuditLog(entry: AuditLogEntry): Promise<void> {
     try {
         await pool.query(
             `INSERT INTO "audit_logs" 
-       ("userId", "action", "resource", "resourceId", "details", "ipAddress", "userAgent")
+       ("user_id", "action", "resource", "resource_id", "details", "ip_address", "user_agent")
        VALUES ($1, $2, $3, $4, $5, $6, $7)`,
             [
                 entry.userId || null,
@@ -65,8 +65,8 @@ export async function getAuditLogsForUser(
     try {
         const result = await pool.query(
             `SELECT * FROM "audit_logs" 
-       WHERE "userId" = $1 
-       ORDER BY "createdAt" DESC 
+       WHERE "user_id" = $1 
+       ORDER BY "created_at" DESC 
        LIMIT $2`,
             [userId, limit]
         );
@@ -99,15 +99,15 @@ export async function getAllAuditLogs(
             params.push(filters.action);
         }
         if (filters?.userId) {
-            query += ` AND "userId" = $${paramIndex++}`;
+            query += ` AND "user_id" = $${paramIndex++}`;
             params.push(filters.userId);
         }
         if (filters?.startDate) {
-            query += ` AND "createdAt" >= $${paramIndex++}`;
+            query += ` AND "created_at" >= $${paramIndex++}`;
             params.push(filters.startDate);
         }
         if (filters?.endDate) {
-            query += ` AND "createdAt" <= $${paramIndex++}`;
+            query += ` AND "created_at" <= $${paramIndex++}`;
             params.push(filters.endDate);
         }
 
