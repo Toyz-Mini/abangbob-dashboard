@@ -460,6 +460,67 @@ export interface Database {
           email?: string | null;
           is_active?: boolean;
           settings?: Json;
+
+        };
+      };
+      // Chat Sessions
+      chat_sessions: {
+        Row: {
+          id: string;
+          created_at: string;
+          updated_at: string;
+          customer_name: string;
+          customer_phone: string;
+          customer_email: string | null;
+          status: 'open' | 'closed' | 'archived';
+          unread_count: number;
+        };
+        Insert: {
+          id?: string;
+          created_at?: string;
+          updated_at?: string;
+          customer_name: string;
+          customer_phone: string;
+          customer_email?: string | null;
+          status?: 'open' | 'closed' | 'archived';
+          unread_count?: number;
+        };
+        Update: {
+          id?: string;
+          created_at?: string;
+          updated_at?: string;
+          customer_name?: string;
+          customer_phone?: string;
+          customer_email?: string | null;
+          status?: 'open' | 'closed' | 'archived';
+          unread_count?: number;
+        };
+      };
+      // Chat Messages
+      chat_messages: {
+        Row: {
+          id: string;
+          created_at: string;
+          session_id: string;
+          sender_type: 'customer' | 'admin';
+          message: string;
+          is_read: boolean;
+        };
+        Insert: {
+          id?: string;
+          created_at?: string;
+          session_id: string;
+          sender_type: 'customer' | 'admin';
+          message: string;
+          is_read?: boolean;
+        };
+        Update: {
+          id?: string;
+          created_at?: string;
+          session_id?: string;
+          sender_type?: 'customer' | 'admin';
+          message?: string;
+          is_read?: boolean;
         };
       };
       // Audit logs

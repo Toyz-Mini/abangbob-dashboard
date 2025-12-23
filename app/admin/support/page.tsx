@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { getSupabaseClient } from '@/lib/supabase/client';
 import { MessageCircle, Search, Send, CheckCircle, Clock, User, Phone, Mail } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -25,7 +25,7 @@ type Message = {
 };
 
 export default function SupportPage() {
-    const supabase = createClientComponentClient();
+    const supabase = getSupabaseClient() as any;
     const [sessions, setSessions] = useState<Session[]>([]);
     const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
     const [messages, setMessages] = useState<Message[]>([]);
@@ -34,12 +34,13 @@ export default function SupportPage() {
 
     // Load sessions
     useEffect(() => {
+        if (!supabase) return;
         fetchSessions();
 
         // Subscribe to new sessions or updates
         const channel = supabase
             .channel('admin_sessions_list')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'chat_sessions' }, (payload) => {
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'chat_sessions' }, (payload: any) => {
                 fetchSessions(); // Refresh list on any change for simplicity
             })
             .subscribe();
@@ -51,14 +52,14 @@ export default function SupportPage() {
 
     // Load messages for selected session
     useEffect(() => {
-        if (!selectedSessionId) return;
+        if (!selectedSessionId || !supabase) return;
 
         fetchMessages(selectedSessionId);
 
         // Subscribe to messages for this session
         const channel = supabase
             .channel(`admin_chat:${selectedSessionId}`)
-            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat_messages', filter: `session_id=eq.${selectedSessionId}` }, (payload) => {
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat_messages', filter: `session_id=eq.${selectedSessionId}` }, (payload: any) => {
                 const newMsg = payload.new as Message;
                 setMessages((prev) => [...prev, newMsg]);
                 scrollToBottom();
@@ -71,6 +72,7 @@ export default function SupportPage() {
     }, [selectedSessionId]);
 
     const fetchSessions = async () => {
+        if (!supabase) return;
         const { data } = await supabase
             .from('chat_sessions')
             .select('*')
@@ -79,6 +81,7 @@ export default function SupportPage() {
     };
 
     const fetchMessages = async (sessionId: string) => {
+        if (!supabase) return;
         const { data } = await supabase
             .from('chat_messages')
             .select('*')
@@ -98,7 +101,7 @@ export default function SupportPage() {
 
     const handleSendMessage = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!newMessage.trim() || !selectedSessionId) return;
+        if (!newMessage.trim() || !selectedSessionId || !supabase) return;
 
         const msgText = newMessage.trim();
         setNewMessage('');
@@ -110,7 +113,7 @@ export default function SupportPage() {
                     session_id: selectedSessionId,
                     sender_type: 'admin',
                     message: msgText
-                });
+                } as any);
 
             if (error) throw error;
         } catch (error) {
@@ -120,12 +123,12 @@ export default function SupportPage() {
     };
 
     const handleCloseSession = async () => {
-        if (!selectedSessionId) return;
+        if (!selectedSessionId || !supabase) return;
         if (!confirm('Adakah anda pasti mahu menutup sesi ini?')) return;
 
         await supabase
             .from('chat_sessions')
-            .update({ status: 'closed' })
+            .update({ status: 'closed' } as any)
             .eq('id', selectedSessionId);
 
         // Optimistic update or wait for realtime
@@ -217,8 +220,8 @@ export default function SupportPage() {
                                 return (
                                     <div key={msg.id} className={`flex w-full ${isAdmin ? 'justify-end' : 'justify-start'}`}>
                                         <div className={`max-w-[70%] p-3 rounded-xl text-sm shadow-sm ${isAdmin
-                                                ? 'bg-blue-600 text-white rounded-br-none'
-                                                : 'bg-white text-gray-800 border border-gray-200 rounded-bl-none'
+                                            ? 'bg-blue-600 text-white rounded-br-none'
+                                            : 'bg-white text-gray-800 border border-gray-200 rounded-bl-none'
                                             }`}>
                                             <p>{msg.message}</p>
                                             <span className={`text-[10px] block mt-1 text-right ${isAdmin ? 'text-blue-100' : 'text-gray-400'}`}>

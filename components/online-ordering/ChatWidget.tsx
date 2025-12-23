@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { getSupabaseClient } from '@/lib/supabase/client';
 import { MessageCircle, X, Send, Minus, User, Phone, Mail } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -19,7 +19,7 @@ type Session = {
 };
 
 export default function ChatWidget() {
-    const supabase = createClientComponentClient();
+    const supabase = getSupabaseClient() as any;
     const [isOpen, setIsOpen] = useState(false);
     const [session, setSession] = useState<Session | null>(null);
     const [messages, setMessages] = useState<Message[]>([]);
@@ -30,6 +30,7 @@ export default function ChatWidget() {
 
     // Load session from local storage on mount
     useEffect(() => {
+        if (!supabase) return;
         const savedSessionId = localStorage.getItem('chatSessionId');
         if (savedSessionId) {
             fetchSession(savedSessionId);
@@ -45,7 +46,7 @@ export default function ChatWidget() {
 
     // Subscribe to messages when session is active
     useEffect(() => {
-        if (!session?.id) return;
+        if (!session?.id || !supabase) return;
 
         console.log('Subscribing to chat:', session.id);
 
@@ -59,7 +60,7 @@ export default function ChatWidget() {
                     table: 'chat_messages',
                     filter: `session_id=eq.${session.id}`
                 },
-                (payload) => {
+                (payload: any) => {
                     console.log('New message received:', payload);
                     const newMsg = payload.new as Message;
                     setMessages((prev) => [...prev, newMsg]);
@@ -74,6 +75,7 @@ export default function ChatWidget() {
     }, [session?.id, supabase]);
 
     const fetchSession = async (sessionId: string) => {
+        if (!supabase) return;
         const { data, error } = await supabase
             .from('chat_sessions')
             .select('*')
@@ -90,6 +92,7 @@ export default function ChatWidget() {
     };
 
     const fetchMessages = async (sessionId: string) => {
+        if (!supabase) return;
         const { data } = await supabase
             .from('chat_messages')
             .select('*')
@@ -110,6 +113,7 @@ export default function ChatWidget() {
 
     const handleStartChat = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (!supabase) return;
         setIsLoading(true);
 
         try {
@@ -121,7 +125,7 @@ export default function ChatWidget() {
                     customer_phone: details.phone,
                     customer_email: details.email,
                     status: 'open'
-                })
+                } as any)
                 .select()
                 .single();
 
@@ -140,7 +144,7 @@ export default function ChatWidget() {
 
     const handleSendMessage = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!newMessage.trim() || !session) return;
+        if (!newMessage.trim() || !session || !supabase) return;
 
         const msgText = newMessage.trim();
         setNewMessage(''); // Optimistic clear
@@ -152,7 +156,7 @@ export default function ChatWidget() {
                     session_id: session.id,
                     sender_type: 'customer',
                     message: msgText
-                });
+                } as any);
 
             if (error) throw error;
             // Subscription will handle adding to state
@@ -258,8 +262,8 @@ export default function ChatWidget() {
                                             >
                                                 <div
                                                     className={`max-w-[80%] p-3 rounded-xl text-sm ${isMe
-                                                            ? 'bg-[#CC1512] text-white rounded-br-none'
-                                                            : 'bg-white border border-gray-200 text-gray-800 rounded-bl-none shadow-sm'
+                                                        ? 'bg-[#CC1512] text-white rounded-br-none'
+                                                        : 'bg-white border border-gray-200 text-gray-800 rounded-bl-none shadow-sm'
                                                         }`}
                                                 >
                                                     {msg.message}
