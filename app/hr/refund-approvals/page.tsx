@@ -70,13 +70,16 @@ export default function RefundApprovalsPage() {
     );
   }
 
-  // Get pending requests
-  const pendingRequests = getPendingVoidRefundRequests();
-  const pendingCount = getPendingVoidRefundCount();
+  // Get pending requests - add defensive fallbacks
+  const pendingRequests = getPendingVoidRefundRequests() || [];
+  const pendingCount = getPendingVoidRefundCount() || 0;
+
+  // Ensure voidRefundRequests is always an array
+  const safeVoidRefundRequests = voidRefundRequests || [];
 
   // Get filtered requests
   const filteredRequests = useMemo(() => {
-    let requests = [...voidRefundRequests];
+    let requests = [...safeVoidRefundRequests];
 
     if (filterStatus !== 'all') {
       requests = requests.filter(r => r.status === filterStatus);
@@ -85,13 +88,13 @@ export default function RefundApprovalsPage() {
     return requests.sort((a, b) =>
       new Date(b.requestedAt).getTime() - new Date(a.requestedAt).getTime()
     );
-  }, [voidRefundRequests, filterStatus]);
+  }, [safeVoidRefundRequests, filterStatus]);
 
   // Stats
   const stats = useMemo(() => {
-    const pending = voidRefundRequests.filter(r => r.status === 'pending');
-    const approved = voidRefundRequests.filter(r => r.status === 'approved');
-    const rejected = voidRefundRequests.filter(r => r.status === 'rejected');
+    const pending = safeVoidRefundRequests.filter(r => r.status === 'pending');
+    const approved = safeVoidRefundRequests.filter(r => r.status === 'approved');
+    const rejected = safeVoidRefundRequests.filter(r => r.status === 'rejected');
 
     return {
       pendingCount: pending.length,
@@ -99,7 +102,7 @@ export default function RefundApprovalsPage() {
       rejectedCount: rejected.length,
       pendingAmount: pending.reduce((sum, r) => sum + (r.amount || 0), 0),
     };
-  }, [voidRefundRequests]);
+  }, [safeVoidRefundRequests]);
 
   // Handle view order details
   const handleViewOrder = (request: VoidRefundRequest) => {
@@ -275,7 +278,7 @@ export default function RefundApprovalsPage() {
           />
           <StatCard
             label="Jumlah Permintaan"
-            value={voidRefundRequests.length}
+            value={safeVoidRefundRequests.length}
             icon={RefreshCw}
             gradient="info"
           />
