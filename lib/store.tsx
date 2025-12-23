@@ -1574,6 +1574,51 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const getRestockSuggestions = useCallback((): StockSuggestion[] => {
+    // 1. Calculate Average Daily Usage (ADU) for each item from inventoryLogs
+    const usageByItem: Record<string, number> = {};
+    const daysAnalyzed = 30;
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - daysAnalyzed);
+
+    // Sum up "out" type logs (usage/sales/waste)
+    inventoryLogs.forEach(log => {
+      if (log.type === 'out' && new Date(log.createdAt).getTime() >= cutoffDate.getTime()) {
+        usageByItem[log.stockItemId] = (usageByItem[log.stockItemId] || 0) + Math.abs(log.quantity);
+      }
+    });
+
+    return inventory.map(item => {
+      const totalUsage = usageByItem[item.id] || 0;
+      const averageDailyUsage = totalUsage / daysAnalyzed;
+
+      // Formula: (ADU * LeadTime) + SafetyStock
+      const leadTimeDays = 3; // Default
+      const safetyStock = item.minQuantity || (averageDailyUsage * 2); // Fallback if minQuantity not set
+      const reorderPoint = (averageDailyUsage * leadTimeDays) + safetyStock;
+
+      // Basic logic: if current quantity is significant low or below reorder point
+      // Using a generous reorder point for safety
+      if (item.currentQuantity <= reorderPoint || item.currentQuantity <= item.minQuantity) {
+        // Suggest ordering enough to cover 2x reorder point or 3x min quantity
+        const targetQty = Math.max(reorderPoint * 3, item.minQuantity * 4);
+        const suggestedOrderQty = Math.max(10, targetQty - item.currentQuantity); // Min order 10
+
+        return {
+          stockId: item.id,
+          stockName: item.name,
+          currentQuantity: item.currentQuantity,
+          averageDailyUsage,
+          suggestedReorderPoint: reorderPoint,
+          suggestedOrderQuantity: Math.ceil(suggestedOrderQty),
+          estimatedCost: Math.ceil(suggestedOrderQty) * item.cost,
+          supplier: item.supplier
+        };
+      }
+      return null;
+    }).filter(Boolean) as StockSuggestion[];
+  }, [inventory, inventoryLogs]);
+
   // Refresh menu from Supabase (for realtime sync)
   const refreshMenu = useCallback(async () => {
     try {
@@ -3860,6 +3905,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     adjustStock,
     bulkUpsertStock,
     refreshInventory,
+    getRestockSuggestions,
 
     // Staff
     staff,

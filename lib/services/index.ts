@@ -28,21 +28,10 @@ export {
 export type { ExportColumn, ExportOptions } from './excel-export';
 
 // WhatsApp Integration
+// WhatsApp Integration
 export {
-  isWhatsAppConfigured,
-  getWhatsAppConfig,
-  getWhatsAppConfigFromSupabase,
-  saveWhatsAppConfig,
-  formatPhoneNumber,
-  generateOrderReceiptMessage,
-  generateOrderReadyMessage,
-  generateLowStockAlertMessage,
-  generateDailySummaryMessage,
-  sendWhatsAppMessage,
-  openWhatsAppWeb,
-  sendReceiptViaWhatsAppWeb,
+  WhatsAppService,
 } from './whatsapp';
-export type { WhatsAppConfig, WhatsAppMessage, WhatsAppTemplate } from './whatsapp';
 
 // Multi-Outlet Management
 export {

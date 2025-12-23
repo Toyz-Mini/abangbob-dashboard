@@ -1,4 +1,4 @@
-import { Order, OrderItem } from '@/lib/types';
+import { Order, CartItem } from '@/lib/types';
 
 export const WhatsAppService = {
   /**
@@ -33,17 +33,19 @@ export const WhatsAppService = {
     message += `*Items:*\n`;
     order.items.forEach(item => {
       message += `${item.quantity}x ${item.name}`;
-      if (item.variant) message += ` (${item.variant})`;
+      // CartItem shouldn't have variant, it has selectedModifiers. But if it did...
+      // if (item.variant) message += ` (${item.variant})`; 
+
       message += ` - $${(item.price * item.quantity).toFixed(2)}\n`;
-      if (item.modifiers && item.modifiers.length > 0) {
-        item.modifiers.forEach(mod => {
-          message += `  + ${mod.name}\n`;
+      if (item.selectedModifiers && item.selectedModifiers.length > 0) {
+        item.selectedModifiers.forEach(mod => {
+          message += `  + ${mod.optionName}\n`;
         });
       }
     });
 
     message += `\n*TOTAL: BND ${order.total.toFixed(2)}*\n`;
-    message += `Payment: ${order.paymentMethod.toUpperCase()}\n\n`;
+    message += `Payment: ${(order.paymentMethod || 'UNKNOWN').toUpperCase()}\n\n`;
     message += `Thank you for your support!`;
 
     return message;

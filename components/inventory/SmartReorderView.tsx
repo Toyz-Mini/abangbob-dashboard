@@ -53,38 +53,48 @@ export default function SmartReorderView() {
             // Create POs for each supplier
             for (const [supplierName, items] of Object.entries(bySupplier)) {
                 await addPurchaseOrder({
-                    supplierId: 'unknown', // Ideally we find the supplier ID by name, but simplified here
+                    supplierId: 'unknown',
                     supplierName: supplierName,
                     items: items.map(i => ({
                         stockItemId: i.stockId,
-                        name: i.stockName,
+                        stockItemName: i.stockName,
                         quantity: i.suggestedOrderQuantity,
-                        unitCost: i.estimatedCost / i.suggestedOrderQuantity,
-                        totalCost: i.estimatedCost,
-                        receivedQuantity: 0
+                        unit: 'unit', // Add unit
+                        unitPrice: i.estimatedCost / i.suggestedOrderQuantity,
+                        totalPrice: i.estimatedCost,
+                        // receivedQuantity is not in PurchaseOrderItem (it's likely in PurchaseOrder status logic or separate table?) 
+                        // Wait, PurchaseOrderItem definition from view_code_item earlier:
+                        // stockItemId, stockItemName, quantity, unit, unitPrice, totalPrice.
                     })),
-                    totalAmount: items.reduce((sum, i) => sum + i.estimatedCost, 0),
-                    status: 'pending',
-                    notes: 'Auto-generated via Smart Reorder'
+                    status: 'draft',
+                    notes: 'Auto-generated via Smart Reorder',
+                    subtotal: items.reduce((sum, i) => sum + i.estimatedCost, 0),
+                    tax: 0,
+                    total: items.reduce((sum, i) => sum + i.estimatedCost, 0),
+                    paymentStatus: 'pending'
                 });
             }
 
             // Handle items without supplier
             if (noSupplierItems.length > 0) {
+                const subtotal = noSupplierItems.reduce((sum, i) => sum + i.estimatedCost, 0);
                 await addPurchaseOrder({
                     supplierId: 'misc',
                     supplierName: 'General Supplier (Unassigned)',
                     items: noSupplierItems.map(i => ({
                         stockItemId: i.stockId,
-                        name: i.stockName,
+                        stockItemName: i.stockName,
                         quantity: i.suggestedOrderQuantity,
-                        unitCost: i.estimatedCost / i.suggestedOrderQuantity,
-                        totalCost: i.estimatedCost,
-                        receivedQuantity: 0
+                        unit: 'unit',
+                        unitPrice: i.estimatedCost / i.suggestedOrderQuantity,
+                        totalPrice: i.estimatedCost,
                     })),
-                    totalAmount: noSupplierItems.reduce((sum, i) => sum + i.estimatedCost, 0),
-                    status: 'pending',
-                    notes: 'Auto-generated via Smart Reorder'
+                    status: 'draft',
+                    notes: 'Auto-generated via Smart Reorder',
+                    subtotal: subtotal,
+                    tax: 0,
+                    total: subtotal,
+                    paymentStatus: 'pending'
                 });
             }
 

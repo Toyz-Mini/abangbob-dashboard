@@ -17,7 +17,6 @@ import {
   VolumeX,
   ArrowLeft,
   RefreshCw,
-  RefreshCw,
   User,
   MessageCircle
 } from 'lucide-react';
