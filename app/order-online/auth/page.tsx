@@ -58,9 +58,7 @@ export default function OrderAuthPage() {
             const newCustomer = await addCustomer({
                 name,
                 email,
-                phone: phoneNumber,
-                status: 'active',
-                joinDate: new Date().toISOString()
+                phone: phoneNumber
             });
 
             if (typeof window !== 'undefined') {
