@@ -85,14 +85,14 @@ export default function ApprovalsPage() {
   const [selectedRequest, setSelectedRequest] = useState<StaffRequest | null>(null);
   const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
 
-  const pendingLeave = getPendingLeaveRequests();
-  const pendingClaims = getPendingClaimRequests();
-  const pendingRequests = getPendingStaffRequests();
+  const pendingLeave = getPendingLeaveRequests() || [];
+  const pendingClaims = getPendingClaimRequests() || [];
+  const pendingRequests = getPendingStaffRequests() || [];
 
-  // History Data
-  const historyLeave = leaveRequests.filter(r => r.status !== 'pending').sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-  const historyClaims = claimRequests.filter(r => r.status !== 'pending').sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-  const historyRequests = staffRequests.filter(r => r.status !== 'pending').sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  // History Data - add defensive checks for arrays
+  const historyLeave = (leaveRequests || []).filter(r => r.status !== 'pending').sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  const historyClaims = (claimRequests || []).filter(r => r.status !== 'pending').sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  const historyRequests = (staffRequests || []).filter(r => r.status !== 'pending').sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
   const totalPending = pendingLeave.length + pendingClaims.length + pendingRequests.length;
 
