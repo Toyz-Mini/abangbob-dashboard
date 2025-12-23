@@ -6,6 +6,8 @@ import Link from 'next/link';
 import { signUp } from '@/lib/auth-client';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import Turnstile from '@/components/Turnstile';
+import PasswordStrength from '@/components/PasswordStrength';
+import { validatePassword } from '@/lib/password-policy';
 import {
   User,
   Mail,
@@ -42,8 +44,10 @@ export default function RegisterPage() {
       return;
     }
 
-    if (password.length < 8) {
-      setError('Password mestilah sekurang-kurangnya 8 aksara');
+    // Password policy validation
+    const passwordValidation = validatePassword(password);
+    if (!passwordValidation.isValid) {
+      setError(passwordValidation.errors[0]);
       return;
     }
 
@@ -283,6 +287,7 @@ export default function RegisterPage() {
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
+              <PasswordStrength password={password} />
             </div>
 
             {/* Confirm Password Input */}
