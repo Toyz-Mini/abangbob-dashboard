@@ -7,10 +7,25 @@ import { SOPTemplate, SOPStep } from '@/lib/types';
 import Sidebar from '@/components/Sidebar';
 import { motion } from 'framer-motion';
 
+import { getSupabaseClient } from '@/lib/supabase/client';
+
 export default function SOPBuilderPage() {
     const [templates, setTemplates] = useState<SOPTemplate[]>(MOCK_SOP_TEMPLATES);
     const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
     const [steps, setSteps] = useState<SOPStep[]>([]);
+
+    // Inventory Items for Linking
+    const [inventoryItems, setInventoryItems] = useState<{ id: string, name: string }[]>([]);
+
+    useEffect(() => {
+        const fetchInventory = async () => {
+            const supabase = getSupabaseClient() as any;
+            if (!supabase) return;
+            const { data } = await supabase.from('inventory').select('id, name').order('name');
+            if (data) setInventoryItems(data);
+        };
+        fetchInventory();
+    }, []);
 
     // Create New Mock
     const handleCreateTemplate = () => {
@@ -172,6 +187,34 @@ export default function SOPBuilderPage() {
                                                         <option value="temperature">Suhu (°C)</option>
                                                         <option value="text">Teks</option>
                                                     </select>
+                                                )}
+
+                                                {/* Inventory Link Dropdown */}
+                                                {step.requiresValue && (
+                                                    <div className="flex items-center gap-2 ml-2 pl-2 border-l border-gray-300">
+                                                        <select
+                                                            value={step.inventoryItemId || ''}
+                                                            onChange={(e) => updateStep(step.id, { inventoryItemId: e.target.value || undefined })}
+                                                            className="text-sm border-gray-300 rounded-md py-1 max-w-[150px]"
+                                                        >
+                                                            <option value="">🔗 Link Inventory...</option>
+                                                            {inventoryItems.map(item => (
+                                                                <option key={item.id} value={item.id}>{item.name}</option>
+                                                            ))}
+                                                        </select>
+
+                                                        {step.inventoryItemId && (
+                                                            <select
+                                                                value={step.inventoryAction || 'set_stock'}
+                                                                onChange={(e) => updateStep(step.id, { inventoryAction: e.target.value as any })}
+                                                                className="text-sm border-gray-300 rounded-md py-1 bg-blue-50 text-blue-700 font-medium"
+                                                            >
+                                                                <option value="set_stock">Set Stock</option>
+                                                                <option value="deduct">Deduct Used</option>
+                                                                <option value="add">Add Restock</option>
+                                                            </select>
+                                                        )}
+                                                    </div>
                                                 )}
                                             </div>
                                         </div>

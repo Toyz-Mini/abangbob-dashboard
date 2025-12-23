@@ -295,6 +295,20 @@ export function useCashRegistersRealtime(onCashRegisterChange: RealtimeChangeHan
 }
 
 /**
+ * Subscribe to sop_logs table changes
+ */
+export function useSOPLogsRealtime(onSOPLogChange: RealtimeChangeHandler) {
+  return useSupabaseRealtime('sop_logs', onSOPLogChange);
+}
+
+/**
+ * Subscribe to staff_xp table changes
+ */
+export function useStaffXPRealtime(onStaffXPChange: RealtimeChangeHandler) {
+  return useSupabaseRealtime('staff_xp', onStaffXPChange);
+}
+
+/**
  * Check if realtime is enabled and working
  */
 export async function testRealtimeConnection(): Promise<boolean> {

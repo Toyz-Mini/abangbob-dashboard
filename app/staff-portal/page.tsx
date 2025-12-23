@@ -46,6 +46,7 @@ import SOPWizard from '@/components/staff/SOPWizard';
 
 import { AnimatePresence } from 'framer-motion';
 import { getStaffXP, StaffXP } from '@/lib/gamification';
+import { useSOPLogsRealtime, useStaffXPRealtime } from '@/lib/supabase/realtime-hooks';
 
 
 // Circular Progress Component
@@ -174,6 +175,7 @@ export default function StaffPortalPage() {
     getTodayChecklist,
     schedules,
     shifts,
+    refreshChecklistCompletions,
   } = useStaffPortal();
 
   const [isClocking, setIsClocking] = useState(false);
@@ -220,6 +222,21 @@ export default function StaffPortalPage() {
       getStaffXP(staffId).then(setXPData);
     }
   }, [staffId, showWizard]);
+
+  // Realtime Subscriptions
+  useSOPLogsRealtime(() => {
+    console.log('SOP Update detected, refreshing...');
+    refreshChecklistCompletions();
+  });
+
+  useStaffXPRealtime((payload) => {
+    // Only refresh if it affects current staff
+    if (!staffId) return;
+    if (payload.new.staff_id === staffId || payload.old.staff_id === staffId) {
+      console.log('XP Update detected, refreshing...');
+      getStaffXP(staffId).then(setXPData);
+    }
+  });
 
   // Get today's schedule
   const today = new Date().toISOString().split('T')[0];

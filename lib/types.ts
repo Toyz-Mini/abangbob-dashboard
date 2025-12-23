@@ -55,6 +55,16 @@ export interface CartItem extends MenuItem {
   itemTotal: number; // Base price + modifier prices
 }
 
+export interface OrderItem {
+  id: string;
+  menuItemId: string;
+  name: string;
+  price: number;
+  quantity: number;
+  modifiers: SelectedModifier[];
+  notes?: string;
+}
+
 export interface Order {
   id: string;
   orderNumber: string;
@@ -1458,6 +1468,8 @@ export interface SOPStep {
   valueType: 'boolean' | 'number' | 'text' | 'temperature' | 'currency';
   minValue?: number;
   maxValue?: number;
+  inventoryItemId?: string;
+  inventoryAction?: 'set_stock' | 'deduct' | 'add';
   createdAt: string;
   updatedAt?: string;
 }

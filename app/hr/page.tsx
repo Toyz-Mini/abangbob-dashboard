@@ -12,7 +12,8 @@ import PremiumButton from '@/components/PremiumButton';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { getRankTier, getScoreColor } from '@/lib/kpi-data';
 import { Order } from '@/lib/types';
-import { useMemo } from 'react';
+import { useMemo, useCallback } from 'react';
+import { useStaffRealtime, useAttendanceRealtime } from '@/lib/supabase/realtime-hooks';
 
 // Helper function to calculate preparation time in minutes
 function calculatePrepTime(order: Order): number | null {
@@ -42,10 +43,21 @@ interface StaffSpeedStats {
 }
 
 export default function HRDashboardPage() {
-  const { staff, attendance, getStaffAttendanceToday, isInitialized } = useStaff();
+  const { staff, attendance, getStaffAttendanceToday, isInitialized, refreshStaff, refreshAttendance } = useStaff();
   const { getKPILeaderboard, staffKPI } = useKPI();
   const { orders } = useOrders();
   const { t, language } = useTranslation();
+
+  // Realtime Subscriptions
+  useStaffRealtime(useCallback(() => {
+    console.log('Staff Sync');
+    refreshStaff();
+  }, [refreshStaff]));
+
+  useAttendanceRealtime(useCallback(() => {
+    console.log('Attendance Sync');
+    refreshAttendance();
+  }, [refreshAttendance]));
 
   const activeStaff = staff.filter(s => s.status === 'active');
   const today = new Date().toISOString().split('T')[0];

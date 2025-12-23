@@ -18,6 +18,8 @@ import { logSyncError, logSyncSuccess } from './utils/sync-logger';
 import * as PaymentTaxSync from './supabase/payment-tax-sync';
 import * as VoidRefundOps from './supabase/operations';
 import { useCashRegistersRealtime } from './supabase/realtime-hooks';
+import { getNextDayForecast, WeatherForecast } from './services/weather';
+
 
 // Helper function to generate UUID for Supabase compatibility
 function generateUUID(): string {
@@ -129,6 +131,7 @@ interface StoreState {
   adjustStock: (id: string, quantity: number, type: 'in' | 'out', reason: string) => void;
   refreshInventory: () => Promise<void>;
   getRestockSuggestions: () => StockSuggestion[];
+  weatherForecast: WeatherForecast | null;
 
   // Waste Tracking
   wasteLogs: WasteLog[];
@@ -521,7 +524,21 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   // Cash Register state
   const [cashRegisters, setCashRegisters] = useState<CashRegister[]>([]);
+
   const [currentRegister, setCurrentRegister] = useState<CashRegister | null>(null);
+
+  // Weather State
+  const [weatherForecast, setWeatherForecast] = useState<WeatherForecast | null>(null);
+
+  // Fetch weather on mount
+  useEffect(() => {
+    getNextDayForecast().then(forecast => {
+      if (forecast) {
+        console.log('[Weather] Forecast loaded:', forecast.description);
+        setWeatherForecast(forecast);
+      }
+    });
+  }, []);
 
   // Initialize from Supabase first, fallback to localStorage
   useEffect(() => {
@@ -3906,6 +3923,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     bulkUpsertStock,
     refreshInventory,
     getRestockSuggestions,
+    weatherForecast,
 
     // Staff
     staff,
@@ -4318,6 +4336,7 @@ export function useInventory() {
   return {
     inventory: store.inventory,
     inventoryLogs: store.inventoryLogs,
+    weatherForecast: store.weatherForecast,
     addStockItem: store.addStockItem,
     updateStockItem: store.updateStockItem,
     deleteStockItem: store.deleteStockItem,
@@ -4327,6 +4346,7 @@ export function useInventory() {
     refreshInventory: store.refreshInventory,
     getRestockSuggestions: store.getRestockSuggestions,
     isInitialized: store.isInitialized,
+
   };
 }
 
