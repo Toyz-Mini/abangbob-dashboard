@@ -4,12 +4,12 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useStore } from '@/lib/store';
 import { OrderItem, Order } from '@/lib/types';
-import { ChevronLeft, MapPin, Clock, CreditCard, Banknote, User } from 'lucide-react';
+import { ChevronLeft, MapPin, Clock, CreditCard, Banknote, User, Plus } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export default function CheckoutPage() {
     const router = useRouter();
-    const { addOrder } = useStore();
+    const { addOrder, menuItems } = useStore();
 
     // State
     const [cart, setCart] = useState<OrderItem[]>([]);
@@ -44,6 +44,26 @@ export default function CheckoutPage() {
     const subtotal = cart.reduce((total, item) => total + (item.price * item.quantity), 0);
     // Assuming 0 tax/fees for now as not specified logic
     const total = subtotal;
+
+    // Derived: Upsell items (simple logic: items not in cart)
+    const upsellItems = menuItems
+        .filter(item => !cart.some(c => c.menuItemId === item.id) && item.category !== 'Unspecified')
+        .slice(0, 5); // Take top 5 recommendations
+
+    const addToCartSimple = (item: any) => {
+        const newItem: OrderItem = {
+            id: crypto.randomUUID(),
+            menuItemId: item.id,
+            name: item.name,
+            price: item.price,
+            quantity: 1,
+            modifiers: [],
+            notes: ''
+        };
+        const newCart = [...cart, newItem];
+        setCart(newCart);
+        sessionStorage.setItem('onlineCart', JSON.stringify(newCart));
+    };
 
     const handlePlaceOrder = async () => {
         if (isSubmitting) return;
@@ -104,7 +124,7 @@ export default function CheckoutPage() {
                 <h1 className="font-bold text-lg text-gray-800">Review & Bayar</h1>
             </div>
 
-            <div className="p-4 space-y-4">
+            <div className="flex-1 overflow-y-auto p-4 space-y-4">
                 {/* Pickup Details */}
                 <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
                     <h2 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
@@ -147,52 +167,84 @@ export default function CheckoutPage() {
                                         <p className="text-xs text-gray-500">{item.notes}</p>
                                     </div>
                                 </div>
-                                <p className="font-bold text-gray-900">RM {(item.price * item.quantity).toFixed(2)}</p>
+                                <p className="font-bold text-gray-900">BND {(item.price * item.quantity).toFixed(2)}</p>
                             </div>
                         ))}
                     </div>
                 </div>
 
-                {/* Payment Method */}
-                <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
-                    <h2 className="font-bold text-gray-800 mb-3">Cara Pembayaran</h2>
-                    <div className="space-y-2">
-                        <button
-                            onClick={() => setPaymentMethod('qr')}
-                            className={`w-full p-4 rounded-xl border flex items-center justify-between transition-all ${paymentMethod === 'qr' ? 'border-orange-500 bg-orange-50 ring-1 ring-orange-500' : 'border-gray-200 bg-white'}`}
-                        >
-                            <div className="flex items-center gap-3">
-                                <CreditCard size={20} className={paymentMethod === 'qr' ? 'text-orange-600' : 'text-gray-400'} />
-                                <span className={paymentMethod === 'qr' ? 'font-bold text-orange-900' : 'font-medium text-gray-700'}>DuitNow QR / Transfer</span>
-                            </div>
-                            {paymentMethod === 'qr' && <div className="w-3 h-3 rounded-full bg-orange-500"></div>}
-                        </button>
+            </div>
 
-                        <button
-                            onClick={() => setPaymentMethod('cash')}
-                            className={`w-full p-4 rounded-xl border flex items-center justify-between transition-all ${paymentMethod === 'cash' ? 'border-orange-500 bg-orange-50 ring-1 ring-orange-500' : 'border-gray-200 bg-white'}`}
-                        >
-                            <div className="flex items-center gap-3">
-                                <Banknote size={20} className={paymentMethod === 'cash' ? 'text-orange-600' : 'text-gray-400'} />
-                                <span className={paymentMethod === 'cash' ? 'font-bold text-orange-900' : 'font-medium text-gray-700'}>Tunai (Kaunter)</span>
+            {/* Upsell Carousel */}
+            {upsellItems.length > 0 && (
+                <div>
+                    <h2 className="font-bold text-gray-800 mb-3 px-1">Order Sekali?</h2>
+                    <div className="flex gap-3 overflow-x-auto pb-4 no-scrollbar -mx-4 px-4">
+                        {upsellItems.map(item => (
+                            <div key={item.id} className="min-w-[160px] bg-white rounded-xl p-3 shadow-sm border border-gray-100 flex flex-col">
+                                <div className="h-24 bg-gray-100 rounded-lg mb-2 relative overflow-hidden">
+                                    <img
+                                        src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=300"
+                                        className="w-full h-full object-cover"
+                                        alt={item.name}
+                                    />
+                                </div>
+                                <h3 className="font-bold text-sm text-gray-800 line-clamp-1 mb-1">{item.name}</h3>
+                                <div className="mt-auto flex justify-between items-center">
+                                    <span className="text-orange-600 font-bold text-sm">BND {item.price.toFixed(2)}</span>
+                                    <button
+                                        onClick={() => addToCartSimple(item)}
+                                        className="p-1.5 bg-orange-100 text-orange-600 rounded-full hover:bg-orange-200"
+                                    >
+                                        <Plus size={16} />
+                                    </button>
+                                </div>
                             </div>
-                            {paymentMethod === 'cash' && <div className="w-3 h-3 rounded-full bg-orange-500"></div>}
-                        </button>
+                        ))}
                     </div>
                 </div>
+            )}
+
+            {/* Payment Method */}
+            <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+                <h2 className="font-bold text-gray-800 mb-3">Cara Pembayaran</h2>
+                <div className="space-y-2">
+                    <button
+                        onClick={() => setPaymentMethod('qr')}
+                        className={`w-full p-4 rounded-xl border flex items-center justify-between transition-all ${paymentMethod === 'qr' ? 'border-orange-500 bg-orange-50 ring-1 ring-orange-500' : 'border-gray-200 bg-white'}`}
+                    >
+                        <div className="flex items-center gap-3">
+                            <CreditCard size={20} className={paymentMethod === 'qr' ? 'text-orange-600' : 'text-gray-400'} />
+                            <span className={paymentMethod === 'qr' ? 'font-bold text-orange-900' : 'font-medium text-gray-700'}>DuitNow QR / Transfer</span>
+                        </div>
+                        {paymentMethod === 'qr' && <div className="w-3 h-3 rounded-full bg-orange-500"></div>}
+                    </button>
+
+                    <button
+                        onClick={() => setPaymentMethod('cash')}
+                        className={`w-full p-4 rounded-xl border flex items-center justify-between transition-all ${paymentMethod === 'cash' ? 'border-orange-500 bg-orange-50 ring-1 ring-orange-500' : 'border-gray-200 bg-white'}`}
+                    >
+                        <div className="flex items-center gap-3">
+                            <Banknote size={20} className={paymentMethod === 'cash' ? 'text-orange-600' : 'text-gray-400'} />
+                            <span className={paymentMethod === 'cash' ? 'font-bold text-orange-900' : 'font-medium text-gray-700'}>Tunai (Kaunter)</span>
+                        </div>
+                        {paymentMethod === 'cash' && <div className="w-3 h-3 rounded-full bg-orange-500"></div>}
+                    </button>
+                </div>
             </div>
+
 
             {/* Bottom Bar - Total & Place Order */}
             <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-100 z-20">
                 <div className="max-w-md mx-auto">
                     <div className="flex justify-between items-center mb-4 text-sm">
                         <span className="text-gray-600">Subtotal</span>
-                        <span className="font-bold text-gray-900">RM {subtotal.toFixed(2)}</span>
+                        <span className="font-bold text-gray-900">BND {subtotal.toFixed(2)}</span>
                     </div>
                     {/* Tax could go here */}
                     <div className="flex justify-between items-center mb-6 text-xl">
                         <span className="font-bold text-gray-800">Total</span>
-                        <span className="font-bold text-orange-600">RM {total.toFixed(2)}</span>
+                        <span className="font-bold text-orange-600">BND {total.toFixed(2)}</span>
                     </div>
 
                     <button
@@ -204,6 +256,6 @@ export default function CheckoutPage() {
                     </button>
                 </div>
             </div>
-        </div>
+        </div >
     );
 }

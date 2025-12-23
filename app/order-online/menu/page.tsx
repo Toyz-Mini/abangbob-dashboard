@@ -185,7 +185,7 @@ export default function OnlineMenuPage() {
                                 </div>
                             </div>
                             <h3 className="font-bold text-gray-800 text-sm leading-tight mb-1">{item.name}</h3>
-                            <p className="text-orange-600 font-bold text-sm">RM {item.price.toFixed(2)}</p>
+                            <p className="text-orange-600 font-bold text-sm">BND {item.price.toFixed(2)}</p>
                         </motion.div>
                     ))}
                 </div>
@@ -216,7 +216,7 @@ export default function OnlineMenuPage() {
                                     <span className="font-medium">Jom Bayar / Checkout</span>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    <span className="font-bold text-lg">RM {cartTotal.toFixed(2)}</span>
+                                    <span className="font-bold text-lg">BND {cartTotal.toFixed(2)}</span>
                                     <ChevronLeft className="rotate-180" size={20} />
                                 </div>
                             </button>
@@ -247,7 +247,7 @@ export default function OnlineMenuPage() {
                                 <div className="flex justify-between items-start mb-6">
                                     <div>
                                         <h2 className="text-2xl font-bold text-gray-900">{selectedItem.name}</h2>
-                                        <p className="text-orange-600 text-xl font-bold mt-1">RM {selectedItem.price.toFixed(2)}</p>
+                                        <p className="text-orange-600 text-xl font-bold mt-1">BND {selectedItem.price.toFixed(2)}</p>
                                     </div>
                                     <button onClick={() => setSelectedItem(null)} className="p-2 bg-gray-100 rounded-full">
                                         <X size={20} />
@@ -303,7 +303,7 @@ export default function OnlineMenuPage() {
                                                                 </div>
                                                                 {option.extraPrice > 0 && (
                                                                     <span className="text-sm font-bold text-orange-600">
-                                                                        + RM {option.extraPrice.toFixed(2)}
+                                                                        + BND {option.extraPrice.toFixed(2)}
                                                                     </span>
                                                                 )}
                                                             </div>
@@ -328,7 +328,7 @@ export default function OnlineMenuPage() {
                                         onClick={addToCart}
                                         className="flex-1 bg-orange-500 text-white font-bold py-4 rounded-xl shadow-lg hover:bg-orange-600 transition-colors flex items-center justify-center gap-2"
                                     >
-                                        <span>Add - RM {calculateItemTotal().toFixed(2)}</span>
+                                        <span>Add - BND {calculateItemTotal().toFixed(2)}</span>
                                     </button>
                                 </div>
                             </div>
