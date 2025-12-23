@@ -1,10 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { Pool } from 'pg';
+import { query } from '@/lib/db';
 import { auth } from '@/lib/auth';
-
-const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-});
 
 export async function POST(request: NextRequest) {
     try {
@@ -20,7 +16,7 @@ export async function POST(request: NextRequest) {
 
         if (action === 'approve') {
             // Update user status to approved
-            const result = await pool.query(
+            const result = await query(
                 `UPDATE "user" 
          SET 
            status = 'approved',
@@ -47,7 +43,7 @@ export async function POST(request: NextRequest) {
             });
         } else if (action === 'reject') {
             // Update user status to rejected
-            const result = await pool.query(
+            const result = await query(
                 `UPDATE "user" 
          SET 
            status = 'rejected',

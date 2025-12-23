@@ -1,11 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { Pool } from 'pg';
+import { query } from '@/lib/db';
 import { sendEmail, getVerificationEmailTemplate } from '@/lib/email';
 import crypto from 'crypto';
-
-const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-});
 
 export async function POST(request: NextRequest) {
     try {
@@ -24,7 +20,7 @@ export async function POST(request: NextRequest) {
         const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
         // Save verification token
-        await pool.query(
+        await query(
             `INSERT INTO "verification" (id, identifier, value, "expiresAt", "createdAt", "updatedAt")
        VALUES ($1, $2, $3, $4, NOW(), NOW())
        ON CONFLICT (id) DO UPDATE SET value = $3, "expiresAt" = $4, "updatedAt" = NOW()`,

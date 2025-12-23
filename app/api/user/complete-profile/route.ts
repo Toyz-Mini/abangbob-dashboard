@@ -1,9 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { Pool } from 'pg';
-
-const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-});
+import { query } from '@/lib/db';
 
 export async function POST(request: NextRequest) {
     try {
@@ -25,7 +21,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Update user profile
-        const result = await pool.query(
+        const result = await query(
             `UPDATE "user" 
        SET 
          phone = $1,

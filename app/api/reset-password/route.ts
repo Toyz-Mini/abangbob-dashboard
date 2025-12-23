@@ -1,11 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { Pool } from 'pg';
+import { query } from '@/lib/db';
 import { rateLimit, getClientIP } from '@/lib/rate-limit';
 import bcrypt from 'crypto';
-
-const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-});
 
 // Simple password hashing using crypto (Better Auth handles this internally too)
 function hashPassword(password: string): string {
@@ -46,7 +42,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Verify token
-        const verification = await pool.query(
+        const verification = await query(
             `SELECT * FROM "verification" 
        WHERE identifier = $1 AND value = $2 AND "expiresAt" > NOW()`,
             [`reset:${email}`, token]
@@ -64,7 +60,7 @@ export async function POST(request: NextRequest) {
         // For now, let's update direct - in production, use Better Auth's API
 
         // Delete the verification token
-        await pool.query(
+        await query(
             `DELETE FROM "verification" WHERE identifier = $1`,
             [`reset:${email}`]
         );
@@ -74,7 +70,7 @@ export async function POST(request: NextRequest) {
         // We need to hash it the same way
         const hashedPassword = hashPassword(password);
 
-        await pool.query(
+        await query(
             `UPDATE "account" 
        SET password = $1, "updatedAt" = NOW()
        WHERE "userId" = (SELECT id FROM "user" WHERE email = $2)

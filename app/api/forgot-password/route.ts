@@ -1,96 +1,92 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { Pool } from 'pg';
+import { query } from '@/lib/db';
 import { sendEmail, getVerificationEmailTemplate } from '@/lib/email';
 import { rateLimit, getClientIP } from '@/lib/rate-limit';
 import crypto from 'crypto';
 
-const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-});
-
 export async function POST(request: NextRequest) {
-    try {
-        // Rate limiting: 3 requests per 15 minutes
-        const clientIP = getClientIP(request);
-        const rateLimitResult = rateLimit(`forgot-password:${clientIP}`, {
-            windowMs: 15 * 60 * 1000,
-            maxRequests: 3,
-        });
+  try {
+    // Rate limiting: 3 requests per 15 minutes
+    const clientIP = getClientIP(request);
+    const rateLimitResult = rateLimit(`forgot-password:${clientIP}`, {
+      windowMs: 15 * 60 * 1000,
+      maxRequests: 3,
+    });
 
-        if (!rateLimitResult.success) {
-            return NextResponse.json(
-                {
-                    error: `Terlalu banyak percubaan. Cuba lagi dalam ${rateLimitResult.retryAfter} saat.`
-                },
-                { status: 429 }
-            );
-        }
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        {
+          error: `Terlalu banyak percubaan. Cuba lagi dalam ${rateLimitResult.retryAfter} saat.`
+        },
+        { status: 429 }
+      );
+    }
 
-        const body = await request.json();
-        const { email } = body;
+    const body = await request.json();
+    const { email } = body;
 
-        if (!email) {
-            return NextResponse.json(
-                { error: 'Email diperlukan' },
-                { status: 400 }
-            );
-        }
+    if (!email) {
+      return NextResponse.json(
+        { error: 'Email diperlukan' },
+        { status: 400 }
+      );
+    }
 
-        // Check if user exists
-        const userResult = await pool.query(
-            `SELECT id, name, email FROM "user" WHERE email = $1`,
-            [email]
-        );
+    // Check if user exists
+    const userResult = await query(
+      `SELECT id, name, email FROM "user" WHERE email = $1`,
+      [email]
+    );
 
-        // Always return success to prevent email enumeration
-        if (userResult.rowCount === 0) {
-            return NextResponse.json({
-                success: true,
-                message: 'Jika email wujud, anda akan menerima link reset password.',
-            });
-        }
+    // Always return success to prevent email enumeration
+    if (userResult.rowCount === 0) {
+      return NextResponse.json({
+        success: true,
+        message: 'Jika email wujud, anda akan menerima link reset password.',
+      });
+    }
 
-        const user = userResult.rows[0];
+    const user = userResult.rows[0];
 
-        // Generate reset token
-        const token = crypto.randomBytes(32).toString('hex');
-        const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+    // Generate reset token
+    const token = crypto.randomBytes(32).toString('hex');
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
 
-        // Save reset token
-        await pool.query(
-            `INSERT INTO "verification" (id, identifier, value, "expiresAt", "createdAt", "updatedAt")
+    // Save reset token
+    await query(
+      `INSERT INTO "verification" (id, identifier, value, "expiresAt", "createdAt", "updatedAt")
        VALUES ($1, $2, $3, $4, NOW(), NOW())
        ON CONFLICT (identifier) DO UPDATE SET value = $3, "expiresAt" = $4, "updatedAt" = NOW()`,
-            [`reset-${crypto.randomUUID()}`, `reset:${email}`, token, expiresAt]
-        );
+      [`reset-${crypto.randomUUID()}`, `reset:${email}`, token, expiresAt]
+    );
 
-        // Create reset URL
-        const baseUrl = process.env.BETTER_AUTH_URL || 'http://localhost:3000';
-        const resetUrl = `${baseUrl}/reset-password?token=${token}&email=${encodeURIComponent(email)}`;
+    // Create reset URL
+    const baseUrl = process.env.BETTER_AUTH_URL || 'http://localhost:3000';
+    const resetUrl = `${baseUrl}/reset-password?token=${token}&email=${encodeURIComponent(email)}`;
 
-        // Send reset email
-        const emailHtml = getPasswordResetEmailTemplate(user.name, resetUrl);
-        await sendEmail({
-            to: email,
-            subject: 'Reset Password - AbangBob',
-            html: emailHtml,
-        });
+    // Send reset email
+    const emailHtml = getPasswordResetEmailTemplate(user.name, resetUrl);
+    await sendEmail({
+      to: email,
+      subject: 'Reset Password - AbangBob',
+      html: emailHtml,
+    });
 
-        return NextResponse.json({
-            success: true,
-            message: 'Jika email wujud, anda akan menerima link reset password.',
-        });
-    } catch (error) {
-        console.error('Forgot password error:', error);
-        return NextResponse.json(
-            { error: 'Ralat berlaku' },
-            { status: 500 }
-        );
-    }
+    return NextResponse.json({
+      success: true,
+      message: 'Jika email wujud, anda akan menerima link reset password.',
+    });
+  } catch (error) {
+    console.error('Forgot password error:', error);
+    return NextResponse.json(
+      { error: 'Ralat berlaku' },
+      { status: 500 }
+    );
+  }
 }
 
 function getPasswordResetEmailTemplate(name: string, resetUrl: string) {
-    return `
+  return `
     <!DOCTYPE html>
     <html>
     <head>

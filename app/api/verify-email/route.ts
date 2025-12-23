@@ -1,9 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { Pool } from 'pg';
-
-const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-});
+import { query } from '@/lib/db';
 
 export async function GET(request: NextRequest) {
     try {
@@ -16,7 +12,7 @@ export async function GET(request: NextRequest) {
         }
 
         // Check if token is valid
-        const verification = await pool.query(
+        const verification = await query(
             `SELECT * FROM "verification" 
        WHERE identifier = $1 AND value = $2 AND "expiresAt" > NOW()`,
             [email, token]
@@ -27,7 +23,7 @@ export async function GET(request: NextRequest) {
         }
 
         // Update user emailVerified status
-        await pool.query(
+        await query(
             `UPDATE "user" 
        SET "emailVerified" = true, "updatedAt" = NOW()
        WHERE email = $1`,
@@ -35,7 +31,7 @@ export async function GET(request: NextRequest) {
         );
 
         // Delete used verification token
-        await pool.query(
+        await query(
             `DELETE FROM "verification" WHERE identifier = $1`,
             [email]
         );
