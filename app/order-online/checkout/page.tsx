@@ -115,16 +115,16 @@ export default function CheckoutPage() {
     };
 
     return (
-        <div className="flex flex-col min-h-screen bg-gray-50 pb-20">
+        <div className="flex flex-col h-screen overflow-hidden bg-gray-50">
             {/* Header */}
-            <div className="bg-white px-4 py-3 shadow-sm sticky top-0 z-10 flex items-center gap-3">
+            <div className="bg-white px-4 py-3 shadow-sm sticky top-0 z-10 flex items-center gap-3 shrink-0">
                 <button onClick={() => router.back()} className="p-2 -ml-2 text-gray-600">
                     <ChevronLeft size={24} />
                 </button>
                 <h1 className="font-bold text-lg text-gray-800">Review & Bayar</h1>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            <div className="flex-1 overflow-y-auto p-4 space-y-4 pb-48">
                 {/* Pickup Details */}
                 <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
                     <h2 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
@@ -173,66 +173,74 @@ export default function CheckoutPage() {
                     </div>
                 </div>
 
-            </div>
+                {/* Upsell Carousel */}
+                {upsellItems.length > 0 && (
+                    <div className="animate-fade-in">
+                        <h2 className="font-bold text-gray-800 mb-3">Order Sekali?</h2>
+                        <motion.div
+                            initial={{ x: 20, opacity: 0 }}
+                            animate={{ x: 0, opacity: 1 }}
+                            transition={{ type: "spring", stiffness: 100, damping: 20 }}
+                            className="flex gap-3 overflow-x-auto pb-4 no-scrollbar -mx-4 px-4 snap-x"
+                            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                        >
+                            {upsellItems.map(item => (
+                                <motion.div
+                                    key={item.id}
+                                    whileTap={{ scale: 0.95 }}
+                                    className="min-w-[160px] bg-white rounded-xl p-3 shadow-sm border border-gray-100 flex flex-col snap-center first:ml-0 last:mr-4 ml-4 first:ml-4"
+                                >
+                                    <div className="h-24 bg-gray-100 rounded-lg mb-2 relative overflow-hidden">
+                                        <img
+                                            src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=300"
+                                            className="w-full h-full object-cover"
+                                            alt={item.name}
+                                        />
+                                    </div>
+                                    <h3 className="font-bold text-sm text-gray-800 line-clamp-1 mb-1">{item.name}</h3>
+                                    <div className="mt-auto flex justify-between items-center">
+                                        <span className="text-orange-600 font-bold text-sm">BND {item.price.toFixed(2)}</span>
+                                        <button
+                                            onClick={() => addToCartSimple(item)}
+                                            className="p-1.5 bg-orange-100 text-orange-600 rounded-full hover:bg-orange-200"
+                                        >
+                                            <Plus size={16} />
+                                        </button>
+                                    </div>
+                                </motion.div>
+                            ))}
+                        </motion.div>
+                    </div>
+                )}
 
-            {/* Upsell Carousel */}
-            {upsellItems.length > 0 && (
-                <div>
-                    <h2 className="font-bold text-gray-800 mb-3 px-1">Order Sekali?</h2>
-                    <div className="flex gap-3 overflow-x-auto pb-4 no-scrollbar -mx-4 px-4">
-                        {upsellItems.map(item => (
-                            <div key={item.id} className="min-w-[160px] bg-white rounded-xl p-3 shadow-sm border border-gray-100 flex flex-col">
-                                <div className="h-24 bg-gray-100 rounded-lg mb-2 relative overflow-hidden">
-                                    <img
-                                        src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=300"
-                                        className="w-full h-full object-cover"
-                                        alt={item.name}
-                                    />
-                                </div>
-                                <h3 className="font-bold text-sm text-gray-800 line-clamp-1 mb-1">{item.name}</h3>
-                                <div className="mt-auto flex justify-between items-center">
-                                    <span className="text-orange-600 font-bold text-sm">BND {item.price.toFixed(2)}</span>
-                                    <button
-                                        onClick={() => addToCartSimple(item)}
-                                        className="p-1.5 bg-orange-100 text-orange-600 rounded-full hover:bg-orange-200"
-                                    >
-                                        <Plus size={16} />
-                                    </button>
-                                </div>
+                {/* Payment Method */}
+                <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+                    <h2 className="font-bold text-gray-800 mb-3">Cara Pembayaran</h2>
+                    <div className="space-y-2">
+                        <button
+                            onClick={() => setPaymentMethod('qr')}
+                            className={`w-full p-4 rounded-xl border flex items-center justify-between transition-all ${paymentMethod === 'qr' ? 'border-orange-500 bg-orange-50 ring-1 ring-orange-500' : 'border-gray-200 bg-white'}`}
+                        >
+                            <div className="flex items-center gap-3">
+                                <CreditCard size={20} className={paymentMethod === 'qr' ? 'text-orange-600' : 'text-gray-400'} />
+                                <span className={paymentMethod === 'qr' ? 'font-bold text-orange-900' : 'font-medium text-gray-700'}>DuitNow QR / Transfer</span>
                             </div>
-                        ))}
+                            {paymentMethod === 'qr' && <div className="w-3 h-3 rounded-full bg-orange-500"></div>}
+                        </button>
+
+                        <button
+                            onClick={() => setPaymentMethod('cash')}
+                            className={`w-full p-4 rounded-xl border flex items-center justify-between transition-all ${paymentMethod === 'cash' ? 'border-orange-500 bg-orange-50 ring-1 ring-orange-500' : 'border-gray-200 bg-white'}`}
+                        >
+                            <div className="flex items-center gap-3">
+                                <Banknote size={20} className={paymentMethod === 'cash' ? 'text-orange-600' : 'text-gray-400'} />
+                                <span className={paymentMethod === 'cash' ? 'font-bold text-orange-900' : 'font-medium text-gray-700'}>Tunai (Kaunter)</span>
+                            </div>
+                            {paymentMethod === 'cash' && <div className="w-3 h-3 rounded-full bg-orange-500"></div>}
+                        </button>
                     </div>
                 </div>
-            )}
-
-            {/* Payment Method */}
-            <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
-                <h2 className="font-bold text-gray-800 mb-3">Cara Pembayaran</h2>
-                <div className="space-y-2">
-                    <button
-                        onClick={() => setPaymentMethod('qr')}
-                        className={`w-full p-4 rounded-xl border flex items-center justify-between transition-all ${paymentMethod === 'qr' ? 'border-orange-500 bg-orange-50 ring-1 ring-orange-500' : 'border-gray-200 bg-white'}`}
-                    >
-                        <div className="flex items-center gap-3">
-                            <CreditCard size={20} className={paymentMethod === 'qr' ? 'text-orange-600' : 'text-gray-400'} />
-                            <span className={paymentMethod === 'qr' ? 'font-bold text-orange-900' : 'font-medium text-gray-700'}>DuitNow QR / Transfer</span>
-                        </div>
-                        {paymentMethod === 'qr' && <div className="w-3 h-3 rounded-full bg-orange-500"></div>}
-                    </button>
-
-                    <button
-                        onClick={() => setPaymentMethod('cash')}
-                        className={`w-full p-4 rounded-xl border flex items-center justify-between transition-all ${paymentMethod === 'cash' ? 'border-orange-500 bg-orange-50 ring-1 ring-orange-500' : 'border-gray-200 bg-white'}`}
-                    >
-                        <div className="flex items-center gap-3">
-                            <Banknote size={20} className={paymentMethod === 'cash' ? 'text-orange-600' : 'text-gray-400'} />
-                            <span className={paymentMethod === 'cash' ? 'font-bold text-orange-900' : 'font-medium text-gray-700'}>Tunai (Kaunter)</span>
-                        </div>
-                        {paymentMethod === 'cash' && <div className="w-3 h-3 rounded-full bg-orange-500"></div>}
-                    </button>
-                </div>
             </div>
-
 
             {/* Bottom Bar - Total & Place Order */}
             <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-100 z-20">

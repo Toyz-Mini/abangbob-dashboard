@@ -1,6 +1,7 @@
 'use client';
 
 import '../globals.css';
+import ChatWidget from '@/components/online-ordering/ChatWidget';
 import { Inter, Outfit } from 'next/font/google';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
@@ -16,6 +17,7 @@ export default function OrderOnlineLayout({
             {/* Mobile Container Assumption: constrained width on Desktop to simulate phone */}
             <div className="mx-auto max-w-md min-h-screen bg-white shadow-2xl relative overflow-hidden">
                 {children}
+                <ChatWidget />
             </div>
         </div>
     );

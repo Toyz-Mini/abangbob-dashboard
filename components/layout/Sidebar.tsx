@@ -34,8 +34,13 @@ import {
   History,
   Wrench,
   RefreshCw,
+  MessageCircle,
   type LucideIcon
 } from 'lucide-react';
+
+
+
+
 
 interface NavItem {
   href: string;
@@ -103,6 +108,7 @@ const navGroupsConfig: NavGroup[] = [
     items: [
       { href: '/customers', labelKey: 'nav.customers', icon: UserCheck, tourId: 'customers' },
       { href: '/promotions', labelKey: 'nav.promotions', icon: Tag, tourId: 'promotions' },
+      { href: '/admin/support', labelKey: 'nav.support', icon: MessageCircle },
     ]
   },
   {
