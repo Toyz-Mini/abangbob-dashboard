@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ShoppingBag, ArrowRight, Clock, X, User } from 'lucide-react';
+import { ShoppingBag, ArrowRight, Clock, X, User, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function OrderLandingPage() {

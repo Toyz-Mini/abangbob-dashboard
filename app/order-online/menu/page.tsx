@@ -27,11 +27,25 @@ export default function OnlineMenuPage() {
     const [orderMode, setOrderMode] = useState<string | null>(null);
 
     useEffect(() => {
-        // Load mode
+        // Load mode and cart
         if (typeof window !== 'undefined') {
             setOrderMode(sessionStorage.getItem('orderMode') || 'dine-in');
+            const savedCart = sessionStorage.getItem('onlineCart');
+            if (savedCart) {
+                try {
+                    setCart(JSON.parse(savedCart));
+                } catch (e) {
+                    console.error('Failed to parse cart', e);
+                }
+            }
         }
     }, []);
+
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            sessionStorage.setItem('onlineCart', JSON.stringify(cart));
+        }
+    }, [cart]);
 
     const filteredItems = useMemo(() => {
         return menuItems.filter(item => {
@@ -87,8 +101,8 @@ export default function OnlineMenuPage() {
                             key={cat}
                             onClick={() => setActiveCategory(cat)}
                             className={`px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${activeCategory === cat
-                                    ? 'bg-orange-500 text-white shadow-md'
-                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                ? 'bg-orange-500 text-white shadow-md'
+                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                                 }`}
                         >
                             {cat}
@@ -137,14 +151,14 @@ export default function OnlineMenuPage() {
                         {/* Mobile Container constraint hack */}
                         <div className="max-w-md mx-auto">
                             <button
-                                onClick={() => alert('Proceed to Checkout Mock')}
+                                onClick={() => router.push('/order-online/checkout')}
                                 className="w-full bg-gray-900 text-white p-4 rounded-2xl shadow-xl flex items-center justify-between"
                             >
                                 <div className="flex items-center gap-3">
                                     <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center font-bold text-sm">
                                         {cartCount}
                                     </div>
-                                    <span className="font-medium">Total</span>
+                                    <span className="font-medium">Jom Bayar / Checkout</span>
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <span className="font-bold text-lg">RM {cartTotal.toFixed(2)}</span>
