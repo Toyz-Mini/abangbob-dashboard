@@ -37,6 +37,9 @@ export const auth = betterAuth({
 
     // Trust host for deployment
     trustedOrigins: [
+        "http://localhost:3000",
+        "https://abangbobeat.store",
+        "https://www.abangbobeat.store",
         process.env.BETTER_AUTH_URL || "http://localhost:3000",
     ],
 });
