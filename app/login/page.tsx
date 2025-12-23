@@ -51,14 +51,17 @@ export default function LoginPage() {
         password,
       });
 
+      console.log('Sign in result:', result);
+
       if (result.error) {
         setError(result.error.message || 'Login gagal');
       } else {
         router.push('/');
         router.refresh();
       }
-    } catch (err) {
-      setError('Ralat berlaku. Sila cuba lagi.');
+    } catch (err: any) {
+      console.error('Sign in error:', err);
+      setError(err?.message || 'Ralat berlaku. Sila cuba lagi.');
     } finally {
       setLoading(false);
     }
