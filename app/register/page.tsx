@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { signUp } from '@/lib/auth-client';
 import LoadingSpinner from '@/components/LoadingSpinner';
+import Turnstile from '@/components/Turnstile';
 import {
   User,
   Mail,
@@ -27,6 +28,11 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState('');
+
+  const handleTurnstileVerify = useCallback((token: string) => {
+    setTurnstileToken(token);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,6 +49,11 @@ export default function RegisterPage() {
 
     if (password !== confirmPassword) {
       setError('Password tidak sepadan');
+      return;
+    }
+
+    if (!turnstileToken) {
+      setError('Sila lengkapkan pengesahan CAPTCHA');
       return;
     }
 
@@ -298,8 +309,11 @@ export default function RegisterPage() {
               </div>
             )}
 
+            {/* Turnstile CAPTCHA */}
+            <Turnstile onVerify={handleTurnstileVerify} />
+
             {/* Submit Button */}
-            <button type="submit" className="auth-submit" disabled={loading}>
+            <button type="submit" className="auth-submit" disabled={loading || !turnstileToken}>
               {loading ? (
                 <LoadingSpinner size="sm" />
               ) : (

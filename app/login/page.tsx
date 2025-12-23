@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { signIn } from '@/lib/auth-client';
 import LoadingSpinner from '@/components/LoadingSpinner';
+import Turnstile from '@/components/Turnstile';
 import {
   Mail,
   Lock,
@@ -22,12 +23,22 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [turnstileToken, setTurnstileToken] = useState('');
+
+  const handleTurnstileVerify = useCallback((token: string) => {
+    setTurnstileToken(token);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!email || !password) {
       setError('Sila isi email dan password');
+      return;
+    }
+
+    if (!turnstileToken) {
+      setError('Sila lengkapkan pengesahan CAPTCHA');
       return;
     }
 
@@ -120,6 +131,11 @@ export default function LoginPage() {
               </div>
             </div>
 
+            {/* Forgot Password */}
+            <div className="forgot-password">
+              <Link href="/forgot-password">Lupa password?</Link>
+            </div>
+
             {/* Error Message */}
             {error && (
               <div className="auth-error">
@@ -128,8 +144,11 @@ export default function LoginPage() {
               </div>
             )}
 
+            {/* Turnstile CAPTCHA */}
+            <Turnstile onVerify={handleTurnstileVerify} />
+
             {/* Submit Button */}
-            <button type="submit" className="auth-submit" disabled={loading}>
+            <button type="submit" className="auth-submit" disabled={loading || !turnstileToken}>
               {loading ? (
                 <LoadingSpinner size="sm" />
               ) : (
@@ -151,7 +170,7 @@ export default function LoginPage() {
             <p>Belum ada akaun?</p>
             <Link href="/register" className="register-link">
               <UserPlus size={18} />
-              Daftar Sekarang
+              <span>Daftar Sekarang</span>
             </Link>
           </div>
         </div>
@@ -354,6 +373,22 @@ export default function LoginPage() {
           margin-bottom: 1rem;
         }
 
+        .forgot-password {
+          text-align: right;
+          margin-bottom: 1rem;
+          margin-top: -0.5rem;
+        }
+
+        .forgot-password :global(a) {
+          color: #CC1512;
+          font-size: 0.875rem;
+          text-decoration: none;
+        }
+
+        .forgot-password :global(a:hover) {
+          text-decoration: underline;
+        }
+
         .auth-submit {
           display: flex;
           align-items: center;
@@ -415,6 +450,7 @@ export default function LoginPage() {
         .register-link {
           display: inline-flex;
           align-items: center;
+          justify-content: center;
           gap: 0.5rem;
           padding: 0.75rem 1.5rem;
           background: #f8f9fa;
