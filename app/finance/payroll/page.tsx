@@ -72,29 +72,35 @@ export default function PayrollPage() {
     const handleExportCSV = useCallback(async () => {
         setIsExporting(true);
         try {
-            const columns: ExportColumn<PayrollEntry>[] = [
-                { header: 'Staff Name', accessor: 'staffName' },
-                { header: 'Base Salary', accessor: 'baseSalary' },
-                { header: 'Overtime', accessor: 'overtimePay' },
-                { header: 'Allowances', accessor: 'allowances' },
-                { header: 'Gross Salary', accessor: 'grossSalary' },
-                { header: 'TAP (Employee)', accessor: 'tapEmployee' },
-                { header: 'TAP (Employer)', accessor: 'tapEmployer' },
-                { header: 'SCP (Employee)', accessor: 'scpEmployee' },
-                { header: 'SCP (Employer)', accessor: 'scpEmployer' },
-                { header: 'Total Deductions', accessor: 'totalDeductions' },
-                { header: 'Net Pay', accessor: 'netPay' },
-                { header: 'Status', accessor: (row) => getPayrollStatusLabel(row.status).label },
-            ];
-
-            exportToCSV(filteredEntries, columns, `payroll_${selectedMonth}`);
-            showToast('success', 'Payroll exported to CSV');
+            exportToCSV({
+                filename: `payroll_${selectedMonth}`,
+                columns: [
+                    { key: 'staffName', label: 'Staff Name' },
+                    { key: 'baseSalary', label: 'Base Salary', format: 'currency' },
+                    { key: 'overtimePay', label: 'Overtime', format: 'currency' },
+                    { key: 'allowances', label: 'Allowances', format: 'currency' },
+                    { key: 'grossSalary', label: 'Gross Salary', format: 'currency' },
+                    { key: 'tapEmployee', label: 'TAP (Employee)', format: 'currency' },
+                    { key: 'tapEmployer', label: 'TAP (Employer)', format: 'currency' },
+                    { key: 'scpEmployee', label: 'SCP (Employee)', format: 'currency' },
+                    { key: 'scpEmployer', label: 'SCP (Employer)', format: 'currency' },
+                    { key: 'totalDeductions', label: 'Total Deductions', format: 'currency' },
+                    { key: 'netPay', label: 'Net Pay', format: 'currency' },
+                    { key: 'status', label: 'Status' },
+                ],
+                data: filteredEntries.map(e => ({
+                    ...e,
+                    status: getPayrollStatusLabel(e.status).label,
+                })),
+            });
+            showToast('Payroll exported to CSV', 'success');
         } catch (error) {
-            showToast('error', 'Failed to export');
+            showToast('Failed to export', 'error');
         } finally {
             setIsExporting(false);
         }
     }, [filteredEntries, selectedMonth, showToast]);
+
 
     const handleExportPDF = useCallback(async () => {
         setIsExporting(true);
@@ -146,9 +152,9 @@ export default function PayrollPage() {
             });
 
             doc.save(`payroll_${selectedMonth}.pdf`);
-            showToast('success', 'Payroll exported to PDF');
+            showToast('Payroll exported to PDF', 'success');
         } catch (error) {
-            showToast('error', 'Failed to export PDF');
+            showToast('Failed to export PDF', 'error');
         } finally {
             setIsExporting(false);
         }
