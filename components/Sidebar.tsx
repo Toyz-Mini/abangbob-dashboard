@@ -167,6 +167,8 @@ const Sidebar = forwardRef<HTMLElement, SidebarProps>(({ isOpen, onMouseEnter, o
   // Filter navigation groups based on user role
   const filteredNavGroups = useMemo(() => {
     return navGroupsConfig
+      // Hide Staff Portal for Admin - they manage staff, not work as staff
+      .filter(group => !(userRole === 'Admin' && group.titleKey === 'nav.group.staffPortal'))
       .map(group => ({
         ...group,
         items: group.items.filter(item => canViewNavItem(userRole, item.href)),
