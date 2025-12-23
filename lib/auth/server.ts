@@ -1,10 +1,5 @@
 import { betterAuth } from "better-auth";
-import { Pool } from "pg";
-
-// Create PostgreSQL connection using Supabase
-const pool = new Pool({
-    connectionString: process.env.DATABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL?.replace('https://', 'postgresql://postgres:postgres@').replace('.supabase.co', '.supabase.co:5432/postgres'),
-});
+import { pool } from "@/lib/db";
 
 export const auth = betterAuth({
     database: pool,

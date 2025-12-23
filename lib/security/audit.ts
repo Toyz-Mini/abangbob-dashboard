@@ -1,8 +1,4 @@
-import { Pool } from 'pg';
-
-const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-});
+import { query } from '@/lib/db';
 
 export type AuditAction =
     | 'LOGIN_SUCCESS'
@@ -35,7 +31,7 @@ interface AuditLogEntry {
  */
 export async function createAuditLog(entry: AuditLogEntry): Promise<void> {
     try {
-        await pool.query(
+        await query(
             `INSERT INTO "audit_logs" 
        ("user_id", "action", "resource", "resource_id", "details", "ip_address", "user_agent")
        VALUES ($1, $2, $3, $4, $5, $6, $7)`,
@@ -63,7 +59,7 @@ export async function getAuditLogsForUser(
     limit: number = 50
 ): Promise<AuditLogEntry[]> {
     try {
-        const result = await pool.query(
+        const result = await query(
             `SELECT * FROM "audit_logs" 
        WHERE "user_id" = $1 
        ORDER BY "created_at" DESC 
@@ -90,31 +86,31 @@ export async function getAllAuditLogs(
     limit: number = 100
 ): Promise<AuditLogEntry[]> {
     try {
-        let query = `SELECT * FROM "audit_logs" WHERE 1=1`;
+        let sqlQuery = `SELECT * FROM "audit_logs" WHERE 1=1`;
         const params: (string | Date)[] = [];
         let paramIndex = 1;
 
         if (filters?.action) {
-            query += ` AND "action" = $${paramIndex++}`;
+            sqlQuery += ` AND "action" = $${paramIndex++}`;
             params.push(filters.action);
         }
         if (filters?.userId) {
-            query += ` AND "user_id" = $${paramIndex++}`;
+            sqlQuery += ` AND "user_id" = $${paramIndex++}`;
             params.push(filters.userId);
         }
         if (filters?.startDate) {
-            query += ` AND "created_at" >= $${paramIndex++}`;
+            sqlQuery += ` AND "created_at" >= $${paramIndex++}`;
             params.push(filters.startDate);
         }
         if (filters?.endDate) {
-            query += ` AND "created_at" <= $${paramIndex++}`;
+            sqlQuery += ` AND "created_at" <= $${paramIndex++}`;
             params.push(filters.endDate);
         }
 
-        query += ` ORDER BY "createdAt" DESC LIMIT $${paramIndex}`;
+        sqlQuery += ` ORDER BY "createdAt" DESC LIMIT $${paramIndex}`;
         params.push(limit.toString());
 
-        const result = await pool.query(query, params);
+        const result = await query(sqlQuery, params);
         return result.rows;
     } catch (error) {
         console.error('Get all audit logs error:', error);

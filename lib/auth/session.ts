@@ -1,8 +1,4 @@
-import { Pool } from 'pg';
-
-const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-});
+import { query } from '@/lib/db';
 
 const SESSION_IDLE_TIMEOUT_MINUTES = 30;
 const MAX_SESSIONS_PER_USER = 3; // Allow multiple devices up to limit
@@ -30,7 +26,7 @@ export async function createSession(
         await enforceSessionLimit(userId);
 
         // Create/update session
-        await pool.query(
+        await query(
             `INSERT INTO "active_sessions" ("id", "user_id", "device_info", "ip_address", "last_active")
        VALUES ($1, $2, $3, $4, NOW())
        ON CONFLICT ("id") DO UPDATE SET "last_active" = NOW()`,
@@ -46,7 +42,7 @@ export async function createSession(
  */
 export async function updateSessionActivity(sessionId: string): Promise<void> {
     try {
-        await pool.query(
+        await query(
             `UPDATE "active_sessions" SET "last_active" = NOW() WHERE "id" = $1`,
             [sessionId]
         );
@@ -60,7 +56,7 @@ export async function updateSessionActivity(sessionId: string): Promise<void> {
  */
 export async function validateSession(sessionId: string): Promise<boolean> {
     try {
-        const result = await pool.query(
+        const result = await query(
             `SELECT "last_active" FROM "active_sessions" WHERE "id" = $1`,
             [sessionId]
         );
@@ -88,7 +84,7 @@ export async function validateSession(sessionId: string): Promise<boolean> {
  */
 export async function deleteSession(sessionId: string): Promise<void> {
     try {
-        await pool.query(`DELETE FROM "active_sessions" WHERE "id" = $1`, [sessionId]);
+        await query(`DELETE FROM "active_sessions" WHERE "id" = $1`, [sessionId]);
     } catch (error) {
         console.error('Delete session error:', error);
     }
@@ -99,7 +95,7 @@ export async function deleteSession(sessionId: string): Promise<void> {
  */
 export async function deleteAllUserSessions(userId: string): Promise<void> {
     try {
-        await pool.query(`DELETE FROM "active_sessions" WHERE "user_id" = $1`, [userId]);
+        await query(`DELETE FROM "active_sessions" WHERE "user_id" = $1`, [userId]);
     } catch (error) {
         console.error('Delete all sessions error:', error);
     }
@@ -110,7 +106,7 @@ export async function deleteAllUserSessions(userId: string): Promise<void> {
  */
 export async function getUserSessions(userId: string): Promise<ActiveSession[]> {
     try {
-        const result = await pool.query(
+        const result = await query(
             `SELECT * FROM "active_sessions" 
        WHERE "user_id" = $1 
        ORDER BY "last_active" DESC`,
@@ -128,7 +124,7 @@ export async function getUserSessions(userId: string): Promise<ActiveSession[]> 
  */
 async function enforceSessionLimit(userId: string): Promise<void> {
     try {
-        const result = await pool.query(
+        const result = await query(
             `SELECT id FROM "active_sessions" 
        WHERE "user_id" = $1 
        ORDER BY "last_active" ASC`,
@@ -153,7 +149,7 @@ async function enforceSessionLimit(userId: string): Promise<void> {
  */
 export async function cleanupExpiredSessions(): Promise<number> {
     try {
-        const result = await pool.query(
+        const result = await query(
             `DELETE FROM "active_sessions" 
        WHERE "last_active" < NOW() - INTERVAL '${SESSION_IDLE_TIMEOUT_MINUTES} minutes'
        RETURNING id`

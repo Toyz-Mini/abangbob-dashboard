@@ -1,13 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { Pool } from 'pg';
-
-const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-});
+import { query } from '@/lib/db';
 
 export async function GET() {
     try {
-        const result = await pool.query(
+        const result = await query(
             `SELECT 
         id, name, email, phone, "icNumber", "dateOfBirth", 
         address, "emergencyContact", status, "createdAt"
