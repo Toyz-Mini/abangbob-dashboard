@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useMenu } from '@/lib/store';
-import { MenuItem, OrderItem } from '@/lib/types';
+import { MenuItem, OrderItem, SelectedModifier } from '@/lib/types';
 import { Search, ShoppingBag, X, Plus, Minus, ChevronLeft, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -16,7 +16,7 @@ const getProductImage = (category: string) => {
 
 export default function OnlineMenuPage() {
     const router = useRouter();
-    const { menuItems, getMenuCategories } = useMenu();
+    const { menuItems, getMenuCategories, modifierGroups, modifierOptions } = useMenu();
     const categories = ['All', ...getMenuCategories()]; // Ensure 'All' is first
 
     const [activeCategory, setActiveCategory] = useState('All');
@@ -24,6 +24,7 @@ export default function OnlineMenuPage() {
     const [cart, setCart] = useState<OrderItem[]>([]);
     const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
     const [quantity, setQuantity] = useState(1);
+    const [selectedModifiers, setSelectedModifiers] = useState<SelectedModifier[]>([]);
     const [orderMode, setOrderMode] = useState<string | null>(null);
 
     useEffect(() => {
@@ -55,6 +56,56 @@ export default function OnlineMenuPage() {
         });
     }, [menuItems, activeCategory, searchTerm]);
 
+    // Derived state for current item's modifiers
+    const activeModifierGroups = useMemo(() => {
+        if (!selectedItem) return [];
+        return modifierGroups.filter(g => selectedItem.modifierGroupIds?.includes(g.id));
+    }, [selectedItem, modifierGroups]);
+
+    const handleModifierToggle = (group: any, option: any) => {
+        const isSelected = selectedModifiers.some(m => m.optionId === option.id);
+
+        if (group.allowMultiple) {
+            if (isSelected) {
+                setSelectedModifiers(prev => prev.filter(m => m.optionId !== option.id));
+            } else {
+                // Check max selection
+                const currentCount = selectedModifiers.filter(m => m.groupId === group.id).length;
+                if (group.maxSelection > 0 && currentCount >= group.maxSelection) {
+                    return; // Max reached
+                }
+
+                setSelectedModifiers(prev => [...prev, {
+                    groupId: group.id,
+                    groupName: group.name,
+                    optionId: option.id,
+                    optionName: option.name,
+                    extraPrice: option.extraPrice
+                }]);
+            }
+        } else {
+            // Single selection - replace existing for this group
+            const newMod = {
+                groupId: group.id,
+                groupName: group.name,
+                optionId: option.id,
+                optionName: option.name,
+                extraPrice: option.extraPrice
+            };
+
+            setSelectedModifiers(prev => [
+                ...prev.filter(m => m.groupId !== group.id),
+                newMod
+            ]);
+        }
+    };
+
+    const calculateItemTotal = () => {
+        if (!selectedItem) return 0;
+        const modifiersTotal = selectedModifiers.reduce((sum, m) => sum + m.extraPrice, 0);
+        return (selectedItem.price + modifiersTotal) * quantity;
+    };
+
     const addToCart = () => {
         if (!selectedItem) return;
 
@@ -62,9 +113,9 @@ export default function OnlineMenuPage() {
             id: crypto.randomUUID(),
             menuItemId: selectedItem.id,
             name: selectedItem.name,
-            price: selectedItem.price,
+            price: selectedItem.price + selectedModifiers.reduce((sum, m) => sum + m.extraPrice, 0), // Base + Modifiers
             quantity: quantity,
-            modifiers: [], // TODO: Add modifier support
+            modifiers: selectedModifiers,
             notes: ''
         };
 
@@ -119,7 +170,11 @@ export default function OnlineMenuPage() {
                             key={item.id}
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
-                            onClick={() => { setSelectedItem(item); setQuantity(1); }}
+                            onClick={() => {
+                                setSelectedItem(item);
+                                setQuantity(1);
+                                setSelectedModifiers([]);
+                            }}
                             className="bg-white rounded-2xl p-3 shadow-sm border border-gray-100 active:scale-95 transition-transform"
                         >
                             <div className="aspect-square rounded-xl bg-gray-100 mb-3 overflow-hidden relative">
@@ -212,6 +267,53 @@ export default function OnlineMenuPage() {
                                     />
                                 </div>
 
+                                {/* Modifiers Section */}
+                                <div className="space-y-6 mb-8">
+                                    {activeModifierGroups.map(group => (
+                                        <div key={group.id}>
+                                            <div className="flex justify-between items-center mb-3">
+                                                <h3 className="font-bold text-gray-800">{group.name}</h3>
+                                                <span className="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+                                                    {group.isRequired ? 'Wajib' : 'Optional'}
+                                                    {group.allowMultiple ? ` (Max ${group.maxSelection})` : ' (Pilih 1)'}
+                                                </span>
+                                            </div>
+                                            <div className="space-y-2">
+                                                {modifierOptions
+                                                    .filter(opt => opt.groupId === group.id && opt.isAvailable)
+                                                    .map(option => {
+                                                        const isSelected = selectedModifiers.some(m => m.optionId === option.id);
+                                                        return (
+                                                            <div
+                                                                key={option.id}
+                                                                onClick={() => handleModifierToggle(group, option)}
+                                                                className={`p-3 rounded-xl border flex items-center justify-between cursor-pointer transition-all ${isSelected
+                                                                    ? 'border-orange-500 bg-orange-50 ring-1 ring-orange-500'
+                                                                    : 'border-gray-100'
+                                                                    }`}
+                                                            >
+                                                                <div className="flex items-center gap-3">
+                                                                    <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${isSelected
+                                                                        ? 'border-orange-500 bg-orange-500 text-white'
+                                                                        : 'border-gray-300'
+                                                                        }`}>
+                                                                        {isSelected && <Check size={12} strokeWidth={3} />}
+                                                                    </div>
+                                                                    <span className="font-medium text-gray-700">{option.name}</span>
+                                                                </div>
+                                                                {option.extraPrice > 0 && (
+                                                                    <span className="text-sm font-bold text-orange-600">
+                                                                        + RM {option.extraPrice.toFixed(2)}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        );
+                                                    })}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+
                                 <div className="flex items-center gap-4">
                                     <div className="flex items-center gap-4 bg-gray-100 rounded-xl p-2 px-4">
                                         <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="p-1">
@@ -226,7 +328,7 @@ export default function OnlineMenuPage() {
                                         onClick={addToCart}
                                         className="flex-1 bg-orange-500 text-white font-bold py-4 rounded-xl shadow-lg hover:bg-orange-600 transition-colors flex items-center justify-center gap-2"
                                     >
-                                        <span>Add - RM {(selectedItem.price * quantity).toFixed(2)}</span>
+                                        <span>Add - RM {calculateItemTotal().toFixed(2)}</span>
                                     </button>
                                 </div>
                             </div>
