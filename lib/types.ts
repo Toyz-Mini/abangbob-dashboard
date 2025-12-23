@@ -119,13 +119,15 @@ export interface BankDetails {
 
 export interface StatutoryContributions {
   // TAP - Tabung Amanah Pekerja (Brunei)
+  tapEnabled?: boolean; // Toggle TAP on/off per staff
   tapNumber?: string;
-  tapEmployeeRate?: number; // percentage
-  tapEmployerRate?: number; // percentage
+  tapEmployeeRate?: number; // percentage (default 5%)
+  tapEmployerRate?: number; // percentage (default 5%)
   // SCP - Supplemental Contribution Plan (Brunei)
+  scpEnabled?: boolean; // Toggle SCP on/off per staff
   scpNumber?: string;
-  scpEmployeeRate?: number;
-  scpEmployerRate?: number;
+  scpEmployeeRate?: number; // percentage (default 3.5%)
+  scpEmployerRate?: number; // percentage (default 3.5%)
   // For Malaysia compatibility
   epfNumber?: string;
   socsoNumber?: string;

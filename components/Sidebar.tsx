@@ -96,6 +96,9 @@ const navGroupsConfig: NavGroup[] = [
       { href: '/hr/leave-calendar', labelKey: 'nav.leaveCalendar', icon: Calendar, tourId: 'leave' },
       { href: '/hr/checklist-config', labelKey: 'nav.checklistConfig', icon: CheckSquare },
       { href: '/finance', labelKey: 'nav.finance', icon: DollarSign, tourId: 'finance' },
+      { href: '/finance/payroll', labelKey: 'nav.payroll', icon: Users },
+      { href: '/finance/reports', labelKey: 'nav.financialReports', icon: BarChart3 },
+      { href: '/finance/tax-summary', labelKey: 'nav.taxSummary', icon: FileText },
     ]
   },
   {

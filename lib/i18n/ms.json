@@ -1,7 +1,6 @@
 {
   "app.name": "AbangBob",
   "app.tagline": "Nasi Lemak & Burger",
-  
   "nav.dashboard": "Dashboard",
   "nav.pos": "POS",
   "nav.orderHistory": "Sejarah Pesanan",
@@ -30,7 +29,9 @@
   "nav.refundApprovals": "Kelulusan Refund",
   "nav.leaveCalendar": "Kalendar Cuti",
   "nav.checklistConfig": "Config Checklist",
-  
+  "nav.payroll": "Gaji",
+  "nav.financialReports": "Laporan",
+  "nav.taxSummary": "Ringkasan TAP/SCP",
   "nav.group.main": "Utama",
   "nav.group.staffPortal": "Staff Portal",
   "nav.group.operations": "Operasi",
@@ -40,7 +41,6 @@
   "nav.group.reportsSettings": "Laporan & Tetapan",
   "nav.group.help": "Bantuan",
   "nav.help": "Pusat Bantuan",
-  
   "topnav.switchLanguage": "Tukar Bahasa",
   "topnav.soundMuted": "Bunyi Dimatikan",
   "topnav.admin": "Admin",
@@ -49,7 +49,6 @@
   "topnav.accountSettings": "Tetapan Akaun",
   "topnav.switchOutlet": "Tukar Outlet",
   "topnav.logout": "Log Keluar",
-  
   "common.save": "Simpan",
   "common.cancel": "Batal",
   "common.delete": "Padam",
@@ -92,7 +91,6 @@
   "common.category": "Kategori",
   "common.view": "Lihat",
   "common.viewAll": "Lihat Semua",
-  
   "dashboard.title": "Dashboard Utama",
   "dashboard.subtitle": "Ringkasan operasi harian",
   "dashboard.salesToday": "Jualan Hari Ini",
@@ -125,7 +123,6 @@
   "dashboard.pending": "pending",
   "dashboard.preparing": "preparing",
   "dashboard.viewQueue": "Lihat Queue",
-  
   "pos.title": "POS System",
   "pos.cart": "Keranjang",
   "pos.emptyCart": "Tiada item dalam keranjang",
@@ -165,7 +162,6 @@
   "pos.noneInKitchen": "Tiada dalam masakan",
   "pos.readyForPickup": "siap diambil",
   "pos.noneReady": "Tiada yang siap",
-  
   "inventory.title": "Inventori",
   "inventory.subtitle": "Pengurusan stok dan bahan",
   "inventory.addItem": "Tambah Item",
@@ -185,7 +181,6 @@
   "inventory.lowStockAlert": "item stok rendah!",
   "inventory.pleaseRestock": "Sila isi semula dengan segera.",
   "inventory.stockList": "Senarai Stok",
-  
   "hr.title": "HR & Staf",
   "hr.subtitle": "Pengurusan kakitangan",
   "hr.addStaff": "Tambah Staf",
@@ -210,7 +205,6 @@
   "hr.hoursWorked": "Jam Bekerja",
   "hr.daysWorked": "Hari Bekerja",
   "hr.registerNewStaff": "Daftar Staf Baru",
-  
   "finance.title": "Kewangan",
   "finance.subtitle": "Pengurusan perbelanjaan, aliran tunai dan untung rugi",
   "finance.addExpense": "Tambah Perbelanjaan",
@@ -237,7 +231,6 @@
   "finance.attention": "Perhatian! Kedai anda rugi",
   "finance.suggestions": "Cadangan",
   "finance.cashFlowToday": "Cash Flow Hari Ini",
-  
   "analytics.title": "Analytics Dashboard",
   "analytics.subtitle": "Insights dan analisis untuk buat keputusan yang lebih baik",
   "analytics.totalSales": "Jumlah Jualan",
@@ -257,7 +250,6 @@
   "analytics.totalItems": "Jumlah Item",
   "analytics.inventoryValue": "Nilai Inventori Semasa",
   "analytics.staffPerformance": "Prestasi Staf",
-  
   "customers.title": "Pelanggan",
   "customers.subtitle": "CRM dan program kesetiaan",
   "customers.addCustomer": "Tambah Pelanggan",
@@ -270,7 +262,6 @@
   "customers.vip": "VIP",
   "customers.birthday": "Hari Lahir",
   "customers.lastOrder": "Pesanan Terakhir",
-  
   "suppliers.title": "Supplier",
   "suppliers.subtitle": "Pengurusan pembekal",
   "suppliers.addSupplier": "Tambah Supplier",
@@ -280,7 +271,6 @@
   "suppliers.rating": "Rating",
   "suppliers.purchaseOrders": "Purchase Orders",
   "suppliers.createPO": "Buat PO",
-  
   "recipes.title": "Resepi",
   "recipes.subtitle": "Pengurusan resepi dan kos",
   "recipes.addRecipe": "Tambah Resepi",
@@ -290,7 +280,6 @@
   "recipes.margin": "Margin",
   "recipes.prepTime": "Masa Penyediaan",
   "recipes.yield": "Hasil",
-  
   "promotions.title": "Promosi",
   "promotions.subtitle": "Pengurusan promosi dan diskaun",
   "promotions.addPromotion": "Tambah Promosi",
@@ -306,7 +295,6 @@
   "promotions.validUntil": "Sah Sehingga",
   "promotions.usageLimit": "Had Penggunaan",
   "promotions.usageCount": "Kali Digunakan",
-  
   "settings.title": "Tetapan",
   "settings.subtitle": "Konfigurasi sistem dan pengurusan data",
   "settings.general": "Umum",
@@ -411,7 +399,6 @@
   "settings.resetSuccess": "Data berjaya direset. Sila refresh halaman.",
   "settings.paymentMethods": "Kaedah Pembayaran",
   "settings.security": "Keselamatan",
-  
   "kds.title": "Kitchen Display System",
   "kds.subtitle": "Paparan dapur",
   "kds.fullscreen": "Skrin Penuh",
@@ -432,7 +419,6 @@
   "kds.noNewOrders": "Tiada pesanan baru",
   "kds.noPreparing": "Tiada dalam penyediaan",
   "kds.noReady": "Tiada pesanan siap",
-  
   "tables.title": "Pengurusan Meja",
   "tables.subtitle": "Layout dan status meja",
   "tables.addTable": "Tambah Meja",
@@ -443,7 +429,6 @@
   "tables.currentOrder": "Pesanan Semasa",
   "tables.assignOrder": "Assign Pesanan",
   "tables.clearTable": "Kosongkan Meja",
-  
   "audit.title": "Audit Log",
   "audit.subtitle": "Rekod perubahan sistem",
   "audit.user": "Pengguna",
@@ -454,14 +439,12 @@
   "audit.create": "Tambah",
   "audit.update": "Kemaskini",
   "audit.delete": "Padam",
-  
   "qrMenu.title": "Menu QR",
   "qrMenu.scanToOrder": "Imbas untuk Order",
   "qrMenu.yourOrder": "Pesanan Anda",
   "qrMenu.submitOrder": "Hantar Pesanan",
   "qrMenu.orderSubmitted": "Pesanan Dihantar!",
   "qrMenu.waitForPreparation": "Sila tunggu pesanan anda disediakan",
-  
   "reports.title": "Laporan",
   "reports.dailySales": "Jualan Harian",
   "reports.monthlySales": "Jualan Bulanan",
@@ -470,7 +453,6 @@
   "reports.expenseReport": "Laporan Perbelanjaan",
   "reports.generatePDF": "Jana PDF",
   "reports.exportExcel": "Export Excel",
-  
   "auth.supabaseNotConfigured": "Supabase tidak dikonfigurasi",
   "auth.loginError": "Ralat semasa login",
   "auth.signupError": "Ralat semasa daftar",
@@ -478,4 +460,3 @@
   "auth.staffDataNotAvailable": "Data staf tidak tersedia",
   "auth.invalidCredentials": "ID atau PIN salah"
 }
-

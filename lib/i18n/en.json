@@ -1,7 +1,6 @@
 {
   "app.name": "AbangBob",
   "app.tagline": "Nasi Lemak & Burger",
-  
   "nav.dashboard": "Dashboard",
   "nav.pos": "POS",
   "nav.orderHistory": "Order History",
@@ -30,7 +29,9 @@
   "nav.refundApprovals": "Refund Approvals",
   "nav.leaveCalendar": "Leave Calendar",
   "nav.checklistConfig": "Checklist Config",
-  
+  "nav.payroll": "Payroll",
+  "nav.financialReports": "Reports",
+  "nav.taxSummary": "TAP/SCP Summary",
   "nav.group.main": "Main",
   "nav.group.staffPortal": "Staff Portal",
   "nav.group.operations": "Operations",
@@ -40,7 +41,6 @@
   "nav.group.reportsSettings": "Reports & Settings",
   "nav.group.help": "Help",
   "nav.help": "Help Center",
-  
   "topnav.switchLanguage": "Switch Language",
   "topnav.soundMuted": "Sound Muted",
   "topnav.admin": "Admin",
@@ -49,7 +49,6 @@
   "topnav.accountSettings": "Account Settings",
   "topnav.switchOutlet": "Switch Outlet",
   "topnav.logout": "Logout",
-  
   "common.save": "Save",
   "common.cancel": "Cancel",
   "common.delete": "Delete",
@@ -92,7 +91,6 @@
   "common.category": "Category",
   "common.view": "View",
   "common.viewAll": "View All",
-  
   "dashboard.title": "Main Dashboard",
   "dashboard.subtitle": "Daily operations summary",
   "dashboard.salesToday": "Sales Today",
@@ -125,7 +123,6 @@
   "dashboard.pending": "pending",
   "dashboard.preparing": "preparing",
   "dashboard.viewQueue": "View Queue",
-  
   "pos.title": "POS System",
   "pos.cart": "Cart",
   "pos.emptyCart": "No items in cart",
@@ -165,7 +162,6 @@
   "pos.noneInKitchen": "None in kitchen",
   "pos.readyForPickup": "ready for pickup",
   "pos.noneReady": "None ready",
-  
   "inventory.title": "Inventory",
   "inventory.subtitle": "Stock and materials management",
   "inventory.addItem": "Add Item",
@@ -185,7 +181,6 @@
   "inventory.lowStockAlert": "items low stock!",
   "inventory.pleaseRestock": "Please restock immediately.",
   "inventory.stockList": "Stock List",
-  
   "hr.title": "HR & Staff",
   "hr.subtitle": "Staff management",
   "hr.addStaff": "Add Staff",
@@ -210,7 +205,6 @@
   "hr.hoursWorked": "Hours Worked",
   "hr.daysWorked": "Days Worked",
   "hr.registerNewStaff": "Register New Staff",
-  
   "finance.title": "Finance",
   "finance.subtitle": "Expense management, cash flow and profit/loss",
   "finance.addExpense": "Add Expense",
@@ -237,7 +231,6 @@
   "finance.attention": "Attention! Your shop made a loss of",
   "finance.suggestions": "Suggestions",
   "finance.cashFlowToday": "Today's Cash Flow",
-  
   "analytics.title": "Analytics Dashboard",
   "analytics.subtitle": "Insights and analysis for better decision making",
   "analytics.totalSales": "Total Sales",
@@ -257,7 +250,6 @@
   "analytics.totalItems": "Total Items",
   "analytics.inventoryValue": "Current Inventory Value",
   "analytics.staffPerformance": "Staff Performance",
-  
   "customers.title": "Customers",
   "customers.subtitle": "CRM and loyalty program",
   "customers.addCustomer": "Add Customer",
@@ -270,7 +262,6 @@
   "customers.vip": "VIP",
   "customers.birthday": "Birthday",
   "customers.lastOrder": "Last Order",
-  
   "suppliers.title": "Suppliers",
   "suppliers.subtitle": "Supplier management",
   "suppliers.addSupplier": "Add Supplier",
@@ -280,7 +271,6 @@
   "suppliers.rating": "Rating",
   "suppliers.purchaseOrders": "Purchase Orders",
   "suppliers.createPO": "Create PO",
-  
   "recipes.title": "Recipes",
   "recipes.subtitle": "Recipe and cost management",
   "recipes.addRecipe": "Add Recipe",
@@ -290,7 +280,6 @@
   "recipes.margin": "Margin",
   "recipes.prepTime": "Prep Time",
   "recipes.yield": "Yield",
-  
   "promotions.title": "Promotions",
   "promotions.subtitle": "Promotion and discount management",
   "promotions.addPromotion": "Add Promotion",
@@ -306,7 +295,6 @@
   "promotions.validUntil": "Valid Until",
   "promotions.usageLimit": "Usage Limit",
   "promotions.usageCount": "Times Used",
-  
   "settings.title": "Settings",
   "settings.subtitle": "System configuration",
   "settings.general": "General",
@@ -411,7 +399,6 @@
   "settings.resetSuccess": "Data reset successfully. Please refresh the page.",
   "settings.paymentMethods": "Payment Methods",
   "settings.security": "Security",
-  
   "kds.title": "Kitchen Display System",
   "kds.subtitle": "Kitchen display",
   "kds.fullscreen": "Fullscreen",
@@ -432,7 +419,6 @@
   "kds.noNewOrders": "No new orders",
   "kds.noPreparing": "None preparing",
   "kds.noReady": "No orders ready",
-  
   "tables.title": "Table Management",
   "tables.subtitle": "Table layout and status",
   "tables.addTable": "Add Table",
@@ -443,7 +429,6 @@
   "tables.currentOrder": "Current Order",
   "tables.assignOrder": "Assign Order",
   "tables.clearTable": "Clear Table",
-  
   "audit.title": "Audit Log",
   "audit.subtitle": "System change records",
   "audit.user": "User",
@@ -454,14 +439,12 @@
   "audit.create": "Create",
   "audit.update": "Update",
   "audit.delete": "Delete",
-  
   "qrMenu.title": "QR Menu",
   "qrMenu.scanToOrder": "Scan to Order",
   "qrMenu.yourOrder": "Your Order",
   "qrMenu.submitOrder": "Submit Order",
   "qrMenu.orderSubmitted": "Order Submitted!",
   "qrMenu.waitForPreparation": "Please wait for your order to be prepared",
-  
   "reports.title": "Reports",
   "reports.dailySales": "Daily Sales",
   "reports.monthlySales": "Monthly Sales",
@@ -470,7 +453,6 @@
   "reports.expenseReport": "Expense Report",
   "reports.generatePDF": "Generate PDF",
   "reports.exportExcel": "Export Excel",
-  
   "auth.supabaseNotConfigured": "Supabase is not configured",
   "auth.loginError": "Error during login",
   "auth.signupError": "Error during registration",
@@ -478,4 +460,3 @@
   "auth.staffDataNotAvailable": "Staff data is not available",
   "auth.invalidCredentials": "Invalid ID or PIN"
 }
-
