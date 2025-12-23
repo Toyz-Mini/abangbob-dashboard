@@ -6,6 +6,8 @@ import { Camera, Check, ChevronRight, AlertTriangle, Upload, X } from 'lucide-re
 import { SOPTemplate, SOPStep, SOPLog } from '@/lib/types';
 import * as SOPSync from '@/lib/supabase/sop-sync';
 import { generateUUID } from '@/lib/utils';
+import { awardXP } from '@/lib/gamification';
+import { Trophy } from 'lucide-react';
 
 interface SOPWizardProps {
     shiftType: 'morning' | 'mid' | 'night';
@@ -19,6 +21,8 @@ export default function SOPWizard({ shiftType, staffId, onComplete, onCancel }: 
     const [steps, setSteps] = useState<SOPStep[]>([]);
     const [currentStepIndex, setCurrentStepIndex] = useState(0);
     const [log, setLog] = useState<SOPLog | null>(null);
+    const [isMissionComplete, setIsMissionComplete] = useState(false);
+    const [earnedXP, setEarnedXP] = useState(0);
 
     // Form State
     const [inputValue, setInputValue] = useState<string>('');
@@ -112,7 +116,16 @@ export default function SOPWizard({ shiftType, staffId, onComplete, onCancel }: 
             } else {
                 // Finish
                 await SOPSync.completeSOPLog(log.id);
-                onComplete();
+
+                // Award XP
+                const result = await awardXP(staffId, 50, 'sop_completion', { logId: log.id });
+                if (result) {
+                    setEarnedXP(50);
+                } else {
+                    setEarnedXP(50); // Fallback visual
+                }
+
+                setIsMissionComplete(true);
             }
         } catch (e) {
             setError('Gagal simpan data. Sila cuba lagi.');
@@ -123,6 +136,44 @@ export default function SOPWizard({ shiftType, staffId, onComplete, onCancel }: 
 
     if (loading) {
         return <div className="p-8 text-center animate-pulse">Loading Mission...</div>;
+    }
+
+    if (isMissionComplete) {
+        return (
+            <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4">
+                <motion.div
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    className="bg-white dark:bg-gray-900 w-full max-w-sm rounded-3xl p-8 text-center"
+                >
+                    <motion.div
+                        initial={{ rotate: -180, scale: 0 }}
+                        animate={{ rotate: 0, scale: 1 }}
+                        transition={{ type: "spring", bounce: 0.5 }}
+                        className="w-24 h-24 bg-yellow-400 rounded-full flex items-center justify-center mx-auto mb-6 shadow-xl shadow-yellow-400/50"
+                    >
+                        <Trophy size={48} className="text-white" />
+                    </motion.div>
+
+                    <h2 className="text-3xl font-black text-gray-900 dark:text-white mb-2">MISSION COMPLETE!</h2>
+                    <p className="text-gray-500 mb-8">Great job keeping the operations smooth.</p>
+
+                    <div className="bg-yellow-50 dark:bg-yellow-900/30 rounded-2xl p-6 mb-8 border border-yellow-200 dark:border-yellow-700">
+                        <div className="text-xs font-bold text-yellow-600 dark:text-yellow-400 uppercase tracking-widest mb-1">REWARD</div>
+                        <div className="text-4xl font-black text-yellow-500 flex items-center justify-center gap-2">
+                            +{earnedXP} <span className="text-lg">XP</span>
+                        </div>
+                    </div>
+
+                    <button
+                        onClick={onComplete}
+                        className="w-full bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-bold py-4 px-6 rounded-xl shadow-lg shadow-orange-500/30 hover:shadow-orange-500/50 transform hover:scale-105 transition-all"
+                    >
+                        Claim Reward
+                    </button>
+                </motion.div>
+            </div>
+        );
     }
 
     if (!template) {

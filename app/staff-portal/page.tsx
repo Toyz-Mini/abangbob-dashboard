@@ -43,7 +43,9 @@ import {
 } from '@/components/staff-portal';
 import VerificationWizard from '@/components/VerificationWizard';
 import SOPWizard from '@/components/staff/SOPWizard';
+
 import { AnimatePresence } from 'framer-motion';
+import { getStaffXP, StaffXP } from '@/lib/gamification';
 
 
 // Circular Progress Component
@@ -185,7 +187,11 @@ export default function StaffPortalPage() {
 
   // SOP Wizard State
   const [showWizard, setShowWizard] = useState(false);
+
   const [wizardType, setWizardType] = useState<'morning' | 'mid' | 'night'>('morning');
+  const [xpData, setXPData] = useState<StaffXP | null>(null);
+
+
 
 
 
@@ -208,6 +214,12 @@ export default function StaffPortalPage() {
   } : null);
 
   const todayAttendance = staffId ? getStaffAttendanceToday(staffId) : undefined;
+
+  useEffect(() => {
+    if (staffId) {
+      getStaffXP(staffId).then(setXPData);
+    }
+  }, [staffId, showWizard]);
 
   // Get today's schedule
   const today = new Date().toISOString().split('T')[0];
@@ -456,6 +468,40 @@ export default function StaffPortalPage() {
             </button>
           </div>
         </div>
+
+        {/* XP Bar Widget */}
+        {xpData && (
+          <div className="mb-6 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl p-4 text-white shadow-lg relative overflow-hidden animate-slide-up delay-100">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-10 -mt-10 blur-2xl"></div>
+
+            <div className="flex justify-between items-center mb-3 relative z-10">
+              <div className="flex items-center gap-3">
+                <div className="bg-white/20 p-2 rounded-xl backdrop-blur-sm border border-white/10">
+                  <Trophy size={24} className="text-yellow-300 drop-shadow-md" />
+                </div>
+                <div>
+                  <div className="text-xs font-bold opacity-80 tracking-wider">LEVEL {xpData.currentLevel}</div>
+                  <div className="font-bold text-lg leading-tight">{currentStaff?.name || 'Staff'}</div>
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="text-3xl font-black tracking-tighter drop-shadow-sm">{xpData.currentXP} <span className="text-sm font-normal opacity-70">XP</span></div>
+              </div>
+            </div>
+
+            {/* Progress Bar */}
+            <div className="relative h-3 bg-black/20 rounded-full overflow-hidden backdrop-blur-sm border border-white/5">
+              <div
+                className="absolute top-0 left-0 h-full bg-gradient-to-r from-yellow-400 to-orange-500 shadow-[0_0_10px_rgba(250,204,21,0.5)]"
+                style={{ width: `${xpData.progress}%`, transition: 'width 1s ease-out' }}
+              />
+            </div>
+            <div className="flex justify-between mt-1.5 text-xs opacity-70 font-mono font-medium relative z-10">
+              <span>Curr: {xpData.currentXP}</span>
+              <span>Next: {xpData.nextLevelXP} XP</span>
+            </div>
+          </div>
+        )}
 
         {/* Clock Message */}
         {clockMessage && (
