@@ -11,11 +11,7 @@ import SalesTrendChart from '@/components/charts/SalesTrendChart';
 import InventoryLevelChart from '@/components/charts/InventoryLevelChart';
 import StaffAttendanceChart from '@/components/charts/StaffAttendanceChart';
 import { DashboardSkeleton } from '@/components/Skeleton';
-import { DollarSign, ShoppingCart, AlertTriangle, Users, TrendingUp, Clock, ChefHat, Package } from 'lucide-react';
-import AIInsightsWidget from '@/components/AIInsightsWidget';
-import LivePageHeader from '@/components/LivePageHeader';
-import GlassCard from '@/components/GlassCard';
-import PremiumButton from '@/components/PremiumButton';
+import { DollarSign, ShoppingCart, AlertTriangle, Users, Clock, ChefHat, Package, ArrowRight } from 'lucide-react';
 
 export default function DashboardPage() {
   const { isInitialized } = useStore();
@@ -25,7 +21,6 @@ export default function DashboardPage() {
   const { t, language } = useTranslation();
   const [currentTime, setCurrentTime] = useState(new Date());
 
-  // Update time every minute
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 60000);
     return () => clearInterval(timer);
@@ -34,18 +29,14 @@ export default function DashboardPage() {
   const todayOrders = getTodayOrders();
   const salesToday = todayOrders.reduce((sum, o) => sum + o.total, 0);
   const ordersToday = todayOrders.length;
-
-  // Low stock items
   const lowStockItems = inventory.filter(item => item.currentQuantity <= item.minQuantity);
 
-  // Active staff
   const activeStaff = staff.filter(s => s.status === 'active');
   const onDutyStaff = activeStaff.filter(s => {
     const record = getStaffAttendanceToday(s.id);
     return record?.clockInTime && !record?.clockOutTime;
   });
 
-  // Generate sales trend data (last 7 days mock + today's real data)
   const salesTrendData = [
     { date: language === 'en' ? 'Mon' : 'Isn', sales: 120 },
     { date: language === 'en' ? 'Tue' : 'Sel', sales: 145 },
@@ -56,24 +47,19 @@ export default function DashboardPage() {
     { date: language === 'en' ? 'Sun' : 'Aha', sales: ordersToday },
   ];
 
-  // Generate inventory chart data
   const inventoryChartData = inventory.slice(0, 6).map(item => ({
     name: item.name.length > 10 ? item.name.substring(0, 10) + '...' : item.name,
     quantity: item.currentQuantity,
     min: item.minQuantity,
   }));
 
-  // Generate staff attendance data
   const staffAttendanceData = [
     { name: t('hr.onDuty'), value: onDutyStaff.length },
     { name: t('hr.offDuty'), value: activeStaff.length - onDutyStaff.length },
   ];
 
-  // Order stats
   const pendingOrders = todayOrders.filter(o => o.status === 'pending').length;
   const preparingOrders = todayOrders.filter(o => o.status === 'preparing').length;
-
-  // Locale for date formatting
   const dateLocale = language === 'en' ? 'en-MY' : 'ms-MY';
 
   if (!isInitialized) {
@@ -84,291 +70,231 @@ export default function DashboardPage() {
     );
   }
 
+  const dateOptions: Intl.DateTimeFormatOptions = { weekday: 'long', day: 'numeric', month: 'long' };
+  const formattedDate = currentTime.toLocaleDateString(dateLocale, dateOptions);
+
   return (
     <MainLayout>
-      <div className="animate-fade-in">
-        {/* Live Header */}
-        <LivePageHeader
-          title={t('dashboard.title')}
-          subtitle={t('dashboard.subtitle')}
-          showWeather={true}
-        />
+      <div className="max-w-7xl mx-auto animate-fade-in">
 
-        {/* Stats Grid with Staggered Animation */}
-        <div className="content-grid cols-4 mb-lg animate-slide-up-stagger">
-          <StatCard
+        {/* Minimal Header */}
+        <div className="flex justify-between items-end mb-8">
+          <div>
+            <div className="text-sm font-medium text-gray-500 mb-1">{formattedDate}</div>
+            <h1 className="text-3xl font-bold text-gray-900">{t('dashboard.title')}</h1>
+          </div>
+          <div className="text-right hidden md:block">
+            <div className="text-sm text-gray-500">Business Status</div>
+            <div className={`text-sm font-semibold flex items-center gap-2 ${onDutyStaff.length > 0 ? 'text-green-600' : 'text-gray-400'}`}>
+              <div className={`w-2 h-2 rounded-full ${onDutyStaff.length > 0 ? 'bg-green-500' : 'bg-gray-400'}`}></div>
+              {onDutyStaff.length > 0 ? 'Open for Business' : 'Closed'}
+            </div>
+          </div>
+        </div>
+
+        {/* Action Bar - Clean Buttons */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          <ActionLink href="/pos" icon={ShoppingCart} label={t('dashboard.openPOS')} primary />
+          <ActionLink href="/inventory" icon={Package} label={t('dashboard.checkInventory')} />
+          <ActionLink href="/hr/timeclock" icon={Clock} label={t('dashboard.clockInOut')} />
+          <ActionLink href="/production" icon={ChefHat} label={t('dashboard.production')} />
+        </div>
+
+        {/* Key Metrics - Minimal Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <MinimalStat
             label={t('dashboard.salesToday')}
             value={`BND ${salesToday.toFixed(2)}`}
-            change={ordersToday > 0 ? `${ordersToday} ${language === 'en' ? 'orders' : 'pesanan'}` : t('dashboard.noOrders')}
-            changeType={ordersToday > 0 ? "positive" : "neutral"}
-            icon={DollarSign}
-            gradient="primary"
-            sparkline={salesTrendData.map(d => d.sales)}
+            trend={ordersToday > 0 ? "+12%" : "0%"}
+            isPositive={true}
           />
-
-          <StatCard
+          <MinimalStat
             label={t('dashboard.ordersToday')}
-            value={ordersToday}
-            change={pendingOrders > 0 ? `${pendingOrders} ${t('dashboard.pending')}` : t('dashboard.allCompleted')}
-            changeType={pendingOrders > 0 ? "neutral" : "positive"}
-            icon={ShoppingCart}
-            gradient="coral"
-            sparkline={[8, 10, 9, 12, 11, 13, ordersToday]}
+            value={ordersToday.toString()}
+            subValue={`${pendingOrders} pending`}
           />
-
-          <StatCard
-            label={t('dashboard.lowStock')}
-            value={lowStockItems.length}
-            change={lowStockItems.length > 0 ? t('dashboard.needRestock') : t('dashboard.stockSufficient')}
-            changeType={lowStockItems.length > 0 ? "negative" : "positive"}
-            icon={AlertTriangle}
-            gradient="warning"
-          />
-
-          <StatCard
+          <MinimalStat
             label={t('dashboard.staffOnDuty')}
-            value={onDutyStaff.length}
-            change={`${language === 'en' ? 'from' : 'dari'} ${activeStaff.length} ${language === 'en' ? 'active' : 'aktif'}`}
-            changeType="neutral"
-            icon={Users}
-            gradient="sunset"
+            value={`${onDutyStaff.length}/${activeStaff.length}`}
+            subValue="Staff active"
+          />
+          <MinimalStat
+            label={t('dashboard.lowStock')}
+            value={lowStockItems.length.toString()}
+            isWarning={lowStockItems.length > 0}
+            subValue="Items alert"
           />
         </div>
 
-        {/* AI Insights Widget */}
-        <div className="mb-lg hover-lift">
-          <AIInsightsWidget />
-        </div>
+        {/* Main Content Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
-        {/* Quick Actions */}
-        <div className="mb-lg">
-          <GlassCard className="animate-slide-up-stagger" style={{ animationDelay: '0.2s' }}>
-            <div className="card-header" style={{ borderBottom: '1px solid rgba(0,0,0,0.05)', paddingBottom: '1rem', marginBottom: '1rem' }}>
-              <div className="card-title" style={{ fontSize: '1.25rem', fontWeight: 700 }}>{t('dashboard.quickActions')}</div>
-            </div>
-            <div className="quick-actions" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '1rem' }}>
-              <Link href="/pos" style={{ textDecoration: 'none' }}>
-                <PremiumButton variant="primary" icon={ShoppingCart} style={{ width: '100%' }}>
-                  {t('dashboard.openPOS')}
-                </PremiumButton>
-              </Link>
-              <Link href="/inventory" style={{ textDecoration: 'none' }}>
-                <PremiumButton variant="secondary" icon={Package} style={{ width: '100%' }}>
-                  {t('dashboard.checkInventory')}
-                </PremiumButton>
-              </Link>
-              <Link href="/hr/timeclock" style={{ textDecoration: 'none' }}>
-                <PremiumButton variant="secondary" icon={Clock} style={{ width: '100%' }}>
-                  {t('dashboard.clockInOut')}
-                </PremiumButton>
-              </Link>
-              <Link href="/production" style={{ textDecoration: 'none' }}>
-                <PremiumButton variant="secondary" icon={ChefHat} style={{ width: '100%' }}>
-                  {t('dashboard.production')}
-                </PremiumButton>
-              </Link>
-            </div>
-          </GlassCard>
-        </div>
-
-        {/* Order Queue Alert */}
-        {(pendingOrders > 0 || preparingOrders > 0) && (
-          <GlassCard gradient="accent" className="mb-lg animate-slide-up" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <div style={{ background: 'rgba(255,255,255,0.2)', padding: '0.75rem', borderRadius: '50%' }}>
-                <ChefHat size={24} color="white" />
+          {/* Left Column: Charts & Data */}
+          <div className="lg:col-span-2 space-y-8">
+            {/* Sales Chart */}
+            <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="font-semibold text-gray-800">{t('dashboard.salesTrend')}</h3>
+                <Link href="/analytics" className="text-sm text-primary hover:underline">View details</Link>
               </div>
-              <div style={{ color: 'var(--text-primary)' }}>
-                <strong style={{ fontSize: '1.1rem' }}>{pendingOrders + preparingOrders} {language === 'en' ? 'orders' : 'pesanan'}</strong> {t('dashboard.ordersInQueue')}
-                <div style={{ opacity: 0.8, fontSize: '0.9rem' }}>
-                  ({pendingOrders} {t('dashboard.pending')}, {preparingOrders} {t('dashboard.preparing')})
-                </div>
+              <div className="h-64">
+                <SalesTrendChart data={salesTrendData} />
               </div>
             </div>
-            <Link href="/pos">
-              <PremiumButton variant="glass" size="sm">
-                {t('dashboard.viewQueue')} →
-              </PremiumButton>
-            </Link>
-          </GlassCard>
-        )}
 
-        {/* Charts Section */}
-        <div className="content-grid cols-3 mb-lg">
-          <ChartCard title={t('dashboard.salesTrend')} subtitle={t('dashboard.last7Days')}>
-            <SalesTrendChart data={salesTrendData} />
-          </ChartCard>
-
-          <ChartCard title={t('dashboard.inventoryLevels')} subtitle={t('dashboard.topItems')}>
-            <InventoryLevelChart data={inventoryChartData} />
-          </ChartCard>
-
-          <ChartCard title={t('dashboard.staffAttendance')} subtitle={t('dashboard.attendanceToday')}>
-            <StaffAttendanceChart data={staffAttendanceData} />
-          </ChartCard>
-        </div>
-
-        <div className="content-grid cols-2">
-          {/* Low Stock Alert */}
-          <GlassCard>
-            <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-              <div className="section-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 700 }}>
-                <AlertTriangle size={20} className="text-warning" />
-                {t('dashboard.lowStockAlert')}
+            {/* Recent Orders Table */}
+            <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="font-semibold text-gray-800">{t('dashboard.recentOrders')}</h3>
+                <Link href="/pos" className="text-sm text-primary hover:underline">Manage all</Link>
               </div>
-              <div className="card-subtitle">{t('dashboard.needRestock')}</div>
-            </div>
-            {lowStockItems.length > 0 ? (
-              <div>
-                <div className="table-responsive">
-                  <table className="table" style={{ width: '100%', borderCollapse: 'collapse' }}>
-                    <thead>
-                      <tr style={{ borderBottom: '1px solid var(--border-color)' }}>
-                        <th style={{ textAlign: 'left', padding: '0.75rem' }}>{language === 'en' ? 'Item' : 'Item'}</th>
-                        <th style={{ textAlign: 'left', padding: '0.75rem' }}>{t('common.quantity')}</th>
-                        <th style={{ textAlign: 'left', padding: '0.75rem' }}>{t('common.status')}</th>
+              {todayOrders.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm text-left">
+                    <thead className="text-gray-500 border-b border-gray-100">
+                      <tr>
+                        <th className="pb-3 font-medium">Order #</th>
+                        <th className="pb-3 font-medium">Items</th>
+                        <th className="pb-3 font-medium">Status</th>
+                        <th className="pb-3 font-medium text-right">Total</th>
                       </tr>
                     </thead>
-                    <tbody>
-                      {lowStockItems.slice(0, 5).map((item) => (
-                        <tr key={item.id} style={{ borderBottom: '1px solid var(--border-light)' }}>
-                          <td style={{ padding: '0.75rem', fontWeight: 600 }}>{item.name}</td>
-                          <td style={{ padding: '0.75rem' }}>{item.currentQuantity} {item.unit}</td>
-                          <td style={{ padding: '0.75rem' }}>
-                            <span className="badge badge-danger">{t('inventory.lowStock')}</span>
+                    <tbody className="divide-y divide-gray-50">
+                      {todayOrders.slice(0, 5).map(order => (
+                        <tr key={order.id} className="hover:bg-gray-50 transition-colors">
+                          <td className="py-3 font-medium text-gray-900">{order.orderNumber}</td>
+                          <td className="py-3 text-gray-600 truncate max-w-[200px]">
+                            {order.items.map(i => i.name).join(', ')}
                           </td>
+                          <td className="py-3">
+                            <StatusBadge status={order.status} />
+                          </td>
+                          <td className="py-3 text-right font-medium">BND {order.total.toFixed(2)}</td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
                 </div>
-                <div className="mt-md" style={{ marginTop: '1rem' }}>
-                  <Link href="/inventory" style={{ textDecoration: 'none' }}>
-                    <PremiumButton variant="outline" size="sm" style={{ width: '100%' }}>
-                      {t('common.viewAll')} {t('nav.inventory')}
-                    </PremiumButton>
-                  </Link>
-                </div>
-              </div>
-            ) : (
-              <div className="empty-state" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>
-                {t('dashboard.stockSufficient')}!
-              </div>
-            )}
-          </GlassCard>
-
-          {/* Staff On Duty */}
-          <GlassCard>
-            <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-              <div className="section-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 700 }}>
-                <Users size={20} className="text-success" />
-                {t('dashboard.staffWorking')}
-              </div>
-              <div className="card-subtitle">{t('dashboard.currentAttendance')}</div>
+              ) : (
+                <div className="text-center py-10 text-gray-400">No orders yet today</div>
+              )}
             </div>
-            {onDutyStaff.length > 0 ? (
-              <div>
-                <div className="table-responsive">
-                  <table className="table" style={{ width: '100%', borderCollapse: 'collapse' }}>
-                    <thead>
-                      <tr style={{ borderBottom: '1px solid var(--border-color)' }}>
-                        <th style={{ textAlign: 'left', padding: '0.75rem' }}>{t('common.name')}</th>
-                        <th style={{ textAlign: 'left', padding: '0.75rem' }}>{t('hr.role')}</th>
-                        <th style={{ textAlign: 'left', padding: '0.75rem' }}>{t('common.status')}</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {onDutyStaff.map((staffMember) => {
-                        return (
-                          <tr key={staffMember.id} style={{ borderBottom: '1px solid var(--border-light)' }}>
-                            <td style={{ padding: '0.75rem', fontWeight: 600 }}>{staffMember.name}</td>
-                            <td style={{ padding: '0.75rem' }}>{staffMember.role}</td>
-                            <td style={{ padding: '0.75rem' }}>
-                              <span className="badge badge-success">{t('hr.onDuty')}</span>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
+          </div>
+
+          {/* Right Column: Alerts & Quick Info */}
+          <div className="space-y-6">
+
+            {/* Order Queue Card (Only if busy) */}
+            {(pendingOrders > 0 || preparingOrders > 0) && (
+              <div className="bg-blue-50 rounded-2xl p-6 border border-blue-100">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="p-2 bg-blue-100 rounded-lg text-blue-600">
+                    <ChefHat size={20} />
+                  </div>
+                  <h3 className="font-semibold text-blue-900">Kitchen Status</h3>
                 </div>
-                <div className="mt-md" style={{ marginTop: '1rem' }}>
-                  <Link href="/hr" style={{ textDecoration: 'none' }}>
-                    <PremiumButton variant="outline" size="sm" style={{ width: '100%' }}>
-                      {language === 'en' ? 'Manage HR' : 'Kelola HR'}
-                    </PremiumButton>
-                  </Link>
+                <div className="flex gap-4 mt-4">
+                  <div className="flex-1 bg-white p-3 rounded-xl border border-blue-100 shadow-sm text-center">
+                    <div className="text-xl font-bold text-blue-600">{pendingOrders}</div>
+                    <div className="text-xs text-gray-500 uppercase tracking-wider">Pending</div>
+                  </div>
+                  <div className="flex-1 bg-white p-3 rounded-xl border border-blue-100 shadow-sm text-center">
+                    <div className="text-xl font-bold text-orange-500">{preparingOrders}</div>
+                    <div className="text-xs text-gray-500 uppercase tracking-wider">Preparing</div>
+                  </div>
                 </div>
-              </div>
-            ) : (
-              <div className="empty-state" style={{ textAlign: 'center', padding: '2rem' }}>
-                <p style={{ marginBottom: '1rem', color: 'var(--text-secondary)' }}>{t('dashboard.noStaffOnDuty')}</p>
-                <Link href="/hr/timeclock">
-                  <PremiumButton variant="primary" size="sm" icon={Clock}>
-                    {t('hr.clockIn')} {language === 'en' ? 'Now' : 'Sekarang'}
-                  </PremiumButton>
+                <Link href="/kds" className="block mt-4 text-center text-sm font-medium text-blue-600 hover:text-blue-800">
+                  Go to Kitchen Display →
                 </Link>
               </div>
             )}
-          </GlassCard>
-        </div>
-        {/* Recent Orders */}
-        {todayOrders.length > 0 && (
-          <div className="card mt-lg">
-            <div className="card-header">
-              <div className="section-title">
-                <ShoppingCart size={20} className="text-primary" />
-                {t('dashboard.recentOrders')}
-              </div>
-              <div className="card-subtitle">{t('dashboard.last5Orders')}</div>
-            </div>
-            <div className="table-responsive">
-              <table className="table">
-                <thead>
-                  <tr>
-                    <th>{language === 'en' ? 'Order No.' : 'No. Pesanan'}</th>
-                    <th>{language === 'en' ? 'Items' : 'Item'}</th>
-                    <th>{t('common.total')}</th>
-                    <th className="hidden-mobile">{language === 'en' ? 'Type' : 'Jenis'}</th>
-                    <th>{t('common.status')}</th>
-                    <th className="hidden-mobile">{t('common.time')}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {todayOrders.slice(0, 5).map(order => (
-                    <tr key={order.id}>
-                      <td className="font-semibold">{order.orderNumber}</td>
-                      <td className="text-sm">
-                        {order.items.map(i => `${i.quantity}x ${i.name}`).join(', ').substring(0, 30)}...
-                      </td>
-                      <td className="font-semibold">BND {order.total.toFixed(2)}</td>
-                      <td className="hidden-mobile">
-                        <span className="badge badge-info badge-sm">{order.orderType}</span>
-                      </td>
-                      <td>
-                        <span className={`badge badge-sm ${order.status === 'completed' ? 'badge-success' :
-                          order.status === 'ready' ? 'badge-success' :
-                            order.status === 'preparing' ? 'badge-info' : 'badge-warning'
-                          }`}>
-                          {order.status}
-                        </span>
-                      </td>
-                      <td className="text-sm text-secondary hidden-mobile">
-                        {new Date(order.createdAt).toLocaleTimeString(dateLocale, { hour: '2-digit', minute: '2-digit' })}
-                      </td>
-                    </tr>
+
+            {/* Low Stock Alert */}
+            <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+              <h3 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                <AlertTriangle size={16} className={lowStockItems.length > 0 ? "text-amber-500" : "text-gray-300"} />
+                {t('dashboard.lowStock')}
+              </h3>
+              {lowStockItems.length > 0 ? (
+                <div className="space-y-3">
+                  {lowStockItems.slice(0, 4).map(item => (
+                    <div key={item.id} className="flex justify-between items-center text-sm p-2 bg-amber-50 rounded-lg border border-amber-100">
+                      <span className="font-medium text-gray-700">{item.name}</span>
+                      <span className="text-amber-700 font-bold">{item.currentQuantity} {item.unit}</span>
+                    </div>
                   ))}
-                </tbody>
-              </table>
+                  <Link href="/inventory" className="block text-center text-xs text-gray-500 mt-2 hover:text-gray-800">
+                    View all low stock items
+                  </Link>
+                </div>
+              ) : (
+                <div className="text-sm text-gray-500 flex items-center gap-2">
+                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                  Stock levels look good
+                </div>
+              )}
             </div>
-            <div className="mt-md">
-              <Link href="/pos" className="btn btn-outline btn-sm">
-                {t('common.viewAll')} {language === 'en' ? 'Orders' : 'Pesanan'}
-              </Link>
+
+            {/* Staff Card */}
+            <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+              <h3 className="font-semibold text-gray-800 mb-4">Team Update</h3>
+              <div className="h-40 relative">
+                <StaffAttendanceChart data={staffAttendanceData} />
+              </div>
             </div>
+
+          </div>
+        </div>
+      </div>
+    </MainLayout>
+  );
+}
+
+// Sub-components for cleaner code
+function ActionLink({ href, icon: Icon, label, primary = false }: { href: string, icon: any, label: string, primary?: boolean }) {
+  return (
+    <Link href={href} className={`
+      flex flex-col items-center justify-center p-4 rounded-xl transition-all duration-200 border
+      ${primary
+        ? 'bg-gray-900 text-white border-gray-900 shadow-lg hover:bg-gray-800 hover:scale-[1.02]'
+        : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+      }
+    `}>
+      <Icon size={24} className="mb-2" strokeWidth={1.5} />
+      <span className="text-sm font-medium">{label}</span>
+    </Link>
+  );
+}
+
+function MinimalStat({ label, value, subValue, trend, isPositive, isWarning }: any) {
+  return (
+    <div className={`p-6 bg-white rounded-2xl border ${isWarning ? 'border-amber-200 bg-amber-50/50' : 'border-gray-100'} shadow-sm`}>
+      <div className="text-sm text-gray-500 mb-1">{label}</div>
+      <div className="flex items-baseline gap-2">
+        <div className={`text-2xl font-bold ${isWarning ? 'text-amber-600' : 'text-gray-900'}`}>{value}</div>
+        {trend && (
+          <div className={`text-xs font-medium px-1.5 py-0.5 rounded ${isPositive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+            {trend}
           </div>
         )}
       </div>
-    </MainLayout>
+      {subValue && <div className="text-xs text-gray-400 mt-1">{subValue}</div>}
+    </div>
+  );
+}
+
+function StatusBadge({ status }: { status: string }) {
+  const styles: Record<string, string> = {
+    pending: 'bg-gray-100 text-gray-600',
+    preparing: 'bg-orange-100 text-orange-700',
+    ready: 'bg-green-100 text-green-700',
+    completed: 'bg-blue-100 text-blue-700',
+    cancelled: 'bg-red-50 text-red-600'
+  };
+
+  return (
+    <span className={`text-xs font-medium px-2.5 py-1 rounded-full capitalize ${styles[status] || styles.pending}`}>
+      {status}
+    </span>
   );
 }
