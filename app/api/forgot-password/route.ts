@@ -52,11 +52,15 @@ export async function POST(request: NextRequest) {
     const token = crypto.randomBytes(32).toString('hex');
     const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
 
-    // Save reset token
+    // Save reset token - first delete any existing token for this email, then insert new
+    await query(
+      `DELETE FROM "verification" WHERE identifier = $1`,
+      [`reset:${email}`]
+    );
+
     await query(
       `INSERT INTO "verification" (id, identifier, value, "expiresAt", "createdAt", "updatedAt")
-       VALUES ($1, $2, $3, $4, NOW(), NOW())
-       ON CONFLICT (identifier) DO UPDATE SET value = $3, "expiresAt" = $4, "updatedAt" = NOW()`,
+       VALUES ($1, $2, $3, $4, NOW(), NOW())`,
       [`reset-${crypto.randomUUID()}`, `reset:${email}`, token, expiresAt]
     );
 
@@ -64,13 +68,23 @@ export async function POST(request: NextRequest) {
     const baseUrl = process.env.BETTER_AUTH_URL || 'http://localhost:3000';
     const resetUrl = `${baseUrl}/reset-password?token=${token}&email=${encodeURIComponent(email)}`;
 
-    // Send reset email
-    const emailHtml = getPasswordResetEmailTemplate(user.name, resetUrl);
-    await sendEmail({
-      to: email,
-      subject: 'Reset Password - AbangBob',
-      html: emailHtml,
-    });
+    // Send reset email (don't fail if email service is unavailable)
+    try {
+      const emailHtml = getPasswordResetEmailTemplate(user.name, resetUrl);
+      const emailResult = await sendEmail({
+        to: email,
+        subject: 'Reset Password - AbangBob',
+        html: emailHtml,
+      });
+
+      if (!emailResult.success) {
+        console.warn('Failed to send reset email:', emailResult.error);
+        // Log but don't fail - for security don't reveal email status
+      }
+    } catch (emailError) {
+      console.warn('Email service error:', emailError);
+      // Continue anyway - don't reveal if email was sent
+    }
 
     return NextResponse.json({
       success: true,
