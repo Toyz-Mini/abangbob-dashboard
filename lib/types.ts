@@ -1431,3 +1431,58 @@ export interface StockSuggestion {
   supplier?: string;
 }
 
+
+// ==================== SOP WIZARD TYPES ====================
+
+export interface SOPTemplate {
+  id: string;
+  title: string;
+  description?: string;
+  targetRole: string[];
+  shiftType: 'morning' | 'mid' | 'night' | 'any';
+  isActive: boolean;
+  createdAt: string;
+  updatedAt?: string;
+  createdBy?: string;
+}
+
+export interface SOPStep {
+  id: string;
+  templateId: string;
+  title: string;
+  description?: string;
+  stepOrder: number;
+  isRequired: boolean;
+  requiresPhoto: boolean;
+  requiresValue: boolean;
+  valueType: 'boolean' | 'number' | 'text' | 'temperature' | 'currency';
+  minValue?: number;
+  maxValue?: number;
+  createdAt: string;
+  updatedAt?: string;
+}
+
+export interface SOPLog {
+  id: string;
+  templateId: string;
+  staffId: string;
+  shiftId?: string;
+  startedAt: string;
+  completedAt?: string;
+  status: 'in_progress' | 'completed' | 'abandoned';
+  notes?: string;
+  totalSteps: number;
+  completedSteps: number;
+  outletId?: string;
+}
+
+export interface SOPLogItem {
+  id: string;
+  logId: string;
+  stepId: string;
+  isChecked: boolean;
+  inputValue?: string;
+  photoUrl?: string; // base64 or url
+  completedAt: string;
+  notes?: string;
+}

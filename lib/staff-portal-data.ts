@@ -1,9 +1,9 @@
-import { 
-  ChecklistItemTemplate, 
-  ChecklistCompletion, 
-  LeaveBalance, 
-  LeaveRequest, 
-  ClaimRequest, 
+import {
+  ChecklistItemTemplate,
+  ChecklistCompletion,
+  LeaveBalance,
+  LeaveRequest,
+  ClaimRequest,
   StaffRequest,
   Announcement,
   Shift,
@@ -280,19 +280,19 @@ export const generateMockSchedules = (): ScheduleEntry[] => {
     { id: '3', name: 'Rahman Ali' },
     { id: '4', name: 'Fatimah Binti Omar' },
   ];
-  
+
   // Pattern: rotate shifts among staff (including today as day 0)
   for (let day = 0; day <= 14; day++) {
     const date = generateFutureDate(day);
-    
+
     staffMembers.forEach((staff, index) => {
       // Skip some days to simulate off days
       if ((day + index) % 7 === 0) return; // Every 7th day is off for each staff
-      
+
       // Rotate shifts based on day and staff index
       const shiftIndex = (day + index) % 3;
       const shift = MOCK_SHIFTS[shiftIndex];
-      
+
       schedules.push({
         id: `schedule_${staff.id}_${date}`,
         staffId: staff.id,
@@ -306,7 +306,7 @@ export const generateMockSchedules = (): ScheduleEntry[] => {
       });
     });
   }
-  
+
   return schedules;
 };
 
@@ -330,11 +330,11 @@ export function getDefaultLeaveEntitlement(): Omit<LeaveBalance, 'id' | 'staffId
 
 export function calculateLeaveDays(startDate: string, endDate: string, isHalfDay: boolean): number {
   if (isHalfDay) return 0.5;
-  
+
   const start = new Date(startDate);
   const end = new Date(endDate);
   let days = 0;
-  
+
   const current = new Date(start);
   while (current <= end) {
     const dayOfWeek = current.getDay();
@@ -344,7 +344,7 @@ export function calculateLeaveDays(startDate: string, endDate: string, isHalfDay
     }
     current.setDate(current.getDate() + 1);
   }
-  
+
   return days;
 }
 
@@ -422,3 +422,77 @@ export function getStatusColor(status: string): string {
   return colors[status] || 'secondary';
 }
 
+// ==================== SOP WIZARD DATA ====================
+import { SOPTemplate, SOPStep } from './types';
+
+export const MOCK_SOP_TEMPLATES: SOPTemplate[] = [
+  {
+    id: 'sop_opening',
+    title: 'Opening Checklist',
+    description: 'Persediaan kedai sebelum operasi bermula (Shift Pagi)',
+    targetRole: ['Staff', 'Manager'],
+    shiftType: 'morning',
+    isActive: true,
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: 'sop_closing',
+    title: 'Closing Checklist',
+    description: 'Prosedur keselamatan dan kebersihan sebelum tutup kedai (Shift Malam)',
+    targetRole: ['Staff', 'Manager'],
+    shiftType: 'night',
+    isActive: true,
+    createdAt: new Date().toISOString(),
+  },
+];
+
+export const MOCK_SOP_STEPS: Record<string, SOPStep[]> = {
+  'sop_opening': [
+    {
+      id: 'step_open_1', templateId: 'sop_opening',
+      title: 'Buka Pintu & Lampu', stepOrder: 1,
+      isRequired: true, requiresPhoto: false, requiresValue: false, valueType: 'boolean',
+      description: 'Pastikan suis utama dihidupkan.',
+      createdAt: new Date().toISOString()
+    },
+    {
+      id: 'step_open_2', templateId: 'sop_opening',
+      title: 'Check Suhu Chiller', stepOrder: 2,
+      isRequired: true, requiresPhoto: true, requiresValue: true, valueType: 'temperature',
+      minValue: 0, maxValue: 10,
+      description: 'Mesti bawah 4°C. Snap gambar thermometer.',
+      createdAt: new Date().toISOString()
+    },
+    {
+      id: 'step_open_3', templateId: 'sop_opening',
+      title: 'Opening Cash Count', stepOrder: 3,
+      isRequired: true, requiresPhoto: false, requiresValue: true, valueType: 'currency',
+      minValue: 50, maxValue: 200,
+      description: 'Kira duit float dalam laci. (Standard: RM100)',
+      createdAt: new Date().toISOString()
+    },
+  ],
+  'sop_closing': [
+    {
+      id: 'step_close_1', templateId: 'sop_closing',
+      title: 'Tutup Gas', stepOrder: 1,
+      isRequired: true, requiresPhoto: true, requiresValue: false, valueType: 'boolean',
+      description: 'Pusing injap gas ke posisi OFF. Snap gambar.',
+      createdAt: new Date().toISOString()
+    },
+    {
+      id: 'step_close_2', templateId: 'sop_closing',
+      title: 'Buang Sampah', stepOrder: 2,
+      isRequired: true, requiresPhoto: false, requiresValue: false, valueType: 'boolean',
+      description: 'Pastikan tong sampah kosong dan bersih.',
+      createdAt: new Date().toISOString()
+    },
+    {
+      id: 'step_close_3', templateId: 'sop_closing',
+      title: 'Closing Cash Count', stepOrder: 3,
+      isRequired: true, requiresPhoto: true, requiresValue: true, valueType: 'currency',
+      description: 'Kira duit cash jualan hari ini.',
+      createdAt: new Date().toISOString()
+    },
+  ]
+};

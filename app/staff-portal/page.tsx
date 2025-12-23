@@ -42,6 +42,8 @@ import {
   staffAchievements
 } from '@/components/staff-portal';
 import VerificationWizard from '@/components/VerificationWizard';
+import SOPWizard from '@/components/staff/SOPWizard';
+import { AnimatePresence } from 'framer-motion';
 
 
 // Circular Progress Component
@@ -181,6 +183,17 @@ export default function StaffPortalPage() {
   const [isVerificationOpen, setIsVerificationOpen] = useState(false);
   const [verificationMode, setVerificationMode] = useState<'IN' | 'OUT'>('IN');
 
+  // SOP Wizard State
+  const [showWizard, setShowWizard] = useState(false);
+  const [wizardType, setWizardType] = useState<'morning' | 'mid' | 'night'>('morning');
+
+
+
+  const handleWizardComplete = () => {
+    setShowWizard(false);
+    // Optional: Refresh data or show success toast
+  };
+
   // Get staff ID - prioritize PIN login, fall back to Supabase user
   // If logged in as Admin via Supabase, use first available staff or show admin view
   const staffId = authStaff?.id || user?.id || '';
@@ -232,6 +245,12 @@ export default function StaffPortalPage() {
   // Determine which checklist to show based on shift
   const isOpeningShift = currentShift?.startTime && currentShift.startTime < '12:00';
   const isClosingShift = currentShift?.endTime && currentShift.endTime >= '20:00';
+
+  useEffect(() => {
+    if (isOpeningShift) setWizardType('morning');
+    else if (isClosingShift) setWizardType('night');
+    else setWizardType('mid');
+  }, [isOpeningShift, isClosingShift]);
 
   // Get earned achievements
   const earnedAchievements = staffAchievements?.filter(a => a.earnedDate).slice(0, 3) || [];
@@ -454,23 +473,24 @@ export default function StaffPortalPage() {
           </h3>
 
           <div className="grid grid-cols-2" style={{ gap: '1rem' }}>
-            {/* Checklist Card - Featured */}
-            <Link href="/staff-portal/checklist" className="staff-action-card featured" style={{ gridColumn: 'span 2', display: 'flex', alignItems: 'center', padding: '1rem', background: 'white', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-sm)', border: '1px solid var(--border-light)' }}>
+            {/* Checklist Card - Updated to Open Wizard */}
+            <div
+              onClick={() => setShowWizard(true)}
+              className="staff-action-card featured cursor-pointer"
+              style={{ gridColumn: 'span 2', display: 'flex', alignItems: 'center', padding: '1rem', background: 'white', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-sm)', border: '1px solid var(--border-light)' }}
+            >
               <div className="staff-action-icon checklist" style={{ marginRight: '1rem' }}>
                 <CheckSquare size={24} />
               </div>
               <div style={{ flex: 1 }}>
-                <div className="staff-action-label" style={{ fontSize: '1rem' }}>Checklist Harian</div>
+                <div className="staff-action-label" style={{ fontSize: '1rem' }}>Daily Mission</div>
                 <div className="staff-action-sublabel" style={{ color: isOpeningShift && !openingChecklist?.completedAt ? 'var(--danger)' : 'var(--text-secondary)' }}>
-                  {isOpeningShift && !openingChecklist?.completedAt && '⚠️ Opening Pending'}
-                  {isOpeningShift && openingChecklist?.completedAt && '✅ Opening Selesai'}
-                  {isClosingShift && !closingChecklist?.completedAt && '⚠️ Closing Pending'}
-                  {isClosingShift && closingChecklist?.completedAt && '✅ Closing Selesai'}
-                  {!isOpeningShift && !isClosingShift && 'Lihat senarai tugas'}
+                  {isOpeningShift ? '☀️ Opening Check' : isClosingShift ? '🌙 Closing Check' : '📋 SOP Harian'}
+                  {!openingChecklist?.completedAt && !closingChecklist?.completedAt && <span className="ml-2 bg-red-100 text-red-600 px-2 py-0.5 rounded text-xs font-bold">Pending</span>}
                 </div>
               </div>
               <ChevronRight size={20} color="var(--text-light)" />
-            </Link>
+            </div>
 
             {/* Schedule Card */}
             <Link href="/staff-portal/schedule" className="staff-action-card">
@@ -717,6 +737,18 @@ export default function StaffPortalPage() {
           onSuccess={handleVerificationSuccess}
           staffName={currentStaff.name}
         />
+
+        {/* SOP Wizard Modal */}
+        <AnimatePresence>
+          {showWizard && (
+            <SOPWizard
+              shiftType={wizardType}
+              staffId={staffId}
+              onComplete={handleWizardComplete}
+              onCancel={() => setShowWizard(false)}
+            />
+          )}
+        </AnimatePresence>
 
         {/* Bottom Navigation for Mobile */}
         <StaffPortalNav currentPage="home" pendingCount={totalPending} />
