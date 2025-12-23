@@ -20,7 +20,8 @@ import {
   markTransactionSubmitted,
 } from '@/lib/services';
 import ReceiptPreview from '@/components/ReceiptPreview';
-import { ArrowLeft, UtensilsCrossed, Sandwich, Coffee, History, Printer, Clock, ChefHat, CheckCircle, ShoppingBag, Plus, Minus, X, Sparkles, AlertTriangle, User, DollarSign, CreditCard, QrCode, Wallet, WifiOff, RefreshCw, MessageCircle, Check, Globe } from 'lucide-react';
+import { ArrowLeft, UtensilsCrossed, Sandwich, Coffee, History, Printer, Clock, ChefHat, CheckCircle, ShoppingBag, Plus, Minus, X, Sparkles, AlertTriangle, User, DollarSign, CreditCard, QrCode, Wallet, WifiOff, RefreshCw, MessageCircle, Check, Globe, Send } from 'lucide-react';
+import { WhatsAppService } from '@/lib/services/whatsapp';
 import Modal from '@/components/Modal';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import StatCard from '@/components/StatCard';
@@ -1605,6 +1606,19 @@ export default function POSPage() {
                 >
                   <Printer size={18} />
                   Cetak Resit
+                </button>
+                <button
+                  onClick={() => {
+                    if (lastOrder && lastOrder.customerPhone) {
+                      const msg = WhatsAppService.generateReceiptMessage(lastOrder);
+                      WhatsAppService.openWhatsApp(lastOrder.customerPhone, msg);
+                    }
+                  }}
+                  className="btn btn-access"
+                  style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', padding: '0.875rem', background: '#25D366', borderColor: '#25D366', color: 'white' }}
+                >
+                  <MessageCircle size={18} />
+                  Hantar Resit (WhatsApp)
                 </button>
                 <button
                   onClick={() => setModalType(null)}

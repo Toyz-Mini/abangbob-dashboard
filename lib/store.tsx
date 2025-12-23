@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
-import { StockItem, StaffProfile, AttendanceRecord, Order, ProductionLog, DeliveryOrder, Expense, DailyCashFlow, Customer, Supplier, PurchaseOrder, Recipe, Shift, ScheduleEntry, Promotion, Notification, MenuItem, ModifierGroup, ModifierOption, StaffKPI, LeaveRecord, TrainingRecord, OTRecord, CustomerReview, KPIMetrics, ChecklistItemTemplate, ChecklistCompletion, LeaveBalance, LeaveRequest, ClaimRequest, StaffRequest, Announcement, OrderHistoryItem, VoidRefundRequest, VoidRefundType, OrderHistoryFilters, RefundItem, OilTracker, OilChangeRequest, OilActionHistory, OilActionType, MenuCategory, PaymentMethodConfig, TaxRate, CashRegister, InventoryLog, DEFAULT_MENU_CATEGORIES, DEFAULT_PAYMENT_METHODS, DEFAULT_TAX_RATES } from './types';
+import { StockItem, StaffProfile, AttendanceRecord, Order, ProductionLog, DeliveryOrder, Expense, DailyCashFlow, Customer, Supplier, PurchaseOrder, Recipe, Shift, ScheduleEntry, Promotion, Notification, MenuItem, ModifierGroup, ModifierOption, StaffKPI, LeaveRecord, TrainingRecord, OTRecord, CustomerReview, KPIMetrics, ChecklistItemTemplate, ChecklistCompletion, LeaveBalance, LeaveRequest, ClaimRequest, StaffRequest, Announcement, OrderHistoryItem, VoidRefundRequest, VoidRefundType, OrderHistoryFilters, RefundItem, OilTracker, OilChangeRequest, OilActionHistory, OilActionType, Equipment, MaintenanceSchedule, MaintenanceLog, WasteLog, MenuCategory, PaymentMethodConfig, TaxRate, CashRegister, InventoryLog, StockSuggestion, DEFAULT_MENU_CATEGORIES, DEFAULT_PAYMENT_METHODS, DEFAULT_TAX_RATES } from './types';
 import { MOCK_ORDER_HISTORY, MOCK_VOID_REFUND_REQUESTS, ORDER_HISTORY_STORAGE_KEYS } from './order-history-data';
 import { MOCK_STOCK } from './inventory-data';
 import { MOCK_STAFF, MOCK_ATTENDANCE, MOCK_PAYROLL } from './hr-data';
@@ -109,6 +109,11 @@ const STORAGE_KEYS = {
   PAYMENT_METHODS: 'abangbob_payment_methods',
   TAX_RATES: 'abangbob_tax_rates',
   CASH_REGISTERS: 'abangbob_cash_registers',
+  // Equipment
+  EQUIPMENT: 'abangbob_equipment',
+  MAINTENANCE_SCHEDULE: 'abangbob_maintenance_schedule',
+  MAINTENANCE_LOGS: 'abangbob_maintenance_logs',
+  WASTE_LOGS: 'abangbob_waste_logs',
 };
 
 // Inventory log type for tracking stock changes
@@ -123,6 +128,12 @@ interface StoreState {
   deleteStockItem: (id: string) => void;
   adjustStock: (id: string, quantity: number, type: 'in' | 'out', reason: string) => void;
   refreshInventory: () => Promise<void>;
+  getRestockSuggestions: () => StockSuggestion[];
+
+  // Waste Tracking
+  wasteLogs: WasteLog[];
+  addWasteLog: (log: Omit<WasteLog, 'id' | 'createdAt' | 'totalLoss'>) => Promise<{ success: boolean; error?: string }>;
+  refreshWasteLogs: () => Promise<void>;
 
   // Staff
   staff: StaffProfile[];
@@ -350,6 +361,19 @@ interface StoreState {
   getOilActionHistory: (fryerId: string) => OilActionHistory[];
   refreshOilTrackers: () => Promise<void>;
 
+  // Equipment & Maintenance (New)
+  equipment: Equipment[];
+  maintenanceSchedules: MaintenanceSchedule[];
+  maintenanceLogs: MaintenanceLog[];
+  addEquipment: (equipment: Omit<Equipment, 'id'>) => void;
+  updateEquipment: (id: string, updates: Partial<Equipment>) => void;
+  deleteEquipment: (id: string) => void;
+  addMaintenanceSchedule: (schedule: Omit<MaintenanceSchedule, 'id'>) => void;
+  updateMaintenanceSchedule: (id: string, updates: Partial<MaintenanceSchedule>) => void;
+  addMaintenanceLog: (log: Omit<MaintenanceLog, 'id'>) => void;
+  updateMaintenanceLog: (id: string, updates: Partial<MaintenanceLog>) => void;
+  refreshEquipment: () => Promise<void>;
+
   // Inventory
   bulkUpsertStock: (items: Partial<StockItem>[]) => void;
 
@@ -483,6 +507,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [oilTrackers, setOilTrackers] = useState<OilTracker[]>([]);
   const [oilChangeRequests, setOilChangeRequests] = useState<OilChangeRequest[]>([]);
   const [oilActionHistory, setOilActionHistory] = useState<OilActionHistory[]>([]);
+
+  // Equipment & Maintenance state
+  const [equipment, setEquipment] = useState<Equipment[]>([]);
+  const [maintenanceSchedules, setMaintenanceSchedules] = useState<MaintenanceSchedule[]>([]);
+  const [maintenanceLogs, setMaintenanceLogs] = useState<MaintenanceLog[]>([]);
+  const [wasteLogs, setWasteLogs] = useState<WasteLog[]>([]);
 
   // Menu Categories, Payment Methods, Tax Rates state
   const [menuCategories, setMenuCategories] = useState<MenuCategory[]>([]);
@@ -683,7 +713,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       }
 
       // Oil Trackers / Equipment
+      // Oil Tracker Data
       setOilTrackers(supabaseConnected && supabaseData.oilTrackers?.length > 0 ? supabaseData.oilTrackers : getFromStorage(STORAGE_KEYS.OIL_TRACKERS, MOCK_OIL_TRACKERS));
+
+      // Equipment & Maintenance Data
+      // For now, load empty or waiting for implementation of MOCK data if needed
+      setEquipment(getFromStorage(STORAGE_KEYS.EQUIPMENT, []));
+      setMaintenanceSchedules(getFromStorage(STORAGE_KEYS.MAINTENANCE_SCHEDULE, []));
+      setMaintenanceLogs(getFromStorage(STORAGE_KEYS.MAINTENANCE_LOGS, []));
       setOilChangeRequests(supabaseConnected && supabaseData.oilChangeRequests?.length > 0 ? supabaseData.oilChangeRequests : getFromStorage(STORAGE_KEYS.OIL_CHANGE_REQUESTS, []));
       setOilActionHistory(supabaseConnected && supabaseData.oilActionHistory?.length > 0 ? supabaseData.oilActionHistory : getFromStorage(STORAGE_KEYS.OIL_ACTION_HISTORY, []));
 
@@ -4050,6 +4087,136 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     getOilActionHistory,
     refreshOilTrackers,
 
+    // Equipment & Maintenance Actions
+    equipment,
+    maintenanceSchedules,
+    maintenanceLogs,
+    addEquipment: useCallback((newEquipment: Omit<Equipment, 'id'>) => {
+      const equip: Equipment = { ...newEquipment, id: generateUUID() };
+      setEquipment(prev => {
+        const updated = [...prev, equip];
+        setToStorage(STORAGE_KEYS.EQUIPMENT, updated);
+        return updated;
+      });
+      // TODO: Sync to Supabase
+    }, []),
+    updateEquipment: useCallback((id: string, updates: Partial<Equipment>) => {
+      setEquipment(prev => {
+        const updated = prev.map(item => item.id === id ? { ...item, ...updates } : item);
+        setToStorage(STORAGE_KEYS.EQUIPMENT, updated);
+        return updated;
+      });
+      // TODO: Sync to Supabase
+    }, []),
+    deleteEquipment: useCallback((id: string) => {
+      setEquipment(prev => {
+        const updated = prev.filter(item => item.id !== id);
+        setToStorage(STORAGE_KEYS.EQUIPMENT, updated);
+        return updated;
+      });
+      // TODO: Sync to Supabase
+    }, []),
+    addMaintenanceSchedule: useCallback((schedule: Omit<MaintenanceSchedule, 'id'>) => {
+      const newSchedule: MaintenanceSchedule = { ...schedule, id: generateUUID() };
+      setMaintenanceSchedules(prev => {
+        const updated = [...prev, newSchedule];
+        setToStorage(STORAGE_KEYS.MAINTENANCE_SCHEDULE, updated);
+        return updated;
+      });
+      // TODO: Sync to Supabase
+    }, []),
+    updateMaintenanceSchedule: useCallback((id: string, updates: Partial<MaintenanceSchedule>) => {
+      setMaintenanceSchedules(prev => {
+        const updated = prev.map(item => item.id === id ? { ...item, ...updates } : item);
+        setToStorage(STORAGE_KEYS.MAINTENANCE_SCHEDULE, updated);
+        return updated;
+      });
+      // TODO: Sync to Supabase
+    }, []),
+    addMaintenanceLog: useCallback((log: Omit<MaintenanceLog, 'id'>) => {
+      const newLog: MaintenanceLog = { ...log, id: generateUUID() };
+      setMaintenanceLogs(prev => {
+        const updated = [...prev, newLog];
+        setToStorage(STORAGE_KEYS.MAINTENANCE_LOGS, updated);
+        return updated;
+      });
+      // Update last performed date in schedule if linked
+      if (log.scheduledTaskId) {
+        setMaintenanceSchedules(prev => {
+          const updated = prev.map(s => {
+            if (s.id === log.scheduledTaskId) {
+              // Calculate next due date based on frequency
+              const lastDate = new Date(log.performedAt);
+              const nextDate = new Date(lastDate);
+              nextDate.setDate(lastDate.getDate() + s.frequencyDays);
+              const nextDue = nextDate.toISOString().split('T')[0];
+
+              return { ...s, lastPerformed: log.performedAt.split('T')[0], nextDue };
+            }
+            return s;
+          });
+          setToStorage(STORAGE_KEYS.MAINTENANCE_SCHEDULE, updated);
+          return updated;
+        });
+      }
+      // TODO: Sync to Supabase
+    }, []),
+    updateMaintenanceLog: useCallback((id: string, updates: Partial<MaintenanceLog>) => {
+      setMaintenanceLogs(prev => {
+        const updated = prev.map(item => item.id === id ? { ...item, ...updates } : item);
+        setToStorage(STORAGE_KEYS.MAINTENANCE_LOGS, updated);
+        return updated;
+      });
+      // TODO: Sync to Supabase
+    }, []),
+    refreshEquipment: useCallback(async () => {
+      // Placeholder for Supabase sync
+    }, []),
+
+    // Waste Tracking Actions
+    wasteLogs,
+    addWasteLog: useCallback(async (log: Omit<WasteLog, 'id' | 'createdAt' | 'totalLoss'>) => {
+      const newLog: WasteLog = {
+        ...log,
+        id: generateUUID(),
+        createdAt: new Date().toISOString(),
+        totalLoss: log.quantity * log.costPerUnit
+      };
+
+      setWasteLogs(prev => {
+        const updated = [newLog, ...prev];
+        setToStorage(STORAGE_KEYS.WASTE_LOGS, updated);
+        return updated;
+      });
+
+      // Optimistically update inventory
+      const stockItem = inventory.find(i => i.id === log.stockId);
+      if (stockItem) {
+        // Use adjustStock if available via closure or implement logic here
+        // Since adjustStock is defined above (we need to be sure), let's check.
+        // Actually adjustStock is likely defined above.
+        // But we are inside the value object... adjustStock is a property of this object?
+        // No, adjustStock is defined as a function variable inside StoreProvider probably.
+        // Let's assume we can call it if it was defined as a const before this object.
+        // If adjustStock is defined INSIDE this object, we can't call it easily.
+        // Let's look at how other actions behave. They use setState directly.
+        // So I should replicate adjustStock logic here or call setInventory.
+
+        const newQuantity = stockItem.currentQuantity - log.quantity;
+        setInventory(prev => {
+          const updated = prev.map(item => item.id === log.stockId ? { ...item, currentQuantity: newQuantity } : item);
+          setToStorage(STORAGE_KEYS.INVENTORY, updated);
+          return updated;
+        });
+      }
+
+      // TODO: Sync to Supabase
+      return { success: true };
+    }, [inventory]), // depend on inventory
+    refreshWasteLogs: useCallback(async () => {
+      // Placeholder
+    }, []),
+
     // Menu Categories
     menuCategories,
     addMenuCategory,
@@ -4109,7 +4276,10 @@ export function useInventory() {
     updateStockItem: store.updateStockItem,
     deleteStockItem: store.deleteStockItem,
     adjustStock: store.adjustStock,
+    wasteLogs: store.wasteLogs,
+    addWasteLog: store.addWasteLog,
     refreshInventory: store.refreshInventory,
+    getRestockSuggestions: store.getRestockSuggestions,
     isInitialized: store.isInitialized,
   };
 }
@@ -4411,6 +4581,19 @@ export function useEquipment() {
     getPendingOilRequestCount: store.getPendingOilRequestCount,
     getOilActionHistory: store.getOilActionHistory,
     refreshOilTrackers: store.refreshOilTrackers,
+
+    // NEW: Equipment & Maintenance
+    equipment: store.equipment,
+    maintenanceSchedules: store.maintenanceSchedules,
+    maintenanceLogs: store.maintenanceLogs,
+    addEquipment: store.addEquipment,
+    updateEquipment: store.updateEquipment,
+    deleteEquipment: store.deleteEquipment,
+    addMaintenanceSchedule: store.addMaintenanceSchedule,
+    updateMaintenanceSchedule: store.updateMaintenanceSchedule,
+    addMaintenanceLog: store.addMaintenanceLog,
+    updateMaintenanceLog: store.updateMaintenanceLog,
+    refreshEquipment: store.refreshEquipment,
 
     // Related data
     staff: store.staff,

@@ -44,7 +44,7 @@ import { startOfMonth, subDays, format } from 'date-fns';
 import { DateRangePicker, type DateRange } from '@/components/DateRangePicker';
 
 export default function AnalyticsPage() {
-  const { orders, productionLogs, inventory, staff, attendance, deliveryOrders, menuItems, isInitialized } = useStore();
+  const { orders, productionLogs, inventory, staff, attendance, deliveryOrders, menuItems, wasteLogs, isInitialized } = useStore();
   const { showToast } = useToast();
   // Default to last 30 days
   const [dateRange, setDateRange] = useState<DateRange>({
@@ -285,16 +285,25 @@ export default function AnalyticsPage() {
     return { revenueChange, orderChange };
   }, [orders, rangeStart, rangeEnd, salesAnalytics]);
 
-  // Waste analytics
+  // Waste analytics (Production + Inventory)
   const wasteAnalytics = useMemo(() => {
-    const wastedLogs = productionLogs.filter(log => {
+    // Production Waste (Kitchen)
+    const activeProductionLogs = productionLogs.filter(log => {
       const logDate = new Date(log.date);
       return logDate >= rangeStart && logDate <= rangeEnd && log.wasteAmount > 0;
     });
+    const productionWasteQty = activeProductionLogs.reduce((sum, log) => sum + log.wasteAmount, 0);
 
-    const totalWaste = wastedLogs.reduce((sum, log) => sum + log.wasteAmount, 0);
-    return { totalWaste };
-  }, [productionLogs, rangeStart, rangeEnd]);
+    // Inventory Waste (Stock - Financial Value)
+    const activeWasteLogs = wasteLogs.filter(log => {
+      const logDate = new Date(log.createdAt);
+      return logDate >= rangeStart && logDate <= rangeEnd;
+    });
+    const totalWasteValue = activeWasteLogs.reduce((sum, log) => sum + (log.totalLoss || 0), 0);
+    const totalWasteItems = activeWasteLogs.length;
+
+    return { productionWasteQty, totalWasteValue, totalWasteItems };
+  }, [productionLogs, wasteLogs, rangeStart, rangeEnd]);
 
   // Inventory analytics
   const inventoryAnalytics = useMemo(() => {
@@ -623,8 +632,8 @@ export default function AnalyticsPage() {
                 </div>
                 <div style={{ padding: '1rem', background: '#fee2e2', borderRadius: 'var(--radius-md)', textAlign: 'center' }}>
                   <Trash2 size={24} style={{ marginBottom: '0.5rem', color: 'var(--danger)' }} />
-                  <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--danger)' }}>{wasteAnalytics.totalWaste}</div>
-                  <div style={{ fontSize: '0.75rem', color: '#991b1b' }}>Unit Dibazirkan</div>
+                  <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--danger)' }}>BND {wasteAnalytics.totalWasteValue.toFixed(2)}</div>
+                  <div style={{ fontSize: '0.75rem', color: '#991b1b' }}>Nilai Pembaziran</div>
                 </div>
                 <div style={{ padding: '1rem', background: '#d1fae5', borderRadius: 'var(--radius-md)', textAlign: 'center' }}>
                   <Users size={24} style={{ marginBottom: '0.5rem', color: 'var(--success)' }} />

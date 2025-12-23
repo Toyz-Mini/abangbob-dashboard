@@ -362,6 +362,62 @@ export interface OilActionHistory {
   photoUrl: string;
 }
 
+// ==================== EQUIPMENT & MAINTENANCE TYPES ====================
+
+export interface Equipment {
+  id: string;
+  name: string;
+  type: 'fridge' | 'freezer' | 'ac' | 'grill' | 'fryer' | 'pos' | 'other';
+  location: string;
+  modelNumber?: string;
+  serialNumber?: string;
+  purchaseDate?: string;
+  warrantyExpiry?: string;
+  status: 'good' | 'warning' | 'critical' | 'maintenance' | 'broken' | 'retired';
+  notes?: string;
+}
+
+export interface MaintenanceSchedule {
+  id: string;
+  equipmentId: string;
+  taskName: string;
+  frequencyDays: number;
+  lastPerformed?: string;
+  nextDue: string;
+  assignedRole?: string;
+  isActive: boolean;
+}
+
+export interface MaintenanceLog {
+  id: string;
+  equipmentId: string;
+  scheduledTaskId?: string;
+  type: 'routine' | 'repair' | 'issue';
+  performedBy: string;
+  performedByName: string;
+  performedAt: string;
+  notes?: string;
+  cost: number;
+  photoUrl?: string;
+  status: 'completed' | 'pending' | 'in_progress';
+}
+
+export interface WasteLog {
+  id: string;
+  stockId: string;
+  stockName?: string; // For UI display
+  quantity: number;
+  unit: string;
+  costPerUnit: number;
+  totalLoss: number;
+  reason: 'expired' | 'spilled' | 'burned' | 'customer_return' | 'staff_meal' | 'other';
+  reportedBy: string;
+  reportedByName: string;
+  photoUrl?: string;
+  notes?: string;
+  createdAt: string;
+}
+
 export interface ProductionLog {
   id: string;
   date: string;
@@ -1362,5 +1418,16 @@ export interface InventoryLog {
   reason: string;
   createdAt: string;
   createdBy?: string;
+}
+
+export interface StockSuggestion {
+  stockId: string;
+  stockName: string;
+  currentQuantity: number;
+  averageDailyUsage: number;
+  suggestedReorderPoint: number;
+  suggestedOrderQuantity: number;
+  estimatedCost: number;
+  supplier?: string;
 }
 

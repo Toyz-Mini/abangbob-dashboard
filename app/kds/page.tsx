@@ -17,9 +17,12 @@ import {
   VolumeX,
   ArrowLeft,
   RefreshCw,
-  User
+  RefreshCw,
+  User,
+  MessageCircle
 } from 'lucide-react';
 import Link from 'next/link';
+import { WhatsAppService } from '@/lib/services/whatsapp';
 
 type OrderColumn = 'pending' | 'preparing' | 'ready';
 
@@ -661,6 +664,36 @@ function OrderCard({
           </div>
         ))}
       </div>
+
+      {/* WhatsApp Notify Button (Only for Ready orders) */}
+      {isReady && order.customerPhone && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            const msg = WhatsAppService.generateOrderReadyMessage(order, order.customerName);
+            WhatsAppService.openWhatsApp(order.customerPhone!, msg);
+          }}
+          style={{
+            width: '100%',
+            padding: '0.75rem',
+            marginBottom: '0.5rem',
+            border: '1px solid #25D366',
+            borderRadius: 'var(--radius-md)',
+            background: 'white',
+            color: '#25D366',
+            fontWeight: 700,
+            fontSize: '0.875rem',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '0.5rem'
+          }}
+        >
+          <MessageCircle size={18} />
+          Notify Customer
+        </button>
+      )}
 
       {/* Action Button */}
       <button

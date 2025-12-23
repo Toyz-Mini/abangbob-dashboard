@@ -8,16 +8,19 @@ import { useAuth } from '@/lib/contexts/AuthContext';
 import { useTranslation } from '@/lib/contexts/LanguageContext';
 import { StockItem } from '@/lib/types';
 import Modal from '@/components/Modal';
-import { AlertTriangle, Plus, Edit2, Trash2, ArrowUp, ArrowDown, History, Package, LayoutGrid, List as ListIcon, Search, Filter, ClipboardList, Upload } from 'lucide-react';
+import { AlertTriangle, Plus, Edit2, Trash2, ArrowUp, ArrowDown, History, Package, LayoutGrid, List as ListIcon, Search, Filter, ClipboardList, Upload, TrendingUp } from 'lucide-react';
 import VarianceReportModal from '@/components/inventory/VarianceReportModal';
 import StockImporter from '@/components/StockImporter';
 import LoadingSpinner from '@/components/LoadingSpinner';
+import WasteModal from '@/components/inventory/WasteModal';
+import WasteHistoryView from '@/components/inventory/WasteHistoryView';
+import SmartReorderView from '@/components/inventory/SmartReorderView';
 import LivePageHeader from '@/components/LivePageHeader';
 import GlassCard from '@/components/GlassCard';
 import PremiumButton from '@/components/PremiumButton';
 import { useToast } from '@/lib/contexts/ToastContext';
 
-type ModalType = 'add' | 'edit' | 'adjust' | 'delete' | 'history' | null;
+type ModalType = 'add' | 'edit' | 'adjust' | 'delete' | 'history' | 'waste' | null;
 
 const STOCK_CATEGORIES = ['Protein', 'Staple', 'Condiment', 'Bread', 'Dairy', 'Beverage', 'Packaging', 'Other'];
 const STOCK_UNITS = ['kg', 'pcs', 'litre', 'gram', 'slices', 'boxes', 'packets'];
@@ -57,6 +60,7 @@ export default function InventoryPage() {
   const [selectedItem, setSelectedItem] = useState<StockItem | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('grid');
+  const [activeTab, setActiveTab] = useState<'inventory' | 'waste' | 'smart-reorder'>('inventory');
 
   // ... (existing form states)
 
@@ -145,6 +149,11 @@ export default function InventoryPage() {
   const openHistoryModal = (item: StockItem) => {
     setSelectedItem(item);
     setModalType('history');
+  };
+
+  const openWasteModal = (item: StockItem) => {
+    setSelectedItem(item);
+    setModalType('waste');
   };
 
   const closeModal = () => {
@@ -313,244 +322,293 @@ export default function InventoryPage() {
               </div>
             )
           }
+
         />
 
-        {/* Controls Bar */}
-        <GlassCard className="mb-lg" style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', alignItems: 'center', justifyContent: 'space-between', padding: '1rem' }}>
-          <div style={{ display: 'flex', gap: '1rem', flex: 1, minWidth: '300px' }}>
-            <div style={{ position: 'relative', flex: 1 }}>
-              <Search size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
-              <input
-                type="text"
-                className="form-input"
-                placeholder={t('inventory.searchPlaceholder')}
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                style={{ paddingLeft: '2.5rem', width: '100%' }}
-              />
+        {/* Tab Navigation */}
+        <div className="flex gap-4 border-b border-gray-200 mb-6">
+          <button
+            onClick={() => setActiveTab('inventory')}
+            className={`pb-2 px-4 font-medium transition-colors relative ${activeTab === 'inventory'
+              ? 'text-primary border-b-2 border-primary'
+              : 'text-gray-500 hover:text-gray-700'
+              }`}
+          >
+            Inventory Stock
+          </button>
+          <button
+            onClick={() => setActiveTab('waste')}
+            className={`pb-2 px-4 font-medium transition-colors relative ${activeTab === 'waste'
+              ? 'text-red-600 border-b-2 border-red-600'
+              : 'text-gray-500 hover:text-red-600'
+              }`}
+          >
+            <div className="flex items-center gap-2">
+              <AlertTriangle size={16} />
+              Waste Logs
             </div>
-            <div style={{ position: 'relative', width: '200px' }}>
-              <Filter size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
-              <select
-                className="form-select"
-                value={filterCategory}
-                onChange={(e) => setFilterCategory(e.target.value)}
-                style={{ paddingLeft: '2.5rem', width: '100%' }}
-              >
-                <option value="All">{t('inventory.allCategories')}</option>
-                {STOCK_CATEGORIES.map(cat => (
-                  <option key={cat} value={cat}>{cat}</option>
-                ))}
-              </select>
+          </button>
+          <button
+            onClick={() => setActiveTab('smart-reorder')}
+            className={`pb-2 px-4 font-medium transition-colors relative ${activeTab === 'smart-reorder'
+              ? 'text-blue-600 border-b-2 border-blue-600'
+              : 'text-gray-500 hover:text-blue-600'
+              }`}
+          >
+            <div className="flex items-center gap-2">
+              <TrendingUp size={16} />
+              Smart Reorder
+              <span className="bg-blue-100 text-blue-700 text-[10px] px-1.5 py-0.5 rounded-full font-bold ml-1">New</span>
             </div>
-          </div>
+          </button>
+        </div>
 
-          <div style={{ display: 'flex', background: 'var(--bg-secondary)', padding: '0.25rem', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-color)' }}>
-            <button
-              onClick={() => setViewMode('grid')}
-              style={{
-                padding: '0.5rem',
-                borderRadius: 'var(--radius-md)',
-                background: viewMode === 'grid' ? 'var(--bg-card)' : 'transparent',
-                color: viewMode === 'grid' ? 'var(--primary)' : 'var(--text-secondary)',
-                boxShadow: viewMode === 'grid' ? 'var(--shadow-sm)' : 'none',
-                transition: 'all 0.2s'
-              }}
-            >
-              <LayoutGrid size={20} />
-            </button>
-            <button
-              onClick={() => setViewMode('list')}
-              style={{
-                padding: '0.5rem',
-                borderRadius: 'var(--radius-md)',
-                background: viewMode === 'list' ? 'var(--bg-card)' : 'transparent',
-                color: viewMode === 'list' ? 'var(--primary)' : 'var(--text-secondary)',
-                boxShadow: viewMode === 'list' ? 'var(--shadow-sm)' : 'none',
-                transition: 'all 0.2s'
-              }}
-            >
-              <ListIcon size={20} />
-            </button>
-          </div>
-        </GlassCard>
-
-        {/* Low Stock Alert */}
-        {lowStock.length > 0 && (
-          <GlassCard gradient="subtle" className="mb-lg" style={{ display: 'flex', alignItems: 'center', gap: '1rem', borderLeft: '4px solid var(--warning)' }}>
-            <div style={{ background: 'rgba(245, 158, 11, 0.1)', padding: '0.75rem', borderRadius: '50%' }}>
-              <AlertTriangle size={24} color="var(--warning)" />
-            </div>
-            <div>
-              <strong style={{ fontSize: '1.1rem', display: 'block' }}>{lowStock.length} {t('inventory.lowStockAlert')}</strong>
-              <span style={{ color: 'var(--text-secondary)' }}>{t('inventory.pleaseRestock')}</span>
-            </div>
-          </GlassCard>
-        )}
-
-        {/* Content View */}
-        {viewMode === 'grid' ? (
-          <div className="content-grid cols-3 animate-slide-up-stagger">
-            {filteredStock.map((item) => {
-              const status = getStockStatus(item);
-              const percentage = (item.currentQuantity / item.minQuantity) * 100; // >100 is good
-              // Invert logic for visual ring: 100% means full/good. 
-              // Actually for stock: if qty > min, it's >100%. We just want to show health.
-              // Let's cap at 100 for the ring visual if it's full.
-              const ringPercentage = Math.min(percentage, 100);
-
-              return (
-                <GlassCard key={item.id} hoverEffect={true} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    <div>
-                      <div className="badge badge-sm" style={{ marginBottom: '0.5rem' }}>{item.category}</div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 style={{ fontWeight: 700, fontSize: '1.1rem', margin: 0 }}>{item.name}</h3>
-                        {item.countDaily && (
-                          <span className="text-xs bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded border border-purple-200 font-medium" title="Dikira Setiap Hari">
-                            Daily
-                          </span>
-                        )}
-                      </div>
-                      <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>BND {item.cost.toFixed(2)} / {item.unit}</div>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                      {canDeleteItems && (
-                        <div style={{ display: 'flex', gap: '0.25rem' }}>
-                          <button
-                            className="btn-icon btn-ghost"
-                            onClick={() => openEditModal(item)}
-                            title="Edit Item"
-                            style={{ width: '28px', height: '28px' }}
-                          >
-                            <Edit2 size={14} />
-                          </button>
-                          <button
-                            className="btn-icon btn-ghost-danger"
-                            onClick={() => openDeleteModal(item)}
-                            title="Padam Item"
-                            style={{ width: '28px', height: '28px' }}
-                          >
-                            <Trash2 size={14} />
-                          </button>
-                        </div>
-                      )}
-                      <StockLevelRing percentage={ringPercentage} color={status.badge} />
-                    </div>
-                  </div>
-
-                  <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem', marginTop: 'auto' }}>
-                    <span style={{ fontSize: '1.5rem', fontWeight: 800 }}>{item.currentQuantity}</span>
-                    <span style={{ color: 'var(--text-secondary)' }}>{item.unit}</span>
-                  </div>
-
-                  <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', display: 'flex', justifyContent: 'space-between' }}>
-                    <span>Min: {item.minQuantity}</span>
-                    <span className={`text-${status.badge.replace('badge-', '')}`}>{status.label}</span>
-                  </div>
-
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', paddingTop: '1rem', borderTop: '1px solid var(--border-light)' }}>
-                    <PremiumButton variant="secondary" size="sm" onClick={() => openAdjustModal(item)}>
-                      <ArrowUp size={14} style={{ marginRight: '4px' }} /> Laras
-                    </PremiumButton>
-                    <PremiumButton variant="ghost" size="sm" onClick={() => openHistoryModal(item)}>
-                      <History size={14} />
-                    </PremiumButton>
-                  </div>
-
-
-                </GlassCard>
-              );
-            })}
-          </div>
+        {activeTab === 'waste' ? (
+          <WasteHistoryView />
+        ) : activeTab === 'smart-reorder' ? (
+          <SmartReorderView />
         ) : (
-          <GlassCard>
-            <div className="table-responsive">
-              <table className="table">
-                <thead>
-                  <tr>
-                    <th>Item</th>
-                    <th className="hidden-mobile">Kategori</th>
-                    <th>Kuantiti Semasa</th>
-                    <th className="hidden-mobile">Minimum</th>
-                    <th className="hidden-mobile">Unit</th>
-                    <th className="hidden-mobile">Kos</th>
-                    <th className="hidden-mobile">Supplier</th>
-                    <th>Status</th>
-                    <th>Tindakan</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredStock.map(item => {
-                    const status = getStockStatus(item);
-                    return (
-                      <tr key={item.id}>
-                        <td style={{ fontWeight: 600 }}>
-                          <div className="flex items-center gap-2">
-                            {item.name}
+          <>
+            {/* Controls Bar */}
+            <GlassCard className="mb-lg" style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', alignItems: 'center', justifyContent: 'space-between', padding: '1rem' }}>
+              <div style={{ display: 'flex', gap: '1rem', flex: 1, minWidth: '300px' }}>
+                <div style={{ position: 'relative', flex: 1 }}>
+                  <Search size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
+                  <input
+                    type="text"
+                    className="form-input"
+                    placeholder={t('inventory.searchPlaceholder')}
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    style={{ paddingLeft: '2.5rem', width: '100%' }}
+                  />
+                </div>
+                <div style={{ position: 'relative', width: '200px' }}>
+                  <Filter size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
+                  <select
+                    className="form-select"
+                    value={filterCategory}
+                    onChange={(e) => setFilterCategory(e.target.value)}
+                    style={{ paddingLeft: '2.5rem', width: '100%' }}
+                  >
+                    <option value="All">{t('inventory.allCategories')}</option>
+                    {STOCK_CATEGORIES.map(cat => (
+                      <option key={cat} value={cat}>{cat}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', background: 'var(--bg-secondary)', padding: '0.25rem', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-color)' }}>
+                <button
+                  onClick={() => setViewMode('grid')}
+                  style={{
+                    padding: '0.5rem',
+                    borderRadius: 'var(--radius-md)',
+                    background: viewMode === 'grid' ? 'var(--bg-card)' : 'transparent',
+                    color: viewMode === 'grid' ? 'var(--primary)' : 'var(--text-secondary)',
+                    boxShadow: viewMode === 'grid' ? 'var(--shadow-sm)' : 'none',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  <LayoutGrid size={20} />
+                </button>
+                <button
+                  onClick={() => setViewMode('list')}
+                  style={{
+                    padding: '0.5rem',
+                    borderRadius: 'var(--radius-md)',
+                    background: viewMode === 'list' ? 'var(--bg-card)' : 'transparent',
+                    color: viewMode === 'list' ? 'var(--primary)' : 'var(--text-secondary)',
+                    boxShadow: viewMode === 'list' ? 'var(--shadow-sm)' : 'none',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  <ListIcon size={20} />
+                </button>
+              </div>
+            </GlassCard>
+
+            {/* Low Stock Alert */}
+            {lowStock.length > 0 && (
+              <GlassCard gradient="subtle" className="mb-lg" style={{ display: 'flex', alignItems: 'center', gap: '1rem', borderLeft: '4px solid var(--warning)' }}>
+                <div style={{ background: 'rgba(245, 158, 11, 0.1)', padding: '0.75rem', borderRadius: '50%' }}>
+                  <AlertTriangle size={24} color="var(--warning)" />
+                </div>
+                <div>
+                  <strong style={{ fontSize: '1.1rem', display: 'block' }}>{lowStock.length} {t('inventory.lowStockAlert')}</strong>
+                  <span style={{ color: 'var(--text-secondary)' }}>{t('inventory.pleaseRestock')}</span>
+                </div>
+              </GlassCard>
+            )}
+
+            {/* Content View */}
+            {viewMode === 'grid' ? (
+              <div className="content-grid cols-3 animate-slide-up-stagger">
+                {filteredStock.map((item) => {
+                  const status = getStockStatus(item);
+                  const percentage = (item.currentQuantity / item.minQuantity) * 100; // >100 is good
+                  // Invert logic for visual ring: 100% means full/good. 
+                  // Actually for stock: if qty > min, it's >100%. We just want to show health.
+                  // Let's cap at 100 for the ring visual if it's full.
+                  const ringPercentage = Math.min(percentage, 100);
+
+                  return (
+                    <GlassCard key={item.id} hoverEffect={true} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                        <div>
+                          <div className="badge badge-sm" style={{ marginBottom: '0.5rem' }}>{item.category}</div>
+                          <div className="flex items-center gap-2 mb-1">
+                            <h3 style={{ fontWeight: 700, fontSize: '1.1rem', margin: 0 }}>{item.name}</h3>
                             {item.countDaily && (
-                              <span className="text-xs bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded border border-purple-200 font-medium">
+                              <span className="text-xs bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded border border-purple-200 font-medium" title="Dikira Setiap Hari">
                                 Daily
                               </span>
                             )}
                           </div>
-                        </td>
-                        <td className="hidden-mobile">{item.category}</td>
-                        <td>{item.currentQuantity}</td>
-                        <td className="hidden-mobile">{item.minQuantity}</td>
-                        <td className="hidden-mobile">{item.unit}</td>
-                        <td className="hidden-mobile">BND {item.cost.toFixed(2)}</td>
-                        <td className="hidden-mobile">{item.supplier || '-'}</td>
-                        <td>
-                          <span className={`badge ${status.badge}`}>
-                            {status.label}
-                          </span>
-                        </td>
-                        <td>
-                          <div className="flex gap-2 justify-end">
-                            <button
-                              className="btn-icon btn-ghost-primary"
-                              onClick={() => openAdjustModal(item)}
-                              title="Laras Stok"
-                            >
-                              <ArrowUp size={14} />
-                            </button>
+                          <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>BND {item.cost.toFixed(2)} / {item.unit}</div>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                          {canDeleteItems && (
+                            <div style={{ display: 'flex', gap: '0.25rem' }}>
+                              <button
+                                className="btn-icon btn-ghost"
+                                onClick={() => openEditModal(item)}
+                                title="Edit Item"
+                                style={{ width: '28px', height: '28px' }}
+                              >
+                                <Edit2 size={14} />
+                              </button>
+                              <button
+                                className="btn-icon btn-ghost-danger"
+                                onClick={() => openDeleteModal(item)}
+                                title="Padam Item"
+                                style={{ width: '28px', height: '28px' }}
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
+                          )}
+                          <StockLevelRing percentage={ringPercentage} color={status.badge} />
+                        </div>
+                      </div>
 
-                            <button
-                              className="btn-icon btn-ghost"
-                              onClick={() => openHistoryModal(item)}
-                              title="Lihat Sejarah"
-                            >
-                              <History size={14} />
-                            </button>
+                      <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem', marginTop: 'auto' }}>
+                        <span style={{ fontSize: '1.5rem', fontWeight: 800 }}>{item.currentQuantity}</span>
+                        <span style={{ color: 'var(--text-secondary)' }}>{item.unit}</span>
+                      </div>
 
-                            {canDeleteItems && (
-                              <>
+                      <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', display: 'flex', justifyContent: 'space-between' }}>
+                        <span>Min: {item.minQuantity}</span>
+                        <span className={`text-${status.badge.replace('badge-', '')}`}>{status.label}</span>
+                      </div>
+
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', paddingTop: '1rem', borderTop: '1px solid var(--border-light)' }}>
+                        <PremiumButton variant="secondary" size="sm" onClick={() => openAdjustModal(item)}>
+                          <ArrowUp size={14} style={{ marginRight: '4px' }} /> Laras
+                        </PremiumButton>
+                        <PremiumButton variant="ghost" size="sm" onClick={() => openHistoryModal(item)}>
+                          <History size={14} />
+                        </PremiumButton>
+                      </div>
+
+
+                    </GlassCard>
+                  );
+                })}
+              </div>
+            ) : (
+              <GlassCard>
+                <div className="table-responsive">
+                  <table className="table">
+                    <thead>
+                      <tr>
+                        <th>Item</th>
+                        <th className="hidden-mobile">Kategori</th>
+                        <th>Kuantiti Semasa</th>
+                        <th className="hidden-mobile">Minimum</th>
+                        <th className="hidden-mobile">Unit</th>
+                        <th className="hidden-mobile">Kos</th>
+                        <th className="hidden-mobile">Supplier</th>
+                        <th>Status</th>
+                        <th>Tindakan</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredStock.map(item => {
+                        const status = getStockStatus(item);
+                        return (
+                          <tr key={item.id}>
+                            <td style={{ fontWeight: 600 }}>
+                              <div className="flex items-center gap-2">
+                                {item.name}
+                                {item.countDaily && (
+                                  <span className="text-xs bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded border border-purple-200 font-medium">
+                                    Daily
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+                            <td className="hidden-mobile">{item.category}</td>
+                            <td>{item.currentQuantity}</td>
+                            <td className="hidden-mobile">{item.minQuantity}</td>
+                            <td className="hidden-mobile">{item.unit}</td>
+                            <td className="hidden-mobile">BND {item.cost.toFixed(2)}</td>
+                            <td className="hidden-mobile">{item.supplier || '-'}</td>
+                            <td>
+                              <span className={`badge ${status.badge}`}>
+                                {status.label}
+                              </span>
+                            </td>
+                            <td>
+                              <div className="flex gap-2 justify-end">
+                                <button
+                                  className="btn-icon btn-ghost-primary"
+                                  onClick={() => openAdjustModal(item)}
+                                  title="Laras Stok"
+                                >
+                                  <ArrowUp size={14} />
+                                </button>
+
                                 <button
                                   className="btn-icon btn-ghost"
-                                  onClick={() => openEditModal(item)}
-                                  title="Edit Item"
+                                  onClick={() => openHistoryModal(item)}
+                                  title="Lihat Sejarah"
                                 >
-                                  <Edit2 size={14} />
+                                  <History size={14} />
                                 </button>
-                                <button
-                                  className="btn-icon btn-ghost-danger"
-                                  onClick={() => deleteStockItem(item.id)}
-                                  title="Padam Item"
-                                >
-                                  <Trash2 size={14} />
-                                </button>
-                              </>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </GlassCard>
+
+                                {canDeleteItems && (
+                                  <>
+                                    <button
+                                      className="btn-icon btn-ghost"
+                                      onClick={() => openEditModal(item)}
+                                      title="Edit Item"
+                                    >
+                                      <Edit2 size={14} />
+                                    </button>
+                                    <button
+                                      className="btn-icon btn-ghost-danger"
+                                      onClick={() => deleteStockItem(item.id)}
+                                      title="Padam Item"
+                                    >
+                                      <Trash2 size={14} />
+                                    </button>
+                                  </>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </GlassCard>
+            )}
+
+
+          </>
         )}
 
         {/* Add/Edit Modal */}

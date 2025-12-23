@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useMemo } from 'react';
 import MainLayout from '@/components/MainLayout';
 import { useEquipment } from '@/lib/store';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { useOilTrackersRealtime } from '@/lib/supabase/realtime-hooks';
-import { OilTracker, OilChangeRequest, OilActionHistory, OilActionType } from '@/lib/types';
+import { OilTracker, OilChangeRequest, OilActionHistory, OilActionType, Equipment, MaintenanceLog } from '@/lib/types';
 import {
   Plus,
   Wrench,
@@ -18,16 +18,22 @@ import {
   Droplets,
   History,
   Clock,
-  Image as ImageIcon
+  Image as ImageIcon,
+  LayoutGrid,
+  Calendar as CalendarIcon,
+  Server
 } from 'lucide-react';
 import Modal from '@/components/Modal';
-import ConfirmDialog from '@/components/ConfirmDialog';
 import LoadingSpinner from '@/components/LoadingSpinner';
+import AssetCard from '@/components/equipment/AssetCard';
+import MaintenanceModal from '@/components/equipment/MaintenanceModal';
 
-type TabType = 'fryers' | 'pending' | 'history';
+type TabType = 'overview' | 'assets' | 'maintenance' | 'oil-tracker';
+type OilTabType = 'fryers' | 'pending' | 'history';
 
 export default function EquipmentPage() {
   const {
+    // Oil Tracker
     oilTrackers,
     oilChangeRequests,
     oilActionHistory,
@@ -40,6 +46,15 @@ export default function EquipmentPage() {
     getPendingOilRequests,
     getPendingOilRequestCount,
     refreshOilTrackers,
+
+    // General Equipment
+    equipment: assetList,
+    addEquipment,
+    updateEquipment,
+    deleteEquipment,
+    addMaintenanceLog,
+    addMaintenanceSchedule,
+
     isInitialized
   } = useEquipment();
 
@@ -53,42 +68,52 @@ export default function EquipmentPage() {
   const isManager = currentStaff?.role === 'Admin' || currentStaff?.role === 'Manager';
   const currentUserName = user?.user_metadata?.name || 'Staff';
 
-  const [activeTab, setActiveTab] = useState<TabType>('fryers');
+  // Main Tabs
+  const [activeTab, setActiveTab] = useState<TabType>('assets');
+
+  // Oil Tracker Sub-tabs
+  const [activeOilTab, setActiveOilTab] = useState<OilTabType>('fryers');
+
+  // Modals
   const [showAddFryerModal, setShowAddFryerModal] = useState(false);
   const [showOilActionModal, setShowOilActionModal] = useState(false);
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [showPhotoModal, setShowPhotoModal] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
+  const [showAssetModal, setShowAssetModal] = useState(false);
+  const [showMaintenanceModal, setShowMaintenanceModal] = useState(false);
+
+  // Selected State
   const [selectedFryer, setSelectedFryer] = useState<OilTracker | null>(null);
   const [selectedRequest, setSelectedRequest] = useState<OilChangeRequest | null>(null);
   const [selectedPhoto, setSelectedPhoto] = useState<string>('');
+  const [selectedAsset, setSelectedAsset] = useState<Equipment | null>(null);
+
   const [actionType, setActionType] = useState<OilActionType>('change');
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // Add/Edit Fryer form
-  const [fryerForm, setFryerForm] = useState({
-    name: '',
-    cycleLimit: 500,
-  });
-
-  // Oil action form
-  const [oilActionForm, setOilActionForm] = useState({
-    topupPercentage: 25,
-    notes: '',
-    photoUrl: '',
-  });
-
-  // Reject form
+  // Forms
+  const [fryerForm, setFryerForm] = useState({ name: '', cycleLimit: 500 });
+  const [oilActionForm, setOilActionForm] = useState({ topupPercentage: 25, notes: '', photoUrl: '' });
   const [rejectReason, setRejectReason] = useState('');
 
-  // Camera ref
+  // Asset Form
+  const [assetForm, setAssetForm] = useState<Partial<Equipment>>({
+    name: '',
+    type: 'other',
+    location: '',
+    status: 'good'
+  });
+
+  // Camera
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isCameraActive, setIsCameraActive] = useState(false);
   const [capturedPhoto, setCapturedPhoto] = useState<string>('');
 
   const pendingRequests = getPendingOilRequests();
   const pendingCount = getPendingOilRequestCount();
+
+  // --- HELPERS ---
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -103,18 +128,48 @@ export default function EquipmentPage() {
     return Math.min((tracker.currentCycles / tracker.cycleLimit) * 100, 100);
   };
 
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('ms-MY', {
+      day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit',
+    });
+  };
+
+  // --- ASSET MANAGEMENT HANDLERS ---
+
+  const handleSaveAsset = async () => {
+    if (!assetForm.name || !assetForm.type) return;
+    setIsProcessing(true);
+    await new Promise(r => setTimeout(r, 500));
+
+    if (selectedAsset) {
+      updateEquipment(selectedAsset.id, assetForm);
+    } else {
+      addEquipment(assetForm as any);
+    }
+
+    setIsProcessing(false);
+    setShowAssetModal(false);
+    setAssetForm({ name: '', type: 'other', location: '', status: 'good' });
+    setSelectedAsset(null);
+  };
+
+  const handleDeleteAsset = (asset: Equipment) => {
+    if (confirm(`Padam asset ${asset.name}?`)) {
+      deleteEquipment(asset.id);
+    }
+  };
+
+  // --- CAMERA HANDLERS ---
+
   const startCamera = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment' }
-      });
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         setIsCameraActive(true);
       }
     } catch (error) {
-      console.error('Camera error:', error);
-      alert('Tidak dapat mengakses kamera. Sila beri kebenaran.');
+      alert('Tidak dapat mengakses kamera.');
     }
   };
 
@@ -142,6 +197,8 @@ export default function EquipmentPage() {
       }
     }
   };
+
+  // --- OIL TRACKER HANDLERS ---
 
   const handleOpenOilAction = (fryer: OilTracker, type: OilActionType) => {
     setSelectedFryer(fryer);
@@ -175,120 +232,17 @@ export default function EquipmentPage() {
     if (result.success) {
       setShowOilActionModal(false);
       setCapturedPhoto('');
-      alert('Request berjaya dihantar! Menunggu approval dari Manager.');
+      alert('Request berjaya dihantar!');
     } else {
       alert(result.error || 'Gagal menghantar request');
     }
   };
 
-  const handleApprove = async (request: OilChangeRequest) => {
-    setIsProcessing(true);
-    await new Promise(resolve => setTimeout(resolve, 300));
-
-    const result = approveOilRequest(request.id, user?.id || '', currentUserName);
-
-    setIsProcessing(false);
-
-    if (result.success) {
-      alert('Request berjaya diluluskan!');
-    } else {
-      alert(result.error || 'Gagal meluluskan request');
-    }
-  };
-
-  const handleReject = async () => {
-    if (!selectedRequest || !rejectReason.trim()) {
-      alert('Sila nyatakan sebab penolakan');
-      return;
-    }
-
-    setIsProcessing(true);
-    await new Promise(resolve => setTimeout(resolve, 300));
-
-    rejectOilRequest(selectedRequest.id, user?.id || '', currentUserName, rejectReason);
-
-    setIsProcessing(false);
-    setShowRejectModal(false);
-    setRejectReason('');
-    setSelectedRequest(null);
-    alert('Request telah ditolak.');
-  };
-
-  const handleAddFryer = async () => {
-    if (!fryerForm.name.trim()) {
-      alert('Sila masukkan nama fryer');
-      return;
-    }
-
-    setIsProcessing(true);
-    await new Promise(resolve => setTimeout(resolve, 300));
-
-    addOilTracker({
-      name: fryerForm.name,
-      currentCycles: 0,
-      cycleLimit: fryerForm.cycleLimit,
-      lastChangedDate: new Date().toISOString().split('T')[0],
-      status: 'good',
-    });
-
-    setIsProcessing(false);
-    setShowAddFryerModal(false);
-    setFryerForm({ name: '', cycleLimit: 500 });
-  };
-
-  const handleEditFryer = (fryer: OilTracker) => {
-    setSelectedFryer(fryer);
-    setFryerForm({ name: fryer.name, cycleLimit: fryer.cycleLimit });
-    setShowAddFryerModal(true);
-  };
-
-  const handleUpdateFryer = async () => {
-    if (!selectedFryer || !fryerForm.name.trim()) {
-      alert('Sila masukkan nama fryer');
-      return;
-    }
-
-    setIsProcessing(true);
-    await new Promise(resolve => setTimeout(resolve, 300));
-
-    updateOilTracker(selectedFryer.fryerId, {
-      name: fryerForm.name,
-      cycleLimit: fryerForm.cycleLimit,
-    });
-
-    setIsProcessing(false);
-    setShowAddFryerModal(false);
-    setSelectedFryer(null);
-    setFryerForm({ name: '', cycleLimit: 500 });
-  };
-
-  const handleDeleteFryer = async () => {
-    if (!selectedFryer) return;
-
-    setIsProcessing(true);
-    await new Promise(resolve => setTimeout(resolve, 300));
-
-    deleteOilTracker(selectedFryer.fryerId);
-
-    setIsProcessing(false);
-    setShowDeleteConfirm(false);
-    setSelectedFryer(null);
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('ms-MY', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
-
+  // Render Loading
   if (!isInitialized) {
     return (
       <MainLayout>
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
+        <div className="flex justify-center items-center h-screen">
           <LoadingSpinner />
         </div>
       </MainLayout>
@@ -297,634 +251,377 @@ export default function EquipmentPage() {
 
   return (
     <MainLayout>
-      <div className="animate-fade-in">
+      <div className="animate-fade-in space-y-6">
         {/* Header */}
-        <div className="page-header">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
-            <div>
-              <h1 className="page-title" style={{ marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <Wrench size={28} />
-                Equipment Health
-              </h1>
-              <p className="page-subtitle">
-                Pantau dan uruskan peralatan dapur - Oil Tracker
-              </p>
-            </div>
-            {isManager && (
-              <button
-                className="btn btn-primary"
-                onClick={() => {
-                  setSelectedFryer(null);
-                  setFryerForm({ name: '', cycleLimit: 500 });
-                  setShowAddFryerModal(true);
-                }}
-              >
-                <Plus size={18} />
-                Tambah Fryer
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div>
+            <h1 className="text-2xl font-bold flex items-center gap-2">
+              <Server className="text-blue-600" />
+              Equipment & Facilities
+            </h1>
+            <p className="text-gray-500">Uruskan aset, penyelenggaraan, dan fryer di satu tempat.</p>
+          </div>
+          <div className="flex gap-2">
+            {activeTab === 'assets' && (
+              <button className="btn btn-primary" onClick={() => {
+                setSelectedAsset(null);
+                setAssetForm({ name: '', type: 'other', location: '', status: 'good' });
+                setShowAssetModal(true);
+              }}>
+                <Plus size={18} className="mr-2" />
+                Daftar Aset
               </button>
             )}
           </div>
         </div>
 
-        {/* Tabs */}
-        <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--border)', paddingBottom: '0.5rem' }}>
+        {/* Main Navigation Tabs */}
+        <div className="flex border-b border-gray-200 overflow-x-auto">
           <button
-            className={`btn ${activeTab === 'fryers' ? 'btn-primary' : 'btn-outline'}`}
-            onClick={() => setActiveTab('fryers')}
-            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+            className={`px-4 py-2 font-medium whitespace-nowrap ${activeTab === 'assets' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+            onClick={() => setActiveTab('assets')}
           >
-            <Droplets size={18} />
-            Fryers
+            <LayoutGrid size={18} className="inline mr-2" />
+            Asset Register
           </button>
-          {isManager && (
-            <button
-              className={`btn ${activeTab === 'pending' ? 'btn-primary' : 'btn-outline'}`}
-              onClick={() => setActiveTab('pending')}
-              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', position: 'relative' }}
-            >
-              <Clock size={18} />
-              Pending
-              {pendingCount > 0 && (
-                <span style={{
-                  position: 'absolute',
-                  top: '-8px',
-                  right: '-8px',
-                  background: 'var(--danger)',
-                  color: 'white',
-                  borderRadius: '50%',
-                  width: '20px',
-                  height: '20px',
-                  fontSize: '0.75rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}>
-                  {pendingCount}
-                </span>
-              )}
-            </button>
-          )}
+
           <button
-            className={`btn ${activeTab === 'history' ? 'btn-primary' : 'btn-outline'}`}
-            onClick={() => setActiveTab('history')}
-            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+            className={`px-4 py-2 font-medium whitespace-nowrap ${activeTab === 'maintenance' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+            onClick={() => setActiveTab('maintenance')}
           >
-            <History size={18} />
-            History
+            <CalendarIcon size={18} className="inline mr-2" />
+            Maintenance
+          </button>
+
+          <button
+            className={`px-4 py-2 font-medium whitespace-nowrap ${activeTab === 'oil-tracker' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+            onClick={() => setActiveTab('oil-tracker')}
+          >
+            <Droplets size={18} className="inline mr-2" />
+            Oil Tracker
           </button>
         </div>
 
-        {/* Fryers Tab */}
-        {activeTab === 'fryers' && (
-          <div className="grid grid-cols-1 md:grid-cols-3" style={{ gap: '1.5rem' }}>
-            {oilTrackers.map(tracker => {
-              const percentage = getStatusPercentage(tracker);
-              const statusColor = getStatusColor(tracker.status);
+        {/* === TAB CONTENT: ASSET REGISTER === */}
+        {activeTab === 'assets' && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {assetList.map(asset => (
+              <AssetCard
+                key={asset.id}
+                equipment={asset}
+                onEdit={(a) => {
+                  setSelectedAsset(a);
+                  setAssetForm(a);
+                  setShowAssetModal(true);
+                }}
+                onDelete={handleDeleteAsset}
+                onViewSchedule={(a) => {
+                  setSelectedAsset(a);
+                  setShowMaintenanceModal(true);
+                }}
+              />
+            ))}
 
-              return (
-                <div key={tracker.fryerId} className="card" style={{ position: 'relative' }}>
-                  {tracker.hasPendingRequest && (
-                    <div style={{
-                      position: 'absolute',
-                      top: '1rem',
-                      right: '1rem',
-                      background: 'var(--warning)',
-                      color: 'white',
-                      padding: '0.25rem 0.5rem',
-                      borderRadius: 'var(--radius-sm)',
-                      fontSize: '0.75rem',
-                      fontWeight: 600,
-                    }}>
-                      ⏳ PENDING
-                    </div>
-                  )}
-
-                  <div style={{ marginBottom: '1rem' }}>
-                    <div style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.5rem' }}>
-                      {tracker.name}
-                    </div>
-                    <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
-                      Last changed: {tracker.lastChangedDate}
-                      {tracker.lastTopupDate && (
-                        <span> | Topup: {tracker.lastTopupDate}</span>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Gauge */}
-                  <div style={{ marginBottom: '1rem' }}>
-                    <div style={{
-                      width: '100%',
-                      height: '20px',
-                      background: 'var(--gray-200)',
-                      borderRadius: 'var(--radius-md)',
-                      overflow: 'hidden',
-                    }}>
-                      <div style={{
-                        width: `${percentage}%`,
-                        height: '100%',
-                        background: statusColor,
-                        transition: 'all 0.3s',
-                      }} />
-                    </div>
-                    <div style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      marginTop: '0.5rem',
-                      fontSize: '0.875rem',
-                      color: 'var(--text-secondary)',
-                    }}>
-                      <span>{tracker.currentCycles} / {tracker.cycleLimit}</span>
-                      <span>{Math.round(percentage)}%</span>
-                    </div>
-                  </div>
-
-                  <div style={{ marginBottom: '1rem' }}>
-                    <span className={`badge ${tracker.status === 'good' ? 'badge-success' :
-                      tracker.status === 'warning' ? 'badge-warning' : 'badge-danger'
-                      }`}>
-                      {tracker.status === 'good' ? 'BAIK' :
-                        tracker.status === 'warning' ? 'AWAS' : 'KRITIKAL'}
-                    </span>
-                  </div>
-
-                  {tracker.status === 'critical' && (
-                    <div className="alert alert-danger" style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <AlertTriangle size={20} />
-                      Minyak perlu ditukar segera!
-                    </div>
-                  )}
-
-                  {/* Action Buttons */}
-                  <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                    <button
-                      onClick={() => handleOpenOilAction(tracker, 'change')}
-                      className="btn btn-primary btn-sm"
-                      disabled={tracker.hasPendingRequest}
-                      style={{ flex: 1 }}
-                    >
-                      Tukar Minyak
-                    </button>
-                    <button
-                      onClick={() => handleOpenOilAction(tracker, 'topup')}
-                      className="btn btn-outline btn-sm"
-                      disabled={tracker.hasPendingRequest}
-                      style={{ flex: 1 }}
-                    >
-                      Topup
-                    </button>
-                  </div>
-
-                  {isManager && (
-                    <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
-                      <button
-                        onClick={() => handleEditFryer(tracker)}
-                        className="btn btn-outline btn-sm"
-                        style={{ flex: 1 }}
-                      >
-                        <Edit2 size={14} />
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => {
-                          setSelectedFryer(tracker);
-                          setShowDeleteConfirm(true);
-                        }}
-                        className="btn btn-outline btn-sm"
-                        style={{ flex: 1, color: 'var(--danger)' }}
-                      >
-                        <Trash2 size={14} />
-                        Padam
-                      </button>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-
-            {oilTrackers.length === 0 && (
-              <div className="card" style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '3rem' }}>
-                <Droplets size={48} style={{ color: 'var(--text-secondary)', margin: '0 auto 1rem' }} />
-                <p style={{ color: 'var(--text-secondary)' }}>
-                  Tiada fryer didaftarkan. {isManager ? 'Klik "Tambah Fryer" untuk mula.' : 'Hubungi Manager untuk tambah fryer.'}
-                </p>
+            {assetList.length === 0 && (
+              <div className="col-span-full text-center py-12 text-gray-500 bg-gray-50 rounded-xl border-dashed border-2 border-gray-200">
+                <Server size={48} className="mx-auto mb-4 text-gray-300" />
+                <p>Tiada aset didaftarkan lagi.</p>
+                <button className="btn btn-outline mt-4" onClick={() => setShowAssetModal(true)}>
+                  Daftar Aset Pertama
+                </button>
               </div>
             )}
           </div>
         )}
 
-        {/* Pending Approvals Tab */}
-        {activeTab === 'pending' && isManager && (
-          <div className="card">
-            <div className="card-header">
-              <div className="card-title">Pending Approvals</div>
-              <div className="card-subtitle">{pendingCount} request menunggu kelulusan</div>
+        {/* === TAB CONTENT: MAINTENANCE === */}
+        {activeTab === 'maintenance' && (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2 space-y-6">
+              <div className="card">
+                <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
+                  <Clock className="text-blue-500" />
+                  Upcoming Scheduled Tasks
+                </h3>
+                {/* This will be populated with maintenanceSchedules from store later */}
+                <div className="text-center py-8 text-gray-500 bg-gray-50 rounded-lg">
+                  <p>Tiada jadual maintenance akan datang.</p>
+                  <p className="text-sm mt-2">Set jadual pada setiap aset untuk melihat di sini.</p>
+                </div>
+              </div>
             </div>
 
-            {pendingRequests.length > 0 ? (
-              <div className="table-responsive">
-                <table className="table">
-                  <thead>
-                    <tr>
-                      <th>Fryer</th>
-                      <th>Jenis</th>
-                      <th>Staff</th>
-                      <th>Tarikh</th>
-                      <th>Cycles</th>
-                      <th>Bukti</th>
-                      <th>Tindakan</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {pendingRequests.map(request => (
-                      <tr key={request.id}>
-                        <td style={{ fontWeight: 600 }}>{request.fryerName}</td>
-                        <td>
-                          <span className={`badge ${request.actionType === 'change' ? 'badge-success' : 'badge-info'}`}>
-                            {request.actionType === 'change' ? 'TUKAR' : `TOPUP ${request.topupPercentage}%`}
-                          </span>
-                        </td>
-                        <td>{request.requestedBy}</td>
-                        <td style={{ fontSize: '0.875rem' }}>{formatDate(request.requestedAt)}</td>
-                        <td>
-                          {request.previousCycles} → {request.proposedCycles}
-                        </td>
-                        <td>
-                          <button
-                            className="btn btn-outline btn-sm"
-                            onClick={() => {
-                              setSelectedPhoto(request.photoUrl);
-                              setShowPhotoModal(true);
-                            }}
-                          >
-                            <ImageIcon size={14} />
-                          </button>
-                        </td>
-                        <td>
-                          <div style={{ display: 'flex', gap: '0.5rem' }}>
-                            <button
-                              className="btn btn-primary btn-sm"
-                              onClick={() => handleApprove(request)}
-                              disabled={isProcessing}
-                            >
-                              <Check size={14} />
-                            </button>
-                            <button
-                              className="btn btn-outline btn-sm"
-                              onClick={() => {
-                                setSelectedRequest(request);
-                                setShowRejectModal(true);
-                              }}
-                              style={{ color: 'var(--danger)' }}
-                              disabled={isProcessing}
-                            >
-                              <X size={14} />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+            <div className="space-y-6">
+              <div className="card bg-blue-50 border-blue-100">
+                <h3 className="font-bold mb-2 text-blue-800">Quick Actions</h3>
+                <div className="space-y-2">
+                  <button className="btn btn-white w-full text-left justify-start" onClick={() => {
+                    // Open asset modal first then maintenance? 
+                    // For now just alert or redirect
+                    alert('Sila pilih Aset di tab Asset Register untuk lapor isu.');
+                    setActiveTab('assets');
+                  }}>
+                    <AlertTriangle size={16} className="mr-2 text-red-500" />
+                    Report Issue / Breakdown
+                  </button>
+                  <button className="btn btn-white w-full text-left justify-start" onClick={() => setActiveTab('oil-tracker')}>
+                    <Droplets size={16} className="mr-2 text-yellow-500" />
+                    Check Fryer Status
+                  </button>
+                </div>
               </div>
-            ) : (
-              <p style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '2rem' }}>
-                Tiada request pending.
-              </p>
-            )}
-          </div>
-        )}
-
-        {/* History Tab */}
-        {activeTab === 'history' && (
-          <div className="card">
-            <div className="card-header">
-              <div className="card-title">History Tukar & Topup Minyak</div>
-              <div className="card-subtitle">Rekod yang telah diluluskan</div>
             </div>
-
-            {oilActionHistory.length > 0 ? (
-              <div className="table-responsive">
-                <table className="table">
-                  <thead>
-                    <tr>
-                      <th>Tarikh</th>
-                      <th>Fryer</th>
-                      <th>Jenis</th>
-                      <th>Cycles</th>
-                      <th>Staff</th>
-                      <th>Approved By</th>
-                      <th>Bukti</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {oilActionHistory.map(history => (
-                      <tr key={history.id}>
-                        <td style={{ fontSize: '0.875rem' }}>{formatDate(history.actionAt)}</td>
-                        <td style={{ fontWeight: 600 }}>{history.fryerName}</td>
-                        <td>
-                          <span className={`badge ${history.actionType === 'change' ? 'badge-success' : 'badge-info'}`}>
-                            {history.actionType === 'change' ? 'TUKAR' : `TOPUP ${history.topupPercentage}%`}
-                          </span>
-                        </td>
-                        <td>
-                          {history.previousCycles} → {history.newCycles}
-                        </td>
-                        <td>{history.requestedBy}</td>
-                        <td>{history.approvedBy}</td>
-                        <td>
-                          <button
-                            className="btn btn-outline btn-sm"
-                            onClick={() => {
-                              setSelectedPhoto(history.photoUrl);
-                              setShowPhotoModal(true);
-                            }}
-                          >
-                            <ImageIcon size={14} />
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <p style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '2rem' }}>
-                Tiada rekod history.
-              </p>
-            )}
           </div>
         )}
 
-        {/* Add/Edit Fryer Modal */}
-        <Modal
-          isOpen={showAddFryerModal}
-          onClose={() => !isProcessing && setShowAddFryerModal(false)}
-          title={selectedFryer ? 'Edit Fryer' : 'Tambah Fryer Baru'}
-          maxWidth="400px"
-        >
-          <div className="form-group">
-            <label className="form-label">Nama Fryer</label>
-            <input
-              type="text"
-              className="form-input"
-              value={fryerForm.name}
-              onChange={(e) => setFryerForm(prev => ({ ...prev, name: e.target.value }))}
-              placeholder="cth: Fryer 1 - Ayam"
-            />
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">Cycle Limit</label>
-            <input
-              type="number"
-              className="form-input"
-              value={fryerForm.cycleLimit}
-              onChange={(e) => setFryerForm(prev => ({ ...prev, cycleLimit: Number(e.target.value) }))}
-              min="100"
-              placeholder="500"
-            />
-            <small style={{ color: 'var(--text-secondary)' }}>Bilangan kitaran maksimum sebelum perlu tukar minyak</small>
-          </div>
-
-          <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1.5rem' }}>
-            <button
-              className="btn btn-outline"
-              onClick={() => setShowAddFryerModal(false)}
-              disabled={isProcessing}
-              style={{ flex: 1 }}
-            >
-              Batal
-            </button>
-            <button
-              className="btn btn-primary"
-              onClick={selectedFryer ? handleUpdateFryer : handleAddFryer}
-              disabled={isProcessing || !fryerForm.name.trim()}
-              style={{ flex: 1 }}
-            >
-              {isProcessing ? <LoadingSpinner size="sm" /> : (selectedFryer ? 'Kemaskini' : 'Tambah')}
-            </button>
-          </div>
-        </Modal>
-
-        {/* Oil Action Modal (Change/Topup) */}
-        <Modal
-          isOpen={showOilActionModal}
-          onClose={() => {
-            if (!isProcessing) {
-              stopCamera();
-              setShowOilActionModal(false);
-            }
-          }}
-          title={actionType === 'change' ? 'Tukar Minyak' : 'Topup Minyak'}
-          subtitle={selectedFryer?.name}
-          maxWidth="500px"
-        >
-          {selectedFryer && (
-            <>
-              <div style={{ background: 'var(--gray-100)', padding: '1rem', borderRadius: 'var(--radius-md)', marginBottom: '1rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                  <span>Cycles semasa:</span>
-                  <strong>{selectedFryer.currentCycles} / {selectedFryer.cycleLimit}</strong>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span>Selepas {actionType === 'change' ? 'tukar' : 'topup'}:</span>
-                  <strong style={{ color: 'var(--success)' }}>
-                    {actionType === 'change'
-                      ? '0'
-                      : Math.round(selectedFryer.currentCycles * (1 - oilActionForm.topupPercentage / 100))
-                    } / {selectedFryer.cycleLimit}
-                  </strong>
-                </div>
-              </div>
-
-              {actionType === 'topup' && (
-                <div className="form-group">
-                  <label className="form-label">Pengurangan Cycles</label>
-                  <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                    {[20, 25, 30].map(pct => (
-                      <button
-                        key={pct}
-                        className={`btn ${oilActionForm.topupPercentage === pct ? 'btn-primary' : 'btn-outline'} btn-sm`}
-                        onClick={() => setOilActionForm(prev => ({ ...prev, topupPercentage: pct }))}
-                      >
-                        {pct}%
-                      </button>
-                    ))}
-                  </div>
-                  <small style={{ color: 'var(--text-secondary)', marginTop: '0.5rem', display: 'block' }}>
-                    Cycles akan dikurangkan dari {selectedFryer.currentCycles} → {Math.round(selectedFryer.currentCycles * (1 - oilActionForm.topupPercentage / 100))}
-                  </small>
-                </div>
+        {/* === TAB CONTENT: OIL TRACKER (Existing functionality) === */}
+        {activeTab === 'oil-tracker' && (
+          <div>
+            {/* Internal Oil Tracker Tabs */}
+            <div className="flex gap-2 mb-6">
+              <button
+                className={`btn btn-sm ${activeOilTab === 'fryers' ? 'btn-primary' : 'btn-outline'}`}
+                onClick={() => setActiveOilTab('fryers')}
+              >
+                Fryers
+              </button>
+              {isManager && (
+                <button
+                  className={`btn btn-sm ${activeOilTab === 'pending' ? 'btn-primary' : 'btn-outline'}`}
+                  onClick={() => setActiveOilTab('pending')}
+                >
+                  Pending
+                  {pendingCount > 0 && <span className="ml-2 bg-white text-red-500 px-1 rounded-full text-xs">{pendingCount}</span>}
+                </button>
               )}
+              <button
+                className={`btn btn-sm ${activeOilTab === 'history' ? 'btn-primary' : 'btn-outline'}`}
+                onClick={() => setActiveOilTab('history')}
+              >
+                History
+              </button>
 
-              <div className="form-group">
-                <label className="form-label">📸 Ambil Gambar Bukti (Wajib)</label>
-                <div style={{
-                  border: '2px dashed var(--border)',
-                  borderRadius: 'var(--radius-md)',
-                  padding: '1rem',
-                  textAlign: 'center',
-                }}>
-                  {!isCameraActive && !capturedPhoto && (
-                    <button className="btn btn-primary" onClick={startCamera}>
-                      <Camera size={18} />
-                      Buka Kamera
-                    </button>
-                  )}
+              {isManager && (
+                <button className="btn btn-sm btn-outline ml-auto" onClick={() => setShowAddFryerModal(true)}>
+                  <Plus size={14} className="mr-1" /> Fryer
+                </button>
+              )}
+            </div>
 
-                  {isCameraActive && (
-                    <div>
-                      <video
-                        ref={videoRef}
-                        autoPlay
-                        playsInline
-                        style={{ width: '100%', borderRadius: 'var(--radius-md)', marginBottom: '1rem' }}
-                      />
-                      <button className="btn btn-primary" onClick={capturePhoto}>
-                        <Camera size={18} />
-                        Tangkap Gambar
-                      </button>
+            {/* Fryers Grid */}
+            {activeOilTab === 'fryers' && (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {oilTrackers.map(tracker => {
+                  const percentage = getStatusPercentage(tracker);
+                  const statusColor = getStatusColor(tracker.status);
+                  return (
+                    <div key={tracker.fryerId} className="card relative">
+                      {tracker.hasPendingRequest && (
+                        <div className="absolute top-4 right-4 bg-yellow-500 text-white text-xs font-bold px-2 py-1 rounded">
+                          PENDING APPRV
+                        </div>
+                      )}
+                      <h3 className="font-bold text-lg mb-1">{tracker.name}</h3>
+                      <p className="text-sm text-gray-500 mb-4">Changed: {tracker.lastChangedDate}</p>
+
+                      {/* Gauge */}
+                      <div className="w-full bg-gray-200 rounded-full h-4 mb-2 overflow-hidden">
+                        <div
+                          className="h-full transition-all duration-500"
+                          style={{ width: `${percentage}%`, backgroundColor: statusColor }}
+                        />
+                      </div>
+                      <div className="flex justify-between text-xs text-gray-600 mb-4">
+                        <span>{tracker.currentCycles} / {tracker.cycleLimit} cycles</span>
+                        <span>{Math.round(percentage)}%</span>
+                      </div>
+
+                      <div className="flex gap-2">
+                        <button
+                          className="btn btn-primary btn-sm flex-1"
+                          disabled={tracker.hasPendingRequest}
+                          onClick={() => handleOpenOilAction(tracker, 'change')}
+                        >
+                          Change
+                        </button>
+                        <button
+                          className="btn btn-outline btn-sm flex-1"
+                          disabled={tracker.hasPendingRequest}
+                          onClick={() => handleOpenOilAction(tracker, 'topup')}
+                        >
+                          Topup
+                        </button>
+                      </div>
                     </div>
-                  )}
-
-                  {capturedPhoto && (
-                    <div>
-                      <img
-                        src={capturedPhoto}
-                        alt="Captured"
-                        style={{ width: '100%', borderRadius: 'var(--radius-md)', marginBottom: '1rem' }}
-                      />
-                      <button
-                        className="btn btn-outline"
-                        onClick={() => {
-                          setCapturedPhoto('');
-                          startCamera();
-                        }}
-                      >
-                        Ambil Semula
-                      </button>
-                    </div>
-                  )}
-                </div>
+                  )
+                })}
               </div>
+            )}
 
-              <div className="form-group">
-                <label className="form-label">Catatan (Optional)</label>
-                <textarea
-                  className="form-input"
-                  value={oilActionForm.notes}
-                  onChange={(e) => setOilActionForm(prev => ({ ...prev, notes: e.target.value }))}
-                  placeholder="cth: Minyak sudah sangat gelap"
-                  rows={2}
-                  style={{ resize: 'vertical' }}
-                />
+            {/* Pending Requests */}
+            {activeOilTab === 'pending' && (
+              <div className="card">
+                <table className="table w-full">
+                  <thead>
+                    <tr>
+                      <th className="text-left">Fryer</th>
+                      <th className="text-left">Type</th>
+                      <th className="text-left">Staff</th>
+                      <th className="text-left">Date</th>
+                      <th className="text-left">Proof</th>
+                      <th className="text-left">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {pendingRequests.map(req => (
+                      <tr key={req.id}>
+                        <td className="font-bold">{req.fryerName}</td>
+                        <td><span className="badge badge-info">{req.actionType}</span></td>
+                        <td>{req.requestedBy}</td>
+                        <td className="text-sm">{formatDate(req.requestedAt)}</td>
+                        <td>
+                          <button className="btn btn-ghost btn-sm" onClick={() => { setSelectedPhoto(req.photoUrl); setShowPhotoModal(true); }}>
+                            <ImageIcon size={16} />
+                          </button>
+                        </td>
+                        <td className="flex gap-2">
+                          <button className="btn btn-success btn-sm text-white" onClick={() => approveOilRequest(req.id, user?.id || '', currentUserName)}>
+                            <Check size={16} />
+                          </button>
+                          <button className="btn btn-error btn-sm text-white" onClick={() => rejectOilRequest(req.id, user?.id || '', currentUserName, 'Rejected')}>
+                            <X size={16} />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                    {pendingRequests.length === 0 && (
+                      <tr><td colSpan={6} className="text-center py-8 text-gray-500">No pending requests</td></tr>
+                    )}
+                  </tbody>
+                </table>
               </div>
+            )}
+          </div>
+        )}
 
-              <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1.5rem' }}>
-                <button
-                  className="btn btn-outline"
-                  onClick={() => {
-                    stopCamera();
-                    setShowOilActionModal(false);
-                  }}
-                  disabled={isProcessing}
-                  style={{ flex: 1 }}
-                >
-                  Batal
-                </button>
-                <button
-                  className="btn btn-primary"
-                  onClick={handleSubmitOilRequest}
-                  disabled={isProcessing || !capturedPhoto}
-                  style={{ flex: 1 }}
-                >
-                  {isProcessing ? <LoadingSpinner size="sm" /> : 'Submit Request'}
-                </button>
-              </div>
-            </>
-          )}
-        </Modal>
-
-        {/* Reject Modal */}
-        <Modal
-          isOpen={showRejectModal}
-          onClose={() => !isProcessing && setShowRejectModal(false)}
-          title="Tolak Request"
-          maxWidth="400px"
-        >
-          {selectedRequest && (
-            <>
-              <div style={{ marginBottom: '1rem' }}>
-                <p><strong>Fryer:</strong> {selectedRequest.fryerName}</p>
-                <p><strong>Jenis:</strong> {selectedRequest.actionType === 'change' ? 'Tukar' : 'Topup'}</p>
-                <p><strong>Staff:</strong> {selectedRequest.requestedBy}</p>
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">Sebab Penolakan (Wajib)</label>
-                <textarea
-                  className="form-input"
-                  value={rejectReason}
-                  onChange={(e) => setRejectReason(e.target.value)}
-                  placeholder="Nyatakan sebab penolakan..."
-                  rows={3}
-                  style={{ resize: 'vertical' }}
-                />
-              </div>
-
-              <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1.5rem' }}>
-                <button
-                  className="btn btn-outline"
-                  onClick={() => setShowRejectModal(false)}
-                  disabled={isProcessing}
-                  style={{ flex: 1 }}
-                >
-                  Batal
-                </button>
-                <button
-                  className="btn btn-danger"
-                  onClick={handleReject}
-                  disabled={isProcessing || !rejectReason.trim()}
-                  style={{ flex: 1 }}
-                >
-                  {isProcessing ? <LoadingSpinner size="sm" /> : 'Tolak'}
-                </button>
-              </div>
-            </>
-          )}
-        </Modal>
-
-        {/* Photo Viewer Modal */}
-        <Modal
-          isOpen={showPhotoModal}
-          onClose={() => setShowPhotoModal(false)}
-          title="Bukti Gambar"
-          maxWidth="600px"
-        >
-          {selectedPhoto && (
-            <img
-              src={selectedPhoto}
-              alt="Proof"
-              style={{ width: '100%', borderRadius: 'var(--radius-md)' }}
-            />
-          )}
-        </Modal>
-
-        {/* Delete Confirmation */}
-        <ConfirmDialog
-          isOpen={showDeleteConfirm}
-          onClose={() => setShowDeleteConfirm(false)}
-          onConfirm={handleDeleteFryer}
-          title="Padam Fryer"
-          message={`Adakah anda pasti mahu memadam "${selectedFryer?.name}"? Tindakan ini tidak boleh dibatalkan.`}
-          confirmText="Padam"
-          cancelText="Batal"
-          variant="danger"
-        />
       </div>
+
+      {/* === MODALS === */}
+
+      {/* 1. Add Asset Modal */}
+      <Modal isOpen={showAssetModal} onClose={() => setShowAssetModal(false)} title="Daftar Aset Baru">
+        <div className="space-y-4">
+          <div className="form-group">
+            <label className="form-label">Nama Aset</label>
+            <input className="form-input" value={assetForm.name} onChange={e => setAssetForm({ ...assetForm, name: e.target.value })} placeholder="e.g. Peti Ais Depan" />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="form-group">
+              <label className="form-label">Jenis</label>
+              <select
+                className="form-input"
+                value={assetForm.type}
+                onChange={e => setAssetForm({ ...assetForm, type: e.target.value as any })}
+              >
+                <option value="fridge">Fridge / Chiller</option>
+                <option value="freezer">Freezer</option>
+                <option value="ac">Aircond</option>
+                <option value="grill">Grill</option>
+                <option value="fryer">Fryer (Electric/Gas)</option>
+                <option value="pos">POS System</option>
+                <option value="other">Lain-lain</option>
+              </select>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Lokasi</label>
+              <select
+                className="form-input"
+                value={assetForm.location}
+                onChange={e => setAssetForm({ ...assetForm, location: e.target.value })}
+              >
+                <option value="">Pilih Lokasi...</option>
+                <option value="Kitchen">Dapur Utama</option>
+                <option value="Counter">Kaunter Depan</option>
+                <option value="Store Room">Stor Barang</option>
+                <option value="Outdoor">Outdoor</option>
+              </select>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="form-group">
+              <label className="form-label">Model No.</label>
+              <input className="form-input" value={assetForm.modelNumber || ''} onChange={e => setAssetForm({ ...assetForm, modelNumber: e.target.value })} />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Serial No.</label>
+              <input className="form-input" value={assetForm.serialNumber || ''} onChange={e => setAssetForm({ ...assetForm, serialNumber: e.target.value })} />
+            </div>
+          </div>
+          <div className="form-group">
+            <label className="form-label">Tarikh Beli</label>
+            <input type="date" className="form-input" value={assetForm.purchaseDate || ''} onChange={e => setAssetForm({ ...assetForm, purchaseDate: e.target.value })} />
+          </div>
+          <div className="form-group">
+            <label className="form-label">Warranty Expired</label>
+            <input type="date" className="form-input" value={assetForm.warrantyExpiry || ''} onChange={e => setAssetForm({ ...assetForm, warrantyExpiry: e.target.value })} />
+          </div>
+          <button className="btn btn-primary w-full" onClick={handleSaveAsset} disabled={isProcessing}>
+            {isProcessing ? 'Menyimpan...' : 'Simpan Aset'}
+          </button>
+        </div>
+      </Modal>
+
+      {/* 2. Maintenance Modal Details */}
+      {selectedAsset && showMaintenanceModal && (
+        <MaintenanceModal
+          isOpen={showMaintenanceModal}
+          onClose={() => setShowMaintenanceModal(false)}
+          equipment={selectedAsset}
+          currentUser={{ id: user?.id || 'sys', name: currentUserName }}
+          onSaveLog={addMaintenanceLog}
+          onSaveSchedule={addMaintenanceSchedule}
+        />
+      )}
+
+      {/* 3. Oil Action Modal (Existing) */}
+      <Modal isOpen={showOilActionModal} onClose={() => { stopCamera(); setShowOilActionModal(false); }} title={actionType === 'change' ? 'Tukar Minyak' : 'Topup Minyak'}>
+        <div className="space-y-4">
+          {actionType === 'topup' && (
+            <div className="form-group">
+              <label>Berapa banyak topup?</label>
+              <div className="flex gap-2 mt-2">
+                {[20, 25, 30].map(p => (
+                  <button key={p} onClick={() => setOilActionForm({ ...oilActionForm, topupPercentage: p })} className={`btn btn-sm ${oilActionForm.topupPercentage === p ? 'btn-primary' : 'btn-outline'}`}>{p}%</button>
+                ))}
+              </div>
+            </div>
+          )}
+          <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+            {!capturedPhoto ? (
+              !isCameraActive ? (
+                <button className="btn btn-outline" onClick={startCamera}><Camera className="mr-2" /> Buka Kamera</button>
+              ) : (
+                <div className="relative">
+                  <video ref={videoRef} autoPlay playsInline className="w-full rounded" />
+                  <button className="btn btn-primary absolute bottom-4 left-1/2 transform -translate-x-1/2" onClick={capturePhoto}>Tangkap</button>
+                </div>
+              )
+            ) : (
+              <div className="relative">
+                <img src={capturedPhoto} className="w-full rounded" />
+                <button className="btn btn-sm btn-circle btn-error absolute top-2 right-2 text-white" onClick={() => setCapturedPhoto('')}><X size={14} /></button>
+              </div>
+            )}
+          </div>
+          <button className="btn btn-primary w-full" onClick={handleSubmitOilRequest} disabled={!capturedPhoto}>Hantar Request</button>
+        </div>
+      </Modal>
+
+      {/* 4. Photo Proof Modal */}
+      <Modal isOpen={showPhotoModal} onClose={() => setShowPhotoModal(false)} title="Bukti Gambar">
+        <img src={selectedPhoto} alt="Proof" className="w-full rounded" />
+      </Modal>
+
     </MainLayout>
   );
 }
-
-
