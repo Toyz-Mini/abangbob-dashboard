@@ -976,20 +976,20 @@ export default function AnalyticsPage() {
 
                   return (
                     <>
-                      <div style={{ textAlign: 'center', padding: '1.5rem', background: 'var(--primary-light)', borderRadius: 'var(--radius-lg)' }}>
-                        <div style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--primary)' }}>{newCustomers}</div>
+                      <div style={{ textAlign: 'center', padding: '1.5rem', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-light)' }}>
+                        <div style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--text-primary)' }}>{newCustomers}</div>
                         <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>New (1 visit)</div>
                         <div style={{ fontSize: '0.75rem', color: 'var(--primary)' }}>{Math.round((newCustomers / total) * 100)}%</div>
                       </div>
-                      <div style={{ textAlign: 'center', padding: '1.5rem', background: 'var(--warning-light)', borderRadius: 'var(--radius-lg)' }}>
-                        <div style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--warning)' }}>{regulars}</div>
+                      <div style={{ textAlign: 'center', padding: '1.5rem', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-light)' }}>
+                        <div style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--text-primary)' }}>{regulars}</div>
                         <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>Regular (2-5)</div>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--warning)' }}>{Math.round((regulars / total) * 100)}%</div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--primary)' }}>{Math.round((regulars / total) * 100)}%</div>
                       </div>
-                      <div style={{ textAlign: 'center', padding: '1.5rem', background: 'var(--success-light)', borderRadius: 'var(--radius-lg)' }}>
-                        <div style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--success)' }}>{vips}</div>
+                      <div style={{ textAlign: 'center', padding: '1.5rem', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-light)' }}>
+                        <div style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--text-primary)' }}>{vips}</div>
                         <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>VIP (5+)</div>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--success)' }}>{Math.round((vips / total) * 100)}%</div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--primary)' }}>{Math.round((vips / total) * 100)}%</div>
                       </div>
                     </>
                   );

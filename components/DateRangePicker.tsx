@@ -176,10 +176,10 @@ export function DateRangePicker({ date, onSelect, className = '' }: DateRangePic
                         key={currentDate.toString()}
                         className={`
               relative w-9 h-9 flex items-center justify-center text-sm cursor-pointer z-10
-              ${!isThisMonth ? 'text-gray-300 dark:text-gray-600' : 'text-gray-700 dark:text-gray-200'}
+              ${!isThisMonth ? 'text-gray-300' : 'text-gray-700'}
               ${isSelected ? 'bg-primary text-white rounded-full' : ''}
-              ${isInRange ? 'bg-red-50 dark:bg-red-900/20' : ''}
-              ${!isSelected && !isInRange && isThisMonth ? 'hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full' : ''}
+              ${isInRange ? 'bg-red-50' : ''}
+              ${!isSelected && !isInRange && isThisMonth ? 'hover:bg-gray-100 rounded-full' : ''}
             `}
                         onClick={(e) => {
                             e.stopPropagation();
@@ -220,10 +220,10 @@ export function DateRangePicker({ date, onSelect, className = '' }: DateRangePic
         <div className={`relative ${className}`} ref={containerRef}>
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="flex items-center gap-2 px-3 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                className="flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
             >
                 <CalendarIcon size={18} className="text-gray-500" />
-                <span className="text-sm font-medium">
+                <span className="text-sm font-medium text-gray-700">
                     {date ? (
                         <>
                             {format(date.from, 'dd MMM')} - {format(date.to, 'dd MMM, yyyy')}
@@ -235,16 +235,16 @@ export function DateRangePicker({ date, onSelect, className = '' }: DateRangePic
             </button>
 
             {isOpen && (
-                <div className="absolute top-full right-0 mt-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl z-50 flex flex-col md:flex-row overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                <div className="absolute top-full right-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-xl z-50 flex flex-col md:flex-row overflow-hidden animate-in fade-in zoom-in-95 duration-200">
                     {/* Presets Sidebar */}
-                    <div className="p-2 w-full md:w-40 border-b md:border-b-0 md:border-r border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+                    <div className="p-2 w-full md:w-40 border-b md:border-b-0 md:border-r border-gray-100 bg-gray-50">
                         <div className="text-xs font-semibold text-gray-500 uppercase px-2 py-2 mb-1">Presets</div>
                         <div className="space-y-1">
                             {presets.map((preset, i) => (
                                 <button
                                     key={i}
                                     onClick={() => handlePresetClick(preset.range)}
-                                    className="w-full text-left px-3 py-2 text-sm rounded-lg hover:bg-white dark:hover:bg-gray-700 hover:shadow-sm transition-all"
+                                    className="w-full text-left px-3 py-2 text-sm text-gray-700 rounded-lg hover:bg-white hover:shadow-sm transition-all"
                                 >
                                     {preset.label}
                                 </button>
@@ -257,7 +257,7 @@ export function DateRangePicker({ date, onSelect, className = '' }: DateRangePic
                         <div className="flex items-center justify-between mb-4">
                             <button
                                 onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
-                                className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full"
+                                className="p-1 hover:bg-gray-100 rounded-full"
                             >
                                 <ChevronLeft size={20} />
                             </button>
@@ -266,7 +266,7 @@ export function DateRangePicker({ date, onSelect, className = '' }: DateRangePic
                             </div>
                             <button
                                 onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
-                                className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full"
+                                className="p-1 hover:bg-gray-100 rounded-full"
                             >
                                 <ChevronRight size={20} />
                             </button>
@@ -278,7 +278,7 @@ export function DateRangePicker({ date, onSelect, className = '' }: DateRangePic
 
                         {renderDays()}
 
-                        <div className="mt-4 pt-3 border-t border-gray-100 dark:border-gray-700 flex justify-end gap-2">
+                        <div className="mt-4 pt-3 border-t border-gray-100 flex justify-end gap-2">
                             <button
                                 onClick={() => setIsOpen(false)}
                                 className="px-3 py-1.5 text-sm btn-ghost"
