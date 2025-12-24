@@ -87,11 +87,11 @@ export function clearSyncQueue() {
  * Returns stats for UI to display notifications
  */
 export async function processSyncQueue(ops: any): Promise<{ successCount: number; failCount: number; droppedCount: number }> {
-    if (typeof window === 'undefined') return { successCount: 0, failCount: 0 };
-    if (!navigator.onLine) return { successCount: 0, failCount: 0 };
+    if (typeof window === 'undefined') return { successCount: 0, failCount: 0, droppedCount: 0 };
+    if (!navigator.onLine) return { successCount: 0, failCount: 0, droppedCount: 0 };
 
     const queue = getSyncQueue();
-    if (queue.length === 0) return { successCount: 0, failCount: 0 };
+    if (queue.length === 0) return { successCount: 0, failCount: 0, droppedCount: 0 };
 
     console.log(`[SyncQueue] Processing ${queue.length} items...`);
 
