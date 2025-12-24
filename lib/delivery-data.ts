@@ -48,6 +48,7 @@ export const MOCK_DELIVERY_ORDERS: DeliveryOrder[] = [
 ];
 
 export const DELIVERY_PLATFORMS = [
+  { name: 'GoMamam', status: 'online' as const },
   { name: 'GrabFood', status: 'online' as const },
   { name: 'FoodPanda', status: 'online' as const },
   { name: 'ShopeeFood', status: 'offline' as const },

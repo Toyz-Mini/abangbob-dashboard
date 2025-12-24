@@ -167,116 +167,165 @@ export default function KDSPage() {
       padding: isFullscreen ? '1rem' : '1.5rem'
     }}>
       {/* Header */}
-      <div className="kds-header" style={{
+      <div className="glass-panel" style={{
+        padding: '1rem 2rem',
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
+        borderRadius: '1rem',
+        background: 'white',
+        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)',
         marginBottom: '1.5rem',
-        background: 'var(--bg-primary)',
-        padding: '1rem 1.5rem',
-        borderRadius: 'var(--radius-lg)',
-        boxShadow: 'var(--shadow-md)'
+        border: '1px solid #e2e8f0'
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+        {/* Left: Brand & Back */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
           {!isFullscreen && (
-            <Link href="/" className="btn btn-ghost">
+            <Link href="/" style={{
+              padding: '0.5rem',
+              borderRadius: '0.5rem',
+              color: '#64748b',
+              background: '#f1f5f9',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
               <ArrowLeft size={20} />
             </Link>
           )}
-          <div>
-            <h1 style={{ fontSize: '1.5rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <ChefHat size={28} />
-              {t('kds.title')}
-            </h1>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
-              {currentTime.toLocaleDateString(dateLocale, { weekday: 'long', day: 'numeric', month: 'short' })} •
-              {currentTime.toLocaleTimeString(dateLocale, { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-            </p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <div style={{
+              position: 'relative',
+              width: '60px',
+              height: '60px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/logo.png" alt="Abang Bob Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+            </div>
+            <div>
+              <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#1e293b', lineHeight: 1.2 }}>
+                KITCHEN DISPLAY
+              </h1>
+              <p style={{ fontSize: '0.875rem', color: '#64748b', fontWeight: 500 }}>
+                {t('kds.title')}
+              </p>
+            </div>
           </div>
         </div>
 
-        <div className="kds-controls" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          {/* Stats */}
-          <div className="kds-stats-desktop" style={{ display: 'flex', gap: '1rem' }}>
-            <div style={{
-              padding: '0.5rem 1rem',
-              background: '#fef3c7',
-              borderRadius: 'var(--radius-md)',
-              textAlign: 'center'
-            }}>
-              <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#92400e' }}>{pendingOrders.length}</div>
-              <div style={{ fontSize: '0.7rem', color: '#92400e' }}>{t('kds.pending')}</div>
+        {/* Center: Stats */}
+        <div className="kds-stats-desktop" style={{ display: 'flex', gap: '2rem' }}>
+          {/* Pending Stat */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <div style={{ color: '#f59e0b', background: '#fffbeb', padding: '0.5rem', borderRadius: '0.5rem' }}>
+              <Clock size={20} />
             </div>
-            <div style={{
-              padding: '0.5rem 1rem',
-              background: '#dbeafe',
-              borderRadius: 'var(--radius-md)',
-              textAlign: 'center'
-            }}>
-              <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#1e40af' }}>{preparingOrders.length}</div>
-              <div style={{ fontSize: '0.7rem', color: '#1e40af' }}>{t('kds.preparing')}</div>
+            <div>
+              <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#1e293b', lineHeight: 1 }}>{pendingOrders.length}</div>
+              <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>{t('kds.pending')}</div>
             </div>
-            <div style={{
-              padding: '0.5rem 1rem',
-              background: '#d1fae5',
-              borderRadius: 'var(--radius-md)',
-              textAlign: 'center'
-            }}>
-              <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#065f46' }}>{readyOrders.length}</div>
-              <div style={{ fontSize: '0.7rem', color: '#065f46' }}>{t('kds.ready')}</div>
+          </div>
+          {/* Preparing Stat */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <div style={{ color: '#3b82f6', background: '#eff6ff', padding: '0.5rem', borderRadius: '0.5rem' }}>
+              <ChefHat size={20} />
+            </div>
+            <div>
+              <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#1e293b', lineHeight: 1 }}>{preparingOrders.length}</div>
+              <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>{t('kds.preparing')}</div>
+            </div>
+          </div>
+          {/* Ready Stat */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <div style={{ color: '#10b981', background: '#ecfdf5', padding: '0.5rem', borderRadius: '0.5rem' }}>
+              <CheckCircle size={20} />
+            </div>
+            <div>
+              <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#1e293b', lineHeight: 1 }}>{readyOrders.length}</div>
+              <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>{t('kds.ready')}</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Right: Controls & Time */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+          {/* Time */}
+          <div className="kds-time" style={{ textAlign: 'right' }}>
+            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#1e293b', lineHeight: 1 }}>
+              {currentTime.toLocaleTimeString(dateLocale, { hour: '2-digit', minute: '2-digit' })}
+            </div>
+            <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.25rem' }}>
+              {currentTime.toLocaleDateString(dateLocale, { day: 'numeric', month: 'short' })}
             </div>
           </div>
 
-          {/* Staff Selector */}
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-            padding: '0.5rem 1rem',
-            background: selectedStaffId ? '#dbeafe' : '#fef3c7',
-            borderRadius: 'var(--radius-md)',
-            border: '2px solid ' + (selectedStaffId ? '#3b82f6' : '#f59e0b')
-          }}>
-            <User size={18} color={selectedStaffId ? '#1e40af' : '#92400e'} />
-            <select
-              value={selectedStaffId}
-              onChange={(e) => handleStaffChange(e.target.value)}
+          <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+            {/* Staff Selector */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              padding: '0.75rem',
+              background: '#f8fafc',
+              borderRadius: '0.75rem',
+              border: '1px solid #e2e8f0',
+              height: '48px'
+            }}>
+              <User size={18} color={'#64748b'} />
+              <select
+                value={selectedStaffId}
+                onChange={(e) => handleStaffChange(e.target.value)}
+                style={{
+                  border: 'none',
+                  background: 'transparent',
+                  fontWeight: 600,
+                  fontSize: '0.875rem',
+                  color: '#334155',
+                  cursor: 'pointer',
+                  outline: 'none',
+                  maxWidth: '120px'
+                }}
+              >
+                <option value="">Staff</option>
+                {activeStaff.map(s => (
+                  <option key={s.id} value={s.id}>{s.name}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Sound */}
+            <div style={{
+              width: '48px',
+              height: '48px',
+              borderRadius: '0.75rem',
+              background: soundSettings.enabled ? '#f0fdf4' : '#fef2f2',
+              border: `1px solid ${soundSettings.enabled ? '#bbf7d0' : '#fecaca'}`,
+              color: soundSettings.enabled ? '#16a34a' : '#dc2626',
+              display: 'flex', alignItems: 'center', justifyContent: 'center'
+            }}>
+              {soundSettings.enabled ? <Volume2 size={20} /> : <VolumeX size={20} />}
+            </div>
+
+            {/* Fullscreen */}
+            <button
+              onClick={toggleFullscreen}
               style={{
-                border: 'none',
-                background: 'transparent',
-                fontWeight: 600,
-                fontSize: '0.875rem',
-                color: selectedStaffId ? '#1e40af' : '#92400e',
+                width: '48px',
+                height: '48px',
+                borderRadius: '0.75rem',
+                border: '1px solid #e2e8f0',
+                background: 'white',
+                color: '#64748b',
                 cursor: 'pointer',
-                outline: 'none',
-                minWidth: '120px'
+                display: 'flex', alignItems: 'center', justifyContent: 'center'
               }}
             >
-              <option value="">{t('kds.selectStaff')}</option>
-              {activeStaff.map(s => (
-                <option key={s.id} value={s.id}>{s.name}</option>
-              ))}
-            </select>
+              {isFullscreen ? <Minimize size={20} /> : <Maximize size={20} />}
+            </button>
           </div>
-
-          {/* Sound indicator */}
-          <div style={{
-            padding: '0.5rem',
-            borderRadius: 'var(--radius-md)',
-            color: soundSettings.enabled ? 'var(--success)' : 'var(--danger)'
-          }}>
-            {soundSettings.enabled ? <Volume2 size={24} /> : <VolumeX size={24} />}
-          </div>
-
-          {/* Fullscreen toggle */}
-          <button
-            onClick={toggleFullscreen}
-            className="btn btn-outline"
-            style={{ padding: '0.75rem' }}
-            title={isFullscreen ? t('kds.exitFullscreen') : t('kds.fullscreen')}
-          >
-            {isFullscreen ? <Minimize size={20} /> : <Maximize size={20} />}
-          </button>
         </div>
       </div>
 
@@ -341,9 +390,9 @@ export default function KDSPage() {
             </span>
           </div>
 
-          <div style={{ flex: 1, overflowY: 'auto', padding: '0.75rem' }}>
-            {pendingOrders.length > 0 ? (
-              pendingOrders.map(order => (
+          {pendingOrders.length > 0 ? (
+            <div style={{ flex: 1, overflowY: 'auto', padding: '0.75rem' }}>
+              {pendingOrders.map(order => (
                 <OrderCard
                   key={order.id}
                   order={order}
@@ -353,11 +402,13 @@ export default function KDSPage() {
                   actionLabel={t('kds.start')}
                   actionColor="var(--primary)"
                 />
-              ))
-            ) : (
+              ))}
+            </div>
+          ) : (
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <EmptyState message={t('kds.noNewOrders')} />
-            )}
-          </div>
+            </div>
+          )}
         </div>
 
         {/* Preparing Column */}
@@ -391,9 +442,9 @@ export default function KDSPage() {
             </span>
           </div>
 
-          <div style={{ flex: 1, overflowY: 'auto', padding: '0.75rem' }}>
-            {preparingOrders.length > 0 ? (
-              preparingOrders.map(order => (
+          {preparingOrders.length > 0 ? (
+            <div style={{ flex: 1, overflowY: 'auto', padding: '0.75rem' }}>
+              {preparingOrders.map(order => (
                 <OrderCard
                   key={order.id}
                   order={order}
@@ -403,11 +454,13 @@ export default function KDSPage() {
                   actionLabel={t('kds.done')}
                   actionColor="var(--success)"
                 />
-              ))
-            ) : (
+              ))}
+            </div>
+          ) : (
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <EmptyState message={t('kds.noPreparing')} />
-            )}
-          </div>
+            </div>
+          )}
         </div>
 
         {/* Ready Column */}
@@ -441,9 +494,9 @@ export default function KDSPage() {
             </span>
           </div>
 
-          <div style={{ flex: 1, overflowY: 'auto', padding: '0.75rem' }}>
-            {readyOrders.length > 0 ? (
-              readyOrders.map(order => (
+          {readyOrders.length > 0 ? (
+            <div style={{ flex: 1, overflowY: 'auto', padding: '0.75rem' }}>
+              {readyOrders.map(order => (
                 <OrderCard
                   key={order.id}
                   order={order}
@@ -454,11 +507,13 @@ export default function KDSPage() {
                   actionColor="var(--gray-600)"
                   isReady
                 />
-              ))
-            ) : (
+              ))}
+            </div>
+          ) : (
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <EmptyState message={t('kds.noReady')} />
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </div>
 

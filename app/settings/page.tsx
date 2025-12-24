@@ -64,9 +64,10 @@ import { checkSupabaseConnection } from '@/lib/supabase/client';
 import { loadSettingsFromSupabase, saveSettingsToSupabase, loadSettingsFromLocalStorage } from '@/lib/supabase/settings-sync';
 import { PixelSettings, PixelConfig, DEFAULT_PIXEL_SETTINGS } from '@/lib/types';
 import { pixelTracker } from '@/lib/services/pixel-tracker';
-import { FileText, Building2 } from 'lucide-react';
+import { FileText, Building2, Truck } from 'lucide-react';
+import DeliveryPlatformSettings from '@/components/settings/DeliveryPlatformSettings';
 
-type SettingSection = 'outlet' | 'operations' | 'receipt' | 'printer' | 'data' | 'notifications' | 'supabase' | 'payment' | 'tax' | 'appearance' | 'security' | 'locations' | 'pixel' | 'payslip';
+type SettingSection = 'outlet' | 'operations' | 'receipt' | 'printer' | 'data' | 'notifications' | 'supabase' | 'payment' | 'tax' | 'appearance' | 'security' | 'locations' | 'pixel' | 'payslip' | 'delivery';
 type PaymentModalType = 'add-payment' | 'edit-payment' | 'delete-payment' | null;
 type TaxModalType = 'add-tax' | 'edit-tax' | 'delete-tax' | null;
 
@@ -667,6 +668,7 @@ export default function SettingsPage() {
     { id: 'receipt', labelKey: 'settings.receiptSettings', icon: Receipt },
     { id: 'printer', labelKey: 'Printer & Drawer', icon: Printer },
     { id: 'payment', labelKey: 'settings.paymentMethods', icon: CreditCard },
+    { id: 'delivery', labelKey: 'Delivery Platforms', icon: Truck },
     { id: 'tax', labelKey: 'Cukai', icon: Percent },
     { id: 'locations', labelKey: 'Lokasi Kehadiran', icon: MapPin },
     { id: 'appearance', labelKey: 'settings.appearance', icon: Palette },
@@ -2486,6 +2488,22 @@ export default function SettingsPage() {
                     </div>
                   </div>
                 </div>
+              </div>
+            )}
+
+            {/* Delivery Platform Settings */}
+            {activeSection === 'delivery' && (
+              <div className="card">
+                <div className="card-header">
+                  <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <Truck size={20} color="var(--primary)" />
+                    Delivery Platforms
+                  </div>
+                  <div className="card-subtitle">
+                    Configure delivery platform integrations (GoMamam, GrabFood, etc.)
+                  </div>
+                </div>
+                <DeliveryPlatformSettings />
               </div>
             )}
 

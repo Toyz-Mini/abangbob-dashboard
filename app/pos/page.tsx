@@ -29,6 +29,7 @@ import ShiftWizardModal from '@/components/cash-management/ShiftWizardModal';
 import RegisterStatus from '@/components/cash-management/RegisterStatus';
 import { useRouter } from 'next/navigation';
 import { useStore } from '@/lib/store';
+import { countries, Country, getDefaultCountry } from '@/lib/countries';
 
 type ModalType = 'upsell' | 'checkout' | 'receipt' | 'history' | 'queue' | 'modifiers' | 'network-error' | null;
 
@@ -100,6 +101,7 @@ export default function POSPage() {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [cart, setCart] = useState<CartItem[]>([]);
   const [modalType, setModalType] = useState<ModalType>(null);
+  const [isCartOpen, setIsCartOpen] = useState(false);
 
   // Checkout State
   const [customerName, setCustomerName] = useState('');
@@ -151,7 +153,7 @@ export default function POSPage() {
   // Power Features State
   const { playSound } = useSound();
   const [sendToWhatsapp, setSendToWhatsapp] = useState(true);
-  const [countryCode, setCountryCode] = useState('+673');
+  const [selectedCountry, setSelectedCountry] = useState<Country>(getDefaultCountry());
 
   // Load receipt settings on mount
   useEffect(() => {
@@ -347,7 +349,7 @@ export default function POSPage() {
     // Robust validation: Strip country code to check if actual digits exist
     // default countryCode is +673 (4 chars). If user typed nothing, length is 4.
     // We want to ensure they have at least 3-4 digits of actual number.
-    const phoneDigits = customerPhone.replace(countryCode, '').trim();
+    const phoneDigits = customerPhone.replace(selectedCountry.dialCode, '').trim();
 
     if (!phoneDigits || phoneDigits.length < 3) {
       showToast('⚠️ Sila masukkan nombor telefon pelanggan dahulu.', 'error');
@@ -612,6 +614,7 @@ export default function POSPage() {
             change={preparingOrders.length > 0 ? t('pos.beingPrepared') : t('pos.noneInKitchen')}
             changeType="neutral"
             icon={ChefHat}
+            gradient="subtle"
           />
           <StatCard
             label={t('pos.ready')}
@@ -623,9 +626,9 @@ export default function POSPage() {
           />
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3" style={{ gap: '1.5rem' }}>
+        <div style={{ position: 'relative' }}>
           {/* Menu Section */}
-          <div className="lg:col-span-2">
+          <div style={{ paddingBottom: '6rem' }}>
             {/* Category Filter */}
             <div style={{ marginBottom: '1.5rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
               {categories.map(category => (
@@ -709,151 +712,200 @@ export default function POSPage() {
             )}
           </div>
 
-          {/* Cart Section */}
-          <div>
-            <div className="card" style={{ position: 'sticky', top: '2rem' }}>
-              <div className="card-header">
-                <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <ShoppingBag size={20} />
-                  Keranjang
-                </div>
-                <div className="card-subtitle">{cart.length} item(s)</div>
-              </div>
+          {/* Cart Section - Floating Drawer */}
+          <>
+            {/* FAB */}
+            <button
+              onClick={() => setIsCartOpen(true)}
+              className="btn btn-primary"
+              style={{
+                position: 'fixed',
+                bottom: '5.5rem',
+                right: '2rem',
+                zIndex: 40,
+                padding: '1rem 1.5rem',
+                borderRadius: '50px',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                display: isCartOpen ? 'none' : 'flex',
+                alignItems: 'center',
+                gap: '0.75rem',
+                fontWeight: 700,
+                animation: 'fade-in 0.3s'
+              }}
+            >
+              <ShoppingBag size={24} />
+              <span>{cart.reduce((a, c) => a + c.quantity, 0)} Items • BND {cartTotal.toFixed(2)}</span>
+            </button>
 
-              {cart.length === 0 ? (
-                <p style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: '2rem' }}>
-                  Tiada item dalam keranjang
-                </p>
-              ) : (
-                <>
-                  <div style={{ maxHeight: '350px', overflowY: 'auto', marginBottom: '1rem' }}>
-                    {cart.map((item, index) => (
-                      <div
-                        key={`${item.id}-${index}`}
-                        style={{
-                          padding: '0.75rem 0',
-                          borderBottom: '1px solid var(--gray-200)',
-                        }}
-                      >
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                          <div style={{ flex: 1 }}>
-                            <div style={{ fontWeight: 600, fontSize: '0.875rem' }}>
-                              {item.name}
-                            </div>
-                            {item.selectedModifiers.length > 0 && (
-                              <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
-                                {item.selectedModifiers?.map((mod, i) => (
-                                  <div key={i}>
-                                    - {mod.groupName?.replace('Pilih ', '').replace('Flavour ', '') || ''}: <b>{mod.optionName}</b>
-                                    {mod.extraPrice > 0 && ` (+$${mod.extraPrice.toFixed(2)})`}
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-                            <div style={{ fontSize: '0.75rem', color: 'var(--primary)', fontWeight: 600, marginTop: '0.25rem' }}>
-                              BND {item.itemTotal.toFixed(2)} each
-                            </div>
-                          </div>
-                          <button
-                            onClick={() => removeFromCart(index)}
-                            style={{
-                              background: 'none',
-                              border: 'none',
-                              cursor: 'pointer',
-                              color: 'var(--danger)',
-                              padding: '0.25rem'
-                            }}
-                          >
-                            <X size={16} />
-                          </button>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem' }}>
-                          <button
-                            onClick={() => updateCartQuantity(index, item.quantity - 1)}
-                            className="btn btn-sm btn-outline"
-                            style={{ padding: '0.25rem 0.5rem', minWidth: 'auto' }}
-                          >
-                            <Minus size={14} />
-                          </button>
-                          <span style={{ minWidth: '2rem', textAlign: 'center', fontWeight: 600 }}>
-                            {item.quantity}
-                          </span>
-                          <button
-                            onClick={() => updateCartQuantity(index, item.quantity + 1)}
-                            className="btn btn-sm btn-outline"
-                            style={{ padding: '0.25rem 0.5rem', minWidth: 'auto' }}
-                          >
-                            <Plus size={14} />
-                          </button>
-                          <span style={{ marginLeft: 'auto', fontWeight: 700 }}>
-                            BND {(item.itemTotal * item.quantity).toFixed(2)}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+            {/* Drawer Overlay */}
+            <div style={{
+              position: 'fixed', inset: 0, zIndex: 100,
+              pointerEvents: isCartOpen ? 'auto' : 'none',
+              visibility: isCartOpen ? 'visible' : 'hidden'
+            }}>
+              {/* Backdrop */}
+              <div
+                style={{
+                  position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)',
+                  opacity: isCartOpen ? 1 : 0, transition: 'opacity 0.3s'
+                }}
+                onClick={() => setIsCartOpen(false)}
+              />
 
-                  {/* Discount */}
-                  <div style={{
-                    padding: '0.75rem',
-                    background: 'var(--gray-100)',
-                    borderRadius: 'var(--radius-md)',
-                    marginBottom: '1rem'
-                  }}>
-                    <label style={{ fontSize: '0.875rem', fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>
-                      Diskaun (%)
-                    </label>
-                    <div style={{ display: 'flex', gap: '0.5rem' }}>
-                      {[0, 5, 10, 15, 20].map(percent => (
-                        <button
-                          key={percent}
-                          onClick={() => setDiscountPercent(percent)}
-                          className={`btn btn-sm ${discountPercent === percent ? 'btn-primary' : 'btn-outline'}`}
-                          style={{ flex: 1, padding: '0.5rem' }}
-                        >
-                          {percent}%
-                        </button>
-                      ))}
+              {/* Drawer Content */}
+              <div className="card" style={{
+                position: 'absolute', top: 0, right: 0, bottom: 0,
+                width: '100%', maxWidth: '450px',
+                borderRadius: '0',
+                margin: 0,
+                transform: isCartOpen ? 'translateX(0)' : 'translateX(100%)',
+                transition: 'transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+                display: 'flex', flexDirection: 'column', height: '100%'
+              }}>
+                <div className="card-header" style={{ padding: '1.5rem', borderBottom: '1px solid #e2e8f0' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                    <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <ShoppingBag size={20} />
+                      Keranjang
                     </div>
-                  </div>
-
-                  <div style={{
-                    paddingTop: '1rem',
-                    borderTop: '2px solid var(--gray-300)',
-                    marginTop: '0.5rem'
-                  }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', fontSize: '0.875rem' }}>
-                      <span>Subtotal:</span>
-                      <span>BND {cartSubtotal.toFixed(2)}</span>
-                    </div>
-                    {discountPercent > 0 && (
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', fontSize: '0.875rem', color: 'var(--success)' }}>
-                        <span>Diskaun ({discountPercent}%):</span>
-                        <span>-BND {discountAmount.toFixed(2)}</span>
-                      </div>
-                    )}
-                    <div style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      fontSize: '1.25rem',
-                      fontWeight: 700,
-                      marginBottom: '1rem'
-                    }}>
-                      <span>Jumlah:</span>
-                      <span>BND {cartTotal.toFixed(2)}</span>
-                    </div>
-                    <button
-                      onClick={handleCheckout}
-                      className="btn btn-primary"
-                      style={{ width: '100%' }}
-                    >
-                      Checkout
+                    <button onClick={() => setIsCartOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)' }}>
+                      <X size={24} />
                     </button>
                   </div>
-                </>
-              )}
+                  <div className="card-subtitle">{cart.length} item(s)</div>
+                </div>
+
+                {cart.length === 0 ? (
+                  <p style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: '2rem' }}>
+                    Tiada item dalam keranjang
+                  </p>
+                ) : (
+                  <>
+                    <div style={{ flex: 1, overflowY: 'auto', padding: '0 1.5rem' }}>
+                      {cart.map((item, index) => (
+                        <div
+                          key={`${item.id}-${index}`}
+                          style={{
+                            padding: '0.75rem 0',
+                            borderBottom: '1px solid var(--gray-200)',
+                          }}
+                        >
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                            <div style={{ flex: 1 }}>
+                              <div style={{ fontWeight: 600, fontSize: '0.875rem' }}>
+                                {item.name}
+                              </div>
+                              {item.selectedModifiers.length > 0 && (
+                                <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
+                                  {item.selectedModifiers?.map((mod, i) => (
+                                    <div key={i}>
+                                      - {mod.groupName?.replace('Pilih ', '').replace('Flavour ', '') || ''}: <b>{mod.optionName}</b>
+                                      {mod.extraPrice > 0 && ` (+$${mod.extraPrice.toFixed(2)})`}
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                              <div style={{ fontSize: '0.75rem', color: 'var(--primary)', fontWeight: 600, marginTop: '0.25rem' }}>
+                                BND {item.itemTotal.toFixed(2)} each
+                              </div>
+                            </div>
+                            <button
+                              onClick={() => removeFromCart(index)}
+                              style={{
+                                background: 'none',
+                                border: 'none',
+                                cursor: 'pointer',
+                                color: 'var(--danger)',
+                                padding: '0.25rem'
+                              }}
+                            >
+                              <X size={16} />
+                            </button>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem' }}>
+                            <button
+                              onClick={() => updateCartQuantity(index, item.quantity - 1)}
+                              className="btn btn-sm btn-outline"
+                              style={{ padding: '0.25rem 0.5rem', minWidth: 'auto' }}
+                            >
+                              <Minus size={14} />
+                            </button>
+                            <span style={{ minWidth: '2rem', textAlign: 'center', fontWeight: 600 }}>
+                              {item.quantity}
+                            </span>
+                            <button
+                              onClick={() => updateCartQuantity(index, item.quantity + 1)}
+                              className="btn btn-sm btn-outline"
+                              style={{ padding: '0.25rem 0.5rem', minWidth: 'auto' }}
+                            >
+                              <Plus size={14} />
+                            </button>
+                            <span style={{ marginLeft: 'auto', fontWeight: 700 }}>
+                              BND {(item.itemTotal * item.quantity).toFixed(2)}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Cart Footer */}
+                    <div style={{ padding: '1.5rem', borderTop: '1px solid #e2e8f0', background: '#f8fafc' }}>
+                      {/* Discount Section */}
+                      <div style={{ marginBottom: '1.5rem' }}>
+                        <label style={{ fontSize: '0.875rem', fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>
+                          Diskaun (%)
+                        </label>
+                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                          {[0, 5, 10, 15, 20].map(percent => (
+                            <button
+                              key={percent}
+                              onClick={() => setDiscountPercent(percent)}
+                              className={`btn btn-sm ${discountPercent === percent ? 'btn-primary' : 'btn-outline'}`}
+                              style={{ flex: 1, padding: '0.5rem' }}
+                            >
+                              {percent}%
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Summary Section */}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', fontSize: '0.875rem' }}>
+                        <span>Subtotal:</span>
+                        <span>BND {cartSubtotal.toFixed(2)}</span>
+                      </div>
+                      {discountPercent > 0 && (
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', fontSize: '0.875rem', color: 'var(--success)' }}>
+                          <span>Diskaun ({discountPercent}%):</span>
+                          <span>-BND {discountAmount.toFixed(2)}</span>
+                        </div>
+                      )}
+                      <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        fontSize: '1.25rem',
+                        fontWeight: 700,
+                        marginTop: '0.5rem',
+                        marginBottom: '1rem',
+                        paddingTop: '0.5rem',
+                        borderTop: '1px dashed #cbd5e1'
+                      }}>
+                        <span>Jumlah:</span>
+                        <span>BND {cartTotal.toFixed(2)}</span>
+                      </div>
+                      <button
+                        onClick={handleCheckout}
+                        className="btn btn-primary"
+                        style={{ width: '100%', padding: '1rem', fontSize: '1rem' }}
+                      >
+                        Checkout
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
-          </div>
+          </>
         </div>
 
         {/* Modifier Selection Modal */}
@@ -1163,389 +1215,320 @@ export default function POSPage() {
           </div>
         </Modal>
 
-        {/* Checkout Modal */}
+        {/* Global Styles for this page */}
+        <style jsx global>{`
+            .no-scrollbar::-webkit-scrollbar {
+              display: none;
+            }
+            .no-scrollbar {
+              -ms-overflow-style: none;
+              scrollbar-width: none;
+            }
+          `}</style>
+
+        {/* Checkout Modal - Clean/Professional Design */}
         <Modal
           isOpen={modalType === 'checkout'}
           onClose={() => !isProcessing && setModalType(null)}
           title="Checkout"
-          subtitle={`Jumlah Perlu Dibayar: BND ${finalPayable.toFixed(2)}`}
+          subtitle={`Total Payable: BND ${finalPayable.toFixed(2)}`}
           maxWidth="500px"
         >
-          <div className="form-group">
-            <label className="form-label">Jenis Pesanan *</label>
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <button
-                onClick={() => setOrderType('takeaway')}
-                className={`btn ${orderType === 'takeaway' ? 'btn-primary' : 'btn-outline'}`}
-                style={{ flex: 1 }}
-              >
-                Takeaway
-              </button>
-              <button
-                onClick={() => setOrderType('gomamam')}
-                className={`btn ${orderType === 'gomamam' ? 'btn-primary' : 'btn-outline'}`}
-                style={{ flex: 1 }}
-              >
-                GoMamam
-              </button>
+          <div className="flex flex-col gap-6 no-scrollbar" style={{ maxHeight: '70vh', overflowY: 'auto', padding: '0.25rem' }}>
+
+            {/* Order Type Section */}
+            <div>
+              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 block">Order Type</label>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  onClick={() => setOrderType('takeaway')}
+                  className={`relative p-3 rounded-lg border transition-all duration-200 flex flex-col items-center justify-center gap-1.5 ${orderType === 'takeaway'
+                    ? 'border-primary bg-primary/5 text-primary ring-1 ring-primary'
+                    : 'border-gray-200 bg-white hover:border-gray-300 text-gray-600'
+                    }`}
+                >
+                  <ShoppingBag size={20} />
+                  <span className="font-semibold text-sm">Takeaway</span>
+                  {orderType === 'takeaway' && <div className="absolute top-2 right-2 w-2 h-2 bg-primary rounded-full"></div>}
+                </button>
+                <button
+                  onClick={() => setOrderType('gomamam')}
+                  className={`relative p-3 rounded-lg border transition-all duration-200 flex flex-col items-center justify-center gap-1.5 ${orderType === 'gomamam'
+                    ? 'border-primary bg-primary/5 text-primary ring-1 ring-primary'
+                    : 'border-gray-200 bg-white hover:border-gray-300 text-gray-600'
+                    }`}
+                >
+                  <Globe size={20} />
+                  <span className="font-semibold text-sm">GoMamam</span>
+                  {orderType === 'gomamam' && <div className="absolute top-2 right-2 w-2 h-2 bg-primary rounded-full"></div>}
+                </button>
+              </div>
             </div>
-          </div>
 
-          {/* Customer Selection or Input */}
-          <div className="form-group">
-            <div className="grid gap-4">
-              {/* Phone Input with Premium Styling & Masking */}
-              <div className="bg-white rounded-lg p-1">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1.5 flex items-center gap-1.5">
-                  <User size={12} /> No Telefon (Wajib)
-                </label>
-                {/* Unified Input Group Container with Border */}
-                <div className="relative group transition-all duration-200 border border-gray-300 focus-within:border-primary focus-within:ring-4 ring-primary/10 rounded-lg flex overflow-hidden">
-                  {/* Country Code Selector */}
-                  <div className="relative border-r border-gray-200 bg-gray-50 transition-colors hover:bg-gray-100 shrink-0">
-                    <select
-                      value={countryCode}
-                      onChange={(e) => {
-                        const newCode = e.target.value;
-                        setCountryCode(newCode);
-                        // Re-trigger lookup
-                        const numberOnly = customerPhone.replace(countryCode, '');
-                        if (numberOnly) {
-                          const fullPhone = `${newCode}${numberOnly}`;
-                          setCustomerPhone(fullPhone);
-                          const found = customers.find(c => c.phone === fullPhone);
-                          if (found) {
-                            setSelectedCustomer(found);
-                            setCustomerName(found.name);
-                          } else {
-                            setSelectedCustomer(null);
-                            setCustomerName('');
-                          }
-                        }
-                      }}
-                      className="appearance-none bg-transparent h-full pl-3 pr-8 font-bold text-gray-700 text-sm focus:outline-none cursor-pointer w-[110px]"
-                    >
-                      <option value="+673">🇧🇳 +673</option>
-                      <option value="+60">🇲🇾 +60</option>
-                      <option value="+62">🇮🇩 +62</option>
-                      <option value="+65">🇸🇬 +65</option>
-                    </select>
-                    <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-gray-500">
-                      <Globe size={12} />
-                    </div>
-                  </div>
+            {/* Customer Selection Section */}
+            <div>
+              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 block">Customer Details</label>
 
-                  <input
-                    type="tel"
-                    className="form-input !border-none !ring-0 !shadow-none py-3 !pl-3 pr-4 font-mono text-xl w-full bg-white transition-colors tracking-wide"
-                    value={(() => {
-                      const raw = customerPhone.replace(countryCode, '');
-                      if (!raw) return '';
-                      // Re-apply mask for display
-                      if (countryCode === '+673' || countryCode === '+60') {
-                        if (raw.length > 3) return raw.slice(0, 3) + ' ' + raw.slice(3);
-                      } else {
-                        if (raw.length > 4) return raw.slice(0, 4) + ' ' + raw.slice(4);
-                      }
-                      return raw;
-                    })()}
+              <div className="space-y-3">
+                {/* Phone Input Group */}
+                <div className="flex rounded-lg border border-gray-300 shadow-sm overflow-hidden focus-within:ring-2 focus-within:ring-primary focus-within:border-primary">
+                  <select
+                    value={selectedCountry.dialCode}
                     onChange={(e) => {
-                      // Remove non-digits
-                      let val = e.target.value.replace(/\D/g, '');
-
-                      // Smart Space Masking based on country code
-                      if (countryCode === '+673') {
-                        if (val.length > 3) val = val.slice(0, 3) + ' ' + val.slice(3);
-                      } else if (countryCode === '+60') {
-                        if (val.length > 3) val = val.slice(0, 3) + ' ' + val.slice(3); // 012 3456789
-                      } else {
-                        // Generic spacing
-                        if (val.length > 4) val = val.slice(0, 4) + ' ' + val.slice(4);
-                      }
-
-                      // Keep spaces for display logic, but strip for value
-                      const displayVal = val;
-                      const rawVal = val.replace(/\s/g, '');
-
-                      const fullPhone = `${countryCode}${rawVal}`;
-                      setCustomerPhone(fullPhone);
-
-                      // Auto lookup
-                      const found = customers.find(c => c.phone === fullPhone);
-                      if (found) {
-                        setSelectedCustomer(found);
-                        setCustomerName(found.name);
-                        playSound('notification');
-                      } else {
-                        if (selectedCustomer) {
+                      const newCountry = countries.find(c => c.dialCode === e.target.value);
+                      if (newCountry) {
+                        setSelectedCountry(newCountry);
+                        const numberOnly = customerPhone.replace(selectedCountry.dialCode, '');
+                        const fullPhone = `${newCountry.dialCode}${numberOnly}`;
+                        setCustomerPhone(fullPhone);
+                        // Lookup logic
+                        const found = customers.find(c => c.phone === fullPhone);
+                        if (found) {
+                          setSelectedCustomer(found);
+                          setCustomerName(found.name);
+                        } else {
                           setSelectedCustomer(null);
                           setCustomerName('');
                         }
                       }
                     }}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        if (customerPhone.length >= 8) {
-                          proceedToPayment();
-                        }
+                    className="appearance-none bg-gray-50 pl-3 pr-8 py-2.5 text-sm font-medium text-gray-700 border-r border-gray-300 focus:outline-none cursor-pointer hover:bg-gray-100 transition-colors"
+                    style={{ backgroundImage: 'none' }}
+                  >
+                    {countries.map((country) => (
+                      <option key={country.code} value={country.dialCode}>
+                        {country.flag} {country.dialCode}
+                      </option>
+                    ))}
+                  </select>
+                  <input
+                    type="tel"
+                    className="flex-1 min-w-0 px-3 py-2.5 text-gray-900 placeholder-gray-400 focus:outline-none text-sm font-mono"
+                    placeholder="888 8888"
+                    value={customerPhone.replace(selectedCountry.dialCode, '')}
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/\D/g, '');
+                      const fullPhone = `${selectedCountry.dialCode}${val}`;
+                      setCustomerPhone(fullPhone);
+                      const found = customers.find(c => c.phone === fullPhone);
+                      if (found) {
+                        setSelectedCustomer(found);
+                        setCustomerName(found.name);
+                      } else if (selectedCustomer) {
+                        setSelectedCustomer(null);
+                        setCustomerName('');
                       }
                     }}
-                    placeholder={countryCode === '+673' ? "888 8888" : "12 3456789"}
-                    autoFocus
+                    onKeyDown={(e) => e.key === 'Enter' && customerPhone.length >= 8 && proceedToPayment()}
                   />
-
-                  {selectedCustomer && (
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2 text-success animate-in zoom-in duration-300 pointer-events-none">
-                      <CheckCircle size={22} fill="#d1fae5" />
-                    </div>
-                  )}
                 </div>
-              </div>
 
-              {/* Customer Flashback Card */}
-              {selectedCustomer && (
-                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-lg p-3 flex justify-between items-center animate-in slide-in-from-top-2 duration-300 shadow-sm">
-                  <div>
-                    <div className="text-xs font-bold text-blue-800 uppercase tracking-wide mb-1 flex items-center gap-1">
-                      <Sparkles size={12} /> Member Found
+                {/* Member Found - Clean Alert Style */}
+                {selectedCustomer && (
+                  <div className="flex items-center justify-between p-3 bg-blue-50 border-l-4 border-blue-500 rounded-r-md">
+                    <div className="flex items-center gap-3">
+                      <User size={18} className="text-blue-600" />
+                      <div>
+                        <div className="text-sm font-medium text-blue-900">{selectedCustomer.name}</div>
+                        <div className="text-xs text-blue-700">{selectedCustomer.loyaltyPoints} Points</div>
+                      </div>
                     </div>
-                    <div className="text-sm font-semibold text-gray-800">
-                      {selectedCustomer.name}
-                    </div>
-                    <div className="text-xs text-gray-500 mt-0.5">
-                      Last Visit: {selectedCustomer.lastOrderAt ? new Date(selectedCustomer.lastOrderAt).toLocaleDateString('ms-MY', { day: 'numeric', month: 'short' }) : 'Baru'} • <span className="font-bold text-primary">{selectedCustomer.loyaltyPoints} Pts</span>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <span className={`badge ${selectedCustomer.segment === 'vip' ? 'badge-warning' : 'badge-info'} font-bold`}>
-                      {selectedCustomer.segment.toUpperCase()}
+                    <span className="text-xs font-bold px-2 py-0.5 bg-blue-200 text-blue-800 rounded uppercase tracking-wider">
+                      {selectedCustomer.segment}
                     </span>
                   </div>
-                </div>
-              )}
+                )}
 
-              {/* Name Input & WhatsApp Toggle */}
-              <div className="grid grid-cols-[1fr_auto] gap-3 items-end">
-                <div>
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1.5">Nama (Pilihan)</label>
+                {/* Name & Whatsapp */}
+                <div className="flex gap-3">
                   <input
                     type="text"
-                    className="form-input w-full bg-gray-50 focus:bg-white border-gray-200"
+                    className="flex-1 block w-full px-3 py-2 rounded-md border border-gray-300 shadow-sm placeholder-gray-400 focus:ring-primary focus:border-primary sm:text-sm"
+                    placeholder="Customer Name (Optional)"
                     value={customerName}
                     onChange={(e) => setCustomerName(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') proceedToPayment();
-                    }}
-                    placeholder="Nama Pelanggan"
                   />
-                </div>
-
-                <div
-                  className={`border rounded-lg p-2.5 cursor-pointer transition-all duration-200 flex flex-col items-center justify-center w-[70px] h-[46px] ${sendToWhatsapp && customerPhone.length > 5 ? 'bg-green-50 border-green-200 text-green-700' : 'bg-gray-50 border-gray-200 text-gray-400'}`}
-                  onClick={() => setSendToWhatsapp(!sendToWhatsapp)}
-                >
-                  <div className="flex items-center gap-1">
-                    <MessageCircle size={18} />
-                    {sendToWhatsapp && <Check size={12} strokeWidth={4} />}
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setSendToWhatsapp(!sendToWhatsapp)}
+                    className={`flex items-center justify-center px-3 py-2 border rounded-md shadow-sm text-sm font-medium transition-colors ${sendToWhatsapp
+                      ? 'bg-green-50 border-green-200 text-green-700 hover:bg-green-100'
+                      : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+                      }`}
+                    title="WhatsApp Receipt"
+                  >
+                    <MessageCircle size={18} className={sendToWhatsapp ? 'mr-1.5' : ''} />
+                    {sendToWhatsapp ? 'On' : <span className="sr-only">Off</span>}
+                  </button>
                 </div>
               </div>
             </div>
-          </div>
 
-          {/* Payment Method Selection */}
-          <div className="form-group">
-            <label className="form-label">Kaedah Pembayaran *</label>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem' }}>
-              {enabledPaymentMethods.map((pm) => (
-                <button
-                  key={pm.id}
-                  type="button"
-                  onClick={() => setPaymentMethod(pm.code)}
-                  className={`btn ${paymentMethod === pm.code ? 'btn-primary' : 'btn-outline'}`}
-                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
-                >
-                  {pm.icon && <span style={{ fontSize: '1.2rem' }}>{pm.icon}</span>}
-                  {pm.name}
-                </button>
-              ))}
+            {/* Payment Method Section */}
+            <div>
+              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 block">Payment Method</label>
+              <div className="grid grid-cols-2 gap-3">
+                {enabledPaymentMethods.map((pm) => (
+                  <button
+                    key={pm.id}
+                    onClick={() => setPaymentMethod(pm.code)}
+                    className={`relative p-3 rounded-lg border transition-all duration-200 flex flex-col items-center justify-center gap-1 min-h-[80px] ${paymentMethod === pm.code
+                      ? 'border-primary bg-primary/5 text-primary ring-1 ring-primary'
+                      : 'border-gray-200 bg-white hover:border-gray-300 text-gray-600'
+                      }`}
+                  >
+                    <div className="text-xl mb-0.5">{pm.icon}</div>
+                    <span className="font-medium text-sm text-center leading-tight">{pm.name}</span>
+                    {paymentMethod === pm.code && <div className="absolute top-2 right-2 w-2 h-2 bg-primary rounded-full"></div>}
+                  </button>
+                ))}
+              </div>
             </div>
-            {enabledPaymentMethods.length === 0 && (
-              <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginTop: '0.5rem' }}>
-                Tiada kaedah pembayaran aktif. Sila tetapkan dalam Settings.
-              </p>
+
+            {/* Loyalty Redemption - Clean Box */}
+            {selectedCustomer && selectedCustomer.loyaltyPoints > 0 && (
+              <div className="p-3 bg-gray-50 rounded-lg border border-gray-200 flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <Sparkles size={18} className="text-amber-500" />
+                  <div>
+                    <div className="text-sm font-medium text-gray-900">Redeem Points</div>
+                    <div className="text-xs text-gray-500">Available: {selectedCustomer.loyaltyPoints} (Max: ${maxRedemptionValue.toFixed(2)})</div>
+                  </div>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={usePoints}
+                  onChange={(e) => setUsePoints(e.target.checked)}
+                  className="h-5 w-5 text-primary focus:ring-primary border-gray-300 rounded"
+                />
+              </div>
             )}
-          </div>
 
-          {/* Loyalty Redemption Toggle */}
-          {selectedCustomer && selectedCustomer.loyaltyPoints > 0 && (
-            <div className="form-group" style={{
-              background: 'linear-gradient(to right, #fef3c7, #fff)',
-              padding: '0.75rem',
-              borderRadius: 'var(--radius-md)',
-              border: '1px solid #fcd34d'
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div>
-                  <div style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <Sparkles size={16} color="#d97706" fill="#d97706" />
-                    Tebus Mata Ganjaran
+            {/* Cash Input - Clean Styled */}
+            {paymentMethod === 'cash' && (
+              <div className="pt-4 border-t border-gray-200">
+                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3 block">Cash Received</label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <span className="text-gray-500 text-lg font-bold">BND</span>
                   </div>
-                  <div style={{ fontSize: '0.8rem', color: '#92400e' }}>
-                    Ada {selectedCustomer.loyaltyPoints} mata (Max tebus: ${maxRedemptionValue.toFixed(2)})
-                  </div>
-                </div>
-                <label className="switch" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
                   <input
-                    type="checkbox"
-                    checked={usePoints}
-                    onChange={(e) => setUsePoints(e.target.checked)}
-                    style={{ accentColor: 'var(--primary)', width: '1.2rem', height: '1.2rem' }}
+                    type="number"
+                    value={cashReceived || ''}
+                    onChange={(e) => setCashReceived(parseFloat(e.target.value))}
+                    className="block w-full pl-16 pr-16 py-4 text-2xl font-bold text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary bg-white"
+                    placeholder="0.00"
+                    autoFocus
                   />
-                  <span style={{ fontWeight: 600 }}>Guna</span>
-                </label>
-              </div>
-
-              {usePoints && (
-                <div style={{ marginTop: '0.5rem', paddingTop: '0.5rem', borderTop: '1px dashed #fcd34d', fontSize: '0.875rem' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', color: '#92400e' }}>
-                    <span>Tebus {pointsToRedeem} mata:</span>
-                    <span style={{ fontWeight: 700 }}>- BND {redemptionAmount.toFixed(2)}</span>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Cash Amount Input - Show only for cash payment */}
-          {paymentMethod === 'cash' && (
-            <div className="form-group" style={{
-              background: 'var(--gray-100)',
-              padding: '1rem',
-              borderRadius: 'var(--radius-md)',
-              marginTop: '0.5rem'
-            }}>
-              <label className="form-label" style={{ marginBottom: '0.5rem' }}>
-                Jumlah Diterima (BND)
-              </label>
-              <input
-                type="number"
-                className="form-input"
-                placeholder="0.00"
-                value={cashReceived || ''}
-                onChange={(e) => setCashReceived(Number(e.target.value))}
-                min="0"
-                step="0.01"
-                style={{ fontSize: '1.25rem', fontWeight: 700, textAlign: 'center' }}
-              />
-              {cashReceived > 0 && (
-                <div style={{
-                  marginTop: '0.75rem',
-                  padding: '0.75rem',
-                  background: cashReceived >= finalPayable ? 'var(--success-light, #d1fae5)' : 'var(--danger-light, #fee2e2)',
-                  borderRadius: 'var(--radius-sm)',
-                  textAlign: 'center'
-                }}>
-                  <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>
-                    Baki
-                  </div>
-                  <div style={{
-                    fontSize: '1.5rem',
-                    fontWeight: 700,
-                    color: cashReceived >= finalPayable ? 'var(--success)' : 'var(--danger)'
-                  }}>
-                    BND {(cashReceived - finalPayable).toFixed(2)}
-                  </div>
-                  {cashReceived < finalPayable && (
-                    <div style={{ fontSize: '0.75rem', color: 'var(--danger)', marginTop: '0.25rem' }}>
-                      Kurang BND {(finalPayable - cashReceived).toFixed(2)}
+                  {cashReceived > 0 && (
+                    <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
+                      <span className={`text-sm font-bold px-2 py-1 rounded ${cashReceived >= finalPayable ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}>
+                        {cashReceived >= finalPayable ? '✓ OK' : '✗ Low'}
+                      </span>
                     </div>
                   )}
                 </div>
-              )}
-              {/* Smart Cash Buttons */}
-              <div className="grid grid-cols-4 gap-2 mt-3">
-                {(() => {
-                  const suggestions = new Set<number>();
-                  suggestions.add(Math.ceil(finalPayable)); // Exact/Ceil
-                  suggestions.add(Math.ceil(finalPayable / 5) * 5);
-                  suggestions.add(Math.ceil(finalPayable / 10) * 10);
-                  suggestions.add(50);
-                  suggestions.add(100);
 
-                  // Filter valid options and sort
-                  const validSuggestions = Array.from(suggestions)
-                    .filter(amt => amt >= finalPayable)
-                    .sort((a, b) => a - b)
-                    .slice(0, 4);
-
-                  return validSuggestions.map(amount => (
+                {/* Smart Amounts */}
+                <div className="flex flex-wrap gap-2 mt-3">
+                  {[3, 5, 10, 20, 50, 100].map(amt => (
                     <button
-                      key={amount}
-                      type="button"
-                      onClick={() => setCashReceived(amount)}
-                      className="btn btn-sm btn-outline h-12 text-lg font-bold hover:bg-primary hover:text-white transition-colors"
+                      key={amt}
+                      onClick={() => setCashReceived(amt)}
+                      style={{
+                        padding: '0.5rem 1rem',
+                        border: '1px solid #d1d5db',
+                        borderRadius: '0.5rem',
+                        fontSize: '0.875rem',
+                        fontWeight: 600,
+                        color: '#374151',
+                        background: 'white',
+                        cursor: 'pointer'
+                      }}
                     >
-                      ${amount}
+                      ${amt}
                     </button>
-                  ));
-                })()}
-                {/* Manual "Exact" button as fallback if needed, but Smart Logic usually covers it. 
-                    Let's adapt "Tepat" to be the exact finalPayable if not already covered, or just keep it as a utility. 
-                */}
-                <button
-                  type="button"
-                  onClick={() => setCashReceived(finalPayable)}
-                  className="btn btn-sm btn-primary h-12 font-bold"
-                >
-                  Tepat
-                </button>
-              </div>
-            </div>
-          )}
+                  ))}
+                  <button
+                    onClick={() => setCashReceived(finalPayable)}
+                    style={{
+                      padding: '0.5rem 1rem',
+                      border: '1px solid var(--primary)',
+                      borderRadius: '0.5rem',
+                      fontSize: '0.875rem',
+                      fontWeight: 600,
+                      color: 'var(--primary)',
+                      background: 'white',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Exact
+                  </button>
+                </div>
 
-          <div style={{
-            display: 'flex',
-            justifyContent: 'flex-end',
-            gap: '0.75rem',
-            marginTop: '1.5rem',
-            paddingTop: '1rem',
-            borderTop: '1px solid var(--gray-200)'
-          }}>
-            <button
-              onClick={() => setModalType(null)}
-              className="btn btn-outline"
-              style={{
-                minWidth: '100px',
-                padding: '0.5rem 1rem'
-              }}
-              disabled={isProcessing}
-            >
-              Batal
-            </button>
-            <button
-              onClick={() => proceedToPayment()}
-              className={`btn btn-primary ${isProcessing ? 'loading' : ''}`}
-              style={{
-                minWidth: '160px',
-                padding: '0.5rem 1.25rem',
-                fontWeight: 600,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}
-              disabled={isProcessing}
-            >
-              {isProcessing ? (
-                <>
-                  <LoadingSpinner size="sm" />
-                  <span style={{ marginLeft: '0.5rem' }}>Memproses...</span>
-                </>
-              ) : (
-                `Bayar BND ${finalPayable.toFixed(2)}`
-              )}
-            </button>
+                {/* Change Display */}
+                {cashReceived > 0 && cashReceived >= finalPayable && (
+                  <div style={{
+                    marginTop: '1rem',
+                    padding: '0.75rem',
+                    background: '#dcfce7',
+                    border: '1px solid #bbf7d0',
+                    borderRadius: '0.5rem',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center'
+                  }}>
+                    <span style={{ fontSize: '0.875rem', fontWeight: 600, color: '#166534' }}>Change:</span>
+                    <span style={{ fontSize: '1.25rem', fontWeight: 700, color: '#15803d' }}>BND {(cashReceived - finalPayable).toFixed(2)}</span>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Action Bar */}
+            <div style={{ marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid #e5e7eb', display: 'flex', gap: '0.75rem' }}>
+              <button
+                onClick={() => !isProcessing && setModalType(null)}
+                style={{
+                  flex: 1,
+                  padding: '0.75rem 1rem',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '0.5rem',
+                  color: '#374151',
+                  fontWeight: 600,
+                  background: 'white',
+                  cursor: 'pointer'
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => proceedToPayment()}
+                disabled={isProcessing}
+                style={{
+                  flex: 2,
+                  padding: '0.75rem 1.5rem',
+                  border: 'none',
+                  borderRadius: '0.5rem',
+                  fontWeight: 700,
+                  color: 'white',
+                  background: 'var(--primary)',
+                  cursor: isProcessing ? 'not-allowed' : 'pointer',
+                  opacity: isProcessing ? 0.5 : 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.5rem'
+                }}
+              >
+                {isProcessing ? (
+                  <><LoadingSpinner size="sm" /> Processing...</>
+                ) : (
+                  <>Pay BND {finalPayable.toFixed(2)}</>
+                )}
+              </button>
+            </div>
+
           </div>
         </Modal>
 
@@ -1557,7 +1540,7 @@ export default function POSPage() {
           maxWidth="450px"
         >
           {lastOrder && (
-            <>
+            <div className="no-scrollbar" style={{ maxHeight: '80vh', overflowY: 'auto' }}>
               <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
                 <div style={{
                   width: '60px',
@@ -1623,7 +1606,7 @@ export default function POSPage() {
                 <button
                   onClick={() => setModalType(null)}
                   className="btn btn-outline"
-                  style={{ width: '100%', padding: '0.875rem' }}
+                  style={{ width: '100%', padding: '0.875rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                 >
                   Tutup
                 </button>
@@ -1643,7 +1626,7 @@ export default function POSPage() {
                   ? '✓ Thermal printer disambung - cetak terus ke printer'
                   : 'Tiada thermal printer - akan cetak melalui browser'}
               </div>
-            </>
+            </div>
           )}
         </Modal>
 

@@ -205,670 +205,379 @@ export default function OrderDisplayPage() {
   return (
     <div style={{
       minHeight: '100vh',
-      background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+      background: '#f8fafc', // Light background
       padding: isFullscreen ? '1rem' : '1.5rem',
-      fontFamily: "'Segoe UI', system-ui, sans-serif",
-      overflow: 'hidden'
+      fontFamily: "'Inter', sans-serif",
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '1.5rem'
     }}>
-      {/* CSS Animations & Responsive Styles */}
+      {/* CSS Animations */}
       <style jsx global>{`
-        @keyframes pulse-glow {
-          0%, 100% { 
-            box-shadow: 0 0 20px rgba(16, 185, 129, 0.5), 0 0 40px rgba(16, 185, 129, 0.3);
-            transform: scale(1);
-          }
-          50% { 
-            box-shadow: 0 0 40px rgba(16, 185, 129, 0.8), 0 0 60px rgba(16, 185, 129, 0.5);
-            transform: scale(1.02);
-          }
+        @keyframes pulse-green {
+          0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+          70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+          100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
         }
         
-        @keyframes slide-in {
-          from {
-            opacity: 0;
-            transform: translateY(-20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
+        @keyframes slide-up {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
         }
-        
-        @keyframes bounce-subtle {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-5px); }
-        }
-        
-        @keyframes pulse-border {
-          0%, 100% { 
-            border-color: rgba(59, 130, 246, 0.4);
-          }
-          50% { 
-            border-color: rgba(59, 130, 246, 0.8);
-          }
-        }
-        
+
         .order-number-new {
-          animation: pulse-glow 1.5s ease-in-out infinite;
+          animation: pulse-green 2s infinite;
+        }
+
+        .animate-card {
+          animation: slide-up 0.4s ease-out forwards;
         }
         
-        .order-card {
-          animation: slide-in 0.4s ease-out;
+        .glass-panel {
+          background: white;
+          border: 1px solid #e2e8f0;
+          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+          border-radius: 1.5rem;
         }
         
-        .queue-card {
-          animation: slide-in 0.3s ease-out;
-        }
-
-        /* Responsive Layout */
-        .order-display-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 1rem;
-          background: rgba(255, 255, 255, 0.05);
-          backdrop-filter: blur(10px);
-          padding: 0.75rem 1.5rem;
-          border-radius: 16px;
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          flex-wrap: wrap;
-          gap: 1rem;
-        }
-
-        .stats-summary {
-          display: flex;
-          gap: 1rem;
-        }
-
-        .order-display-grid {
-          display: grid;
-          grid-template-columns: 1fr 1.2fr 1.2fr;
-          gap: 1rem;
-          height: ${isFullscreen ? 'calc(100vh - 120px)' : 'calc(100vh - 180px)'};
-        }
-
-        @media (max-width: 1024px) {
-          .order-display-grid {
-            grid-template-columns: 1fr;
-            height: auto;
-          }
-          
-          .order-display-header {
-            flex-direction: column;
-            align-items: stretch;
-          }
-
-          .stats-summary {
-            justify-content: space-between;
-          }
-
-          /* Make columns full height on mobile or fixed height scrolling */
-          .order-column {
-            height: 400px !important;
-          }
+        .header-bg {
+          background: white;
+          border-bottom: 1px solid #e2e8f0;
+          box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
         }
       `}</style>
 
       {/* Header */}
-      <div className="order-display-header">
-        {/* Logo & Name */}
+      <div className="glass-panel" style={{
+        padding: '1rem 2rem',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        borderRadius: '1rem'
+      }}>
+        {/* Brand */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           <div style={{
-            width: '50px',
-            height: '50px',
-            background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
-            borderRadius: '12px',
+            position: 'relative',
+            width: '60px',
+            height: '60px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: '0 4px 15px rgba(249, 115, 22, 0.4)'
           }}>
-            <Utensils size={28} color="white" />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo.png" alt="Abang Bob Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
           </div>
           <div>
-            <h1 style={{
-              fontSize: '1.75rem',
-              fontWeight: 800,
-              color: 'white',
-              letterSpacing: '-0.02em'
-            }}>
+            <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#1e293b', lineHeight: 1.2 }}>
               ABANG BOB
             </h1>
-            <p style={{
-              color: 'rgba(255, 255, 255, 0.6)',
-              fontSize: '0.85rem',
-              fontWeight: 500
-            }}>
-              Status Pesanan Anda
+            <p style={{ fontSize: '0.875rem', color: '#64748b', fontWeight: 500 }}>
+              Status Pesanan
             </p>
           </div>
         </div>
 
-        {/* Stats Summary */}
-        <div className="stats-summary">
-          <StatBadge
-            icon={<Users size={18} />}
-            label="Giliran"
-            value={pendingOrders.length}
-            color="#3b82f6"
-          />
-          <StatBadge
-            icon={<ChefHat size={18} />}
-            label="Dibuat"
-            value={preparingOrders.length}
-            color="#f59e0b"
-          />
-          <StatBadge
-            icon={<CheckCircle size={18} />}
-            label="Sedia"
-            value={readyOrders.length}
-            color="#10b981"
-          />
+        {/* Stats */}
+        <div style={{ display: 'flex', gap: '2rem' }}>
+          <StatCounter icon={<Users size={20} />} label="Dalam Giliran" value={pendingOrders.length} color="blue" />
+          <StatCounter icon={<ChefHat size={20} />} label="Sedang Dibuat" value={preparingOrders.length} color="amber" />
+          <StatCounter icon={<CheckCircle size={20} />} label="Sedia" value={readyOrders.length} color="emerald" />
         </div>
 
-        {/* Time & Controls */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', justifyContent: 'space-between', flex: 1 }}>
-          {/* Current Time */}
+        {/* Controls & Time */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
           <div style={{ textAlign: 'right' }}>
-            <div style={{
-              fontSize: '2rem',
-              fontWeight: 700,
-              color: 'white',
-              fontVariantNumeric: 'tabular-nums'
-            }}>
-              {currentTime.toLocaleTimeString('ms-MY', {
-                hour: '2-digit',
-                minute: '2-digit'
-              })}
+            <div style={{ fontSize: '1.75rem', fontWeight: 700, color: '#1e293b', lineHeight: 1 }}>
+              {currentTime.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit' })}
             </div>
-            <div style={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: '0.8rem' }}>
-              {currentTime.toLocaleDateString('ms-MY', {
-                weekday: 'long',
-                day: 'numeric',
-                month: 'short'
-              })}
+            <div style={{ fontSize: '0.875rem', color: '#64748b', marginTop: '0.25rem' }}>
+              {currentTime.toLocaleDateString('ms-MY', { weekday: 'long', day: 'numeric', month: 'short' })}
             </div>
           </div>
 
           <div style={{ display: 'flex', gap: '0.5rem' }}>
-            {/* Voice Toggle */}
-            <button
-              onClick={toggleVoice}
-              title={voiceEnabled ? 'Matikan pengumuman suara' : 'Hidupkan pengumuman suara'}
-              style={{
-                padding: '0.6rem',
-                background: voiceEnabled ? 'rgba(139, 92, 246, 0.2)' : 'rgba(107, 114, 128, 0.2)',
-                border: `2px solid ${voiceEnabled ? '#8b5cf6' : '#6b7280'}`,
-                borderRadius: '10px',
-                color: voiceEnabled ? '#8b5cf6' : '#6b7280',
-                cursor: 'pointer',
-                transition: 'all 0.2s'
-              }}
-            >
-              {voiceEnabled ? <Mic size={22} /> : <MicOff size={22} />}
-            </button>
-
-            {/* Sound Toggle */}
-            <button
-              onClick={toggleSound}
-              title={soundSettings.enabled ? 'Matikan bunyi' : 'Hidupkan bunyi'}
-              style={{
-                padding: '0.6rem',
-                background: soundSettings.enabled ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)',
-                border: `2px solid ${soundSettings.enabled ? '#10b981' : '#ef4444'}`,
-                borderRadius: '10px',
-                color: soundSettings.enabled ? '#10b981' : '#ef4444',
-                cursor: 'pointer',
-                transition: 'all 0.2s'
-              }}
-            >
-              {soundSettings.enabled ? <Volume2 size={22} /> : <VolumeX size={22} />}
-            </button>
-
-            {/* Fullscreen Toggle */}
+            <ControlButton onClick={toggleVoice} active={voiceEnabled} iconActive={<Mic size={20} />} iconInactive={<MicOff size={20} />} />
+            <ControlButton onClick={toggleSound} active={soundSettings.enabled} iconActive={<Volume2 size={20} />} iconInactive={<VolumeX size={20} />} />
             <button
               onClick={toggleFullscreen}
-              title={isFullscreen ? 'Keluar skrin penuh' : 'Skrin penuh'}
               style={{
-                padding: '0.6rem',
-                background: 'rgba(255, 255, 255, 0.1)',
-                border: '2px solid rgba(255, 255, 255, 0.2)',
-                borderRadius: '10px',
-                color: 'white',
-                cursor: 'pointer',
-                transition: 'all 0.2s'
+                padding: '0.75rem',
+                borderRadius: '0.75rem',
+                border: '1px solid #e2e8f0',
+                background: 'white',
+                color: '#64748b',
+                cursor: 'pointer'
               }}
             >
-              {isFullscreen ? <Minimize size={22} /> : <Maximize size={22} />}
+              {isFullscreen ? <Minimize size={20} /> : <Maximize size={20} />}
             </button>
           </div>
         </div>
       </div>
 
-      {/* Three Column Display */}
-      <div className="order-display-grid">
-        {/* DALAM GILIRAN Column (Queue) */}
-        <div className="order-column" style={{
-          background: 'rgba(59, 130, 246, 0.1)',
-          borderRadius: '20px',
-          overflow: 'hidden',
-          display: 'flex',
-          flexDirection: 'column',
-          border: '2px solid rgba(59, 130, 246, 0.3)'
-        }}>
-          {/* Header */}
-          <div style={{
-            padding: '1rem 1.5rem',
-            background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              <Users size={28} color="white" />
-              <span style={{
-                fontSize: '1.4rem',
-                fontWeight: 800,
-                color: 'white',
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em'
-              }}>
-                Dalam Giliran
-              </span>
-            </div>
-            <div style={{
-              background: 'rgba(255, 255, 255, 0.3)',
-              padding: '0.4rem 1.2rem',
-              borderRadius: '50px',
-              fontSize: '1.3rem',
-              fontWeight: 800,
-              color: 'white'
-            }}>
-              {pendingOrders.length}
-            </div>
-          </div>
-
-          {/* Queue List */}
-          <div style={{
-            flex: 1,
-            padding: '1rem',
-            overflowY: 'auto',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '0.75rem'
-          }}>
-            {pendingOrders.length > 0 ? (
-              pendingOrders.map((order, index) => (
-                <QueueCard
-                  key={order.id}
-                  orderNumber={order.orderNumber}
-                  position={index + 1}
-                  estimatedTime={getEstimatedWaitTime(index + 1)}
-                  timeColor={getWaitTimeColor(index + 1)}
-                />
-              ))
-            ) : (
-              <EmptyState
-                icon={<Users size={48} />}
-                message="Tiada pesanan dalam giliran"
-                color="#3b82f6"
-              />
-            )}
-          </div>
-        </div>
-
-        {/* SEDANG DIBUAT Column */}
-        <div className="order-column" style={{
-          background: 'rgba(251, 191, 36, 0.1)',
-          borderRadius: '20px',
-          overflow: 'hidden',
-          display: 'flex',
-          flexDirection: 'column',
-          border: '2px solid rgba(251, 191, 36, 0.3)'
-        }}>
-          {/* Header */}
-          <div style={{
-            padding: '1rem 1.5rem',
-            background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              <ChefHat size={28} color="white" />
-              <span style={{
-                fontSize: '1.4rem',
-                fontWeight: 800,
-                color: 'white',
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em'
-              }}>
-                Sedang Dibuat
-              </span>
-            </div>
-            <div style={{
-              background: 'rgba(255, 255, 255, 0.3)',
-              padding: '0.4rem 1.2rem',
-              borderRadius: '50px',
-              fontSize: '1.3rem',
-              fontWeight: 800,
-              color: 'white'
-            }}>
-              {preparingOrders.length}
-            </div>
-          </div>
-
-          {/* Order Numbers */}
-          <div style={{
-            flex: 1,
-            padding: '1rem',
-            overflowY: 'auto',
-            display: 'flex',
-            flexWrap: 'wrap',
-            alignContent: 'flex-start',
-            gap: '0.75rem'
-          }}>
-            {preparingOrders.length > 0 ? (
-              preparingOrders.map(order => (
-                <OrderNumberCard
-                  key={order.id}
-                  orderNumber={order.orderNumber}
-                  isNew={false}
-                  variant="preparing"
-                />
-              ))
-            ) : (
-              <EmptyState
-                icon={<ChefHat size={48} />}
-                message="Tiada pesanan dalam penyediaan"
-                color="#f59e0b"
-              />
-            )}
-          </div>
-        </div>
-
-        {/* SEDIA DIAMBIL Column */}
-        <div className="order-column" style={{
-          background: 'rgba(16, 185, 129, 0.1)',
-          borderRadius: '20px',
-          overflow: 'hidden',
-          display: 'flex',
-          flexDirection: 'column',
-          border: '2px solid rgba(16, 185, 129, 0.3)'
-        }}>
-          {/* Header */}
-          <div style={{
-            padding: '1rem 1.5rem',
-            background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              <CheckCircle size={28} color="white" />
-              <span style={{
-                fontSize: '1.4rem',
-                fontWeight: 800,
-                color: 'white',
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em'
-              }}>
-                Sedia Diambil
-              </span>
-            </div>
-            <div style={{
-              background: 'rgba(255, 255, 255, 0.3)',
-              padding: '0.4rem 1.2rem',
-              borderRadius: '50px',
-              fontSize: '1.3rem',
-              fontWeight: 800,
-              color: 'white'
-            }}>
-              {readyOrders.length}
-            </div>
-          </div>
-
-          {/* Order Numbers */}
-          <div style={{
-            flex: 1,
-            padding: '1rem',
-            overflowY: 'auto',
-            display: 'flex',
-            flexWrap: 'wrap',
-            alignContent: 'flex-start',
-            gap: '0.75rem'
-          }}>
-            {readyOrders.length > 0 ? (
-              readyOrders.map(order => (
-                <OrderNumberCard
-                  key={order.id}
-                  orderNumber={order.orderNumber}
-                  isNew={newReadyOrders.has(order.id)}
-                  variant="ready"
-                />
-              ))
-            ) : (
-              <EmptyState
-                icon={<CheckCircle size={48} />}
-                message="Tiada pesanan siap"
-                color="#10b981"
-              />
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Footer - Instruction */}
+      {/* Grid */}
       <div style={{
-        position: 'fixed',
-        bottom: '0.75rem',
-        left: '50%',
-        transform: 'translateX(-50%)',
-        background: 'rgba(255, 255, 255, 0.1)',
-        backdropFilter: 'blur(10px)',
-        padding: '0.6rem 1.5rem',
-        borderRadius: '50px',
-        color: 'rgba(255, 255, 255, 0.7)',
-        fontSize: '0.9rem',
-        fontWeight: 500,
-        border: '1px solid rgba(255, 255, 255, 0.1)',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '0.5rem'
+        display: 'grid',
+        gridTemplateColumns: '1fr 1.25fr 1.25fr',
+        gap: '1.5rem',
+        flex: 1,
+        minHeight: 0
       }}>
-        <CheckCircle size={16} />
-        Sila ambil pesanan anda apabila nombor dipaparkan di bahagian "Sedia Diambil"
+
+        {/* Queue Column */}
+        <ColumnCard
+          title="Dalam Giliran"
+          count={pendingOrders.length}
+          icon={<Users size={24} />}
+          theme="blue"
+        >
+          {pendingOrders.length > 0 ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              {pendingOrders.map((order, i) => (
+                <QueueItem
+                  key={order.id}
+                  order={order}
+                  position={i + 1}
+                  estimatedWait={getEstimatedWaitTime(i + 1)}
+                />
+              ))}
+            </div>
+          ) : (
+            <EmptyState icon={<Users size={48} />} message="Tiada giliran" />
+          )}
+        </ColumnCard>
+
+        {/* Preparing Column */}
+        <ColumnCard
+          title="Sedang Dibuat"
+          count={preparingOrders.length}
+          icon={<ChefHat size={24} />}
+          theme="amber"
+        >
+          {preparingOrders.length > 0 ? (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', alignContent: 'flex-start' }}>
+              {preparingOrders.map(order => (
+                <OrderCard key={order.id} orderNumber={order.orderNumber} theme="amber" />
+              ))}
+            </div>
+          ) : (
+            <EmptyState icon={<ChefHat size={48} />} message="Dapur tenang" />
+          )}
+        </ColumnCard>
+
+        {/* Ready Column */}
+        <ColumnCard
+          title="Sedia Diambil"
+          count={readyOrders.length}
+          icon={<CheckCircle size={24} />}
+          theme="emerald"
+        >
+          {readyOrders.length > 0 ? (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', alignContent: 'flex-start' }}>
+              {readyOrders.map(order => (
+                <OrderCard
+                  key={order.id}
+                  orderNumber={order.orderNumber}
+                  theme="emerald"
+                  isNew={newReadyOrders.has(order.id)}
+                />
+              ))}
+            </div>
+          ) : (
+            <EmptyState icon={<CheckCircle size={48} />} message="Menunggu pesanan" />
+          )}
+        </ColumnCard>
+
+      </div>
+
+      {/* Footer */}
+      <div style={{ textAlign: 'center', color: '#64748b', fontSize: '0.875rem', fontWeight: 500 }}>
+        Sila semak nombor pesanan anda di bahagian "Sedia Diambil"
       </div>
     </div>
   );
 }
 
-// Stat Badge Component for header
-function StatBadge({
-  icon,
-  label,
-  value,
-  color
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: number;
-  color: string;
-}) {
+// Sub-components
+function StatCounter({ icon, label, value, color }: { icon: any, label: string, value: number, color: 'blue' | 'amber' | 'emerald' }) {
+  const colors = {
+    blue: '#3b82f6',
+    amber: '#f59e0b',
+    emerald: '#10b981'
+  };
+
   return (
-    <div style={{
-      display: 'flex',
-      alignItems: 'center',
-      gap: '0.5rem',
-      padding: '0.5rem 1rem',
-      background: `${color}20`,
-      borderRadius: '12px',
-      border: `2px solid ${color}40`
-    }}>
-      <div style={{ color }}>{icon}</div>
+    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+      <div style={{
+        color: colors[color],
+        background: `${colors[color]}15`,
+        padding: '0.5rem',
+        borderRadius: '0.5rem'
+      }}>{icon}</div>
       <div>
-        <div style={{ fontSize: '1.25rem', fontWeight: 800, color }}>{value}</div>
-        <div style={{ fontSize: '0.7rem', color: `${color}cc`, fontWeight: 600 }}>{label}</div>
+        <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#1e293b', lineHeight: 1 }}>{value}</div>
+        <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>{label}</div>
       </div>
     </div>
   );
 }
 
-// Queue Card Component with position and estimated time
-function QueueCard({
-  orderNumber,
-  position,
-  estimatedTime,
-  timeColor
-}: {
-  orderNumber: string;
-  position: number;
-  estimatedTime: string;
-  timeColor: string;
-}) {
+function ControlButton({ onClick, active, iconActive, iconInactive }: any) {
   return (
-    <div
-      className="queue-card"
-      style={{
-        background: 'rgba(59, 130, 246, 0.15)',
-        border: '2px solid rgba(59, 130, 246, 0.3)',
-        borderRadius: '14px',
-        padding: '0.75rem 1rem',
+    <button onClick={onClick} style={{
+      padding: '0.75rem',
+      borderRadius: '0.75rem',
+      background: active ? '#f0fdf4' : '#fef2f2',
+      border: `1px solid ${active ? '#bbf7d0' : '#fecaca'}`,
+      color: active ? '#16a34a' : '#dc2626',
+      cursor: 'pointer',
+      transition: 'all 0.2s'
+    }}>
+      {active ? iconActive : iconInactive}
+    </button>
+  );
+}
+
+function ColumnCard({ title, count, icon, children, theme }: any) {
+  const themes = {
+    blue: { bg: '#eff6ff', border: '#dbeafe', text: '#1e40af', iconBg: '#2563eb' },
+    amber: { bg: '#fffbeb', border: '#fef3c7', text: '#92400e', iconBg: '#d97706' },
+    emerald: { bg: '#f0fdf4', border: '#dcfce7', text: '#166534', iconBg: '#16a34a' }
+  };
+
+  // @ts-ignore
+  const t = themes[theme];
+
+  return (
+    <div className="glass-panel" style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      {/* Header */}
+      <div style={{
+        padding: '1.25rem',
+        background: t.bg,
+        borderBottom: `1px solid ${t.border}`,
         display: 'flex',
-        alignItems: 'center',
         justifyContent: 'space-between',
-        transition: 'all 0.3s ease',
-      }}
-    >
-      {/* Position & Order Number */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+        alignItems: 'center'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <div style={{
+            background: 'white',
+            padding: '0.4rem',
+            borderRadius: '0.5rem',
+            color: t.iconBg,
+            boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+          }}>{icon}</div>
+          <h2 style={{ fontSize: '1.1rem', fontWeight: 700, color: t.text, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            {title}
+          </h2>
+        </div>
         <div style={{
-          width: '36px',
-          height: '36px',
-          background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
-          borderRadius: '10px',
+          background: 'white',
+          color: t.text,
+          fontWeight: 800,
+          padding: '0.25rem 0.75rem',
+          borderRadius: '999px',
+          fontSize: '1rem',
+          boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+        }}>
+          {count}
+        </div>
+      </div>
+
+      {/* Body */}
+      <div style={{ padding: '1.25rem', flex: 1, overflowY: 'auto', background: 'white' }}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function QueueItem({ order, position, estimatedWait }: any) {
+  return (
+    <div className="animate-card" style={{
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      padding: '1rem',
+      background: 'white',
+      border: '1px solid #e2e8f0',
+      borderRadius: '0.75rem',
+      boxShadow: '0 1px 2px rgba(0,0,0,0.02)'
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+        <div style={{
+          background: '#f1f5f9',
+          color: '#64748b',
+          fontSize: '0.875rem',
+          fontWeight: 700,
+          width: '32px',
+          height: '32px',
+          borderRadius: '0.5rem',
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'center',
-          color: 'white',
-          fontWeight: 800,
-          fontSize: '1rem'
+          justifyContent: 'center'
         }}>
           #{position}
         </div>
-        <div style={{
-          fontSize: '1.4rem',
-          fontWeight: 800,
-          color: '#60a5fa',
-          letterSpacing: '0.02em',
-          fontVariantNumeric: 'tabular-nums'
-        }}>
-          {orderNumber}
-        </div>
+        <span style={{ fontSize: '1.25rem', fontWeight: 700, color: '#334155' }}>{order.orderNumber}</span>
       </div>
-
-      {/* Estimated Wait Time */}
       <div style={{
         display: 'flex',
         alignItems: 'center',
         gap: '0.4rem',
-        padding: '0.4rem 0.75rem',
-        background: `${timeColor}20`,
-        borderRadius: '8px',
-        border: `1px solid ${timeColor}40`
+        fontSize: '0.8rem',
+        color: '#64748b',
+        background: '#f8fafc',
+        padding: '0.4rem 0.6rem',
+        borderRadius: '0.5rem'
       }}>
-        <Clock size={14} color={timeColor} />
-        <span style={{
-          fontSize: '0.85rem',
-          fontWeight: 700,
-          color: timeColor
-        }}>
-          {estimatedTime}
-        </span>
+        <Clock size={14} />
+        {estimatedWait}
       </div>
     </div>
   );
 }
 
-// Order Number Card Component
-function OrderNumberCard({
-  orderNumber,
-  isNew,
-  variant
-}: {
-  orderNumber: string;
-  isNew: boolean;
-  variant: 'preparing' | 'ready';
-}) {
-  const baseStyles = variant === 'ready'
-    ? {
-      background: isNew
-        ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
-        : 'rgba(16, 185, 129, 0.2)',
-      border: `3px solid ${isNew ? '#10b981' : 'rgba(16, 185, 129, 0.4)'}`,
-      color: isNew ? 'white' : '#10b981',
-    }
-    : {
-      background: 'rgba(251, 191, 36, 0.2)',
-      border: '3px solid rgba(251, 191, 36, 0.4)',
-      color: '#fbbf24',
-    };
+function OrderCard({ orderNumber, theme, isNew }: any) {
+  const themes = {
+    amber: { bg: '#fff7ed', border: '#fed7aa', text: '#c2410c' },
+    emerald: { bg: '#ecfdf5', border: '#6ee7b7', text: '#059669' }
+  };
+  // @ts-ignore
+  const t = themes[theme];
 
   return (
-    <div
-      className={`order-card ${isNew ? 'order-number-new' : ''}`}
-      style={{
-        ...baseStyles,
-        borderRadius: '14px',
-        padding: '1.25rem 1.75rem',
-        minWidth: '140px',
-        textAlign: 'center',
-        transition: 'all 0.3s ease',
-      }}
-    >
-      <div style={{
-        fontSize: '2rem',
-        fontWeight: 800,
-        letterSpacing: '0.02em',
-        fontVariantNumeric: 'tabular-nums'
-      }}>
-        {orderNumber}
-      </div>
+    <div className={`animate-card ${isNew ? 'order-number-new' : ''}`} style={{
+      flex: '1 1 auto',
+      minWidth: '120px',
+      textAlign: 'center',
+      padding: '1.5rem 1rem',
+      background: isNew ? '#10b981' : 'white',
+      border: `2px solid ${isNew ? '#10b981' : '#e2e8f0'}`,
+      borderRadius: '1rem',
+      color: isNew ? 'white' : '#334155',
+      boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
+    }}>
+      <div style={{ fontSize: '2rem', fontWeight: 800 }}>{orderNumber}</div>
     </div>
   );
 }
 
-// Empty State Component
-function EmptyState({
-  icon,
-  message,
-  color
-}: {
-  icon: React.ReactNode;
-  message: string;
-  color: string;
-}) {
+function EmptyState({ icon, message }: any) {
   return (
     <div style={{
+      height: '100%',
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
       justifyContent: 'center',
-      width: '100%',
-      height: '100%',
-      minHeight: '150px',
-      color: color,
-      opacity: 0.4
+      color: '#cbd5e1',
+      gap: '1rem',
+      minHeight: '200px'
     }}>
       {icon}
-      <span style={{
-        marginTop: '0.75rem',
-        fontSize: '1rem',
-        fontWeight: 500,
-        textAlign: 'center'
-      }}>
-        {message}
-      </span>
+      <span style={{ fontSize: '1rem', fontWeight: 500 }}>{message}</span>
     </div>
-  );
+  )
 }

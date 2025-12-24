@@ -73,9 +73,13 @@ export default function DeliveryHubPage() {
 
   const getPlatformColor = (platform: string) => {
     switch (platform) {
+      case 'GoMamam': return 'var(--primary)';
       case 'Grab': return '#00b14f';
+      case 'GrabFood': return '#00b14f';
       case 'Panda': return '#d70f64';
+      case 'FoodPanda': return '#d70f64';
       case 'Shopee': return '#ee4d2d';
+      case 'ShopeeFood': return '#ee4d2d';
       default: return 'var(--primary)';
     }
   };

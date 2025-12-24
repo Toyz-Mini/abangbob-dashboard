@@ -513,7 +513,7 @@ export default function OrderHistoryPage() {
               pagination
               pageSize={10}
               emptyMessage={
-                <div style={{ textAlign: 'center', padding: '3rem' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '3rem' }}>
                   <History size={48} style={{ color: 'var(--text-secondary)', marginBottom: '1rem', opacity: 0.5 }} />
                   <p style={{ color: 'var(--text-secondary)' }}>Tiada pesanan dijumpai</p>
                 </div>

@@ -213,6 +213,8 @@ export function hasPermission(
   if (!role) return false;
 
   const rolePermissions = ROLE_PERMISSIONS[role];
+  if (!rolePermissions) return false;
+
   const categoryPermission = rolePermissions.find(p => p.category === category);
 
   if (!categoryPermission) return false;
@@ -258,6 +260,8 @@ export function getAllowedActions(
   if (!role) return [];
 
   const rolePermissions = ROLE_PERMISSIONS[role];
+  if (!rolePermissions) return [];
+
   const categoryPermission = rolePermissions.find(p => p.category === category);
 
   return categoryPermission?.actions || [];

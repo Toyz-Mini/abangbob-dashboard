@@ -31,6 +31,8 @@ export default function StatCard({
     'warning': 'subtle',
     'info': 'subtle',
     'subtle': 'subtle',
+    'peach': 'subtle',
+    'amber': 'subtle',
     'none': 'none'
   };
 
