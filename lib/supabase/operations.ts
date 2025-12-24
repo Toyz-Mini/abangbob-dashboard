@@ -2187,53 +2187,134 @@ export async function fetchPromotions(status?: string) {
   if (!supabase) return [];
 
   let query = supabase
-    .from('promotions')
+    .from('promo_codes')
     .select('*')
     .order('created_at', { ascending: false });
 
-  if (status) query = query.eq('status', status);
+  if (status) {
+    if (status === 'active') query = query.eq('is_active', true);
+    if (status === 'inactive') query = query.eq('is_active', false);
+  }
 
   const { data, error } = await query;
 
   if (error) {
-    console.error('Error fetching promotions:', error);
+    console.error('Error fetching promotions (promo_codes):', error);
     return [];
   }
 
-  return toCamelCase(data || []);
+  // Map promo_codes logic back to Promotion interface
+  return (data || []).map((pc: any) => ({
+    id: pc.id,
+    name: pc.description || pc.code, // Map description to Name
+    description: pc.description,
+    type: pc.discount_type === 'fixed' ? 'fixed_amount' : 'percentage',
+    value: pc.discount_value,
+    minPurchase: pc.min_spend,
+    maxDiscount: pc.max_discount_amount,
+    promoCode: pc.code,
+    applicableItems: [], // Not supported in simple promo_codes
+    startDate: pc.start_date,
+    endDate: pc.end_date,
+    daysOfWeek: [], // Not supported
+    startTime: undefined, // Not supported
+    endTime: undefined, // Not supported
+    usageLimit: pc.usage_limit,
+    usageCount: pc.usage_count,
+    status: pc.is_active ? 'active' : 'inactive',
+    createdAt: pc.created_at,
+  }));
 }
 
 export async function insertPromotion(promotion: any) {
   const supabase = getSupabaseClient();
   if (!supabase) throw new Error('Supabase not connected');
 
-  const snakeCasedPromotion = toSnakeCase(promotion);
+  // Map Promotion to promo_codes columns
+  const dbData = {
+    id: promotion.id,
+    code: promotion.promoCode || promotion.name.replace(/\s+/g, '').toUpperCase().slice(0, 10),
+    description: promotion.name + (promotion.description ? ` - ${promotion.description}` : ''),
+    discount_type: promotion.type === 'fixed_amount' ? 'fixed' : 'percentage',
+    discount_value: promotion.value,
+    min_spend: promotion.minPurchase || 0,
+    max_discount_amount: promotion.maxDiscount || null,
+    start_date: promotion.startDate,
+    end_date: promotion.endDate,
+    usage_limit: promotion.usageLimit || null,
+    usage_count: 0,
+    is_active: promotion.status === 'active',
+  };
 
   // @ts-ignore
   const { data, error } = await supabase
-    .from('promotions')
-    .insert(snakeCasedPromotion)
+    .from('promo_codes')
+    .insert(dbData)
     .select()
     .single();
 
   if (error) throw error;
-  return toCamelCase(data);
+
+  // Return mapped back
+  const pc = data;
+  return {
+    id: pc.id,
+    name: promotion.name,
+    description: promotion.description,
+    type: promotion.type,
+    value: promotion.value,
+    minPurchase: promotion.minPurchase,
+    maxDiscount: promotion.maxDiscount,
+    promoCode: pc.code,
+    applicableItems: promotion.applicableItems,
+    startDate: pc.start_date,
+    endDate: pc.end_date,
+    daysOfWeek: promotion.daysOfWeek,
+    startTime: promotion.startTime,
+    endTime: promotion.endTime,
+    usageLimit: pc.usage_limit,
+    usageCount: pc.usage_count,
+    status: pc.is_active ? 'active' : 'inactive',
+    createdAt: pc.created_at,
+  };
 }
 
 export async function updatePromotion(id: string, updates: any) {
   const supabase = getSupabaseClient();
   if (!supabase) throw new Error('Supabase not connected');
 
+  // Map updates
+  const dbUpdates: any = {};
+  if (updates.promoCode !== undefined) dbUpdates.code = updates.promoCode;
+  if (updates.name !== undefined) dbUpdates.description = updates.name; // Simple mapping
+  if (updates.type !== undefined) dbUpdates.discount_type = updates.type === 'fixed_amount' ? 'fixed' : 'percentage';
+  if (updates.value !== undefined) dbUpdates.discount_value = updates.value;
+  if (updates.minPurchase !== undefined) dbUpdates.min_spend = updates.minPurchase;
+  if (updates.maxDiscount !== undefined) dbUpdates.max_discount_amount = updates.maxDiscount;
+  if (updates.startDate !== undefined) dbUpdates.start_date = updates.startDate;
+  if (updates.endDate !== undefined) dbUpdates.end_date = updates.endDate;
+  if (updates.usageLimit !== undefined) dbUpdates.usage_limit = updates.usageLimit;
+  if (updates.status !== undefined) dbUpdates.is_active = updates.status === 'active';
+
   // @ts-ignore
   const { data, error } = await supabase
-    .from('promotions')
-    .update(toSnakeCase(updates))
+    .from('promo_codes')
+    .update(dbUpdates)
     .eq('id', id)
     .select()
     .single();
 
   if (error) throw error;
-  return toCamelCase(data);
+  const pc = data;
+
+  // Return mapped back (merging with updates for full object effect if needed, but here sufficient to identify)
+  return {
+    ...updates, // Optimistic return of what we sent + DB confirmed fields
+    id: pc.id,
+    promoCode: pc.code,
+    status: pc.is_active ? 'active' : 'inactive',
+    // We don't fetch full fields to reconstruction unless necessary, but store handles it.
+  };
 }
 
 export async function deletePromotion(id: string) {
@@ -2241,7 +2322,7 @@ export async function deletePromotion(id: string) {
   if (!supabase) throw new Error('Supabase not connected');
 
   const { error } = await supabase
-    .from('promotions')
+    .from('promo_codes')
     .delete()
     .eq('id', id);
 
@@ -2392,3 +2473,57 @@ export async function updateCashRegister(id: string, updates: any) {
 }
 
 
+export async function insertLoyaltyTransaction(transaction: any) {
+    const supabase = getSupabaseClient();
+    if (!supabase) throw new Error('Supabase not connected');
+
+    const snakeCasedTransaction = toSnakeCase(transaction);
+
+    // @ts-ignore
+    const { data, error } = await supabase
+        .from('loyalty_transactions')
+        .insert(snakeCasedTransaction)
+        .select()
+        .single();
+
+    if (error) throw error;
+    return toCamelCase(data);
+}
+
+export async function insertPromoUsage(usage: any) {
+    const supabase = getSupabaseClient();
+    if (!supabase) throw new Error('Supabase not connected');
+
+    const snakeCasedUsage = toSnakeCase(usage);
+
+    // @ts-ignore
+    const { data, error } = await supabase
+        .from('promo_usages')
+        .insert(snakeCasedUsage)
+        .select()
+        .single();
+
+    if (error) throw error;
+    return toCamelCase(data);
+}
+
+export async function incrementPromoUsageCount(promoCodeId: string) {
+    const supabase = getSupabaseClient();
+    if (!supabase) throw new Error('Supabase not connected');
+
+    // get current count first
+    const { data: promo, error: fetchError } = await supabase
+        .from('promo_codes')
+        .select('usage_count')
+        .eq('id', promoCodeId)
+        .single();
+
+    if (fetchError || !promo) return;
+
+    const newCount = (promo.usage_count || 0) + 1;
+
+    await supabase
+        .from('promo_codes')
+        .update({ usage_count: newCount })
+        .eq('id', promoCodeId);
+}

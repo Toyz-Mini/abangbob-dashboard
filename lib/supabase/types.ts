@@ -177,6 +177,10 @@ export interface Database {
           preparing_started_at: string | null;
           ready_at: string | null;
           outlet_id: string | null;
+          promo_code_id: string | null;
+          discount_amount: number;
+          loyalty_points_earned: number;
+          loyalty_points_redeemed: number;
         };
         Insert: {
           id?: string;
@@ -200,6 +204,10 @@ export interface Database {
           preparing_started_at?: string | null;
           ready_at?: string | null;
           outlet_id?: string | null;
+          promo_code_id?: string | null;
+          discount_amount?: number;
+          loyalty_points_earned?: number;
+          loyalty_points_redeemed?: number;
         };
         Update: {
           id?: string;
@@ -223,6 +231,10 @@ export interface Database {
           preparing_started_at?: string | null;
           ready_at?: string | null;
           outlet_id?: string | null;
+          promo_code_id?: string | null;
+          discount_amount?: number;
+          loyalty_points_earned?: number;
+          loyalty_points_redeemed?: number;
         };
       };
       // Menu items
@@ -559,6 +571,117 @@ export interface Database {
           outlet_id?: string | null;
         };
       };
+      // Loyalty Transactions
+      loyalty_transactions: {
+        Row: {
+          id: string;
+          created_at: string;
+          customer_id: string;
+          order_id: string | null;
+          transaction_type: 'earn' | 'redeem' | 'adjust' | 'expire';
+          points: number;
+          description: string | null;
+        };
+        Insert: {
+          id?: string;
+          created_at?: string;
+          customer_id: string;
+          order_id?: string | null;
+          transaction_type: 'earn' | 'redeem' | 'adjust' | 'expire';
+          points: number;
+          description?: string | null;
+        };
+        Update: {
+          id?: string;
+          created_at?: string;
+          customer_id?: string;
+          order_id?: string | null;
+          transaction_type?: 'earn' | 'redeem' | 'adjust' | 'expire';
+          points?: number;
+          description?: string | null;
+        };
+      };
+      // Promo Codes
+      promo_codes: {
+        Row: {
+          id: string;
+          created_at: string;
+          updated_at: string;
+          code: string;
+          description: string | null;
+          discount_type: 'percentage' | 'fixed';
+          discount_value: number;
+          min_spend: number;
+          max_discount_amount: number | null;
+          start_date: string;
+          end_date: string | null;
+          usage_limit: number | null;
+          usage_count: number;
+          is_active: boolean;
+          outlet_id: string | null;
+        };
+        Insert: {
+          id?: string;
+          created_at?: string;
+          updated_at?: string;
+          code: string;
+          description?: string | null;
+          discount_type: 'percentage' | 'fixed';
+          discount_value: number;
+          min_spend?: number;
+          max_discount_amount?: number | null;
+          start_date?: string;
+          end_date?: string | null;
+          usage_limit?: number | null;
+          usage_count?: number;
+          is_active?: boolean;
+          outlet_id?: string | null;
+        };
+        Update: {
+          id?: string;
+          created_at?: string;
+          updated_at?: string;
+          code?: string;
+          description?: string | null;
+          discount_type?: 'percentage' | 'fixed';
+          discount_value?: number;
+          min_spend?: number;
+          max_discount_amount?: number | null;
+          start_date?: string;
+          end_date?: string | null;
+          usage_limit?: number | null;
+          usage_count?: number;
+          is_active?: boolean;
+          outlet_id?: string | null;
+        };
+      };
+      // Promo Usages
+      promo_usages: {
+        Row: {
+          id: string;
+          created_at: string;
+          promo_code_id: string;
+          customer_id: string | null;
+          order_id: string;
+          discount_amount: number;
+        };
+        Insert: {
+          id?: string;
+          created_at?: string;
+          promo_code_id: string;
+          customer_id?: string | null;
+          order_id: string;
+          discount_amount: number;
+        };
+        Update: {
+          id?: string;
+          created_at?: string;
+          promo_code_id?: string;
+          customer_id?: string | null;
+          order_id?: string;
+          discount_amount?: number;
+        };
+      };
     };
     Views: {
       [_ in never]: never;
@@ -589,6 +712,9 @@ export type Customer = Tables<'customers'>;
 export type Expense = Tables<'expenses'>;
 export type Outlet = Tables<'outlets'>;
 export type AuditLog = Tables<'audit_logs'>;
+export type LoyaltyTransaction = Tables<'loyalty_transactions'>;
+export type PromoCode = Tables<'promo_codes'>;
+export type PromoUsage = Tables<'promo_usages'>;
 
 
 

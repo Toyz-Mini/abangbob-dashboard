@@ -399,7 +399,52 @@ export async function syncAddOrder(order: any) {
   if (!isSupabaseSyncEnabled()) return null;
 
   try {
-    return await ops.insertOrder(order);
+    const savedOrder = await ops.insertOrder(order);
+
+    // If order saved successfully, handle side effects (Loyalty & Promo)
+    if (savedOrder && savedOrder.id) {
+      // Wrap side effects in independent try-catch blocks to ensure order return is not blocked
+      try {
+        // 1. Loyalty Points Earned
+        if (order.loyaltyPointsEarned > 0 && order.customerId) {
+          await ops.insertLoyaltyTransaction({
+            customerId: order.customerId,
+            orderId: savedOrder.id,
+            transactionType: 'earn',
+            points: order.loyaltyPointsEarned,
+            description: `Points from Order #${order.orderNumber}`
+          });
+        }
+
+        // 2. Loyalty Points Redeemed
+        if (order.loyaltyPointsRedeemed > 0 && order.customerId) {
+          await ops.insertLoyaltyTransaction({
+            customerId: order.customerId,
+            orderId: savedOrder.id,
+            transactionType: 'redeem',
+            points: order.loyaltyPointsRedeemed, // Use positive value, transactionType defines direction
+            description: `Redeemed for Order #${order.orderNumber}`
+          });
+        }
+
+        // 3. Promo Code Usage
+        if (order.promoCodeId) {
+          await ops.insertPromoUsage({
+            promoCodeId: order.promoCodeId,
+            orderId: savedOrder.id,
+            customerId: order.customerId || null,
+            discountAmount: order.discountAmount || 0
+          });
+          await ops.incrementPromoUsageCount(order.promoCodeId);
+        }
+      } catch (sideEffectError) {
+        console.error('Failed to process order side effects (Loyalty/Promo):', sideEffectError);
+        // We do NOT re-throw here, as the order itself was successful.
+        // Future improvement: retry queue for side effects.
+      }
+    }
+
+    return savedOrder;
   } catch (error) {
     console.error('Failed to sync order to Supabase:', error);
     // Offline Queue

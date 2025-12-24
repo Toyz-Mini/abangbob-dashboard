@@ -4,8 +4,29 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useStore } from '@/lib/store';
 import { OrderItem, Order } from '@/lib/types';
-import { ChevronLeft, MapPin, Clock, CreditCard, Banknote, User, Plus } from 'lucide-react';
-import { motion } from 'framer-motion';
+import {
+    ChevronLeft, MapPin,
+    Clock,
+    CreditCard,
+    DollarSign,
+    CheckCircle,
+    ShoppingBag,
+    ChevronDown,
+    ChevronUp,
+    AlertCircle,
+    Loader2,
+    Gift,
+    Coins,
+    X,
+    User,
+    Plus,
+    Tag,
+    Check,
+    Banknote
+} from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { verifyPromoCode, getCustomerPoints, calculateRedemptionValue, calculatePointsEarned, PromoValidationResult } from '@/lib/logic/promo-loyalty';
+import { PromoCode } from '@/lib/supabase/types';
 
 export default function CheckoutPage() {
     const router = useRouter();
@@ -17,6 +38,17 @@ export default function CheckoutPage() {
     const [pickupTime, setPickupTime] = useState('');
     const [paymentMethod, setPaymentMethod] = useState<'cash' | 'qr'>('qr');
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    // Advanced Features State
+    const [promoCodeInput, setPromoCodeInput] = useState('');
+    const [appliedPromo, setAppliedPromo] = useState<PromoCode | null>(null);
+    const [promoDiscount, setPromoDiscount] = useState(0);
+    const [promoError, setPromoError] = useState('');
+    const [isVerifyingPromo, setIsVerifyingPromo] = useState(false);
+
+    const [availablePoints, setAvailablePoints] = useState(0);
+    const [usePoints, setUsePoints] = useState(false);
+    const [redeemableAmount, setRedeemableAmount] = useState(0);
 
     useEffect(() => {
         if (typeof window !== 'undefined') {
@@ -41,9 +73,50 @@ export default function CheckoutPage() {
         }
     }, [router]);
 
+    // Fetch Loyalty Points when customer loads
+    useEffect(() => {
+        if (customer?.id) {
+            getCustomerPoints(customer.id).then(points => {
+                setAvailablePoints(points);
+                setRedeemableAmount(calculateRedemptionValue(points));
+            });
+        }
+    }, [customer]);
+
     const subtotal = cart.reduce((total, item) => total + (item.price * item.quantity), 0);
-    // Assuming 0 tax/fees for now as not specified logic
-    const total = subtotal;
+
+    // Calculate final total
+    const pointsDiscount = usePoints ? redeemableAmount : 0;
+    // ensure total doesn't go below 0
+    let total = Math.max(0, subtotal - promoDiscount - pointsDiscount);
+
+    // Logic: Points earned on final paid amount
+    const pointsToEarn = calculatePointsEarned(total);
+
+    const handleApplyPromo = async () => {
+        if (!promoCodeInput.trim()) return;
+        setIsVerifyingPromo(true);
+        setPromoError('');
+
+        const result = await verifyPromoCode(promoCodeInput, subtotal);
+        setIsVerifyingPromo(false);
+
+        if (result.isValid && result.promoCode) {
+            setAppliedPromo(result.promoCode);
+            setPromoDiscount(result.discountAmount);
+            setPromoCodeInput(''); // clear input
+        } else {
+            setAppliedPromo(null);
+            setPromoDiscount(0);
+            setPromoError(result.error || 'Invalid code');
+        }
+    };
+
+    const removePromo = () => {
+        setAppliedPromo(null);
+        setPromoDiscount(0);
+        setPromoCodeInput('');
+    };
 
     // Derived: Upsell items (simple logic: items not in cart)
     const upsellItems = menuItems
@@ -95,18 +168,27 @@ export default function CheckoutPage() {
                 customerId: customer?.id,
                 customerName: `${customer?.name || 'Guest'} (Pick-up: ${pickupTime})`,
                 customerPhone: customer?.phone,
-                redeemedPoints: 0,
-                redemptionAmount: 0
+                // Advanced Fields
+                promoCodeId: appliedPromo?.id || null,
+                discountAmount: promoDiscount,
+                loyaltyPointsEarned: pointsToEarn,
+                loyaltyPointsRedeemed: usePoints ? Math.floor(availablePoints / 100) * 100 : 0, // blocks of 100
+                redemptionAmount: pointsDiscount
             };
 
-            await addOrder(orderData as any);
+            const newOrder = await addOrder(orderData as any);
 
             // Clear cart
             sessionStorage.removeItem('onlineCart');
             sessionStorage.removeItem('pickupTime');
             // Keep customer logged in
 
-            router.push('/order-online/success');
+            if (newOrder && newOrder.id) {
+                router.push(`/order-online/status/${newOrder.id}`);
+            } else {
+                // Fallback if ID handling fails (e.g. offline queue only)
+                router.push('/order-online/success');
+            }
         } catch (error) {
             console.error('Order failed', error);
             alert('Gagal membuat pesanan. Sila cuba lagi.');
@@ -213,6 +295,85 @@ export default function CheckoutPage() {
                     </div>
                 )}
 
+                {/* Promo Code Section */}
+                <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+                    <h2 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
+                        <Tag size={16} className="text-orange-500" />
+                        Promo Code
+                    </h2>
+
+                    {appliedPromo ? (
+                        <div className="bg-green-50 border border-green-200 rounded-xl p-3 flex justify-between items-center">
+                            <div className="flex items-center gap-2">
+                                <div className="bg-green-100 p-1.5 rounded-full text-green-700">
+                                    <Check size={14} />
+                                </div>
+                                <div>
+                                    <p className="font-bold text-green-800 text-sm">{appliedPromo.code}</p>
+                                    <p className="text-xs text-green-600">Diskaun BND {promoDiscount.toFixed(2)} applied</p>
+                                </div>
+                            </div>
+                            <button onClick={removePromo} className="text-gray-400 hover:text-red-500">
+                                <X size={18} />
+                            </button>
+                        </div>
+                    ) : (
+                        <div className="flex gap-2">
+                            <input
+                                type="text"
+                                value={promoCodeInput}
+                                onChange={(e) => setPromoCodeInput(e.target.value)}
+                                placeholder="Masukkan kod"
+                                className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-500 uppercase"
+                            />
+                            <button
+                                onClick={handleApplyPromo}
+                                disabled={isVerifyingPromo || !promoCodeInput}
+                                className="bg-gray-900 text-white px-4 rounded-xl font-bold text-sm disabled:opacity-50"
+                            >
+                                {isVerifyingPromo ? 'Check...' : 'Apply'}
+                            </button>
+                        </div>
+                    )}
+                    {promoError && <p className="text-red-500 text-xs mt-2 ml-1">{promoError}</p>}
+                </div>
+
+                {/* Loyalty Points Section */}
+                {customer && availablePoints >= 100 && (
+                    <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+                        <div className="flex justify-between items-start mb-3">
+                            <h2 className="font-bold text-gray-800 flex items-center gap-2">
+                                <Gift size={16} className="text-orange-500" />
+                                Guna Points
+                            </h2>
+                            <div className="flex justify-between items-center bg-orange-50 p-4 rounded-xl border border-orange-100">
+                                <div>
+                                    <p className="font-bold text-gray-800 flex items-center gap-2">
+                                        <Coins size={18} className="text-orange-500" />
+                                        {availablePoints} Points Available
+                                    </p>
+                                    <p className="text-xs text-gray-500 mt-1">100 Pts = BND 5.00</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div
+                            onClick={() => setUsePoints(!usePoints)}
+                            className={`p-3 rounded-xl border flex items-center justify-between cursor-pointer transition-all ${usePoints ? 'border-orange-500 bg-orange-50' : 'border-gray-200'}`}
+                        >
+                            <div className="flex flex-col">
+                                <span className={`font-bold text-sm ${usePoints ? 'text-orange-800' : 'text-gray-700'}`}>
+                                    Tebus {Math.floor(availablePoints / 100) * 100} Points
+                                </span>
+                                <span className="text-xs text-gray-500">Jimat BND {redeemableAmount.toFixed(2)}</span>
+                            </div>
+                            <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${usePoints ? 'border-orange-500 bg-orange-500' : 'border-gray-300'}`}>
+                                {usePoints && <Check size={14} className="text-white" />}
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 {/* Payment Method */}
                 <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
                     <h2 className="font-bold text-gray-800 mb-3">Cara Pembayaran</h2>
@@ -245,15 +406,35 @@ export default function CheckoutPage() {
             {/* Bottom Bar - Total & Place Order */}
             <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-100 z-20">
                 <div className="max-w-md mx-auto">
-                    <div className="flex justify-between items-center mb-4 text-sm">
-                        <span className="text-gray-600">Subtotal</span>
-                        <span className="font-bold text-gray-900">BND {subtotal.toFixed(2)}</span>
+                    <div className="space-y-2 mb-4">
+                        <div className="flex justify-between text-gray-600 mb-2">
+                            <span>Subtotal</span>
+                            <span>BND {(subtotal || 0).toFixed(2)}</span>
+                        </div>
+                        {promoDiscount > 0 && (
+                            <div className="flex justify-between text-green-600 mb-2">
+                                <span>Promo Discount</span>
+                                <span>- BND {promoDiscount.toFixed(2)}</span>
+                            </div>
+                        )}
+                        {usePoints && redeemableAmount > 0 && (
+                            <div className="flex justify-between text-orange-600 mb-2">
+                                <span>Loyalty Redemption</span>
+                                <span>- BND {redeemableAmount.toFixed(2)}</span>
+                            </div>
+                        )}
+                        <div className="flex justify-between font-bold text-gray-900 text-lg border-t pt-4">
+                            <span>Total</span>
+                            <span>BND {(total || 0).toFixed(2)}</span>
+                        </div>
                     </div>
-                    {/* Tax could go here */}
-                    <div className="flex justify-between items-center mb-6 text-xl">
-                        <span className="font-bold text-gray-800">Total</span>
-                        <span className="font-bold text-orange-600">BND {total.toFixed(2)}</span>
-                    </div>
+
+                    {customer && (
+                        <div className="bg-yellow-50 p-2 rounded-lg mb-4 flex items-center justify-center gap-2 text-xs text-yellow-800 font-medium">
+                            <Gift size={12} />
+                            Anda akan dapat +{pointsToEarn} Points!
+                        </div>
+                    )}
 
                     <button
                         disabled={isSubmitting}
