@@ -376,12 +376,12 @@ export default function HRDashboardPage() {
           {/* Sidebar Column */}
           <div className="flex flex-col gap-6">
             {/* KPI Widget */}
-            <GlassCard gradient="accent" className="animate-slide-up" style={{ animationDelay: '0.2s', color: 'white' }}>
+            <GlassCard gradient="primary" className="animate-slide-up" style={{ animationDelay: '0.2s' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <Trophy size={18} /> <span style={{ fontWeight: 700 }}>KPI Leaderboard</span>
+                  <Trophy size={18} color="var(--primary)" /> <span style={{ fontWeight: 700 }}>KPI Leaderboard</span>
                 </div>
-                <Link href="/hr/kpi" style={{ fontSize: '0.85rem', textDecoration: 'underline', opacity: 0.9 }}>Lihat Semua</Link>
+                <Link href="/hr/kpi" style={{ fontSize: '0.85rem', color: 'var(--primary)', textDecoration: 'underline' }}>Lihat Semua</Link>
               </div>
 
               {leaderboard.length > 0 ? (
@@ -392,20 +392,20 @@ export default function HRDashboardPage() {
                     return (
                       <div key={kpi.id} style={{
                         display: 'flex', alignItems: 'center', gap: '0.75rem',
-                        padding: '0.75rem', background: 'rgba(255,255,255,0.15)',
-                        borderRadius: 'var(--radius-md)', backdropFilter: 'blur(4px)'
+                        padding: '0.75rem', background: 'var(--bg-secondary)',
+                        borderRadius: 'var(--radius-md)', border: '1px solid var(--border-light)'
                       }}>
                         <span style={{ fontSize: '1.2rem' }}>{medals[idx]}</span>
                         <div style={{ flex: 1 }}>
-                          <div style={{ fontWeight: 600, fontSize: '0.95rem' }}>{staffInfo?.name}</div>
-                          <div style={{ fontSize: '0.75rem', opacity: 0.9 }}>Score: {kpi.overallScore}%</div>
+                          <div style={{ fontWeight: 600, fontSize: '0.95rem', color: 'var(--text-primary)' }}>{staffInfo?.name}</div>
+                          <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Score: {kpi.overallScore}%</div>
                         </div>
                       </div>
                     );
                   })}
                 </div>
               ) : (
-                <div style={{ textAlign: 'center', padding: '1rem', opacity: 0.8 }}>Tiada data KPI bulan ini</div>
+                <div style={{ textAlign: 'center', padding: '1rem', color: 'var(--text-secondary)' }}>Tiada data KPI bulan ini</div>
               )}
             </GlassCard>
 

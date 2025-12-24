@@ -316,6 +316,7 @@ export default function PromotionsPage() {
             change="promosi tersedia"
             changeType="neutral"
             icon={Tag}
+            gradient="subtle"
           />
           <StatCard
             label="Aktif"
@@ -495,7 +496,7 @@ export default function PromotionsPage() {
             ))}
           </div>
         ) : (
-          <div className="card" style={{ textAlign: 'center', padding: '3rem' }}>
+          <div className="card" style={{ textAlign: 'center', padding: '3rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
             <Tag size={48} color="var(--gray-400)" style={{ marginBottom: '1rem' }} />
             <p style={{ color: 'var(--text-secondary)', marginBottom: '1rem' }}>
               {filterStatus !== 'all' ? 'Tiada promosi untuk filter ini' : 'Belum ada promosi'}

@@ -631,8 +631,8 @@ export default function FinancePage() {
                 </div>
 
                 {filteredExpenses.length > 0 ? (
-                  <div className="table-responsive">
-                    <table className="table">
+                  <div style={{ overflowX: 'auto', maxWidth: '100%' }}>
+                    <table className="table" style={{ minWidth: '600px' }}>
                       <thead>
                         <tr>
                           <th>Tarikh</th>
