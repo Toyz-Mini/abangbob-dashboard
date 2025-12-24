@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import MainLayout from '@/components/MainLayout';
-import { DELIVERY_PLATFORMS } from '@/lib/delivery-data';
 import { useStore } from '@/lib/store';
 import { useDeliveryOrdersRealtime } from '@/lib/supabase/realtime-hooks';
 import { DeliveryOrder } from '@/lib/types';
@@ -10,6 +9,22 @@ import Modal from '@/components/Modal';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { Volume2, VolumeX, Printer, Bell, RefreshCw, ShoppingBag, ChefHat, CheckCircle, Truck, UserPlus } from 'lucide-react';
 import StatCard from '@/components/StatCard';
+
+// Platform config interface
+interface PlatformConfig {
+  id: string;
+  name: string;
+  enabled: boolean;
+  color: string;
+}
+
+// Default platforms (fallback if no settings)
+const DEFAULT_PLATFORMS: PlatformConfig[] = [
+  { id: 'gomamam', name: 'GoMamam', enabled: true, color: '#CC1512' },
+  { id: 'grabfood', name: 'GrabFood', enabled: false, color: '#00b14f' },
+  { id: 'foodpanda', name: 'FoodPanda', enabled: false, color: '#d70f64' },
+  { id: 'shopeefood', name: 'ShopeeFood', enabled: false, color: '#ee4d2d' },
+];
 
 // Sample driver list (in production, this would come from API)
 const AVAILABLE_DRIVERS = [
@@ -21,6 +36,21 @@ const AVAILABLE_DRIVERS = [
 
 export default function DeliveryHubPage() {
   const { deliveryOrders, updateDeliveryStatus, refreshDeliveryOrders, isInitialized } = useStore();
+
+  // Load platform settings from localStorage
+  const [platforms, setPlatforms] = useState<PlatformConfig[]>(DEFAULT_PLATFORMS);
+
+  useEffect(() => {
+    const saved = localStorage.getItem('delivery_platform_settings');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        setPlatforms(parsed);
+      } catch (e) {
+        console.error('Failed to parse platform settings:', e);
+      }
+    }
+  }, []);
 
   // Realtime subscription for delivery orders
   const handleDeliveryOrderChange = useCallback(() => {
@@ -330,25 +360,25 @@ export default function DeliveryHubPage() {
             <div className="card-title">Platform Status</div>
           </div>
           <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-            {DELIVERY_PLATFORMS.map(platform => (
+            {platforms.map(platform => (
               <div
-                key={platform.name}
+                key={platform.id}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
                   gap: '0.5rem',
                   padding: '0.75rem 1rem',
-                  background: platform.status === 'online' ? '#d1fae5' : '#fee2e2',
+                  background: platform.enabled ? '#d1fae5' : '#fee2e2',
                   borderRadius: 'var(--radius-md)',
-                  borderLeft: `4px solid ${getPlatformColor(platform.name)}`
+                  borderLeft: `4px solid ${platform.color || getPlatformColor(platform.name)}`
                 }}
               >
                 <span style={{
                   width: '12px',
                   height: '12px',
                   borderRadius: '50%',
-                  background: platform.status === 'online' ? 'var(--success)' : 'var(--danger)',
-                  animation: platform.status === 'online' ? 'pulse 2s infinite' : 'none'
+                  background: platform.enabled ? 'var(--success)' : 'var(--danger)',
+                  animation: platform.enabled ? 'pulse 2s infinite' : 'none'
                 }} />
                 <span style={{ fontWeight: 600 }}>
                   {platform.name}
@@ -358,7 +388,7 @@ export default function DeliveryHubPage() {
                   color: 'var(--text-secondary)',
                   textTransform: 'uppercase'
                 }}>
-                  {platform.status}
+                  {platform.enabled ? 'online' : 'offline'}
                 </span>
               </div>
             ))}
@@ -397,6 +427,7 @@ export default function DeliveryHubPage() {
             change="sudah dihantar"
             changeType="neutral"
             icon={Truck}
+            gradient="subtle"
           />
         </div>
 
