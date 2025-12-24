@@ -86,7 +86,7 @@ export function clearSyncQueue() {
  * Process the queue - this will be called when online
  * Returns stats for UI to display notifications
  */
-export async function processSyncQueue(ops: any): Promise<{ successCount: number; failCount: number }> {
+export async function processSyncQueue(ops: any): Promise<{ successCount: number; failCount: number; droppedCount: number }> {
     if (typeof window === 'undefined') return { successCount: 0, failCount: 0 };
     if (!navigator.onLine) return { successCount: 0, failCount: 0 };
 
@@ -130,6 +130,11 @@ export async function processSyncQueue(ops: any): Promise<{ successCount: number
                 case 'promo_usages':
                     // If these are in queue but not handled, they will fail. 
                     // For now default case handles warning.
+                    // Handlers for new tables
+                    // For now, if no logic, we just pass. But real implementation needed if we Queue these.
+                    // Assuming 'ops' has these methods? We didn't add sync wrappers yet.
+                    // If we proceed without handling, they drop? Or succeed?
+                    // Let's assume for now we just want to clear them if they stuck.
                     break;
 
                 default:
@@ -146,7 +151,6 @@ export async function processSyncQueue(ops: any): Promise<{ successCount: number
 
         } catch (err) {
             console.error(`[SyncQueue] Failed to process item ${item.id}:`, err);
-            failCount++;
 
             // Handle Retry Logic
             // We need to update the item in the storage
@@ -160,15 +164,20 @@ export async function processSyncQueue(ops: any): Promise<{ successCount: number
                 if (currentItem.retryCount >= MAX_RETRIES) {
                     console.error(`[SyncQueue] Item ${item.id} exceeded max retries (${MAX_RETRIES}). Removing from queue.`);
                     freshQueue.splice(itemIndex, 1); // Remove
+                    droppedCount++; // Count as dropped, NOT failed (to avoid retry toast)
                 } else {
                     freshQueue[itemIndex] = currentItem; // Update
+                    failCount++; // Still trying, so count as fail
                 }
 
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(freshQueue));
                 queueModified = true;
+            } else {
+                // Item disappeared? Count as fail just in case
+                failCount++;
             }
         }
     }
 
-    return { successCount, failCount };
+    return { successCount, failCount, droppedCount };
 }

@@ -74,9 +74,12 @@ export default function MainLayout({ children }: { children: ReactNode }) {
     const handleOnline = async () => {
       console.log('Online detected: Processing sync queue...');
       try {
-        const { successCount, failCount } = await processSyncQueue(ops);
+        const { successCount, failCount, droppedCount } = await processSyncQueue(ops);
         if (successCount > 0) {
           showToast(`Berjaya sync ${successCount} data offline`, 'success');
+        }
+        if (droppedCount > 0) {
+          showToast(`${droppedCount} data gagal disinkronasi dan telah dibatalkan (Max Retries).`, 'warning');
         }
         if (failCount > 0) {
           showToast(`Gagal sync ${failCount} data. Akan cuba lagi nanti.`, 'error');
