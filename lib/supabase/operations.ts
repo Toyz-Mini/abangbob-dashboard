@@ -956,6 +956,8 @@ export async function fetchProductionLogs(startDate?: string, endDate?: string) 
   return toCamelCase(data || []);
 }
 
+
+
 export async function insertProductionLog(log: any) {
   const supabase = getSupabaseClient();
   if (!supabase) throw new Error('Supabase not connected');
@@ -2208,7 +2210,7 @@ export async function fetchPromotions(status?: string) {
     id: pc.id,
     name: pc.description || pc.code, // Map description to Name
     description: pc.description,
-    type: pc.discount_type === 'fixed' ? 'fixed_amount' : 'percentage',
+    type: (pc.discount_type === 'fixed' ? 'fixed_amount' : 'percentage') as any,
     value: pc.discount_value,
     minPurchase: pc.min_spend,
     maxDiscount: pc.max_discount_amount,
@@ -2221,7 +2223,7 @@ export async function fetchPromotions(status?: string) {
     endTime: undefined, // Not supported
     usageLimit: pc.usage_limit,
     usageCount: pc.usage_count,
-    status: pc.is_active ? 'active' : 'inactive',
+    status: (pc.is_active ? 'active' : 'inactive') as any,
     createdAt: pc.created_at,
   }));
 }
@@ -2474,56 +2476,56 @@ export async function updateCashRegister(id: string, updates: any) {
 
 
 export async function insertLoyaltyTransaction(transaction: any) {
-    const supabase = getSupabaseClient();
-    if (!supabase) throw new Error('Supabase not connected');
+  const supabase = getSupabaseClient();
+  if (!supabase) throw new Error('Supabase not connected');
 
-    const snakeCasedTransaction = toSnakeCase(transaction);
+  const snakeCasedTransaction = toSnakeCase(transaction);
 
-    // @ts-ignore
-    const { data, error } = await supabase
-        .from('loyalty_transactions')
-        .insert(snakeCasedTransaction)
-        .select()
-        .single();
+  // @ts-ignore
+  const { data, error } = await supabase
+    .from('loyalty_transactions')
+    .insert(snakeCasedTransaction)
+    .select()
+    .single();
 
-    if (error) throw error;
-    return toCamelCase(data);
+  if (error) throw error;
+  return toCamelCase(data);
 }
 
 export async function insertPromoUsage(usage: any) {
-    const supabase = getSupabaseClient();
-    if (!supabase) throw new Error('Supabase not connected');
+  const supabase = getSupabaseClient();
+  if (!supabase) throw new Error('Supabase not connected');
 
-    const snakeCasedUsage = toSnakeCase(usage);
+  const snakeCasedUsage = toSnakeCase(usage);
 
-    // @ts-ignore
-    const { data, error } = await supabase
-        .from('promo_usages')
-        .insert(snakeCasedUsage)
-        .select()
-        .single();
+  // @ts-ignore
+  const { data, error } = await supabase
+    .from('promo_usages')
+    .insert(snakeCasedUsage)
+    .select()
+    .single();
 
-    if (error) throw error;
-    return toCamelCase(data);
+  if (error) throw error;
+  return toCamelCase(data);
 }
 
 export async function incrementPromoUsageCount(promoCodeId: string) {
-    const supabase = getSupabaseClient();
-    if (!supabase) throw new Error('Supabase not connected');
+  const supabase = getSupabaseClient();
+  if (!supabase) throw new Error('Supabase not connected');
 
-    // get current count first
-    const { data: promo, error: fetchError } = await supabase
-        .from('promo_codes')
-        .select('usage_count')
-        .eq('id', promoCodeId)
-        .single();
+  // get current count first
+  const { data: promo, error: fetchError } = await supabase
+    .from('promo_codes')
+    .select('usage_count')
+    .eq('id', promoCodeId)
+    .single();
 
-    if (fetchError || !promo) return;
+  if (fetchError || !promo) return;
 
-    const newCount = (promo.usage_count || 0) + 1;
+  const newCount = (promo.usage_count || 0) + 1;
 
-    await supabase
-        .from('promo_codes')
-        .update({ usage_count: newCount })
-        .eq('id', promoCodeId);
+  await supabase
+    .from('promo_codes')
+    .update({ usage_count: newCount })
+    .eq('id', promoCodeId);
 }
