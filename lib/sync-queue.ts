@@ -97,6 +97,7 @@ export async function processSyncQueue(ops: any): Promise<{ successCount: number
 
     let successCount = 0;
     let failCount = 0;
+    let droppedCount = 0;
     const MAX_RETRIES = 3;
     let queueModified = false;
 
