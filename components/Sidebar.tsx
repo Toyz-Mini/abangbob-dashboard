@@ -218,6 +218,7 @@ const Sidebar = forwardRef<HTMLElement, SidebarProps>(({ isOpen, onMouseEnter, o
                   <li key={item.href} className="nav-item">
                     <Link
                       href={item.href}
+                      scroll={false}
                       className={`nav-link ${isActive ? 'active' : ''}`}
                       title={!isOpen ? label : undefined}
                       data-tour={item.tourId}
