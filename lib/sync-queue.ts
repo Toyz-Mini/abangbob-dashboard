@@ -8,7 +8,10 @@ export type SyncTable =
     | 'modifier_options'
     | 'recipes'
     | 'purchase_orders'
-    | 'suppliers';
+    | 'suppliers'
+    | 'promotions'
+    | 'loyalty_transactions'
+    | 'promo_usages';
 
 export interface SyncItem {
     id: string; // UUID of the item being acted on
@@ -94,8 +97,16 @@ export async function processSyncQueue(ops: any): Promise<{ successCount: number
 
     let successCount = 0;
     let failCount = 0;
+    const MAX_RETRIES = 3;
+    let queueModified = false;
 
-    for (const item of queue) {
+    // We process items sequentially
+    // We must re-read queue completely if we want to modify it safely, 
+    // but since we are the only processor, we can iterate and build a new queue state.
+    // Note: getSyncQueue() returns a fresh array. 
+    // We will mutate 'currentQueue' logic conceptually or just map/filter.
+
+    for (const item of queue) { // iterate original snapshot
         try {
             console.log(`[SyncQueue] Processing item:`, item);
 
@@ -113,17 +124,49 @@ export async function processSyncQueue(ops: any): Promise<{ successCount: number
                     if (item.action === 'UPDATE') await ops.updateCustomer(item.id, item.payload);
                     break;
 
+                // Add missing cases if any
+                case 'promotions': // Example if needed later
+                case 'loyalty_transactions':
+                case 'promo_usages':
+                    // If these are in queue but not handled, they will fail. 
+                    // For now default case handles warning.
+                    break;
+
                 default:
                     console.warn(`[SyncQueue] Unknown table or action: ${item.table} ${item.action}`);
+                    // If unknown, it will never succeed. Treat as success to remove it? 
+                    // Or treat as fail and max retries will kill it.
+                    throw new Error(`Unknown table/action: ${item.table}/${item.action}`);
             }
 
             // If successful, remove from queue
             removeFromSyncQueue(item.timestamp);
             successCount++;
+            queueModified = true;
 
         } catch (err) {
             console.error(`[SyncQueue] Failed to process item ${item.id}:`, err);
             failCount++;
+
+            // Handle Retry Logic
+            // We need to update the item in the storage
+            const freshQueue = getSyncQueue();
+            const itemIndex = freshQueue.findIndex(i => i.timestamp === item.timestamp);
+
+            if (itemIndex !== -1) {
+                const currentItem = freshQueue[itemIndex];
+                currentItem.retryCount = (currentItem.retryCount || 0) + 1;
+
+                if (currentItem.retryCount >= MAX_RETRIES) {
+                    console.error(`[SyncQueue] Item ${item.id} exceeded max retries (${MAX_RETRIES}). Removing from queue.`);
+                    freshQueue.splice(itemIndex, 1); // Remove
+                } else {
+                    freshQueue[itemIndex] = currentItem; // Update
+                }
+
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(freshQueue));
+                queueModified = true;
+            }
         }
     }
 
