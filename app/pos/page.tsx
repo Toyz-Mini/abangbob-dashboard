@@ -1,6 +1,5 @@
-'use client';
-
 import { useState, useRef, useMemo, useEffect, useCallback } from 'react';
+import dynamic from 'next/dynamic';
 import RouteGuard from '@/components/RouteGuard';
 import { useOrders, useMenu, useInventory, usePaymentMethods, useCustomers } from '@/lib/store';
 import { useMenuRealtime, useInventoryRealtime, useModifiersRealtime, useOrdersRealtime } from '@/lib/supabase/realtime-hooks';
@@ -19,14 +18,17 @@ import {
   isTransactionSubmitted,
   markTransactionSubmitted,
 } from '@/lib/services';
-import ReceiptPreview from '@/components/ReceiptPreview';
+// Dynamic Imports for Heavy Components
+const ReceiptPreview = dynamic(() => import('@/components/ReceiptPreview'), { ssr: false });
+const ShiftWizardModal = dynamic(() => import('@/components/cash-management/ShiftWizardModal'), { ssr: false });
+const RegisterStatus = dynamic(() => import('@/components/cash-management/RegisterStatus'), { ssr: false });
+import POSMenuItem from '@/components/pos/POSMenuItem'; // Memoized Item
+
 import { ArrowLeft, UtensilsCrossed, Sandwich, Coffee, History, Printer, Clock, ChefHat, CheckCircle, ShoppingBag, Plus, Minus, X, Sparkles, AlertTriangle, User, DollarSign, CreditCard, QrCode, Wallet, WifiOff, RefreshCw, MessageCircle, Check, Globe, Send } from 'lucide-react';
 import { WhatsAppService } from '@/lib/services/whatsapp';
 import Modal from '@/components/Modal';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import StatCard from '@/components/StatCard';
-import ShiftWizardModal from '@/components/cash-management/ShiftWizardModal';
-import RegisterStatus from '@/components/cash-management/RegisterStatus';
 import { useRouter } from 'next/navigation';
 import { useStore } from '@/lib/store';
 import { countries, Country, getDefaultCountry } from '@/lib/countries';
@@ -645,61 +647,11 @@ export default function POSPage() {
             {/* Menu Grid */}
             <div className="grid grid-cols-2 md:grid-cols-3" style={{ gap: '1rem' }}>
               {filteredMenu.map(item => (
-                <div
+                <POSMenuItem
                   key={item.id}
-                  className="card"
-                  style={{ cursor: 'pointer', transition: 'transform 0.2s' }}
-                  onClick={() => handleItemClick(item)}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-4px)';
-                    e.currentTarget.style.boxShadow = 'var(--shadow-lg)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
-                  }}
-                >
-                  <div style={{
-                    width: '100%',
-                    height: '100px',
-                    background: 'var(--gray-100)',
-                    borderRadius: 'var(--radius-md)',
-                    marginBottom: '0.75rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: 'var(--primary)',
-                    position: 'relative'
-                  }}>
-                    {item.category === 'Nasi Lemak' ? <UtensilsCrossed size={40} /> :
-                      item.category === 'Burger' ? <Sandwich size={40} /> : <Coffee size={40} />}
-                    {item.modifierGroupIds.length > 0 && (
-                      <div style={{
-                        position: 'absolute',
-                        top: '0.5rem',
-                        right: '0.5rem',
-                        background: 'var(--warning)',
-                        color: 'white',
-                        borderRadius: '50%',
-                        width: '20px',
-                        height: '20px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '0.7rem',
-                        fontWeight: 700
-                      }}>
-                        +
-                      </div>
-                    )}
-                  </div>
-                  <div style={{ fontWeight: 600, marginBottom: '0.25rem', fontSize: '0.9rem' }}>
-                    {item.name}
-                  </div>
-                  <div style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--primary)' }}>
-                    BND {item.price.toFixed(2)}
-                  </div>
-                </div>
+                  item={item}
+                  onClick={handleItemClick}
+                />
               ))}
             </div>
 

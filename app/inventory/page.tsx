@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo, useCallback } from 'react';
+import dynamic from 'next/dynamic';
 import MainLayout from '@/components/MainLayout';
 import { useInventory } from '@/lib/store';
 import { useInventoryRealtime } from '@/lib/supabase/realtime-hooks';
@@ -9,16 +10,18 @@ import { useTranslation } from '@/lib/contexts/LanguageContext';
 import { StockItem } from '@/lib/types';
 import Modal from '@/components/Modal';
 import { AlertTriangle, Plus, Edit2, Trash2, ArrowUp, ArrowDown, History, Package, LayoutGrid, List as ListIcon, Search, Filter, ClipboardList, Upload, TrendingUp } from 'lucide-react';
-import VarianceReportModal from '@/components/inventory/VarianceReportModal';
-import StockImporter from '@/components/StockImporter';
 import LoadingSpinner from '@/components/LoadingSpinner';
-import WasteModal from '@/components/inventory/WasteModal';
-import WasteHistoryView from '@/components/inventory/WasteHistoryView';
-import SmartReorderView from '@/components/inventory/SmartReorderView';
 import LivePageHeader from '@/components/LivePageHeader';
 import GlassCard from '@/components/GlassCard';
 import PremiumButton from '@/components/PremiumButton';
 import { useToast } from '@/lib/contexts/ToastContext';
+
+// Dynamic Imports for Heavy Components
+const VarianceReportModal = dynamic(() => import('@/components/inventory/VarianceReportModal'), { ssr: false });
+const StockImporter = dynamic(() => import('@/components/StockImporter'), { ssr: false });
+const WasteModal = dynamic(() => import('@/components/inventory/WasteModal'), { ssr: false });
+const WasteHistoryView = dynamic(() => import('@/components/inventory/WasteHistoryView'), { ssr: false });
+const SmartReorderView = dynamic(() => import('@/components/inventory/SmartReorderView'), { ssr: false });
 
 type ModalType = 'add' | 'edit' | 'adjust' | 'delete' | 'history' | 'waste' | null;
 
