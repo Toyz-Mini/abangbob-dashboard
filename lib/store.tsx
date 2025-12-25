@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
-import { StockItem, StaffProfile, AttendanceRecord, Order, ProductionLog, DeliveryOrder, Expense, DailyCashFlow, Customer, Supplier, PurchaseOrder, Recipe, Shift, ScheduleEntry, Promotion, Notification, MenuItem, ModifierGroup, ModifierOption, StaffKPI, LeaveRecord, TrainingRecord, OTRecord, CustomerReview, KPIMetrics, ChecklistItemTemplate, ChecklistCompletion, LeaveBalance, LeaveRequest, ClaimRequest, StaffRequest, Announcement, OrderHistoryItem, VoidRefundRequest, VoidRefundType, OrderHistoryFilters, RefundItem, OilTracker, OilChangeRequest, OilActionHistory, OilActionType, Equipment, MaintenanceSchedule, MaintenanceLog, WasteLog, MenuCategory, PaymentMethodConfig, TaxRate, CashRegister, InventoryLog, StockSuggestion, DEFAULT_MENU_CATEGORIES, DEFAULT_PAYMENT_METHODS, DEFAULT_TAX_RATES, OTClaim, SalaryAdvance, DisciplinaryAction, StaffTraining, StaffDocument, PerformanceReview, OnboardingChecklist } from './types';
+import { StockItem, StaffProfile, AttendanceRecord, Order, ProductionLog, DeliveryOrder, Expense, DailyCashFlow, Customer, Supplier, PurchaseOrder, Recipe, Shift, ScheduleEntry, Promotion, Notification, MenuItem, ModifierGroup, ModifierOption, StaffKPI, LeaveRecord, TrainingRecord, OTRecord, CustomerReview, KPIMetrics, ChecklistItemTemplate, ChecklistCompletion, LeaveBalance, LeaveRequest, ClaimRequest, StaffRequest, Announcement, OrderHistoryItem, VoidRefundRequest, VoidRefundType, OrderHistoryFilters, RefundItem, OilTracker, OilChangeRequest, OilActionHistory, OilActionType, Equipment, MaintenanceSchedule, MaintenanceLog, WasteLog, MenuCategory, PaymentMethodConfig, TaxRate, CashRegister, InventoryLog, StockSuggestion, DEFAULT_MENU_CATEGORIES, DEFAULT_PAYMENT_METHODS, DEFAULT_TAX_RATES, OTClaim, SalaryAdvance, DisciplinaryAction, StaffTraining, StaffDocument, PerformanceReview, OnboardingChecklist, ExitInterview } from './types';
 import { MOCK_ORDER_HISTORY, MOCK_VOID_REFUND_REQUESTS, ORDER_HISTORY_STORAGE_KEYS } from './order-history-data';
 import { MOCK_STOCK } from './inventory-data';
 import { MOCK_STAFF, MOCK_ATTENDANCE, MOCK_PAYROLL } from './hr-data';
@@ -130,6 +130,8 @@ const STORAGE_KEYS = {
   PERFORMANCE_REVIEWS: 'abangbob_performance_reviews',
   // Onboarding Checklists
   ONBOARDING_CHECKLISTS: 'abangbob_onboarding_checklists',
+  // Exit Interviews
+  EXIT_INTERVIEWS: 'abangbob_exit_interviews',
 };
 
 // Inventory log type for tracking stock changes
@@ -391,6 +393,13 @@ interface StoreState {
   getStaffOnboarding: (staffId: string) => OnboardingChecklist | undefined;
   refreshOnboardingChecklists: () => Promise<void>;
 
+  // HR - Exit Interviews
+  exitInterviews: ExitInterview[];
+  addExitInterview: (interview: Omit<ExitInterview, 'id' | 'createdAt'>) => void;
+  updateExitInterview: (id: string, updates: Partial<ExitInterview>) => void;
+  deleteExitInterview: (id: string) => void;
+  refreshExitInterviews: () => Promise<void>;
+
   // Staff Portal - General Requests
   staffRequests: StaffRequest[];
   addStaffRequest: (request: Omit<StaffRequest, 'id' | 'createdAt'>) => void;
@@ -582,6 +591,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [staffDocuments, setStaffDocuments] = useState<StaffDocument[]>([]);
   const [performanceReviews, setPerformanceReviews] = useState<PerformanceReview[]>([]);
   const [onboardingChecklists, setOnboardingChecklists] = useState<OnboardingChecklist[]>([]);
+  const [exitInterviews, setExitInterviews] = useState<ExitInterview[]>([]);
   const [staffRequests, setStaffRequests] = useState<StaffRequest[]>([]);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
 
@@ -795,6 +805,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       setStaffDocuments(getFromStorage(STORAGE_KEYS.STAFF_DOCUMENTS, []));
       setPerformanceReviews(getFromStorage(STORAGE_KEYS.PERFORMANCE_REVIEWS, []));
       setOnboardingChecklists(getFromStorage(STORAGE_KEYS.ONBOARDING_CHECKLISTS, []));
+      setExitInterviews(getFromStorage(STORAGE_KEYS.EXIT_INTERVIEWS, []));
       setStaffRequests(supabaseConnected && supabaseData.staffRequests?.length > 0 ? supabaseData.staffRequests : getFromStorage(STORAGE_KEYS.STAFF_REQUESTS, MOCK_STAFF_REQUESTS));
       setAnnouncements(supabaseConnected && supabaseData.announcements?.length > 0 ? supabaseData.announcements : getFromStorage(STORAGE_KEYS.ANNOUNCEMENTS, MOCK_ANNOUNCEMENTS));
 
@@ -3603,6 +3614,89 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  // ==================== Exit Interview Functions ====================
+
+  const addExitInterview = useCallback((interview: Omit<ExitInterview, 'id' | 'createdAt'>) => {
+    const newInterview: ExitInterview = {
+      ...interview,
+      id: `exit_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      createdAt: new Date().toISOString(),
+    };
+    setExitInterviews(prev => {
+      const updated = [newInterview, ...prev];
+      setToStorage(STORAGE_KEYS.EXIT_INTERVIEWS, updated);
+      return updated;
+    });
+    // Sync to Supabase
+    getSupabaseClient()?.from('exit_interviews').insert({
+      id: newInterview.id,
+      staff_id: newInterview.staffId,
+      staff_name: newInterview.staffName,
+      exit_date: newInterview.exitDate,
+      reason: newInterview.reason,
+      reason_details: newInterview.reasonDetails,
+      overall_experience: newInterview.overallExperience,
+      management_rating: newInterview.managementRating,
+      work_environment: newInterview.workEnvironment,
+      career_growth: newInterview.careerGrowth,
+      what_liked: newInterview.whatLiked,
+      what_disliked: newInterview.whatDisliked,
+      suggestions: newInterview.suggestions,
+      would_recommend: newInterview.wouldRecommend,
+      interviewed_by: newInterview.interviewedBy,
+      interviewed_by_name: newInterview.interviewedByName,
+      created_at: newInterview.createdAt,
+    }).then(({ error }: { error: Error | null }) => {
+      if (error) console.error('[Supabase] Failed to insert exit interview:', error);
+    });
+  }, []);
+
+  const updateExitInterview = useCallback((id: string, updates: Partial<ExitInterview>) => {
+    setExitInterviews(prev => {
+      const updated = prev.map(e => e.id === id ? { ...e, ...updates } : e);
+      setToStorage(STORAGE_KEYS.EXIT_INTERVIEWS, updated);
+      return updated;
+    });
+  }, []);
+
+  const deleteExitInterview = useCallback((id: string) => {
+    setExitInterviews(prev => {
+      const updated = prev.filter(e => e.id !== id);
+      setToStorage(STORAGE_KEYS.EXIT_INTERVIEWS, updated);
+      return updated;
+    });
+    getSupabaseClient()?.from('exit_interviews').delete().eq('id', id).then(({ error }: { error: Error | null }) => {
+      if (error) console.error('[Supabase] Failed to delete exit interview:', error);
+    });
+  }, []);
+
+  const refreshExitInterviews = useCallback(async () => {
+    const { data, error } = await (getSupabaseClient()?.from('exit_interviews').select('*').order('created_at', { ascending: false }) || { data: null, error: null });
+    if (!error && data) {
+      const mapped: ExitInterview[] = data.map((row: Record<string, unknown>) => ({
+        id: row.id as string,
+        staffId: row.staff_id as string,
+        staffName: row.staff_name as string,
+        exitDate: row.exit_date as string,
+        reason: row.reason as ExitInterview['reason'],
+        reasonDetails: row.reason_details as string | undefined,
+        overallExperience: row.overall_experience as number,
+        managementRating: row.management_rating as number,
+        workEnvironment: row.work_environment as number,
+        careerGrowth: row.career_growth as number,
+        whatLiked: row.what_liked as string | undefined,
+        whatDisliked: row.what_disliked as string | undefined,
+        suggestions: row.suggestions as string | undefined,
+        wouldRecommend: row.would_recommend as boolean,
+        interviewedBy: row.interviewed_by as string | undefined,
+        interviewedByName: row.interviewed_by_name as string | undefined,
+        createdAt: row.created_at as string,
+      }));
+      setExitInterviews(mapped);
+      setToStorage(STORAGE_KEYS.EXIT_INTERVIEWS, mapped);
+    }
+  }, []);
+
   // Staff Portal - Staff Request actions
   const addStaffRequest = useCallback((request: Omit<StaffRequest, 'id' | 'createdAt'>) => {
     const newRequest: StaffRequest = {
@@ -4892,6 +4986,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     deleteOnboardingChecklist,
     getStaffOnboarding,
     refreshOnboardingChecklists,
+
+    // HR - Exit Interviews
+    exitInterviews,
+    addExitInterview,
+    updateExitInterview,
+    deleteExitInterview,
+    refreshExitInterviews,
 
     // Staff Portal - General Requests
     staffRequests,

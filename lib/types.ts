@@ -259,6 +259,30 @@ export interface OnboardingChecklist {
   createdAt: string;
 }
 
+// ==================== EXIT INTERVIEW TYPES ====================
+
+export type ExitReason = 'resignation' | 'termination' | 'contract_end' | 'retirement' | 'other';
+
+export interface ExitInterview {
+  id: string;
+  staffId: string;
+  staffName: string;
+  exitDate: string;
+  reason: ExitReason;
+  reasonDetails?: string;
+  overallExperience: number;  // 1-5
+  managementRating: number;   // 1-5
+  workEnvironment: number;    // 1-5
+  careerGrowth: number;       // 1-5
+  whatLiked?: string;
+  whatDisliked?: string;
+  suggestions?: string;
+  wouldRecommend: boolean;
+  interviewedBy?: string;
+  interviewedByName?: string;
+  createdAt: string;
+}
+
 export interface StaffProfile {
   id: string;
   employeeNumber?: string;

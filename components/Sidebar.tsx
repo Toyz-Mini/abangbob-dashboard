@@ -41,6 +41,7 @@ import {
   GraduationCap,
   TrendingUp,
   ClipboardList,
+  UserMinus,
   type LucideIcon
 } from 'lucide-react';
 
@@ -117,6 +118,7 @@ const navGroupsConfig: NavGroup[] = [
       { href: '/hr/documents', labelKey: 'nav.documents', icon: FileText },
       { href: '/hr/performance', labelKey: 'nav.performance', icon: TrendingUp },
       { href: '/hr/onboarding', labelKey: 'nav.onboarding', icon: ClipboardList },
+      { href: '/hr/exit-interview', labelKey: 'nav.exitInterview', icon: UserMinus },
       { href: '/hr/leave-calendar', labelKey: 'nav.leaveCalendar', icon: Calendar, tourId: 'leave' },
       { href: '/hr/checklist-config', labelKey: 'nav.checklistConfig', icon: CheckSquare },
     ]
