@@ -138,7 +138,6 @@ export default function StaffComplaintsPage() {
             subject: form.subject,
             description: form.description,
             status: 'pending',
-            createdAt: new Date().toISOString(),
         });
 
         resetForm();
