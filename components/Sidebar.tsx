@@ -39,6 +39,7 @@ import {
   ChevronRight,
   AlertTriangle,
   GraduationCap,
+  TrendingUp,
   type LucideIcon
 } from 'lucide-react';
 
@@ -113,6 +114,7 @@ const navGroupsConfig: NavGroup[] = [
       { href: '/hr/disciplinary', labelKey: 'nav.disciplinary', icon: AlertTriangle },
       { href: '/hr/training', labelKey: 'nav.training', icon: GraduationCap },
       { href: '/hr/documents', labelKey: 'nav.documents', icon: FileText },
+      { href: '/hr/performance', labelKey: 'nav.performance', icon: TrendingUp },
       { href: '/hr/leave-calendar', labelKey: 'nav.leaveCalendar', icon: Calendar, tourId: 'leave' },
       { href: '/hr/checklist-config', labelKey: 'nav.checklistConfig', icon: CheckSquare },
     ]

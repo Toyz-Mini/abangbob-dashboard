@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
-import { StockItem, StaffProfile, AttendanceRecord, Order, ProductionLog, DeliveryOrder, Expense, DailyCashFlow, Customer, Supplier, PurchaseOrder, Recipe, Shift, ScheduleEntry, Promotion, Notification, MenuItem, ModifierGroup, ModifierOption, StaffKPI, LeaveRecord, TrainingRecord, OTRecord, CustomerReview, KPIMetrics, ChecklistItemTemplate, ChecklistCompletion, LeaveBalance, LeaveRequest, ClaimRequest, StaffRequest, Announcement, OrderHistoryItem, VoidRefundRequest, VoidRefundType, OrderHistoryFilters, RefundItem, OilTracker, OilChangeRequest, OilActionHistory, OilActionType, Equipment, MaintenanceSchedule, MaintenanceLog, WasteLog, MenuCategory, PaymentMethodConfig, TaxRate, CashRegister, InventoryLog, StockSuggestion, DEFAULT_MENU_CATEGORIES, DEFAULT_PAYMENT_METHODS, DEFAULT_TAX_RATES, OTClaim, SalaryAdvance, DisciplinaryAction, StaffTraining, StaffDocument } from './types';
+import { StockItem, StaffProfile, AttendanceRecord, Order, ProductionLog, DeliveryOrder, Expense, DailyCashFlow, Customer, Supplier, PurchaseOrder, Recipe, Shift, ScheduleEntry, Promotion, Notification, MenuItem, ModifierGroup, ModifierOption, StaffKPI, LeaveRecord, TrainingRecord, OTRecord, CustomerReview, KPIMetrics, ChecklistItemTemplate, ChecklistCompletion, LeaveBalance, LeaveRequest, ClaimRequest, StaffRequest, Announcement, OrderHistoryItem, VoidRefundRequest, VoidRefundType, OrderHistoryFilters, RefundItem, OilTracker, OilChangeRequest, OilActionHistory, OilActionType, Equipment, MaintenanceSchedule, MaintenanceLog, WasteLog, MenuCategory, PaymentMethodConfig, TaxRate, CashRegister, InventoryLog, StockSuggestion, DEFAULT_MENU_CATEGORIES, DEFAULT_PAYMENT_METHODS, DEFAULT_TAX_RATES, OTClaim, SalaryAdvance, DisciplinaryAction, StaffTraining, StaffDocument, PerformanceReview } from './types';
 import { MOCK_ORDER_HISTORY, MOCK_VOID_REFUND_REQUESTS, ORDER_HISTORY_STORAGE_KEYS } from './order-history-data';
 import { MOCK_STOCK } from './inventory-data';
 import { MOCK_STAFF, MOCK_ATTENDANCE, MOCK_PAYROLL } from './hr-data';
@@ -126,6 +126,8 @@ const STORAGE_KEYS = {
   STAFF_TRAINING: 'abangbob_staff_training',
   // Staff Documents
   STAFF_DOCUMENTS: 'abangbob_staff_documents',
+  // Performance Reviews
+  PERFORMANCE_REVIEWS: 'abangbob_performance_reviews',
 };
 
 // Inventory log type for tracking stock changes
@@ -371,6 +373,14 @@ interface StoreState {
   getExpiringDocuments: (daysAhead?: number) => StaffDocument[];
   refreshStaffDocuments: () => Promise<void>;
 
+  // HR - Performance Reviews
+  performanceReviews: PerformanceReview[];
+  addPerformanceReview: (review: Omit<PerformanceReview, 'id' | 'createdAt'>) => void;
+  updatePerformanceReview: (id: string, updates: Partial<PerformanceReview>) => void;
+  deletePerformanceReview: (id: string) => void;
+  getStaffPerformanceReviews: (staffId: string) => PerformanceReview[];
+  refreshPerformanceReviews: () => Promise<void>;
+
   // Staff Portal - General Requests
   staffRequests: StaffRequest[];
   addStaffRequest: (request: Omit<StaffRequest, 'id' | 'createdAt'>) => void;
@@ -560,6 +570,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [disciplinaryActions, setDisciplinaryActions] = useState<DisciplinaryAction[]>([]);
   const [staffTraining, setStaffTraining] = useState<StaffTraining[]>([]);
   const [staffDocuments, setStaffDocuments] = useState<StaffDocument[]>([]);
+  const [performanceReviews, setPerformanceReviews] = useState<PerformanceReview[]>([]);
   const [staffRequests, setStaffRequests] = useState<StaffRequest[]>([]);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
 
@@ -771,6 +782,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       setDisciplinaryActions(getFromStorage(STORAGE_KEYS.DISCIPLINARY_ACTIONS, []));
       setStaffTraining(getFromStorage(STORAGE_KEYS.STAFF_TRAINING, []));
       setStaffDocuments(getFromStorage(STORAGE_KEYS.STAFF_DOCUMENTS, []));
+      setPerformanceReviews(getFromStorage(STORAGE_KEYS.PERFORMANCE_REVIEWS, []));
       setStaffRequests(supabaseConnected && supabaseData.staffRequests?.length > 0 ? supabaseData.staffRequests : getFromStorage(STORAGE_KEYS.STAFF_REQUESTS, MOCK_STAFF_REQUESTS));
       setAnnouncements(supabaseConnected && supabaseData.announcements?.length > 0 ? supabaseData.announcements : getFromStorage(STORAGE_KEYS.ANNOUNCEMENTS, MOCK_ANNOUNCEMENTS));
 
@@ -3380,6 +3392,118 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  // ==================== Performance Review Functions ====================
+
+  const addPerformanceReview = useCallback((review: Omit<PerformanceReview, 'id' | 'createdAt'>) => {
+    const newReview: PerformanceReview = {
+      ...review,
+      id: `review_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      createdAt: new Date().toISOString(),
+    };
+    setPerformanceReviews(prev => {
+      const updated = [newReview, ...prev];
+      setToStorage(STORAGE_KEYS.PERFORMANCE_REVIEWS, updated);
+      return updated;
+    });
+    // Sync to Supabase
+    getSupabaseClient()?.from('performance_reviews').insert({
+      id: newReview.id,
+      staff_id: newReview.staffId,
+      staff_name: newReview.staffName,
+      reviewer_id: newReview.reviewerId,
+      reviewer_name: newReview.reviewerName,
+      period: newReview.period,
+      period_start: newReview.periodStart,
+      period_end: newReview.periodEnd,
+      overall_rating: newReview.overallRating,
+      punctuality: newReview.punctuality,
+      teamwork: newReview.teamwork,
+      productivity: newReview.productivity,
+      communication: newReview.communication,
+      initiative: newReview.initiative,
+      strengths: newReview.strengths,
+      improvements: newReview.improvements,
+      goals: newReview.goals,
+      comments: newReview.comments,
+      status: newReview.status,
+      acknowledged_at: newReview.acknowledgedAt,
+      created_at: newReview.createdAt,
+    }).then(({ error }: { error: Error | null }) => {
+      if (error) console.error('[Supabase] Failed to insert performance review:', error);
+    });
+  }, []);
+
+  const updatePerformanceReview = useCallback((id: string, updates: Partial<PerformanceReview>) => {
+    setPerformanceReviews(prev => {
+      const updated = prev.map(r => r.id === id ? { ...r, ...updates } : r);
+      setToStorage(STORAGE_KEYS.PERFORMANCE_REVIEWS, updated);
+      return updated;
+    });
+    // Sync to Supabase
+    const snakeCaseUpdates: Record<string, unknown> = {};
+    if (updates.overallRating !== undefined) snakeCaseUpdates.overall_rating = updates.overallRating;
+    if (updates.punctuality !== undefined) snakeCaseUpdates.punctuality = updates.punctuality;
+    if (updates.teamwork !== undefined) snakeCaseUpdates.teamwork = updates.teamwork;
+    if (updates.productivity !== undefined) snakeCaseUpdates.productivity = updates.productivity;
+    if (updates.communication !== undefined) snakeCaseUpdates.communication = updates.communication;
+    if (updates.initiative !== undefined) snakeCaseUpdates.initiative = updates.initiative;
+    if (updates.strengths !== undefined) snakeCaseUpdates.strengths = updates.strengths;
+    if (updates.improvements !== undefined) snakeCaseUpdates.improvements = updates.improvements;
+    if (updates.goals !== undefined) snakeCaseUpdates.goals = updates.goals;
+    if (updates.comments !== undefined) snakeCaseUpdates.comments = updates.comments;
+    if (updates.status !== undefined) snakeCaseUpdates.status = updates.status;
+    if (updates.acknowledgedAt !== undefined) snakeCaseUpdates.acknowledged_at = updates.acknowledgedAt;
+    getSupabaseClient()?.from('performance_reviews').update(snakeCaseUpdates).eq('id', id).then(({ error }: { error: Error | null }) => {
+      if (error) console.error('[Supabase] Failed to update performance review:', error);
+    });
+  }, []);
+
+  const deletePerformanceReview = useCallback((id: string) => {
+    setPerformanceReviews(prev => {
+      const updated = prev.filter(r => r.id !== id);
+      setToStorage(STORAGE_KEYS.PERFORMANCE_REVIEWS, updated);
+      return updated;
+    });
+    getSupabaseClient()?.from('performance_reviews').delete().eq('id', id).then(({ error }: { error: Error | null }) => {
+      if (error) console.error('[Supabase] Failed to delete performance review:', error);
+    });
+  }, []);
+
+  const getStaffPerformanceReviews = useCallback((staffId: string): PerformanceReview[] => {
+    return performanceReviews.filter(r => r.staffId === staffId);
+  }, [performanceReviews]);
+
+  const refreshPerformanceReviews = useCallback(async () => {
+    const { data, error } = await (getSupabaseClient()?.from('performance_reviews').select('*').order('created_at', { ascending: false }) || { data: null, error: null });
+    if (!error && data) {
+      const mapped: PerformanceReview[] = data.map((row: Record<string, unknown>) => ({
+        id: row.id as string,
+        staffId: row.staff_id as string,
+        staffName: row.staff_name as string,
+        reviewerId: row.reviewer_id as string,
+        reviewerName: row.reviewer_name as string,
+        period: row.period as PerformanceReview['period'],
+        periodStart: row.period_start as string,
+        periodEnd: row.period_end as string,
+        overallRating: row.overall_rating as number,
+        punctuality: row.punctuality as number,
+        teamwork: row.teamwork as number,
+        productivity: row.productivity as number,
+        communication: row.communication as number,
+        initiative: row.initiative as number,
+        strengths: row.strengths as string | undefined,
+        improvements: row.improvements as string | undefined,
+        goals: row.goals as string | undefined,
+        comments: row.comments as string | undefined,
+        status: row.status as PerformanceReview['status'],
+        acknowledgedAt: row.acknowledged_at as string | undefined,
+        createdAt: row.created_at as string,
+      }));
+      setPerformanceReviews(mapped);
+      setToStorage(STORAGE_KEYS.PERFORMANCE_REVIEWS, mapped);
+    }
+  }, []);
+
   // Staff Portal - Staff Request actions
   const addStaffRequest = useCallback((request: Omit<StaffRequest, 'id' | 'createdAt'>) => {
     const newRequest: StaffRequest = {
@@ -4653,6 +4777,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     getStaffDocuments,
     getExpiringDocuments,
     refreshStaffDocuments,
+
+    // HR - Performance Reviews
+    performanceReviews,
+    addPerformanceReview,
+    updatePerformanceReview,
+    deletePerformanceReview,
+    getStaffPerformanceReviews,
+    refreshPerformanceReviews,
 
     // Staff Portal - General Requests
     staffRequests,

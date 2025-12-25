@@ -204,6 +204,35 @@ export interface StaffDocument {
   createdAt?: string;         // Added for tracking
 }
 
+// ==================== PERFORMANCE REVIEW TYPES ====================
+
+export type ReviewPeriod = 'monthly' | 'quarterly' | 'semi_annual' | 'annual';
+export type ReviewStatus = 'draft' | 'pending_acknowledgement' | 'completed';
+
+export interface PerformanceReview {
+  id: string;
+  staffId: string;
+  staffName: string;
+  reviewerId: string;
+  reviewerName: string;
+  period: ReviewPeriod;
+  periodStart: string;
+  periodEnd: string;
+  overallRating: number;  // 1-5
+  punctuality: number;    // 1-5
+  teamwork: number;       // 1-5
+  productivity: number;   // 1-5
+  communication: number;  // 1-5
+  initiative: number;     // 1-5
+  strengths?: string;
+  improvements?: string;
+  goals?: string;
+  comments?: string;
+  status: ReviewStatus;
+  acknowledgedAt?: string;
+  createdAt: string;
+}
+
 export interface StaffProfile {
   id: string;
   employeeNumber?: string;
