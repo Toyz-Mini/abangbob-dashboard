@@ -923,7 +923,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       setter: React.Dispatch<React.SetStateAction<T[]>>
     ) => {
       const channel = supabase.channel(`${tableName}_global_sync`)
-        .on('postgres_changes', { event: '*', schema: 'public', table: tableName }, (payload) => {
+        .on('postgres_changes', { event: '*', schema: 'public', table: tableName }, (payload: any) => {
           // console.log(`[Realtime] ${tableName} event:`, payload.eventType);
 
           if (payload.eventType === 'INSERT') {
