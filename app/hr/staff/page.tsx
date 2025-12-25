@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import MainLayout from '@/components/MainLayout';
-import { useStaff } from '@/lib/store';
+import { useStaff, useStaffPortal } from '@/lib/store';
 import { useStaffRealtime } from '@/lib/supabase/realtime-hooks';
 import {
   StaffProfile,
@@ -57,6 +57,7 @@ type EditTab = 'personal' | 'employment' | 'salary' | 'permissions';
 
 export default function StaffListPage() {
   const { staff, updateStaff, deleteStaff, getStaffAttendanceToday, refreshStaff, isInitialized } = useStaff();
+  const { getLeaveBalance } = useStaffPortal();
 
   // Realtime subscription for staff
   const handleStaffChange = useCallback(() => {
@@ -908,12 +909,28 @@ export default function StaffListPage() {
           {/* Leave Entitlement Card */}
           <SectionCard title="Entitlement Cuti" icon={Calendar}>
             <div className="grid grid-cols-2 gap-x-4 gap-y-6">
-              <Field label="Tahunan" value={`${selectedStaff.leaveEntitlement?.annual || 14} hari`} />
-              <Field label="Sakit" value={`${selectedStaff.leaveEntitlement?.medical || 14} hari`} />
-              <Field label="Kecemasan" value={`${selectedStaff.leaveEntitlement?.emergency || 3} hari`} />
-              <Field label="Ehsan" value={`${selectedStaff.leaveEntitlement?.compassionate || 3} hari`} />
-              <Field label="Bersalin" value={`${selectedStaff.leaveEntitlement?.maternity || 105} hari`} />
-              <Field label="Paterniti" value={`${selectedStaff.leaveEntitlement?.paternity || 3} hari`} />
+              {(() => {
+                const currentYear = new Date().getFullYear();
+                const balance = getLeaveBalance(selectedStaff.id, currentYear);
+                // Priority: Balance (Current Year) -> Profile Config -> Default
+                const annual = balance?.annual?.entitled ?? selectedStaff.leaveEntitlement?.annual ?? 14;
+                const medical = balance?.medical?.entitled ?? selectedStaff.leaveEntitlement?.medical ?? 14;
+                const emergency = balance?.emergency?.entitled ?? selectedStaff.leaveEntitlement?.emergency ?? 3;
+                const compassionate = balance?.compassionate?.entitled ?? selectedStaff.leaveEntitlement?.compassionate ?? 3;
+                const maternity = balance?.maternity?.entitled ?? selectedStaff.leaveEntitlement?.maternity ?? 105;
+                const paternity = balance?.paternity?.entitled ?? selectedStaff.leaveEntitlement?.paternity ?? 3;
+
+                return (
+                  <>
+                    <Field label="Tahunan" value={`${annual} hari`} />
+                    <Field label="Sakit" value={`${medical} hari`} />
+                    <Field label="Kecemasan" value={`${emergency} hari`} />
+                    <Field label="Ehsan" value={`${compassionate} hari`} />
+                    <Field label="Bersalin" value={`${maternity} hari`} />
+                    <Field label="Paterniti" value={`${paternity} hari`} />
+                  </>
+                );
+              })()}
             </div>
           </SectionCard>
 
