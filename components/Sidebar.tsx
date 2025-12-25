@@ -155,7 +155,7 @@ const Sidebar = forwardRef<HTMLElement, SidebarProps>(({ isOpen, onMouseEnter, o
       {/* Logo */}
       <Link href="/" className="nav-logo">
         <Image
-          src="/abangbob-logo.png"
+          src="/logo.png"
           alt="AbangBob"
           width={40}
           height={40}
