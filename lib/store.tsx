@@ -202,7 +202,7 @@ interface StoreState {
   customers: Customer[];
   addCustomer: (customer: Omit<Customer, 'id' | 'createdAt' | 'loyaltyPoints' | 'totalSpent' | 'totalOrders' | 'segment'>) => Promise<Customer>;
   updateCustomer: (id: string, updates: Partial<Customer>) => void;
-  addLoyaltyPoints: (customerId: string, points: number, orderId?: string) => void;
+  addLoyaltyPoints: (customerId: string, points: number, orderTotal?: number) => void;
   redeemLoyaltyPoints: (customerId: string, points: number) => boolean;
   refreshCustomers: () => Promise<void>;
 
