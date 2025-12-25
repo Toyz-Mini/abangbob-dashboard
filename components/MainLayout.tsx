@@ -289,7 +289,7 @@ export default function MainLayout({ children }: { children: ReactNode }) {
           className="desktop-only"
           style={{
             position: 'fixed',
-            left: isSidebarOpen ? '280px' : '0px',
+            left: isSidebarOpen ? '280px' : '80px',
             top: '50%',
             transform: 'translateY(-50%) translateX(-50%)',
             zIndex: 100, // Above sidebar content
