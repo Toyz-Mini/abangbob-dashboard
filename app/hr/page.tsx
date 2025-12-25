@@ -304,27 +304,83 @@ export default function HRDashboardPage() {
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                   <Link href="/hr/staff">
-                    <div className="hover-lift" style={{ padding: '1rem', background: 'var(--primary-light)', borderRadius: 'var(--radius-md)', textAlign: 'center', cursor: 'pointer' }}>
-                      <List size={24} style={{ color: 'var(--primary)', marginBottom: '0.5rem' }} />
-                      <div style={{ fontWeight: 600, fontSize: '0.85rem' }}>Senarai Staf</div>
+                    <div className="hover-lift" style={{
+                      padding: '1.25rem 1rem',
+                      background: 'var(--bg-card)',
+                      borderRadius: 'var(--radius-md)',
+                      textAlign: 'center',
+                      cursor: 'pointer',
+                      border: '1px solid var(--border-light)',
+                      boxShadow: 'var(--shadow-sm)'
+                    }}>
+                      <div style={{
+                        width: '40px', height: '40px', margin: '0 auto 0.75rem',
+                        borderRadius: '10px', background: 'var(--primary-50)', color: 'var(--primary)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center'
+                      }}>
+                        <List size={20} />
+                      </div>
+                      <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-primary)' }}>Senarai Staf</div>
                     </div>
                   </Link>
                   <Link href="/hr/timeclock">
-                    <div className="hover-lift" style={{ padding: '1rem', background: 'var(--primary-light)', borderRadius: 'var(--radius-md)', textAlign: 'center', cursor: 'pointer' }}>
-                      <Clock size={24} style={{ color: 'var(--primary)', marginBottom: '0.5rem' }} />
-                      <div style={{ fontWeight: 600, fontSize: '0.85rem' }}>Timeclock</div>
+                    <div className="hover-lift" style={{
+                      padding: '1.25rem 1rem',
+                      background: 'var(--bg-card)',
+                      borderRadius: 'var(--radius-md)',
+                      textAlign: 'center',
+                      cursor: 'pointer',
+                      border: '1px solid var(--border-light)',
+                      boxShadow: 'var(--shadow-sm)'
+                    }}>
+                      <div style={{
+                        width: '40px', height: '40px', margin: '0 auto 0.75rem',
+                        borderRadius: '10px', background: 'var(--primary-50)', color: 'var(--primary)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center'
+                      }}>
+                        <Clock size={20} />
+                      </div>
+                      <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-primary)' }}>Timeclock</div>
                     </div>
                   </Link>
                   <Link href="/hr/schedule">
-                    <div className="hover-lift" style={{ padding: '1rem', background: 'var(--primary-light)', borderRadius: 'var(--radius-md)', textAlign: 'center', cursor: 'pointer' }}>
-                      <Calendar size={24} style={{ color: 'var(--primary)', marginBottom: '0.5rem' }} />
-                      <div style={{ fontWeight: 600, fontSize: '0.85rem' }}>Jadual Shift</div>
+                    <div className="hover-lift" style={{
+                      padding: '1.25rem 1rem',
+                      background: 'var(--bg-card)',
+                      borderRadius: 'var(--radius-md)',
+                      textAlign: 'center',
+                      cursor: 'pointer',
+                      border: '1px solid var(--border-light)',
+                      boxShadow: 'var(--shadow-sm)'
+                    }}>
+                      <div style={{
+                        width: '40px', height: '40px', margin: '0 auto 0.75rem',
+                        borderRadius: '10px', background: 'var(--primary-50)', color: 'var(--primary)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center'
+                      }}>
+                        <Calendar size={20} />
+                      </div>
+                      <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-primary)' }}>Jadual Shift</div>
                     </div>
                   </Link>
                   <Link href="/hr/kpi">
-                    <div className="hover-lift" style={{ padding: '1rem', background: 'var(--primary-light)', borderRadius: 'var(--radius-md)', textAlign: 'center', cursor: 'pointer' }}>
-                      <Trophy size={24} style={{ color: 'var(--primary)', marginBottom: '0.5rem' }} />
-                      <div style={{ fontWeight: 600, fontSize: '0.85rem' }}>KPI</div>
+                    <div className="hover-lift" style={{
+                      padding: '1.25rem 1rem',
+                      background: 'var(--bg-card)',
+                      borderRadius: 'var(--radius-md)',
+                      textAlign: 'center',
+                      cursor: 'pointer',
+                      border: '1px solid var(--border-light)',
+                      boxShadow: 'var(--shadow-sm)'
+                    }}>
+                      <div style={{
+                        width: '40px', height: '40px', margin: '0 auto 0.75rem',
+                        borderRadius: '10px', background: 'var(--primary-50)', color: 'var(--primary)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center'
+                      }}>
+                        <Trophy size={20} />
+                      </div>
+                      <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-primary)' }}>KPI</div>
                     </div>
                   </Link>
                 </div>
@@ -337,27 +393,83 @@ export default function HRDashboardPage() {
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                   <Link href="/hr/approvals?tab=leave">
-                    <div className="hover-lift" style={{ padding: '1rem', background: 'var(--success-light)', borderRadius: 'var(--radius-md)', textAlign: 'center', cursor: 'pointer' }}>
-                      <Calendar size={24} style={{ color: 'var(--success)', marginBottom: '0.5rem' }} />
-                      <div style={{ fontWeight: 600, fontSize: '0.85rem' }}>Cuti</div>
+                    <div className="hover-lift" style={{
+                      padding: '1.25rem 1rem',
+                      background: 'var(--bg-card)',
+                      borderRadius: 'var(--radius-md)',
+                      textAlign: 'center',
+                      cursor: 'pointer',
+                      border: '1px solid var(--border-light)',
+                      boxShadow: 'var(--shadow-sm)'
+                    }}>
+                      <div style={{
+                        width: '40px', height: '40px', margin: '0 auto 0.75rem',
+                        borderRadius: '10px', background: 'rgba(5, 150, 105, 0.1)', color: 'var(--success)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center'
+                      }}>
+                        <Calendar size={20} />
+                      </div>
+                      <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-primary)' }}>Cuti</div>
                     </div>
                   </Link>
                   <Link href="/hr/approvals?tab=claims">
-                    <div className="hover-lift" style={{ padding: '1rem', background: 'var(--success-light)', borderRadius: 'var(--radius-md)', textAlign: 'center', cursor: 'pointer' }}>
-                      <DollarSign size={24} style={{ color: 'var(--success)', marginBottom: '0.5rem' }} />
-                      <div style={{ fontWeight: 600, fontSize: '0.85rem' }}>Tuntutan</div>
+                    <div className="hover-lift" style={{
+                      padding: '1.25rem 1rem',
+                      background: 'var(--bg-card)',
+                      borderRadius: 'var(--radius-md)',
+                      textAlign: 'center',
+                      cursor: 'pointer',
+                      border: '1px solid var(--border-light)',
+                      boxShadow: 'var(--shadow-sm)'
+                    }}>
+                      <div style={{
+                        width: '40px', height: '40px', margin: '0 auto 0.75rem',
+                        borderRadius: '10px', background: 'rgba(5, 150, 105, 0.1)', color: 'var(--success)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center'
+                      }}>
+                        <DollarSign size={20} />
+                      </div>
+                      <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-primary)' }}>Tuntutan</div>
                     </div>
                   </Link>
                   <Link href="/hr/approvals?tab=ot">
-                    <div className="hover-lift" style={{ padding: '1rem', background: 'var(--success-light)', borderRadius: 'var(--radius-md)', textAlign: 'center', cursor: 'pointer' }}>
-                      <Clock size={24} style={{ color: 'var(--success)', marginBottom: '0.5rem' }} />
-                      <div style={{ fontWeight: 600, fontSize: '0.85rem' }}>OT</div>
+                    <div className="hover-lift" style={{
+                      padding: '1.25rem 1rem',
+                      background: 'var(--bg-card)',
+                      borderRadius: 'var(--radius-md)',
+                      textAlign: 'center',
+                      cursor: 'pointer',
+                      border: '1px solid var(--border-light)',
+                      boxShadow: 'var(--shadow-sm)'
+                    }}>
+                      <div style={{
+                        width: '40px', height: '40px', margin: '0 auto 0.75rem',
+                        borderRadius: '10px', background: 'rgba(5, 150, 105, 0.1)', color: 'var(--success)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center'
+                      }}>
+                        <Clock size={20} />
+                      </div>
+                      <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-primary)' }}>OT</div>
                     </div>
                   </Link>
                   <Link href="/hr/refund-approvals">
-                    <div className="hover-lift" style={{ padding: '1rem', background: 'var(--success-light)', borderRadius: 'var(--radius-md)', textAlign: 'center', cursor: 'pointer' }}>
-                      <BarChart3 size={24} style={{ color: 'var(--success)', marginBottom: '0.5rem' }} />
-                      <div style={{ fontWeight: 600, fontSize: '0.85rem' }}>Void/Refund</div>
+                    <div className="hover-lift" style={{
+                      padding: '1.25rem 1rem',
+                      background: 'var(--bg-card)',
+                      borderRadius: 'var(--radius-md)',
+                      textAlign: 'center',
+                      cursor: 'pointer',
+                      border: '1px solid var(--border-light)',
+                      boxShadow: 'var(--shadow-sm)'
+                    }}>
+                      <div style={{
+                        width: '40px', height: '40px', margin: '0 auto 0.75rem',
+                        borderRadius: '10px', background: 'rgba(5, 150, 105, 0.1)', color: 'var(--success)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center'
+                      }}>
+                        <BarChart3 size={20} />
+                      </div>
+                      <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-primary)' }}>Void/Refund</div>
                     </div>
                   </Link>
                 </div>
@@ -370,27 +482,83 @@ export default function HRDashboardPage() {
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                   <Link href="/hr/leave-calendar">
-                    <div className="hover-lift" style={{ padding: '1rem', background: 'var(--warning-light)', borderRadius: 'var(--radius-md)', textAlign: 'center', cursor: 'pointer' }}>
-                      <Calendar size={24} style={{ color: 'var(--warning)', marginBottom: '0.5rem' }} />
-                      <div style={{ fontWeight: 600, fontSize: '0.85rem' }}>Kalendar Cuti</div>
+                    <div className="hover-lift" style={{
+                      padding: '1.25rem 1rem',
+                      background: 'var(--bg-card)',
+                      borderRadius: 'var(--radius-md)',
+                      textAlign: 'center',
+                      cursor: 'pointer',
+                      border: '1px solid var(--border-light)',
+                      boxShadow: 'var(--shadow-sm)'
+                    }}>
+                      <div style={{
+                        width: '40px', height: '40px', margin: '0 auto 0.75rem',
+                        borderRadius: '10px', background: 'rgba(234, 179, 8, 0.1)', color: 'var(--warning)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center'
+                      }}>
+                        <Calendar size={20} />
+                      </div>
+                      <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-primary)' }}>Kalendar Cuti</div>
                     </div>
                   </Link>
                   <Link href="/hr/leave-settings">
-                    <div className="hover-lift" style={{ padding: '1rem', background: 'var(--warning-light)', borderRadius: 'var(--radius-md)', textAlign: 'center', cursor: 'pointer' }}>
-                      <List size={24} style={{ color: 'var(--warning)', marginBottom: '0.5rem' }} />
-                      <div style={{ fontWeight: 600, fontSize: '0.85rem' }}>Tetapan Cuti</div>
+                    <div className="hover-lift" style={{
+                      padding: '1.25rem 1rem',
+                      background: 'var(--bg-card)',
+                      borderRadius: 'var(--radius-md)',
+                      textAlign: 'center',
+                      cursor: 'pointer',
+                      border: '1px solid var(--border-light)',
+                      boxShadow: 'var(--shadow-sm)'
+                    }}>
+                      <div style={{
+                        width: '40px', height: '40px', margin: '0 auto 0.75rem',
+                        borderRadius: '10px', background: 'rgba(234, 179, 8, 0.1)', color: 'var(--warning)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center'
+                      }}>
+                        <List size={20} />
+                      </div>
+                      <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-primary)' }}>Tetapan Cuti</div>
                     </div>
                   </Link>
                   <Link href="/finance/payroll">
-                    <div className="hover-lift" style={{ padding: '1rem', background: 'var(--warning-light)', borderRadius: 'var(--radius-md)', textAlign: 'center', cursor: 'pointer' }}>
-                      <DollarSign size={24} style={{ color: 'var(--warning)', marginBottom: '0.5rem' }} />
-                      <div style={{ fontWeight: 600, fontSize: '0.85rem' }}>Payroll</div>
+                    <div className="hover-lift" style={{
+                      padding: '1.25rem 1rem',
+                      background: 'var(--bg-card)',
+                      borderRadius: 'var(--radius-md)',
+                      textAlign: 'center',
+                      cursor: 'pointer',
+                      border: '1px solid var(--border-light)',
+                      boxShadow: 'var(--shadow-sm)'
+                    }}>
+                      <div style={{
+                        width: '40px', height: '40px', margin: '0 auto 0.75rem',
+                        borderRadius: '10px', background: 'rgba(234, 179, 8, 0.1)', color: 'var(--warning)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center'
+                      }}>
+                        <DollarSign size={20} />
+                      </div>
+                      <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-primary)' }}>Payroll</div>
                     </div>
                   </Link>
                   <Link href="/hr/ot-report">
-                    <div className="hover-lift" style={{ padding: '1rem', background: 'var(--warning-light)', borderRadius: 'var(--radius-md)', textAlign: 'center', cursor: 'pointer' }}>
-                      <Clock size={24} style={{ color: 'var(--warning)', marginBottom: '0.5rem' }} />
-                      <div style={{ fontWeight: 600, fontSize: '0.85rem' }}>Laporan OT</div>
+                    <div className="hover-lift" style={{
+                      padding: '1.25rem 1rem',
+                      background: 'var(--bg-card)',
+                      borderRadius: 'var(--radius-md)',
+                      textAlign: 'center',
+                      cursor: 'pointer',
+                      border: '1px solid var(--border-light)',
+                      boxShadow: 'var(--shadow-sm)'
+                    }}>
+                      <div style={{
+                        width: '40px', height: '40px', margin: '0 auto 0.75rem',
+                        borderRadius: '10px', background: 'rgba(234, 179, 8, 0.1)', color: 'var(--warning)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center'
+                      }}>
+                        <Clock size={20} />
+                      </div>
+                      <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-primary)' }}>Laporan OT</div>
                     </div>
                   </Link>
                 </div>
@@ -403,27 +571,83 @@ export default function HRDashboardPage() {
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                   <Link href="/hr/performance">
-                    <div className="hover-lift" style={{ padding: '1rem', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-md)', textAlign: 'center', cursor: 'pointer' }}>
-                      <TrendingUp size={24} style={{ color: 'var(--text-secondary)', marginBottom: '0.5rem' }} />
-                      <div style={{ fontWeight: 600, fontSize: '0.85rem' }}>Prestasi</div>
+                    <div className="hover-lift" style={{
+                      padding: '1.25rem 1rem',
+                      background: 'var(--bg-card)',
+                      borderRadius: 'var(--radius-md)',
+                      textAlign: 'center',
+                      cursor: 'pointer',
+                      border: '1px solid var(--border-light)',
+                      boxShadow: 'var(--shadow-sm)'
+                    }}>
+                      <div style={{
+                        width: '40px', height: '40px', margin: '0 auto 0.75rem',
+                        borderRadius: '10px', background: 'var(--gray-100)', color: 'var(--text-secondary)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center'
+                      }}>
+                        <TrendingUp size={20} />
+                      </div>
+                      <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-primary)' }}>Prestasi</div>
                     </div>
                   </Link>
                   <Link href="/hr/training">
-                    <div className="hover-lift" style={{ padding: '1rem', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-md)', textAlign: 'center', cursor: 'pointer' }}>
-                      <Award size={24} style={{ color: 'var(--text-secondary)', marginBottom: '0.5rem' }} />
-                      <div style={{ fontWeight: 600, fontSize: '0.85rem' }}>Training</div>
+                    <div className="hover-lift" style={{
+                      padding: '1.25rem 1rem',
+                      background: 'var(--bg-card)',
+                      borderRadius: 'var(--radius-md)',
+                      textAlign: 'center',
+                      cursor: 'pointer',
+                      border: '1px solid var(--border-light)',
+                      boxShadow: 'var(--shadow-sm)'
+                    }}>
+                      <div style={{
+                        width: '40px', height: '40px', margin: '0 auto 0.75rem',
+                        borderRadius: '10px', background: 'var(--gray-100)', color: 'var(--text-secondary)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center'
+                      }}>
+                        <Award size={20} />
+                      </div>
+                      <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-primary)' }}>Training</div>
                     </div>
                   </Link>
                   <Link href="/hr/documents">
-                    <div className="hover-lift" style={{ padding: '1rem', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-md)', textAlign: 'center', cursor: 'pointer' }}>
-                      <List size={24} style={{ color: 'var(--text-secondary)', marginBottom: '0.5rem' }} />
-                      <div style={{ fontWeight: 600, fontSize: '0.85rem' }}>Dokumen</div>
+                    <div className="hover-lift" style={{
+                      padding: '1.25rem 1rem',
+                      background: 'var(--bg-card)',
+                      borderRadius: 'var(--radius-md)',
+                      textAlign: 'center',
+                      cursor: 'pointer',
+                      border: '1px solid var(--border-light)',
+                      boxShadow: 'var(--shadow-sm)'
+                    }}>
+                      <div style={{
+                        width: '40px', height: '40px', margin: '0 auto 0.75rem',
+                        borderRadius: '10px', background: 'var(--gray-100)', color: 'var(--text-secondary)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center'
+                      }}>
+                        <List size={20} />
+                      </div>
+                      <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-primary)' }}>Dokumen</div>
                     </div>
                   </Link>
                   <Link href="/hr/disciplinary">
-                    <div className="hover-lift" style={{ padding: '1rem', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-md)', textAlign: 'center', cursor: 'pointer' }}>
-                      <Users size={24} style={{ color: 'var(--text-secondary)', marginBottom: '0.5rem' }} />
-                      <div style={{ fontWeight: 600, fontSize: '0.85rem' }}>Disiplin</div>
+                    <div className="hover-lift" style={{
+                      padding: '1.25rem 1rem',
+                      background: 'var(--bg-card)',
+                      borderRadius: 'var(--radius-md)',
+                      textAlign: 'center',
+                      cursor: 'pointer',
+                      border: '1px solid var(--border-light)',
+                      boxShadow: 'var(--shadow-sm)'
+                    }}>
+                      <div style={{
+                        width: '40px', height: '40px', margin: '0 auto 0.75rem',
+                        borderRadius: '10px', background: 'var(--gray-100)', color: 'var(--text-secondary)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center'
+                      }}>
+                        <Users size={20} />
+                      </div>
+                      <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-primary)' }}>Disiplin</div>
                     </div>
                   </Link>
                 </div>
