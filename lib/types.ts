@@ -83,6 +83,7 @@ export interface Order {
   paymentMethod?: PaymentMethod;
   createdAt: string;
   staffId?: string;
+  staffName?: string; // Add staffName for history display
   // Staff speed tracking timestamps
   preparingStartedAt?: string;  // Bila staff mula prepare
   readyAt?: string;             // Bila order siap
