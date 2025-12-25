@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
-import { StockItem, StaffProfile, AttendanceRecord, Order, ProductionLog, DeliveryOrder, Expense, DailyCashFlow, Customer, Supplier, PurchaseOrder, Recipe, Shift, ScheduleEntry, Promotion, Notification, MenuItem, ModifierGroup, ModifierOption, StaffKPI, LeaveRecord, TrainingRecord, OTRecord, CustomerReview, KPIMetrics, ChecklistItemTemplate, ChecklistCompletion, LeaveBalance, LeaveRequest, ClaimRequest, StaffRequest, Announcement, OrderHistoryItem, VoidRefundRequest, VoidRefundType, OrderHistoryFilters, RefundItem, OilTracker, OilChangeRequest, OilActionHistory, OilActionType, Equipment, MaintenanceSchedule, MaintenanceLog, WasteLog, MenuCategory, PaymentMethodConfig, TaxRate, CashRegister, InventoryLog, StockSuggestion, DEFAULT_MENU_CATEGORIES, DEFAULT_PAYMENT_METHODS, DEFAULT_TAX_RATES, OTClaim, SalaryAdvance, DisciplinaryAction, StaffTraining, StaffDocument, PerformanceReview } from './types';
+import { StockItem, StaffProfile, AttendanceRecord, Order, ProductionLog, DeliveryOrder, Expense, DailyCashFlow, Customer, Supplier, PurchaseOrder, Recipe, Shift, ScheduleEntry, Promotion, Notification, MenuItem, ModifierGroup, ModifierOption, StaffKPI, LeaveRecord, TrainingRecord, OTRecord, CustomerReview, KPIMetrics, ChecklistItemTemplate, ChecklistCompletion, LeaveBalance, LeaveRequest, ClaimRequest, StaffRequest, Announcement, OrderHistoryItem, VoidRefundRequest, VoidRefundType, OrderHistoryFilters, RefundItem, OilTracker, OilChangeRequest, OilActionHistory, OilActionType, Equipment, MaintenanceSchedule, MaintenanceLog, WasteLog, MenuCategory, PaymentMethodConfig, TaxRate, CashRegister, InventoryLog, StockSuggestion, DEFAULT_MENU_CATEGORIES, DEFAULT_PAYMENT_METHODS, DEFAULT_TAX_RATES, OTClaim, SalaryAdvance, DisciplinaryAction, StaffTraining, StaffDocument, PerformanceReview, OnboardingChecklist } from './types';
 import { MOCK_ORDER_HISTORY, MOCK_VOID_REFUND_REQUESTS, ORDER_HISTORY_STORAGE_KEYS } from './order-history-data';
 import { MOCK_STOCK } from './inventory-data';
 import { MOCK_STAFF, MOCK_ATTENDANCE, MOCK_PAYROLL } from './hr-data';
@@ -128,6 +128,8 @@ const STORAGE_KEYS = {
   STAFF_DOCUMENTS: 'abangbob_staff_documents',
   // Performance Reviews
   PERFORMANCE_REVIEWS: 'abangbob_performance_reviews',
+  // Onboarding Checklists
+  ONBOARDING_CHECKLISTS: 'abangbob_onboarding_checklists',
 };
 
 // Inventory log type for tracking stock changes
@@ -381,6 +383,14 @@ interface StoreState {
   getStaffPerformanceReviews: (staffId: string) => PerformanceReview[];
   refreshPerformanceReviews: () => Promise<void>;
 
+  // HR - Onboarding Checklists
+  onboardingChecklists: OnboardingChecklist[];
+  addOnboardingChecklist: (checklist: Omit<OnboardingChecklist, 'id' | 'createdAt'>) => void;
+  updateOnboardingChecklist: (id: string, updates: Partial<OnboardingChecklist>) => void;
+  deleteOnboardingChecklist: (id: string) => void;
+  getStaffOnboarding: (staffId: string) => OnboardingChecklist | undefined;
+  refreshOnboardingChecklists: () => Promise<void>;
+
   // Staff Portal - General Requests
   staffRequests: StaffRequest[];
   addStaffRequest: (request: Omit<StaffRequest, 'id' | 'createdAt'>) => void;
@@ -571,6 +581,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [staffTraining, setStaffTraining] = useState<StaffTraining[]>([]);
   const [staffDocuments, setStaffDocuments] = useState<StaffDocument[]>([]);
   const [performanceReviews, setPerformanceReviews] = useState<PerformanceReview[]>([]);
+  const [onboardingChecklists, setOnboardingChecklists] = useState<OnboardingChecklist[]>([]);
   const [staffRequests, setStaffRequests] = useState<StaffRequest[]>([]);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
 
@@ -783,6 +794,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       setStaffTraining(getFromStorage(STORAGE_KEYS.STAFF_TRAINING, []));
       setStaffDocuments(getFromStorage(STORAGE_KEYS.STAFF_DOCUMENTS, []));
       setPerformanceReviews(getFromStorage(STORAGE_KEYS.PERFORMANCE_REVIEWS, []));
+      setOnboardingChecklists(getFromStorage(STORAGE_KEYS.ONBOARDING_CHECKLISTS, []));
       setStaffRequests(supabaseConnected && supabaseData.staffRequests?.length > 0 ? supabaseData.staffRequests : getFromStorage(STORAGE_KEYS.STAFF_REQUESTS, MOCK_STAFF_REQUESTS));
       setAnnouncements(supabaseConnected && supabaseData.announcements?.length > 0 ? supabaseData.announcements : getFromStorage(STORAGE_KEYS.ANNOUNCEMENTS, MOCK_ANNOUNCEMENTS));
 
@@ -3504,6 +3516,93 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  // ==================== Onboarding Checklist Functions ====================
+
+  const addOnboardingChecklist = useCallback((checklist: Omit<OnboardingChecklist, 'id' | 'createdAt'>) => {
+    const newChecklist: OnboardingChecklist = {
+      ...checklist,
+      id: `onboard_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      createdAt: new Date().toISOString(),
+    };
+    setOnboardingChecklists(prev => {
+      const updated = [newChecklist, ...prev];
+      setToStorage(STORAGE_KEYS.ONBOARDING_CHECKLISTS, updated);
+      return updated;
+    });
+    // Sync to Supabase
+    getSupabaseClient()?.from('onboarding_checklists').insert({
+      id: newChecklist.id,
+      staff_id: newChecklist.staffId,
+      staff_name: newChecklist.staffName,
+      start_date: newChecklist.startDate,
+      due_date: newChecklist.dueDate,
+      items: JSON.stringify(newChecklist.items),
+      status: newChecklist.status,
+      notes: newChecklist.notes,
+      assigned_to: newChecklist.assignedTo,
+      assigned_to_name: newChecklist.assignedToName,
+      created_at: newChecklist.createdAt,
+    }).then(({ error }: { error: Error | null }) => {
+      if (error) console.error('[Supabase] Failed to insert onboarding checklist:', error);
+    });
+  }, []);
+
+  const updateOnboardingChecklist = useCallback((id: string, updates: Partial<OnboardingChecklist>) => {
+    setOnboardingChecklists(prev => {
+      const updated = prev.map(c => c.id === id ? { ...c, ...updates } : c);
+      setToStorage(STORAGE_KEYS.ONBOARDING_CHECKLISTS, updated);
+      return updated;
+    });
+    // Sync to Supabase
+    const snakeCaseUpdates: Record<string, unknown> = {};
+    if (updates.startDate !== undefined) snakeCaseUpdates.start_date = updates.startDate;
+    if (updates.dueDate !== undefined) snakeCaseUpdates.due_date = updates.dueDate;
+    if (updates.items !== undefined) snakeCaseUpdates.items = JSON.stringify(updates.items);
+    if (updates.status !== undefined) snakeCaseUpdates.status = updates.status;
+    if (updates.notes !== undefined) snakeCaseUpdates.notes = updates.notes;
+    if (updates.assignedTo !== undefined) snakeCaseUpdates.assigned_to = updates.assignedTo;
+    if (updates.assignedToName !== undefined) snakeCaseUpdates.assigned_to_name = updates.assignedToName;
+    getSupabaseClient()?.from('onboarding_checklists').update(snakeCaseUpdates).eq('id', id).then(({ error }: { error: Error | null }) => {
+      if (error) console.error('[Supabase] Failed to update onboarding checklist:', error);
+    });
+  }, []);
+
+  const deleteOnboardingChecklist = useCallback((id: string) => {
+    setOnboardingChecklists(prev => {
+      const updated = prev.filter(c => c.id !== id);
+      setToStorage(STORAGE_KEYS.ONBOARDING_CHECKLISTS, updated);
+      return updated;
+    });
+    getSupabaseClient()?.from('onboarding_checklists').delete().eq('id', id).then(({ error }: { error: Error | null }) => {
+      if (error) console.error('[Supabase] Failed to delete onboarding checklist:', error);
+    });
+  }, []);
+
+  const getStaffOnboarding = useCallback((staffId: string): OnboardingChecklist | undefined => {
+    return onboardingChecklists.find(c => c.staffId === staffId);
+  }, [onboardingChecklists]);
+
+  const refreshOnboardingChecklists = useCallback(async () => {
+    const { data, error } = await (getSupabaseClient()?.from('onboarding_checklists').select('*').order('created_at', { ascending: false }) || { data: null, error: null });
+    if (!error && data) {
+      const mapped: OnboardingChecklist[] = data.map((row: Record<string, unknown>) => ({
+        id: row.id as string,
+        staffId: row.staff_id as string,
+        staffName: row.staff_name as string,
+        startDate: row.start_date as string,
+        dueDate: row.due_date as string | undefined,
+        items: typeof row.items === 'string' ? JSON.parse(row.items) : row.items,
+        status: row.status as OnboardingChecklist['status'],
+        notes: row.notes as string | undefined,
+        assignedTo: row.assigned_to as string | undefined,
+        assignedToName: row.assigned_to_name as string | undefined,
+        createdAt: row.created_at as string,
+      }));
+      setOnboardingChecklists(mapped);
+      setToStorage(STORAGE_KEYS.ONBOARDING_CHECKLISTS, mapped);
+    }
+  }, []);
+
   // Staff Portal - Staff Request actions
   const addStaffRequest = useCallback((request: Omit<StaffRequest, 'id' | 'createdAt'>) => {
     const newRequest: StaffRequest = {
@@ -4785,6 +4884,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     deletePerformanceReview,
     getStaffPerformanceReviews,
     refreshPerformanceReviews,
+
+    // HR - Onboarding Checklists
+    onboardingChecklists,
+    addOnboardingChecklist,
+    updateOnboardingChecklist,
+    deleteOnboardingChecklist,
+    getStaffOnboarding,
+    refreshOnboardingChecklists,
 
     // Staff Portal - General Requests
     staffRequests,

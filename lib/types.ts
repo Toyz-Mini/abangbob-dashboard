@@ -233,6 +233,32 @@ export interface PerformanceReview {
   createdAt: string;
 }
 
+// ==================== ONBOARDING CHECKLIST TYPES ====================
+
+export type OnboardingStatus = 'pending' | 'in_progress' | 'completed';
+
+export interface OnboardingItem {
+  id: string;
+  title: string;
+  isCompleted: boolean;
+  completedAt?: string;
+  completedBy?: string;
+}
+
+export interface OnboardingChecklist {
+  id: string;
+  staffId: string;
+  staffName: string;
+  startDate: string;
+  dueDate?: string;
+  items: OnboardingItem[];
+  status: OnboardingStatus;
+  notes?: string;
+  assignedTo?: string;
+  assignedToName?: string;
+  createdAt: string;
+}
+
 export interface StaffProfile {
   id: string;
   employeeNumber?: string;
