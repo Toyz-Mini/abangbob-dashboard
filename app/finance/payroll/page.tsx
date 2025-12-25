@@ -6,6 +6,7 @@ import StatCard from '@/components/StatCard';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import Modal from '@/components/Modal';
 import { useToast } from '@/lib/contexts/ToastContext';
+import { useStaffPortal } from '@/lib/store';
 import { exportToCSV, type ExportColumn } from '@/lib/services';
 import {
     PayrollEntry,
@@ -38,6 +39,7 @@ import autoTable from 'jspdf-autotable';
 
 export default function PayrollPage() {
     const { showToast } = useToast();
+    const { getApprovedSalaryAdvances, markSalaryAdvanceAsDeducted, staff } = useStaffPortal();
 
     // State
     const [payrollEntries, setPayrollEntries] = useState<PayrollEntry[]>(MOCK_PAYROLL_ENTRIES);
@@ -45,6 +47,12 @@ export default function PayrollPage() {
     const [selectedEntry, setSelectedEntry] = useState<PayrollEntry | null>(null);
     const [showDetailModal, setShowDetailModal] = useState(false);
     const [isExporting, setIsExporting] = useState(false);
+
+    // Get approved salary advances for a staff member
+    const getStaffAdvanceDeduction = useCallback((staffId: string): number => {
+        const advances = getApprovedSalaryAdvances(staffId);
+        return advances.reduce((sum, a) => sum + a.amount, 0);
+    }, [getApprovedSalaryAdvances]);
 
     // Filter entries by selected month
     const filteredEntries = useMemo(() => {
@@ -421,13 +429,19 @@ export default function PayrollPage() {
                                         {selectedEntry.scpEnabled ? selectedEntry.scpEmployee.toFixed(2) : '- (Tidak Aktif)'}
                                     </span>
                                 </div>
+                                {getStaffAdvanceDeduction(selectedEntry.staffId) > 0 && (
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem', color: 'var(--warning)' }}>
+                                        <span>Pendahuluan Gaji</span>
+                                        <span>{getStaffAdvanceDeduction(selectedEntry.staffId).toFixed(2)}</span>
+                                    </div>
+                                )}
                                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
                                     <span>Potongan Lain</span>
                                     <span>{selectedEntry.otherDeductions.toFixed(2)}</span>
                                 </div>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 600, paddingTop: '0.5rem', borderTop: '1px solid var(--gray-200)', color: 'var(--danger)' }}>
                                     <span>Jumlah Potongan</span>
-                                    <span>-BND {selectedEntry.totalDeductions.toFixed(2)}</span>
+                                    <span>-BND {(selectedEntry.totalDeductions + getStaffAdvanceDeduction(selectedEntry.staffId)).toFixed(2)}</span>
                                 </div>
                             </div>
 
@@ -447,7 +461,7 @@ export default function PayrollPage() {
                             {/* Net Pay */}
                             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.25rem', fontWeight: 700, padding: '1rem', background: 'var(--primary)', color: 'white', borderRadius: 'var(--radius-md)' }}>
                                 <span>GAJI BERSIH</span>
-                                <span>BND {selectedEntry.netPay.toFixed(2)}</span>
+                                <span>BND {(selectedEntry.netPay - getStaffAdvanceDeduction(selectedEntry.staffId)).toFixed(2)}</span>
                             </div>
 
                             {/* Status */}
