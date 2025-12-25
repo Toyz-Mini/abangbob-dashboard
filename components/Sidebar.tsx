@@ -1,12 +1,12 @@
 'use client';
 
-import { forwardRef, useMemo } from 'react';
+import { forwardRef, useMemo, useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useTranslation } from '@/lib/contexts/LanguageContext';
+import { useTranslation } from '@/lib/i18n/client';
 import { useAuth } from '@/lib/contexts/AuthContext';
+import { canViewNavItem, UserRole } from '@/lib/nav-permissions';
 import { useOrderHistory } from '@/lib/store';
-import { canViewNavItem, type UserRole } from '@/lib/permissions';
 import {
   LayoutDashboard,
   ShoppingCart,
@@ -35,15 +35,18 @@ import {
   Wrench,
   RefreshCw,
   Clock,
+  ChevronDown,
+  ChevronRight,
   type LucideIcon
 } from 'lucide-react';
 
 interface NavItem {
-  href: string;
+  href?: string;  // Optional for parent items
   labelKey: string;
   icon: LucideIcon;
-  tourId?: string; // For interactive tour targeting
-  showBadge?: boolean; // For showing notification badges
+  tourId?: string;
+  showBadge?: boolean;
+  children?: NavItem[];  // Support for nested items
 }
 
 interface NavGroup {
@@ -51,7 +54,7 @@ interface NavGroup {
   items: NavItem[];
 }
 
-// Navigation structure with translation keys
+// Navigation structure with collapsible items
 const navGroupsConfig: NavGroup[] = [
   {
     titleKey: 'nav.group.main',
@@ -93,8 +96,14 @@ const navGroupsConfig: NavGroup[] = [
     titleKey: 'nav.group.hr',
     items: [
       { href: '/hr', labelKey: 'nav.hr', icon: Users, tourId: 'hr' },
-      { href: '/hr/approvals', labelKey: 'nav.approvals', icon: ClipboardCheck },
-      { href: '/hr/refund-approvals', labelKey: 'nav.refundApprovals', icon: RefreshCw, showBadge: true },
+      {
+        labelKey: 'nav.approvals',
+        icon: ClipboardCheck,
+        children: [
+          { href: '/hr/approvals', labelKey: 'nav.allApprovals', icon: ClipboardCheck },
+          { href: '/hr/refund-approvals', labelKey: 'nav.refundApprovals', icon: RefreshCw, showBadge: true },
+        ]
+      },
       { href: '/hr/leave-calendar', labelKey: 'nav.leaveCalendar', icon: Calendar, tourId: 'leave' },
       { href: '/hr/checklist-config', labelKey: 'nav.checklistConfig', icon: CheckSquare },
     ]
@@ -103,9 +112,15 @@ const navGroupsConfig: NavGroup[] = [
     titleKey: 'nav.group.finance',
     items: [
       { href: '/finance', labelKey: 'nav.finance', icon: DollarSign, tourId: 'finance' },
-      { href: '/finance/payroll', labelKey: 'nav.payroll', icon: Users },
-      { href: '/finance/reports', labelKey: 'nav.financialReports', icon: BarChart3 },
-      { href: '/finance/tax-summary', labelKey: 'nav.taxSummary', icon: FileText },
+      {
+        labelKey: 'nav.financeReports',
+        icon: BarChart3,
+        children: [
+          { href: '/finance/payroll', labelKey: 'nav.payroll', icon: Users },
+          { href: '/finance/reports', labelKey: 'nav.financialReports', icon: BarChart3 },
+          { href: '/finance/tax-summary', labelKey: 'nav.taxSummary', icon: FileText },
+        ]
+      },
     ]
   },
   {
@@ -136,7 +151,7 @@ interface SidebarProps {
   isOpen: boolean;
   onMouseEnter?: () => void;
   onClick?: (e: React.MouseEvent) => void;
-  onNavClick?: () => void; // Called when a nav link is clicked (for mobile auto-close)
+  onNavClick?: () => void;
 }
 
 const Sidebar = forwardRef<HTMLElement, SidebarProps>(({ isOpen, onMouseEnter, onClick, onNavClick }, ref) => {
@@ -145,46 +160,159 @@ const Sidebar = forwardRef<HTMLElement, SidebarProps>(({ isOpen, onMouseEnter, o
   const { user, currentStaff, isStaffLoggedIn } = useAuth();
   const { getPendingVoidRefundCount } = useOrderHistory();
 
-  // Get pending refund count for badge
+  // State for expanded dropdown items
+  const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
+
   const pendingRefundCount = getPendingVoidRefundCount();
 
-  // Determine the current user's role
-  // Default to 'Admin' when no auth to ensure menu is always visible
   const userRole: UserRole | null = useMemo(() => {
-    if (user) {
-      // Supabase authenticated user is Admin
-      return 'Admin';
-    }
-    if (isStaffLoggedIn && currentStaff) {
-      return currentStaff.role;
-    }
-    // Default to null (no access) when not logged in
-    return 'Staff'; // Temporary safety: default to lowest role if unsure, or null. 
-    // Plan said return null. Let's return null.
-    // However, UserRole type is 'Admin' | 'Manager' | 'Staff'. Null is not in UserRole.
-    // I need to change the return type or handle null.
-    // Looking at the code: `const userRole: UserRole`
-    // I should probably change the type definition or cast.
-    // Actually, let's look at `UserRole`.
-    // If I return null, `filteredNavGroups` logic needs to handle it.
-    // `filteredNavGroups` maps `group.items.filter(...)`.
-    // `canViewNavItem(role, path)` accepts `UserRole | null`.
-    // So `userRole` variable should be `UserRole | null`.
-
+    if (user) return 'Admin';
+    if (isStaffLoggedIn && currentStaff) return currentStaff.role;
     return null;
   }, [user, currentStaff, isStaffLoggedIn]);
 
-  // Filter navigation groups based on user role
+  // Auto-expand items that contain current active path
+  useEffect(() => {
+    const newExpanded = new Set<string>();
+    navGroupsConfig.forEach(group => {
+      group.items.forEach(item => {
+        if (item.children) {
+          const hasActiveChild = item.children.some(child =>
+            pathname === child.href || (child.href && pathname?.startsWith(child.href))
+          );
+          if (hasActiveChild) {
+            newExpanded.add(item.labelKey);
+          }
+        }
+      });
+    });
+    if (newExpanded.size > 0) {
+      setExpandedItems(prev => new Set([...prev, ...newExpanded]));
+    }
+  }, [pathname]);
+
+  const toggleExpand = (labelKey: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setExpandedItems(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(labelKey)) {
+        newSet.delete(labelKey);
+      } else {
+        newSet.add(labelKey);
+      }
+      return newSet;
+    });
+  };
+
   const filteredNavGroups = useMemo(() => {
     return navGroupsConfig
-      // Hide Staff Portal for Admin - they manage staff, not work as staff
       .filter(group => !(userRole === 'Admin' && group.titleKey === 'nav.group.staffPortal'))
       .map(group => ({
         ...group,
-        items: group.items.filter(item => canViewNavItem(userRole, item.href)),
+        items: group.items.filter(item => {
+          if (item.href) return canViewNavItem(userRole, item.href);
+          if (item.children) {
+            return item.children.some(child => child.href && canViewNavItem(userRole, child.href));
+          }
+          return true;
+        }),
       }))
       .filter(group => group.items.length > 0);
   }, [userRole]);
+
+  const renderNavItem = (item: NavItem, depth: number = 0) => {
+    const Icon = item.icon;
+    const label = t(item.labelKey);
+    const hasChildren = item.children && item.children.length > 0;
+    const isExpanded = expandedItems.has(item.labelKey);
+
+    // Check if this item or any child is active
+    const isActive = item.href
+      ? (pathname === item.href || (item.href !== '/' && pathname?.startsWith(item.href)))
+      : item.children?.some(child =>
+        pathname === child.href || (child.href && child.href !== '/' && pathname?.startsWith(child.href))
+      );
+
+    const badgeCount = item.showBadge ? pendingRefundCount : 0;
+
+    if (hasChildren) {
+      // Collapsible parent item
+      return (
+        <li key={item.labelKey} className="nav-item">
+          <button
+            className={`nav-link nav-toggle ${isActive ? 'active' : ''}`}
+            onClick={(e) => toggleExpand(item.labelKey, e)}
+            style={{
+              width: '100%',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              paddingLeft: depth > 0 ? `${1 + depth * 0.75}rem` : undefined,
+            }}
+          >
+            <Icon size={20} />
+            {isOpen && (
+              <>
+                <span>{label}</span>
+                <span style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center' }}>
+                  {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                </span>
+              </>
+            )}
+          </button>
+          {isOpen && isExpanded && (
+            <ul className="nav-submenu" style={{
+              paddingLeft: '0',
+              marginTop: '0.25rem',
+              marginBottom: '0.25rem',
+              listStyle: 'none'
+            }}>
+              {item.children?.map(child => renderNavItem(child, depth + 1))}
+            </ul>
+          )}
+        </li>
+      );
+    }
+
+    // Regular nav item with link
+    return (
+      <li key={item.href || item.labelKey} className="nav-item">
+        <Link
+          href={item.href || '#'}
+          scroll={false}
+          className={`nav-link ${isActive ? 'active' : ''}`}
+          title={!isOpen ? label : undefined}
+          data-tour={item.tourId}
+          onClick={onNavClick}
+          style={{
+            paddingLeft: depth > 0 ? `${1.5 + depth * 0.75}rem` : undefined,
+          }}
+        >
+          <Icon size={depth > 0 ? 16 : 20} />
+          {isOpen && (
+            <>
+              <span style={{ fontSize: depth > 0 ? '0.875rem' : undefined }}>{label}</span>
+              {badgeCount > 0 && (
+                <span
+                  className="badge badge-warning"
+                  style={{
+                    marginLeft: 'auto',
+                    fontSize: '0.7rem',
+                    padding: '0.125rem 0.375rem',
+                    borderRadius: 'var(--radius-full)',
+                    fontWeight: 600,
+                  }}
+                >
+                  {badgeCount}
+                </span>
+              )}
+            </>
+          )}
+        </Link>
+      </li>
+    );
+  };
 
   return (
     <aside
@@ -213,48 +341,7 @@ const Sidebar = forwardRef<HTMLElement, SidebarProps>(({ isOpen, onMouseEnter, o
               <div className="nav-group-divider" />
             )}
             <ul className="nav-menu">
-              {group.items.map((item) => {
-                const isActive = pathname === item.href ||
-                  (item.href !== '/' && pathname?.startsWith(item.href));
-
-                const Icon = item.icon;
-                const label = t(item.labelKey);
-                const badgeCount = item.showBadge ? pendingRefundCount : 0;
-
-                return (
-                  <li key={item.href} className="nav-item">
-                    <Link
-                      href={item.href}
-                      scroll={false}
-                      className={`nav-link ${isActive ? 'active' : ''}`}
-                      title={!isOpen ? label : undefined}
-                      data-tour={item.tourId}
-                      onClick={onNavClick}
-                    >
-                      <Icon size={20} />
-                      {isOpen && (
-                        <>
-                          <span>{label}</span>
-                          {badgeCount > 0 && (
-                            <span
-                              className="badge badge-warning"
-                              style={{
-                                marginLeft: 'auto',
-                                fontSize: '0.7rem',
-                                padding: '0.125rem 0.375rem',
-                                borderRadius: 'var(--radius-full)',
-                                fontWeight: 600,
-                              }}
-                            >
-                              {badgeCount}
-                            </span>
-                          )}
-                        </>
-                      )}
-                    </Link>
-                  </li>
-                );
-              })}
+              {group.items.map((item) => renderNavItem(item))}
             </ul>
           </div>
         ))}

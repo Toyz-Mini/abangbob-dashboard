@@ -637,6 +637,39 @@ body {
   color: white;
 }
 
+/* Toggle dropdown button */
+.nav-toggle {
+  text-align: left;
+  font-family: inherit;
+}
+
+.nav-toggle:hover {
+  background: var(--gray-100);
+  color: var(--primary);
+}
+
+/* Submenu styles */
+.nav-submenu {
+  background: var(--gray-50);
+  border-radius: var(--radius-sm);
+  margin-left: 0.5rem;
+  overflow: hidden;
+}
+
+.nav-submenu .nav-link {
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-size: 0.875rem;
+}
+
+.nav-submenu .nav-link:hover {
+  background: var(--gray-100);
+}
+
+.nav-submenu .nav-link.active {
+  background: var(--primary);
+  color: white;
+}
+
 /* Buttons - Enhanced definitions moved below */
 
 .btn-sm {
