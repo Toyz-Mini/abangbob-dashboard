@@ -17,10 +17,11 @@ import {
     AlertCircle,
     Clock,
     FileText,
+    Briefcase,
 } from 'lucide-react';
 
-// Default max advance (can be made configurable)
-const MAX_ADVANCE_AMOUNT = 500;
+// Assume 26 working days per month (standard for Brunei)
+const WORKING_DAYS_PER_MONTH = 26;
 
 export default function SalaryAdvancePage() {
     const { currentStaff, isStaffLoggedIn } = useAuth();
@@ -28,6 +29,7 @@ export default function SalaryAdvancePage() {
         salaryAdvances,
         addSalaryAdvance,
         getStaffSalaryAdvances,
+        attendance,
         isInitialized
     } = useStaffPortal();
 
@@ -36,6 +38,61 @@ export default function SalaryAdvancePage() {
     const [reason, setReason] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'approved' | 'rejected' | 'deducted'>('all');
+
+    // Calculate days worked this month and max advance
+    const { daysWorkedThisMonth, dailyRate, maxAdvance, earnedSoFar, alreadyAdvanced } = useMemo(() => {
+        if (!currentStaff) {
+            return { daysWorkedThisMonth: 0, dailyRate: 0, maxAdvance: 0, earnedSoFar: 0, alreadyAdvanced: 0 };
+        }
+
+        // Get current month start and end
+        const now = new Date();
+        const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+        const today = now.getDate();
+
+        // Count days worked this month from attendance
+        const daysWorked = (attendance || []).filter(a => {
+            const date = new Date(a.date);
+            return (
+                a.staffId === currentStaff.id &&
+                date >= monthStart &&
+                date <= now &&
+                a.checkIn // Has check-in means worked
+            );
+        }).length;
+
+        // Use actual days worked, or estimate based on passed weekdays if no attendance
+        const estimatedWorkDays = Math.min(today, Math.floor(today * 5 / 7)); // Rough estimate
+        const actualDaysWorked = daysWorked > 0 ? daysWorked : Math.max(1, estimatedWorkDays);
+
+        // Calculate daily rate from monthly salary
+        const monthlySalary = currentStaff.salary || 1500; // Default BND 1500 if not set
+        const rate = monthlySalary / WORKING_DAYS_PER_MONTH;
+
+        // Calculate earned so far
+        const earned = rate * actualDaysWorked;
+
+        // Get already approved/pending advances this month
+        const monthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+        const myAdvances = getStaffSalaryAdvances(currentStaff.id);
+        const pendingOrApproved = myAdvances.filter(a => {
+            const advDate = new Date(a.createdAt);
+            const advMonth = `${advDate.getFullYear()}-${String(advDate.getMonth() + 1).padStart(2, '0')}`;
+            return advMonth === monthStr && (a.status === 'pending' || a.status === 'approved');
+        });
+        const alreadyAdvancedAmt = pendingOrApproved.reduce((sum, a) => sum + a.amount, 0);
+
+        // Max advance = earned so far - already advanced
+        const maxAdv = Math.max(0, Math.floor(earned - alreadyAdvancedAmt));
+
+        return {
+            daysWorkedThisMonth: actualDaysWorked,
+            dailyRate: rate,
+            maxAdvance: maxAdv,
+            earnedSoFar: earned,
+            alreadyAdvanced: alreadyAdvancedAmt
+        };
+    }, [currentStaff, attendance, getStaffSalaryAdvances, salaryAdvances]);
 
     // Get current staff's advances
     const myAdvances = useMemo(() => {
@@ -69,8 +126,8 @@ export default function SalaryAdvancePage() {
             return;
         }
 
-        if (amountNum > MAX_ADVANCE_AMOUNT) {
-            alert(`Jumlah maksimum adalah BND ${MAX_ADVANCE_AMOUNT}`);
+        if (amountNum > maxAdvance) {
+            alert(`Jumlah melebihi had berdasarkan hari bekerja. Maksimum: BND ${maxAdvance.toFixed(2)}`);
             return;
         }
 
@@ -138,13 +195,39 @@ export default function SalaryAdvancePage() {
                             Pendahuluan Gaji
                         </h1>
                         <p style={{ color: 'var(--text-secondary)' }}>
-                            Mohon pendahuluan gaji - akan dipotong dari gaji bulan hadapan
+                            Mohon pendahuluan gaji - berdasarkan hari bekerja bulan ini
                         </p>
                     </div>
-                    <button className="btn btn-primary" onClick={() => setShowAddModal(true)}>
+                    <button
+                        className="btn btn-primary"
+                        onClick={() => setShowAddModal(true)}
+                        disabled={maxAdvance <= 0}
+                    >
                         <Plus size={18} />
                         Mohon Pendahuluan
                     </button>
+                </div>
+
+                {/* Eligibility Info */}
+                <div className="card" style={{ marginBottom: '2rem', padding: '1rem', background: 'var(--info-light)', border: '1px solid var(--info)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <Briefcase size={18} color="var(--info)" />
+                            <span><strong>Hari Bekerja:</strong> {daysWorkedThisMonth} hari</span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <DollarSign size={18} color="var(--info)" />
+                            <span><strong>Pendapatan Setakat Ini:</strong> BND {earnedSoFar.toFixed(2)}</span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <Clock size={18} color="var(--info)" />
+                            <span><strong>Dah Advance:</strong> BND {alreadyAdvanced.toFixed(2)}</span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 700, color: maxAdvance > 0 ? 'var(--success)' : 'var(--danger)' }}>
+                            <CheckCircle size={18} />
+                            <span>Boleh Mohon: BND {maxAdvance.toFixed(2)}</span>
+                        </div>
+                    </div>
                 </div>
 
                 {/* Stats */}
@@ -166,9 +249,9 @@ export default function SalaryAdvancePage() {
                         gradient="subtle"
                     />
                     <StatCard
-                        label="Had Maksimum"
-                        value={`BND ${MAX_ADVANCE_AMOUNT}`}
-                        change="setiap permohonan"
+                        label="Kadar Harian"
+                        value={`BND ${dailyRate.toFixed(2)}`}
+                        change={`gaji / ${WORKING_DAYS_PER_MONTH} hari`}
                         changeType="neutral"
                         icon={DollarSign}
                         gradient="subtle"
@@ -263,66 +346,104 @@ export default function SalaryAdvancePage() {
                     title="Mohon Pendahuluan Gaji"
                     maxWidth="450px"
                 >
-                    <div className="form-group">
-                        <label className="form-label">Jumlah (BND) *</label>
-                        <input
-                            type="number"
-                            className="form-input"
-                            value={amount}
-                            onChange={(e) => setAmount(e.target.value)}
-                            placeholder="Contoh: 200"
-                            min="1"
-                            max={MAX_ADVANCE_AMOUNT}
-                        />
-                        <small style={{ color: 'var(--text-secondary)', marginTop: '0.25rem', display: 'block' }}>
-                            Maksimum BND {MAX_ADVANCE_AMOUNT} setiap permohonan
-                        </small>
-                    </div>
-
-                    <div className="form-group">
-                        <label className="form-label">Sebab Permohonan *</label>
-                        <textarea
-                            className="form-input"
-                            value={reason}
-                            onChange={(e) => setReason(e.target.value)}
-                            rows={3}
-                            placeholder="Nyatakan sebab permohonan..."
-                        />
-                    </div>
-
-                    <div style={{
-                        background: 'var(--warning-light)',
-                        padding: '0.75rem',
-                        borderRadius: 'var(--radius-md)',
-                        marginBottom: '1rem',
-                        border: '1px solid var(--warning)'
-                    }}>
-                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem' }}>
-                            <AlertCircle size={18} color="var(--warning)" style={{ marginTop: '2px' }} />
-                            <div style={{ fontSize: '0.875rem', color: 'var(--warning-dark)' }}>
-                                <strong>Perhatian:</strong> Pendahuluan gaji akan dipotong secara automatik dari gaji bulan hadapan selepas diluluskan.
-                            </div>
+                    {maxAdvance <= 0 ? (
+                        <div style={{ textAlign: 'center', padding: '2rem' }}>
+                            <AlertCircle size={48} color="var(--danger)" style={{ marginBottom: '1rem' }} />
+                            <h3 style={{ marginBottom: '0.5rem' }}>Tidak Boleh Mohon</h3>
+                            <p style={{ color: 'var(--text-secondary)' }}>
+                                Anda sudah advance maksimum berdasarkan hari bekerja bulan ini.
+                            </p>
                         </div>
-                    </div>
+                    ) : (
+                        <>
+                            {/* Eligibility summary */}
+                            <div style={{
+                                background: 'var(--gray-50)',
+                                padding: '0.75rem',
+                                borderRadius: 'var(--radius-md)',
+                                marginBottom: '1rem',
+                                fontSize: '0.875rem'
+                            }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+                                    <span>Hari Bekerja Bulan Ini:</span>
+                                    <strong>{daysWorkedThisMonth} hari</strong>
+                                </div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+                                    <span>Pendapatan Setakat Ini:</span>
+                                    <strong>BND {earnedSoFar.toFixed(2)}</strong>
+                                </div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+                                    <span>Dah Advance:</span>
+                                    <span>BND {alreadyAdvanced.toFixed(2)}</span>
+                                </div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, color: 'var(--success)', paddingTop: '0.5rem', borderTop: '1px solid var(--gray-200)' }}>
+                                    <span>Boleh Mohon Maksimum:</span>
+                                    <span>BND {maxAdvance.toFixed(2)}</span>
+                                </div>
+                            </div>
 
-                    <div style={{ display: 'flex', gap: '0.5rem' }}>
-                        <button
-                            className="btn btn-outline"
-                            onClick={() => setShowAddModal(false)}
-                            disabled={isSubmitting}
-                            style={{ flex: 1 }}
-                        >
-                            Batal
-                        </button>
-                        <button
-                            className="btn btn-primary"
-                            onClick={handleSubmit}
-                            disabled={isSubmitting || !amount || !reason.trim()}
-                            style={{ flex: 1 }}
-                        >
-                            {isSubmitting ? <LoadingSpinner size="sm" /> : 'Hantar Permohonan'}
-                        </button>
-                    </div>
+                            <div className="form-group">
+                                <label className="form-label">Jumlah (BND) *</label>
+                                <input
+                                    type="number"
+                                    className="form-input"
+                                    value={amount}
+                                    onChange={(e) => setAmount(e.target.value)}
+                                    placeholder={`Contoh: ${Math.min(100, maxAdvance)}`}
+                                    min="1"
+                                    max={maxAdvance}
+                                />
+                                <small style={{ color: 'var(--text-secondary)', marginTop: '0.25rem', display: 'block' }}>
+                                    Maksimum BND {maxAdvance.toFixed(2)} berdasarkan hari bekerja
+                                </small>
+                            </div>
+
+                            <div className="form-group">
+                                <label className="form-label">Sebab Permohonan *</label>
+                                <textarea
+                                    className="form-input"
+                                    value={reason}
+                                    onChange={(e) => setReason(e.target.value)}
+                                    rows={3}
+                                    placeholder="Nyatakan sebab permohonan..."
+                                />
+                            </div>
+
+                            <div style={{
+                                background: 'var(--warning-light)',
+                                padding: '0.75rem',
+                                borderRadius: 'var(--radius-md)',
+                                marginBottom: '1rem',
+                                border: '1px solid var(--warning)'
+                            }}>
+                                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem' }}>
+                                    <AlertCircle size={18} color="var(--warning)" style={{ marginTop: '2px' }} />
+                                    <div style={{ fontSize: '0.875rem', color: 'var(--warning-dark)' }}>
+                                        <strong>Perhatian:</strong> Pendahuluan gaji akan dipotong secara automatik dari gaji bulan hadapan selepas diluluskan.
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                <button
+                                    className="btn btn-outline"
+                                    onClick={() => setShowAddModal(false)}
+                                    disabled={isSubmitting}
+                                    style={{ flex: 1 }}
+                                >
+                                    Batal
+                                </button>
+                                <button
+                                    className="btn btn-primary"
+                                    onClick={handleSubmit}
+                                    disabled={isSubmitting || !amount || !reason.trim() || parseFloat(amount) > maxAdvance}
+                                    style={{ flex: 1 }}
+                                >
+                                    {isSubmitting ? <LoadingSpinner size="sm" /> : 'Hantar Permohonan'}
+                                </button>
+                            </div>
+                        </>
+                    )}
                 </Modal>
             </div>
         </MainLayout>
