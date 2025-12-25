@@ -90,13 +90,18 @@ const navGroupsConfig: NavGroup[] = [
     ]
   },
   {
-    titleKey: 'nav.group.hrFinance',
+    titleKey: 'nav.group.hr',
     items: [
       { href: '/hr', labelKey: 'nav.hr', icon: Users, tourId: 'hr' },
       { href: '/hr/approvals', labelKey: 'nav.approvals', icon: ClipboardCheck },
       { href: '/hr/refund-approvals', labelKey: 'nav.refundApprovals', icon: RefreshCw, showBadge: true },
       { href: '/hr/leave-calendar', labelKey: 'nav.leaveCalendar', icon: Calendar, tourId: 'leave' },
       { href: '/hr/checklist-config', labelKey: 'nav.checklistConfig', icon: CheckSquare },
+    ]
+  },
+  {
+    titleKey: 'nav.group.finance',
+    items: [
       { href: '/finance', labelKey: 'nav.finance', icon: DollarSign, tourId: 'finance' },
       { href: '/finance/payroll', labelKey: 'nav.payroll', icon: Users },
       { href: '/finance/reports', labelKey: 'nav.financialReports', icon: BarChart3 },
