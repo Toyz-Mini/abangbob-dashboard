@@ -30,6 +30,17 @@ export interface Database {
           join_date: string | null;
           profile_photo_url: string | null;
           outlet_id: string | null;
+          // New Columns
+          date_of_birth: string | null;
+          gender: string | null;
+          marital_status: string | null;
+          address: string | null;
+          nationality: string | null;
+          religion: string | null;
+          position: string | null;
+          department: string | null;
+          bank_details: Json;
+          emergency_contact: Json;
           extended_data: Json;
         };
         Insert: {
@@ -48,6 +59,17 @@ export interface Database {
           join_date?: string | null;
           profile_photo_url?: string | null;
           outlet_id?: string | null;
+          // New Columns
+          date_of_birth?: string | null;
+          gender?: string | null;
+          marital_status?: string | null;
+          address?: string | null;
+          nationality?: string | null;
+          religion?: string | null;
+          position?: string | null;
+          department?: string | null;
+          bank_details?: Json;
+          emergency_contact?: Json;
           extended_data?: Json;
         };
         Update: {
@@ -66,6 +88,17 @@ export interface Database {
           join_date?: string | null;
           profile_photo_url?: string | null;
           outlet_id?: string | null;
+          // New Columns
+          date_of_birth?: string | null;
+          gender?: string | null;
+          marital_status?: string | null;
+          address?: string | null;
+          nationality?: string | null;
+          religion?: string | null;
+          position?: string | null;
+          department?: string | null;
+          bank_details?: Json;
+          emergency_contact?: Json;
           extended_data?: Json;
         };
       };
