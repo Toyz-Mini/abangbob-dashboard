@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
-import { StockItem, StaffProfile, AttendanceRecord, Order, ProductionLog, DeliveryOrder, Expense, DailyCashFlow, Customer, Supplier, PurchaseOrder, Recipe, Shift, ScheduleEntry, Promotion, Notification, MenuItem, ModifierGroup, ModifierOption, StaffKPI, LeaveRecord, TrainingRecord, OTRecord, CustomerReview, KPIMetrics, ChecklistItemTemplate, ChecklistCompletion, LeaveBalance, LeaveRequest, ClaimRequest, StaffRequest, Announcement, OrderHistoryItem, VoidRefundRequest, VoidRefundType, OrderHistoryFilters, RefundItem, OilTracker, OilChangeRequest, OilActionHistory, OilActionType, Equipment, MaintenanceSchedule, MaintenanceLog, WasteLog, MenuCategory, PaymentMethodConfig, TaxRate, CashRegister, InventoryLog, StockSuggestion, DEFAULT_MENU_CATEGORIES, DEFAULT_PAYMENT_METHODS, DEFAULT_TAX_RATES, OTClaim, SalaryAdvance, DisciplinaryAction, StaffTraining } from './types';
+import { StockItem, StaffProfile, AttendanceRecord, Order, ProductionLog, DeliveryOrder, Expense, DailyCashFlow, Customer, Supplier, PurchaseOrder, Recipe, Shift, ScheduleEntry, Promotion, Notification, MenuItem, ModifierGroup, ModifierOption, StaffKPI, LeaveRecord, TrainingRecord, OTRecord, CustomerReview, KPIMetrics, ChecklistItemTemplate, ChecklistCompletion, LeaveBalance, LeaveRequest, ClaimRequest, StaffRequest, Announcement, OrderHistoryItem, VoidRefundRequest, VoidRefundType, OrderHistoryFilters, RefundItem, OilTracker, OilChangeRequest, OilActionHistory, OilActionType, Equipment, MaintenanceSchedule, MaintenanceLog, WasteLog, MenuCategory, PaymentMethodConfig, TaxRate, CashRegister, InventoryLog, StockSuggestion, DEFAULT_MENU_CATEGORIES, DEFAULT_PAYMENT_METHODS, DEFAULT_TAX_RATES, OTClaim, SalaryAdvance, DisciplinaryAction, StaffTraining, StaffDocument } from './types';
 import { MOCK_ORDER_HISTORY, MOCK_VOID_REFUND_REQUESTS, ORDER_HISTORY_STORAGE_KEYS } from './order-history-data';
 import { MOCK_STOCK } from './inventory-data';
 import { MOCK_STAFF, MOCK_ATTENDANCE, MOCK_PAYROLL } from './hr-data';
@@ -124,6 +124,8 @@ const STORAGE_KEYS = {
   DISCIPLINARY_ACTIONS: 'abangbob_disciplinary_actions',
   // Staff Training
   STAFF_TRAINING: 'abangbob_staff_training',
+  // Staff Documents
+  STAFF_DOCUMENTS: 'abangbob_staff_documents',
 };
 
 // Inventory log type for tracking stock changes
@@ -360,6 +362,15 @@ interface StoreState {
   getExpiringTraining: (daysAhead?: number) => StaffTraining[];
   refreshStaffTraining: () => Promise<void>;
 
+  // HR - Staff Documents
+  staffDocuments: StaffDocument[];
+  addStaffDocument: (doc: Omit<StaffDocument, 'id' | 'createdAt' | 'uploadedAt'>) => void;
+  updateStaffDocument: (id: string, updates: Partial<StaffDocument>) => void;
+  deleteStaffDocument: (id: string) => void;
+  getStaffDocuments: (staffId: string) => StaffDocument[];
+  getExpiringDocuments: (daysAhead?: number) => StaffDocument[];
+  refreshStaffDocuments: () => Promise<void>;
+
   // Staff Portal - General Requests
   staffRequests: StaffRequest[];
   addStaffRequest: (request: Omit<StaffRequest, 'id' | 'createdAt'>) => void;
@@ -548,6 +559,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [salaryAdvances, setSalaryAdvances] = useState<SalaryAdvance[]>([]);
   const [disciplinaryActions, setDisciplinaryActions] = useState<DisciplinaryAction[]>([]);
   const [staffTraining, setStaffTraining] = useState<StaffTraining[]>([]);
+  const [staffDocuments, setStaffDocuments] = useState<StaffDocument[]>([]);
   const [staffRequests, setStaffRequests] = useState<StaffRequest[]>([]);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
 
@@ -758,6 +770,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       setSalaryAdvances(getFromStorage(STORAGE_KEYS.SALARY_ADVANCES, []));
       setDisciplinaryActions(getFromStorage(STORAGE_KEYS.DISCIPLINARY_ACTIONS, []));
       setStaffTraining(getFromStorage(STORAGE_KEYS.STAFF_TRAINING, []));
+      setStaffDocuments(getFromStorage(STORAGE_KEYS.STAFF_DOCUMENTS, []));
       setStaffRequests(supabaseConnected && supabaseData.staffRequests?.length > 0 ? supabaseData.staffRequests : getFromStorage(STORAGE_KEYS.STAFF_REQUESTS, MOCK_STAFF_REQUESTS));
       setAnnouncements(supabaseConnected && supabaseData.announcements?.length > 0 ? supabaseData.announcements : getFromStorage(STORAGE_KEYS.ANNOUNCEMENTS, MOCK_ANNOUNCEMENTS));
 
@@ -3270,6 +3283,103 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  // ==================== Staff Document Functions ====================
+
+  const addStaffDocument = useCallback((doc: Omit<StaffDocument, 'id' | 'createdAt' | 'uploadedAt'>) => {
+    const now = new Date().toISOString();
+    const newDoc: StaffDocument = {
+      ...doc,
+      id: `doc_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      uploadedAt: now,
+      createdAt: now,
+    };
+    setStaffDocuments(prev => {
+      const updated = [newDoc, ...prev];
+      setToStorage(STORAGE_KEYS.STAFF_DOCUMENTS, updated);
+      return updated;
+    });
+    // Sync to Supabase
+    getSupabaseClient()?.from('staff_documents').insert({
+      id: newDoc.id,
+      staff_id: newDoc.staffId,
+      staff_name: newDoc.staffName,
+      type: newDoc.type,
+      name: newDoc.name,
+      description: newDoc.description,
+      url: newDoc.url,
+      expiry_date: newDoc.expiryDate,
+      uploaded_at: newDoc.uploadedAt,
+      created_at: newDoc.createdAt,
+    }).then(({ error }: { error: Error | null }) => {
+      if (error) console.error('[Supabase] Failed to insert staff document:', error);
+    });
+  }, []);
+
+  const updateStaffDocument = useCallback((id: string, updates: Partial<StaffDocument>) => {
+    setStaffDocuments(prev => {
+      const updated = prev.map(d => d.id === id ? { ...d, ...updates } : d);
+      setToStorage(STORAGE_KEYS.STAFF_DOCUMENTS, updated);
+      return updated;
+    });
+    // Sync to Supabase
+    const snakeCaseUpdates: Record<string, unknown> = {};
+    if (updates.staffId !== undefined) snakeCaseUpdates.staff_id = updates.staffId;
+    if (updates.staffName !== undefined) snakeCaseUpdates.staff_name = updates.staffName;
+    if (updates.type !== undefined) snakeCaseUpdates.type = updates.type;
+    if (updates.name !== undefined) snakeCaseUpdates.name = updates.name;
+    if (updates.description !== undefined) snakeCaseUpdates.description = updates.description;
+    if (updates.url !== undefined) snakeCaseUpdates.url = updates.url;
+    if (updates.expiryDate !== undefined) snakeCaseUpdates.expiry_date = updates.expiryDate;
+    getSupabaseClient()?.from('staff_documents').update(snakeCaseUpdates).eq('id', id).then(({ error }: { error: Error | null }) => {
+      if (error) console.error('[Supabase] Failed to update staff document:', error);
+    });
+  }, []);
+
+  const deleteStaffDocument = useCallback((id: string) => {
+    setStaffDocuments(prev => {
+      const updated = prev.filter(d => d.id !== id);
+      setToStorage(STORAGE_KEYS.STAFF_DOCUMENTS, updated);
+      return updated;
+    });
+    getSupabaseClient()?.from('staff_documents').delete().eq('id', id).then(({ error }: { error: Error | null }) => {
+      if (error) console.error('[Supabase] Failed to delete staff document:', error);
+    });
+  }, []);
+
+  const getStaffDocuments = useCallback((staffId: string): StaffDocument[] => {
+    return staffDocuments.filter(d => d.staffId === staffId);
+  }, [staffDocuments]);
+
+  const getExpiringDocuments = useCallback((daysAhead: number = 30): StaffDocument[] => {
+    const now = new Date();
+    const futureDate = new Date(now.getTime() + daysAhead * 24 * 60 * 60 * 1000);
+    return staffDocuments.filter(d => {
+      if (!d.expiryDate) return false;
+      const expiryDate = new Date(d.expiryDate);
+      return expiryDate <= futureDate && expiryDate > now;
+    });
+  }, [staffDocuments]);
+
+  const refreshStaffDocuments = useCallback(async () => {
+    const { data, error } = await (getSupabaseClient()?.from('staff_documents').select('*').order('created_at', { ascending: false }) || { data: null, error: null });
+    if (!error && data) {
+      const mapped: StaffDocument[] = data.map((row: Record<string, unknown>) => ({
+        id: row.id as string,
+        staffId: row.staff_id as string | undefined,
+        staffName: row.staff_name as string | undefined,
+        type: row.type as StaffDocument['type'],
+        name: row.name as string,
+        description: row.description as string | undefined,
+        url: row.url as string,
+        expiryDate: row.expiry_date as string | undefined,
+        uploadedAt: row.uploaded_at as string,
+        createdAt: row.created_at as string | undefined,
+      }));
+      setStaffDocuments(mapped);
+      setToStorage(STORAGE_KEYS.STAFF_DOCUMENTS, mapped);
+    }
+  }, []);
+
   // Staff Portal - Staff Request actions
   const addStaffRequest = useCallback((request: Omit<StaffRequest, 'id' | 'createdAt'>) => {
     const newRequest: StaffRequest = {
@@ -4534,6 +4644,15 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     getStaffTrainingRecords,
     getExpiringTraining,
     refreshStaffTraining,
+
+    // HR - Staff Documents
+    staffDocuments,
+    addStaffDocument,
+    updateStaffDocument,
+    deleteStaffDocument,
+    getStaffDocuments,
+    getExpiringDocuments,
+    refreshStaffDocuments,
 
     // Staff Portal - General Requests
     staffRequests,

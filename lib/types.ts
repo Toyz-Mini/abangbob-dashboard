@@ -193,11 +193,15 @@ export interface Deduction {
 
 export interface StaffDocument {
   id: string;
+  staffId?: string;           // Added for standalone document management
+  staffName?: string;         // Added for standalone document management
   type: 'ic_front' | 'ic_back' | 'contract' | 'resume' | 'offer_letter' | 'medical_report' | 'work_permit' | 'certificate' | 'other';
   name: string;
+  description?: string;       // Added for document notes
   url: string;
   uploadedAt: string;
   expiryDate?: string;
+  createdAt?: string;         // Added for tracking
 }
 
 export interface StaffProfile {
