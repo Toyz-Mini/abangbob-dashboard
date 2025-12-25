@@ -1308,6 +1308,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         console.error('Failed to sync log:', err)
       );
 
+      // Sync stock item update to Supabase
+      SupabaseSync.syncUpdateStockItem(id, { current_quantity: newQuantity }).catch(err =>
+        console.error('Failed to sync stock update:', err)
+      );
+
       return prev.map(i =>
         i.id === id ? { ...i, currentQuantity: newQuantity } : i
       );
@@ -1515,6 +1520,18 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       if (c.id === customerId) {
         const newPoints = c.loyaltyPoints + points;
         const newSegment = newPoints >= 500 ? 'vip' : newPoints >= 100 ? 'regular' : 'new';
+
+        // Sync to Supabase
+        const transaction = {
+          id: generateUUID(),
+          customer_id: customerId,
+          points: points,
+          type: 'earn',
+          description: 'Manual addition',
+          created_at: new Date().toISOString()
+        };
+        SupabaseSync.syncAddLoyaltyTransaction(transaction);
+
         return { ...c, loyaltyPoints: newPoints, segment: newSegment };
       }
       return c;
@@ -1524,9 +1541,25 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const redeemLoyaltyPoints = useCallback((customerId: string, points: number): boolean => {
     const customer = customers.find(c => c.id === customerId);
     if (!customer || customer.loyaltyPoints < points) return false;
-    setCustomers(prev => prev.map(c =>
-      c.id === customerId ? { ...c, loyaltyPoints: c.loyaltyPoints - points } : c
-    ));
+    setCustomers(prev => prev.map(c => {
+      if (c.id === customerId) {
+        // Sync to Supabase
+        const transaction = {
+          id: generateUUID(),
+          customer_id: customerId,
+          points: -points, // Negative for redemption if tracking balance, but type 'redeem' usually implies subtraction. 
+          // However, typically transaction records capture the amount involved. 
+          // Let's assume positive value with type 'redeem'.
+          points_redeemed: points,
+          type: 'redeem',
+          description: 'Manual redemption',
+          created_at: new Date().toISOString()
+        };
+        SupabaseSync.syncAddLoyaltyTransaction(transaction);
+        return { ...c, loyaltyPoints: c.loyaltyPoints - points };
+      }
+      return c;
+    }));
     return true;
   }, [customers]);
 
