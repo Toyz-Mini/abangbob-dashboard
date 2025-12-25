@@ -65,18 +65,18 @@ const createClient = () => {
     console.warn('  - NEXT_PUBLIC_SUPABASE_URL:', supabaseUrl ? 'SET' : 'MISSING');
     console.warn('  - NEXT_PUBLIC_SUPABASE_ANON_KEY:', supabaseAnonKey ? 'SET' : 'MISSING');
     console.warn('[Supabase] Running in OFFLINE mode. Data will only be saved to localStorage.');
-    
+
     updateConnectionState({
       status: 'unconfigured',
       isConfigured: false,
       lastError: 'Environment variables not configured',
     });
-    
+
     return null;
   }
 
   updateConnectionState({ isConfigured: true });
-  
+
   return createBrowserClient<Database>(
     supabaseUrl,
     supabaseAnonKey
@@ -84,14 +84,14 @@ const createClient = () => {
 };
 
 // Singleton pattern to avoid multiple client instances
-let supabase: ReturnType<typeof createBrowserClient<Database>> | null = null;
+let supabase: any = null;
 
-export function getSupabaseClient() {
+export function getSupabaseClient(): any {
   if (typeof window === 'undefined') {
     // Server-side: always create new client
     return createClient();
   }
-  
+
   // Browser: use singleton
   if (!supabase) {
     supabase = createClient();
@@ -106,7 +106,7 @@ export async function checkSupabaseConnection(): Promise<{
   latencyMs: number | null;
 }> {
   const client = getSupabaseClient();
-  
+
   if (!client) {
     updateConnectionState({
       status: 'unconfigured',
@@ -117,9 +117,9 @@ export async function checkSupabaseConnection(): Promise<{
   }
 
   updateConnectionState({ status: 'connecting' });
-  
+
   const startTime = Date.now();
-  
+
   try {
     // Simple query to check connection - select from a system table
     const { error } = await client
@@ -139,7 +139,7 @@ export async function checkSupabaseConnection(): Promise<{
         });
         return { connected: true, error: 'Table does not exist - run migrations', latencyMs };
       }
-      
+
       updateConnectionState({
         status: 'disconnected',
         lastChecked: new Date(),
@@ -153,19 +153,19 @@ export async function checkSupabaseConnection(): Promise<{
       lastChecked: new Date(),
       lastError: null,
     });
-    
+
     console.log(`[Supabase] Connection healthy (${latencyMs}ms)`);
     return { connected: true, error: null, latencyMs };
   } catch (err) {
     const latencyMs = Date.now() - startTime;
     const errorMessage = err instanceof Error ? err.message : 'Unknown connection error';
-    
+
     updateConnectionState({
       status: 'disconnected',
       lastChecked: new Date(),
       lastError: errorMessage,
     });
-    
+
     console.error('[Supabase] Connection check failed:', errorMessage);
     return { connected: false, error: errorMessage, latencyMs };
   }
@@ -181,13 +181,13 @@ if (typeof window !== 'undefined') {
       }
     });
   }, 1000);
-  
+
   // Listen for online/offline events
   window.addEventListener('online', () => {
     console.log('[Supabase] Network online - checking connection...');
     checkSupabaseConnection();
   });
-  
+
   window.addEventListener('offline', () => {
     console.log('[Supabase] Network offline');
     updateConnectionState({
