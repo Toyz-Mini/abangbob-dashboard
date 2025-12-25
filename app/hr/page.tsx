@@ -291,27 +291,166 @@ export default function HRDashboardPage() {
               )}
             </GlassCard>
 
-            {/* Quick Actions */}
+            {/* HR Hub - All Features */}
             <GlassCard className="animate-slide-up" style={{ animationDelay: '0.2s' }}>
-              <h3 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <Zap size={20} color="var(--warning)" /> Quick Actions
+              <h3 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <Zap size={20} color="var(--warning)" /> Modul HR & Staf
               </h3>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                <Link href="/hr/kpi">
-                  <PremiumButton variant="glass" style={{ width: '100%', justifyContent: 'flex-start' }} icon={Trophy}>KPI & Leaderboard</PremiumButton>
-                </Link>
-                <Link href="/hr/staff">
-                  <PremiumButton variant="glass" style={{ width: '100%', justifyContent: 'flex-start' }} icon={List}>Senarai Staf</PremiumButton>
-                </Link>
-                <Link href="/hr/timeclock">
-                  <PremiumButton variant="glass" style={{ width: '100%', justifyContent: 'flex-start' }} icon={Clock}>Timeclock</PremiumButton>
-                </Link>
-                <Link href="/hr/schedule">
-                  <PremiumButton variant="glass" style={{ width: '100%', justifyContent: 'flex-start' }} icon={Calendar}>Jadual Shift</PremiumButton>
-                </Link>
-                <Link href="/hr/payroll">
-                  <PremiumButton variant="glass" style={{ width: '100%', justifyContent: 'flex-start' }} icon={DollarSign}>Payroll</PremiumButton>
-                </Link>
+
+              {/* Pengurusan Staf */}
+              <div style={{ marginBottom: '1.5rem' }}>
+                <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  👥 Pengurusan Staf
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <Link href="/hr/staff">
+                    <div className="hover-lift" style={{ padding: '1rem', background: 'var(--primary-light)', borderRadius: 'var(--radius-md)', textAlign: 'center', cursor: 'pointer' }}>
+                      <List size={24} style={{ color: 'var(--primary)', marginBottom: '0.5rem' }} />
+                      <div style={{ fontWeight: 600, fontSize: '0.85rem' }}>Senarai Staf</div>
+                    </div>
+                  </Link>
+                  <Link href="/hr/timeclock">
+                    <div className="hover-lift" style={{ padding: '1rem', background: 'var(--primary-light)', borderRadius: 'var(--radius-md)', textAlign: 'center', cursor: 'pointer' }}>
+                      <Clock size={24} style={{ color: 'var(--primary)', marginBottom: '0.5rem' }} />
+                      <div style={{ fontWeight: 600, fontSize: '0.85rem' }}>Timeclock</div>
+                    </div>
+                  </Link>
+                  <Link href="/hr/schedule">
+                    <div className="hover-lift" style={{ padding: '1rem', background: 'var(--primary-light)', borderRadius: 'var(--radius-md)', textAlign: 'center', cursor: 'pointer' }}>
+                      <Calendar size={24} style={{ color: 'var(--primary)', marginBottom: '0.5rem' }} />
+                      <div style={{ fontWeight: 600, fontSize: '0.85rem' }}>Jadual Shift</div>
+                    </div>
+                  </Link>
+                  <Link href="/hr/kpi">
+                    <div className="hover-lift" style={{ padding: '1rem', background: 'var(--primary-light)', borderRadius: 'var(--radius-md)', textAlign: 'center', cursor: 'pointer' }}>
+                      <Trophy size={24} style={{ color: 'var(--primary)', marginBottom: '0.5rem' }} />
+                      <div style={{ fontWeight: 600, fontSize: '0.85rem' }}>KPI</div>
+                    </div>
+                  </Link>
+                </div>
+              </div>
+
+              {/* Kelulusan */}
+              <div style={{ marginBottom: '1.5rem' }}>
+                <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  ✅ Kelulusan & Permohonan
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <Link href="/hr/approvals?tab=leave">
+                    <div className="hover-lift" style={{ padding: '1rem', background: 'var(--success-light)', borderRadius: 'var(--radius-md)', textAlign: 'center', cursor: 'pointer' }}>
+                      <Calendar size={24} style={{ color: 'var(--success)', marginBottom: '0.5rem' }} />
+                      <div style={{ fontWeight: 600, fontSize: '0.85rem' }}>Cuti</div>
+                    </div>
+                  </Link>
+                  <Link href="/hr/approvals?tab=claims">
+                    <div className="hover-lift" style={{ padding: '1rem', background: 'var(--success-light)', borderRadius: 'var(--radius-md)', textAlign: 'center', cursor: 'pointer' }}>
+                      <DollarSign size={24} style={{ color: 'var(--success)', marginBottom: '0.5rem' }} />
+                      <div style={{ fontWeight: 600, fontSize: '0.85rem' }}>Tuntutan</div>
+                    </div>
+                  </Link>
+                  <Link href="/hr/approvals?tab=ot">
+                    <div className="hover-lift" style={{ padding: '1rem', background: 'var(--success-light)', borderRadius: 'var(--radius-md)', textAlign: 'center', cursor: 'pointer' }}>
+                      <Clock size={24} style={{ color: 'var(--success)', marginBottom: '0.5rem' }} />
+                      <div style={{ fontWeight: 600, fontSize: '0.85rem' }}>OT</div>
+                    </div>
+                  </Link>
+                  <Link href="/hr/refund-approvals">
+                    <div className="hover-lift" style={{ padding: '1rem', background: 'var(--success-light)', borderRadius: 'var(--radius-md)', textAlign: 'center', cursor: 'pointer' }}>
+                      <BarChart3 size={24} style={{ color: 'var(--success)', marginBottom: '0.5rem' }} />
+                      <div style={{ fontWeight: 600, fontSize: '0.85rem' }}>Void/Refund</div>
+                    </div>
+                  </Link>
+                </div>
+              </div>
+
+              {/* Cuti & Gaji */}
+              <div style={{ marginBottom: '1.5rem' }}>
+                <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  💰 Cuti & Kewangan
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <Link href="/hr/leave-calendar">
+                    <div className="hover-lift" style={{ padding: '1rem', background: 'var(--warning-light)', borderRadius: 'var(--radius-md)', textAlign: 'center', cursor: 'pointer' }}>
+                      <Calendar size={24} style={{ color: 'var(--warning)', marginBottom: '0.5rem' }} />
+                      <div style={{ fontWeight: 600, fontSize: '0.85rem' }}>Kalendar Cuti</div>
+                    </div>
+                  </Link>
+                  <Link href="/hr/leave-settings">
+                    <div className="hover-lift" style={{ padding: '1rem', background: 'var(--warning-light)', borderRadius: 'var(--radius-md)', textAlign: 'center', cursor: 'pointer' }}>
+                      <List size={24} style={{ color: 'var(--warning)', marginBottom: '0.5rem' }} />
+                      <div style={{ fontWeight: 600, fontSize: '0.85rem' }}>Tetapan Cuti</div>
+                    </div>
+                  </Link>
+                  <Link href="/finance/payroll">
+                    <div className="hover-lift" style={{ padding: '1rem', background: 'var(--warning-light)', borderRadius: 'var(--radius-md)', textAlign: 'center', cursor: 'pointer' }}>
+                      <DollarSign size={24} style={{ color: 'var(--warning)', marginBottom: '0.5rem' }} />
+                      <div style={{ fontWeight: 600, fontSize: '0.85rem' }}>Payroll</div>
+                    </div>
+                  </Link>
+                  <Link href="/hr/ot-report">
+                    <div className="hover-lift" style={{ padding: '1rem', background: 'var(--warning-light)', borderRadius: 'var(--radius-md)', textAlign: 'center', cursor: 'pointer' }}>
+                      <Clock size={24} style={{ color: 'var(--warning)', marginBottom: '0.5rem' }} />
+                      <div style={{ fontWeight: 600, fontSize: '0.85rem' }}>Laporan OT</div>
+                    </div>
+                  </Link>
+                </div>
+              </div>
+
+              {/* Rekod & Dokumen */}
+              <div>
+                <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  📋 Rekod & Dokumen
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <Link href="/hr/performance">
+                    <div className="hover-lift" style={{ padding: '1rem', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-md)', textAlign: 'center', cursor: 'pointer' }}>
+                      <TrendingUp size={24} style={{ color: 'var(--text-secondary)', marginBottom: '0.5rem' }} />
+                      <div style={{ fontWeight: 600, fontSize: '0.85rem' }}>Prestasi</div>
+                    </div>
+                  </Link>
+                  <Link href="/hr/training">
+                    <div className="hover-lift" style={{ padding: '1rem', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-md)', textAlign: 'center', cursor: 'pointer' }}>
+                      <Award size={24} style={{ color: 'var(--text-secondary)', marginBottom: '0.5rem' }} />
+                      <div style={{ fontWeight: 600, fontSize: '0.85rem' }}>Training</div>
+                    </div>
+                  </Link>
+                  <Link href="/hr/documents">
+                    <div className="hover-lift" style={{ padding: '1rem', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-md)', textAlign: 'center', cursor: 'pointer' }}>
+                      <List size={24} style={{ color: 'var(--text-secondary)', marginBottom: '0.5rem' }} />
+                      <div style={{ fontWeight: 600, fontSize: '0.85rem' }}>Dokumen</div>
+                    </div>
+                  </Link>
+                  <Link href="/hr/disciplinary">
+                    <div className="hover-lift" style={{ padding: '1rem', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-md)', textAlign: 'center', cursor: 'pointer' }}>
+                      <Users size={24} style={{ color: 'var(--text-secondary)', marginBottom: '0.5rem' }} />
+                      <div style={{ fontWeight: 600, fontSize: '0.85rem' }}>Disiplin</div>
+                    </div>
+                  </Link>
+                </div>
+              </div>
+
+              {/* More Features Row */}
+              <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--border-light)' }}>
+                <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
+                  <Link href="/hr/onboarding" style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textAlign: 'center', padding: '0.5rem' }}>
+                    Onboarding
+                  </Link>
+                  <Link href="/hr/exit-interview" style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textAlign: 'center', padding: '0.5rem' }}>
+                    Exit Interview
+                  </Link>
+                  <Link href="/hr/complaints" style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textAlign: 'center', padding: '0.5rem' }}>
+                    Aduan
+                  </Link>
+                  <Link href="/hr/checklist-config" style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textAlign: 'center', padding: '0.5rem' }}>
+                    Checklist
+                  </Link>
+                  <Link href="/hr/approvals?tab=advance" style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textAlign: 'center', padding: '0.5rem' }}>
+                    Salary Advance
+                  </Link>
+                  <Link href="/hr/staff/new" style={{ fontSize: '0.75rem', color: 'var(--primary)', textAlign: 'center', padding: '0.5rem', fontWeight: 600 }}>
+                    + Tambah Staf
+                  </Link>
+                </div>
               </div>
             </GlassCard>
 
