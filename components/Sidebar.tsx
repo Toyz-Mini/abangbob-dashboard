@@ -123,6 +123,7 @@ const navGroupsConfig: NavGroup[] = [
       { href: '/hr/exit-interview', labelKey: 'nav.exitInterview', icon: UserMinus },
       { href: '/hr/complaints', labelKey: 'nav.complaints', icon: Shield },
       { href: '/hr/leave-calendar', labelKey: 'nav.leaveCalendar', icon: Calendar, tourId: 'leave' },
+      { href: '/hr/leave-settings', labelKey: 'nav.leaveSettings', icon: Settings },
       { href: '/hr/checklist-config', labelKey: 'nav.checklistConfig', icon: CheckSquare },
     ]
   },
