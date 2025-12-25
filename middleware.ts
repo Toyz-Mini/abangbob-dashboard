@@ -33,22 +33,22 @@ export async function middleware(request: NextRequest) {
         }
     )
 
-    const {
-        data: { user },
-    } = await supabase.auth.getUser()
+    // const {
+    //     data: { user },
+    // } = await supabase.auth.getUser()
 
     // Protected Routes
-    const protectedPaths = ['/hr', '/finance', '/inventory', '/settings', '/kitchen', '/pos']
-    const isProtected = protectedPaths.some(path => request.nextUrl.pathname.startsWith(path))
+    // const protectedPaths = ['/hr', '/finance', '/inventory', '/settings', '/kitchen', '/pos']
+    // const isProtected = protectedPaths.some(path => request.nextUrl.pathname.startsWith(path))
 
-    if (isProtected && !user) {
-        return NextResponse.redirect(new URL('/login', request.url))
-    }
+    // if (isProtected && !user) {
+    //     return NextResponse.redirect(new URL('/login', request.url))
+    // }
 
     // Auth Routes (redirect to home if already logged in)
-    if (user && request.nextUrl.pathname.startsWith('/login')) {
-        return NextResponse.redirect(new URL('/', request.url))
-    }
+    // if (user && request.nextUrl.pathname.startsWith('/login')) {
+    //     return NextResponse.redirect(new URL('/', request.url))
+    // }
 
     return response
 }
