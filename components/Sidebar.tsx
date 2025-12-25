@@ -100,7 +100,9 @@ const navGroupsConfig: NavGroup[] = [
         labelKey: 'nav.approvals',
         icon: ClipboardCheck,
         children: [
-          { href: '/hr/approvals', labelKey: 'nav.allApprovals', icon: ClipboardCheck },
+          { href: '/hr/approvals?tab=leave', labelKey: 'nav.leaveApprovals', icon: Calendar },
+          { href: '/hr/approvals?tab=claims', labelKey: 'nav.claimsApprovals', icon: DollarSign },
+          { href: '/hr/approvals?tab=ot', labelKey: 'nav.otApprovals', icon: Clock },
           { href: '/hr/refund-approvals', labelKey: 'nav.refundApprovals', icon: RefreshCw, showBadge: true },
         ]
       },

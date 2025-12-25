@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import MainLayout from '@/components/MainLayout';
 import { useStaffPortal } from '@/lib/store';
 import { useLeaveRequestsRealtime, useClaimRequestsRealtime, useStaffRequestsRealtime } from '@/lib/supabase/realtime-hooks';
@@ -28,6 +29,7 @@ const CURRENT_APPROVER_NAME = 'Ahmad Bin Hassan';
 type TabType = 'leave' | 'claims' | 'ot' | 'requests';
 
 export default function ApprovalsPage() {
+  const searchParams = useSearchParams();
   const {
     // Leave
     leaveRequests,
@@ -78,6 +80,14 @@ export default function ApprovalsPage() {
 
   const [activeTab, setActiveTab] = useState<TabType>('leave');
   const [viewMode, setViewMode] = useState<'pending' | 'history'>('pending');
+
+  // Read tab from URL query parameter
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab && ['leave', 'claims', 'ot', 'requests'].includes(tab)) {
+      setActiveTab(tab as TabType);
+    }
+  }, [searchParams]);
 
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState<{ type: TabType; id: string } | null>(null);
