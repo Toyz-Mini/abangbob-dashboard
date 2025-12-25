@@ -440,6 +440,8 @@ export default function POSPage() {
         paymentMethod,
         status: 'pending',
         createdAt: new Date().toISOString(),
+        staffId: currentStaff?.id, // Fix: Link order to staff
+        staffName: currentStaff?.name, // Fix: Store staff name
       });
 
       // Decrement inventory based on sold items (simple mapping by category)
