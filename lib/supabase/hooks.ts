@@ -104,7 +104,7 @@ export function useRealtimeTable<T extends keyof Database['public']['Tables']>(
             schema: 'public',
             table: tableName,
           },
-          (payload) => {
+          (payload: any) => {
             if (payload.eventType === 'INSERT') {
               setData(prev => [...prev, payload.new as TableRow]);
             } else if (payload.eventType === 'UPDATE') {
@@ -194,7 +194,7 @@ export function useRealtimeRecord<T extends keyof Database['public']['Tables']>(
           table: tableName,
           filter: `id=eq.${id}`,
         },
-        (payload) => {
+        (payload: any) => {
           if (payload.eventType === 'UPDATE') {
             setData(payload.new as TableRow);
           } else if (payload.eventType === 'DELETE') {
@@ -268,7 +268,7 @@ export function useRealtimeOrders(options?: {
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'orders' },
-        (payload) => {
+        (payload: any) => {
           if (payload.eventType === 'INSERT') {
             setOrders(prev => [payload.new as Tables<'orders'>, ...prev]);
           } else if (payload.eventType === 'UPDATE') {
