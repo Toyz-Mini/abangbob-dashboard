@@ -57,7 +57,7 @@ export default function SalaryAdvancePage() {
                 a.staffId === currentStaff.id &&
                 date >= monthStart &&
                 date <= now &&
-                a.checkIn // Has check-in means worked
+                a.clockInTime // Has clock-in means worked
             );
         }).length;
 

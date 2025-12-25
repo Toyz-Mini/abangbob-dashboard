@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
-import { StockItem, StaffProfile, AttendanceRecord, Order, ProductionLog, DeliveryOrder, Expense, DailyCashFlow, Customer, Supplier, PurchaseOrder, Recipe, Shift, ScheduleEntry, Promotion, Notification, MenuItem, ModifierGroup, ModifierOption, StaffKPI, LeaveRecord, TrainingRecord, OTRecord, CustomerReview, KPIMetrics, ChecklistItemTemplate, ChecklistCompletion, LeaveBalance, LeaveRequest, ClaimRequest, StaffRequest, Announcement, OrderHistoryItem, VoidRefundRequest, VoidRefundType, OrderHistoryFilters, RefundItem, OilTracker, OilChangeRequest, OilActionHistory, OilActionType, Equipment, MaintenanceSchedule, MaintenanceLog, WasteLog, MenuCategory, PaymentMethodConfig, TaxRate, CashRegister, InventoryLog, StockSuggestion, DEFAULT_MENU_CATEGORIES, DEFAULT_PAYMENT_METHODS, DEFAULT_TAX_RATES, OTClaim, SalaryAdvance, DisciplinaryAction, StaffTraining, StaffDocument, PerformanceReview, OnboardingChecklist, ExitInterview } from './types';
+import { StockItem, StaffProfile, AttendanceRecord, Order, ProductionLog, DeliveryOrder, Expense, DailyCashFlow, Customer, Supplier, PurchaseOrder, Recipe, Shift, ScheduleEntry, Promotion, Notification, MenuItem, ModifierGroup, ModifierOption, StaffKPI, LeaveRecord, TrainingRecord, OTRecord, CustomerReview, KPIMetrics, ChecklistItemTemplate, ChecklistCompletion, LeaveBalance, LeaveRequest, ClaimRequest, StaffRequest, Announcement, OrderHistoryItem, VoidRefundRequest, VoidRefundType, OrderHistoryFilters, RefundItem, OilTracker, OilChangeRequest, OilActionHistory, OilActionType, Equipment, MaintenanceSchedule, MaintenanceLog, WasteLog, MenuCategory, PaymentMethodConfig, TaxRate, CashRegister, InventoryLog, StockSuggestion, DEFAULT_MENU_CATEGORIES, DEFAULT_PAYMENT_METHODS, DEFAULT_TAX_RATES, OTClaim, SalaryAdvance, DisciplinaryAction, StaffTraining, StaffDocument, PerformanceReview, OnboardingChecklist, ExitInterview, StaffComplaint } from './types';
 import { MOCK_ORDER_HISTORY, MOCK_VOID_REFUND_REQUESTS, ORDER_HISTORY_STORAGE_KEYS } from './order-history-data';
 import { MOCK_STOCK } from './inventory-data';
 import { MOCK_STAFF, MOCK_ATTENDANCE, MOCK_PAYROLL } from './hr-data';
@@ -132,6 +132,8 @@ const STORAGE_KEYS = {
   ONBOARDING_CHECKLISTS: 'abangbob_onboarding_checklists',
   // Exit Interviews
   EXIT_INTERVIEWS: 'abangbob_exit_interviews',
+  // Staff Complaints
+  STAFF_COMPLAINTS: 'abangbob_staff_complaints',
 };
 
 // Inventory log type for tracking stock changes
@@ -400,6 +402,13 @@ interface StoreState {
   deleteExitInterview: (id: string) => void;
   refreshExitInterviews: () => Promise<void>;
 
+  // HR - Staff Complaints
+  staffComplaints: StaffComplaint[];
+  addStaffComplaint: (complaint: Omit<StaffComplaint, 'id' | 'createdAt'>) => void;
+  updateStaffComplaint: (id: string, updates: Partial<StaffComplaint>) => void;
+  deleteStaffComplaint: (id: string) => void;
+  refreshStaffComplaints: () => Promise<void>;
+
   // Staff Portal - General Requests
   staffRequests: StaffRequest[];
   addStaffRequest: (request: Omit<StaffRequest, 'id' | 'createdAt'>) => void;
@@ -592,6 +601,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [performanceReviews, setPerformanceReviews] = useState<PerformanceReview[]>([]);
   const [onboardingChecklists, setOnboardingChecklists] = useState<OnboardingChecklist[]>([]);
   const [exitInterviews, setExitInterviews] = useState<ExitInterview[]>([]);
+  const [staffComplaints, setStaffComplaints] = useState<StaffComplaint[]>([]);
   const [staffRequests, setStaffRequests] = useState<StaffRequest[]>([]);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
 
@@ -806,6 +816,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       setPerformanceReviews(getFromStorage(STORAGE_KEYS.PERFORMANCE_REVIEWS, []));
       setOnboardingChecklists(getFromStorage(STORAGE_KEYS.ONBOARDING_CHECKLISTS, []));
       setExitInterviews(getFromStorage(STORAGE_KEYS.EXIT_INTERVIEWS, []));
+      setStaffComplaints(getFromStorage(STORAGE_KEYS.STAFF_COMPLAINTS, []));
       setStaffRequests(supabaseConnected && supabaseData.staffRequests?.length > 0 ? supabaseData.staffRequests : getFromStorage(STORAGE_KEYS.STAFF_REQUESTS, MOCK_STAFF_REQUESTS));
       setAnnouncements(supabaseConnected && supabaseData.announcements?.length > 0 ? supabaseData.announcements : getFromStorage(STORAGE_KEYS.ANNOUNCEMENTS, MOCK_ANNOUNCEMENTS));
 
@@ -3697,6 +3708,95 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+
+  // ==================== Staff Constraint Functions ====================
+
+  const addStaffComplaint = useCallback((complaint: Omit<StaffComplaint, 'id' | 'createdAt'>) => {
+    const newComplaint: StaffComplaint = {
+      ...complaint,
+      id: `complaint_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      createdAt: new Date().toISOString(),
+    };
+    setStaffComplaints(prev => {
+      const updated = [newComplaint, ...prev];
+      setToStorage(STORAGE_KEYS.STAFF_COMPLAINTS, updated);
+      return updated;
+    });
+    // Sync to Supabase
+    getSupabaseClient()?.from('staff_complaints').insert({
+      id: newComplaint.id,
+      is_anonymous: newComplaint.isAnonymous,
+      staff_id: newComplaint.staffId,
+      staff_name: newComplaint.staffName,
+      date: newComplaint.date,
+      category: newComplaint.category,
+      subject: newComplaint.subject,
+      description: newComplaint.description,
+      status: newComplaint.status,
+      admin_notes: newComplaint.adminNotes,
+      resolved_at: newComplaint.resolvedAt,
+      resolved_by: newComplaint.resolvedBy,
+      created_at: newComplaint.createdAt,
+    }).then(({ error }: { error: Error | null }) => {
+      if (error) console.error('[Supabase] Failed to insert staff complaint:', error);
+    });
+  }, []);
+
+  const updateStaffComplaint = useCallback((id: string, updates: Partial<StaffComplaint>) => {
+    setStaffComplaints(prev => {
+      const updated = prev.map(c => c.id === id ? { ...c, ...updates } : c);
+      setToStorage(STORAGE_KEYS.STAFF_COMPLAINTS, updated);
+      return updated;
+    });
+    // Sync to Supabase
+    const snakeCaseUpdates: Record<string, unknown> = {};
+    if (updates.isAnonymous !== undefined) snakeCaseUpdates.is_anonymous = updates.isAnonymous;
+    if (updates.category !== undefined) snakeCaseUpdates.category = updates.category;
+    if (updates.subject !== undefined) snakeCaseUpdates.subject = updates.subject;
+    if (updates.description !== undefined) snakeCaseUpdates.description = updates.description;
+    if (updates.status !== undefined) snakeCaseUpdates.status = updates.status;
+    if (updates.adminNotes !== undefined) snakeCaseUpdates.admin_notes = updates.adminNotes;
+    if (updates.resolvedAt !== undefined) snakeCaseUpdates.resolved_at = updates.resolvedAt;
+    if (updates.resolvedBy !== undefined) snakeCaseUpdates.resolved_by = updates.resolvedBy;
+    getSupabaseClient()?.from('staff_complaints').update(snakeCaseUpdates).eq('id', id).then(({ error }: { error: Error | null }) => {
+      if (error) console.error('[Supabase] Failed to update staff complaint:', error);
+    });
+  }, []);
+
+  const deleteStaffComplaint = useCallback((id: string) => {
+    setStaffComplaints(prev => {
+      const updated = prev.filter(c => c.id !== id);
+      setToStorage(STORAGE_KEYS.STAFF_COMPLAINTS, updated);
+      return updated;
+    });
+    getSupabaseClient()?.from('staff_complaints').delete().eq('id', id).then(({ error }: { error: Error | null }) => {
+      if (error) console.error('[Supabase] Failed to delete staff complaint:', error);
+    });
+  }, []);
+
+  const refreshStaffComplaints = useCallback(async () => {
+    const { data, error } = await (getSupabaseClient()?.from('staff_complaints').select('*').order('created_at', { ascending: false }) || { data: null, error: null });
+    if (!error && data) {
+      const mapped: StaffComplaint[] = data.map((row: Record<string, unknown>) => ({
+        id: row.id as string,
+        isAnonymous: row.is_anonymous as boolean,
+        staffId: row.staff_id as string | undefined,
+        staffName: row.staff_name as string | undefined,
+        date: row.date as string,
+        category: row.category as StaffComplaint['category'],
+        subject: row.subject as string,
+        description: row.description as string,
+        status: row.status as StaffComplaint['status'],
+        adminNotes: row.admin_notes as string | undefined,
+        resolvedAt: row.resolved_at as string | undefined,
+        resolvedBy: row.resolved_by as string | undefined,
+        createdAt: row.created_at as string,
+      }));
+      setStaffComplaints(mapped);
+      setToStorage(STORAGE_KEYS.STAFF_COMPLAINTS, mapped);
+    }
+  }, []);
+
   // Staff Portal - Staff Request actions
   const addStaffRequest = useCallback((request: Omit<StaffRequest, 'id' | 'createdAt'>) => {
     const newRequest: StaffRequest = {
@@ -4994,6 +5094,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     deleteExitInterview,
     refreshExitInterviews,
 
+    // HR - Staff Complaints
+    staffComplaints,
+    addStaffComplaint,
+    updateStaffComplaint,
+    deleteStaffComplaint,
+    refreshStaffComplaints,
+
     // Staff Portal - General Requests
     staffRequests,
     addStaffRequest,
@@ -5444,6 +5551,7 @@ export function useStaffPortal() {
     updateChecklistItem: store.updateChecklistItem,
     completeChecklist: store.completeChecklist,
     getTodayChecklist: store.getTodayChecklist,
+    attendance: store.attendance,
     // Leave
     leaveBalances: store.leaveBalances,
     leaveRequests: store.leaveRequests,

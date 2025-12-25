@@ -283,6 +283,27 @@ export interface ExitInterview {
   createdAt: string;
 }
 
+// ==================== STAFF COMPLAINT TYPES ====================
+
+export type ComplaintStatus = 'pending' | 'investigating' | 'resolved' | 'dismissed';
+export type ComplaintCategory = 'harassment' | 'misconduct' | 'safety' | 'management' | 'other';
+
+export interface StaffComplaint {
+  id: string;
+  isAnonymous: boolean;
+  staffId?: string;     // Null if anonymous
+  staffName?: string;   // "Anonymous" if anonymous
+  date: string;         // Incident date
+  category: ComplaintCategory;
+  subject: string;
+  description: string;
+  status: ComplaintStatus;
+  adminNotes?: string;
+  resolvedAt?: string;
+  resolvedBy?: string;
+  createdAt: string;
+}
+
 export interface StaffProfile {
   id: string;
   employeeNumber?: string;

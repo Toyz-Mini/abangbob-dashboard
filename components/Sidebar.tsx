@@ -42,6 +42,7 @@ import {
   TrendingUp,
   ClipboardList,
   UserMinus,
+  Shield,
   type LucideIcon
 } from 'lucide-react';
 
@@ -109,6 +110,7 @@ const navGroupsConfig: NavGroup[] = [
           { href: '/hr/approvals?tab=leave', labelKey: 'nav.leaveApprovals', icon: Calendar },
           { href: '/hr/approvals?tab=claims', labelKey: 'nav.claimsApprovals', icon: DollarSign },
           { href: '/hr/approvals?tab=ot', labelKey: 'nav.otApprovals', icon: Clock },
+          { href: '/hr/ot-report', labelKey: 'nav.otReport', icon: Clock },
           { href: '/hr/approvals?tab=advance', labelKey: 'nav.advanceApprovals', icon: DollarSign },
           { href: '/hr/refund-approvals', labelKey: 'nav.refundApprovals', icon: RefreshCw, showBadge: true },
         ]
@@ -119,6 +121,7 @@ const navGroupsConfig: NavGroup[] = [
       { href: '/hr/performance', labelKey: 'nav.performance', icon: TrendingUp },
       { href: '/hr/onboarding', labelKey: 'nav.onboarding', icon: ClipboardList },
       { href: '/hr/exit-interview', labelKey: 'nav.exitInterview', icon: UserMinus },
+      { href: '/hr/complaints', labelKey: 'nav.complaints', icon: Shield },
       { href: '/hr/leave-calendar', labelKey: 'nav.leaveCalendar', icon: Calendar, tourId: 'leave' },
       { href: '/hr/checklist-config', labelKey: 'nav.checklistConfig', icon: CheckSquare },
     ]
