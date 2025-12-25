@@ -148,34 +148,32 @@ const Sidebar = forwardRef<HTMLElement, SidebarProps>(({ isOpen, onMouseEnter, o
   return (
     <aside
       ref={ref}
-      className={`sidebar ${isOpen ? 'sidebar-open' : 'sidebar-closed'}`}
+      className={`sidebar ${isOpen ? 'open' : 'closed'}`}
       onMouseEnter={onMouseEnter}
       onClick={onClick}
     >
       {/* Logo */}
-      <div className="sidebar-header">
-        <Link href="/" className="sidebar-logo">
-          <Image
-            src="/abangbob-logo.png"
-            alt="AbangBob"
-            width={40}
-            height={40}
-            className="sidebar-logo-img"
-          />
-          <span className="sidebar-logo-text">AbangBob</span>
-        </Link>
-      </div>
+      <Link href="/" className="nav-logo">
+        <Image
+          src="/abangbob-logo.png"
+          alt="AbangBob"
+          width={40}
+          height={40}
+          className="sidebar-logo-img"
+        />
+        <span className="sidebar-logo-text">AbangBob</span>
+      </Link>
 
       {/* Navigation */}
-      <nav className="sidebar-nav">
+      <nav className="nav-container">
         {filteredNavItems.map((group, groupIndex) => {
           const groupKey = group.titleKey;
           const isCollapsed = collapsedGroups[groupKey];
 
           return (
-            <div key={groupIndex} className="sidebar-group">
+            <div key={groupIndex} className="nav-group">
               <button
-                className="sidebar-group-title"
+                className="nav-group-title"
                 onClick={() => toggleGroup(groupKey)}
                 style={{
                   display: 'flex',
@@ -185,12 +183,7 @@ const Sidebar = forwardRef<HTMLElement, SidebarProps>(({ isOpen, onMouseEnter, o
                   background: 'none',
                   border: 'none',
                   cursor: 'pointer',
-                  padding: '0.5rem 0.75rem',
-                  color: 'var(--text-secondary)',
-                  fontSize: '0.7rem',
-                  fontWeight: 600,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.5px'
+                  paddingRight: '0'
                 }}
               >
                 <span>{t(groupKey)}</span>
@@ -198,24 +191,24 @@ const Sidebar = forwardRef<HTMLElement, SidebarProps>(({ isOpen, onMouseEnter, o
               </button>
 
               {!isCollapsed && (
-                <ul className="sidebar-list">
+                <ul className="nav-menu">
                   {group.items.map((item, itemIndex) => {
                     const Icon = item.icon;
                     const active = isActive(item.href);
                     const showBadge = item.href === '/hr/refund-approvals' && pendingCount > 0;
 
                     return (
-                      <li key={itemIndex}>
+                      <li key={itemIndex} className="nav-item">
                         <Link
                           href={item.href}
-                          className={`sidebar-link ${active ? 'active' : ''}`}
+                          className={`nav-link ${active ? 'active' : ''}`}
                           onClick={onNavClick}
                           data-tour={item.tourId}
                         >
-                          <Icon size={18} className="sidebar-icon" />
-                          <span className="sidebar-label">{t(item.labelKey)}</span>
+                          <Icon size={20} />
+                          <span>{t(item.labelKey)}</span>
                           {showBadge && (
-                            <span className="sidebar-badge">{pendingCount}</span>
+                            <span className="badge badge-warning" style={{ marginLeft: 'auto', fontSize: '0.7rem' }}>{pendingCount}</span>
                           )}
                         </Link>
                       </li>
@@ -229,34 +222,34 @@ const Sidebar = forwardRef<HTMLElement, SidebarProps>(({ isOpen, onMouseEnter, o
       </nav>
 
       {/* Footer */}
-      <div className="sidebar-footer">
-        <div className="sidebar-user">
+      <div className="mt-auto pt-4 border-t border-gray-100">
+        <div className="flex items-center gap-3 px-2">
           {user ? (
             <>
-              <div className="sidebar-user-avatar">
+              <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center font-bold">
                 {user.name?.charAt(0) || 'A'}
               </div>
-              <div className="sidebar-user-info">
-                <div className="sidebar-user-name">{user.name || 'Admin'}</div>
-                <div className="sidebar-user-role">Admin</div>
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-semibold truncate">{user.name || 'Admin'}</div>
+                <div className="text-xs text-gray-500">Admin</div>
               </div>
             </>
           ) : currentStaff ? (
             <>
-              <div className="sidebar-user-avatar">
+              <div className="w-8 h-8 rounded-full bg-primary-light text-primary flex items-center justify-center font-bold">
                 {currentStaff.name.charAt(0)}
               </div>
-              <div className="sidebar-user-info">
-                <div className="sidebar-user-name">{currentStaff.name}</div>
-                <div className="sidebar-user-role">{currentStaff.role}</div>
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-semibold truncate">{currentStaff.name}</div>
+                <div className="text-xs text-gray-500">{currentStaff.role}</div>
               </div>
             </>
           ) : (
             <>
-              <div className="sidebar-user-avatar">G</div>
-              <div className="sidebar-user-info">
-                <div className="sidebar-user-name">Guest</div>
-                <div className="sidebar-user-role">Viewer</div>
+              <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">G</div>
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-semibold">Guest</div>
+                <div className="text-xs text-gray-500">Viewer</div>
               </div>
             </>
           )}
