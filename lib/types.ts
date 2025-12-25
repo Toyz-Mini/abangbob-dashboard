@@ -1017,6 +1017,26 @@ export interface DisciplinaryAction {
   createdAt: string;
 }
 
+// ==================== STAFF TRAINING TYPES ====================
+
+export type TrainingStatus = 'scheduled' | 'in_progress' | 'completed' | 'expired';
+
+export interface StaffTraining {
+  id: string;
+  staffId: string;
+  staffName: string;
+  courseName: string;
+  provider: string;
+  category: 'food_safety' | 'health_safety' | 'customer_service' | 'technical' | 'compliance' | 'other';
+  scheduledDate?: string;
+  completedAt?: string;
+  expiresAt?: string;
+  certificateNumber?: string;
+  notes?: string;
+  status: TrainingStatus;
+  createdAt: string;
+}
+
 export interface CustomerReview {
   id: string;
   orderId: string;

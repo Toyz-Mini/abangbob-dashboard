@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
-import { StockItem, StaffProfile, AttendanceRecord, Order, ProductionLog, DeliveryOrder, Expense, DailyCashFlow, Customer, Supplier, PurchaseOrder, Recipe, Shift, ScheduleEntry, Promotion, Notification, MenuItem, ModifierGroup, ModifierOption, StaffKPI, LeaveRecord, TrainingRecord, OTRecord, CustomerReview, KPIMetrics, ChecklistItemTemplate, ChecklistCompletion, LeaveBalance, LeaveRequest, ClaimRequest, StaffRequest, Announcement, OrderHistoryItem, VoidRefundRequest, VoidRefundType, OrderHistoryFilters, RefundItem, OilTracker, OilChangeRequest, OilActionHistory, OilActionType, Equipment, MaintenanceSchedule, MaintenanceLog, WasteLog, MenuCategory, PaymentMethodConfig, TaxRate, CashRegister, InventoryLog, StockSuggestion, DEFAULT_MENU_CATEGORIES, DEFAULT_PAYMENT_METHODS, DEFAULT_TAX_RATES, OTClaim, SalaryAdvance, DisciplinaryAction } from './types';
+import { StockItem, StaffProfile, AttendanceRecord, Order, ProductionLog, DeliveryOrder, Expense, DailyCashFlow, Customer, Supplier, PurchaseOrder, Recipe, Shift, ScheduleEntry, Promotion, Notification, MenuItem, ModifierGroup, ModifierOption, StaffKPI, LeaveRecord, TrainingRecord, OTRecord, CustomerReview, KPIMetrics, ChecklistItemTemplate, ChecklistCompletion, LeaveBalance, LeaveRequest, ClaimRequest, StaffRequest, Announcement, OrderHistoryItem, VoidRefundRequest, VoidRefundType, OrderHistoryFilters, RefundItem, OilTracker, OilChangeRequest, OilActionHistory, OilActionType, Equipment, MaintenanceSchedule, MaintenanceLog, WasteLog, MenuCategory, PaymentMethodConfig, TaxRate, CashRegister, InventoryLog, StockSuggestion, DEFAULT_MENU_CATEGORIES, DEFAULT_PAYMENT_METHODS, DEFAULT_TAX_RATES, OTClaim, SalaryAdvance, DisciplinaryAction, StaffTraining } from './types';
 import { MOCK_ORDER_HISTORY, MOCK_VOID_REFUND_REQUESTS, ORDER_HISTORY_STORAGE_KEYS } from './order-history-data';
 import { MOCK_STOCK } from './inventory-data';
 import { MOCK_STAFF, MOCK_ATTENDANCE, MOCK_PAYROLL } from './hr-data';
@@ -122,6 +122,8 @@ const STORAGE_KEYS = {
   SALARY_ADVANCES: 'abangbob_salary_advances',
   // Disciplinary Actions
   DISCIPLINARY_ACTIONS: 'abangbob_disciplinary_actions',
+  // Staff Training
+  STAFF_TRAINING: 'abangbob_staff_training',
 };
 
 // Inventory log type for tracking stock changes
@@ -349,6 +351,15 @@ interface StoreState {
   getStaffDisciplinaryActions: (staffId: string) => DisciplinaryAction[];
   refreshDisciplinaryActions: () => Promise<void>;
 
+  // HR - Staff Training & Certifications
+  staffTraining: StaffTraining[];
+  addStaffTraining: (training: Omit<StaffTraining, 'id' | 'createdAt'>) => void;
+  updateStaffTraining: (id: string, updates: Partial<StaffTraining>) => void;
+  deleteStaffTraining: (id: string) => void;
+  getStaffTrainingRecords: (staffId: string) => StaffTraining[];
+  getExpiringTraining: (daysAhead?: number) => StaffTraining[];
+  refreshStaffTraining: () => Promise<void>;
+
   // Staff Portal - General Requests
   staffRequests: StaffRequest[];
   addStaffRequest: (request: Omit<StaffRequest, 'id' | 'createdAt'>) => void;
@@ -536,6 +547,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [otClaims, setOTClaims] = useState<OTClaim[]>([]);
   const [salaryAdvances, setSalaryAdvances] = useState<SalaryAdvance[]>([]);
   const [disciplinaryActions, setDisciplinaryActions] = useState<DisciplinaryAction[]>([]);
+  const [staffTraining, setStaffTraining] = useState<StaffTraining[]>([]);
   const [staffRequests, setStaffRequests] = useState<StaffRequest[]>([]);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
 
@@ -745,6 +757,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       setOTClaims(getFromStorage(STORAGE_KEYS.OT_CLAIMS, []));
       setSalaryAdvances(getFromStorage(STORAGE_KEYS.SALARY_ADVANCES, []));
       setDisciplinaryActions(getFromStorage(STORAGE_KEYS.DISCIPLINARY_ACTIONS, []));
+      setStaffTraining(getFromStorage(STORAGE_KEYS.STAFF_TRAINING, []));
       setStaffRequests(supabaseConnected && supabaseData.staffRequests?.length > 0 ? supabaseData.staffRequests : getFromStorage(STORAGE_KEYS.STAFF_REQUESTS, MOCK_STAFF_REQUESTS));
       setAnnouncements(supabaseConnected && supabaseData.announcements?.length > 0 ? supabaseData.announcements : getFromStorage(STORAGE_KEYS.ANNOUNCEMENTS, MOCK_ANNOUNCEMENTS));
 
@@ -3152,6 +3165,111 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  // ==================== Staff Training Functions ====================
+
+  const addStaffTraining = useCallback((training: Omit<StaffTraining, 'id' | 'createdAt'>) => {
+    const newTraining: StaffTraining = {
+      ...training,
+      id: `train_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      createdAt: new Date().toISOString(),
+    };
+    setStaffTraining(prev => {
+      const updated = [newTraining, ...prev];
+      setToStorage(STORAGE_KEYS.STAFF_TRAINING, updated);
+      return updated;
+    });
+    // Sync to Supabase
+    getSupabaseClient()?.from('staff_training').insert({
+      id: newTraining.id,
+      staff_id: newTraining.staffId,
+      staff_name: newTraining.staffName,
+      course_name: newTraining.courseName,
+      provider: newTraining.provider,
+      category: newTraining.category,
+      scheduled_date: newTraining.scheduledDate,
+      completed_at: newTraining.completedAt,
+      expires_at: newTraining.expiresAt,
+      certificate_number: newTraining.certificateNumber,
+      notes: newTraining.notes,
+      status: newTraining.status,
+      created_at: newTraining.createdAt,
+    }).then(({ error }: { error: Error | null }) => {
+      if (error) console.error('[Supabase] Failed to insert staff training:', error);
+    });
+  }, []);
+
+  const updateStaffTraining = useCallback((id: string, updates: Partial<StaffTraining>) => {
+    setStaffTraining(prev => {
+      const updated = prev.map(t => t.id === id ? { ...t, ...updates } : t);
+      setToStorage(STORAGE_KEYS.STAFF_TRAINING, updated);
+      return updated;
+    });
+    // Sync to Supabase
+    const snakeCaseUpdates: Record<string, unknown> = {};
+    if (updates.staffId !== undefined) snakeCaseUpdates.staff_id = updates.staffId;
+    if (updates.staffName !== undefined) snakeCaseUpdates.staff_name = updates.staffName;
+    if (updates.courseName !== undefined) snakeCaseUpdates.course_name = updates.courseName;
+    if (updates.provider !== undefined) snakeCaseUpdates.provider = updates.provider;
+    if (updates.category !== undefined) snakeCaseUpdates.category = updates.category;
+    if (updates.scheduledDate !== undefined) snakeCaseUpdates.scheduled_date = updates.scheduledDate;
+    if (updates.completedAt !== undefined) snakeCaseUpdates.completed_at = updates.completedAt;
+    if (updates.expiresAt !== undefined) snakeCaseUpdates.expires_at = updates.expiresAt;
+    if (updates.certificateNumber !== undefined) snakeCaseUpdates.certificate_number = updates.certificateNumber;
+    if (updates.notes !== undefined) snakeCaseUpdates.notes = updates.notes;
+    if (updates.status !== undefined) snakeCaseUpdates.status = updates.status;
+    getSupabaseClient()?.from('staff_training').update(snakeCaseUpdates).eq('id', id).then(({ error }: { error: Error | null }) => {
+      if (error) console.error('[Supabase] Failed to update staff training:', error);
+    });
+  }, []);
+
+  const deleteStaffTraining = useCallback((id: string) => {
+    setStaffTraining(prev => {
+      const updated = prev.filter(t => t.id !== id);
+      setToStorage(STORAGE_KEYS.STAFF_TRAINING, updated);
+      return updated;
+    });
+    getSupabaseClient()?.from('staff_training').delete().eq('id', id).then(({ error }: { error: Error | null }) => {
+      if (error) console.error('[Supabase] Failed to delete staff training:', error);
+    });
+  }, []);
+
+  const getStaffTrainingRecords = useCallback((staffId: string): StaffTraining[] => {
+    return staffTraining.filter(t => t.staffId === staffId);
+  }, [staffTraining]);
+
+  const getExpiringTraining = useCallback((daysAhead: number = 30): StaffTraining[] => {
+    const now = new Date();
+    const futureDate = new Date(now.getTime() + daysAhead * 24 * 60 * 60 * 1000);
+    return staffTraining.filter(t => {
+      if (!t.expiresAt || t.status === 'expired') return false;
+      const expiryDate = new Date(t.expiresAt);
+      return expiryDate <= futureDate && expiryDate > now;
+    });
+  }, [staffTraining]);
+
+  const refreshStaffTraining = useCallback(async () => {
+    const { data, error } = await (getSupabaseClient()?.from('staff_training').select('*').order('created_at', { ascending: false }) || { data: null, error: null });
+    if (!error && data) {
+      const mapped: StaffTraining[] = data.map((row: Record<string, unknown>) => ({
+        id: row.id as string,
+        staffId: row.staff_id as string,
+        staffName: row.staff_name as string,
+        courseName: row.course_name as string,
+        provider: row.provider as string,
+        category: row.category as StaffTraining['category'],
+        scheduledDate: row.scheduled_date as string | undefined,
+        completedAt: row.completed_at as string | undefined,
+        expiresAt: row.expires_at as string | undefined,
+        certificateNumber: row.certificate_number as string | undefined,
+        notes: row.notes as string | undefined,
+        status: row.status as StaffTraining['status'],
+        createdAt: row.created_at as string,
+      }));
+      setStaffTraining(mapped);
+      setToStorage(STORAGE_KEYS.STAFF_TRAINING, mapped);
+    }
+  }, []);
+
   // Staff Portal - Staff Request actions
   const addStaffRequest = useCallback((request: Omit<StaffRequest, 'id' | 'createdAt'>) => {
     const newRequest: StaffRequest = {
@@ -4407,6 +4525,15 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     deleteDisciplinaryAction,
     getStaffDisciplinaryActions,
     refreshDisciplinaryActions,
+
+    // HR - Staff Training & Certifications
+    staffTraining,
+    addStaffTraining,
+    updateStaffTraining,
+    deleteStaffTraining,
+    getStaffTrainingRecords,
+    getExpiringTraining,
+    refreshStaffTraining,
 
     // Staff Portal - General Requests
     staffRequests,

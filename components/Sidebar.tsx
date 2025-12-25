@@ -38,6 +38,7 @@ import {
   ChevronDown,
   ChevronRight,
   AlertTriangle,
+  GraduationCap,
   type LucideIcon
 } from 'lucide-react';
 
@@ -110,6 +111,7 @@ const navGroupsConfig: NavGroup[] = [
         ]
       },
       { href: '/hr/disciplinary', labelKey: 'nav.disciplinary', icon: AlertTriangle },
+      { href: '/hr/training', labelKey: 'nav.training', icon: GraduationCap },
       { href: '/hr/leave-calendar', labelKey: 'nav.leaveCalendar', icon: Calendar, tourId: 'leave' },
       { href: '/hr/checklist-config', labelKey: 'nav.checklistConfig', icon: CheckSquare },
     ]
