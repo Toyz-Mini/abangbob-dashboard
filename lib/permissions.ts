@@ -324,7 +324,7 @@ export function canRequestVoidRefund(role: UserRole | null): boolean {
  * Check if role can view all orders (Admin/Manager) or only own orders (Staff)
  */
 export function canViewAllOrders(role: UserRole | null): boolean {
-  return role === 'Admin' || role === 'Manager' || role === 'Staff';
+  return role === 'Admin' || role === 'Manager';
 }
 
 /**

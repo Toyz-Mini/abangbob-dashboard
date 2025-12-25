@@ -6,8 +6,9 @@ import RouteGuard from '@/components/RouteGuard';
 import { useOrders, useMenu, useInventory, usePaymentMethods, useCustomers } from '@/lib/store';
 import { useMenuRealtime, useInventoryRealtime, useModifiersRealtime, useOrdersRealtime } from '@/lib/supabase/realtime-hooks';
 import { useTranslation } from '@/lib/contexts/LanguageContext';
-import { useToast } from '@/lib/contexts/ToastContext';
 import { useSound } from '@/lib/contexts/SoundContext';
+import { useAuth } from '@/lib/contexts/AuthContext';
+import { useToast } from '@/lib/contexts/ToastContext';
 import { CartItem, Order, MenuItem, SelectedModifier, ReceiptSettings, DEFAULT_RECEIPT_SETTINGS, Customer } from '@/lib/types';
 import { getUpsellSuggestions } from '@/lib/menu-data';
 import {
@@ -45,6 +46,7 @@ export default function POSPage() {
   const { customers } = useCustomers();
   const { t, language } = useTranslation();
   const { showToast } = useToast();
+  const { currentStaff } = useAuth();
   const router = useRouter();
 
   // Cash Register State
