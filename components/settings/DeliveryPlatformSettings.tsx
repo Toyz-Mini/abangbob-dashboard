@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useStore } from '@/lib/store';
-import { Globe, Key, Copy, Check, RefreshCw, ExternalLink, AlertTriangle } from 'lucide-react';
+import { getSupabaseClient } from '@/lib/supabase/client';
+import { Globe, Key, Copy, Check, RefreshCw, ExternalLink, AlertTriangle, Loader2 } from 'lucide-react';
 
 interface PlatformConfig {
     id: string;
@@ -21,27 +22,87 @@ const DEFAULT_PLATFORMS: PlatformConfig[] = [
     { id: 'shopeefood', name: 'ShopeeFood', enabled: false, color: '#ee4d2d' },
 ];
 
+const SETTING_KEY = 'delivery_platforms';
+
 export default function DeliveryPlatformSettings() {
     const [platforms, setPlatforms] = useState<PlatformConfig[]>([]);
     const [copied, setCopied] = useState<string | null>(null);
     const [showApiKey, setShowApiKey] = useState<string | null>(null);
     const [editingPlatform, setEditingPlatform] = useState<string | null>(null);
     const [tempApiKey, setTempApiKey] = useState('');
+    const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
 
-    // Load from localStorage on mount
-    useEffect(() => {
-        const saved = localStorage.getItem('delivery_platform_settings');
-        if (saved) {
-            setPlatforms(JSON.parse(saved));
-        } else {
+    // Load from Supabase on mount
+    const loadSettings = useCallback(async () => {
+        setLoading(true);
+        try {
+            const supabase = getSupabaseClient();
+            if (supabase) {
+                const { data, error } = await supabase
+                    .from('settings')
+                    .select('setting_value')
+                    .eq('setting_key', SETTING_KEY)
+                    .eq('user_id', 'global')
+                    .single();
+
+                if (data && !error) {
+                    setPlatforms(data.setting_value as PlatformConfig[]);
+                } else {
+                    // Fallback to localStorage, then default
+                    const saved = localStorage.getItem('delivery_platform_settings');
+                    setPlatforms(saved ? JSON.parse(saved) : DEFAULT_PLATFORMS);
+                }
+            } else {
+                // Fallback to localStorage
+                const saved = localStorage.getItem('delivery_platform_settings');
+                setPlatforms(saved ? JSON.parse(saved) : DEFAULT_PLATFORMS);
+            }
+        } catch (err) {
+            console.error('Failed to load delivery settings:', err);
             setPlatforms(DEFAULT_PLATFORMS);
+        } finally {
+            setLoading(false);
         }
     }, []);
 
-    // Save to localStorage when changed
-    const savePlatforms = (updated: PlatformConfig[]) => {
+    useEffect(() => {
+        loadSettings();
+    }, [loadSettings]);
+
+    // Save to Supabase and localStorage
+    const savePlatforms = async (updated: PlatformConfig[]) => {
         setPlatforms(updated);
+        setSaving(true);
+
+        // Always save to localStorage as backup
         localStorage.setItem('delivery_platform_settings', JSON.stringify(updated));
+
+        try {
+            const supabase = getSupabaseClient();
+            if (supabase) {
+                const { error } = await supabase
+                    .from('settings')
+                    .upsert({
+                        user_id: 'global',
+                        setting_key: SETTING_KEY,
+                        setting_value: updated,
+                        updated_at: new Date().toISOString()
+                    }, {
+                        onConflict: 'user_id,setting_key'
+                    });
+
+                if (error) {
+                    console.error('Failed to save to Supabase:', error);
+                } else {
+                    console.log('✅ Delivery platform settings synced to Supabase');
+                }
+            }
+        } catch (err) {
+            console.error('Supabase sync error:', err);
+        } finally {
+            setSaving(false);
+        }
     };
 
     const togglePlatform = (id: string) => {
