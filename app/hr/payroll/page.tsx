@@ -2,17 +2,17 @@
 
 import { useState, useMemo } from 'react';
 import MainLayout from '@/components/MainLayout';
-import { useStaff, useKPI } from '@/lib/store';
-import { StaffProfile, AttendanceRecord } from '@/lib/types';
+import { useStore, useKPI } from '@/lib/store';
+import { StaffProfile, AttendanceRecord, LeaveRequest, SalaryAdvance, ClaimRequest } from '@/lib/types';
 import Modal from '@/components/Modal';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { getRankTier, getScoreColor } from '@/lib/kpi-data';
 import { downloadPayslipPDF, type PayslipData } from '@/lib/services';
 import Link from 'next/link';
-import { 
-  DollarSign, 
-  Calculator, 
-  FileText, 
+import {
+  DollarSign,
+  Calculator,
+  FileText,
   Download,
   Users,
   Clock,
@@ -20,127 +20,290 @@ import {
   Printer,
   CheckCircle,
   Trophy,
-  Award
+  Award,
+  AlertCircle
 } from 'lucide-react';
 import StatCard from '@/components/StatCard';
+
+interface DetailedDeduction {
+  name: string;
+  amount: number;
+}
+
+interface DetailedAddition {
+  name: string;
+  amount: number;
+}
 
 interface PayrollEntry {
   staffId: string;
   staffName: string;
   role: string;
+  salaryType: 'monthly' | 'hourly' | 'daily'; // Matched with lib/types.ts
+
+  // Base Data
   baseSalary: number;
   hourlyRate: number;
+
+  // Time Data
   daysWorked: number;
-  totalHours: number;
-  regularHours: number;
+  paidLeaveDays: number;
+  unpaidLeaveDays: number;
+  daysAbsent: number; // For monthly logic
+  totalHours: number; // Actual worked hours
   otHours: number;
-  regularPay: number;
+
+  // Earnings
+  basePay: number; // Monthly: Base - Unpaid/Absent; Hourly: Worked * Rate
   otPay: number;
   kpiBonus: number;
   kpiScore: number;
+  allowances: DetailedAddition[];
+  claims: DetailedAddition[]; // Approved claims
   grossPay: number;
-  deductions: {
-    epf: number;
-    socso: number;
-    advances: number;
-    other: number;
+
+  // Deductions
+  statutory: {
+    tap: number; // Employee Share
+    scp: number; // Employee Share
+    tapEmployer: number;
+    scpEmployer: number;
   };
+  fixedDeductions: DetailedDeduction[];
+  advances: number; // Approved salary advances
+  otherDeductions: number;
+  totalDeductions: number;
+
   netPay: number;
 }
 
 export default function PayrollPage() {
-  const { staff, attendance, isInitialized } = useStaff();
+  const {
+    staff,
+    attendance,
+    leaveRequests,
+    salaryAdvances,
+    claimRequests,
+    isInitialized
+  } = useStore();
+
   const { getStaffKPI, getStaffBonus } = useKPI();
+
   const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7));
   const [showPayslipModal, setShowPayslipModal] = useState(false);
   const [selectedPayroll, setSelectedPayroll] = useState<PayrollEntry | null>(null);
-  const [otRate, setOtRate] = useState(1.5); // OT multiplier
+
+  // Settings
+  const [otRate, setOtRate] = useState(1.5);
   const [regularHoursPerDay, setRegularHoursPerDay] = useState(8);
-  const [deductionRates, setDeductionRates] = useState({
-    epf: 8, // % of gross
-    socso: 0.5, // % of gross
-  });
+  const [workingDaysPerMonth, setWorkingDaysPerMonth] = useState(26); // Default standard
 
   // Calculate payroll for each staff
   const payrollData = useMemo((): PayrollEntry[] => {
     const activeStaff = staff.filter(s => s.status === 'active');
+    // Filter data by month
     const monthAttendance = attendance.filter(a => a.date.startsWith(selectedMonth));
+    const monthLeaves = leaveRequests.filter(l =>
+      l.status === 'approved' &&
+      (l.startDate.startsWith(selectedMonth) || l.endDate.startsWith(selectedMonth))
+    );
+    const monthAdvances = salaryAdvances.filter(a =>
+      a.status === 'approved' &&
+      (!a.deductedMonth || a.deductedMonth === selectedMonth)
+    );
+    const monthClaims = claimRequests.filter(c =>
+      c.status === 'approved' &&
+      c.claimDate.startsWith(selectedMonth)
+    );
 
     return activeStaff.map(s => {
+      // 1. Calculate Attendance & Hours
       const staffRecords = monthAttendance.filter(a => a.staffId === s.id);
-      
-      // Calculate hours worked
       let totalMinutes = 0;
+      let daysWorked = 0;
+
       staffRecords.forEach(record => {
         if (record.clockInTime && record.clockOutTime) {
           const [inH, inM] = record.clockInTime.split(':').map(Number);
           const [outH, outM] = record.clockOutTime.split(':').map(Number);
           const worked = (outH * 60 + outM) - (inH * 60 + inM) - record.breakDuration;
-          totalMinutes += Math.max(0, worked);
+          if (worked > 0) {
+            totalMinutes += worked;
+            daysWorked++;
+          }
         }
       });
 
       const totalHours = totalMinutes / 60;
-      const daysWorked = staffRecords.filter(r => r.clockInTime && r.clockOutTime).length;
-      const regularHoursLimit = daysWorked * regularHoursPerDay;
-      const regularHours = Math.min(totalHours, regularHoursLimit);
-      const otHours = Math.max(0, totalHours - regularHoursLimit);
 
-      // Calculate pay
-      const regularPay = regularHours * s.hourlyRate;
-      const otPay = otHours * s.hourlyRate * otRate;
-      
-      // Get KPI bonus
+      // 2. Calculate Leave Days
+      // Simple logic: If leave falls in this month, count days.
+      // (Advanced logic would split across months, simplified here for MVP)
+      const staffLeaves = monthLeaves.filter(l => l.staffId === s.id);
+      const paidLeaveDays = staffLeaves
+        .filter(l => l.type !== 'unpaid')
+        .reduce((sum, l) => sum + l.duration, 0);
+      const unpaidLeaveDays = staffLeaves
+        .filter(l => l.type === 'unpaid')
+        .reduce((sum, l) => sum + l.duration, 0);
+
+      // 3. Determine Salary Logic
+      const isMonthly = s.salaryType === 'monthly';
+      const dailyRate = isMonthly ? (s.baseSalary / workingDaysPerMonth) : (s.hourlyRate * regularHoursPerDay);
+
+      let basePay = 0;
+      let otPay = 0;
+      let otHours = 0;
+      let daysAbsent = 0;
+
+      if (isMonthly) {
+        // Monthly Logic
+        // Base = Salary
+        // Deduct: Unpaid Leave days + Absent days
+        // Absent days = WorkingDaysPerMonth - (DaysWorked + PaidLeaveDays + UnpaidLeaveDays)
+        // If they worked EXTRA days, do we pay extra? Usually no for fixed salary, unless OT.
+        // We will assume "Absent" deduction.
+
+        const accountableDays = daysWorked + paidLeaveDays + unpaidLeaveDays;
+        daysAbsent = Math.max(0, workingDaysPerMonth - accountableDays);
+
+        const unpaidDays = unpaidLeaveDays + daysAbsent;
+        basePay = s.baseSalary - (unpaidDays * dailyRate);
+
+        // OT Calculation for Monthly
+        // Assume OT starts after 8 hours/day OR working days > 26?
+        // Standard: OT is calculated on hourly basis derived from monthly
+        const hourlyRateDerived = s.baseSalary / workingDaysPerMonth / regularHoursPerDay;
+
+        // Calculate OT hours based on daily limit
+        const regularHoursLimit = daysWorked * regularHoursPerDay;
+        otHours = Math.max(0, totalHours - regularHoursLimit);
+        otPay = otHours * hourlyRateDerived * otRate;
+
+      } else {
+        // Hourly Logic
+        // Pay = (WorkedHours * Rate) + (PaidLeaveDays * 8 * Rate)
+        const workedPay = totalHours * s.hourlyRate;
+        const leavePay = paidLeaveDays * regularHoursPerDay * s.hourlyRate;
+        basePay = workedPay + leavePay;
+
+        // Hourly Staff OT?
+        // Usually implied in totalHours if just flat rate.
+        // If we want detailed OT:
+        const regularHoursLimit = daysWorked * regularHoursPerDay;
+        const regularHours = Math.min(totalHours, regularHoursLimit);
+        otHours = Math.max(0, totalHours - regularHoursLimit);
+
+        // Recalculate with OT Rate overlap
+        // BasePay above assumes all hours at flat rate. Let's adjust.
+        // Real Base = RegularHours * Rate
+        // Real OT = OTHours * Rate * Multiplier
+
+        basePay = (regularHours * s.hourlyRate) + (paidLeaveDays * regularHoursPerDay * s.hourlyRate);
+        otPay = otHours * s.hourlyRate * otRate;
+      }
+
+      // 4. KPI Bonus
       const staffKPI = getStaffKPI(s.id, selectedMonth);
-      const kpiBonus = getStaffBonus(s.id, selectedMonth);
+      const kpiBonus = getStaffBonus(s.id, selectedMonth); // Uses helper which checks global config
       const kpiScore = staffKPI?.overallScore || 0;
-      
-      const grossPay = regularPay + otPay + kpiBonus;
 
-      // Calculate deductions (on base pay, not including bonus)
-      const basePay = regularPay + otPay;
-      const epf = (basePay * deductionRates.epf) / 100;
-      const socso = (basePay * deductionRates.socso) / 100;
-      const advances = 0; // Could be tracked separately
-      const other = 0;
-      const totalDeductions = epf + socso + advances + other;
+      // 5. Allowances (From Staff Profile)
+      const allowanceList: DetailedAddition[] = s.allowances?.map(a => ({
+        name: a.name,
+        amount: a.type === 'percentage' ? (basePay * a.amount / 100) : a.amount
+      })) || [];
+      const totalAllowances = allowanceList.reduce((sum, a) => sum + a.amount, 0);
+
+      // 6. Claims (From ClaimRequests)
+      const staffClaims = monthClaims.filter(c => c.staffId === s.id);
+      const claimList: DetailedAddition[] = staffClaims.map(c => ({
+        name: c.description || c.type,
+        amount: c.amount
+      }));
+      const totalClaims = claimList.reduce((sum, c) => sum + c.amount, 0);
+
+      // GROSS PAY
+      const grossPay = basePay + otPay + kpiBonus + totalAllowances + totalClaims; // claims usually tax exempt? keeping simple
+
+      // 7. Statutory Deductions (TAP/SCP)
+      const tapRate = s.statutoryContributions?.tapEnabled ? (s.statutoryContributions.tapEmployeeRate || 5) : 0;
+      const scpRate = s.statutoryContributions?.scpEnabled ? (s.statutoryContributions.scpEmployeeRate || 3.5) : 0;
+
+      const tapEmployerRate = s.statutoryContributions?.tapEnabled ? (s.statutoryContributions.tapEmployerRate || 5) : 0;
+      const scpEmployerRate = s.statutoryContributions?.scpEnabled ? (s.statutoryContributions.scpEmployerRate || 3.5) : 0; // SCP Employer often fixed? Using % for consistency
+
+      // Calculation Base: Usually Base + Allowances? Or just Base?
+      // Brunei TAP is on Wages.
+      const contributionBase = basePay + otPay + totalAllowances + kpiBonus; // Broad definition
+
+      const tapAmount = (contributionBase * tapRate) / 100;
+      const scpAmount = (contributionBase * scpRate) / 100;
+      const tapEmployerAmount = (contributionBase * tapEmployerRate) / 100;
+      const scpEmployerAmount = (contributionBase * scpEmployerRate) / 100;
+
+      // 8. Fixed Deductions (From Staff Profile)
+      const fixedDeductionList: DetailedDeduction[] = s.fixedDeductions?.map(d => ({
+        name: d.name,
+        amount: d.type === 'percentage' ? (basePay * d.amount / 100) : d.amount
+      })) || [];
+      const totalFixedDeductions = fixedDeductionList.reduce((sum, d) => sum + d.amount, 0);
+
+      // 9. Salary Advances
+      const staffAdvances = monthAdvances.filter(a => a.staffId === s.id);
+      const totalAdvances = staffAdvances.reduce((sum, a) => sum + a.amount, 0);
+
+      // Total Deductions
+      const totalDeductions = tapAmount + scpAmount + totalFixedDeductions + totalAdvances;
+
+      // NET PAY
       const netPay = grossPay - totalDeductions;
 
       return {
         staffId: s.id,
         staffName: s.name,
         role: s.role,
-        baseSalary: s.baseSalary,
-        hourlyRate: s.hourlyRate,
+        salaryType: s.salaryType || 'hourly',
+        baseSalary: s.baseSalary || 0,
+        hourlyRate: s.hourlyRate || 0,
         daysWorked,
-        totalHours: Math.round(totalHours * 100) / 100,
-        regularHours: Math.round(regularHours * 100) / 100,
-        otHours: Math.round(otHours * 100) / 100,
-        regularPay: Math.round(regularPay * 100) / 100,
+        paidLeaveDays,
+        unpaidLeaveDays,
+        daysAbsent,
+        totalHours,
+        otHours,
+        basePay: Math.round(basePay * 100) / 100,
         otPay: Math.round(otPay * 100) / 100,
         kpiBonus: Math.round(kpiBonus * 100) / 100,
         kpiScore,
+        allowances: allowanceList,
+        claims: claimList,
         grossPay: Math.round(grossPay * 100) / 100,
-        deductions: {
-          epf: Math.round(epf * 100) / 100,
-          socso: Math.round(socso * 100) / 100,
-          advances,
-          other
+        statutory: {
+          tap: Math.round(tapAmount * 100) / 100,
+          scp: Math.round(scpAmount * 100) / 100,
+          tapEmployer: Math.round(tapEmployerAmount * 100) / 100,
+          scpEmployer: Math.round(scpEmployerAmount * 100) / 100,
         },
+        fixedDeductions: fixedDeductionList,
+        advances: totalAdvances,
+        otherDeductions: 0,
+        totalDeductions: Math.round(totalDeductions * 100) / 100,
         netPay: Math.round(netPay * 100) / 100,
       };
     }).sort((a, b) => b.netPay - a.netPay);
-  }, [staff, attendance, selectedMonth, otRate, regularHoursPerDay, deductionRates, getStaffKPI, getStaffBonus]);
+  }, [staff, attendance, selectedMonth, otRate, regularHoursPerDay, workingDaysPerMonth, leaveRequests, salaryAdvances, claimRequests, getStaffKPI, getStaffBonus]);
 
-  // Summary totals
   const summary = useMemo(() => {
     return {
       totalStaff: payrollData.length,
       totalGross: payrollData.reduce((sum, p) => sum + p.grossPay, 0),
-      totalDeductions: payrollData.reduce((sum, p) => sum + p.deductions.epf + p.deductions.socso + p.deductions.advances + p.deductions.other, 0),
+      totalDeductions: payrollData.reduce((sum, p) => sum + p.totalDeductions, 0),
       totalNet: payrollData.reduce((sum, p) => sum + p.netPay, 0),
       totalHours: payrollData.reduce((sum, p) => sum + p.totalHours, 0),
       totalOT: payrollData.reduce((sum, p) => sum + p.otHours, 0),
+      totalTapEmployer: payrollData.reduce((sum, p) => sum + p.statutory.tapEmployer, 0),
+      totalScpEmployer: payrollData.reduce((sum, p) => sum + p.statutory.scpEmployer, 0),
       totalKPIBonus: payrollData.reduce((sum, p) => sum + p.kpiBonus, 0),
     };
   }, [payrollData]);
@@ -154,34 +317,34 @@ export default function PayrollPage() {
     window.print();
   };
 
-  // Convert PayrollEntry to PayslipData for PDF generation
-  const convertToPayslipData = (entry: PayrollEntry): PayslipData => ({
-    staffName: entry.staffName,
-    staffId: entry.staffId,
-    role: entry.role,
-    period: getMonthName(selectedMonth),
-    daysWorked: entry.daysWorked,
-    regularHours: entry.regularHours,
-    otHours: entry.otHours,
-    hourlyRate: entry.hourlyRate,
-    otRate: otRate,
-    regularPay: entry.regularPay,
-    otPay: entry.otPay,
-    kpiScore: entry.kpiScore,
-    kpiBonus: entry.kpiBonus,
-    grossPay: entry.grossPay,
-    deductions: {
-      tap: entry.deductions.epf,
-      scp: entry.deductions.socso,
-      advances: entry.deductions.advances,
-      other: entry.deductions.other,
-    },
-    netPay: entry.netPay,
-  });
-
   const handleDownloadPDF = () => {
     if (selectedPayroll) {
-      const payslipData = convertToPayslipData(selectedPayroll);
+      // Need to adjust PayslipData type if needed, but for now allow basic
+      // For this MVP we'll just download mostly static data or update type
+      // Assuming downloadPayslipPDF can accept extra fields or we map carefully
+      const payslipData: any = { // Using any to bypass strict type for MVP rapid dev
+        staffName: selectedPayroll.staffName,
+        staffId: selectedPayroll.staffId,
+        role: selectedPayroll.role,
+        period: selectedMonth,
+        daysWorked: selectedPayroll.daysWorked,
+        regularHours: selectedPayroll.totalHours - selectedPayroll.otHours,
+        otHours: selectedPayroll.otHours,
+        hourlyRate: selectedPayroll.hourlyRate,
+        otRate: otRate,
+        regularPay: selectedPayroll.basePay, // Using basePay as regular
+        otPay: selectedPayroll.otPay,
+        kpiScore: selectedPayroll.kpiScore,
+        kpiBonus: selectedPayroll.kpiBonus,
+        grossPay: selectedPayroll.grossPay,
+        deductions: {
+          tap: selectedPayroll.statutory.tap,
+          scp: selectedPayroll.statutory.scp,
+          advances: selectedPayroll.advances,
+          other: selectedPayroll.totalDeductions - selectedPayroll.statutory.tap - selectedPayroll.statutory.scp - selectedPayroll.advances
+        },
+        netPay: selectedPayroll.netPay
+      };
       downloadPayslipPDF(payslipData);
     }
   };
@@ -208,10 +371,10 @@ export default function PayrollPage() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
           <div>
             <h1 style={{ fontSize: '2rem', fontWeight: 700, marginBottom: '0.5rem' }}>
-              Payroll Generator
+              Payroll Generator v2.0
             </h1>
             <p style={{ color: 'var(--text-secondary)' }}>
-              Jana gaji staf secara automatik dari rekod kehadiran
+              Integrated payroll with Leaves, Claims, Advances & Statutory
             </p>
           </div>
           <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
@@ -229,33 +392,33 @@ export default function PayrollPage() {
         {/* Summary Cards */}
         <div className="content-grid cols-4 mb-lg">
           <StatCard
-            label="Jumlah Staf"
+            label="Total Staff"
             value={summary.totalStaff}
-            change="staf aktif bulan ini"
+            change="Active"
             changeType="neutral"
             icon={Users}
             gradient="primary"
           />
           <StatCard
-            label="Jumlah Jam"
-            value={`${summary.totalHours.toFixed(1)}h`}
-            change={`OT: ${summary.totalOT.toFixed(1)}h`}
-            changeType={summary.totalOT > 0 ? "neutral" : "positive"}
-            icon={Clock}
+            label="Employer Cost"
+            value={`BND ${(summary.totalTapEmployer + summary.totalScpEmployer).toFixed(2)}`}
+            change="TAP + SCP Contribution"
+            changeType="neutral"
+            icon={DollarSign}
           />
           <StatCard
-            label="Gaji Kasar"
+            label="Total Gross"
             value={`BND ${summary.totalGross.toFixed(2)}`}
-            change="jumlah sebelum potongan"
+            change="Before Deductions"
             changeType="neutral"
             icon={Calculator}
             gradient="warning"
           />
           <StatCard
-            label="Gaji Bersih"
+            label="Total Net Payout"
             value={`BND ${summary.totalNet.toFixed(2)}`}
-            change={`Bonus KPI: BND ${summary.totalKPIBonus.toFixed(2)}`}
-            changeType={summary.totalKPIBonus > 0 ? "positive" : "neutral"}
+            change={`Bonus: ${summary.totalKPIBonus.toFixed(2)}`} // Simplified context
+            changeType="positive"
             icon={DollarSign}
             gradient="sunset"
           />
@@ -266,19 +429,20 @@ export default function PayrollPage() {
           <div>
             <div className="card">
               <div className="card-header">
-                <div className="card-title">Tetapan Gaji</div>
+                <div className="card-title">Parameter Gaji</div>
               </div>
-              
+
               <div className="form-group">
-                <label className="form-label">Jam Biasa / Hari</label>
+                <label className="form-label">Min Working Days</label>
                 <input
                   type="number"
                   className="form-input"
-                  value={regularHoursPerDay}
-                  onChange={(e) => setRegularHoursPerDay(Number(e.target.value))}
-                  min="1"
-                  max="12"
+                  value={workingDaysPerMonth}
+                  onChange={(e) => setWorkingDaysPerMonth(Number(e.target.value))}
+                  min="20"
+                  max="31"
                 />
+                <small style={{ color: 'var(--text-secondary)' }}>Used for Monthly calculations</small>
               </div>
 
               <div className="form-group">
@@ -293,31 +457,14 @@ export default function PayrollPage() {
                   <option value="2">2× (Double)</option>
                 </select>
               </div>
+            </div>
 
-              <div className="form-group">
-                <label className="form-label">Potongan TAP/SCP (%)</label>
-                <input
-                  type="number"
-                  className="form-input"
-                  value={deductionRates.epf}
-                  onChange={(e) => setDeductionRates(prev => ({ ...prev, epf: Number(e.target.value) }))}
-                  min="0"
-                  max="20"
-                  step="0.5"
-                />
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">Potongan SCP (%)</label>
-                <input
-                  type="number"
-                  className="form-input"
-                  value={deductionRates.socso}
-                  onChange={(e) => setDeductionRates(prev => ({ ...prev, socso: Number(e.target.value) }))}
-                  min="0"
-                  max="5"
-                  step="0.1"
-                />
+            <div className="card" style={{ marginTop: '1rem' }}>
+              <div className="card-header"><div className="card-title">Info</div></div>
+              <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                <p>✅ <strong>Monthly:</strong> Based on {workingDaysPerMonth} days. Unpaid leaves deduct daily rate.</p>
+                <p>✅ <strong>Hourly:</strong> Based on clocked hours + Approved Paid Leave (8h).</p>
+                <p>✅ <strong>Deductions:</strong> Advance & TAP/SCP auto-calculated.</p>
               </div>
             </div>
           </div>
@@ -337,103 +484,76 @@ export default function PayrollPage() {
                   <table className="table">
                     <thead>
                       <tr>
-                        <th>Nama</th>
-                        <th>Jawatan</th>
-                        <th>Hari</th>
-                        <th>Jam</th>
+                        <th>Staf</th>
+                        <th>Type</th>
+                        <th>Hari/Jam</th>
                         <th>OT</th>
-                        <th style={{ textAlign: 'center' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', justifyContent: 'center' }}>
-                            <Trophy size={14} color="var(--warning)" />
-                            KPI Bonus
-                          </div>
-                        </th>
-                        <th>Gaji Kasar</th>
+                        <th>Perolehan</th>
                         <th>Potongan</th>
                         <th>Gaji Bersih</th>
                         <th>Tindakan</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {payrollData.map(entry => {
-                        const tier = entry.kpiScore > 0 ? getRankTier(entry.kpiScore) : null;
-                        return (
-                          <tr key={entry.staffId}>
-                            <td style={{ fontWeight: 600 }}>{entry.staffName}</td>
-                            <td>{entry.role}</td>
-                            <td>{entry.daysWorked}</td>
-                            <td>{entry.regularHours.toFixed(1)}h</td>
-                            <td>
-                              {entry.otHours > 0 ? (
-                                <span className="badge badge-warning">{entry.otHours.toFixed(1)}h</span>
-                              ) : (
-                                '-'
-                              )}
-                            </td>
-                            <td style={{ textAlign: 'center' }}>
-                              {entry.kpiBonus > 0 ? (
-                                <Link href={`/hr/kpi/${entry.staffId}`} style={{ textDecoration: 'none' }}>
-                                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.25rem' }}>
-                                    <span style={{ 
-                                      padding: '0.125rem 0.5rem',
-                                      borderRadius: '9999px',
-                                      fontSize: '0.65rem',
-                                      fontWeight: 600,
-                                      background: tier ? `${tier.color}20` : 'var(--gray-100)',
-                                      color: tier?.color || 'var(--text-secondary)'
-                                    }}>
-                                      {tier?.icon} {entry.kpiScore}%
-                                    </span>
-                                    <span style={{ color: 'var(--success)', fontWeight: 600, fontSize: '0.875rem' }}>
-                                      +BND {entry.kpiBonus.toFixed(2)}
-                                    </span>
-                                  </div>
-                                </Link>
-                              ) : (
-                                <span style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>-</span>
-                              )}
-                            </td>
-                            <td>BND {entry.grossPay.toFixed(2)}</td>
-                            <td style={{ color: 'var(--danger)' }}>
-                              - BND {(entry.deductions.epf + entry.deductions.socso + entry.deductions.advances + entry.deductions.other).toFixed(2)}
-                            </td>
-                            <td style={{ fontWeight: 700, color: 'var(--success)' }}>
-                              BND {entry.netPay.toFixed(2)}
-                            </td>
-                            <td>
-                              <button
-                                className="btn btn-sm btn-outline"
-                                onClick={() => openPayslip(entry)}
-                              >
-                                <FileText size={14} />
-                                Payslip
-                              </button>
-                            </td>
-                          </tr>
-                        );
-                      })}
+                      {payrollData.map(entry => (
+                        <tr key={entry.staffId}>
+                          <td>
+                            <div style={{ fontWeight: 600 }}>{entry.staffName}</div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{entry.role}</div>
+                          </td>
+                          <td>
+                            <span className={`badge ${entry.salaryType === 'monthly' ? 'badge-primary' : 'badge-secondary'}`}>
+                              {entry.salaryType === 'monthly' ? 'Bulanan' : 'Jam'}
+                            </span>
+                          </td>
+                          <td>
+                            <div style={{ fontSize: '0.85rem' }}>
+                              <div>Work: {entry.daysWorked}d ({entry.totalHours.toFixed(1)}h)</div>
+                              {entry.paidLeaveDays > 0 && <div style={{ color: 'var(--success)' }}>+Leave: {entry.paidLeaveDays}d</div>}
+                              {entry.daysAbsent > 0 && <div style={{ color: 'var(--danger)' }}>-Absent: {entry.daysAbsent}d</div>}
+                            </div>
+                          </td>
+                          <td>
+                            {entry.otHours > 0 ? (
+                              <span style={{ fontWeight: 600 }}>{entry.otHours.toFixed(1)}h</span>
+                            ) : '-'}
+                          </td>
+                          <td>
+                            <div style={{ fontSize: '0.85rem' }}>
+                              <div>Base: {entry.basePay.toFixed(2)}</div>
+                              {entry.otPay > 0 && <div>OT: {entry.otPay.toFixed(2)}</div>}
+                              {entry.kpiBonus > 0 && <div style={{ color: '#d97706' }}>KPI: {entry.kpiBonus.toFixed(2)}</div>}
+                              {entry.claims.length > 0 && <div style={{ color: 'var(--info)' }}>Claims: {entry.claims.reduce((s, c) => s + c.amount, 0).toFixed(2)}</div>}
+                              {entry.allowances.length > 0 && <div style={{ color: 'var(--success)' }}>Allow: {entry.allowances.reduce((s, a) => s + a.amount, 0).toFixed(2)}</div>}
+                              <div style={{ borderTop: '1px solid #eee', fontWeight: 600 }}>Gross: {entry.grossPay.toFixed(2)}</div>
+                            </div>
+                          </td>
+                          <td>
+                            <div style={{ fontSize: '0.85rem', color: 'var(--danger)' }}>
+                              {entry.statutory.tap > 0 && <div>TAP: {entry.statutory.tap.toFixed(2)}</div>}
+                              {entry.statutory.scp > 0 && <div>SCP: {entry.statutory.scp.toFixed(2)}</div>}
+                              {entry.advances > 0 && <div>Adv: {entry.advances.toFixed(2)}</div>}
+                              {entry.fixedDeductions.length > 0 && <div>Fixed: {entry.fixedDeductions.reduce((s, d) => s + d.amount, 0).toFixed(2)}</div>}
+                              <div style={{ borderTop: '1px solid #eee', fontWeight: 600 }}>Total: {entry.totalDeductions.toFixed(2)}</div>
+                            </div>
+                          </td>
+                          <td style={{ fontWeight: 700, color: 'var(--success)', fontSize: '1.1rem' }}>
+                            {entry.netPay.toFixed(2)}
+                          </td>
+                          <td>
+                            <button className="btn btn-sm btn-outline" onClick={() => openPayslip(entry)}>
+                              <FileText size={14} /> Payslip
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
                     </tbody>
-                    <tfoot>
-                      <tr style={{ background: 'var(--gray-100)', fontWeight: 700 }}>
-                        <td colSpan={5}>JUMLAH</td>
-                        <td style={{ textAlign: 'center', color: 'var(--success)' }}>+BND {summary.totalKPIBonus.toFixed(2)}</td>
-                        <td>BND {summary.totalGross.toFixed(2)}</td>
-                        <td style={{ color: 'var(--danger)' }}>- BND {summary.totalDeductions.toFixed(2)}</td>
-                        <td style={{ color: 'var(--success)' }}>BND {summary.totalNet.toFixed(2)}</td>
-                        <td></td>
-                      </tr>
-                    </tfoot>
                   </table>
                 </div>
               ) : (
                 <div style={{ textAlign: 'center', padding: '3rem' }}>
                   <Users size={48} color="var(--gray-400)" style={{ marginBottom: '1rem' }} />
-                  <p style={{ color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
-                    Tiada data gaji untuk bulan ini
-                  </p>
-                  <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
-                    Pastikan staf telah clock in/out untuk menjana gaji
-                  </p>
+                  <p>Tiada data untuk bulan ini.</p>
                 </div>
               )}
             </div>
@@ -444,148 +564,122 @@ export default function PayrollPage() {
         <Modal
           isOpen={showPayslipModal}
           onClose={() => setShowPayslipModal(false)}
-          title="Payslip"
+          title="Payslip Details"
           subtitle={`${selectedPayroll?.staffName} - ${getMonthName(selectedMonth)}`}
-          maxWidth="500px"
+          maxWidth="600px" // Wider for better layout
         >
           {selectedPayroll && (
-            <div key={`payslip-${selectedPayroll.staffId}-${selectedMonth}`}>
-              <div style={{ 
-                background: 'var(--gray-50)', 
-                padding: '1.5rem', 
-                borderRadius: 'var(--radius-md)',
-                fontFamily: 'monospace',
-                fontSize: '0.875rem'
-              }}>
-                <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-                  <h3 style={{ margin: 0, fontSize: '1.25rem' }}>ABANGBOB</h3>
-                  <div style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>Nasi Lemak & Burger</div>
-                  <div style={{ marginTop: '0.5rem', fontWeight: 600 }}>SLIP GAJI</div>
+            <div>
+              <div style={{ background: 'var(--gray-50)', padding: '2rem', borderRadius: 'var(--radius-md)', fontFamily: 'monospace' }}>
+                <div style={{ textAlign: 'center', marginBottom: '1.5rem', borderBottom: '2px solid #ddd', paddingBottom: '1rem' }}>
+                  <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.25rem' }}>ABANGBOB</h2>
+                  <p>OFFICIAL PAYSLIP</p>
                 </div>
 
-                <div style={{ borderTop: '1px dashed var(--gray-300)', paddingTop: '1rem', marginBottom: '1rem' }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
-                    <div>
-                      <div style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>Nama</div>
-                      <div style={{ fontWeight: 600 }}>{selectedPayroll.staffName}</div>
-                    </div>
-                    <div>
-                      <div style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>Jawatan</div>
-                      <div>{selectedPayroll.role}</div>
-                    </div>
-                    <div>
-                      <div style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>Tempoh</div>
-                      <div>{getMonthName(selectedMonth)}</div>
-                    </div>
-                    <div>
-                      <div style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>Hari Bekerja</div>
-                      <div>{selectedPayroll.daysWorked} hari</div>
-                    </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '2rem' }}>
+                  <div>
+                    <p style={{ color: '#666', fontSize: '0.8rem' }}>NAME</p>
+                    <p style={{ fontWeight: 600 }}>{selectedPayroll.staffName}</p>
+                  </div>
+                  <div>
+                    <p style={{ color: '#666', fontSize: '0.8rem' }}>POSITION</p>
+                    <p style={{ fontWeight: 600 }}>{selectedPayroll.role}</p>
+                  </div>
+                  <div>
+                    <p style={{ color: '#666', fontSize: '0.8rem' }}>PERIOD</p>
+                    <p style={{ fontWeight: 600 }}>{getMonthName(selectedMonth)}</p>
+                  </div>
+                  <div>
+                    <p style={{ color: '#666', fontSize: '0.8rem' }}>TYPE</p>
+                    <p style={{ fontWeight: 600, textTransform: 'capitalize' }}>{selectedPayroll.salaryType}</p>
                   </div>
                 </div>
 
-                <div style={{ borderTop: '1px dashed var(--gray-300)', paddingTop: '1rem', marginBottom: '1rem' }}>
-                  <div style={{ fontWeight: 600, marginBottom: '0.5rem' }}>PENDAPATAN</div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
-                    <span>Gaji Biasa ({selectedPayroll.regularHours.toFixed(1)}h × BND {selectedPayroll.hourlyRate.toFixed(2)})</span>
-                    <span>BND {selectedPayroll.regularPay.toFixed(2)}</span>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
+                  {/* EARNINGS */}
+                  <div>
+                    <h4 style={{ fontWeight: 700, borderBottom: '1px solid #ccc', marginBottom: '0.5rem' }}>EARNINGS</h4>
+                    <div className="flex justify-between mb-1">
+                      <span>Base Pay</span>
+                      <span>{selectedPayroll.basePay.toFixed(2)}</span>
+                    </div>
+                    {selectedPayroll.otPay > 0 && (
+                      <div className="flex justify-between mb-1">
+                        <span>Overtime ({selectedPayroll.otHours.toFixed(1)}h)</span>
+                        <span>{selectedPayroll.otPay.toFixed(2)}</span>
+                      </div>
+                    )}
+                    {selectedPayroll.kpiBonus > 0 && (
+                      <div className="flex justify-between mb-1">
+                        <span>KPI Bonus ({selectedPayroll.kpiScore}%)</span>
+                        <span>{selectedPayroll.kpiBonus.toFixed(2)}</span>
+                      </div>
+                    )}
+                    {selectedPayroll.allowances.map((a, i) => (
+                      <div key={i} className="flex justify-between mb-1">
+                        <span>{a.name}</span>
+                        <span>{a.amount.toFixed(2)}</span>
+                      </div>
+                    ))}
+                    {selectedPayroll.claims.map((c, i) => (
+                      <div key={i} className="flex justify-between mb-1 text-sm text-gray-600">
+                        <span>Claim: {c.name}</span>
+                        <span>{c.amount.toFixed(2)}</span>
+                      </div>
+                    ))}
+                    <div className="flex justify-between mt-2 pt-2 border-t font-bold">
+                      <span>TOTAL EARNINGS</span>
+                      <span>{selectedPayroll.grossPay.toFixed(2)}</span>
+                    </div>
                   </div>
-                  {selectedPayroll.otHours > 0 && (
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
-                      <span>OT ({selectedPayroll.otHours.toFixed(1)}h × BND {(selectedPayroll.hourlyRate * otRate).toFixed(2)})</span>
-                      <span>BND {selectedPayroll.otPay.toFixed(2)}</span>
+
+                  {/* DEDUCTIONS */}
+                  <div>
+                    <h4 style={{ fontWeight: 700, borderBottom: '1px solid #ccc', marginBottom: '0.5rem' }}>DEDUCTIONS</h4>
+                    {selectedPayroll.statutory.tap > 0 && (
+                      <div className="flex justify-between mb-1">
+                        <span>TAP (Employee)</span>
+                        <span className="text-red-500">-{selectedPayroll.statutory.tap.toFixed(2)}</span>
+                      </div>
+                    )}
+                    {selectedPayroll.statutory.scp > 0 && (
+                      <div className="flex justify-between mb-1">
+                        <span>SCP (Employee)</span>
+                        <span className="text-red-500">-{selectedPayroll.statutory.scp.toFixed(2)}</span>
+                      </div>
+                    )}
+                    {selectedPayroll.advances > 0 && (
+                      <div className="flex justify-between mb-1">
+                        <span>Salary Advance</span>
+                        <span className="text-red-500">-{selectedPayroll.advances.toFixed(2)}</span>
+                      </div>
+                    )}
+                    {selectedPayroll.fixedDeductions.map((d, i) => (
+                      <div key={i} className="flex justify-between mb-1">
+                        <span>{d.name}</span>
+                        <span className="text-red-500">-{d.amount.toFixed(2)}</span>
+                      </div>
+                    ))}
+                    <div className="flex justify-between mt-2 pt-2 border-t font-bold">
+                      <span>TOTAL DEDUCTIONS</span>
+                      <span className="text-red-500">-{selectedPayroll.totalDeductions.toFixed(2)}</span>
                     </div>
-                  )}
-                  {selectedPayroll.kpiBonus > 0 && (
-                    <div style={{ 
-                      display: 'flex', 
-                      justifyContent: 'space-between', 
-                      marginBottom: '0.25rem',
-                      background: '#fef3c7',
-                      padding: '0.5rem',
-                      borderRadius: 'var(--radius-sm)',
-                      marginTop: '0.5rem'
-                    }}>
-                      <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                        <Trophy size={14} color="#d97706" />
-                        Bonus KPI ({selectedPayroll.kpiScore}%)
-                      </span>
-                      <span style={{ color: '#d97706', fontWeight: 600 }}>+ BND {selectedPayroll.kpiBonus.toFixed(2)}</span>
-                    </div>
-                  )}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 600, marginTop: '0.5rem', paddingTop: '0.5rem', borderTop: '1px solid var(--gray-200)' }}>
-                    <span>Jumlah Pendapatan</span>
-                    <span>BND {selectedPayroll.grossPay.toFixed(2)}</span>
                   </div>
                 </div>
 
-                <div style={{ borderTop: '1px dashed var(--gray-300)', paddingTop: '1rem', marginBottom: '1rem' }}>
-                  <div style={{ fontWeight: 600, marginBottom: '0.5rem' }}>POTONGAN</div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
-                    <span>TAP/SCP ({deductionRates.epf}%)</span>
-                    <span style={{ color: 'var(--danger)' }}>- BND {selectedPayroll.deductions.epf.toFixed(2)}</span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
-                    <span>SCP ({deductionRates.socso}%)</span>
-                    <span style={{ color: 'var(--danger)' }}>- BND {selectedPayroll.deductions.socso.toFixed(2)}</span>
-                  </div>
-                  {selectedPayroll.deductions.advances > 0 && (
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
-                      <span>Pendahuluan</span>
-                      <span style={{ color: 'var(--danger)' }}>- BND {selectedPayroll.deductions.advances.toFixed(2)}</span>
-                    </div>
-                  )}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 600, marginTop: '0.5rem', paddingTop: '0.5rem', borderTop: '1px solid var(--gray-200)' }}>
-                    <span>Jumlah Potongan</span>
-                    <span style={{ color: 'var(--danger)' }}>
-                      - BND {(selectedPayroll.deductions.epf + selectedPayroll.deductions.socso + selectedPayroll.deductions.advances + selectedPayroll.deductions.other).toFixed(2)}
-                    </span>
-                  </div>
+                <div style={{ background: '#d1fae5', padding: '1rem', marginTop: '2rem', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ color: '#065f46', fontWeight: 700 }}>NET PAY</span>
+                  <span style={{ color: '#065f46', fontWeight: 700, fontSize: '1.5rem' }}>BND {selectedPayroll.netPay.toFixed(2)}</span>
                 </div>
 
-                <div style={{ 
-                  background: '#d1fae5', 
-                  padding: '1rem', 
-                  borderRadius: 'var(--radius-md)',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center'
-                }}>
-                  <span style={{ fontWeight: 700, color: '#065f46' }}>GAJI BERSIH</span>
-                  <span style={{ fontSize: '1.5rem', fontWeight: 700, color: '#065f46' }}>
-                    BND {selectedPayroll.netPay.toFixed(2)}
-                  </span>
-                </div>
-
-                <div style={{ textAlign: 'center', marginTop: '1.5rem', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                  <div>Dijana pada: {new Date().toLocaleDateString('ms-MY')}</div>
+                <div style={{ marginTop: '1rem', fontSize: '0.75rem', color: '#888', textAlign: 'center' }}>
+                  <p>Employer Contribution: TAP {selectedPayroll.statutory.tapEmployer.toFixed(2)} | SCP {selectedPayroll.statutory.scpEmployer.toFixed(2)}</p>
                 </div>
               </div>
 
-              <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1.5rem' }}>
-                <button
-                  className="btn btn-outline"
-                  onClick={() => setShowPayslipModal(false)}
-                  style={{ flex: 1 }}
-                >
-                  Tutup
-                </button>
-                <button
-                  className="btn btn-secondary"
-                  onClick={handleDownloadPDF}
-                  style={{ flex: 1 }}
-                >
-                  <Download size={18} />
-                  PDF
-                </button>
-                <button
-                  className="btn btn-primary"
-                  onClick={handlePrintPayslip}
-                  style={{ flex: 1 }}
-                >
-                  <Printer size={18} />
-                  Cetak
-                </button>
+              <div className="flex gap-2 mt-4">
+                <button className="btn btn-primary flex-1" onClick={handlePrintPayslip}>Print</button>
+                <button className="btn btn-outline flex-1" onClick={() => setShowPayslipModal(false)}>Close</button>
               </div>
             </div>
           )}
@@ -594,4 +688,3 @@ export default function PayrollPage() {
     </MainLayout>
   );
 }
-
