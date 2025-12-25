@@ -162,44 +162,6 @@ export default function ProductionPage() {
           }
         />
 
-        {/* Equipment Health Link */}
-        <Link href="/equipment" style={{ textDecoration: 'none' }}>
-          <GlassCard
-            gradient="accent"
-            hoverEffect={true}
-            className="mb-lg"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              cursor: 'pointer',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
-              <div style={{
-                background: 'rgba(255,255,255,0.2)',
-                color: 'white',
-                padding: '1rem',
-                borderRadius: 'var(--radius-lg)',
-                backdropFilter: 'blur(4px)'
-              }}>
-                <Wrench size={28} />
-              </div>
-              <div>
-                <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.25rem', color: 'var(--text-primary)' }}>
-                  Equipment Health - Oil Tracker
-                </h3>
-                <p style={{ color: 'var(--text-secondary)' }}>
-                  Pantau dan uruskan status minyak fryer
-                </p>
-              </div>
-            </div>
-            <div style={{ background: 'var(--bg-card)', padding: '0.5rem', borderRadius: '50%' }}>
-              <ArrowRight size={24} style={{ color: 'var(--text-primary)' }} />
-            </div>
-          </GlassCard>
-        </Link>
-
         {/* Daily Stats */}
         <div className="content-grid cols-3 mb-lg animate-slide-up-stagger">
           <StatCard
