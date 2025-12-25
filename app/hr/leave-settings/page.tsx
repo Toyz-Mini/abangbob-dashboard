@@ -58,7 +58,7 @@ const getRoleBadgeStyle = (role: string) => {
 
 export default function LeaveSettingsPage() {
     const { staff, isInitialized } = useStaff();
-    const { leaveBalances, getLeaveBalance } = useStaffPortal();
+    const { leaveBalances, getLeaveBalance, updateLeaveBalance } = useStaffPortal();
 
     const [searchQuery, setSearchQuery] = useState('');
     const [editing, setEditing] = useState<EditingState | null>(null);
@@ -201,6 +201,7 @@ export default function LeaveSettingsPage() {
             };
 
             await SupabaseSync.syncUpsertLeaveBalance(newBalance);
+            updateLeaveBalance(newBalance);
 
             setMessage({ type: 'success', text: `✓ Entitlement untuk ${editing.staffName} berjaya dikemaskini!` });
             setEditing(null);
@@ -501,15 +502,16 @@ export default function LeaveSettingsPage() {
                                                     textAlign: 'center',
                                                     padding: '0.5rem 0.25rem',
                                                     borderRadius: '8px',
-                                                    background: 'var(--primary-light)'
+                                                    background: 'var(--bg-secondary)',
+                                                    border: '1px solid var(--border-color)'
                                                 }}
                                                 title={`${lt.label}: ${entitled} hari (${used} digunakan)`}
                                             >
-                                                <Icon size={16} style={{ color: 'var(--primary)', marginBottom: '0.25rem' }} />
-                                                <div style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--primary)' }}>{entitled}</div>
-                                                <div style={{ fontSize: '0.55rem', color: 'var(--text-secondary)' }}>
-                                                    {lt.label}
+                                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.25rem', marginBottom: '0.25rem' }}>
+                                                    <Icon size={12} style={{ color: 'var(--text-secondary)' }} />
+                                                    <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>{lt.label}</div>
                                                 </div>
+                                                <div style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--text-primary)' }}>{entitled}</div>
                                             </div>
                                         );
                                     })}

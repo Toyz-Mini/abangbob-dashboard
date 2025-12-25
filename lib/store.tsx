@@ -321,6 +321,8 @@ interface StoreState {
   getStaffLeaveRequests: (staffId: string) => LeaveRequest[];
   getPendingLeaveRequests: () => LeaveRequest[];
   refreshLeaveRequests: () => Promise<void>;
+  updateLeaveBalance: (balance: LeaveBalance) => void;
+  refreshLeaveBalances: () => Promise<void>;
 
   // Staff Portal - Claims
   claimRequests: ClaimRequest[];
@@ -2921,6 +2923,34 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     return leaveRequests.filter(r => r.status === 'pending');
   }, [leaveRequests]);
 
+  // Staff Portal - Leave Actions
+  const updateLeaveBalance = (balance: LeaveBalance) => {
+    setLeaveBalances(prev => {
+      const existingIndex = prev.findIndex(b => b.id === balance.id);
+      let newBalances;
+      if (existingIndex >= 0) {
+        newBalances = [...prev];
+        newBalances[existingIndex] = balance;
+      } else {
+        newBalances = [...prev, balance];
+      }
+      setToStorage(STORAGE_KEYS.LEAVE_BALANCES, newBalances);
+      return newBalances;
+    });
+  };
+
+  const refreshLeaveBalances = async () => {
+    try {
+      const balances = await SupabaseSync.loadLeaveBalancesFromSupabase();
+      if (balances && balances.length > 0) {
+        setLeaveBalances(balances);
+        setToStorage(STORAGE_KEYS.LEAVE_BALANCES, balances);
+      }
+    } catch (error) {
+      console.error('Failed to refresh leave balances:', error);
+    }
+  };
+
   // Staff Portal - Claim actions
   const addClaimRequest = useCallback((claim: Omit<ClaimRequest, 'id' | 'createdAt'>) => {
     const newClaim: ClaimRequest = {
@@ -5004,6 +5034,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
     // Staff Portal - Leave
     leaveBalances,
+    updateLeaveBalance,
+    refreshLeaveBalances,
     leaveRequests,
     getLeaveBalance,
     addLeaveRequest,
@@ -5554,6 +5586,8 @@ export function useStaffPortal() {
     attendance: store.attendance,
     // Leave
     leaveBalances: store.leaveBalances,
+    updateLeaveBalance: store.updateLeaveBalance,
+    refreshLeaveBalances: store.refreshLeaveBalances,
     leaveRequests: store.leaveRequests,
     getLeaveBalance: store.getLeaveBalance,
     addLeaveRequest: store.addLeaveRequest,
