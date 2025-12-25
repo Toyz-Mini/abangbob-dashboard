@@ -980,6 +980,25 @@ export interface OTClaim {
   createdAt: string;
 }
 
+// ==================== SALARY ADVANCE TYPES ====================
+
+export type SalaryAdvanceStatus = 'pending' | 'approved' | 'rejected' | 'deducted';
+
+export interface SalaryAdvance {
+  id: string;
+  staffId: string;
+  staffName: string;
+  amount: number;
+  reason: string;
+  status: SalaryAdvanceStatus;
+  approvedBy?: string;
+  approverName?: string;
+  approvedAt?: string;
+  rejectionReason?: string;
+  deductedMonth?: string;      // Month when deducted from salary (e.g., "2024-01")
+  createdAt: string;
+}
+
 export interface CustomerReview {
   id: string;
   orderId: string;

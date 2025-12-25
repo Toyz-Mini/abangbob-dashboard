@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
-import { StockItem, StaffProfile, AttendanceRecord, Order, ProductionLog, DeliveryOrder, Expense, DailyCashFlow, Customer, Supplier, PurchaseOrder, Recipe, Shift, ScheduleEntry, Promotion, Notification, MenuItem, ModifierGroup, ModifierOption, StaffKPI, LeaveRecord, TrainingRecord, OTRecord, CustomerReview, KPIMetrics, ChecklistItemTemplate, ChecklistCompletion, LeaveBalance, LeaveRequest, ClaimRequest, StaffRequest, Announcement, OrderHistoryItem, VoidRefundRequest, VoidRefundType, OrderHistoryFilters, RefundItem, OilTracker, OilChangeRequest, OilActionHistory, OilActionType, Equipment, MaintenanceSchedule, MaintenanceLog, WasteLog, MenuCategory, PaymentMethodConfig, TaxRate, CashRegister, InventoryLog, StockSuggestion, DEFAULT_MENU_CATEGORIES, DEFAULT_PAYMENT_METHODS, DEFAULT_TAX_RATES, OTClaim } from './types';
+import { StockItem, StaffProfile, AttendanceRecord, Order, ProductionLog, DeliveryOrder, Expense, DailyCashFlow, Customer, Supplier, PurchaseOrder, Recipe, Shift, ScheduleEntry, Promotion, Notification, MenuItem, ModifierGroup, ModifierOption, StaffKPI, LeaveRecord, TrainingRecord, OTRecord, CustomerReview, KPIMetrics, ChecklistItemTemplate, ChecklistCompletion, LeaveBalance, LeaveRequest, ClaimRequest, StaffRequest, Announcement, OrderHistoryItem, VoidRefundRequest, VoidRefundType, OrderHistoryFilters, RefundItem, OilTracker, OilChangeRequest, OilActionHistory, OilActionType, Equipment, MaintenanceSchedule, MaintenanceLog, WasteLog, MenuCategory, PaymentMethodConfig, TaxRate, CashRegister, InventoryLog, StockSuggestion, DEFAULT_MENU_CATEGORIES, DEFAULT_PAYMENT_METHODS, DEFAULT_TAX_RATES, OTClaim, SalaryAdvance } from './types';
 import { MOCK_ORDER_HISTORY, MOCK_VOID_REFUND_REQUESTS, ORDER_HISTORY_STORAGE_KEYS } from './order-history-data';
 import { MOCK_STOCK } from './inventory-data';
 import { MOCK_STAFF, MOCK_ATTENDANCE, MOCK_PAYROLL } from './hr-data';
@@ -118,6 +118,8 @@ const STORAGE_KEYS = {
   WASTE_LOGS: 'abangbob_waste_logs',
   // OT Claims
   OT_CLAIMS: 'abangbob_ot_claims',
+  // Salary Advances
+  SALARY_ADVANCES: 'abangbob_salary_advances',
 };
 
 // Inventory log type for tracking stock changes
@@ -327,6 +329,16 @@ interface StoreState {
   getStaffOTClaims: (staffId: string) => OTClaim[];
   getPendingOTClaims: () => OTClaim[];
 
+  // Staff Portal - Salary Advances
+  salaryAdvances: SalaryAdvance[];
+  addSalaryAdvance: (advance: Omit<SalaryAdvance, 'id' | 'createdAt'>) => void;
+  approveSalaryAdvance: (id: string, approverId: string, approverName: string) => void;
+  rejectSalaryAdvance: (id: string, approverId: string, approverName: string, reason: string) => void;
+  markSalaryAdvanceAsDeducted: (id: string, month: string) => void;
+  getStaffSalaryAdvances: (staffId: string) => SalaryAdvance[];
+  getPendingSalaryAdvances: () => SalaryAdvance[];
+  getApprovedSalaryAdvances: (staffId?: string) => SalaryAdvance[];
+
   // Staff Portal - General Requests
   staffRequests: StaffRequest[];
   addStaffRequest: (request: Omit<StaffRequest, 'id' | 'createdAt'>) => void;
@@ -512,6 +524,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>([]);
   const [claimRequests, setClaimRequests] = useState<ClaimRequest[]>([]);
   const [otClaims, setOTClaims] = useState<OTClaim[]>([]);
+  const [salaryAdvances, setSalaryAdvances] = useState<SalaryAdvance[]>([]);
   const [staffRequests, setStaffRequests] = useState<StaffRequest[]>([]);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
 
@@ -719,6 +732,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       setLeaveRequests(supabaseConnected && supabaseData.leaveRequests?.length > 0 ? supabaseData.leaveRequests : getFromStorage(STORAGE_KEYS.LEAVE_REQUESTS, MOCK_LEAVE_REQUESTS));
       setClaimRequests(supabaseConnected && supabaseData.claimRequests?.length > 0 ? supabaseData.claimRequests : getFromStorage(STORAGE_KEYS.CLAIM_REQUESTS, MOCK_CLAIM_REQUESTS));
       setOTClaims(getFromStorage(STORAGE_KEYS.OT_CLAIMS, []));
+      setSalaryAdvances(getFromStorage(STORAGE_KEYS.SALARY_ADVANCES, []));
       setStaffRequests(supabaseConnected && supabaseData.staffRequests?.length > 0 ? supabaseData.staffRequests : getFromStorage(STORAGE_KEYS.STAFF_REQUESTS, MOCK_STAFF_REQUESTS));
       setAnnouncements(supabaseConnected && supabaseData.announcements?.length > 0 ? supabaseData.announcements : getFromStorage(STORAGE_KEYS.ANNOUNCEMENTS, MOCK_ANNOUNCEMENTS));
 
@@ -2964,6 +2978,81 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     return otClaims.filter(c => c.status === 'pending');
   }, [otClaims]);
 
+  // ==================== Salary Advance Actions ====================
+
+  const addSalaryAdvance = useCallback((advance: Omit<SalaryAdvance, 'id' | 'createdAt'>) => {
+    const newAdvance: SalaryAdvance = {
+      ...advance,
+      id: `adv_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      createdAt: new Date().toISOString(),
+    };
+    setSalaryAdvances(prev => {
+      const updated = [...prev, newAdvance];
+      setToStorage(STORAGE_KEYS.SALARY_ADVANCES, updated);
+      return updated;
+    });
+  }, []);
+
+  const approveSalaryAdvance = useCallback((id: string, approverId: string, approverName: string) => {
+    setSalaryAdvances(prev => {
+      const updated = prev.map(a => {
+        if (a.id !== id) return a;
+        return {
+          ...a,
+          status: 'approved' as const,
+          approvedBy: approverId,
+          approverName,
+          approvedAt: new Date().toISOString(),
+        };
+      });
+      setToStorage(STORAGE_KEYS.SALARY_ADVANCES, updated);
+      return updated;
+    });
+  }, []);
+
+  const rejectSalaryAdvance = useCallback((id: string, approverId: string, approverName: string, reason: string) => {
+    setSalaryAdvances(prev => {
+      const updated = prev.map(a => {
+        if (a.id !== id) return a;
+        return {
+          ...a,
+          status: 'rejected' as const,
+          approvedBy: approverId,
+          approverName,
+          approvedAt: new Date().toISOString(),
+          rejectionReason: reason,
+        };
+      });
+      setToStorage(STORAGE_KEYS.SALARY_ADVANCES, updated);
+      return updated;
+    });
+  }, []);
+
+  const markSalaryAdvanceAsDeducted = useCallback((id: string, month: string) => {
+    setSalaryAdvances(prev => {
+      const updated = prev.map(a => {
+        if (a.id !== id) return a;
+        return { ...a, status: 'deducted' as const, deductedMonth: month };
+      });
+      setToStorage(STORAGE_KEYS.SALARY_ADVANCES, updated);
+      return updated;
+    });
+  }, []);
+
+  const getStaffSalaryAdvances = useCallback((staffId: string): SalaryAdvance[] => {
+    return salaryAdvances.filter(a => a.staffId === staffId);
+  }, [salaryAdvances]);
+
+  const getPendingSalaryAdvances = useCallback((): SalaryAdvance[] => {
+    return salaryAdvances.filter(a => a.status === 'pending');
+  }, [salaryAdvances]);
+
+  const getApprovedSalaryAdvances = useCallback((staffId?: string): SalaryAdvance[] => {
+    return salaryAdvances.filter(a =>
+      a.status === 'approved' && (!staffId || a.staffId === staffId)
+    );
+  }, [salaryAdvances]);
+
   // Staff Portal - Staff Request actions
   const addStaffRequest = useCallback((request: Omit<StaffRequest, 'id' | 'createdAt'>) => {
     const newRequest: StaffRequest = {
@@ -4202,6 +4291,16 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     getStaffOTClaims,
     getPendingOTClaims,
 
+    // Staff Portal - Salary Advances
+    salaryAdvances,
+    addSalaryAdvance,
+    approveSalaryAdvance,
+    rejectSalaryAdvance,
+    markSalaryAdvanceAsDeducted,
+    getStaffSalaryAdvances,
+    getPendingSalaryAdvances,
+    getApprovedSalaryAdvances,
+
     // Staff Portal - General Requests
     staffRequests,
     addStaffRequest,
@@ -4682,6 +4781,15 @@ export function useStaffPortal() {
     markOTClaimAsPaid: store.markOTClaimAsPaid,
     getStaffOTClaims: store.getStaffOTClaims,
     getPendingOTClaims: store.getPendingOTClaims,
+    // Salary Advances
+    salaryAdvances: store.salaryAdvances,
+    addSalaryAdvance: store.addSalaryAdvance,
+    approveSalaryAdvance: store.approveSalaryAdvance,
+    rejectSalaryAdvance: store.rejectSalaryAdvance,
+    markSalaryAdvanceAsDeducted: store.markSalaryAdvanceAsDeducted,
+    getStaffSalaryAdvances: store.getStaffSalaryAdvances,
+    getPendingSalaryAdvances: store.getPendingSalaryAdvances,
+    getApprovedSalaryAdvances: store.getApprovedSalaryAdvances,
     // Staff Requests
     staffRequests: store.staffRequests,
     addStaffRequest: store.addStaffRequest,

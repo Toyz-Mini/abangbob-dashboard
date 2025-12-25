@@ -10,7 +10,7 @@ import Modal from '@/components/Modal';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import ClaimDetailModal from '@/components/staff-portal/ClaimDetailModal';
 import RequestDetailModal from '@/components/staff-portal/RequestDetailModal';
-import { ClaimRequest, StaffRequest, OTClaim } from '@/lib/types';
+import { ClaimRequest, StaffRequest, OTClaim, SalaryAdvance } from '@/lib/types';
 import {
   CheckCircle,
   XCircle,
@@ -26,7 +26,7 @@ import {
 const CURRENT_APPROVER_ID = '1';
 const CURRENT_APPROVER_NAME = 'Ahmad Bin Hassan';
 
-type TabType = 'leave' | 'claims' | 'ot' | 'requests';
+type TabType = 'leave' | 'claims' | 'ot' | 'advance' | 'requests';
 
 export default function ApprovalsPage() {
   const searchParams = useSearchParams();
@@ -54,6 +54,11 @@ export default function ApprovalsPage() {
     getPendingOTClaims,
     approveOTClaim,
     rejectOTClaim,
+    // Salary Advances
+    salaryAdvances,
+    getPendingSalaryAdvances,
+    approveSalaryAdvance,
+    rejectSalaryAdvance,
     // Common
     isInitialized
   } = useStaffPortal();
@@ -84,7 +89,7 @@ export default function ApprovalsPage() {
   // Read tab from URL query parameter
   useEffect(() => {
     const tab = searchParams.get('tab');
-    if (tab && ['leave', 'claims', 'ot', 'requests'].includes(tab)) {
+    if (tab && ['leave', 'claims', 'ot', 'advance', 'requests'].includes(tab)) {
       setActiveTab(tab as TabType);
     }
   }, [searchParams]);
@@ -103,15 +108,17 @@ export default function ApprovalsPage() {
   const pendingLeave = getPendingLeaveRequests() || [];
   const pendingClaims = getPendingClaimRequests() || [];
   const pendingOT = getPendingOTClaims() || [];
+  const pendingAdvances = getPendingSalaryAdvances() || [];
   const pendingRequests = getPendingStaffRequests() || [];
 
   // History Data - add defensive checks for arrays
   const historyLeave = (leaveRequests || []).filter(r => r.status !== 'pending').sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   const historyClaims = (claimRequests || []).filter(r => r.status !== 'pending').sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   const historyOT = (otClaims || []).filter(r => r.status !== 'pending').sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  const historyAdvances = (salaryAdvances || []).filter(r => r.status !== 'pending').sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   const historyRequests = (staffRequests || []).filter(r => r.status !== 'pending').sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
-  const totalPending = pendingLeave.length + pendingClaims.length + pendingOT.length + pendingRequests.length;
+  const totalPending = pendingLeave.length + pendingClaims.length + pendingOT.length + pendingAdvances.length + pendingRequests.length;
 
   const handleApprove = async (type: TabType, id: string) => {
     setIsProcessing(true);
@@ -124,6 +131,8 @@ export default function ApprovalsPage() {
       setIsClaimModalOpen(false); // Close modal if open
     } else if (type === 'ot') {
       approveOTClaim(id, CURRENT_APPROVER_ID, CURRENT_APPROVER_NAME);
+    } else if (type === 'advance') {
+      approveSalaryAdvance(id, CURRENT_APPROVER_ID, CURRENT_APPROVER_NAME);
     } else {
       completeStaffRequest(id, 'Diluluskan');
       setIsRequestModalOpen(false); // Close modal if open
@@ -154,6 +163,8 @@ export default function ApprovalsPage() {
       setIsClaimModalOpen(false);
     } else if (selectedItem.type === 'ot') {
       rejectOTClaim(selectedItem.id, CURRENT_APPROVER_ID, CURRENT_APPROVER_NAME, rejectReason);
+    } else if (selectedItem.type === 'advance') {
+      rejectSalaryAdvance(selectedItem.id, CURRENT_APPROVER_ID, CURRENT_APPROVER_NAME, rejectReason);
     } else {
       rejectStaffRequest(selectedItem.id, rejectReason);
       setIsRequestModalOpen(false);
@@ -427,6 +438,88 @@ export default function ApprovalsPage() {
     );
   };
 
+  // Render Salary Advance List
+  const renderAdvanceList = (data: SalaryAdvance[], isHistory: boolean) => {
+    if (data.length === 0) {
+      return (
+        <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>
+          Tiada permohonan pendahuluan gaji {isHistory ? 'history' : 'pending'}
+        </div>
+      );
+    }
+
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        {data.map(item => (
+          <div
+            key={item.id}
+            style={{
+              padding: '1rem',
+              borderRadius: 'var(--radius-md)',
+              background: 'var(--gray-50)',
+              border: '1px solid var(--gray-200)',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem', flexWrap: 'wrap' }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>
+                  {item.staffName}
+                </div>
+                <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--primary)', marginBottom: '0.5rem' }}>
+                  BND {item.amount.toFixed(2)}
+                </div>
+                <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+                  Sebab: {item.reason}
+                </div>
+                <div style={{ fontSize: '0.7rem', color: 'var(--text-light)', marginTop: '0.5rem' }}>
+                  <Clock size={10} style={{ display: 'inline', marginRight: '0.25rem' }} />
+                  {new Date(item.createdAt).toLocaleDateString('ms-MY')}
+                  {isHistory && (
+                    <span className={`badge badge-${item.status === 'approved' || item.status === 'deducted' ? 'success' : item.status === 'rejected' ? 'danger' : 'warning'}`} style={{ marginLeft: '0.5rem', fontSize: '0.7rem' }}>
+                      {item.status === 'approved' ? 'Diluluskan' : item.status === 'rejected' ? 'Ditolak' : item.status === 'deducted' ? 'Dipotong' : 'Menunggu'}
+                    </span>
+                  )}
+                </div>
+                {item.status === 'rejected' && item.rejectionReason && (
+                  <div style={{ fontSize: '0.75rem', color: 'var(--danger)', marginTop: '0.25rem' }}>
+                    Sebab ditolak: {item.rejectionReason}
+                  </div>
+                )}
+                {item.status === 'deducted' && item.deductedMonth && (
+                  <div style={{ fontSize: '0.75rem', color: 'var(--success)', marginTop: '0.25rem' }}>
+                    Dipotong: Bulan {item.deductedMonth}
+                  </div>
+                )}
+              </div>
+
+              {/* Actions - Only for Pending */}
+              {!isHistory && (
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <button
+                    className="btn btn-success btn-sm"
+                    onClick={() => handleApprove('advance', item.id)}
+                    disabled={isProcessing}
+                  >
+                    <CheckCircle size={16} />
+                    Lulus
+                  </button>
+                  <button
+                    className="btn btn-danger btn-sm"
+                    onClick={() => openRejectModal('advance', item.id)}
+                    disabled={isProcessing}
+                  >
+                    <XCircle size={16} />
+                    Tolak
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
   return (
     <MainLayout>
       <div className="animate-fade-in">
@@ -483,6 +576,13 @@ export default function ApprovalsPage() {
             OT Claims {viewMode === 'pending' ? `(${pendingOT.length})` : ''}
           </button>
           <button
+            className={`btn ${activeTab === 'advance' ? 'btn-primary' : 'btn-outline'}`}
+            onClick={() => setActiveTab('advance')}
+          >
+            <DollarSign size={18} />
+            Pendahuluan {viewMode === 'pending' ? `(${pendingAdvances.length})` : ''}
+          </button>
+          <button
             className={`btn ${activeTab === 'requests' ? 'btn-primary' : 'btn-outline'}`}
             onClick={() => setActiveTab('requests')}
           >
@@ -507,6 +607,7 @@ export default function ApprovalsPage() {
           {activeTab === 'leave' && renderList(viewMode === 'pending' ? pendingLeave : historyLeave, 'leave', viewMode === 'history')}
           {activeTab === 'claims' && renderList(viewMode === 'pending' ? pendingClaims : historyClaims, 'claims', viewMode === 'history')}
           {activeTab === 'ot' && renderOTList(viewMode === 'pending' ? pendingOT : historyOT, viewMode === 'history')}
+          {activeTab === 'advance' && renderAdvanceList(viewMode === 'pending' ? pendingAdvances : historyAdvances, viewMode === 'history')}
           {activeTab === 'requests' && renderList(viewMode === 'pending' ? pendingRequests : historyRequests, 'requests', viewMode === 'history')}
         </div>
 

@@ -69,6 +69,7 @@ const navGroupsConfig: NavGroup[] = [
       { href: '/staff-portal/schedule', labelKey: 'nav.mySchedule', icon: Calendar, tourId: 'schedule' },
       { href: '/staff-portal/checklist', labelKey: 'nav.checklist', icon: CheckSquare, tourId: 'checklist' },
       { href: '/staff-portal/ot-claim', labelKey: 'nav.otClaim', icon: Clock, tourId: 'ot-claim' },
+      { href: '/staff-portal/salary-advance', labelKey: 'nav.salaryAdvance', icon: DollarSign, tourId: 'salary-advance' },
     ]
   },
   {
@@ -103,6 +104,7 @@ const navGroupsConfig: NavGroup[] = [
           { href: '/hr/approvals?tab=leave', labelKey: 'nav.leaveApprovals', icon: Calendar },
           { href: '/hr/approvals?tab=claims', labelKey: 'nav.claimsApprovals', icon: DollarSign },
           { href: '/hr/approvals?tab=ot', labelKey: 'nav.otApprovals', icon: Clock },
+          { href: '/hr/approvals?tab=advance', labelKey: 'nav.advanceApprovals', icon: DollarSign },
           { href: '/hr/refund-approvals', labelKey: 'nav.refundApprovals', icon: RefreshCw, showBadge: true },
         ]
       },
