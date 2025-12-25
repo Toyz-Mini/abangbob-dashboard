@@ -3,7 +3,7 @@
 import { forwardRef, useMemo, useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useTranslation } from '@/lib/i18n/client';
+import { useTranslation } from '@/lib/contexts/LanguageContext';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { canViewNavItem, UserRole } from '@/lib/nav-permissions';
 import { useOrderHistory } from '@/lib/store';
