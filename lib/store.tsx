@@ -1515,24 +1515,40 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, [attendance]);
 
   // Customer Loyalty Actions (Moved here for dependency access in addOrder)
-  const addLoyaltyPoints = useCallback((customerId: string, points: number) => {
+  const addLoyaltyPoints = useCallback((customerId: string, points: number, orderTotal?: number) => {
     setCustomers(prev => prev.map(c => {
       if (c.id === customerId) {
         const newPoints = c.loyaltyPoints + points;
+        const newTotalSpent = (c.totalSpent || 0) + (orderTotal || points);
+        const newTotalOrders = (c.totalOrders || 0) + 1;
         const newSegment = newPoints >= 500 ? 'vip' : newPoints >= 100 ? 'regular' : 'new';
 
-        // Sync to Supabase
+        // Sync to Supabase - Loyalty Transaction
         const transaction = {
           id: generateUUID(),
           customer_id: customerId,
           points: points,
           type: 'earn',
-          description: 'Manual addition',
+          description: 'Points from order',
           created_at: new Date().toISOString()
         };
         SupabaseSync.syncAddLoyaltyTransaction(transaction);
 
-        return { ...c, loyaltyPoints: newPoints, segment: newSegment };
+        // Sync to Supabase - Update Customer
+        SupabaseSync.syncUpdateCustomer(customerId, {
+          loyaltyPoints: newPoints,
+          totalSpent: newTotalSpent,
+          totalOrders: newTotalOrders,
+          segment: newSegment
+        });
+
+        return {
+          ...c,
+          loyaltyPoints: newPoints,
+          totalSpent: newTotalSpent,
+          totalOrders: newTotalOrders,
+          segment: newSegment
+        };
       }
       return c;
     }));
@@ -1708,7 +1724,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       const pointsToEarn = Math.floor(netTotal);
 
       if (pointsToEarn > 0) {
-        addLoyaltyPoints(newOrder.customerId, pointsToEarn);
+        addLoyaltyPoints(newOrder.customerId, pointsToEarn, newOrder.total);
         console.log(`[Loyalty] Awarded ${pointsToEarn} points to customer ${newOrder.customerId} (Net Spend: $${netTotal.toFixed(2)})`);
       }
     }

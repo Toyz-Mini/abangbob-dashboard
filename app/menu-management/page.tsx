@@ -907,10 +907,28 @@ export default function MenuManagementPage() {
                                 fontSize: '0.875rem'
                               }}
                             >
-                              <span style={{ opacity: opt.isAvailable ? 1 : 0.6 }}>{opt.name}</span>
-                              <span style={{ fontWeight: 600, color: opt.extraPrice > 0 ? 'var(--success)' : 'var(--text-secondary)' }}>
-                                {opt.extraPrice > 0 ? `+BND ${opt.extraPrice.toFixed(2)}` : 'Free'}
-                              </span>
+                              <span style={{ opacity: opt.isAvailable ? 1 : 0.6, flex: 1 }}>{opt.name}</span>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                <span style={{ fontWeight: 600, color: opt.extraPrice > 0 ? 'var(--success)' : 'var(--text-secondary)' }}>
+                                  {opt.extraPrice > 0 ? `+BND ${opt.extraPrice.toFixed(2)}` : 'Free'}
+                                </span>
+                                <button
+                                  className="btn btn-sm btn-ghost"
+                                  onClick={() => openEditOptionModal(opt)}
+                                  style={{ padding: '0.25rem', minWidth: 'auto' }}
+                                  title="Edit"
+                                >
+                                  <Edit2 size={14} />
+                                </button>
+                                <button
+                                  className="btn btn-sm btn-ghost"
+                                  onClick={() => openDeleteOptionModal(opt)}
+                                  style={{ padding: '0.25rem', minWidth: 'auto', color: 'var(--danger)' }}
+                                  title="Padam"
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              </div>
                             </div>
                           ))}
                         </div>

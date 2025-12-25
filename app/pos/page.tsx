@@ -809,36 +809,11 @@ export default function POSPage() {
 
                     {/* Cart Footer */}
                     <div style={{ padding: '1.5rem', borderTop: '1px solid #e2e8f0', background: '#f8fafc' }}>
-                      {/* Discount Section */}
-                      <div style={{ marginBottom: '1.5rem' }}>
-                        <label style={{ fontSize: '0.875rem', fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>
-                          Diskaun (%)
-                        </label>
-                        <div style={{ display: 'flex', gap: '0.5rem' }}>
-                          {[0, 5, 10, 15, 20].map(percent => (
-                            <button
-                              key={percent}
-                              onClick={() => setDiscountPercent(percent)}
-                              className={`btn btn-sm ${discountPercent === percent ? 'btn-primary' : 'btn-outline'}`}
-                              style={{ flex: 1, padding: '0.5rem' }}
-                            >
-                              {percent}%
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-
                       {/* Summary Section */}
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', fontSize: '0.875rem' }}>
                         <span>Subtotal:</span>
                         <span>BND {cartSubtotal.toFixed(2)}</span>
                       </div>
-                      {discountPercent > 0 && (
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', fontSize: '0.875rem', color: 'var(--success)' }}>
-                          <span>Diskaun ({discountPercent}%):</span>
-                          <span>-BND {discountAmount.toFixed(2)}</span>
-                        </div>
-                      )}
                       <div style={{
                         display: 'flex',
                         justifyContent: 'space-between',
@@ -1379,8 +1354,26 @@ export default function POSPage() {
                   <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 animate-slide-up">
                     <div className="flex justify-between items-center mb-3">
                       <span className="text-xs font-bold text-gray-500 uppercase">Tunai Diterima</span>
-                      {cashReceived >= finalPayable && <span className="text-[10px] font-bold text-green-700 bg-green-100 px-2 py-1 rounded-full">CHANGE: BND {(cashReceived - finalPayable).toFixed(2)}</span>}
                     </div>
+
+                    {/* CHANGE Display - Large and Prominent */}
+                    {cashReceived >= finalPayable && (
+                      <div style={{
+                        background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                        color: 'white',
+                        padding: '1rem',
+                        borderRadius: '12px',
+                        marginBottom: '1rem',
+                        textAlign: 'center'
+                      }}>
+                        <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', opacity: 0.9, marginBottom: '0.25rem' }}>
+                          Baki / Change
+                        </div>
+                        <div style={{ fontSize: '2.5rem', fontWeight: 800, letterSpacing: '-1px' }}>
+                          BND {(cashReceived - finalPayable).toFixed(2)}
+                        </div>
+                      </div>
+                    )}
 
                     <div className="relative mb-3">
                       <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
