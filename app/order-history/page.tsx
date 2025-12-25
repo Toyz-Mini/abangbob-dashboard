@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import MainLayout from '@/components/MainLayout';
 import DataTable, { Column } from '@/components/DataTable';
 import Modal from '@/components/Modal';
@@ -73,6 +73,15 @@ export default function OrderHistoryPage() {
 
   // Subscribe to realtime void/refund changes
   useVoidRefundRealtime(handleVoidRefundChange);
+
+  // Force refresh orders on page mount to ensure data is loaded
+  useEffect(() => {
+    console.log('[OrderHistory] Page mounted, orders in state:', orders.length);
+    if (ordersInitialized && orders.length === 0) {
+      console.log('[OrderHistory] No orders in state, forcing refresh...');
+      refreshOrders();
+    }
+  }, [ordersInitialized, orders.length, refreshOrders]);
 
   // State
   const [selectedOrder, setSelectedOrder] = useState<OrderHistoryItem | null>(null);
@@ -169,9 +178,26 @@ export default function OrderHistoryPage() {
     }
 
     // If staff, only show their own orders
+    // Note: We compare by staffName because currentStaff.id from better-auth 
+    // may not be a UUID matching the database's staff_id
     if (!canViewAll && currentStaff) {
-      historyItems = historyItems.filter(o => o.cashierId === currentStaff.id);
+      historyItems = historyItems.filter(o =>
+        o.cashierId === currentStaff.id ||
+        o.cashierName === currentStaff.name ||
+        o.staffName === currentStaff.name
+      );
     }
+
+    // DEBUG: Log filtering process
+    console.log('[OrderHistory Debug]', {
+      rawOrdersCount: orders.length,
+      afterTransform: historyItems.length,
+      userRole,
+      canViewAll,
+      currentStaffId: currentStaff?.id,
+      currentStaffName: currentStaff?.name,
+      dateFilter: filters.dateRange,
+    });
 
     // Sort by date descending
     historyItems.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
