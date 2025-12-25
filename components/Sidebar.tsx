@@ -185,25 +185,7 @@ const Sidebar = forwardRef<HTMLElement, SidebarProps>(({ isOpen, onToggle, onNav
         )}
 
         {/* Toggle Button (Desktop Only) */}
-        <button
-          onClick={onToggle}
-          className="desktop-only icon-btn-hover"
-          style={{
-            display: isOpen ? 'flex' : 'none',
-            background: 'var(--gray-100)',
-            border: 'none',
-            borderRadius: '50%',
-            width: '24px',
-            height: '24px',
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: 'pointer',
-            color: 'var(--text-secondary)'
-          }}
-          title={isOpen ? "Collapse Sidebar" : "Expand Sidebar"}
-        >
-          {isOpen ? <ChevronDown size={14} style={{ transform: 'rotate(90deg)' }} /> : <ChevronRight size={14} />}
-        </button>
+
       </div>
 
       {/* Navigation */}

@@ -13,6 +13,7 @@ export interface OutletSettings {
     currency: string;
     timezone: string;
     taxRate: number;
+    mileageRate: number;
 }
 
 export interface OperatingHours {
@@ -119,6 +120,7 @@ export async function loadSettingsFromSupabase(): Promise<AllSettings | null> {
                 currency: outletData.currency || 'BND',
                 timezone: outletData.timezone || 'Asia/Brunei',
                 taxRate: outletData.tax_rate || 0,
+                mileageRate: outletData.mileage_rate || 0.60,
             },
             operatingHours: outletData.operating_hours || {},
             receipt: outletData.receipt_settings || {
@@ -189,6 +191,7 @@ export async function saveSettingsToSupabase(settings: AllSettings): Promise<boo
                 currency: settings.outlet.currency,
                 timezone: settings.outlet.timezone,
                 tax_rate: settings.outlet.taxRate,
+                mileage_rate: settings.outlet.mileageRate,
                 operating_hours: settings.operatingHours,
                 receipt_settings: settings.receipt,
                 notification_settings: settings.notification,
@@ -256,6 +259,7 @@ export function loadSettingsFromLocalStorage(): AllSettings {
             currency: 'BND',
             timezone: 'Asia/Brunei',
             taxRate: 0,
+            mileageRate: 0.60,
         }),
         operatingHours: getFromStorage('abangbob_operating_hours', {}),
         receipt: getFromStorage('abangbob_receipt_settings', {

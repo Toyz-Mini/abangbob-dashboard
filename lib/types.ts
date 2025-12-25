@@ -1249,6 +1249,7 @@ export type ClaimType =
   | 'phone'
   | 'uniform'
   | 'equipment'
+  | 'mileage'
   | 'other';
 
 export interface ClaimRequest {
@@ -1261,6 +1262,15 @@ export interface ClaimRequest {
   receiptUrls: string[];
   claimDate: string;
   status: 'pending' | 'approved' | 'rejected' | 'paid';
+
+  // Mileage Specific
+  category?: 'general' | 'mileage';
+  odometerStart?: number;
+  odometerEnd?: number;
+  distanceKm?: number;
+  ratePerKm?: number; // Snapshot of rate
+  locations?: string; // From -> To
+
   approvedBy?: string;
   approverName?: string;
   approvedAt?: string;

@@ -354,6 +354,7 @@ export default function SettingsPage() {
     currency: 'BND',
     timezone: 'Asia/Brunei',
     taxRate: 0,
+    mileageRate: 0.60,
     logoUrl: '',
   });
 
@@ -979,10 +980,26 @@ export default function SettingsPage() {
                       type="number"
                       className="form-input"
                       value={outletSettings.taxRate}
-                      onChange={(e) => setOutletSettings(prev => ({ ...prev, taxRate: Number(e.target.value) }))}
+                      onChange={(e) => setOutletSettings({ ...outletSettings, taxRate: parseFloat(e.target.value) || 0 })}
                       min="0"
-                      max="100"
+                      step="0.1"
                     />
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">Mileage Rate (BND / km)</label>
+                    <input
+                      type="number"
+                      className="form-input"
+                      value={outletSettings.mileageRate}
+                      onChange={(e) => setOutletSettings({ ...outletSettings, mileageRate: parseFloat(e.target.value) || 0 })}
+                      min="0"
+                      step="0.01"
+                      placeholder="0.60"
+                    />
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
+                      Kadar tuntutan perjalanan default.
+                    </div>
                   </div>
                 </div>
 

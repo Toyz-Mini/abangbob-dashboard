@@ -28,7 +28,10 @@ import {
   ShoppingCart,
   Package,
   Users,
-  BookOpen
+  BookOpen,
+  ChevronLeft,
+  ChevronRight,
+  Menu
 } from 'lucide-react';
 
 import { usePathname } from 'next/navigation';
@@ -279,6 +282,42 @@ export default function MainLayout({ children }: { children: ReactNode }) {
             onNavClick={handleNavClick}
           />
         </div>
+
+        {/* Floating Sidebar Toggle (Desktop) */}
+        <button
+          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+          className="desktop-only"
+          style={{
+            position: 'fixed',
+            left: isSidebarOpen ? '280px' : '0px',
+            top: '50%',
+            transform: 'translateY(-50%) translateX(-50%)',
+            zIndex: 100, // Above sidebar content
+            width: '24px',
+            height: '48px', // Pill shape
+            borderRadius: '0 12px 12px 0',
+            background: 'var(--primary)',
+            color: 'white',
+            border: 'none',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            transition: 'left 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+            boxShadow: '2px 0 8px rgba(0,0,0,0.1)',
+            opacity: 0.8,
+          }}
+          onMouseEnter={(e) => e.currentTarget.style.opacity = '1'}
+          onMouseLeave={(e) => e.currentTarget.style.opacity = '0.8'}
+          title={isSidebarOpen ? "Collapse" : "Expand"}
+        >
+          {isSidebarOpen ? (
+            <ChevronLeft size={16} />
+          ) : (
+            <ChevronRight size={16} />
+          )}
+        </button>
+
         <TopNav onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)} />
         <main
           id="main-content"
