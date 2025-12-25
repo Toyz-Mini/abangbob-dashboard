@@ -109,7 +109,7 @@ export default function OTReportPage() {
         doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 33);
 
         // Stats Summary
-        doc.autoTable({
+        (doc as any).autoTable({
             startY: 40,
             head: [['Total Cost', 'Total Hours', 'Pending Claims', 'Approval Rate']],
             body: [[
@@ -123,7 +123,7 @@ export default function OTReportPage() {
         });
 
         // Detailed Table
-        doc.autoTable({
+        (doc as any).autoTable({
             startY: 70,
             head: [['Date', 'Staff', 'Time', 'Hours', 'Rate', 'Total', 'Status']],
             body: filteredClaims.map(c => [
