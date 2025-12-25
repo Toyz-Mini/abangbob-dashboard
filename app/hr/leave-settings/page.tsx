@@ -22,15 +22,15 @@ import {
 } from 'lucide-react';
 import * as SupabaseSync from '@/lib/supabase-sync';
 
-// Leave types configuration with icons and colors
+// Leave types configuration - using theme colors
 const LEAVE_TYPES = [
-    { key: 'annual', label: 'Tahunan', shortLabel: 'Thn', defaultDays: 14, icon: Plane, color: '#10b981' },
-    { key: 'medical', label: 'Sakit', shortLabel: 'Skt', defaultDays: 14, icon: Heart, color: '#ef4444' },
-    { key: 'emergency', label: 'Kecemasan', shortLabel: 'Kcm', defaultDays: 3, icon: AlertCircle, color: '#f59e0b' },
-    { key: 'replacement', label: 'Ganti', shortLabel: 'Gnt', defaultDays: 0, icon: RefreshCw, color: '#8b5cf6' },
-    { key: 'maternity', label: 'Bersalin', shortLabel: 'Brs', defaultDays: 105, icon: Heart, color: '#ec4899' },
-    { key: 'paternity', label: 'Paternity', shortLabel: 'Pat', defaultDays: 3, icon: Users, color: '#3b82f6' },
-    { key: 'compassionate', label: 'Compassionate', shortLabel: 'Cmp', defaultDays: 3, icon: Heart, color: '#6b7280' },
+    { key: 'annual', label: 'Tahunan', defaultDays: 14, icon: Plane },
+    { key: 'medical', label: 'Sakit', defaultDays: 14, icon: Heart },
+    { key: 'emergency', label: 'Kecemasan', defaultDays: 3, icon: AlertCircle },
+    { key: 'replacement', label: 'Ganti', defaultDays: 0, icon: RefreshCw },
+    { key: 'maternity', label: 'Bersalin', defaultDays: 105, icon: Heart },
+    { key: 'paternity', label: 'Paternity', defaultDays: 3, icon: Users },
+    { key: 'compassionate', label: 'Compassionate', defaultDays: 3, icon: Heart },
 ] as const;
 
 type LeaveType = typeof LEAVE_TYPES[number]['key'];
@@ -234,7 +234,7 @@ export default function LeaveSettingsPage() {
                             width: '48px',
                             height: '48px',
                             borderRadius: '12px',
-                            background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                            background: 'var(--primary)',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
@@ -251,7 +251,7 @@ export default function LeaveSettingsPage() {
 
                 {/* Stats Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-3" style={{ gap: '1rem', marginBottom: '1.5rem' }}>
-                    <div className="card" style={{ background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)', color: 'white', padding: '1.25rem' }}>
+                    <div className="card" style={{ background: 'var(--primary)', color: 'white', padding: '1.25rem' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                             <Users size={32} style={{ opacity: 0.9 }} />
                             <div>
@@ -261,7 +261,7 @@ export default function LeaveSettingsPage() {
                         </div>
                     </div>
 
-                    <div className="card" style={{ background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', color: 'white', padding: '1.25rem' }}>
+                    <div className="card" style={{ background: 'var(--success)', color: 'white', padding: '1.25rem' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                             <CheckCircle size={32} style={{ opacity: 0.9 }} />
                             <div>
@@ -271,7 +271,7 @@ export default function LeaveSettingsPage() {
                         </div>
                     </div>
 
-                    <div className="card" style={{ background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)', color: 'white', padding: '1.25rem' }}>
+                    <div className="card" style={{ background: 'var(--secondary)', color: 'white', padding: '1.25rem' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                             <Calendar size={32} style={{ opacity: 0.9 }} />
                             <div>
@@ -368,12 +368,12 @@ export default function LeaveSettingsPage() {
                                                     width: '36px',
                                                     height: '36px',
                                                     borderRadius: '8px',
-                                                    background: lt.color + '20',
+                                                    background: 'var(--primary-light)',
                                                     display: 'flex',
                                                     alignItems: 'center',
                                                     justifyContent: 'center'
                                                 }}>
-                                                    <Icon size={18} style={{ color: lt.color }} />
+                                                    <Icon size={18} style={{ color: 'var(--primary)' }} />
                                                 </div>
                                                 <div>
                                                     <div style={{ fontWeight: 600 }}>{lt.label}</div>
@@ -499,16 +499,16 @@ export default function LeaveSettingsPage() {
                                                 key={lt.key}
                                                 style={{
                                                     textAlign: 'center',
-                                                    padding: '0.5rem',
+                                                    padding: '0.5rem 0.25rem',
                                                     borderRadius: '8px',
-                                                    background: 'var(--gray-50)'
+                                                    background: 'var(--primary-light)'
                                                 }}
                                                 title={`${lt.label}: ${entitled} hari (${used} digunakan)`}
                                             >
-                                                <Icon size={16} style={{ color: lt.color, marginBottom: '0.25rem' }} />
-                                                <div style={{ fontWeight: 700, fontSize: '1rem' }}>{entitled}</div>
-                                                <div style={{ fontSize: '0.6rem', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>
-                                                    {lt.shortLabel}
+                                                <Icon size={16} style={{ color: 'var(--primary)', marginBottom: '0.25rem' }} />
+                                                <div style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--primary)' }}>{entitled}</div>
+                                                <div style={{ fontSize: '0.55rem', color: 'var(--text-secondary)' }}>
+                                                    {lt.label}
                                                 </div>
                                             </div>
                                         );
