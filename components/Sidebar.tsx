@@ -101,12 +101,11 @@ const NAV_ITEMS = [
 
 interface SidebarProps {
   isOpen: boolean;
-  onMouseEnter?: () => void;
-  onClick?: (e: React.MouseEvent) => void;
+  onToggle?: () => void;
   onNavClick?: () => void;
 }
 
-const Sidebar = forwardRef<HTMLElement, SidebarProps>(({ isOpen, onMouseEnter, onClick, onNavClick }, ref) => {
+const Sidebar = forwardRef<HTMLElement, SidebarProps>(({ isOpen, onToggle, onNavClick }, ref) => {
   const pathname = usePathname();
   const { t } = useTranslation();
   const { user, currentStaff, isStaffLoggedIn } = useAuth();
@@ -149,20 +148,63 @@ const Sidebar = forwardRef<HTMLElement, SidebarProps>(({ isOpen, onMouseEnter, o
     <aside
       ref={ref}
       className={`sidebar ${isOpen ? 'open' : 'closed'}`}
-      onMouseEnter={onMouseEnter}
-      onClick={onClick}
     >
-      {/* Logo */}
-      <Link href="/" className="nav-logo">
-        <Image
-          src="/logo.png"
-          alt="AbangBob"
-          width={40}
-          height={40}
-          className="sidebar-logo-img"
-        />
-        <span className="sidebar-logo-text">AbangBob</span>
-      </Link>
+      {/* Header with Logo and Toggle */}
+      <div className="sidebar-header" style={{
+        padding: '1rem',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: isOpen ? 'space-between' : 'center',
+        borderBottom: '1px solid var(--border-color)',
+        marginBottom: '1rem',
+        height: '64px'
+      }}>
+        {/* Logo */}
+        <Link href="/" className="nav-logo" style={{ display: isOpen ? 'flex' : 'none', alignItems: 'center', gap: '0.75rem', textDecoration: 'none' }}>
+          <Image
+            src="/logo.png"
+            alt="AbangBob"
+            width={32}
+            height={32}
+            className="sidebar-logo-img"
+          />
+          <span className="sidebar-logo-text" style={{ fontWeight: 700, fontSize: '1.1rem', color: 'var(--primary)' }}>AbangBob</span>
+        </Link>
+
+        {/* Logo Icon Only (when closed) */}
+        {!isOpen && (
+          <Image
+            src="/logo.png"
+            alt="AbangBob"
+            width={32}
+            height={32}
+            className="sidebar-logo-img"
+            onClick={onToggle}
+            style={{ cursor: 'pointer' }}
+          />
+        )}
+
+        {/* Toggle Button (Desktop Only) */}
+        <button
+          onClick={onToggle}
+          className="desktop-only icon-btn-hover"
+          style={{
+            display: isOpen ? 'flex' : 'none',
+            background: 'var(--gray-100)',
+            border: 'none',
+            borderRadius: '50%',
+            width: '24px',
+            height: '24px',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            color: 'var(--text-secondary)'
+          }}
+          title={isOpen ? "Collapse Sidebar" : "Expand Sidebar"}
+        >
+          {isOpen ? <ChevronDown size={14} style={{ transform: 'rotate(90deg)' }} /> : <ChevronRight size={14} />}
+        </button>
+      </div>
 
       {/* Navigation */}
       <nav className="nav-container">

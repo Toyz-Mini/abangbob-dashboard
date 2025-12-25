@@ -40,8 +40,8 @@ import { processSyncQueue } from '@/lib/sync-queue';
 import * as ops from '@/lib/supabase/operations';
 
 export default function MainLayout({ children }: { children: ReactNode }) {
-  // Default to closed to prevent flash on mobile
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  // Default to open for better UX on desktop
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const { showToast } = useToast();
   const sidebarRef = useRef<HTMLElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -110,9 +110,12 @@ export default function MainLayout({ children }: { children: ReactNode }) {
   // Bottom nav more menu
   const bottomNav = useBottomNav();
 
-  // Auto-close when clicking outside sidebar
+  // Auto-close when clicking outside sidebar (MOBILE ONLY)
   useEffect(() => {
-    if (!isSidebarOpen) return; // Don't listen if already closed
+    // Only apply click-outside logic on mobile
+    if (window.innerWidth >= 768) return;
+
+    if (!isSidebarOpen) return;
 
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as HTMLElement;
@@ -122,13 +125,8 @@ export default function MainLayout({ children }: { children: ReactNode }) {
         return;
       }
 
-      // Close sidebar when clicking outside (only on desktop)
-      if (window.innerWidth >= 768) {
-        setIsSidebarOpen(false);
-      } else {
-        // Also close on mobile if clicking outside (on overlay)
-        setIsSidebarOpen(false);
-      }
+      // Close sidebar when clicking outside (mobile overlay)
+      setIsSidebarOpen(false);
     };
 
     // Add small delay to prevent immediate close after render
@@ -142,15 +140,6 @@ export default function MainLayout({ children }: { children: ReactNode }) {
     };
   }, [isSidebarOpen]);
 
-  // Handle click on sidebar to expand if collapsed
-  const handleSidebarClick = (e: React.MouseEvent) => {
-    // Stop propagation to prevent closing
-    e.stopPropagation();
-    if (!isSidebarOpen) {
-      setIsSidebarOpen(true);
-    }
-  };
-
   // Toggle body class for mobile overlay
   useEffect(() => {
     if (window.innerWidth < 768 && isSidebarOpen) {
@@ -163,7 +152,7 @@ export default function MainLayout({ children }: { children: ReactNode }) {
     const handleResize = () => {
       if (window.innerWidth >= 768) {
         document.body.classList.remove('mobile-sidebar-open');
-        if (!isSidebarOpen) setIsSidebarOpen(true); // Auto open on desktop
+        // We don't auto-open here to respect user preference, but generally desktop starts open
       } else if (isSidebarOpen) {
         document.body.classList.add('mobile-sidebar-open');
       }
@@ -172,13 +161,6 @@ export default function MainLayout({ children }: { children: ReactNode }) {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, [isSidebarOpen]);
-
-  // Expand sidebar on hover when collapsed
-  const handleSidebarMouseEnter = () => {
-    if (!isSidebarOpen && window.innerWidth >= 768) {
-      setIsSidebarOpen(true);
-    }
-  };
 
 
   // Handle nav link click - close sidebar on mobile
@@ -293,8 +275,7 @@ export default function MainLayout({ children }: { children: ReactNode }) {
           <Sidebar
             ref={sidebarRef}
             isOpen={isSidebarOpen}
-            onMouseEnter={handleSidebarMouseEnter}
-            onClick={handleSidebarClick}
+            onToggle={() => setIsSidebarOpen(prev => !prev)}
             onNavClick={handleNavClick}
           />
         </div>
