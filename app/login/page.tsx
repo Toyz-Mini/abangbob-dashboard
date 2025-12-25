@@ -56,12 +56,17 @@ export default function LoginPage() {
       if (result.error) {
         setError(result.error.message || 'Login gagal');
       } else {
-        router.push('/');
-        router.refresh();
+        // Force full page reload to ensure auth state is fresh and cookies are sent
+        window.location.href = '/';
       }
     } catch (err: any) {
-      console.error('Sign in error:', err);
-      setError(err?.message || 'Ralat berlaku. Sila cuba lagi.');
+      console.error('Sign in error details:', err);
+      // specific check for fetch failures
+      if (err.message === 'Load failed' || err.message === 'Failed to fetch') {
+        setError('Gagal menyambung ke server. Sila periksa sambungan internet anda.');
+      } else {
+        setError(err?.message || 'Ralat berlaku. Sila cuba lagi.');
+      }
     } finally {
       setLoading(false);
     }
