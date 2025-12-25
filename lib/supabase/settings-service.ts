@@ -157,7 +157,7 @@ export async function loadAllSettings(userId: string = 'global'): Promise<Map<st
                 .eq('user_id', userId);
 
             if (data && !error) {
-                data.forEach(row => {
+                data.forEach((row: any) => {
                     settings.set(row.setting_key, row.setting_value);
                     localStorage.setItem(`setting_${row.setting_key}`, JSON.stringify(row.setting_value));
                 });
