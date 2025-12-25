@@ -1580,6 +1580,41 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
     // Sync to Supabase
     try {
+      // 1. Handle "Walk-in" Customer Details (Auto-create or Find)
+      let finalCustomerId = newOrder.customerId;
+
+      if (!finalCustomerId && newOrder.customerName && newOrder.customerPhone) {
+        // Check if customer already exists locally
+        const existingCustomer = customers.find(c => c.phone === newOrder.customerPhone);
+
+        if (existingCustomer) {
+          finalCustomerId = existingCustomer.id;
+          console.log(`[Order] Found existing customer by phone: ${existingCustomer.name}`);
+        } else {
+          // Create new customer
+          try {
+            console.log(`[Order] Auto-creating new customer: ${newOrder.customerName}`);
+            const newCustomer = await addCustomer({
+              name: newOrder.customerName,
+              phone: newOrder.customerPhone,
+              email: undefined,
+              birthday: undefined,
+              notes: 'Auto-created from POS Order'
+            });
+            finalCustomerId = newCustomer.id;
+          } catch (err) {
+            console.error('[Order] Failed to auto-create customer:', err);
+            // Proceed without ID, just text details
+          }
+        }
+      }
+
+      // Update order with resolved customer ID
+      if (finalCustomerId) {
+        newOrder.customerId = finalCustomerId;
+      }
+
+      // 2. Sync Order to Supabase
       const supabaseOrder = await SupabaseSync.syncAddOrder(newOrder);
       if (supabaseOrder && supabaseOrder.id) {
         newOrder.id = supabaseOrder.id;
