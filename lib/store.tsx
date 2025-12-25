@@ -3151,7 +3151,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       return updated;
     });
     // Sync to Supabase
-    getSupabaseClient().from('disciplinary_actions').insert({
+    getSupabaseClient()?.from('disciplinary_actions').insert({
       id: newAction.id,
       staff_id: newAction.staffId,
       staff_name: newAction.staffName,
@@ -3204,7 +3204,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, [disciplinaryActions]);
 
   const refreshDisciplinaryActions = useCallback(async () => {
-    const { data, error } = await getSupabaseClient().from('disciplinary_actions').select('*').order('created_at', { ascending: false });
+    const { data, error } = await getSupabaseClient()?.from('disciplinary_actions').select('*').order('created_at', { ascending: false }) || { data: null, error: null };
     if (!error && data) {
       const mapped: DisciplinaryAction[] = data.map((row: Record<string, unknown>) => ({
         id: row.id as string,
