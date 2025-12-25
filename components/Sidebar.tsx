@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTranslation } from '@/lib/contexts/LanguageContext';
 import { useAuth } from '@/lib/contexts/AuthContext';
-import { canViewNavItem, UserRole } from '@/lib/nav-permissions';
+import { canViewNavItem, UserRole } from '@/lib/permissions';
 import { useOrderHistory } from '@/lib/store';
 import {
   LayoutDashboard,
