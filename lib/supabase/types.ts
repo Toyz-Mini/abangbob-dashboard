@@ -682,6 +682,428 @@ export interface Database {
           discount_amount?: number;
         };
       };
+
+      // HR: Disciplinary Actions
+      disciplinary_actions: {
+        Row: {
+          id: string;
+          staff_id: string;
+          staff_name: string;
+          type: 'verbal_warning' | 'written_warning' | 'final_warning' | 'suspension' | 'termination';
+          reason: string;
+          details: string | null;
+          issued_by: string;
+          issued_by_name: string;
+          issued_at: string;
+          acknowledged_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          staff_id: string;
+          staff_name: string;
+          type: 'verbal_warning' | 'written_warning' | 'final_warning' | 'suspension' | 'termination';
+          reason: string;
+          details?: string | null;
+          issued_by: string;
+          issued_by_name: string;
+          issued_at: string;
+          acknowledged_at?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          staff_id?: string;
+          staff_name?: string;
+          type?: 'verbal_warning' | 'written_warning' | 'final_warning' | 'suspension' | 'termination';
+          reason?: string;
+          details?: string | null;
+          issued_by?: string;
+          issued_by_name?: string;
+          issued_at?: string;
+          acknowledged_at?: string | null;
+          created_at?: string;
+        };
+      };
+
+      // HR: Staff Training
+      staff_training: {
+        Row: {
+          id: string;
+          staff_id: string;
+          staff_name: string;
+          course_name: string;
+          provider: string;
+          category: 'food_safety' | 'health_safety' | 'customer_service' | 'technical' | 'compliance' | 'other';
+          scheduled_date: string | null;
+          completed_at: string | null;
+          expires_at: string | null;
+          certificate_number: string | null;
+          notes: string | null;
+          status: 'scheduled' | 'in_progress' | 'completed' | 'expired';
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          staff_id: string;
+          staff_name: string;
+          course_name: string;
+          provider: string;
+          category: 'food_safety' | 'health_safety' | 'customer_service' | 'technical' | 'compliance' | 'other';
+          scheduled_date?: string | null;
+          completed_at?: string | null;
+          expires_at?: string | null;
+          certificate_number?: string | null;
+          notes?: string | null;
+          status: 'scheduled' | 'in_progress' | 'completed' | 'expired';
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          staff_id?: string;
+          staff_name?: string;
+          course_name?: string;
+          provider?: string;
+          category?: 'food_safety' | 'health_safety' | 'customer_service' | 'technical' | 'compliance' | 'other';
+          scheduled_date?: string | null;
+          completed_at?: string | null;
+          expires_at?: string | null;
+          certificate_number?: string | null;
+          notes?: string | null;
+          status?: 'scheduled' | 'in_progress' | 'completed' | 'expired';
+          created_at?: string;
+        };
+      };
+
+      // HR: Staff Documents
+      staff_documents: {
+        Row: {
+          id: string;
+          staff_id: string | null;
+          staff_name: string | null;
+          type: 'ic_front' | 'ic_back' | 'contract' | 'resume' | 'offer_letter' | 'medical_report' | 'work_permit' | 'certificate' | 'other';
+          name: string;
+          description: string | null;
+          url: string;
+          expiry_date: string | null;
+          uploaded_at: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          staff_id?: string | null;
+          staff_name?: string | null;
+          type: 'ic_front' | 'ic_back' | 'contract' | 'resume' | 'offer_letter' | 'medical_report' | 'work_permit' | 'certificate' | 'other';
+          name: string;
+          description?: string | null;
+          url: string;
+          expiry_date?: string | null;
+          uploaded_at?: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          staff_id?: string | null;
+          staff_name?: string | null;
+          type?: 'ic_front' | 'ic_back' | 'contract' | 'resume' | 'offer_letter' | 'medical_report' | 'work_permit' | 'certificate' | 'other';
+          name?: string;
+          description?: string | null;
+          url?: string;
+          expiry_date?: string | null;
+          uploaded_at?: string;
+          created_at?: string;
+        };
+      };
+
+      // HR: Performance Reviews
+      performance_reviews: {
+        Row: {
+          id: string;
+          staff_id: string;
+          staff_name: string;
+          reviewer_id: string;
+          reviewer_name: string;
+          period: 'monthly' | 'quarterly' | 'semi_annual' | 'annual';
+          period_start: string;
+          period_end: string;
+          overall_rating: number;
+          punctuality: number;
+          teamwork: number;
+          productivity: number;
+          communication: number;
+          initiative: number;
+          strengths: string | null;
+          improvements: string | null;
+          goals: string | null;
+          comments: string | null;
+          status: 'draft' | 'pending_acknowledgement' | 'completed';
+          acknowledged_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          staff_id: string;
+          staff_name: string;
+          reviewer_id: string;
+          reviewer_name: string;
+          period: 'monthly' | 'quarterly' | 'semi_annual' | 'annual';
+          period_start: string;
+          period_end: string;
+          overall_rating: number;
+          punctuality: number;
+          teamwork: number;
+          productivity: number;
+          communication: number;
+          initiative: number;
+          strengths?: string | null;
+          improvements?: string | null;
+          goals?: string | null;
+          comments?: string | null;
+          status: 'draft' | 'pending_acknowledgement' | 'completed';
+          acknowledged_at?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          staff_id?: string;
+          staff_name?: string;
+          reviewer_id?: string;
+          reviewer_name?: string;
+          period?: 'monthly' | 'quarterly' | 'semi_annual' | 'annual';
+          period_start?: string;
+          period_end?: string;
+          overall_rating?: number;
+          punctuality?: number;
+          teamwork?: number;
+          productivity?: number;
+          communication?: number;
+          initiative?: number;
+          strengths?: string | null;
+          improvements?: string | null;
+          goals?: string | null;
+          comments?: string | null;
+          status?: 'draft' | 'pending_acknowledgement' | 'completed';
+          acknowledged_at?: string | null;
+          created_at?: string;
+        };
+      };
+
+      // HR: Onboarding Checklists
+      onboarding_checklists: {
+        Row: {
+          id: string;
+          staff_id: string;
+          staff_name: string;
+          start_date: string;
+          due_date: string | null;
+          items: Json;
+          status: 'pending' | 'in_progress' | 'completed';
+          notes: string | null;
+          assigned_to: string | null;
+          assigned_to_name: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          staff_id: string;
+          staff_name: string;
+          start_date: string;
+          due_date?: string | null;
+          items?: Json;
+          status: 'pending' | 'in_progress' | 'completed';
+          notes?: string | null;
+          assigned_to?: string | null;
+          assigned_to_name?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          staff_id?: string;
+          staff_name?: string;
+          start_date?: string;
+          due_date?: string | null;
+          items?: Json;
+          status?: 'pending' | 'in_progress' | 'completed';
+          notes?: string | null;
+          assigned_to?: string | null;
+          assigned_to_name?: string | null;
+          created_at?: string;
+        };
+      };
+
+      // HR: Exit Interviews
+      exit_interviews: {
+        Row: {
+          id: string;
+          staff_id: string;
+          staff_name: string;
+          exit_date: string;
+          reason: 'resignation' | 'termination' | 'contract_end' | 'retirement' | 'other';
+          reason_details: string | null;
+          overall_experience: number;
+          management_rating: number;
+          work_environment: number;
+          career_growth: number;
+          what_liked: string | null;
+          what_disliked: string | null;
+          suggestions: string | null;
+          would_recommend: boolean;
+          interviewed_by: string | null;
+          interviewed_by_name: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          staff_id: string;
+          staff_name: string;
+          exit_date: string;
+          reason: 'resignation' | 'termination' | 'contract_end' | 'retirement' | 'other';
+          reason_details?: string | null;
+          overall_experience: number;
+          management_rating: number;
+          work_environment: number;
+          career_growth: number;
+          what_liked?: string | null;
+          what_disliked?: string | null;
+          suggestions?: string | null;
+          would_recommend?: boolean;
+          interviewed_by?: string | null;
+          interviewed_by_name?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          staff_id?: string;
+          staff_name?: string;
+          exit_date?: string;
+          reason?: 'resignation' | 'termination' | 'contract_end' | 'retirement' | 'other';
+          reason_details?: string | null;
+          overall_experience?: number;
+          management_rating?: number;
+          work_environment?: number;
+          career_growth?: number;
+          what_liked?: string | null;
+          what_disliked?: string | null;
+          suggestions?: string | null;
+          would_recommend?: boolean;
+          interviewed_by?: string | null;
+          interviewed_by_name?: string | null;
+          created_at?: string;
+        };
+      };
+
+      // HR: Staff Complaints
+      staff_complaints: {
+        Row: {
+          id: string;
+          is_anonymous: boolean;
+          staff_id: string | null;
+          staff_name: string;
+          date: string;
+          category: 'harassment' | 'misconduct' | 'safety' | 'management' | 'other';
+          subject: string;
+          description: string;
+          status: 'pending' | 'investigating' | 'resolved' | 'dismissed';
+          admin_notes: string | null;
+          resolved_at: string | null;
+          resolved_by: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          is_anonymous?: boolean;
+          staff_id?: string | null;
+          staff_name: string;
+          date: string;
+          category: 'harassment' | 'misconduct' | 'safety' | 'management' | 'other';
+          subject: string;
+          description: string;
+          status?: 'pending' | 'investigating' | 'resolved' | 'dismissed';
+          admin_notes?: string | null;
+          resolved_at?: string | null;
+          resolved_by?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          is_anonymous?: boolean;
+          staff_id?: string | null;
+          staff_name?: string;
+          date?: string;
+          category?: 'harassment' | 'misconduct' | 'safety' | 'management' | 'other';
+          subject?: string;
+          description?: string;
+          status?: 'pending' | 'investigating' | 'resolved' | 'dismissed';
+          admin_notes?: string | null;
+          resolved_at?: string | null;
+          resolved_by?: string | null;
+          created_at?: string;
+        };
+      };
+
+      // HR: OT Claims
+      ot_claims: {
+        Row: {
+          id: string;
+          staff_id: string;
+          staff_name: string;
+          date: string;
+          start_time: string;
+          end_time: string;
+          hours_worked: number;
+          hourly_rate: number;
+          multiplier: number;
+          total_amount: number;
+          reason: string;
+          status: 'pending' | 'approved' | 'rejected' | 'paid';
+          approved_by: string | null;
+          approver_name: string | null;
+          approved_at: string | null;
+          rejection_reason: string | null;
+          paid_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          staff_id: string;
+          staff_name: string;
+          date: string;
+          start_time: string;
+          end_time: string;
+          hours_worked: number;
+          hourly_rate: number;
+          multiplier?: number;
+          total_amount: number;
+          reason: string;
+          status?: 'pending' | 'approved' | 'rejected' | 'paid';
+          approved_by?: string | null;
+          approver_name?: string | null;
+          approved_at?: string | null;
+          rejection_reason?: string | null;
+          paid_at?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          staff_id?: string;
+          staff_name?: string;
+          date?: string;
+          start_time?: string;
+          end_time?: string;
+          hours_worked?: number;
+          hourly_rate?: number;
+          multiplier?: number;
+          total_amount?: number;
+          reason?: string;
+          status?: 'pending' | 'approved' | 'rejected' | 'paid';
+          approved_by?: string | null;
+          approver_name?: string | null;
+          approved_at?: string | null;
+          rejection_reason?: string | null;
+          paid_at?: string | null;
+          created_at?: string;
+        };
+      };
     };
     Views: {
       [_ in never]: never;
