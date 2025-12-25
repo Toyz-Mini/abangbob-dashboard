@@ -62,7 +62,6 @@ export default function LeaveSettingsPage() {
             const leaveType = LEAVE_TYPES.find(lt => lt.key === type);
             return leaveType?.defaultDays || 0;
         }
-        if (type === 'unpaid') return 0;
         return (balance[type] as any)?.entitled || 0;
     };
 
