@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
-import { StockItem, StaffProfile, AttendanceRecord, Order, ProductionLog, DeliveryOrder, Expense, DailyCashFlow, Customer, Supplier, PurchaseOrder, Recipe, Shift, ScheduleEntry, Promotion, Notification, MenuItem, ModifierGroup, ModifierOption, StaffKPI, LeaveRecord, TrainingRecord, OTRecord, CustomerReview, KPIMetrics, ChecklistItemTemplate, ChecklistCompletion, LeaveBalance, LeaveRequest, ClaimRequest, StaffRequest, Announcement, OrderHistoryItem, VoidRefundRequest, VoidRefundType, OrderHistoryFilters, RefundItem, OilTracker, OilChangeRequest, OilActionHistory, OilActionType, Equipment, MaintenanceSchedule, MaintenanceLog, WasteLog, MenuCategory, PaymentMethodConfig, TaxRate, CashRegister, InventoryLog, StockSuggestion, DEFAULT_MENU_CATEGORIES, DEFAULT_PAYMENT_METHODS, DEFAULT_TAX_RATES } from './types';
+import { StockItem, StaffProfile, AttendanceRecord, Order, ProductionLog, DeliveryOrder, Expense, DailyCashFlow, Customer, Supplier, PurchaseOrder, Recipe, Shift, ScheduleEntry, Promotion, Notification, MenuItem, ModifierGroup, ModifierOption, StaffKPI, LeaveRecord, TrainingRecord, OTRecord, CustomerReview, KPIMetrics, ChecklistItemTemplate, ChecklistCompletion, LeaveBalance, LeaveRequest, ClaimRequest, StaffRequest, Announcement, OrderHistoryItem, VoidRefundRequest, VoidRefundType, OrderHistoryFilters, RefundItem, OilTracker, OilChangeRequest, OilActionHistory, OilActionType, Equipment, MaintenanceSchedule, MaintenanceLog, WasteLog, MenuCategory, PaymentMethodConfig, TaxRate, CashRegister, InventoryLog, StockSuggestion, DEFAULT_MENU_CATEGORIES, DEFAULT_PAYMENT_METHODS, DEFAULT_TAX_RATES, OTClaim } from './types';
 import { MOCK_ORDER_HISTORY, MOCK_VOID_REFUND_REQUESTS, ORDER_HISTORY_STORAGE_KEYS } from './order-history-data';
 import { MOCK_STOCK } from './inventory-data';
 import { MOCK_STAFF, MOCK_ATTENDANCE, MOCK_PAYROLL } from './hr-data';
@@ -116,6 +116,8 @@ const STORAGE_KEYS = {
   MAINTENANCE_SCHEDULE: 'abangbob_maintenance_schedule',
   MAINTENANCE_LOGS: 'abangbob_maintenance_logs',
   WASTE_LOGS: 'abangbob_waste_logs',
+  // OT Claims
+  OT_CLAIMS: 'abangbob_ot_claims',
 };
 
 // Inventory log type for tracking stock changes
@@ -315,6 +317,16 @@ interface StoreState {
   getPendingClaimRequests: () => ClaimRequest[];
   refreshClaimRequests: () => Promise<void>;
 
+  // Staff Portal - OT Claims
+  otClaims: OTClaim[];
+  addOTClaim: (claim: Omit<OTClaim, 'id' | 'createdAt'>) => void;
+  updateOTClaim: (id: string, updates: Partial<OTClaim>) => void;
+  approveOTClaim: (id: string, approverId: string, approverName: string) => void;
+  rejectOTClaim: (id: string, approverId: string, approverName: string, reason: string) => void;
+  markOTClaimAsPaid: (id: string) => void;
+  getStaffOTClaims: (staffId: string) => OTClaim[];
+  getPendingOTClaims: () => OTClaim[];
+
   // Staff Portal - General Requests
   staffRequests: StaffRequest[];
   addStaffRequest: (request: Omit<StaffRequest, 'id' | 'createdAt'>) => void;
@@ -499,6 +511,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [leaveBalances, setLeaveBalances] = useState<LeaveBalance[]>([]);
   const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>([]);
   const [claimRequests, setClaimRequests] = useState<ClaimRequest[]>([]);
+  const [otClaims, setOTClaims] = useState<OTClaim[]>([]);
   const [staffRequests, setStaffRequests] = useState<StaffRequest[]>([]);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
 
@@ -705,6 +718,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       setLeaveBalances(supabaseConnected && supabaseData.leaveBalances?.length > 0 ? supabaseData.leaveBalances : getFromStorage(STORAGE_KEYS.LEAVE_BALANCES, MOCK_LEAVE_BALANCES));
       setLeaveRequests(supabaseConnected && supabaseData.leaveRequests?.length > 0 ? supabaseData.leaveRequests : getFromStorage(STORAGE_KEYS.LEAVE_REQUESTS, MOCK_LEAVE_REQUESTS));
       setClaimRequests(supabaseConnected && supabaseData.claimRequests?.length > 0 ? supabaseData.claimRequests : getFromStorage(STORAGE_KEYS.CLAIM_REQUESTS, MOCK_CLAIM_REQUESTS));
+      setOTClaims(getFromStorage(STORAGE_KEYS.OT_CLAIMS, []));
       setStaffRequests(supabaseConnected && supabaseData.staffRequests?.length > 0 ? supabaseData.staffRequests : getFromStorage(STORAGE_KEYS.STAFF_REQUESTS, MOCK_STAFF_REQUESTS));
       setAnnouncements(supabaseConnected && supabaseData.announcements?.length > 0 ? supabaseData.announcements : getFromStorage(STORAGE_KEYS.ANNOUNCEMENTS, MOCK_ANNOUNCEMENTS));
 
@@ -2874,6 +2888,82 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     return claimRequests.filter(c => c.status === 'pending');
   }, [claimRequests]);
 
+  // Staff Portal - OT Claims actions
+  const addOTClaim = useCallback((claim: Omit<OTClaim, 'id' | 'createdAt'>) => {
+    const newClaim: OTClaim = {
+      ...claim,
+      id: generateUUID(),
+      createdAt: new Date().toISOString(),
+    };
+    setOTClaims(prev => {
+      const updated = [newClaim, ...prev];
+      setToStorage(STORAGE_KEYS.OT_CLAIMS, updated);
+      return updated;
+    });
+  }, []);
+
+  const updateOTClaim = useCallback((id: string, updates: Partial<OTClaim>) => {
+    setOTClaims(prev => {
+      const updated = prev.map(c => c.id === id ? { ...c, ...updates } : c);
+      setToStorage(STORAGE_KEYS.OT_CLAIMS, updated);
+      return updated;
+    });
+  }, []);
+
+  const approveOTClaim = useCallback((id: string, approverId: string, approverName: string) => {
+    setOTClaims(prev => {
+      const updated = prev.map(c => {
+        if (c.id !== id) return c;
+        return {
+          ...c,
+          status: 'approved' as const,
+          approvedBy: approverId,
+          approverName,
+          approvedAt: new Date().toISOString(),
+        };
+      });
+      setToStorage(STORAGE_KEYS.OT_CLAIMS, updated);
+      return updated;
+    });
+  }, []);
+
+  const rejectOTClaim = useCallback((id: string, approverId: string, approverName: string, reason: string) => {
+    setOTClaims(prev => {
+      const updated = prev.map(c => {
+        if (c.id !== id) return c;
+        return {
+          ...c,
+          status: 'rejected' as const,
+          approvedBy: approverId,
+          approverName,
+          approvedAt: new Date().toISOString(),
+          rejectionReason: reason,
+        };
+      });
+      setToStorage(STORAGE_KEYS.OT_CLAIMS, updated);
+      return updated;
+    });
+  }, []);
+
+  const markOTClaimAsPaid = useCallback((id: string) => {
+    setOTClaims(prev => {
+      const updated = prev.map(c => {
+        if (c.id !== id) return c;
+        return { ...c, status: 'paid' as const, paidAt: new Date().toISOString() };
+      });
+      setToStorage(STORAGE_KEYS.OT_CLAIMS, updated);
+      return updated;
+    });
+  }, []);
+
+  const getStaffOTClaims = useCallback((staffId: string): OTClaim[] => {
+    return otClaims.filter(c => c.staffId === staffId);
+  }, [otClaims]);
+
+  const getPendingOTClaims = useCallback((): OTClaim[] => {
+    return otClaims.filter(c => c.status === 'pending');
+  }, [otClaims]);
+
   // Staff Portal - Staff Request actions
   const addStaffRequest = useCallback((request: Omit<StaffRequest, 'id' | 'createdAt'>) => {
     const newRequest: StaffRequest = {
@@ -4102,6 +4192,16 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     getPendingClaimRequests,
     refreshClaimRequests,
 
+    // Staff Portal - OT Claims
+    otClaims,
+    addOTClaim,
+    updateOTClaim,
+    approveOTClaim,
+    rejectOTClaim,
+    markOTClaimAsPaid,
+    getStaffOTClaims,
+    getPendingOTClaims,
+
     // Staff Portal - General Requests
     staffRequests,
     addStaffRequest,
@@ -4573,6 +4673,15 @@ export function useStaffPortal() {
     getStaffClaimRequests: store.getStaffClaimRequests,
     getPendingClaimRequests: store.getPendingClaimRequests,
     refreshClaimRequests: store.refreshClaimRequests,
+    // OT Claims
+    otClaims: store.otClaims,
+    addOTClaim: store.addOTClaim,
+    updateOTClaim: store.updateOTClaim,
+    approveOTClaim: store.approveOTClaim,
+    rejectOTClaim: store.rejectOTClaim,
+    markOTClaimAsPaid: store.markOTClaimAsPaid,
+    getStaffOTClaims: store.getStaffOTClaims,
+    getPendingOTClaims: store.getPendingOTClaims,
     // Staff Requests
     staffRequests: store.staffRequests,
     addStaffRequest: store.addStaffRequest,

@@ -34,6 +34,7 @@ import {
   History,
   Wrench,
   RefreshCw,
+  Clock,
   type LucideIcon
 } from 'lucide-react';
 
@@ -64,6 +65,7 @@ const navGroupsConfig: NavGroup[] = [
       { href: '/staff-portal', labelKey: 'nav.portal', icon: UserCircle, tourId: 'staff-portal' },
       { href: '/staff-portal/schedule', labelKey: 'nav.mySchedule', icon: Calendar, tourId: 'schedule' },
       { href: '/staff-portal/checklist', labelKey: 'nav.checklist', icon: CheckSquare, tourId: 'checklist' },
+      { href: '/staff-portal/ot-claim', labelKey: 'nav.otClaim', icon: Clock, tourId: 'ot-claim' },
     ]
   },
   {

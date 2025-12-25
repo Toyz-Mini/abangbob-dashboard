@@ -955,6 +955,31 @@ export interface OTRecord {
   createdAt: string;
 }
 
+// ==================== OT CLAIM TYPES ====================
+
+export type OTClaimStatus = 'pending' | 'approved' | 'rejected' | 'paid';
+
+export interface OTClaim {
+  id: string;
+  staffId: string;
+  staffName: string;
+  date: string;           // Date OT was worked
+  startTime: string;      // OT start time (e.g., "18:00")
+  endTime: string;        // OT end time (e.g., "22:00")
+  hoursWorked: number;    // Calculated hours
+  hourlyRate: number;     // Staff's OT hourly rate
+  multiplier: number;     // 1.5x, 2x etc
+  totalAmount: number;    // hoursWorked * hourlyRate * multiplier
+  reason: string;         // Why OT was needed
+  status: OTClaimStatus;
+  approvedBy?: string;
+  approverName?: string;
+  approvedAt?: string;
+  rejectionReason?: string;
+  paidAt?: string;
+  createdAt: string;
+}
+
 export interface CustomerReview {
   id: string;
   orderId: string;

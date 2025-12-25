@@ -9,7 +9,7 @@ import Modal from '@/components/Modal';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import ClaimDetailModal from '@/components/staff-portal/ClaimDetailModal';
 import RequestDetailModal from '@/components/staff-portal/RequestDetailModal';
-import { ClaimRequest, StaffRequest } from '@/lib/types';
+import { ClaimRequest, StaffRequest, OTClaim } from '@/lib/types';
 import {
   CheckCircle,
   XCircle,
@@ -25,7 +25,7 @@ import {
 const CURRENT_APPROVER_ID = '1';
 const CURRENT_APPROVER_NAME = 'Ahmad Bin Hassan';
 
-type TabType = 'leave' | 'claims' | 'requests';
+type TabType = 'leave' | 'claims' | 'ot' | 'requests';
 
 export default function ApprovalsPage() {
   const {
@@ -47,6 +47,11 @@ export default function ApprovalsPage() {
     completeStaffRequest,
     rejectStaffRequest,
     refreshStaffRequests,
+    // OT Claims
+    otClaims,
+    getPendingOTClaims,
+    approveOTClaim,
+    rejectOTClaim,
     // Common
     isInitialized
   } = useStaffPortal();
@@ -87,14 +92,16 @@ export default function ApprovalsPage() {
 
   const pendingLeave = getPendingLeaveRequests() || [];
   const pendingClaims = getPendingClaimRequests() || [];
+  const pendingOT = getPendingOTClaims() || [];
   const pendingRequests = getPendingStaffRequests() || [];
 
   // History Data - add defensive checks for arrays
   const historyLeave = (leaveRequests || []).filter(r => r.status !== 'pending').sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   const historyClaims = (claimRequests || []).filter(r => r.status !== 'pending').sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  const historyOT = (otClaims || []).filter(r => r.status !== 'pending').sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   const historyRequests = (staffRequests || []).filter(r => r.status !== 'pending').sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
-  const totalPending = pendingLeave.length + pendingClaims.length + pendingRequests.length;
+  const totalPending = pendingLeave.length + pendingClaims.length + pendingOT.length + pendingRequests.length;
 
   const handleApprove = async (type: TabType, id: string) => {
     setIsProcessing(true);
@@ -105,6 +112,8 @@ export default function ApprovalsPage() {
     } else if (type === 'claims') {
       approveClaimRequest(id, CURRENT_APPROVER_ID, CURRENT_APPROVER_NAME);
       setIsClaimModalOpen(false); // Close modal if open
+    } else if (type === 'ot') {
+      approveOTClaim(id, CURRENT_APPROVER_ID, CURRENT_APPROVER_NAME);
     } else {
       completeStaffRequest(id, 'Diluluskan');
       setIsRequestModalOpen(false); // Close modal if open
@@ -133,6 +142,8 @@ export default function ApprovalsPage() {
     } else if (selectedItem.type === 'claims') {
       rejectClaimRequest(selectedItem.id, CURRENT_APPROVER_ID, CURRENT_APPROVER_NAME, rejectReason);
       setIsClaimModalOpen(false);
+    } else if (selectedItem.type === 'ot') {
+      rejectOTClaim(selectedItem.id, CURRENT_APPROVER_ID, CURRENT_APPROVER_NAME, rejectReason);
     } else {
       rejectStaffRequest(selectedItem.id, rejectReason);
       setIsRequestModalOpen(false);
@@ -320,6 +331,92 @@ export default function ApprovalsPage() {
     );
   };
 
+  // Render OT Claims List
+  const renderOTList = (data: OTClaim[], isHistory: boolean) => {
+    if (data.length === 0) {
+      return (
+        <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>
+          Tiada rekod OT {isHistory ? 'history' : 'pending'}
+        </div>
+      );
+    }
+
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        {data.map(item => (
+          <div
+            key={item.id}
+            style={{
+              padding: '1rem',
+              borderRadius: 'var(--radius-md)',
+              background: 'var(--gray-50)',
+              border: '1px solid var(--gray-200)',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem', flexWrap: 'wrap' }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>
+                  {item.staffName}
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                  <span className="badge badge-info" style={{ fontSize: '0.7rem' }}>
+                    {item.hoursWorked.toFixed(1)} jam
+                  </span>
+                  <span style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--primary)' }}>
+                    BND {item.totalAmount.toFixed(2)}
+                  </span>
+                </div>
+                <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <Calendar size={14} />
+                  {new Date(item.date).toLocaleDateString('ms-MY')} | {item.startTime} - {item.endTime}
+                </div>
+                <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.5rem' }}>
+                  Sebab: {item.reason}
+                </div>
+                <div style={{ fontSize: '0.7rem', color: 'var(--text-light)', marginTop: '0.5rem' }}>
+                  <Clock size={10} style={{ display: 'inline', marginRight: '0.25rem' }} />
+                  {new Date(item.createdAt).toLocaleDateString('ms-MY')}
+                  {isHistory && (
+                    <span className={`badge badge-${item.status === 'approved' || item.status === 'paid' ? 'success' : item.status === 'rejected' ? 'danger' : 'warning'}`} style={{ marginLeft: '0.5rem', fontSize: '0.7rem' }}>
+                      {item.status === 'approved' ? 'Diluluskan' : item.status === 'rejected' ? 'Ditolak' : item.status === 'paid' ? 'Dibayar' : 'Menunggu'}
+                    </span>
+                  )}
+                </div>
+                {item.status === 'rejected' && item.rejectionReason && (
+                  <div style={{ fontSize: '0.75rem', color: 'var(--danger)', marginTop: '0.25rem' }}>
+                    Sebab ditolak: {item.rejectionReason}
+                  </div>
+                )}
+              </div>
+
+              {/* Actions - Only for Pending */}
+              {!isHistory && (
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <button
+                    className="btn btn-success btn-sm"
+                    onClick={() => handleApprove('ot', item.id)}
+                    disabled={isProcessing}
+                  >
+                    <CheckCircle size={16} />
+                    Lulus
+                  </button>
+                  <button
+                    className="btn btn-danger btn-sm"
+                    onClick={() => openRejectModal('ot', item.id)}
+                    disabled={isProcessing}
+                  >
+                    <XCircle size={16} />
+                    Tolak
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
   return (
     <MainLayout>
       <div className="animate-fade-in">
@@ -369,6 +466,13 @@ export default function ApprovalsPage() {
             Tuntutan {viewMode === 'pending' ? `(${pendingClaims.length})` : ''}
           </button>
           <button
+            className={`btn ${activeTab === 'ot' ? 'btn-primary' : 'btn-outline'}`}
+            onClick={() => setActiveTab('ot')}
+          >
+            <Clock size={18} />
+            OT Claims {viewMode === 'pending' ? `(${pendingOT.length})` : ''}
+          </button>
+          <button
             className={`btn ${activeTab === 'requests' ? 'btn-primary' : 'btn-outline'}`}
             onClick={() => setActiveTab('requests')}
           >
@@ -392,6 +496,7 @@ export default function ApprovalsPage() {
 
           {activeTab === 'leave' && renderList(viewMode === 'pending' ? pendingLeave : historyLeave, 'leave', viewMode === 'history')}
           {activeTab === 'claims' && renderList(viewMode === 'pending' ? pendingClaims : historyClaims, 'claims', viewMode === 'history')}
+          {activeTab === 'ot' && renderOTList(viewMode === 'pending' ? pendingOT : historyOT, viewMode === 'history')}
           {activeTab === 'requests' && renderList(viewMode === 'pending' ? pendingRequests : historyRequests, 'requests', viewMode === 'history')}
         </div>
 
