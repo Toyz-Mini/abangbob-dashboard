@@ -158,6 +158,10 @@ export interface Database {
           cost: number;
           supplier_id: string | null;
           outlet_id: string | null;
+          count_daily: boolean;
+          sku: string | null;
+          location: string | null;
+          last_restock_date: string | null;
         };
         Insert: {
           id?: string;
@@ -171,6 +175,10 @@ export interface Database {
           cost?: number;
           supplier_id?: string | null;
           outlet_id?: string | null;
+          count_daily?: boolean;
+          sku?: string | null;
+          location?: string | null;
+          last_restock_date?: string | null;
         };
         Update: {
           id?: string;
@@ -184,6 +192,10 @@ export interface Database {
           cost?: number;
           supplier_id?: string | null;
           outlet_id?: string | null;
+          count_daily?: boolean;
+          sku?: string | null;
+          location?: string | null;
+          last_restock_date?: string | null;
         };
       };
       // Orders
@@ -285,6 +297,7 @@ export interface Database {
           is_available: boolean;
           preparation_time: number;
           modifier_group_ids: string[];
+          ingredients: string[] | null;
           outlet_id: string | null;
         };
         Insert: {
@@ -300,6 +313,7 @@ export interface Database {
           is_available?: boolean;
           preparation_time?: number;
           modifier_group_ids?: string[];
+          ingredients?: string[] | null;
           outlet_id?: string | null;
         };
         Update: {
@@ -315,6 +329,7 @@ export interface Database {
           is_available?: boolean;
           preparation_time?: number;
           modifier_group_ids?: string[];
+          ingredients?: string[] | null;
           outlet_id?: string | null;
         };
       };
