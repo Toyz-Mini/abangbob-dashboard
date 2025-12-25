@@ -22,7 +22,7 @@ export function useAuth() {
     }
 
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data: { session } }: any) => {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
@@ -30,7 +30,7 @@ export function useAuth() {
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
+      (_event: any, session: any) => {
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
@@ -67,7 +67,7 @@ export function useRealtimeTable<T extends keyof Database['public']['Tables']>(
 
     try {
       let query = supabase.from(tableName).select('*');
-      
+
       if (filter) {
         query = query.eq(filter.column as string, filter.value as never);
       }
@@ -108,16 +108,16 @@ export function useRealtimeTable<T extends keyof Database['public']['Tables']>(
             if (payload.eventType === 'INSERT') {
               setData(prev => [...prev, payload.new as TableRow]);
             } else if (payload.eventType === 'UPDATE') {
-              setData(prev => 
-                prev.map(item => 
+              setData(prev =>
+                prev.map(item =>
                   (item as Record<string, unknown>)['id'] === (payload.new as Record<string, unknown>)['id']
                     ? payload.new as TableRow
                     : item
                 )
               );
             } else if (payload.eventType === 'DELETE') {
-              setData(prev => 
-                prev.filter(item => 
+              setData(prev =>
+                prev.filter(item =>
                   (item as Record<string, unknown>)['id'] !== (payload.old as Record<string, unknown>)['id']
                 )
               );
@@ -213,13 +213,13 @@ export function useRealtimeRecord<T extends keyof Database['public']['Tables']>(
 }
 
 // Hook for orders with real-time updates
-export function useRealtimeOrders(options?: { 
-  status?: string; 
+export function useRealtimeOrders(options?: {
+  status?: string;
   date?: string;
   outlet_id?: string;
 }) {
   const { status, date, outlet_id } = options || {};
-  
+
   const [orders, setOrders] = useState<Tables<'orders'>[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -299,7 +299,7 @@ export function useRealtimeOrders(options?: {
 // Hook for inventory with low stock alerts
 export function useInventoryWithAlerts(options?: { outlet_id?: string }) {
   const { outlet_id } = options || {};
-  
+
   const [inventory, setInventory] = useState<Tables<'inventory'>[]>([]);
   const [lowStockItems, setLowStockItems] = useState<Tables<'inventory'>[]>([]);
   const [loading, setLoading] = useState(true);
