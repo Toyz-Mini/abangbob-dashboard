@@ -3028,6 +3028,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       setToStorage(STORAGE_KEYS.OT_CLAIMS, updated);
       return updated;
     });
+
+    // Sync to Supabase
+    SupabaseSync.syncAddOTClaim(newClaim);
   }, []);
 
   const updateOTClaim = useCallback((id: string, updates: Partial<OTClaim>) => {
@@ -3036,6 +3039,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       setToStorage(STORAGE_KEYS.OT_CLAIMS, updated);
       return updated;
     });
+    // Sync to Supabase
+    SupabaseSync.syncUpdateOTClaim(id, updates);
   }, []);
 
   const approveOTClaim = useCallback((id: string, approverId: string, approverName: string) => {
@@ -3052,6 +3057,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       });
       setToStorage(STORAGE_KEYS.OT_CLAIMS, updated);
       return updated;
+    });
+
+    // Sync to Supabase
+    SupabaseSync.syncUpdateOTClaim(id, {
+      status: 'approved',
+      approvedBy: approverId,
+      approverName: approverName,
+      approvedAt: new Date().toISOString()
     });
   }, []);
 
@@ -3081,6 +3094,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       });
       setToStorage(STORAGE_KEYS.OT_CLAIMS, updated);
       return updated;
+    });
+    // Sync to Supabase
+    SupabaseSync.syncUpdateOTClaim(id, {
+      status: 'paid',
+      paidAt: new Date().toISOString()
     });
   }, []);
 
@@ -3181,21 +3199,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       return updated;
     });
     // Sync to Supabase
-    getSupabaseClient()?.from('disciplinary_actions').insert({
-      id: newAction.id,
-      staff_id: newAction.staffId,
-      staff_name: newAction.staffName,
-      type: newAction.type,
-      reason: newAction.reason,
-      details: newAction.details,
-      issued_by: newAction.issuedBy,
-      issued_by_name: newAction.issuedByName,
-      issued_at: newAction.issuedAt,
-      acknowledged_at: newAction.acknowledgedAt,
-      created_at: newAction.createdAt,
-    }).then(({ error }: { error: Error | null }) => {
-      if (error) console.error('[Supabase] Failed to insert disciplinary action:', error);
-    });
+    SupabaseSync.syncAddDisciplinaryAction(newAction);
   }, []);
 
   const updateDisciplinaryAction = useCallback((id: string, updates: Partial<DisciplinaryAction>) => {
@@ -3205,16 +3209,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       return updated;
     });
     // Sync to Supabase
-    const snakeCaseUpdates: Record<string, unknown> = {};
-    if (updates.staffId !== undefined) snakeCaseUpdates.staff_id = updates.staffId;
-    if (updates.staffName !== undefined) snakeCaseUpdates.staff_name = updates.staffName;
-    if (updates.type !== undefined) snakeCaseUpdates.type = updates.type;
-    if (updates.reason !== undefined) snakeCaseUpdates.reason = updates.reason;
-    if (updates.details !== undefined) snakeCaseUpdates.details = updates.details;
-    if (updates.acknowledgedAt !== undefined) snakeCaseUpdates.acknowledged_at = updates.acknowledgedAt;
-    getSupabaseClient().from('disciplinary_actions').update(snakeCaseUpdates).eq('id', id).then(({ error }: { error: Error | null }) => {
-      if (error) console.error('[Supabase] Failed to update disciplinary action:', error);
-    });
+    SupabaseSync.syncUpdateDisciplinaryAction(id, updates);
   }, []);
 
   const deleteDisciplinaryAction = useCallback((id: string) => {
@@ -3224,9 +3219,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       return updated;
     });
     // Sync to Supabase
-    getSupabaseClient().from('disciplinary_actions').delete().eq('id', id).then(({ error }: { error: Error | null }) => {
-      if (error) console.error('[Supabase] Failed to delete disciplinary action:', error);
-    });
+    SupabaseSync.syncDeleteDisciplinaryAction(id);
   }, []);
 
   const getStaffDisciplinaryActions = useCallback((staffId: string): DisciplinaryAction[] => {
@@ -3268,23 +3261,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       return updated;
     });
     // Sync to Supabase
-    getSupabaseClient()?.from('staff_training').insert({
-      id: newTraining.id,
-      staff_id: newTraining.staffId,
-      staff_name: newTraining.staffName,
-      course_name: newTraining.courseName,
-      provider: newTraining.provider,
-      category: newTraining.category,
-      scheduled_date: newTraining.scheduledDate,
-      completed_at: newTraining.completedAt,
-      expires_at: newTraining.expiresAt,
-      certificate_number: newTraining.certificateNumber,
-      notes: newTraining.notes,
-      status: newTraining.status,
-      created_at: newTraining.createdAt,
-    }).then(({ error }: { error: Error | null }) => {
-      if (error) console.error('[Supabase] Failed to insert staff training:', error);
-    });
+    SupabaseSync.syncAddStaffTraining(newTraining);
   }, []);
 
   const updateStaffTraining = useCallback((id: string, updates: Partial<StaffTraining>) => {
@@ -3294,21 +3271,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       return updated;
     });
     // Sync to Supabase
-    const snakeCaseUpdates: Record<string, unknown> = {};
-    if (updates.staffId !== undefined) snakeCaseUpdates.staff_id = updates.staffId;
-    if (updates.staffName !== undefined) snakeCaseUpdates.staff_name = updates.staffName;
-    if (updates.courseName !== undefined) snakeCaseUpdates.course_name = updates.courseName;
-    if (updates.provider !== undefined) snakeCaseUpdates.provider = updates.provider;
-    if (updates.category !== undefined) snakeCaseUpdates.category = updates.category;
-    if (updates.scheduledDate !== undefined) snakeCaseUpdates.scheduled_date = updates.scheduledDate;
-    if (updates.completedAt !== undefined) snakeCaseUpdates.completed_at = updates.completedAt;
-    if (updates.expiresAt !== undefined) snakeCaseUpdates.expires_at = updates.expiresAt;
-    if (updates.certificateNumber !== undefined) snakeCaseUpdates.certificate_number = updates.certificateNumber;
-    if (updates.notes !== undefined) snakeCaseUpdates.notes = updates.notes;
-    if (updates.status !== undefined) snakeCaseUpdates.status = updates.status;
-    getSupabaseClient()?.from('staff_training').update(snakeCaseUpdates).eq('id', id).then(({ error }: { error: Error | null }) => {
-      if (error) console.error('[Supabase] Failed to update staff training:', error);
-    });
+    SupabaseSync.syncUpdateStaffTraining(id, updates);
   }, []);
 
   const deleteStaffTraining = useCallback((id: string) => {
@@ -3317,9 +3280,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       setToStorage(STORAGE_KEYS.STAFF_TRAINING, updated);
       return updated;
     });
-    getSupabaseClient()?.from('staff_training').delete().eq('id', id).then(({ error }: { error: Error | null }) => {
-      if (error) console.error('[Supabase] Failed to delete staff training:', error);
-    });
+    SupabaseSync.syncDeleteStaffTraining(id);
   }, []);
 
   const getStaffTrainingRecords = useCallback((staffId: string): StaffTraining[] => {
@@ -3375,20 +3336,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       return updated;
     });
     // Sync to Supabase
-    getSupabaseClient()?.from('staff_documents').insert({
-      id: newDoc.id,
-      staff_id: newDoc.staffId,
-      staff_name: newDoc.staffName,
-      type: newDoc.type,
-      name: newDoc.name,
-      description: newDoc.description,
-      url: newDoc.url,
-      expiry_date: newDoc.expiryDate,
-      uploaded_at: newDoc.uploadedAt,
-      created_at: newDoc.createdAt,
-    }).then(({ error }: { error: Error | null }) => {
-      if (error) console.error('[Supabase] Failed to insert staff document:', error);
-    });
+    SupabaseSync.syncAddStaffDocument(newDoc);
   }, []);
 
   const updateStaffDocument = useCallback((id: string, updates: Partial<StaffDocument>) => {
@@ -3398,17 +3346,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       return updated;
     });
     // Sync to Supabase
-    const snakeCaseUpdates: Record<string, unknown> = {};
-    if (updates.staffId !== undefined) snakeCaseUpdates.staff_id = updates.staffId;
-    if (updates.staffName !== undefined) snakeCaseUpdates.staff_name = updates.staffName;
-    if (updates.type !== undefined) snakeCaseUpdates.type = updates.type;
-    if (updates.name !== undefined) snakeCaseUpdates.name = updates.name;
-    if (updates.description !== undefined) snakeCaseUpdates.description = updates.description;
-    if (updates.url !== undefined) snakeCaseUpdates.url = updates.url;
-    if (updates.expiryDate !== undefined) snakeCaseUpdates.expiry_date = updates.expiryDate;
-    getSupabaseClient()?.from('staff_documents').update(snakeCaseUpdates).eq('id', id).then(({ error }: { error: Error | null }) => {
-      if (error) console.error('[Supabase] Failed to update staff document:', error);
-    });
+    SupabaseSync.syncUpdateStaffDocument(id, updates);
   }, []);
 
   const deleteStaffDocument = useCallback((id: string) => {
@@ -3417,9 +3355,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       setToStorage(STORAGE_KEYS.STAFF_DOCUMENTS, updated);
       return updated;
     });
-    getSupabaseClient()?.from('staff_documents').delete().eq('id', id).then(({ error }: { error: Error | null }) => {
-      if (error) console.error('[Supabase] Failed to delete staff document:', error);
-    });
+    SupabaseSync.syncDeleteStaffDocument(id);
   }, []);
 
   const getStaffDocuments = useCallback((staffId: string): StaffDocument[] => {
@@ -3470,31 +3406,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       return updated;
     });
     // Sync to Supabase
-    getSupabaseClient()?.from('performance_reviews').insert({
-      id: newReview.id,
-      staff_id: newReview.staffId,
-      staff_name: newReview.staffName,
-      reviewer_id: newReview.reviewerId,
-      reviewer_name: newReview.reviewerName,
-      period: newReview.period,
-      period_start: newReview.periodStart,
-      period_end: newReview.periodEnd,
-      overall_rating: newReview.overallRating,
-      punctuality: newReview.punctuality,
-      teamwork: newReview.teamwork,
-      productivity: newReview.productivity,
-      communication: newReview.communication,
-      initiative: newReview.initiative,
-      strengths: newReview.strengths,
-      improvements: newReview.improvements,
-      goals: newReview.goals,
-      comments: newReview.comments,
-      status: newReview.status,
-      acknowledged_at: newReview.acknowledgedAt,
-      created_at: newReview.createdAt,
-    }).then(({ error }: { error: Error | null }) => {
-      if (error) console.error('[Supabase] Failed to insert performance review:', error);
-    });
+    SupabaseSync.syncAddPerformanceReview(newReview);
   }, []);
 
   const updatePerformanceReview = useCallback((id: string, updates: Partial<PerformanceReview>) => {

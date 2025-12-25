@@ -2529,3 +2529,198 @@ export async function incrementPromoUsageCount(promoCodeId: string) {
     .update({ usage_count: newCount })
     .eq('id', promoCodeId);
 }
+
+// ============ PERFORMANCE REVIEWS OPERATIONS ============
+
+export async function insertPerformanceReview(review: any) {
+  const supabase = getSupabaseClient();
+  if (!supabase) throw new Error('Supabase not connected');
+
+  const snakeCasedReview = toSnakeCase(review);
+
+  // @ts-ignore - Type conversion handled at runtime
+  const { data, error } = await supabase
+    .from('performance_reviews')
+    .insert(snakeCasedReview)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return toCamelCase(data);
+}
+
+// ============ OT CLAIMS OPERATIONS ============
+
+export async function insertOTClaim(claim: any) {
+  const supabase = getSupabaseClient();
+  if (!supabase) throw new Error('Supabase not connected');
+
+  const snakeCasedClaim = toSnakeCase(claim);
+
+  // @ts-ignore - Type conversion handled at runtime
+  const { data, error } = await supabase
+    .from('ot_claims')
+    .insert(snakeCasedClaim)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return toCamelCase(data);
+}
+
+export async function updateOTClaim(id: string, updates: any) {
+  const supabase = getSupabaseClient();
+  if (!supabase) throw new Error('Supabase not connected');
+
+  // @ts-ignore - Type conversion handled at runtime
+  const { data, error } = await supabase
+    .from('ot_claims')
+    .update(toSnakeCase(updates))
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return toCamelCase(data);
+}
+
+// ============ DISCIPLINARY ACTIONS OPERATIONS ============
+
+export async function insertDisciplinaryAction(action: any) {
+  const supabase = getSupabaseClient();
+  if (!supabase) throw new Error('Supabase not connected');
+
+  const snakeCasedAction = toSnakeCase(action);
+
+  // @ts-ignore
+  const { data, error } = await supabase
+    .from('disciplinary_actions')
+    .insert(snakeCasedAction)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return toCamelCase(data);
+}
+
+export async function updateDisciplinaryAction(id: string, updates: any) {
+  const supabase = getSupabaseClient();
+  if (!supabase) throw new Error('Supabase not connected');
+
+  // @ts-ignore
+  const { data, error } = await supabase
+    .from('disciplinary_actions')
+    .update(toSnakeCase(updates))
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return toCamelCase(data);
+}
+
+export async function deleteDisciplinaryAction(id: string) {
+  const supabase = getSupabaseClient();
+  if (!supabase) throw new Error('Supabase not connected');
+
+  const { error } = await supabase
+    .from('disciplinary_actions')
+    .delete()
+    .eq('id', id);
+
+  if (error) throw error;
+}
+
+// ============ STAFF TRAINING OPERATIONS ============
+
+export async function insertStaffTraining(training: any) {
+  const supabase = getSupabaseClient();
+  if (!supabase) throw new Error('Supabase not connected');
+
+  const snakeCasedTraining = toSnakeCase(training);
+
+  // @ts-ignore
+  const { data, error } = await supabase
+    .from('staff_training')
+    .insert(snakeCasedTraining)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return toCamelCase(data);
+}
+
+export async function updateStaffTraining(id: string, updates: any) {
+  const supabase = getSupabaseClient();
+  if (!supabase) throw new Error('Supabase not connected');
+
+  // @ts-ignore
+  const { data, error } = await supabase
+    .from('staff_training')
+    .update(toSnakeCase(updates))
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return toCamelCase(data);
+}
+
+export async function deleteStaffTraining(id: string) {
+  const supabase = getSupabaseClient();
+  if (!supabase) throw new Error('Supabase not connected');
+
+  const { error } = await supabase
+    .from('staff_training')
+    .delete()
+    .eq('id', id);
+
+  if (error) throw error;
+}
+
+// ============ STAFF DOCUMENTS OPERATIONS ============
+
+export async function insertStaffDocument(doc: any) {
+  const supabase = getSupabaseClient();
+  if (!supabase) throw new Error('Supabase not connected');
+
+  const snakeCasedDoc = toSnakeCase(doc);
+
+  // @ts-ignore
+  const { data, error } = await supabase
+    .from('staff_documents')
+    .insert(snakeCasedDoc)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return toCamelCase(data);
+}
+
+export async function updateStaffDocument(id: string, updates: any) {
+  const supabase = getSupabaseClient();
+  if (!supabase) throw new Error('Supabase not connected');
+
+  // @ts-ignore
+  const { data, error } = await supabase
+    .from('staff_documents')
+    .update(toSnakeCase(updates))
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return toCamelCase(data);
+}
+
+export async function deleteStaffDocument(id: string) {
+  const supabase = getSupabaseClient();
+  if (!supabase) throw new Error('Supabase not connected');
+
+  const { error } = await supabase
+    .from('staff_documents')
+    .delete()
+    .eq('id', id);
+
+  if (error) throw error;
+}

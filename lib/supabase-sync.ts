@@ -1344,7 +1344,52 @@ export async function syncUpdateClaimRequest(id: string, updates: any) {
     return null;
   }
 }
+export async function syncAddPerformanceReview(review: any) {
+  if (!isSupabaseSyncEnabled()) return null;
 
+  try {
+    const savedReview = await ops.insertPerformanceReview(review);
+    return savedReview;
+  } catch (error) {
+    console.error('Failed to sync performance review to Supabase:', error);
+    // Offline Queue
+    addToSyncQueue({ id: review.id, table: 'performance_reviews', action: 'CREATE', payload: review });
+    console.log('Saved to offline queue (Performance Review)');
+    return null;
+  }
+}
+
+// ============ OT CLAIMS SYNC ============
+
+export async function syncAddOTClaim(claim: any) {
+  if (!isSupabaseSyncEnabled()) return null;
+
+  try {
+    const savedClaim = await ops.insertOTClaim(claim);
+    return savedClaim;
+  } catch (error) {
+    console.error('Failed to sync OT claim to Supabase:', error);
+    // Offline Queue
+    addToSyncQueue({ id: claim.id, table: 'ot_claims', action: 'CREATE', payload: claim });
+    console.log('Saved to offline queue (OT Claim)');
+    return null;
+  }
+}
+
+export async function syncUpdateOTClaim(id: string, updates: any) {
+  if (!isSupabaseSyncEnabled()) return null;
+
+  try {
+    const updatedClaim = await ops.updateOTClaim(id, updates);
+    return updatedClaim;
+  } catch (error) {
+    console.error('Failed to sync OT claim update to Supabase:', error);
+    // Offline Queue
+    addToSyncQueue({ id: id, table: 'ot_claims', action: 'UPDATE', payload: updates });
+    console.log('Saved to offline queue (OT Claim Update)');
+    return null;
+  }
+}
 export async function loadClaimRequestsFromSupabase(staffId?: string) {
   if (!isSupabaseSyncEnabled()) return [];
 
@@ -1727,6 +1772,117 @@ export async function clockIn(data: any) {
 export async function clockOut(data: any) {
   if (!isSupabaseSyncEnabled()) return { success: false, error: 'Supabase disabled', data: null };
   return await attendanceOps.clockOut(data);
+}
+
+// ============ DISCIPLINARY ACTIONS SYNC ============
+
+export async function syncAddDisciplinaryAction(action: any) {
+  if (!isSupabaseSyncEnabled()) return null;
+
+  try {
+    return await ops.insertDisciplinaryAction(action);
+  } catch (error) {
+    console.error('Failed to sync disciplinary action to Supabase:', error);
+    addToSyncQueue({ id: action.id, table: 'disciplinary_actions', action: 'CREATE', payload: action });
+    return null;
+  }
+}
+
+export async function syncUpdateDisciplinaryAction(id: string, updates: any) {
+  if (!isSupabaseSyncEnabled()) return null;
+
+  try {
+    return await ops.updateDisciplinaryAction(id, updates);
+  } catch (error) {
+    console.error('Failed to sync disciplinary action update:', error);
+    addToSyncQueue({ id, table: 'disciplinary_actions', action: 'UPDATE', payload: updates });
+    return null;
+  }
+}
+
+export async function syncDeleteDisciplinaryAction(id: string) {
+  if (!isSupabaseSyncEnabled()) return null;
+
+  try {
+    await ops.deleteDisciplinaryAction(id);
+  } catch (error) {
+    console.error('Failed to sync delete disciplinary action:', error);
+    addToSyncQueue({ id, table: 'disciplinary_actions', action: 'DELETE', payload: {} });
+  }
+}
+
+// ============ STAFF TRAINING SYNC ============
+
+export async function syncAddStaffTraining(training: any) {
+  if (!isSupabaseSyncEnabled()) return null;
+
+  try {
+    return await ops.insertStaffTraining(training);
+  } catch (error) {
+    console.error('Failed to sync staff training to Supabase:', error);
+    addToSyncQueue({ id: training.id, table: 'staff_training', action: 'CREATE', payload: training });
+    return null;
+  }
+}
+
+export async function syncUpdateStaffTraining(id: string, updates: any) {
+  if (!isSupabaseSyncEnabled()) return null;
+
+  try {
+    return await ops.updateStaffTraining(id, updates);
+  } catch (error) {
+    console.error('Failed to sync staff training update:', error);
+    addToSyncQueue({ id, table: 'staff_training', action: 'UPDATE', payload: updates });
+    return null;
+  }
+}
+
+export async function syncDeleteStaffTraining(id: string) {
+  if (!isSupabaseSyncEnabled()) return null;
+
+  try {
+    await ops.deleteStaffTraining(id);
+  } catch (error) {
+    console.error('Failed to sync delete staff training:', error);
+    addToSyncQueue({ id, table: 'staff_training', action: 'DELETE', payload: {} });
+  }
+}
+
+// ============ STAFF DOCUMENTS SYNC ============
+
+export async function syncAddStaffDocument(doc: any) {
+  if (!isSupabaseSyncEnabled()) return null;
+
+  try {
+    return await ops.insertStaffDocument(doc);
+  } catch (error) {
+    console.error('Failed to sync staff document to Supabase:', error);
+    addToSyncQueue({ id: doc.id, table: 'staff_documents', action: 'CREATE', payload: doc });
+    return null;
+  }
+}
+
+export async function syncUpdateStaffDocument(id: string, updates: any) {
+  if (!isSupabaseSyncEnabled()) return null;
+
+  try {
+    return await ops.updateStaffDocument(id, updates);
+  } catch (error) {
+    console.error('Failed to sync staff document update:', error);
+    addToSyncQueue({ id, table: 'staff_documents', action: 'UPDATE', payload: updates });
+    return null;
+  }
+}
+
+export async function syncDeleteStaffDocument(id: string) {
+  if (!isSupabaseSyncEnabled()) return null;
+
+  try {
+    await ops.deleteStaffDocument(id);
+  } catch (error) {
+    console.error('Failed to sync delete staff document:', error);
+    addToSyncQueue({ id, table: 'staff_documents', action: 'DELETE', payload: {} });
+  }
 }
 
 

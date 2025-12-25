@@ -11,7 +11,12 @@ export type SyncTable =
     | 'suppliers'
     | 'promotions'
     | 'loyalty_transactions'
-    | 'promo_usages';
+    | 'promo_usages'
+    | 'performance_reviews'
+    | 'ot_claims'
+    | 'disciplinary_actions'
+    | 'staff_training'
+    | 'staff_documents';
 
 export interface SyncItem {
     id: string; // UUID of the item being acted on
