@@ -30,7 +30,8 @@ export default function SalaryAdvancePage() {
         addSalaryAdvance,
         getStaffSalaryAdvances,
         attendance,
-        isInitialized
+        isInitialized,
+        staff
     } = useStaffPortal();
 
     const [showAddModal, setShowAddModal] = useState(false);
@@ -66,7 +67,8 @@ export default function SalaryAdvancePage() {
         const actualDaysWorked = daysWorked > 0 ? daysWorked : Math.max(1, estimatedWorkDays);
 
         // Calculate daily rate from monthly salary
-        const monthlySalary = currentStaff.salary || 1500; // Default BND 1500 if not set
+        const fullProfile = staff.find(s => s.id === currentStaff.id);
+        const monthlySalary = fullProfile?.baseSalary || 1500; // Default BND 1500 if not set
         const rate = monthlySalary / WORKING_DAYS_PER_MONTH;
 
         // Calculate earned so far
@@ -92,7 +94,7 @@ export default function SalaryAdvancePage() {
             earnedSoFar: earned,
             alreadyAdvanced: alreadyAdvancedAmt
         };
-    }, [currentStaff, attendance, getStaffSalaryAdvances, salaryAdvances]);
+    }, [currentStaff, attendance, getStaffSalaryAdvances, salaryAdvances, staff]);
 
     // Get current staff's advances
     const myAdvances = useMemo(() => {
