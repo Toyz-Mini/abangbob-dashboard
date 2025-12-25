@@ -167,19 +167,22 @@ export async function insertStaff(staff: any) {
     join_date: staff.joinDate,
     profile_photo_url: staff.profilePhotoUrl,
     outlet_id: staff.outletId,
+    // New Columns
+    date_of_birth: staff.dateOfBirth,
+    gender: staff.gender,
+    marital_status: staff.maritalStatus,
+    address: staff.address,
+    nationality: staff.nationality,
+    religion: staff.religion,
+    position: staff.position,
+    department: staff.department,
+    bank_details: staff.bankDetails,
+    emergency_contact: staff.emergencyContact,
   };
 
   // Everything else goes to extended_data
   const extendedFields = {
     employeeNumber: staff.employeeNumber,
-    dateOfBirth: staff.dateOfBirth,
-    gender: staff.gender,
-    maritalStatus: staff.maritalStatus,
-    nationality: staff.nationality,
-    religion: staff.religion,
-    address: staff.address,
-    position: staff.position,
-    department: staff.department,
     contractEndDate: staff.contractEndDate,
     probationEndDate: staff.probationEndDate,
     reportingTo: staff.reportingTo,
@@ -191,9 +194,7 @@ export async function insertStaff(staff: any) {
     allowances: staff.allowances,
     fixedDeductions: staff.fixedDeductions,
     paymentFrequency: staff.paymentFrequency,
-    bankDetails: staff.bankDetails,
     statutoryContributions: staff.statutoryContributions,
-    emergencyContact: staff.emergencyContact,
     leaveEntitlement: staff.leaveEntitlement,
     accessLevel: staff.accessLevel,
     permissions: staff.permissions,
@@ -246,7 +247,9 @@ export async function updateStaff(id: string, updates: any) {
 
   const baseFieldsList = [
     'name', 'email', 'phone', 'role', 'status', 'pin', 'hourlyRate',
-    'icNumber', 'employmentType', 'joinDate', 'profilePhotoUrl', 'outletId'
+    'icNumber', 'employmentType', 'joinDate', 'profilePhotoUrl', 'outletId',
+    'dateOfBirth', 'gender', 'maritalStatus', 'address', 'nationality', 'religion',
+    'position', 'department', 'bankDetails', 'emergencyContact'
   ];
 
   // Sort updates into base and extended
