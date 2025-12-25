@@ -1430,22 +1430,52 @@ export default function POSPage() {
                   if (checkoutStep === 1) {
                     setCheckoutStep(2);
                   } else if (checkoutStep === 2) {
+                    // Validate phone number (at least 7 digits after +673)
+                    const phoneDigits = customerPhone.replace(/\D/g, '');
+                    if (phoneDigits.length < 10) { // +673 = 3 digits + at least 7 local digits
+                      showToast('Sila masukkan nombor telefon yang sah', 'error');
+                      return;
+                    }
                     setCheckoutStep(3);
                   } else {
                     proceedToPayment();
                   }
                 }}
                 disabled={isProcessing}
-                className={`flex-1 py-3 rounded-xl font-bold text-lg shadow-lg flex items-center justify-center gap-2 transition-all ${isProcessing ? 'bg-gray-300 cursor-not-allowed text-gray-500' : 'bg-primary text-white hover:bg-primary-dark hover:shadow-primary/30'}`}
+                style={{
+                  flex: 1,
+                  padding: '0.75rem',
+                  borderRadius: '0.75rem',
+                  fontWeight: 700,
+                  fontSize: '1rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.5rem',
+                  backgroundColor: isProcessing ? '#d1d5db' : 'var(--primary)',
+                  color: isProcessing ? '#6b7280' : 'white',
+                  border: 'none',
+                  cursor: isProcessing ? 'not-allowed' : 'pointer',
+                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                }}
               >
                 {isProcessing ? (
-                  <><LoadingSpinner size="sm" /> Memproses...</>
+                  <>
+                    <LoadingSpinner size="sm" />
+                    <span>Memproses...</span>
+                  </>
+                ) : checkoutStep === 3 ? (
+                  <>
+                    <span>Bayar</span>
+                    <span style={{ backgroundColor: 'rgba(255,255,255,0.2)', padding: '0.25rem 0.5rem', borderRadius: '0.25rem', fontSize: '0.875rem' }}>
+                      BND {finalPayable.toFixed(2)}
+                    </span>
+                  </>
                 ) : (
-                  checkoutStep === 3 ? (
-                    <span className="flex items-center gap-2">Bayar <span className="bg-white/20 px-2 rounded text-sm">BND {finalPayable.toFixed(2)}</span></span>
-                  ) : (
-                    <span className="flex items-center gap-2">Seterusnya <ChevronRight size={20} /></span>
-                  )
+                  <>
+                    <span>Seterusnya</span>
+                    <ChevronRight size={20} />
+                  </>
                 )}
               </button>
             </div>
