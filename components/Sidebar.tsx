@@ -37,6 +37,7 @@ import {
   Clock,
   ChevronDown,
   ChevronRight,
+  AlertTriangle,
   type LucideIcon
 } from 'lucide-react';
 
@@ -108,6 +109,7 @@ const navGroupsConfig: NavGroup[] = [
           { href: '/hr/refund-approvals', labelKey: 'nav.refundApprovals', icon: RefreshCw, showBadge: true },
         ]
       },
+      { href: '/hr/disciplinary', labelKey: 'nav.disciplinary', icon: AlertTriangle },
       { href: '/hr/leave-calendar', labelKey: 'nav.leaveCalendar', icon: Calendar, tourId: 'leave' },
       { href: '/hr/checklist-config', labelKey: 'nav.checklistConfig', icon: CheckSquare },
     ]

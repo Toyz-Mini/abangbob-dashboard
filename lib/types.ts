@@ -999,6 +999,24 @@ export interface SalaryAdvance {
   createdAt: string;
 }
 
+// ==================== DISCIPLINARY ACTION TYPES ====================
+
+export type DisciplinaryActionType = 'verbal_warning' | 'written_warning' | 'final_warning' | 'suspension' | 'termination';
+
+export interface DisciplinaryAction {
+  id: string;
+  staffId: string;
+  staffName: string;
+  type: DisciplinaryActionType;
+  reason: string;
+  details?: string;
+  issuedBy: string;
+  issuedByName: string;
+  issuedAt: string;
+  acknowledgedAt?: string;  // When staff acknowledged the warning
+  createdAt: string;
+}
+
 export interface CustomerReview {
   id: string;
   orderId: string;

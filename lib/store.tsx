@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
-import { StockItem, StaffProfile, AttendanceRecord, Order, ProductionLog, DeliveryOrder, Expense, DailyCashFlow, Customer, Supplier, PurchaseOrder, Recipe, Shift, ScheduleEntry, Promotion, Notification, MenuItem, ModifierGroup, ModifierOption, StaffKPI, LeaveRecord, TrainingRecord, OTRecord, CustomerReview, KPIMetrics, ChecklistItemTemplate, ChecklistCompletion, LeaveBalance, LeaveRequest, ClaimRequest, StaffRequest, Announcement, OrderHistoryItem, VoidRefundRequest, VoidRefundType, OrderHistoryFilters, RefundItem, OilTracker, OilChangeRequest, OilActionHistory, OilActionType, Equipment, MaintenanceSchedule, MaintenanceLog, WasteLog, MenuCategory, PaymentMethodConfig, TaxRate, CashRegister, InventoryLog, StockSuggestion, DEFAULT_MENU_CATEGORIES, DEFAULT_PAYMENT_METHODS, DEFAULT_TAX_RATES, OTClaim, SalaryAdvance } from './types';
+import { StockItem, StaffProfile, AttendanceRecord, Order, ProductionLog, DeliveryOrder, Expense, DailyCashFlow, Customer, Supplier, PurchaseOrder, Recipe, Shift, ScheduleEntry, Promotion, Notification, MenuItem, ModifierGroup, ModifierOption, StaffKPI, LeaveRecord, TrainingRecord, OTRecord, CustomerReview, KPIMetrics, ChecklistItemTemplate, ChecklistCompletion, LeaveBalance, LeaveRequest, ClaimRequest, StaffRequest, Announcement, OrderHistoryItem, VoidRefundRequest, VoidRefundType, OrderHistoryFilters, RefundItem, OilTracker, OilChangeRequest, OilActionHistory, OilActionType, Equipment, MaintenanceSchedule, MaintenanceLog, WasteLog, MenuCategory, PaymentMethodConfig, TaxRate, CashRegister, InventoryLog, StockSuggestion, DEFAULT_MENU_CATEGORIES, DEFAULT_PAYMENT_METHODS, DEFAULT_TAX_RATES, OTClaim, SalaryAdvance, DisciplinaryAction } from './types';
 import { MOCK_ORDER_HISTORY, MOCK_VOID_REFUND_REQUESTS, ORDER_HISTORY_STORAGE_KEYS } from './order-history-data';
 import { MOCK_STOCK } from './inventory-data';
 import { MOCK_STAFF, MOCK_ATTENDANCE, MOCK_PAYROLL } from './hr-data';
@@ -120,6 +120,8 @@ const STORAGE_KEYS = {
   OT_CLAIMS: 'abangbob_ot_claims',
   // Salary Advances
   SALARY_ADVANCES: 'abangbob_salary_advances',
+  // Disciplinary Actions
+  DISCIPLINARY_ACTIONS: 'abangbob_disciplinary_actions',
 };
 
 // Inventory log type for tracking stock changes
@@ -339,6 +341,14 @@ interface StoreState {
   getPendingSalaryAdvances: () => SalaryAdvance[];
   getApprovedSalaryAdvances: (staffId?: string) => SalaryAdvance[];
 
+  // HR - Disciplinary Actions
+  disciplinaryActions: DisciplinaryAction[];
+  addDisciplinaryAction: (action: Omit<DisciplinaryAction, 'id' | 'createdAt'>) => void;
+  updateDisciplinaryAction: (id: string, updates: Partial<DisciplinaryAction>) => void;
+  deleteDisciplinaryAction: (id: string) => void;
+  getStaffDisciplinaryActions: (staffId: string) => DisciplinaryAction[];
+  refreshDisciplinaryActions: () => Promise<void>;
+
   // Staff Portal - General Requests
   staffRequests: StaffRequest[];
   addStaffRequest: (request: Omit<StaffRequest, 'id' | 'createdAt'>) => void;
@@ -525,6 +535,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [claimRequests, setClaimRequests] = useState<ClaimRequest[]>([]);
   const [otClaims, setOTClaims] = useState<OTClaim[]>([]);
   const [salaryAdvances, setSalaryAdvances] = useState<SalaryAdvance[]>([]);
+  const [disciplinaryActions, setDisciplinaryActions] = useState<DisciplinaryAction[]>([]);
   const [staffRequests, setStaffRequests] = useState<StaffRequest[]>([]);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
 
@@ -733,6 +744,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       setClaimRequests(supabaseConnected && supabaseData.claimRequests?.length > 0 ? supabaseData.claimRequests : getFromStorage(STORAGE_KEYS.CLAIM_REQUESTS, MOCK_CLAIM_REQUESTS));
       setOTClaims(getFromStorage(STORAGE_KEYS.OT_CLAIMS, []));
       setSalaryAdvances(getFromStorage(STORAGE_KEYS.SALARY_ADVANCES, []));
+      setDisciplinaryActions(getFromStorage(STORAGE_KEYS.DISCIPLINARY_ACTIONS, []));
       setStaffRequests(supabaseConnected && supabaseData.staffRequests?.length > 0 ? supabaseData.staffRequests : getFromStorage(STORAGE_KEYS.STAFF_REQUESTS, MOCK_STAFF_REQUESTS));
       setAnnouncements(supabaseConnected && supabaseData.announcements?.length > 0 ? supabaseData.announcements : getFromStorage(STORAGE_KEYS.ANNOUNCEMENTS, MOCK_ANNOUNCEMENTS));
 
@@ -3053,6 +3065,93 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     );
   }, [salaryAdvances]);
 
+  // ==================== Disciplinary Action Functions ====================
+
+  const addDisciplinaryAction = useCallback((action: Omit<DisciplinaryAction, 'id' | 'createdAt'>) => {
+    const newAction: DisciplinaryAction = {
+      ...action,
+      id: `disc_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      createdAt: new Date().toISOString(),
+    };
+    setDisciplinaryActions(prev => {
+      const updated = [newAction, ...prev];
+      setToStorage(STORAGE_KEYS.DISCIPLINARY_ACTIONS, updated);
+      return updated;
+    });
+    // Sync to Supabase
+    getSupabaseClient().from('disciplinary_actions').insert({
+      id: newAction.id,
+      staff_id: newAction.staffId,
+      staff_name: newAction.staffName,
+      type: newAction.type,
+      reason: newAction.reason,
+      details: newAction.details,
+      issued_by: newAction.issuedBy,
+      issued_by_name: newAction.issuedByName,
+      issued_at: newAction.issuedAt,
+      acknowledged_at: newAction.acknowledgedAt,
+      created_at: newAction.createdAt,
+    }).then(({ error }: { error: Error | null }) => {
+      if (error) console.error('[Supabase] Failed to insert disciplinary action:', error);
+    });
+  }, []);
+
+  const updateDisciplinaryAction = useCallback((id: string, updates: Partial<DisciplinaryAction>) => {
+    setDisciplinaryActions(prev => {
+      const updated = prev.map(a => a.id === id ? { ...a, ...updates } : a);
+      setToStorage(STORAGE_KEYS.DISCIPLINARY_ACTIONS, updated);
+      return updated;
+    });
+    // Sync to Supabase
+    const snakeCaseUpdates: Record<string, unknown> = {};
+    if (updates.staffId !== undefined) snakeCaseUpdates.staff_id = updates.staffId;
+    if (updates.staffName !== undefined) snakeCaseUpdates.staff_name = updates.staffName;
+    if (updates.type !== undefined) snakeCaseUpdates.type = updates.type;
+    if (updates.reason !== undefined) snakeCaseUpdates.reason = updates.reason;
+    if (updates.details !== undefined) snakeCaseUpdates.details = updates.details;
+    if (updates.acknowledgedAt !== undefined) snakeCaseUpdates.acknowledged_at = updates.acknowledgedAt;
+    getSupabaseClient().from('disciplinary_actions').update(snakeCaseUpdates).eq('id', id).then(({ error }: { error: Error | null }) => {
+      if (error) console.error('[Supabase] Failed to update disciplinary action:', error);
+    });
+  }, []);
+
+  const deleteDisciplinaryAction = useCallback((id: string) => {
+    setDisciplinaryActions(prev => {
+      const updated = prev.filter(a => a.id !== id);
+      setToStorage(STORAGE_KEYS.DISCIPLINARY_ACTIONS, updated);
+      return updated;
+    });
+    // Sync to Supabase
+    getSupabaseClient().from('disciplinary_actions').delete().eq('id', id).then(({ error }: { error: Error | null }) => {
+      if (error) console.error('[Supabase] Failed to delete disciplinary action:', error);
+    });
+  }, []);
+
+  const getStaffDisciplinaryActions = useCallback((staffId: string): DisciplinaryAction[] => {
+    return disciplinaryActions.filter(a => a.staffId === staffId);
+  }, [disciplinaryActions]);
+
+  const refreshDisciplinaryActions = useCallback(async () => {
+    const { data, error } = await getSupabaseClient().from('disciplinary_actions').select('*').order('created_at', { ascending: false });
+    if (!error && data) {
+      const mapped: DisciplinaryAction[] = data.map((row: Record<string, unknown>) => ({
+        id: row.id as string,
+        staffId: row.staff_id as string,
+        staffName: row.staff_name as string,
+        type: row.type as DisciplinaryAction['type'],
+        reason: row.reason as string,
+        details: row.details as string | undefined,
+        issuedBy: row.issued_by as string,
+        issuedByName: row.issued_by_name as string,
+        issuedAt: row.issued_at as string,
+        acknowledgedAt: row.acknowledged_at as string | undefined,
+        createdAt: row.created_at as string,
+      }));
+      setDisciplinaryActions(mapped);
+      setToStorage(STORAGE_KEYS.DISCIPLINARY_ACTIONS, mapped);
+    }
+  }, []);
+
   // Staff Portal - Staff Request actions
   const addStaffRequest = useCallback((request: Omit<StaffRequest, 'id' | 'createdAt'>) => {
     const newRequest: StaffRequest = {
@@ -4300,6 +4399,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     getStaffSalaryAdvances,
     getPendingSalaryAdvances,
     getApprovedSalaryAdvances,
+
+    // HR - Disciplinary Actions
+    disciplinaryActions,
+    addDisciplinaryAction,
+    updateDisciplinaryAction,
+    deleteDisciplinaryAction,
+    getStaffDisciplinaryActions,
+    refreshDisciplinaryActions,
 
     // Staff Portal - General Requests
     staffRequests,
