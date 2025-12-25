@@ -27,7 +27,7 @@ const ShiftWizardModal = dynamic(() => import('@/components/cash-management/Shif
 const RegisterStatus = dynamic(() => import('@/components/cash-management/RegisterStatus'), { ssr: false });
 import POSMenuItem from '@/components/pos/POSMenuItem'; // Memoized Item
 
-import { ArrowLeft, UtensilsCrossed, Sandwich, Coffee, History, Printer, Clock, ChefHat, CheckCircle, ShoppingBag, Plus, Minus, X, Sparkles, AlertTriangle, User, DollarSign, CreditCard, QrCode, Wallet, WifiOff, RefreshCw, MessageCircle, Check, Globe, Send } from 'lucide-react';
+import { ArrowLeft, UtensilsCrossed, Sandwich, Coffee, History, Printer, Clock, ChefHat, CheckCircle, ShoppingBag, Plus, Minus, X, Sparkles, AlertTriangle, User, DollarSign, CreditCard, QrCode, Wallet, WifiOff, RefreshCw, MessageCircle, Check, Globe, Send, ChevronRight } from 'lucide-react';
 import { WhatsAppService } from '@/lib/services/whatsapp';
 import Modal from '@/components/Modal';
 import LoadingSpinner from '@/components/LoadingSpinner';
@@ -119,6 +119,7 @@ export default function POSPage() {
   const [discountPercent, setDiscountPercent] = useState(0);
   const [cashReceived, setCashReceived] = useState<number>(0);
   const [usePoints, setUsePoints] = useState(false); // Loyalty Redemption Toggle
+  const [checkoutStep, setCheckoutStep] = useState(1); // Wizard Step (1-3)
   const [receiptSettings, setReceiptSettings] = useState<ReceiptSettings>(DEFAULT_RECEIPT_SETTINGS);
   const receiptRef = useRef<HTMLDivElement>(null);
 
@@ -1192,297 +1193,259 @@ export default function POSPage() {
           subtitle={`Total Payable: BND ${finalPayable.toFixed(2)}`}
           maxWidth="500px"
         >
-          <div className="flex flex-col gap-6 no-scrollbar" style={{ maxHeight: '70vh', overflowY: 'auto', padding: '0.25rem' }}>
+          <div className="flex flex-col gap-4 no-scrollbar" style={{ maxHeight: '70vh', overflowY: 'auto', padding: '0.25rem' }}>
 
-            {/* Order Type Section */}
-            <div>
-              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 block">Order Type</label>
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  onClick={() => setOrderType('takeaway')}
-                  className={`relative p-3 rounded-lg border transition-all duration-200 flex flex-col items-center justify-center gap-1.5 ${orderType === 'takeaway'
-                    ? 'border-primary bg-primary/5 text-primary ring-1 ring-primary'
-                    : 'border-gray-200 bg-white hover:border-gray-300 text-gray-600'
-                    }`}
-                >
-                  <ShoppingBag size={20} />
-                  <span className="font-semibold text-sm">Takeaway</span>
-                  {orderType === 'takeaway' && <div className="absolute top-2 right-2 w-2 h-2 bg-primary rounded-full"></div>}
-                </button>
-                <button
-                  onClick={() => setOrderType('gomamam')}
-                  className={`relative p-3 rounded-lg border transition-all duration-200 flex flex-col items-center justify-center gap-1.5 ${orderType === 'gomamam'
-                    ? 'border-primary bg-primary/5 text-primary ring-1 ring-primary'
-                    : 'border-gray-200 bg-white hover:border-gray-300 text-gray-600'
-                    }`}
-                >
-                  <Globe size={20} />
-                  <span className="font-semibold text-sm">GoMamam</span>
-                  {orderType === 'gomamam' && <div className="absolute top-2 right-2 w-2 h-2 bg-primary rounded-full"></div>}
-                </button>
-              </div>
-            </div>
-
-            {/* Customer Selection Section */}
-            <div>
-              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 block">Customer Details</label>
-
-              <div className="space-y-3">
-                {/* Phone Input Group */}
-                <div className="flex rounded-lg border border-gray-300 shadow-sm overflow-hidden focus-within:ring-2 focus-within:ring-primary focus-within:border-primary">
-                  <select
-                    value={selectedCountry.dialCode}
-                    onChange={(e) => {
-                      const newCountry = countries.find(c => c.dialCode === e.target.value);
-                      if (newCountry) {
-                        setSelectedCountry(newCountry);
-                        const numberOnly = customerPhone.replace(selectedCountry.dialCode, '');
-                        const fullPhone = `${newCountry.dialCode}${numberOnly}`;
-                        setCustomerPhone(fullPhone);
-                        // Lookup logic
-                        const found = customers.find(c => c.phone === fullPhone);
-                        if (found) {
-                          setSelectedCustomer(found);
-                          setCustomerName(found.name);
-                        } else {
-                          setSelectedCustomer(null);
-                          setCustomerName('');
-                        }
-                      }
-                    }}
-                    className="appearance-none bg-gray-50 pl-3 pr-8 py-2.5 text-sm font-medium text-gray-700 border-r border-gray-300 focus:outline-none cursor-pointer hover:bg-gray-100 transition-colors"
-                    style={{ backgroundImage: 'none' }}
-                  >
-                    {countries.map((country) => (
-                      <option key={country.code} value={country.dialCode}>
-                        {country.flag} {country.dialCode}
-                      </option>
-                    ))}
-                  </select>
-                  <input
-                    type="tel"
-                    className="flex-1 min-w-0 px-3 py-2.5 text-gray-900 placeholder-gray-400 focus:outline-none text-sm font-mono"
-                    placeholder="888 8888"
-                    value={customerPhone.replace(selectedCountry.dialCode, '')}
-                    onChange={(e) => {
-                      const val = e.target.value.replace(/\D/g, '');
-                      const fullPhone = `${selectedCountry.dialCode}${val}`;
-                      setCustomerPhone(fullPhone);
-                      const found = customers.find(c => c.phone === fullPhone);
-                      if (found) {
-                        setSelectedCustomer(found);
-                        setCustomerName(found.name);
-                      } else if (selectedCustomer) {
-                        setSelectedCustomer(null);
-                        setCustomerName('');
-                      }
-                    }}
-                    onKeyDown={(e) => e.key === 'Enter' && customerPhone.length >= 8 && proceedToPayment()}
-                  />
-                </div>
-
-                {/* Member Found - Clean Alert Style */}
-                {selectedCustomer && (
-                  <div className="flex items-center justify-between p-3 bg-blue-50 border-l-4 border-blue-500 rounded-r-md">
-                    <div className="flex items-center gap-3">
-                      <User size={18} className="text-blue-600" />
-                      <div>
-                        <div className="text-sm font-medium text-blue-900">{selectedCustomer.name}</div>
-                        <div className="text-xs text-blue-700">{selectedCustomer.loyaltyPoints} Points</div>
-                      </div>
-                    </div>
-                    <span className="text-xs font-bold px-2 py-0.5 bg-blue-200 text-blue-800 rounded uppercase tracking-wider">
-                      {selectedCustomer.segment}
-                    </span>
-                  </div>
-                )}
-
-                {/* Name & Whatsapp */}
-                <div className="flex gap-3">
-                  <input
-                    type="text"
-                    className="flex-1 block w-full px-3 py-2 rounded-md border border-gray-300 shadow-sm placeholder-gray-400 focus:ring-primary focus:border-primary sm:text-sm"
-                    placeholder="Customer Name (Optional)"
-                    value={customerName}
-                    onChange={(e) => setCustomerName(e.target.value)}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setSendToWhatsapp(!sendToWhatsapp)}
-                    className={`flex items-center justify-center px-3 py-2 border rounded-md shadow-sm text-sm font-medium transition-colors ${sendToWhatsapp
-                      ? 'bg-green-50 border-green-200 text-green-700 hover:bg-green-100'
-                      : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
-                      }`}
-                    title="WhatsApp Receipt"
-                  >
-                    <MessageCircle size={18} className={sendToWhatsapp ? 'mr-1.5' : ''} />
-                    {sendToWhatsapp ? 'On' : <span className="sr-only">Off</span>}
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Payment Method Section */}
-            <div>
-              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 block">Payment Method</label>
-              <div className="grid grid-cols-2 gap-3">
-                {enabledPaymentMethods.map((pm) => (
-                  <button
-                    key={pm.id}
-                    onClick={() => setPaymentMethod(pm.code)}
-                    className={`relative p-3 rounded-lg border transition-all duration-200 flex flex-col items-center justify-center gap-1 min-h-[80px] ${paymentMethod === pm.code
-                      ? 'border-primary bg-primary/5 text-primary ring-1 ring-primary'
-                      : 'border-gray-200 bg-white hover:border-gray-300 text-gray-600'
-                      }`}
-                  >
-                    <div className="text-xl mb-0.5">{pm.icon}</div>
-                    <span className="font-medium text-sm text-center leading-tight">{pm.name}</span>
-                    {paymentMethod === pm.code && <div className="absolute top-2 right-2 w-2 h-2 bg-primary rounded-full"></div>}
-                  </button>
+            {/* Wizard Progress - Clean Dots */}
+            <div className="flex justify-center mb-4">
+              <div className="flex items-center gap-2">
+                {[1, 2, 3].map(step => (
+                  <div key={step} className={`transition-all duration-300 ${checkoutStep === step ? 'w-8 bg-primary h-2' : checkoutStep > step ? 'w-2 h-2 bg-primary/40' : 'w-2 h-2 bg-gray-200'} rounded-full`} />
                 ))}
               </div>
             </div>
 
-            {/* Loyalty Redemption - Clean Box */}
-            {selectedCustomer && selectedCustomer.loyaltyPoints > 0 && (
-              <div className="p-3 bg-gray-50 rounded-lg border border-gray-200 flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <Sparkles size={18} className="text-amber-500" />
-                  <div>
-                    <div className="text-sm font-medium text-gray-900">Redeem Points</div>
-                    <div className="text-xs text-gray-500">Available: {selectedCustomer.loyaltyPoints} (Max: ${maxRedemptionValue.toFixed(2)})</div>
-                  </div>
+            {/* Step 1: Order Type Selection */}
+            {checkoutStep === 1 && (
+              <div className="animate-fade-in space-y-4">
+                <div className="text-center mb-4">
+                  <h3 className="text-lg font-bold text-gray-800">Bagaimana pesanan ini?</h3>
+                  <p className="text-sm text-gray-500">Pilih jenis pesanan untuk teruskan</p>
                 </div>
-                <input
-                  type="checkbox"
-                  checked={usePoints}
-                  onChange={(e) => setUsePoints(e.target.checked)}
-                  className="h-5 w-5 text-primary focus:ring-primary border-gray-300 rounded"
-                />
+
+                <div className="grid grid-cols-2 gap-4">
+                  <button
+                    onClick={() => setOrderType('takeaway')}
+                    className={`flex flex-col items-center justify-center p-6 rounded-xl border-2 transition-all duration-200 ${orderType === 'takeaway' ? 'border-primary bg-primary/5 text-primary shadow-sm' : 'border-gray-100 hover:border-primary/30 hover:shadow-md bg-white text-gray-600'}`}
+                  >
+                    <div className={`w-14 h-14 rounded-full flex items-center justify-center mb-3 ${orderType === 'takeaway' ? 'bg-white shadow-sm' : 'bg-gray-50'}`}>
+                      <ShoppingBag size={28} className={orderType === 'takeaway' ? 'text-primary' : 'text-gray-400'} />
+                    </div>
+                    <span className="font-bold text-lg">Bungkus</span>
+                    <span className="text-xs text-center mt-1 opacity-70">Takeaway</span>
+                  </button>
+
+                  <button
+                    onClick={() => setOrderType('gomamam')}
+                    className={`flex flex-col items-center justify-center p-6 rounded-xl border-2 transition-all duration-200 ${orderType === 'gomamam' ? 'border-primary bg-primary/5 text-primary shadow-sm' : 'border-gray-100 hover:border-primary/30 hover:shadow-md bg-white text-gray-600'}`}
+                  >
+                    <div className={`w-14 h-14 rounded-full flex items-center justify-center mb-3 ${orderType === 'gomamam' ? 'bg-white shadow-sm' : 'bg-gray-50'}`}>
+                      <Globe size={28} className={orderType === 'gomamam' ? 'text-primary' : 'text-gray-400'} />
+                    </div>
+                    <span className="font-bold text-lg">GoMamam</span>
+                    <span className="text-xs text-center mt-1 opacity-70">Delivery</span>
+                  </button>
+                </div>
               </div>
             )}
 
-            {/* Cash Input - Clean Styled */}
-            {paymentMethod === 'cash' && (
-              <div className="pt-4 border-t border-gray-200">
-                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3 block">Cash Received</label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <span className="text-gray-500 text-lg font-bold">BND</span>
+            {/* Step 2: Customer Details */}
+            {checkoutStep === 2 && (
+              <div className="animate-fade-in space-y-6">
+                <div className="text-center">
+                  <h3 className="text-lg font-bold text-gray-800">Maklumat Pelanggan</h3>
+                  <p className="text-sm text-gray-500">Cari ahli atau masukkan maklumat baru</p>
+                </div>
+
+                {/* Search / Phone Input */}
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Nombor Telefon</label>
+                    <div className="flex rounded-xl border-2 border-gray-100 overflow-hidden focus-within:border-primary focus-within:ring-4 focus-within:ring-primary/10 transition-all bg-white relative">
+                      <div className="flex items-center px-4 bg-gray-50 border-r border-gray-100">
+                        <span className="text-gray-600 font-bold">🇧🇳 +673</span>
+                      </div>
+                      <input
+                        type="tel"
+                        className="block w-full px-4 py-4 text-xl font-medium outline-none placeholder-gray-300"
+                        placeholder="888 8888"
+                        value={customerPhone.replace('+673', '')}
+                        onChange={(e) => {
+                          const val = e.target.value.replace(/\D/g, '');
+                          const full = `+673${val}`;
+                          setCustomerPhone(full);
+                          const found = customers.find(c => c.phone === full);
+                          if (found) {
+                            setSelectedCustomer(found);
+                            setCustomerName(found.name);
+                          } else {
+                            setSelectedCustomer(null);
+                          }
+                        }}
+                        autoFocus
+                      />
+                      {/* Loading indicator could go here */}
+                    </div>
                   </div>
-                  <input
-                    type="number"
-                    value={cashReceived || ''}
-                    onChange={(e) => setCashReceived(parseFloat(e.target.value))}
-                    className="block w-full pl-16 pr-16 py-4 text-2xl font-bold text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary bg-white"
-                    placeholder="0.00"
-                    autoFocus
-                  />
-                  {cashReceived > 0 && (
-                    <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
-                      <span className={`text-sm font-bold px-2 py-1 rounded ${cashReceived >= finalPayable ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}>
-                        {cashReceived >= finalPayable ? '✓ OK' : '✗ Low'}
-                      </span>
+
+                  {selectedCustomer && (
+                    <div className="bg-blue-50 p-4 rounded-xl border border-blue-100 flex items-center justify-between animate-slide-up">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
+                          <User size={20} />
+                        </div>
+                        <div>
+                          <div className="font-bold text-blue-900">{selectedCustomer.name}</div>
+                          <div className="text-xs text-blue-600 font-medium">{selectedCustomer.loyaltyPoints} Points Available</div>
+                        </div>
+                      </div>
+                      <span className="px-3 py-1 bg-blue-200 text-blue-800 rounded-lg text-xs font-bold uppercase">{selectedCustomer.segment}</span>
                     </div>
                   )}
-                </div>
 
-                {/* Smart Amounts */}
-                <div className="flex flex-wrap gap-2 mt-3">
-                  {[3, 5, 10, 20, 50, 100].map(amt => (
-                    <button
-                      key={amt}
-                      onClick={() => setCashReceived(amt)}
-                      style={{
-                        padding: '0.5rem 1rem',
-                        border: '1px solid #d1d5db',
-                        borderRadius: '0.5rem',
-                        fontSize: '0.875rem',
-                        fontWeight: 600,
-                        color: '#374151',
-                        background: 'white',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      ${amt}
-                    </button>
-                  ))}
-                  <button
-                    onClick={() => setCashReceived(finalPayable)}
-                    style={{
-                      padding: '0.5rem 1rem',
-                      border: '1px solid var(--primary)',
-                      borderRadius: '0.5rem',
-                      fontSize: '0.875rem',
-                      fontWeight: 600,
-                      color: 'var(--primary)',
-                      background: 'white',
-                      cursor: 'pointer'
-                    }}
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Nama Pelanggan (Optional)</label>
+                    <input
+                      type="text"
+                      className="block w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all"
+                      placeholder="Nama Pelanggan"
+                      value={customerName}
+                      onChange={(e) => setCustomerName(e.target.value)}
+                    />
+                  </div>
+
+                  <div
+                    onClick={() => setSendToWhatsapp(!sendToWhatsapp)}
+                    className={`flex items-center justify-between p-4 rounded-xl border cursor-pointer transition-all ${sendToWhatsapp ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-100 hover:bg-gray-100'}`}
                   >
-                    Exact
-                  </button>
+                    <div className="flex items-center gap-3">
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${sendToWhatsapp ? 'bg-green-100 text-green-600' : 'bg-gray-200 text-gray-400'}`}>
+                        <MessageCircle size={20} />
+                      </div>
+                      <div>
+                        <div className={`font-semibold ${sendToWhatsapp ? 'text-green-900' : 'text-gray-700'}`}>Hantar Resit WhatsApp</div>
+                        <div className="text-xs text-gray-500">Resit digital terus ke pelanggan</div>
+                      </div>
+                    </div>
+                    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${sendToWhatsapp ? 'bg-green-500 border-green-500' : 'border-gray-300'}`}>
+                      {sendToWhatsapp && <Check size={14} className="text-white" />}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Step 3: Payment */}
+            {checkoutStep === 3 && (
+              <div className="animate-fade-in space-y-6">
+                <div className="text-center py-2">
+                  <div className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Jumlah Perlu Dibayar</div>
+                  <div className="text-4xl font-extrabold text-gray-900 flex items-center justify-center font-mono">
+                    <span className="text-lg text-gray-400 mr-1 mt-2">BND</span>
+                    {finalPayable.toFixed(2)}
+                  </div>
                 </div>
 
-                {/* Change Display */}
-                {cashReceived > 0 && cashReceived >= finalPayable && (
-                  <div style={{
-                    marginTop: '1rem',
-                    padding: '0.75rem',
-                    background: '#dcfce7',
-                    border: '1px solid #bbf7d0',
-                    borderRadius: '0.5rem',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center'
-                  }}>
-                    <span style={{ fontSize: '0.875rem', fontWeight: 600, color: '#166534' }}>Change:</span>
-                    <span style={{ fontSize: '1.25rem', fontWeight: 700, color: '#15803d' }}>BND {(cashReceived - finalPayable).toFixed(2)}</span>
+                {/* Point Redemption */}
+                {selectedCustomer && selectedCustomer.loyaltyPoints > 0 && (
+                  <div
+                    onClick={() => setUsePoints(!usePoints)}
+                    className={`p-4 rounded-xl border-2 cursor-pointer transition-all flex items-center justify-between ${usePoints ? 'border-amber-400 bg-amber-50' : 'border-gray-100 hover:border-amber-200'}`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center ${usePoints ? 'bg-amber-100 text-amber-600' : 'bg-gray-100 text-gray-400'}`}>
+                        <Sparkles size={20} />
+                      </div>
+                      <div>
+                        <div className="font-bold text-gray-800">Redeem Points</div>
+                        <div className="text-xs text-gray-500">Available: {selectedCustomer.loyaltyPoints} ($ {(selectedCustomer.loyaltyPoints * 0.01).toFixed(2)})</div>
+                      </div>
+                    </div>
+                    {usePoints && <div className="text-amber-700 font-bold text-sm">- BND {(Math.min(finalPayable, selectedCustomer.loyaltyPoints * 0.01)).toFixed(2)}</div>}
+                  </div>
+                )}
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-3">Cara Pembayaran</label>
+                  <div className="grid grid-cols-2 gap-3">
+                    {enabledPaymentMethods.map((pm) => (
+                      <button
+                        key={pm.id}
+                        onClick={() => setPaymentMethod(pm.code)}
+                        className={`relative p-4 rounded-xl border-2 transition-all flex flex-col items-center justify-center gap-2 ${paymentMethod === pm.code
+                          ? 'border-primary bg-primary/5 text-primary shadow-sm'
+                          : 'border-gray-100 bg-white hover:border-gray-200 text-gray-600'
+                          }`}
+                      >
+                        <div className="text-xl">{pm.icon}</div>
+                        <span className="font-bold text-sm">{pm.name}</span>
+                        {paymentMethod === pm.code && <div className="absolute top-2 right-2 w-2 h-2 bg-primary rounded-full animate-pulse"></div>}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Cash Input */}
+                {paymentMethod === 'cash' && (
+                  <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 animate-slide-up">
+                    <div className="flex justify-between items-center mb-3">
+                      <span className="text-xs font-bold text-gray-500 uppercase">Tunai Diterima</span>
+                      {cashReceived >= finalPayable && <span className="text-[10px] font-bold text-green-700 bg-green-100 px-2 py-1 rounded-full">CHANGE: BND {(cashReceived - finalPayable).toFixed(2)}</span>}
+                    </div>
+
+                    <div className="relative mb-3">
+                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <span className="text-gray-400 font-bold">BND</span>
+                      </div>
+                      <input
+                        type="number"
+                        value={cashReceived || ''}
+                        onChange={(e) => setCashReceived(parseFloat(e.target.value))}
+                        className="block w-full pl-14 pr-4 py-3 text-2xl font-bold border border-gray-300 rounded-xl focus:ring-primary focus:border-primary"
+                        placeholder="0.00"
+                        autoFocus
+                      />
+                    </div>
+
+                    <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
+                      {[1, 5, 10, 20, 50, 100].map(amt => (
+                        <button key={amt} onClick={() => setCashReceived(amt)} className="min-w-[50px] flex-1 py-2 bg-white border border-gray-200 rounded-lg text-sm font-bold text-gray-600 hover:border-primary hover:text-primary transition-colors">${amt}</button>
+                      ))}
+                      <button onClick={() => setCashReceived(Math.ceil(finalPayable))} className="px-3 py-2 bg-primary/10 text-primary rounded-lg text-xs font-bold whitespace-nowrap">Exact</button>
+                    </div>
                   </div>
                 )}
               </div>
             )}
 
-            {/* Action Bar */}
-            <div style={{ marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid #e5e7eb', display: 'flex', gap: '0.75rem' }}>
+            {/* Footer Navigation */}
+            <div className="mt-4 pt-4 border-t border-gray-100 flex gap-3 sticky bottom-0 bg-white pb-2 z-10">
+              {checkoutStep > 1 ? (
+                <button
+                  onClick={() => setCheckoutStep(prev => prev - 1)}
+                  className="px-5 py-3 rounded-xl border border-gray-200 font-bold text-gray-600 hover:bg-gray-50 transition-colors"
+                >
+                  <ArrowLeft size={20} />
+                </button>
+              ) : (
+                <button
+                  onClick={() => !isProcessing && setModalType(null)}
+                  className="px-5 py-3 rounded-xl border border-gray-200 font-bold text-gray-600 hover:bg-gray-50 transition-colors"
+                >
+                  Batal
+                </button>
+              )}
+
               <button
-                onClick={() => !isProcessing && setModalType(null)}
-                style={{
-                  flex: 1,
-                  padding: '0.75rem 1rem',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '0.5rem',
-                  color: '#374151',
-                  fontWeight: 600,
-                  background: 'white',
-                  cursor: 'pointer'
+                onClick={() => {
+                  if (checkoutStep === 1) {
+                    setCheckoutStep(2);
+                  } else if (checkoutStep === 2) {
+                    setCheckoutStep(3);
+                  } else {
+                    proceedToPayment();
+                  }
                 }}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => proceedToPayment()}
                 disabled={isProcessing}
-                style={{
-                  flex: 2,
-                  padding: '0.75rem 1.5rem',
-                  border: 'none',
-                  borderRadius: '0.5rem',
-                  fontWeight: 700,
-                  color: 'white',
-                  background: 'var(--primary)',
-                  cursor: isProcessing ? 'not-allowed' : 'pointer',
-                  opacity: isProcessing ? 0.5 : 1,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '0.5rem'
-                }}
+                className={`flex-1 py-3 rounded-xl font-bold text-lg shadow-lg flex items-center justify-center gap-2 transition-all ${isProcessing ? 'bg-gray-300 cursor-not-allowed text-gray-500' : 'bg-primary text-white hover:bg-primary-dark hover:shadow-primary/30'}`}
               >
                 {isProcessing ? (
-                  <><LoadingSpinner size="sm" /> Processing...</>
+                  <><LoadingSpinner size="sm" /> Memproses...</>
                 ) : (
-                  <>Pay BND {finalPayable.toFixed(2)}</>
+                  checkoutStep === 3 ? (
+                    <span className="flex items-center gap-2">Bayar <span className="bg-white/20 px-2 rounded text-sm">BND {finalPayable.toFixed(2)}</span></span>
+                  ) : (
+                    <span className="flex items-center gap-2">Seterusnya <ChevronRight size={20} /></span>
+                  )
                 )}
               </button>
             </div>
