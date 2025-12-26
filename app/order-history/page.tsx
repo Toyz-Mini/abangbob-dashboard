@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import MainLayout from '@/components/MainLayout';
 import DataTable, { Column } from '@/components/DataTable';
 import Modal from '@/components/Modal';
@@ -34,6 +34,7 @@ import {
   Search,
   ShoppingCart
 } from 'lucide-react';
+import { useSearchParams } from 'next/navigation';
 import LivePageHeader from '@/components/LivePageHeader';
 import GlassCard from '@/components/GlassCard';
 import PremiumButton from '@/components/PremiumButton';
@@ -53,8 +54,9 @@ export default function OrderHistoryPage() {
     voidRefundRequests,
   } = useOrderHistory();
 
-  const { currentStaff } = useAuth();
+  const { currentStaff, user } = useAuth();
   const { t } = useTranslation();
+  const approvalsRef = useRef<HTMLDivElement>(null);
 
   // Handle realtime order changes - refresh when new orders come in
   const handleOrderChange = useCallback(() => {
@@ -102,8 +104,16 @@ export default function OrderHistoryPage() {
     searchQuery: '',
   });
 
-  // Get user role
-  const userRole = currentStaff?.role || 'Staff';
+  const searchParams = useSearchParams();
+
+  // Handle URL filters
+  // Handle URL filters
+  useEffect(() => {
+    // Other filters logic could go here in future
+  }, [searchParams]);
+
+  // Get user role - prioritize explicit Admin user (Supabase) or fall back to staff role
+  const userRole = user ? 'Admin' : (currentStaff?.role || 'Staff');
   const canApprove = canApproveVoidRefund(userRole);
   const canViewAll = canViewAllOrders(userRole);
   const canExportData = canExport(userRole, 'order-history');
@@ -411,7 +421,7 @@ export default function OrderHistoryPage() {
 
         {/* Pending Approvals Panel (Manager/Admin only) */}
         {canApprove && pendingCount > 0 && (
-          <div className="mb-lg animate-slide-up">
+          <div ref={approvalsRef} className="mb-lg animate-slide-up">
             <PendingApprovalsPanel
               requests={pendingRequests}
               onApprove={async (requestId) => {

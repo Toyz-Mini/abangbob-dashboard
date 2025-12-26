@@ -5,7 +5,7 @@ import MainLayout from '@/components/MainLayout';
 import { useFinance, useInventory, useStaffPortal } from '@/lib/store';
 import { useExpensesRealtime, useCashFlowsRealtime, useClaimRequestsRealtime } from '@/lib/supabase/realtime-hooks';
 import { useTranslation } from '@/lib/contexts/LanguageContext';
-import { Expense, ExpenseCategory, PaymentMethod, ClaimRequest } from '@/lib/types';
+import { Expense, ExpenseCategory, PaymentMethod, ClaimRequest, CashPayout } from '@/lib/types';
 import { EXPENSE_CATEGORIES, PAYMENT_METHODS, getCategoryLabel, getCategoryColor } from '@/lib/finance-data';
 import Modal from '@/components/Modal';
 import LoadingSpinner from '@/components/LoadingSpinner';
@@ -26,16 +26,18 @@ import {
   Receipt,
   Download,
   CheckCircle,
-  Clock
+  Clock,
+  Banknote
 } from 'lucide-react';
 import StatCard from '@/components/StatCard';
 import { exportToCSV, type ExportColumn } from '@/lib/services';
 import { useToast } from '@/lib/contexts/ToastContext';
+import { fetchCashPayouts } from '@/lib/supabase/operations';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
 type ModalType = 'add' | 'edit' | 'delete' | 'cashflow' | null;
-type ViewMode = 'expenses' | 'cashflow' | 'pnl' | 'claims';
+type ViewMode = 'expenses' | 'cashflow' | 'pnl' | 'claims' | 'moneyout';
 
 export default function FinancePage() {
   const {
@@ -88,6 +90,8 @@ export default function FinancePage() {
   const [filterMonth, setFilterMonth] = useState(new Date().toISOString().slice(0, 7));
   const [filterCategory, setFilterCategory] = useState<ExpenseCategory | 'all'>('all');
   const [isExporting, setIsExporting] = useState(false);
+  const [cashPayouts, setCashPayouts] = useState<CashPayout[]>([]);
+  const [payoutsLoading, setPayoutsLoading] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -116,6 +120,25 @@ export default function FinancePage() {
       return matchesMonth && matchesCategory;
     }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [expenses, filterMonth, filterCategory]);
+
+  // Load cash payouts when viewing moneyout tab
+  const loadPayouts = useCallback(async () => {
+    setPayoutsLoading(true);
+    try {
+      const data = await fetchCashPayouts();
+      setCashPayouts(data);
+    } catch (error) {
+      console.error('Failed to load cash payouts:', error);
+    } finally {
+      setPayoutsLoading(false);
+    }
+  }, []);
+
+  // Filter payouts by month
+  const filteredPayouts = useMemo(() => {
+    return cashPayouts.filter(p => p.createdAt.startsWith(filterMonth))
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }, [cashPayouts, filterMonth]);
 
   // Approved Claims (Ready for Payout)
   const approvedClaims = useMemo(() => {
@@ -560,6 +583,13 @@ export default function FinancePage() {
             <FileText size={16} />
             P&L Statement
           </button>
+          <button
+            onClick={() => { setViewMode('moneyout'); loadPayouts(); }}
+            className={`btn btn-sm ${viewMode === 'moneyout' ? 'btn-primary' : 'btn-outline'}`}
+          >
+            <Banknote size={16} />
+            Money Out
+          </button>
         </div>
 
         {/* Stats Cards */}
@@ -997,6 +1027,115 @@ export default function FinancePage() {
                 </div>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* Money Out View */}
+        {viewMode === 'moneyout' && (
+          <div className="card">
+            <div className="card-header">
+              <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <Banknote size={20} />
+                Rekod Pengeluaran Tunai (Money Out)
+              </div>
+              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                <input
+                  type="month"
+                  className="form-input"
+                  value={filterMonth}
+                  onChange={(e) => setFilterMonth(e.target.value)}
+                  style={{ width: 'auto' }}
+                />
+                <button
+                  className="btn btn-sm btn-outline"
+                  onClick={loadPayouts}
+                  disabled={payoutsLoading}
+                >
+                  {payoutsLoading ? 'Loading...' : 'Refresh'}
+                </button>
+              </div>
+            </div>
+
+            {payoutsLoading ? (
+              <div style={{ textAlign: 'center', padding: '2rem' }}>
+                <LoadingSpinner />
+              </div>
+            ) : filteredPayouts.length > 0 ? (
+              <div style={{ overflowX: 'auto' }}>
+                <table className="table" style={{ minWidth: '700px' }}>
+                  <thead>
+                    <tr>
+                      <th>Tarikh & Masa</th>
+                      <th>Jumlah</th>
+                      <th>Kategori</th>
+                      <th>Sebab</th>
+                      <th>Dikeluarkan oleh</th>
+                      <th>Diluluskan oleh</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredPayouts.map((payout) => (
+                      <tr key={payout.id}>
+                        <td style={{ fontSize: '0.875rem' }}>
+                          {new Date(payout.createdAt).toLocaleDateString('ms-MY')}
+                          <br />
+                          <span style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>
+                            {new Date(payout.createdAt).toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        </td>
+                        <td style={{ fontWeight: 700, color: 'var(--danger)' }}>
+                          BND {payout.amount.toFixed(2)}
+                        </td>
+                        <td>
+                          <span style={{
+                            padding: '0.25rem 0.5rem',
+                            borderRadius: 'var(--radius-sm)',
+                            fontSize: '0.75rem',
+                            fontWeight: 600,
+                            background: 'var(--gray-200)',
+                            textTransform: 'capitalize'
+                          }}>
+                            {payout.category.replace('_', ' ')}
+                          </span>
+                        </td>
+                        <td>
+                          <div style={{ fontWeight: 600 }}>{payout.reason}</div>
+                          {payout.notes && (
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                              {payout.notes}
+                            </div>
+                          )}
+                        </td>
+                        <td style={{ fontSize: '0.875rem' }}>{payout.performedByName}</td>
+                        <td style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--primary)' }}>
+                          {payout.approvedByName || '-'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <p style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '2rem' }}>
+                Tiada rekod pengeluaran untuk bulan ini
+              </p>
+            )}
+
+            {filteredPayouts.length > 0 && (
+              <div style={{
+                marginTop: '1rem',
+                paddingTop: '1rem',
+                borderTop: '2px solid var(--gray-200)',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center'
+              }}>
+                <span style={{ fontWeight: 600 }}>Jumlah Pengeluaran:</span>
+                <span style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--danger)' }}>
+                  BND {filteredPayouts.reduce((sum, p) => sum + p.amount, 0).toFixed(2)}
+                </span>
+              </div>
+            )}
           </div>
         )}
 

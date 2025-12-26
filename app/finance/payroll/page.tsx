@@ -1,6 +1,4 @@
-'use client';
-
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import MainLayout from '@/components/MainLayout';
 import StatCard from '@/components/StatCard';
 import LoadingSpinner from '@/components/LoadingSpinner';
@@ -13,6 +11,7 @@ import {
     PayrollSummary,
     MOCK_PAYROLL_ENTRIES,
     calculatePayrollSummary,
+    calculatePayroll,
     formatBND,
     getMonthLabel,
     getPayrollStatusLabel,
@@ -33,13 +32,14 @@ import {
     Eye,
     Edit2,
     Printer,
+    RefreshCw
 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
 export default function PayrollPage() {
     const { showToast } = useToast();
-    const { getApprovedSalaryAdvances, markSalaryAdvanceAsDeducted, staff } = useStaffPortal();
+    const { getApprovedSalaryAdvances, markSalaryAdvanceAsDeducted, staff, leaveRequests } = useStaffPortal();
 
     // State
     const [payrollEntries, setPayrollEntries] = useState<PayrollEntry[]>(MOCK_PAYROLL_ENTRIES);
@@ -47,12 +47,98 @@ export default function PayrollPage() {
     const [selectedEntry, setSelectedEntry] = useState<PayrollEntry | null>(null);
     const [showDetailModal, setShowDetailModal] = useState(false);
     const [isExporting, setIsExporting] = useState(false);
+    const [isGenerating, setIsGenerating] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
+    const [editForm, setEditForm] = useState<Partial<PayrollEntry>>({});
+
+    // Get approved unpaid leave days for a staff member in the selected month
+    const getApprovedUnpaidLeaveDays = useCallback((staffId: string, month: string): number => {
+        const [yearStr, monthStr] = month.split('-');
+        const year = parseInt(yearStr);
+        const monthIndex = parseInt(monthStr) - 1; // 0-based index
+
+        const startOfMonth = new Date(year, monthIndex, 1);
+        const endOfMonth = new Date(year, monthIndex + 1, 0);
+
+        const unpaidLeaves = leaveRequests.filter(req =>
+            req.staffId === staffId &&
+            req.type === 'unpaid' &&
+            req.status === 'approved' &&
+            // Check overlap
+            new Date(req.startDate) <= endOfMonth &&
+            new Date(req.endDate) >= startOfMonth
+        );
+
+        let totalDays = 0;
+        unpaidLeaves.forEach(req => {
+            // Simple overlap calculation (assuming strict day counts from request duration)
+            // Ideally should calculate exact days overlapping this month
+            // For now, using the request's duration if it falls in the month
+            // Refinement: Calculate exact overlap days
+            const reqStart = new Date(req.startDate);
+            const reqEnd = new Date(req.endDate);
+
+            const overlapStart = reqStart > startOfMonth ? reqStart : startOfMonth;
+            const overlapEnd = reqEnd < endOfMonth ? reqEnd : endOfMonth;
+
+            if (overlapStart <= overlapEnd) {
+                const diffTime = Math.abs(overlapEnd.getTime() - overlapStart.getTime());
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+                totalDays += diffDays;
+            }
+        });
+
+        return totalDays;
+    }, [leaveRequests]);
 
     // Get approved salary advances for a staff member
     const getStaffAdvanceDeduction = useCallback((staffId: string): number => {
         const advances = getApprovedSalaryAdvances(staffId);
         return advances.reduce((sum, a) => sum + a.amount, 0);
     }, [getApprovedSalaryAdvances]);
+
+    // Handle Generate/Refresh Payroll
+    const handleGeneratePayroll = useCallback(() => {
+        setIsGenerating(true);
+        try {
+            // In a real app, this might fetch from backend.
+            // Here we generate based on current staff data.
+            const newEntries: PayrollEntry[] = staff.map(s => {
+                const unpaidDays = getApprovedUnpaidLeaveDays(s.id, selectedMonth);
+
+                const calculated = calculatePayroll(
+                    s,
+                    0, // overtime (placeholder)
+                    0, // bonus
+                    0, // otherEarnings
+                    0, // otherDeductions
+                    unpaidDays
+                );
+
+                return {
+                    ...calculated,
+                    id: `pay_${s.id}_${selectedMonth}`,
+                    staffId: s.id,
+                    staffName: s.name,
+                    month: selectedMonth,
+                    status: 'draft',
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString(),
+                };
+            });
+
+            setPayrollEntries(newEntries);
+            showToast('Payroll refreshed with latest staff & leave data', 'success');
+        } catch (error) {
+            console.error(error);
+            showToast('Failed to generate payroll', 'error');
+        } finally {
+            setIsGenerating(false);
+        }
+    }, [staff, selectedMonth, getApprovedUnpaidLeaveDays, showToast]);
+
+    // Auto-generate on mount/month change if empty (optional, keeping manual mostly)
+    // For demo purposes, let's keep the mock data initial state, but allow refresh.
 
     // Filter entries by selected month
     const filteredEntries = useMemo(() => {
@@ -92,6 +178,7 @@ export default function PayrollPage() {
                     { key: 'tapEmployer', label: 'TAP (Employer)', format: 'currency' },
                     { key: 'scpEmployee', label: 'SCP (Employee)', format: 'currency' },
                     { key: 'scpEmployer', label: 'SCP (Employer)', format: 'currency' },
+                    { key: 'unpaidLeaveDeduction', label: 'Unpaid Leave Cut', format: 'currency' },
                     { key: 'totalDeductions', label: 'Total Deductions', format: 'currency' },
                     { key: 'netPay', label: 'Net Pay', format: 'currency' },
                     { key: 'status', label: 'Status' },
@@ -133,7 +220,7 @@ export default function PayrollPage() {
             // Table
             autoTable(doc, {
                 startY: 55,
-                head: [['Staff', 'Gross', 'TAP (E)', 'TAP (R)', 'SCP (E)', 'SCP (R)', 'Deductions', 'Net Pay']],
+                head: [['Staff', 'Gross', 'TAP (E)', 'TAP (R)', 'SCP (E)', 'SCP (R)', 'Unpaid', 'Deductions', 'Net Pay']],
                 body: filteredEntries.map(e => [
                     e.staffName,
                     e.grossSalary.toFixed(2),
@@ -141,6 +228,7 @@ export default function PayrollPage() {
                     e.tapEmployer.toFixed(2),
                     e.scpEmployee.toFixed(2),
                     e.scpEmployer.toFixed(2),
+                    e.unpaidLeaveDeduction.toFixed(2),
                     e.totalDeductions.toFixed(2),
                     e.netPay.toFixed(2),
                 ]),
@@ -151,7 +239,8 @@ export default function PayrollPage() {
                     summary.totalTapEmployer.toFixed(2),
                     summary.totalScpEmployee.toFixed(2),
                     summary.totalScpEmployer.toFixed(2),
-                    (summary.totalTapEmployee + summary.totalScpEmployee).toFixed(2),
+                    filteredEntries.reduce((s, e) => s + (e.unpaidLeaveDeduction || 0), 0).toFixed(2),
+                    filteredEntries.reduce((s, e) => s + e.totalDeductions, 0).toFixed(2),
                     summary.totalNetPay.toFixed(2),
                 ]],
                 styles: { fontSize: 8 },
@@ -171,7 +260,91 @@ export default function PayrollPage() {
     // View detail
     const handleViewDetail = (entry: PayrollEntry) => {
         setSelectedEntry(entry);
+        setEditForm({});
+        setIsEditing(false);
         setShowDetailModal(true);
+    };
+
+    const handleEditClick = () => {
+        if (selectedEntry) {
+            setEditForm({
+                bonus: selectedEntry.bonus,
+                allowances: selectedEntry.allowances,
+                unpaidLeaveDays: selectedEntry.unpaidLeaveDays,
+                otherDeductions: selectedEntry.otherDeductions,
+            });
+            setIsEditing(true);
+        }
+    };
+
+    const handleSaveEdit = () => {
+        if (!selectedEntry || !staff) return;
+
+        const currentStaff = staff.find(s => s.id === selectedEntry.staffId);
+        if (!currentStaff) {
+            showToast('Staff not found', 'error');
+            return;
+        }
+
+        const newUnpaidDays = Number(editForm.unpaidLeaveDays) || 0;
+        const newBonus = Number(editForm.bonus) || 0;
+        const newAllowances = Number(editForm.allowances) || 0;
+        const newOtherDeductions = Number(editForm.otherDeductions) || 0;
+
+        // Recalculate basic parts (statutory rates etc)
+        // We use the helper directly or calculatePayroll. 
+        // calculatePayroll adds staff.allowances to gross. 
+        // We want to OVERRIDE allowances.
+        // So we calculate manually here to ensure we control the inputs.
+
+        const manualGrossSalary = currentStaff.baseSalary + selectedEntry.overtimePay + newAllowances + newBonus + selectedEntry.otherEarnings;
+
+        // Recalculate Statutory
+        // Note: We use the stored settings in the entry (snapshot) rather than current staff settings, 
+        // to preserve the state at time of generation, OR we can use current settings. 
+        // Usually edits respect the snapshot settings.
+        const tap = selectedEntry.tapEnabled ? (manualGrossSalary * TAP_EMPLOYEE_RATE / 100) : 0;
+        const scp = selectedEntry.scpEnabled ? (manualGrossSalary * SCP_EMPLOYEE_RATE / 100) : 0;
+
+        const unpaidCut = (selectedEntry.baseSalary / 26) * newUnpaidDays;
+
+        // Fixed deductions from profile are usually fixed. otherDeductions is the variable part.
+        // We need to know what 'fixedDeductions' were. 
+        // In the entry, 'otherDeductions' stores (fixed + manual other).
+        // This is tricky. 
+        // Let's assume the user is editing the TOTAL 'otherDeductions' field which includes fixed ones.
+        // simplified: 'otherDeductions' in UI = entry.otherDeductions.
+
+        const tapEmp = Math.round(tap * 100) / 100;
+        const tapEmpYr = Math.round((selectedEntry.tapEnabled ? (manualGrossSalary * TAP_EMPLOYER_RATE / 100) : 0) * 100) / 100;
+        const scpEmp = Math.round(scp * 100) / 100;
+        const scpEmpYr = Math.round((selectedEntry.scpEnabled ? (manualGrossSalary * SCP_EMPLOYER_RATE / 100) : 0) * 100) / 100;
+
+        const totalDeductions = tapEmp + scpEmp + newOtherDeductions + unpaidCut;
+        const netPay = manualGrossSalary - totalDeductions;
+
+        const updatedEntry: PayrollEntry = {
+            ...selectedEntry,
+            grossSalary: manualGrossSalary,
+            allowances: newAllowances,
+            bonus: newBonus,
+            // Update statutory
+            tapEmployee: tapEmp,
+            tapEmployer: tapEmpYr,
+            scpEmployee: scpEmp,
+            scpEmployer: scpEmpYr,
+            // Update deductions
+            unpaidLeaveDays: newUnpaidDays,
+            unpaidLeaveDeduction: unpaidCut,
+            otherDeductions: newOtherDeductions,
+            totalDeductions: totalDeductions,
+            netPay: netPay,
+        };
+
+        setPayrollEntries(prev => prev.map(e => e.id === selectedEntry.id ? updatedEntry : e));
+        setSelectedEntry(updatedEntry);
+        setIsEditing(false);
+        showToast('Payslip updated', 'success');
     };
 
     return (
@@ -193,6 +366,16 @@ export default function PayrollPage() {
 
                     {/* Month Picker & Export */}
                     <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                        <button
+                            className="btn btn-primary"
+                            onClick={handleGeneratePayroll}
+                            disabled={isGenerating}
+                            title="Kira semula gaji berdasarkan data terkini"
+                        >
+                            <RefreshCw size={16} className={isGenerating ? "spin-slow" : ""} />
+                            {isGenerating ? 'Computing...' : 'Auto-Generate'}
+                        </button>
+
                         <input
                             type="month"
                             value={selectedMonth}
@@ -209,7 +392,7 @@ export default function PayrollPage() {
                             CSV
                         </button>
                         <button
-                            className="btn btn-primary"
+                            className="btn btn-outline"
                             onClick={handleExportPDF}
                             disabled={isExporting || filteredEntries.length === 0}
                         >
@@ -262,6 +445,9 @@ export default function PayrollPage() {
                         <div style={{ color: 'var(--text-secondary)' }}>
                             * TAP/SCP boleh enable/disable per staf
                         </div>
+                        <div style={{ color: 'var(--danger)' }}>
+                            * Unpaid Leave dikira: (Gaji Pokok ÷ 26) × Hari Cuti
+                        </div>
                     </div>
                 </div>
 
@@ -275,6 +461,9 @@ export default function PayrollPage() {
                         <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-secondary)' }}>
                             <Calendar size={48} style={{ marginBottom: '1rem', opacity: 0.5 }} />
                             <p>Tiada rekod gaji untuk bulan ini</p>
+                            <button className="btn btn-sm btn-primary mt-sm" onClick={handleGeneratePayroll}>
+                                Generate Payroll for {getMonthLabel(selectedMonth)}
+                            </button>
                         </div>
                     ) : (
                         <div style={{ overflowX: 'auto' }}>
@@ -379,14 +568,21 @@ export default function PayrollPage() {
                 <Modal
                     isOpen={showDetailModal}
                     onClose={() => setShowDetailModal(false)}
-                    title="Slip Gaji"
+                    title={isEditing ? "Edit Slip Gaji" : "Slip Gaji"}
                     maxWidth="500px"
                 >
                     {selectedEntry && (
                         <div>
-                            <div style={{ marginBottom: '1.5rem', paddingBottom: '1rem', borderBottom: '1px solid var(--gray-200)' }}>
-                                <h3 style={{ margin: '0 0 0.25rem', fontSize: '1.25rem' }}>{selectedEntry.staffName}</h3>
-                                <p style={{ margin: 0, color: 'var(--text-secondary)' }}>{getMonthLabel(selectedEntry.month)}</p>
+                            <div style={{ marginBottom: '1.5rem', paddingBottom: '1rem', borderBottom: '1px solid var(--gray-200)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <div>
+                                    <h3 style={{ margin: '0 0 0.25rem', fontSize: '1.25rem' }}>{selectedEntry.staffName}</h3>
+                                    <p style={{ margin: 0, color: 'var(--text-secondary)' }}>{getMonthLabel(selectedEntry.month)}</p>
+                                </div>
+                                {!isEditing && (
+                                    <button className="btn btn-sm btn-outline" onClick={handleEditClick}>
+                                        <Edit2 size={14} /> Edit
+                                    </button>
+                                )}
                             </div>
 
                             {/* Earnings */}
@@ -400,13 +596,33 @@ export default function PayrollPage() {
                                     <span>Overtime</span>
                                     <span>{selectedEntry.overtimePay.toFixed(2)}</span>
                                 </div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem', alignItems: 'center' }}>
                                     <span>Elaun</span>
-                                    <span>{selectedEntry.allowances.toFixed(2)}</span>
+                                    {isEditing ? (
+                                        <input
+                                            type="number"
+                                            className="form-input"
+                                            style={{ width: '100px', padding: '2px 5px', textAlign: 'right' }}
+                                            value={editForm.allowances}
+                                            onChange={e => setEditForm({ ...editForm, allowances: Number(e.target.value) })}
+                                        />
+                                    ) : (
+                                        <span>{selectedEntry.allowances.toFixed(2)}</span>
+                                    )}
                                 </div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem', alignItems: 'center' }}>
                                     <span>Bonus</span>
-                                    <span>{selectedEntry.bonus.toFixed(2)}</span>
+                                    {isEditing ? (
+                                        <input
+                                            type="number"
+                                            className="form-input"
+                                            style={{ width: '100px', padding: '2px 5px', textAlign: 'right' }}
+                                            value={editForm.bonus}
+                                            onChange={e => setEditForm({ ...editForm, bonus: Number(e.target.value) })}
+                                        />
+                                    ) : (
+                                        <span>{selectedEntry.bonus.toFixed(2)}</span>
+                                    )}
                                 </div>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 600, paddingTop: '0.5rem', borderTop: '1px solid var(--gray-200)' }}>
                                     <span>Jumlah Pendapatan</span>
@@ -429,15 +645,46 @@ export default function PayrollPage() {
                                         {selectedEntry.scpEnabled ? selectedEntry.scpEmployee.toFixed(2) : '- (Tidak Aktif)'}
                                     </span>
                                 </div>
+
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem', color: 'var(--danger)', alignItems: 'center' }}>
+                                    <span>
+                                        Cuti Tanpa Gaji
+                                        {isEditing ? (
+                                            <span style={{ display: 'inline-flex', alignItems: 'center', marginLeft: '5px' }}>
+                                                (Hari: <input
+                                                    type="number"
+                                                    className="form-input"
+                                                    style={{ width: '50px', padding: '0 5px', height: '24px', marginLeft: '5px' }}
+                                                    value={editForm.unpaidLeaveDays}
+                                                    onChange={e => setEditForm({ ...editForm, unpaidLeaveDays: Number(e.target.value) })}
+                                                />)
+                                            </span>
+                                        ) : (
+                                            selectedEntry.unpaidLeaveDays > 0 ? ` (${selectedEntry.unpaidLeaveDays} hari)` : ''
+                                        )}
+                                    </span>
+                                    <span>-{selectedEntry.unpaidLeaveDeduction.toFixed(2)}</span>
+                                </div>
+
                                 {getStaffAdvanceDeduction(selectedEntry.staffId) > 0 && (
                                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem', color: 'var(--warning)' }}>
                                         <span>Pendahuluan Gaji</span>
-                                        <span>{getStaffAdvanceDeduction(selectedEntry.staffId).toFixed(2)}</span>
+                                        <span>-{getStaffAdvanceDeduction(selectedEntry.staffId).toFixed(2)}</span>
                                     </div>
                                 )}
-                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem', alignItems: 'center' }}>
                                     <span>Potongan Lain</span>
-                                    <span>{selectedEntry.otherDeductions.toFixed(2)}</span>
+                                    {isEditing ? (
+                                        <input
+                                            type="number"
+                                            className="form-input"
+                                            style={{ width: '100px', padding: '2px 5px', textAlign: 'right' }}
+                                            value={editForm.otherDeductions}
+                                            onChange={e => setEditForm({ ...editForm, otherDeductions: Number(e.target.value) })}
+                                        />
+                                    ) : (
+                                        <span>{selectedEntry.otherDeductions.toFixed(2)}</span>
+                                    )}
                                 </div>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 600, paddingTop: '0.5rem', borderTop: '1px solid var(--gray-200)', color: 'var(--danger)' }}>
                                     <span>Jumlah Potongan</span>
@@ -464,17 +711,26 @@ export default function PayrollPage() {
                                 <span>BND {(selectedEntry.netPay - getStaffAdvanceDeduction(selectedEntry.staffId)).toFixed(2)}</span>
                             </div>
 
+                            {isEditing && (
+                                <div style={{ marginTop: '1.5rem', display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
+                                    <button className="btn btn-ghost" onClick={() => setIsEditing(false)}>Batal</button>
+                                    <button className="btn btn-primary" onClick={handleSaveEdit}>Simpan & Kira Semula</button>
+                                </div>
+                            )}
+
                             {/* Status */}
-                            <div style={{ marginTop: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <span className={`badge badge-${getPayrollStatusLabel(selectedEntry.status).color}`}>
-                                    {getPayrollStatusLabel(selectedEntry.status).label}
-                                </span>
-                                {selectedEntry.paidAt && (
-                                    <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                                        Dibayar: {new Date(selectedEntry.paidAt).toLocaleDateString('ms-MY')}
+                            {!isEditing && (
+                                <div style={{ marginTop: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <span className={`badge badge-${getPayrollStatusLabel(selectedEntry.status).color}`}>
+                                        {getPayrollStatusLabel(selectedEntry.status).label}
                                     </span>
-                                )}
-                            </div>
+                                    {selectedEntry.paidAt && (
+                                        <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                                            Dibayar: {new Date(selectedEntry.paidAt).toLocaleDateString('ms-MY')}
+                                        </span>
+                                    )}
+                                </div>
+                            )}
                         </div>
                     )}
                 </Modal>

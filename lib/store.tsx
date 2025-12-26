@@ -4122,6 +4122,71 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     const now = new Date().toISOString();
     const reversalAmount = request.amount || order.total;
 
+    // CUSTOMER LOYALTY REVERSAL
+    if (order.customerId) {
+      const customer = customers.find(c => c.id === order.customerId);
+      if (customer) {
+        // Determine points to reverse
+        // If loyaltyPointsEarned is tracked, use it. Otherwise estimate 1 point per BND 1 (or 0 if unsure)
+        // For partial refunds, prorate points if possible, or just ignore points for partial refunds if complex?
+        // User request: "refund tapi still point naik" - implies we should deduct.
+        // Best effort: deduct proportional points for partial, or full points for void.
+
+        let pointsToReverse = 0;
+        if (order.loyaltyPointsEarned) {
+          if (request.type === 'void') {
+            pointsToReverse = order.loyaltyPointsEarned;
+          } else {
+            // Prorate for partial refund
+            const ratio = reversalAmount / order.total;
+            pointsToReverse = Math.floor(order.loyaltyPointsEarned * ratio);
+          }
+        } else {
+          // Fallback: Estimate 1 point per dollar if not tracked (standard AbangBob rate usually)
+          pointsToReverse = Math.floor(reversalAmount);
+        }
+
+        if (pointsToReverse > 0 || reversalAmount > 0) {
+          const newPoints = Math.max(0, (customer.loyaltyPoints || 0) - pointsToReverse);
+          const newTotalSpent = Math.max(0, (customer.totalSpent || 0) - reversalAmount);
+          // Only reduce totalOrders if it's a full void
+          const newTotalOrders = request.type === 'void'
+            ? Math.max(0, (customer.totalOrders || 0) - 1)
+            : customer.totalOrders;
+
+          const newSegment = newPoints >= 500 ? 'vip' : newPoints >= 100 ? 'regular' : 'new';
+
+          // Update Local State
+          setCustomers(prev => prev.map(c =>
+            c.id === customer.id
+              ? { ...c, loyaltyPoints: newPoints, totalSpent: newTotalSpent, totalOrders: newTotalOrders, segment: newSegment }
+              : c
+          ));
+
+          // Sync Customer Update
+          SupabaseSync.syncUpdateCustomer(customer.id, {
+            loyaltyPoints: newPoints,
+            totalSpent: newTotalSpent,
+            totalOrders: newTotalOrders,
+            segment: newSegment
+          });
+
+          // Record Negative Loyalty Transaction
+          if (pointsToReverse > 0) {
+            SupabaseSync.syncAddLoyaltyTransaction({
+              id: generateUUID(),
+              customer_id: customer.id,
+              order_id: order.id,
+              transaction_type: 'adjust', // Using 'adjust' for deduction
+              points: -pointsToReverse,
+              description: `Reversal for ${request.type === 'void' ? 'Void' : 'Refund'} #${request.id.substring(0, 8)}`,
+              created_at: now
+            });
+          }
+        }
+      }
+    }
+
     // Update request status
     setVoidRefundRequests(prev => prev.map(r =>
       r.id === requestId

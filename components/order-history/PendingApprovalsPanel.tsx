@@ -4,12 +4,12 @@ import { useState } from 'react';
 import { VoidRefundRequest } from '@/lib/types';
 import { getVoidRefundTypeLabel } from '@/lib/order-history-data';
 import { useToast } from '@/lib/contexts/ToastContext';
-import { 
-  AlertTriangle, 
-  CheckCircle, 
-  XCircle, 
-  Clock, 
-  ChevronDown, 
+import {
+  AlertTriangle,
+  CheckCircle,
+  XCircle,
+  Clock,
+  ChevronDown,
   ChevronUp,
   User,
   DollarSign,
@@ -80,10 +80,10 @@ export default function PendingApprovalsPanel({
   return (
     <div className="card mb-lg" style={{ borderLeft: '4px solid #f59e0b' }}>
       {/* Header */}
-      <div 
-        style={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
           alignItems: 'center',
           cursor: 'pointer',
           padding: '0.75rem 1rem',
@@ -110,133 +110,136 @@ export default function PendingApprovalsPanel({
 
       {/* Request List */}
       {!isCollapsed && (
-        <div style={{ padding: '0.5rem' }}>
+        <div style={{ padding: '0.75rem' }}>
           {requests.map((request) => (
-            <div 
+            <div
               key={request.id}
-              style={{ 
-                padding: '1rem',
-                marginBottom: '0.5rem',
-                background: 'var(--gray-50)',
-                borderRadius: 'var(--radius-md)',
+              style={{
+                padding: '1.25rem',
+                marginBottom: '1rem',
+                background: 'white',
+                borderRadius: 'var(--radius-lg)',
                 border: '1px solid var(--gray-200)',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
               }}
             >
-              {/* Request Header */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
+              {/* Request Main Info Grid */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '1rem', marginBottom: '1rem' }}>
                 <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
-                    <span 
-                      style={{ 
-                        fontWeight: 700, 
-                        fontSize: '0.875rem',
-                        color: getTypeColor(request.type),
-                        textTransform: 'uppercase',
-                      }}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
+                    <span
+                      className={`badge ${request.type === 'void' ? 'badge-danger' : 'badge-warning'}`}
+                      style={{ textTransform: 'uppercase', fontWeight: 700 }}
                     >
                       {getVoidRefundTypeLabel(request.type)}
                     </span>
-                    <span style={{ fontWeight: 600 }}>{request.orderNumber}</span>
+                    <span style={{ fontWeight: 600, fontSize: '1.1rem' }}>{request.orderNumber}</span>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                      <User size={12} />
-                      {request.requestedByName}
-                    </span>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                      <Clock size={12} />
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <User size={14} />
+                      Requested by: <span style={{ fontWeight: 500, color: 'var(--text-primary)' }}>{request.requestedByName}</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <Clock size={14} />
                       {getTimeSince(request.requestedAt)}
-                    </span>
+                    </div>
                   </div>
                 </div>
+
                 <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontWeight: 700, fontSize: '1.1rem', color: 'var(--danger)' }}>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>Amount</div>
+                  <div style={{ fontWeight: 800, fontSize: '1.5rem', color: 'var(--danger)', lineHeight: 1 }}>
                     BND {(request.amount || 0).toFixed(2)}
                   </div>
                 </div>
               </div>
 
-              {/* Reason */}
-              <div style={{ 
-                padding: '0.5rem 0.75rem',
-                background: 'white',
-                borderRadius: 'var(--radius-sm)',
-                marginBottom: '0.75rem',
-                fontSize: '0.875rem',
+              {/* Reason Box */}
+              <div style={{
+                padding: '0.75rem 1rem',
+                background: 'var(--gray-50)',
+                borderRadius: 'var(--radius-md)',
+                marginBottom: '1rem',
+                borderLeft: '4px solid var(--primary)',
+                fontSize: '0.95rem'
               }}>
-                <strong>Sebab:</strong> {request.reason}
+                <span style={{ fontWeight: 600, display: 'block', marginBottom: '0.25rem', fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-secondary)' }}>Reason</span>
+                "{request.reason}"
               </div>
 
-              {/* Partial Refund Items */}
+              {/* Items List (if partial) */}
               {request.itemsToRefund && request.itemsToRefund.length > 0 && (
-                <div style={{ 
-                  marginBottom: '0.75rem',
-                  padding: '0.5rem 0.75rem',
-                  background: 'white',
-                  borderRadius: 'var(--radius-sm)',
-                  fontSize: '0.75rem',
-                }}>
-                  <strong>Item untuk refund:</strong>
-                  <ul style={{ margin: '0.25rem 0 0', paddingLeft: '1.25rem' }}>
+                <div style={{ marginBottom: '1rem' }}>
+                  <div style={{ fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>Items to Refund</div>
+                  <div style={{ background: 'var(--gray-50)', borderRadius: 'var(--radius-md)', padding: '0.5rem' }}>
                     {request.itemsToRefund.map((item, idx) => (
-                      <li key={idx}>{item.itemName} × {item.quantity} (BND {item.amount.toFixed(2)})</li>
+                      <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.25rem 0.5rem', borderBottom: idx < (request.itemsToRefund?.length || 0) - 1 ? '1px solid var(--gray-200)' : 'none' }}>
+                        <span>{item.itemName} <span style={{ opacity: 0.6 }}>×{item.quantity}</span></span>
+                        <span style={{ fontWeight: 500 }}>BND {item.amount.toFixed(2)}</span>
+                      </div>
                     ))}
-                  </ul>
+                  </div>
                 </div>
               )}
 
-              {/* Rejection Reason Input */}
+              {/* Rejection Input */}
               {rejectingId === request.id && (
-                <div style={{ marginBottom: '0.75rem' }}>
+                <div style={{ marginBottom: '1rem', animation: 'fadeIn 0.2s ease-out' }}>
+                  <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500, fontSize: '0.875rem' }}>Sebab Penolakan:</label>
                   <textarea
                     className="form-input"
-                    rows={2}
-                    placeholder="Sebab penolakan..."
+                    rows={3}
+                    placeholder="Contoh: Customer change mind"
                     value={rejectReason}
                     onChange={(e) => setRejectReason(e.target.value)}
-                    style={{ fontSize: '0.875rem' }}
+                    style={{ width: '100%', padding: '0.75rem' }}
                     autoFocus
                   />
                 </div>
               )}
 
-              {/* Action Buttons */}
-              <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+              {/* Big Action Buttons */}
+              <div style={{ display: 'grid', gridTemplateColumns: rejectingId === request.id ? '1fr 2fr' : '1fr 1fr', gap: '0.75rem' }}>
                 {rejectingId === request.id ? (
                   <>
-                    <button 
-                      className="btn btn-sm btn-outline"
+                    <button
+                      className="btn btn-outline"
                       onClick={() => {
                         setRejectingId(null);
                         setRejectReason('');
                       }}
+                      style={{ justifyContent: 'center' }}
                     >
                       Batal
                     </button>
-                    <button 
-                      className="btn btn-sm btn-danger"
+                    <button
+                      className="btn btn-danger"
                       onClick={() => handleReject(request.id)}
                       disabled={!rejectReason.trim()}
+                      style={{ justifyContent: 'center' }}
                     >
-                      Hantar Penolakan
+                      Confirm Reject
                     </button>
                   </>
                 ) : (
                   <>
-                    <button 
-                      className="btn btn-sm btn-outline"
-                      style={{ borderColor: 'var(--danger)', color: 'var(--danger)' }}
+                    <button
+                      className="btn btn-outline-danger"
                       onClick={() => setRejectingId(request.id)}
+                      style={{ padding: '0.75rem', justifyContent: 'center', height: 'auto', gap: '0.5rem' }}
                     >
-                      <XCircle size={14} />
-                      Tolak
+                      <XCircle size={18} />
+                      <span style={{ fontWeight: 600 }}>Tolak Order</span>
                     </button>
-                    <button 
-                      className="btn btn-sm btn-success"
+                    <button
+                      className="btn btn-success"
                       onClick={() => handleApprove(request.id)}
+                      style={{ padding: '0.75rem', justifyContent: 'center', height: 'auto', gap: '0.5rem', boxShadow: '0 4px 6px rgba(16, 185, 129, 0.2)' }}
                     >
-                      <CheckCircle size={14} />
-                      Luluskan
+                      <CheckCircle size={18} />
+                      <span style={{ fontWeight: 600 }}>Luluskan (Approve)</span>
                     </button>
                   </>
                 )}

@@ -25,9 +25,10 @@ import {
 const ReceiptPreview = dynamic(() => import('@/components/ReceiptPreview'), { ssr: false });
 const ShiftWizardModal = dynamic(() => import('@/components/cash-management/ShiftWizardModal'), { ssr: false });
 const RegisterStatus = dynamic(() => import('@/components/cash-management/RegisterStatus'), { ssr: false });
+const MoneyOutModal = dynamic(() => import('@/components/pos/MoneyOutModal'), { ssr: false });
 import POSMenuItem from '@/components/pos/POSMenuItem'; // Memoized Item
 
-import { ArrowLeft, UtensilsCrossed, Sandwich, Coffee, History, Printer, Clock, ChefHat, CheckCircle, ShoppingBag, Plus, Minus, X, Sparkles, AlertTriangle, User, DollarSign, CreditCard, QrCode, Wallet, WifiOff, RefreshCw, MessageCircle, Check, Globe, Send, ChevronRight } from 'lucide-react';
+import { ArrowLeft, UtensilsCrossed, Sandwich, Coffee, History, Printer, Clock, ChefHat, CheckCircle, ShoppingBag, Plus, Minus, X, Sparkles, AlertTriangle, User, DollarSign, CreditCard, QrCode, Wallet, WifiOff, RefreshCw, MessageCircle, Check, Globe, Send, ChevronRight, Banknote } from 'lucide-react';
 import { WhatsAppService } from '@/lib/services/whatsapp';
 import Modal from '@/components/Modal';
 import LoadingSpinner from '@/components/LoadingSpinner';
@@ -53,6 +54,7 @@ export default function POSPage() {
   const { currentRegister, isInitialized: storeInitialized } = useStore();
   const [registerModalOpen, setRegisterModalOpen] = useState(false);
   const [registerModalMode, setRegisterModalMode] = useState<'open' | 'close'>('open');
+  const [moneyOutModalOpen, setMoneyOutModalOpen] = useState(false);
 
   // Enforce Open Register
   useEffect(() => {
@@ -587,6 +589,17 @@ export default function POSPage() {
                   setRegisterModalOpen(true);
                 }}
               />
+              {/* Money Out Button */}
+              <button
+                className="btn btn-outline"
+                onClick={() => setMoneyOutModalOpen(true)}
+                disabled={!currentRegister}
+                title={!currentRegister ? 'Buka register dahulu' : 'Rekod pengeluaran tunai'}
+                style={{ gap: '0.25rem' }}
+              >
+                <Banknote size={18} />
+                Money Out
+              </button>
               <button className="btn btn-outline" onClick={() => setModalType('queue')}>
                 <ChefHat size={18} />
                 {t('pos.orderQueue')} ({pendingOrders.length + preparingOrders.length})
@@ -1921,6 +1934,12 @@ export default function POSPage() {
           }
         }}
         mode={registerModalMode}
+      />
+      {/* Money Out Modal */}
+      <MoneyOutModal
+        isOpen={moneyOutModalOpen}
+        onClose={() => setMoneyOutModalOpen(false)}
+        registerId={currentRegister?.id}
       />
     </RouteGuard>
   );

@@ -86,8 +86,29 @@ export default function LeaveSettingsPage() {
             return sum + (balance?.annual?.entitled || 14);
         }, 0);
 
+        // DIAGNOSTIC LOG
+        if (activeStaff.length > 0) {
+            console.log('[LeaveStats] Diagnostic:', {
+                yearToMatch: currentYear,
+                balancesCount: leaveBalances.length,
+                // Log strictly the IDs for easy comparison
+                IDS_IN_STORE: leaveBalances.map(lb => ({ id: lb.id, staffId: lb.staffId })),
+                IDS_IN_STAFF: activeStaff.map(s => ({ name: s.name, id: s.id })),
+
+                matches: activeStaff.map(s => {
+                    const found = leaveBalances.find(lb => lb.staffId === s.id);
+                    return {
+                        name: s.name,
+                        id: s.id,
+                        matched: !!found,
+                        foundStaffId: found?.staffId
+                    };
+                })
+            });
+        }
+
         return { totalStaff, withEntitlements, totalAnnualDays };
-    }, [activeStaff, getLeaveBalance, currentYear]);
+    }, [activeStaff, getLeaveBalance, currentYear, leaveBalances]);
 
     // Get entitlement for a staff member
     const getEntitlement = (staffId: string, type: LeaveType): number => {
@@ -150,7 +171,7 @@ export default function LeaveSettingsPage() {
             const existingBalance = getLeaveBalance(editing.staffId, currentYear);
 
             const newBalance = {
-                id: existingBalance?.id || `lb_${Date.now()}`,
+                id: existingBalance?.id || crypto.randomUUID(),
                 staffId: editing.staffId,
                 year: currentYear,
                 annual: {
@@ -200,7 +221,12 @@ export default function LeaveSettingsPage() {
                 updatedAt: new Date().toISOString(),
             };
 
-            await SupabaseSync.syncUpsertLeaveBalance(newBalance);
+            const result = await SupabaseSync.syncUpsertLeaveBalance(newBalance);
+
+            if (!result) {
+                throw new Error('Failed to save to server');
+            }
+
             updateLeaveBalance(newBalance);
 
             setMessage({ type: 'success', text: `✓ Entitlement untuk ${editing.staffName} berjaya dikemaskini!` });
@@ -209,7 +235,7 @@ export default function LeaveSettingsPage() {
             setTimeout(() => setMessage(null), 3000);
         } catch (error) {
             console.error('Failed to save entitlements:', error);
-            setMessage({ type: 'error', text: 'Gagal menyimpan. Sila cuba lagi.' });
+            setMessage({ type: 'error', text: 'Gagal menyimpan. Sila semak sambungan atau cuba lagi.' });
         } finally {
             setSaving(false);
         }

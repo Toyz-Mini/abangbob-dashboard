@@ -1398,24 +1398,144 @@ export async function fetchLeaveBalances(staffId?: string, year?: number) {
     return [];
   }
 
-  return toCamelCase(data || []);
+  return (data || []).map(hydrateLeaveBalance);
 }
 
 export async function upsertLeaveBalance(balance: any) {
   const supabase = getSupabaseClient();
   if (!supabase) throw new Error('Supabase not connected');
 
-  const snakeCasedBalance = toSnakeCase(balance);
+
+  console.log('[LeaveBalance] Input:', balance);
+  // Flatten the nested structure for the DB
+  const flatBalance: any = {
+    // id: balance.id, // Remove ID to avoid PK conflict on upsert
+    staff_id: balance.staffId,
+    year: balance.year,
+
+    // Annual
+    annual_entitled: balance.annual?.entitled || 0,
+    annual_taken: balance.annual?.taken || 0,
+    annual_pending: balance.annual?.pending || 0,
+    annual_balance: balance.annual?.balance || 0,
+
+    // Medical
+    medical_entitled: balance.medical?.entitled || 0,
+    medical_taken: balance.medical?.taken || 0,
+    medical_pending: balance.medical?.pending || 0,
+    medical_balance: balance.medical?.balance || 0,
+
+    // Emergency
+    emergency_entitled: balance.emergency?.entitled || 0,
+    emergency_taken: balance.emergency?.taken || 0,
+    emergency_pending: balance.emergency?.pending || 0,
+    emergency_balance: balance.emergency?.balance || 0,
+
+    // Maternity
+    maternity_entitled: balance.maternity?.entitled || 0,
+    maternity_taken: balance.maternity?.taken || 0,
+    maternity_pending: balance.maternity?.pending || 0,
+    maternity_balance: balance.maternity?.balance || 0,
+
+    // Paternity
+    paternity_entitled: balance.paternity?.entitled || 0,
+    paternity_taken: balance.paternity?.taken || 0,
+    paternity_pending: balance.paternity?.pending || 0,
+    paternity_balance: balance.paternity?.balance || 0,
+
+    // Compassionate
+    compassionate_entitled: balance.compassionate?.entitled || 0,
+    compassionate_taken: balance.compassionate?.taken || 0,
+    compassionate_pending: balance.compassionate?.pending || 0,
+    compassionate_balance: balance.compassionate?.balance || 0,
+
+    // Replacement
+    replacement_entitled: balance.replacement?.entitled || 0,
+    replacement_taken: balance.replacement?.taken || 0,
+    replacement_pending: balance.replacement?.pending || 0,
+    replacement_balance: balance.replacement?.balance || 0,
+
+    // Unpaid (Only taken is stored in DB)
+    unpaid_taken: balance.unpaid?.taken || 0,
+
+    updated_at: new Date().toISOString()
+  };
+
+  console.log('[LeaveBalance] Flattened:', flatBalance);
 
   // @ts-ignore
   const { data, error } = await supabase
     .from('leave_balances')
-    .upsert(snakeCasedBalance, { onConflict: 'staff_id,year' })
+    .upsert(flatBalance, { onConflict: 'staff_id,year' })
     .select()
     .single();
 
-  if (error) throw error;
-  return toCamelCase(data);
+  if (error) {
+    console.error('[LeaveBalance] Upsert Error:', error);
+    throw error;
+  }
+  console.log('[LeaveBalance] Upsert Success:', data);
+  return hydrateLeaveBalance(data);
+}
+
+// Helper: Hydrate flat DB row to nested LeaveBalance object
+function hydrateLeaveBalance(row: any) {
+  if (!row) return null;
+  return {
+    id: row.id,
+    staffId: String(row.staff_id),
+    year: Number(row.year),
+    annual: {
+      entitled: row.annual_entitled || 0,
+      taken: row.annual_taken || 0,
+      pending: row.annual_pending || 0,
+      balance: row.annual_balance || 0
+    },
+    medical: {
+      entitled: row.medical_entitled || 0,
+      taken: row.medical_taken || 0,
+      pending: row.medical_pending || 0,
+      balance: row.medical_balance || 0
+    },
+    emergency: {
+      entitled: row.emergency_entitled || 0,
+      taken: row.emergency_taken || 0,
+      pending: row.emergency_pending || 0,
+      balance: row.emergency_balance || 0
+    },
+    maternity: {
+      entitled: row.maternity_entitled || 0,
+      taken: row.maternity_taken || 0,
+      pending: row.maternity_pending || 0,
+      balance: row.maternity_balance || 0
+    },
+    paternity: {
+      entitled: row.paternity_entitled || 0,
+      taken: row.paternity_taken || 0,
+      pending: row.paternity_pending || 0,
+      balance: row.paternity_balance || 0
+    },
+    compassionate: {
+      entitled: row.compassionate_entitled || 0,
+      taken: row.compassionate_taken || 0,
+      pending: row.compassionate_pending || 0,
+      balance: row.compassionate_balance || 0
+    },
+    replacement: {
+      entitled: row.replacement_entitled || 0,
+      taken: row.replacement_taken || 0,
+      pending: row.replacement_pending || 0,
+      balance: row.replacement_balance || 0
+    },
+    unpaid: {
+      entitled: 0,
+      taken: row.unpaid_taken || 0,
+      pending: 0,
+      balance: 0
+    },
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
+  };
 }
 
 export async function fetchLeaveRequests(staffId?: string, status?: string) {
@@ -2726,4 +2846,68 @@ export async function deleteStaffDocument(id: string) {
     .eq('id', id);
 
   if (error) throw error;
+}
+
+// ============ CASH PAYOUTS (MONEY OUT) OPERATIONS ============
+
+export async function fetchCashPayouts(date?: string) {
+  const supabase = getSupabaseClient();
+  if (!supabase) return [];
+
+  let query = supabase
+    .from('cash_payouts')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (date) {
+    // Filter by date (YYYY-MM-DD)
+    query = query.gte('created_at', `${date}T00:00:00`)
+      .lte('created_at', `${date}T23:59:59`);
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    console.error('Error fetching cash payouts:', error);
+    return [];
+  }
+
+  return toCamelCase(data || []);
+}
+
+export async function insertCashPayout(payout: any) {
+  const supabase = getSupabaseClient();
+  if (!supabase) throw new Error('Supabase not connected');
+
+  const snakeCasedPayout = toSnakeCase(payout);
+
+  // @ts-ignore
+  const { data, error } = await supabase
+    .from('cash_payouts')
+    .insert(snakeCasedPayout)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return toCamelCase(data);
+}
+
+export async function getTodayCashPayoutsTotal() {
+  const supabase = getSupabaseClient();
+  if (!supabase) return 0;
+
+  const today = new Date().toISOString().split('T')[0];
+
+  const { data, error } = await supabase
+    .from('cash_payouts')
+    .select('amount')
+    .gte('created_at', `${today}T00:00:00`)
+    .lte('created_at', `${today}T23:59:59`);
+
+  if (error) {
+    console.error('Error fetching today cash payouts total:', error);
+    return 0;
+  }
+
+  return (data || []).reduce((sum: number, p: any) => sum + Number(p.amount), 0);
 }

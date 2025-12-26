@@ -52,16 +52,23 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 
   // Translation function with parameter support
   const t = useCallback((key: string, params?: Record<string, string | number>): string => {
-    let translation = translations[language][key] || translations['ms'][key] || key;
-    
+    // Helper to resolve nested keys like "nav.dashboard"
+    const resolveKey = (obj: any, path: string) => {
+      return path.split('.').reduce((prev, curr) => {
+        return prev ? prev[curr] : null;
+      }, obj);
+    };
+
+    let translation = resolveKey(translations[language], key) || resolveKey(translations['ms'], key) || key;
+
     // Replace parameters like {{name}} with actual values
-    if (params) {
+    if (params && typeof translation === 'string') {
       Object.entries(params).forEach(([param, value]) => {
         translation = translation.replace(new RegExp(`{{${param}}}`, 'g'), String(value));
       });
     }
-    
-    return translation;
+
+    return typeof translation === 'string' ? translation : key;
   }, [language]);
 
   if (!mounted) {

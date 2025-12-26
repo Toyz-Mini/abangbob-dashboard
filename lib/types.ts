@@ -88,6 +88,7 @@ export interface Order {
   preparingStartedAt?: string;  // Bila staff mula prepare
   readyAt?: string;             // Bila order siap
   preparedByStaffId?: string;   // Staff mana yang prepare
+  loyaltyPointsEarned?: number; // Points earned from this order (for void/refund reversal)
 }
 
 export interface StockItem {
@@ -603,6 +604,27 @@ export interface CashRegister {
   createdAt: string;
   updatedAt: string;
 }
+
+// ==================== CASH PAYOUT (MONEY OUT) ====================
+
+export type CashPayoutCategory = 'petty_cash' | 'refund' | 'change' | 'supplier' | 'other';
+
+export interface CashPayout {
+  id: string;
+  amount: number;
+  reason: string;
+  category: CashPayoutCategory;
+  performedBy: string;
+  performedByName: string;
+  approvedBy?: string;
+  approvedByName?: string;
+  registerId?: string;
+  outletId?: string;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 
 export interface ProfitLossReport {
   period: string; // YYYY-MM format

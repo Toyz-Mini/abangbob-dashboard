@@ -4,12 +4,12 @@ import { useState, useEffect } from 'react';
 import { Plus, MapPin, Edit2, Trash2, Save, X, Navigation, Target, Loader2 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import {
-    getAllowedLocations,
-    addAllowedLocation,
-    updateAllowedLocation,
-    deleteAllowedLocation,
-    type AllowedLocation,
-} from '@/lib/supabase/attendance-sync';
+    getAllowedLocationsAction,
+    addAllowedLocationAction,
+    updateAllowedLocationAction,
+    deleteAllowedLocationAction
+} from '@/lib/actions/attendance-actions';
+import { type AllowedLocation } from '@/lib/supabase/attendance-sync';
 
 // Dynamic import to prevent SSR issues with Leaflet (requires window)
 const LocationMapPicker = dynamic(() => import('./LocationMapPicker'), {
@@ -53,7 +53,7 @@ export default function LocationSettings() {
 
     const loadLocations = async () => {
         setLoading(true);
-        const result = await getAllowedLocations();
+        const result = await getAllowedLocationsAction();
         if (result.success && result.data) {
             setLocations(result.data);
         }
@@ -91,27 +91,39 @@ export default function LocationSettings() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setSubmitting(true);
+        console.log('Submitting form data:', formData);
+
+        // Debug: Check auth status
+        /*
+        const { data: { user } } = await supabase.auth.getUser();
+        console.log('Current User:', user);
+        */
 
         if (editingId) {
             // Update existing location
-            const result = await updateAllowedLocation(editingId, formData);
+            const result = await updateAllowedLocationAction(editingId, formData);
             if (result.success) {
                 await loadLocations();
                 resetForm();
             } else {
+                console.error('Update Error:', result.error);
                 alert('Gagal update lokasi: ' + result.error);
             }
         } else {
             // Add new location
-            const result = await addAllowedLocation({
+            const result = await addAllowedLocationAction({
                 ...formData,
                 is_active: true,
             });
+            console.log('Add Result:', result);
+
             if (result.success) {
                 await loadLocations();
                 resetForm();
             } else {
-                alert('Gagal tambah lokasi: ' + result.error);
+                console.error('Add Error Full:', result.error);
+                // Try to alert more detail if available
+                alert('Gagal tambah lokasi: ' + (typeof result.error === 'object' ? JSON.stringify(result.error) : result.error));
             }
         }
         setSubmitting(false);
@@ -131,7 +143,7 @@ export default function LocationSettings() {
 
     const handleDelete = async (id: string) => {
         if (confirm('Adakah anda pasti untuk memadam lokasi ini?')) {
-            const result = await deleteAllowedLocation(id);
+            const result = await deleteAllowedLocationAction(id);
             if (result.success) {
                 await loadLocations();
             } else {
@@ -196,6 +208,7 @@ export default function LocationSettings() {
             </div>
 
             {/* Locations Grid - Premium Cards */}
+
             {loading ? (
                 <div className="flex items-center justify-center py-16">
                     <div className="flex flex-col items-center gap-4">

@@ -31,6 +31,8 @@ export interface PayrollEntry {
     tapEmployer: number;
     scpEmployee: number;
     scpEmployer: number;
+    unpaidLeaveDays: number;
+    unpaidLeaveDeduction: number;
     otherDeductions: number;
     totalDeductions: number;
 
@@ -107,7 +109,8 @@ export function calculatePayroll(
     overtimePay: number = 0,
     bonus: number = 0,
     otherEarnings: number = 0,
-    otherDeductions: number = 0
+    otherDeductions: number = 0,
+    unpaidLeaveDays: number = 0
 ): Omit<PayrollEntry, 'id' | 'month' | 'status' | 'createdAt' | 'updatedAt'> {
     // Get settings from staff profile or use defaults
     const tapEnabled = staff.statutoryContributions?.tapEnabled ?? true;
@@ -127,11 +130,16 @@ export function calculatePayroll(
     const tap = calculateTAP(grossSalary, tapEnabled, tapEmployeeRate, tapEmployerRate);
     const scp = calculateSCP(grossSalary, scpEnabled, scpEmployeeRate, scpEmployerRate);
 
+    // Calculate Unpaid Leave Deduction
+    // Formula: (Base Salary / 26) * Days
+    const WORKING_DAYS_PER_MONTH = 26;
+    const unpaidLeaveDeduction = (staff.baseSalary / WORKING_DAYS_PER_MONTH) * unpaidLeaveDays;
+
     // Calculate fixed deductions from staff profile
     const fixedDeductions = (staff.fixedDeductions || []).reduce((sum, d) => sum + d.amount, 0);
 
     // Total deductions (employee portion only)
-    const totalDeductions = tap.employee + scp.employee + fixedDeductions + otherDeductions;
+    const totalDeductions = tap.employee + scp.employee + fixedDeductions + otherDeductions + unpaidLeaveDeduction;
 
     // Net pay
     const netPay = grossSalary - totalDeductions;
@@ -149,6 +157,8 @@ export function calculatePayroll(
         tapEmployer: tap.employer,
         scpEmployee: scp.employee,
         scpEmployer: scp.employer,
+        unpaidLeaveDays,
+        unpaidLeaveDeduction,
         otherDeductions: fixedDeductions + otherDeductions,
         totalDeductions,
         netPay,
@@ -193,6 +203,8 @@ export const MOCK_PAYROLL_ENTRIES: PayrollEntry[] = [
         tapEmployer: 87.50,
         scpEmployee: 61.25,
         scpEmployer: 61.25,
+        unpaidLeaveDays: 0,
+        unpaidLeaveDeduction: 0,
         otherDeductions: 0,
         totalDeductions: 148.75,
         netPay: 1601.25,
@@ -219,6 +231,8 @@ export const MOCK_PAYROLL_ENTRIES: PayrollEntry[] = [
         tapEmployer: 62.50,
         scpEmployee: 43.75,
         scpEmployer: 43.75,
+        unpaidLeaveDays: 0,
+        unpaidLeaveDeduction: 0,
         otherDeductions: 0,
         totalDeductions: 106.25,
         netPay: 1143.75,
@@ -245,6 +259,8 @@ export const MOCK_PAYROLL_ENTRIES: PayrollEntry[] = [
         tapEmployer: 0,
         scpEmployee: 0, // SCP disabled for part-time
         scpEmployer: 0,
+        unpaidLeaveDays: 0,
+        unpaidLeaveDeduction: 0,
         otherDeductions: 0,
         totalDeductions: 0,
         netPay: 600,

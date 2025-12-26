@@ -87,14 +87,18 @@ export async function getAllowedLocations() {
 }
 
 export async function addAllowedLocation(location: Omit<AllowedLocation, 'id' | 'created_at' | 'updated_at'>) {
+    console.log('addAllowedLocation called with:', location);
     const supabase = getSupabaseClient();
     if (!supabase) return { success: false, error: 'Supabase not configured', data: null };
 
+    console.log('Sending insert request to Supabase...');
     const { data, error } = await (supabase as any)
         .from('allowed_locations')
         .insert([location])
         .select()
         .single();
+
+    console.log('Supabase response:', { data, error });
 
     if (error) {
         console.error('Error adding location:', error);

@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, Circle, useMapEvents, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { Navigation, Loader2, MapPin, Crosshair } from 'lucide-react';
+import { Navigation, Loader2, MapPin, Crosshair, Search } from 'lucide-react';
 
 // Fix Leaflet default marker icon issue in Next.js
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -55,6 +55,8 @@ export default function LocationMapPicker({
     const [position, setPosition] = useState<[number, number]>([latitude || 4.9031, longitude || 114.9398]);
     const [gettingLocation, setGettingLocation] = useState(false);
     const [mapReady, setMapReady] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [isSearching, setIsSearching] = useState(false);
     const mapRef = useRef<L.Map | null>(null);
 
     useEffect(() => {
@@ -91,6 +93,39 @@ export default function LocationMapPicker({
         );
     };
 
+    const handleSearch = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!searchQuery.trim()) return;
+
+        setIsSearching(true);
+        try {
+            const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=1`);
+            const data = await response.json();
+
+            if (data && data.length > 0) {
+                const result = data[0];
+                const lat = parseFloat(result.lat);
+                const lng = parseFloat(result.lon);
+
+                setPosition([lat, lng]);
+                onLocationChange(lat, lng);
+
+                if (mapRef.current) {
+                    mapRef.current.flyTo([lat, lng], 16, {
+                        duration: 1.5
+                    });
+                }
+            } else {
+                alert('Lokasi tidak dijumpai. Sila cuba kata kunci lain.');
+            }
+        } catch (error) {
+            console.error('Search error:', error);
+            alert('Gagal mencari lokasi.');
+        } finally {
+            setIsSearching(false);
+        }
+    };
+
     const handleMarkerDrag = (e: L.DragEndEvent) => {
         const marker = e.target;
         const newPos = marker.getLatLng();
@@ -106,7 +141,7 @@ export default function LocationMapPicker({
     return (
         <div className="relative h-full w-full">
             {!mapReady && (
-                <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-gray-900 to-gray-800 rounded-lg z-10">
+                <div className="absolute inset-0 flex items-center justify-center bg-gray-50 rounded-lg z-10">
                     <div className="flex flex-col items-center gap-4">
                         <div className="relative">
                             <Loader2 className="animate-spin text-red-500" size={48} />
@@ -114,7 +149,7 @@ export default function LocationMapPicker({
                                 <Loader2 className="text-red-500/30" size={48} />
                             </div>
                         </div>
-                        <p className="text-sm text-gray-300 font-medium">Memuatkan map...</p>
+                        <p className="text-sm text-gray-500 font-medium">Memuatkan map...</p>
                     </div>
                 </div>
             )}
@@ -131,11 +166,10 @@ export default function LocationMapPicker({
                 }}
                 zoomControl={false}
             >
-                {/* Dark Modern Tiles - CartoDB Dark Matter */}
+                {/* Light Modern Tiles - CartoDB Positron */}
                 <TileLayer
                     attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> | <a href="https://carto.com/">CARTO</a>'
-                    url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-                    className="map-tiles"
+                    url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
                 />
 
                 {/* Map click handler */}
@@ -165,49 +199,74 @@ export default function LocationMapPicker({
                 />
             </MapContainer>
 
+            {/* Search Bar - Premium Float */}
+            <div className="absolute top-4 left-4 right-4 z-[1000] max-w-md mx-auto">
+                <div className="relative group">
+                    <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+                        <Search className="h-5 w-5 text-gray-400 group-focus-within:text-red-500 transition-colors" />
+                    </div>
+                    <input
+                        type="text"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                                e.preventDefault();
+                                handleSearch(e);
+                            }
+                        }}
+                        placeholder="Cari lokasi (cth: Gadong, Rimba Point)"
+                        className="w-full pl-10 pr-12 py-3 bg-white/90 backdrop-blur-md border border-gray-200 rounded-xl shadow-lg text-gray-800 placeholder-gray-500 outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all font-medium"
+                    />
+                    <button
+                        type="button"
+                        onClick={handleSearch}
+                        disabled={isSearching}
+                        className="absolute inset-y-0 right-2 px-3 flex items-center"
+                    >
+                        {isSearching ? (
+                            <Loader2 className="h-5 w-5 text-red-500 animate-spin" />
+                        ) : (
+                            <div className="bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg p-1.5 transition-colors cursor-pointer">
+                                <span className="text-xs font-bold">GO</span>
+                            </div>
+                        )}
+                    </button>
+                </div>
+            </div>
+
             {/* Premium Glassmorphic Controls */}
-            <div className="absolute top-4 right-4 flex flex-col gap-3 z-[1000]">
+            <div className="absolute bottom-4 right-4 flex flex-col gap-3 z-[1000]">
                 {/* Current Location Button */}
                 <button
                     onClick={getCurrentLocation}
                     disabled={gettingLocation}
-                    className="bg-white/10 dark:bg-gray-900/40 backdrop-blur-xl border border-white/20 dark:border-gray-700/50 text-white px-4 py-2.5 rounded-xl shadow-2xl hover:bg-white/20 dark:hover:bg-gray-800/60 transition-all duration-300 flex items-center gap-2 group disabled:opacity-50"
-                    style={{
-                        boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.37)'
-                    }}
+                    className="bg-white hover:bg-gray-50 text-gray-700 px-4 py-2.5 rounded-xl shadow-lg transition-all duration-300 flex items-center gap-2 group disabled:opacity-50 border border-gray-100"
                 >
                     {gettingLocation ? (
                         <>
-                            <Loader2 className="animate-spin text-red-400" size={18} />
-                            <span className="text-sm font-medium">Locating...</span>
+                            <Loader2 className="animate-spin text-red-500" size={18} />
+                            <span className="text-sm font-bold">Locating...</span>
                         </>
                     ) : (
                         <>
-                            <Navigation className="text-red-400 group-hover:scale-110 transition-transform" size={18} />
-                            <span className="text-sm font-medium">My Location</span>
+                            <Navigation className="text-red-500 group-hover:scale-110 transition-transform" size={18} />
+                            <span className="text-sm font-bold">My Location</span>
                         </>
                     )}
                 </button>
             </div>
 
-            {/* Premium Info Box - Glassmorphism */}
-            <div className="absolute bottom-4 left-4 bg-white/10 dark:bg-gray-900/40 backdrop-blur-xl border border-white/20 dark:border-gray-700/50 px-5 py-4 rounded-xl shadow-2xl z-[1000]"
-                style={{
-                    boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.37)'
-                }}
-            >
-                <div className="flex items-start gap-3">
-                    <div className="p-2 bg-red-500/20 rounded-lg">
-                        <MapPin size={20} className="text-red-400" />
+            {/* Premium Info Box - Light Theme */}
+            <div className="absolute bottom-4 left-4 bg-white/90 backdrop-blur-md border border-gray-100 px-5 py-3 rounded-xl shadow-lg z-[1000]">
+                <div className="flex items-center gap-3">
+                    <div className="p-2 bg-red-50 rounded-lg">
+                        <MapPin size={20} className="text-red-500" />
                     </div>
                     <div>
-                        <div className="text-sm font-semibold text-white mb-1">Selected Location</div>
-                        <div className="text-gray-300 font-mono text-xs bg-black/20 px-2 py-1 rounded">
+                        <div className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-0.5">Selected Location</div>
+                        <div className="text-gray-900 font-mono text-xs font-bold bg-gray-100 px-2 py-1 rounded inline-block">
                             {position[0].toFixed(6)}, {position[1].toFixed(6)}
-                        </div>
-                        <div className="mt-2 flex items-center gap-2">
-                            <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
-                            <span className="text-xs text-gray-400">Radius: {radius}m</span>
                         </div>
                     </div>
                 </div>
@@ -220,27 +279,12 @@ export default function LocationMapPicker({
 
             {/* Premium Styling */}
             <style jsx global>{`
-        /* Map Container Dark Theme */
+        /* Map Container Light Theme */
         .leaflet-container {
-          background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+          background: #f8fafc;
           font-family: inherit;
         }
-
-        /* Hide default attribution for cleaner look */
-        .leaflet-control-attribution {
-          background: rgba(0, 0, 0, 0.3) !important;
-          backdrop-filter: blur(10px);
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          border-radius: 8px;
-          padding: 2px 6px;
-          font-size: 10px;
-          color: rgba(255, 255, 255, 0.6);
-        }
         
-        .leaflet-control-attribution a {
-          color: #ef4444 !important;
-        }
-
         /* Custom Marker Animation */
         .custom-marker {
           position: relative;
@@ -306,12 +350,7 @@ export default function LocationMapPicker({
           }
         }
 
-        /* Map tiles darker for better contrast */
-        .map-tiles {
-          filter: brightness(0.8) contrast(1.1);
-        }
-
-        /* Custom zoom controls - hidden for cleaner look */
+        /* Clean controls */
         .leaflet-control-zoom {
           display: none;
         }
@@ -319,11 +358,6 @@ export default function LocationMapPicker({
         /* Smooth transitions */
         .leaflet-marker-icon {
           transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        /* Circle animation */
-        .leaflet-interactive {
-          filter: drop-shadow(0 0 10px rgba(239, 68, 68, 0.3));
         }
       `}</style>
         </div>

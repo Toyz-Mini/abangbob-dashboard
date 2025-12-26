@@ -34,6 +34,7 @@ import {
   CheckSquare,
   History,
   Wrench,
+  AlertTriangle,
   ChevronDown,
   ChevronRight,
 } from 'lucide-react';
@@ -219,7 +220,7 @@ const Sidebar = forwardRef<HTMLElement, SidebarProps>(({ isOpen, onToggle, onNav
                   {group.items.map((item, itemIndex) => {
                     const Icon = item.icon;
                     const active = isActive(item.href);
-                    const showBadge = item.href === '/hr/refund-approvals' && pendingCount > 0;
+                    const showBadge = item.href === '/order-history?filter=void_refund' && pendingCount > 0;
 
                     return (
                       <li key={itemIndex} className="nav-item">

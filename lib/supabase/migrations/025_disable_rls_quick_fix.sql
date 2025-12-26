@@ -1,0 +1,68 @@
+-- ============================================================
+-- DISABLE RLS ON ALL PUBLIC TABLES
+-- ============================================================
+-- Run this in Supabase SQL Editor
+-- This is a quick fix to resolve the Better Auth / Supabase Auth disconnect
+-- ============================================================
+
+-- Option 1: Manual list (safer, explicit)
+ALTER TABLE IF EXISTS public.allowed_locations DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.attendance DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.staff DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.orders DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.customers DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.menu_items DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.categories DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.modifier_groups DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.modifier_options DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.inventory DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.inventory_logs DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.settings DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.app_settings DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.outlet_settings DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.cash_registers DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.expenses DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.leave_requests DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.leave_balances DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.claim_requests DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.void_refund_requests DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.disciplinary_actions DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.staff_training DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.staff_documents DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.performance_reviews DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.onboarding_checklists DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.exit_interviews DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.staff_complaints DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.ot_claims DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.promo_codes DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.promo_usages DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.loyalty_transactions DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.equipment DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.maintenance_schedule DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.maintenance_logs DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.waste_logs DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.sop_templates DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.sop_steps DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.sop_logs DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.sop_log_items DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.chat_sessions DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.chat_messages DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.staff_xp DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.xp_logs DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.schedules DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.shifts DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.outlets DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.recipes DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.recipe_ingredients DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.combos DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.combo_items DISABLE ROW LEVEL SECURITY;
+
+-- ============================================================
+-- VERIFICATION: Check which tables still have RLS enabled
+-- ============================================================
+SELECT 
+    tablename,
+    CASE WHEN rowsecurity THEN '🔒 RLS ON' ELSE '🔓 RLS OFF' END as status
+FROM pg_tables
+WHERE schemaname = 'public'
+ORDER BY rowsecurity DESC, tablename;
