@@ -545,8 +545,8 @@ export default function StaffPortalPage() {
             boxShadow: 'var(--shadow-sm)',
             border: '1px solid var(--border-light)'
           }}>
-            <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>Rank</div>
-            <div style={{ fontWeight: 700 }}>🏆 #{xpData?.rank || '—'}</div>
+            <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>Level</div>
+            <div style={{ fontWeight: 700 }}>⭐ Lv.{xpData?.currentLevel || 1}</div>
           </div>
           <div style={{
             background: 'white',
