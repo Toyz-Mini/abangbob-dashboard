@@ -19,9 +19,9 @@ const LanguageContext = createContext<LanguageContextType | null>(null);
 
 const STORAGE_KEY = 'abangbob_language';
 
-const translations: Record<Language, Record<string, string>> = {
-  ms: ms as Record<string, string>,
-  en: en as Record<string, string>,
+const translations: Record<Language, any> = {
+  ms: ms as unknown as any,
+  en: en as unknown as any,
 };
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
