@@ -64,10 +64,11 @@ import { checkSupabaseConnection } from '@/lib/supabase/client';
 import { loadSettingsFromSupabase, saveSettingsToSupabase, loadSettingsFromLocalStorage } from '@/lib/supabase/settings-sync';
 import { PixelSettings, PixelConfig, DEFAULT_PIXEL_SETTINGS } from '@/lib/types';
 import { pixelTracker } from '@/lib/services/pixel-tracker';
-import { FileText, Building2, Truck } from 'lucide-react';
+import { FileText, Building2, Truck, Timer } from 'lucide-react';
 import DeliveryPlatformSettings from '@/components/settings/DeliveryPlatformSettings';
+import ShiftSettings from '@/components/settings/ShiftSettings';
 
-type SettingSection = 'outlet' | 'operations' | 'receipt' | 'printer' | 'data' | 'notifications' | 'supabase' | 'payment' | 'tax' | 'appearance' | 'security' | 'locations' | 'pixel' | 'payslip' | 'delivery';
+type SettingSection = 'outlet' | 'operations' | 'receipt' | 'printer' | 'data' | 'notifications' | 'supabase' | 'payment' | 'tax' | 'appearance' | 'security' | 'locations' | 'pixel' | 'payslip' | 'delivery' | 'shifts';
 type PaymentModalType = 'add-payment' | 'edit-payment' | 'delete-payment' | null;
 type TaxModalType = 'add-tax' | 'edit-tax' | 'delete-tax' | null;
 
@@ -672,6 +673,7 @@ export default function SettingsPage() {
     { id: 'delivery', labelKey: 'Delivery Platforms', icon: Truck },
     { id: 'tax', labelKey: 'Cukai', icon: Percent },
     { id: 'locations', labelKey: 'Lokasi Kehadiran', icon: MapPin },
+    { id: 'shifts', labelKey: 'Shift & Kehadiran', icon: Timer },
     { id: 'appearance', labelKey: 'settings.appearance', icon: Palette },
     { id: 'security', labelKey: 'settings.security', icon: Lock },
     { id: 'notifications', labelKey: 'settings.notifications', icon: Bell },
@@ -1991,6 +1993,11 @@ export default function SettingsPage() {
               <div className="card">
                 <LocationSettings />
               </div>
+            )}
+
+            {/* Shift & Attendance Settings */}
+            {activeSection === 'shifts' && (
+              <ShiftSettings />
             )}
 
             {/* Notification Settings */}
