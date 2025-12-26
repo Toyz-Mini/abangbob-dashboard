@@ -499,12 +499,192 @@ export default function StaffPortalV2() {
           </Link>
         </div>
 
-        {/* Performance / Leave Balance Mini Card */}
+        {/* 1. Leave Balance Widget */}
         <div style={{
           background: 'white',
           borderRadius: '16px',
           padding: '1rem',
-          marginBottom: '1rem',
+          marginBottom: '0.75rem',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+          border: '1px solid #e5e7eb'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
+            <Plane size={18} color="#059669" />
+            <span style={{ fontWeight: 600, fontSize: '0.9rem', color: '#1f2937' }}>Baki Cuti</span>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem' }}>
+            <div style={{ textAlign: 'center', padding: '0.5rem', background: '#d1fae5', borderRadius: '8px' }}>
+              <div style={{ fontSize: '1.25rem', fontWeight: 700, color: '#059669' }}>{leaveBalance?.annual?.balance || 0}</div>
+              <div style={{ fontSize: '0.65rem', color: '#047857' }}>Tahunan</div>
+            </div>
+            <div style={{ textAlign: 'center', padding: '0.5rem', background: '#dbeafe', borderRadius: '8px' }}>
+              <div style={{ fontSize: '1.25rem', fontWeight: 700, color: '#2563eb' }}>{leaveBalance?.medical?.balance || 0}</div>
+              <div style={{ fontSize: '0.65rem', color: '#1d4ed8' }}>MC</div>
+            </div>
+            <div style={{ textAlign: 'center', padding: '0.5rem', background: '#fef3c7', borderRadius: '8px' }}>
+              <div style={{ fontSize: '1.25rem', fontWeight: 700, color: '#d97706' }}>{leaveBalance?.emergency?.balance || 0}</div>
+              <div style={{ fontSize: '0.65rem', color: '#b45309' }}>Kecemasan</div>
+            </div>
+            <div style={{ textAlign: 'center', padding: '0.5rem', background: '#f3f4f6', borderRadius: '8px' }}>
+              <div style={{ fontSize: '1.25rem', fontWeight: 700, color: '#6b7280' }}>{leaveBalance?.unpaid?.taken || 0}</div>
+              <div style={{ fontSize: '0.65rem', color: '#4b5563' }}>Unpaid</div>
+            </div>
+          </div>
+        </div>
+
+        {/* 2. Pending Requests Widget */}
+        <div style={{
+          background: 'white',
+          borderRadius: '16px',
+          padding: '1rem',
+          marginBottom: '0.75rem',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+          border: '1px solid #e5e7eb'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <AlertCircle size={18} color="#f59e0b" />
+              <span style={{ fontWeight: 600, fontSize: '0.9rem', color: '#1f2937' }}>Permohonan</span>
+            </div>
+            <span style={{
+              background: totalPending > 0 ? '#fef3c7' : '#d1fae5',
+              color: totalPending > 0 ? '#92400e' : '#065f46',
+              padding: '0.25rem 0.5rem',
+              borderRadius: '6px',
+              fontSize: '0.7rem',
+              fontWeight: 600
+            }}>
+              {totalPending > 0 ? `${totalPending} menunggu` : 'Tiada pending'}
+            </span>
+          </div>
+          {leaveRequests && leaveRequests.filter(r => r.status === 'pending').slice(0, 2).map((req, idx) => (
+            <div key={idx} style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              padding: '0.5rem',
+              background: '#f9fafb',
+              borderRadius: '8px',
+              marginBottom: '0.5rem',
+              fontSize: '0.8rem'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <Plane size={14} color="#6b7280" />
+                <span>{req.type === 'annual' ? 'Cuti Tahunan' : req.type === 'medical' ? 'MC' : 'Cuti'}</span>
+              </div>
+              <span style={{ color: '#f59e0b', fontWeight: 500 }}>⏳ Menunggu</span>
+            </div>
+          ))}
+          {pendingClaimCount > 0 && (
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              padding: '0.5rem',
+              background: '#f9fafb',
+              borderRadius: '8px',
+              fontSize: '0.8rem'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <DollarSign size={14} color="#6b7280" />
+                <span>Tuntutan ({pendingClaimCount})</span>
+              </div>
+              <span style={{ color: '#f59e0b', fontWeight: 500 }}>⏳ Menunggu</span>
+            </div>
+          )}
+          {totalPending === 0 && (
+            <div style={{ textAlign: 'center', color: '#059669', fontSize: '0.85rem' }}>
+              ✓ Semua permohonan selesai
+            </div>
+          )}
+        </div>
+
+        {/* 3. Next Shift Widget */}
+        {(() => {
+          // Find next scheduled shift
+          const tomorrow = new Date();
+          tomorrow.setDate(tomorrow.getDate() + 1);
+          const tomorrowStr = tomorrow.toISOString().split('T')[0];
+          const nextSchedule = schedules.find(s => s.staffId === staffId && s.date >= tomorrowStr);
+          const nextShift = nextSchedule ? shifts.find(sh => sh.id === nextSchedule.shiftId) : null;
+
+          return (
+            <div style={{
+              background: 'white',
+              borderRadius: '16px',
+              padding: '1rem',
+              marginBottom: '0.75rem',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+              border: '1px solid #e5e7eb'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                <Calendar size={18} color="#2563eb" />
+                <span style={{ fontWeight: 600, fontSize: '0.9rem', color: '#1f2937' }}>Shift Seterusnya</span>
+              </div>
+              {nextSchedule && nextShift ? (
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <div style={{ fontWeight: 600, color: '#1f2937' }}>{nextShift.name}</div>
+                    <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>{nextShift.startTime} - {nextShift.endTime}</div>
+                  </div>
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{ fontWeight: 600, color: '#2563eb' }}>
+                      {new Date(nextSchedule.date).toLocaleDateString('ms-MY', { weekday: 'short', day: 'numeric', month: 'short' })}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div style={{ color: '#6b7280', fontSize: '0.85rem' }}>Tiada shift dijadualkan</div>
+              )}
+            </div>
+          );
+        })()}
+
+        {/* 4. OT Record Widget */}
+        {(() => {
+          // Calculate OT this month from attendance (simplified)
+          const thisMonth = new Date().getMonth();
+          const thisYear = new Date().getFullYear();
+          // This would normally come from the database - using placeholder for now
+          const monthlyOTMinutes = todayAttendance?.overtimeMinutes || 0;
+          const otHours = Math.floor(monthlyOTMinutes / 60);
+          const otMins = monthlyOTMinutes % 60;
+
+          return (
+            <div style={{
+              background: 'white',
+              borderRadius: '16px',
+              padding: '1rem',
+              marginBottom: '0.75rem',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+              border: '1px solid #e5e7eb'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <Timer size={18} color="#7c3aed" />
+                  <span style={{ fontWeight: 600, fontSize: '0.9rem', color: '#1f2937' }}>OT Bulan Ini</span>
+                </div>
+                <div style={{
+                  background: '#ede9fe',
+                  color: '#7c3aed',
+                  padding: '0.5rem 0.75rem',
+                  borderRadius: '8px',
+                  fontWeight: 700,
+                  fontSize: '1rem'
+                }}>
+                  {otHours}j {otMins}m
+                </div>
+              </div>
+            </div>
+          );
+        })()}
+
+        {/* XP Progress Card */}
+        <div style={{
+          background: 'white',
+          borderRadius: '16px',
+          padding: '1rem',
+          marginBottom: '0.75rem',
           boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
           border: '1px solid #e5e7eb',
           display: 'flex',
