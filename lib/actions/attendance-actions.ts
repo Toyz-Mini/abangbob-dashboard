@@ -192,6 +192,9 @@ export async function clockInAction(data: {
     longitude: number;
     selfie_base64: string;
     selfie_filename: string;
+    // New fields for late handling
+    late_reason_code?: string;
+    late_reason_note?: string;
 }) {
     try {
         await verifySession();
@@ -205,10 +208,36 @@ export async function clockInAction(data: {
                 success: false,
                 error: `Anda berada ${Math.round(verification.distance || 0)}m dari lokasi terdekat. Sila berada dalam radius yang dibenarkan.`,
                 data: null,
+                requiresLateReason: false,
             };
         }
 
-        // 2. Upload selfie
+        // 2. Check late status using attendance utilities
+        const { validateClockIn } = await import('@/lib/attendance-utils');
+        const validation = await validateClockIn(data.staff_id);
+
+        // If blocked due to early clock-in
+        if (!validation.allowed && validation.isEarlyBlocked) {
+            return {
+                success: false,
+                error: validation.message || 'Anda cuba clock in terlalu awal.',
+                data: null,
+                requiresLateReason: false,
+            };
+        }
+
+        // If late but no reason provided, return to request reason
+        if (validation.isLate && !data.late_reason_code) {
+            return {
+                success: false,
+                requiresLateReason: true,
+                lateMinutes: validation.lateMinutes,
+                error: validation.message,
+                data: null,
+            };
+        }
+
+        // 3. Upload selfie
         const { path: selfie_url, error: uploadError } = await uploadPhotoServer(
             data.staff_id,
             data.selfie_base64,
@@ -220,10 +249,11 @@ export async function clockInAction(data: {
                 success: false,
                 error: 'Gagal upload foto: ' + uploadError,
                 data: null,
+                requiresLateReason: false,
             };
         }
 
-        // 3. Create attendance record
+        // 4. Create attendance record with enhanced fields
         const attendance_data = {
             staff_id: data.staff_id,
             clock_in: new Date().toISOString(),
@@ -234,6 +264,16 @@ export async function clockInAction(data: {
             actual_longitude: data.longitude,
             distance_meters: verification.distance,
             selfie_url,
+            // Enhanced fields
+            is_late: validation.isLate,
+            late_reason_code: data.late_reason_code || null,
+            late_reason_note: data.late_reason_note || null,
+            late_minutes: validation.lateMinutes || 0,
+            shift_id: validation.shift?.id || null,
+            expected_clock_in: validation.expectedClockIn || null,
+            expected_clock_out: validation.shift?.endTime || null,
+            is_holiday: validation.isHoliday,
+            clock_in_method: 'manual',
         };
 
         const { data: record, error: insertError } = await (supabaseAdmin as any)
@@ -248,6 +288,7 @@ export async function clockInAction(data: {
                 success: false,
                 error: 'Gagal merekod kehadiran: ' + insertError.message,
                 data: null,
+                requiresLateReason: false,
             };
         }
 
@@ -256,6 +297,10 @@ export async function clockInAction(data: {
             data: record,
             error: null,
             location_name: verification.nearest_location?.name,
+            isLate: validation.isLate,
+            lateMinutes: validation.lateMinutes,
+            shiftName: validation.shift?.name || null,
+            requiresLateReason: false,
         };
     } catch (error: any) {
         console.error('Clock-in error:', error);
@@ -263,6 +308,7 @@ export async function clockInAction(data: {
             success: false,
             error: error.message || 'Ralat tidak dijangka',
             data: null,
+            requiresLateReason: false,
         };
     }
 }
@@ -305,7 +351,13 @@ export async function clockOutAction(data: {
             };
         }
 
-        // 3. Fetch current notes to append
+        // 3. Calculate overtime
+        const { calculateClockOutOvertime } = await import('@/lib/attendance-utils');
+        const { formatTime, getBruneiNow } = await import('@/lib/timezone-utils');
+        const clockOutTime = formatTime(getBruneiNow());
+        const otResult = await calculateClockOutOvertime(data.staff_id, clockOutTime);
+
+        // 4. Fetch current notes to append
         const { data: currentRecord } = await (supabaseAdmin as any)
             .from('attendance')
             .select('notes')
@@ -315,10 +367,12 @@ export async function clockOutAction(data: {
         const noteEntry = `[Clock Out Verified] Lat: ${data.latitude}, Lng: ${data.longitude}, Dist: ${Math.round(verification.distance || 0)}m, Selfie: ${selfie_url}`;
         const currentNotes = currentRecord?.notes ? `${currentRecord.notes}\n` : '';
 
-        // 4. Update attendance record
+        // 5. Update attendance record with OT info
         const updates = {
             clock_out: new Date().toISOString(),
-            notes: `${currentNotes}${noteEntry}`
+            notes: `${currentNotes}${noteEntry}`,
+            overtime_minutes: otResult.overtimeMinutes,
+            overtime_approved: otResult.overtimeMinutes > 0 ? null : undefined, // null = pending approval
         };
 
         const { data: record, error } = await (supabaseAdmin as any)
@@ -333,7 +387,13 @@ export async function clockOutAction(data: {
             return { success: false, error: error.message, data: null };
         }
 
-        return { success: true, data: record, error: null };
+        return {
+            success: true,
+            data: record,
+            error: null,
+            overtimeMinutes: otResult.overtimeMinutes,
+            expectedClockOut: otResult.expectedClockOut,
+        };
     } catch (error: any) {
         console.error('Clock-out error:', error);
         return {
