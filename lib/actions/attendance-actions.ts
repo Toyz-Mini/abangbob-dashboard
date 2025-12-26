@@ -52,10 +52,9 @@ export async function addAllowedLocationAction(location: Omit<AllowedLocation, '
         const supabaseAdmin = getSupabaseAdmin();
 
         // Cast to bypass strict Supabase generated types
-        const locationData: any = location;
-        const { data, error } = await supabaseAdmin
+        const { data, error } = await (supabaseAdmin as any)
             .from('allowed_locations')
-            .insert([locationData])
+            .insert([location])
             .select()
             .single();
 
@@ -72,9 +71,9 @@ export async function updateAllowedLocationAction(id: string, updates: Partial<A
         await verifySession();
         const supabaseAdmin = getSupabaseAdmin();
 
-        const { data, error } = await supabaseAdmin
+        const { data, error } = await (supabaseAdmin as any)
             .from('allowed_locations')
-            .update(updates as any)
+            .update(updates)
             .eq('id', id)
             .select()
             .single();
@@ -112,7 +111,7 @@ export async function deleteAllowedLocationAction(id: string) {
 async function verifyLocationServer(latitude: number, longitude: number) {
     const supabaseAdmin = getSupabaseAdmin();
 
-    const { data: locations, error } = await supabaseAdmin
+    const { data: locations, error } = await (supabaseAdmin as any)
         .from('allowed_locations')
         .select('*')
         .eq('is_active', true);
@@ -237,7 +236,7 @@ export async function clockInAction(data: {
             selfie_url,
         };
 
-        const { data: record, error: insertError } = await supabaseAdmin
+        const { data: record, error: insertError } = await (supabaseAdmin as any)
             .from('attendance')
             .insert([attendance_data])
             .select()
@@ -307,7 +306,7 @@ export async function clockOutAction(data: {
         }
 
         // 3. Fetch current notes to append
-        const { data: currentRecord } = await supabaseAdmin
+        const { data: currentRecord } = await (supabaseAdmin as any)
             .from('attendance')
             .select('notes')
             .eq('id', data.attendance_id)
@@ -322,7 +321,7 @@ export async function clockOutAction(data: {
             notes: `${currentNotes}${noteEntry}`
         };
 
-        const { data: record, error } = await supabaseAdmin
+        const { data: record, error } = await (supabaseAdmin as any)
             .from('attendance')
             .update(updates)
             .eq('id', data.attendance_id)
