@@ -645,8 +645,9 @@ export default function StaffPortalV2() {
           // Calculate OT this month from attendance (simplified)
           const thisMonth = new Date().getMonth();
           const thisYear = new Date().getFullYear();
-          // This would normally come from the database - using placeholder for now
-          const monthlyOTMinutes = todayAttendance?.overtimeMinutes || 0;
+          // OT tracking would come from attendance records with overtime_minutes field
+          // Using 0 as placeholder - would need to aggregate from DB
+          const monthlyOTMinutes = 0; // TODO: Fetch from attendance records
           const otHours = Math.floor(monthlyOTMinutes / 60);
           const otMins = monthlyOTMinutes % 60;
 
