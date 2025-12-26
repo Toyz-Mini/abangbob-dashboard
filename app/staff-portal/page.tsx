@@ -26,7 +26,9 @@ import {
   ArrowLeftRight,
   GraduationCap,
   Receipt,
-  Trophy
+  Trophy,
+  Wrench,
+  Package
 } from 'lucide-react';
 import StaffPortalNav from '@/components/StaffPortalNav';
 import {
@@ -520,6 +522,45 @@ export default function StaffPortalPage() {
           </div>
         )}
 
+        {/* Stats Row - Mini Cards */}
+        <div className="grid grid-cols-3 animate-slide-up delay-150" style={{ gap: '0.75rem', marginBottom: '1.5rem' }}>
+          <div style={{
+            background: 'white',
+            padding: '0.75rem',
+            borderRadius: 'var(--radius-lg)',
+            textAlign: 'center',
+            boxShadow: 'var(--shadow-sm)',
+            border: '1px solid var(--border-light)'
+          }}>
+            <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>Hari Ini</div>
+            <div style={{ fontWeight: 700, color: todayAttendance?.clockInTime ? 'var(--success)' : 'var(--text-secondary)' }}>
+              {todayAttendance?.clockInTime ? '✓ On Time' : '—'}
+            </div>
+          </div>
+          <div style={{
+            background: 'white',
+            padding: '0.75rem',
+            borderRadius: 'var(--radius-lg)',
+            textAlign: 'center',
+            boxShadow: 'var(--shadow-sm)',
+            border: '1px solid var(--border-light)'
+          }}>
+            <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>Rank</div>
+            <div style={{ fontWeight: 700 }}>🏆 #{xpData?.rank || '—'}</div>
+          </div>
+          <div style={{
+            background: 'white',
+            padding: '0.75rem',
+            borderRadius: 'var(--radius-lg)',
+            textAlign: 'center',
+            boxShadow: 'var(--shadow-sm)',
+            border: '1px solid var(--border-light)'
+          }}>
+            <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>XP</div>
+            <div style={{ fontWeight: 700, color: 'var(--primary)' }}>{xpData?.currentXP || 0}</div>
+          </div>
+        </div>
+
         {/* Clock Message */}
         {clockMessage && (
           <div className={`staff-message ${clockMessage.includes('berjaya') ? 'success' : 'error'} animate-slide-up delay-100`} style={{ marginBottom: '1.5rem' }}>
@@ -627,6 +668,22 @@ export default function StaffPortalPage() {
                 <User size={18} />
               </div>
               <div className="staff-action-label" style={{ fontSize: '0.75rem' }}>Profil</div>
+            </Link>
+
+            {/* Equipment Issue */}
+            <Link href="/equipment" className="staff-action-card compact" style={{ flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '0.75rem' }}>
+              <div className="staff-action-icon" style={{ width: '40px', height: '40px', marginBottom: '0.5rem', background: '#fef3c7', color: '#d97706', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%' }}>
+                <Wrench size={18} />
+              </div>
+              <div className="staff-action-label" style={{ fontSize: '0.75rem' }}>Issue</div>
+            </Link>
+
+            {/* Stock Check */}
+            <Link href="/inventory" className="staff-action-card compact" style={{ flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '0.75rem' }}>
+              <div className="staff-action-icon" style={{ width: '40px', height: '40px', marginBottom: '0.5rem', background: '#dbeafe', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%' }}>
+                <Package size={18} />
+              </div>
+              <div className="staff-action-label" style={{ fontSize: '0.75rem' }}>Stock</div>
             </Link>
           </div>
         </div>
