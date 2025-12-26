@@ -51,10 +51,11 @@ export async function addAllowedLocationAction(location: Omit<AllowedLocation, '
         await verifySession();
         const supabaseAdmin = getSupabaseAdmin();
 
-        // @ts-ignore - Supabase types are strict
+        // Cast to bypass strict Supabase generated types
+        const locationData: any = location;
         const { data, error } = await supabaseAdmin
             .from('allowed_locations')
-            .insert([location])
+            .insert([locationData])
             .select()
             .single();
 
