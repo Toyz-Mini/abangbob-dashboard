@@ -1717,3 +1717,106 @@ export interface SOPLogItem {
   completedAt: string;
   notes?: string;
 }
+
+// ==================== ENHANCED ATTENDANCE TYPES ====================
+
+export interface ShiftDefinition {
+  id: string;
+  name: string;
+  nameMalay: string;
+  code: string;
+  startTime: string; // HH:mm
+  endTime: string; // HH:mm
+  color: string;
+  isActive: boolean;
+  sortOrder: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface StaffShift {
+  id: string;
+  staffId: string;
+  shiftId: string;
+  dayOfWeek: number; // 0=Sunday...6=Saturday
+  isOffDay: boolean;
+  outletId?: string;
+  createdAt: string;
+  // Joined data
+  shift?: ShiftDefinition;
+}
+
+export interface Holiday {
+  id: string;
+  date: string;
+  name: string;
+  nameMalay?: string;
+  isNational: boolean;
+  createdAt: string;
+}
+
+export interface SystemSetting {
+  id: string;
+  key: string;
+  value: string;
+  category: string;
+  description?: string;
+  updatedAt: string;
+  updatedBy?: string;
+}
+
+export type LateReasonCode = 'TRAFFIC' | 'MEDICAL' | 'FAMILY' | 'TRANSPORT' | 'WEATHER' | 'VEHICLE' | 'OTHER';
+
+export interface LateReasonCategory {
+  id: string;
+  code: LateReasonCode;
+  name: string;
+  nameMalay: string;
+  icon: string;
+  requiresNote: boolean;
+  isActive: boolean;
+  sortOrder: number;
+}
+
+export interface EnhancedAttendance {
+  id: string;
+  staffId: string;
+  date: string;
+  clockIn: string;
+  clockOut?: string;
+  locationVerified: boolean;
+  locationId?: string;
+  actualLatitude?: number;
+  actualLongitude?: number;
+  distanceMeters?: number;
+  selfieUrl?: string;
+  notes?: string;
+  // Enhanced fields
+  isLate: boolean;
+  lateReasonCode?: LateReasonCode;
+  lateReasonNote?: string;
+  lateMinutes: number;
+  isEarlyLeave: boolean;
+  overtimeMinutes: number;
+  overtimeApproved?: boolean;
+  overtimeApprovedBy?: string;
+  overtimeApprovedAt?: string;
+  shiftId?: string;
+  expectedClockIn?: string;
+  expectedClockOut?: string;
+  isHoliday: boolean;
+  deviceId?: string;
+  clockInMethod: 'manual' | 'auto' | 'admin';
+  // Joined data
+  shift?: ShiftDefinition;
+}
+
+export interface SettingsAuditLog {
+  id: string;
+  settingKey: string;
+  oldValue?: string;
+  newValue: string;
+  changedBy: string;
+  changedAt: string;
+}
+

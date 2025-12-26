@@ -2911,3 +2911,269 @@ export async function getTodayCashPayoutsTotal() {
 
   return (data || []).reduce((sum: number, p: any) => sum + Number(p.amount), 0);
 }
+
+// ============ SHIFT DEFINITIONS OPERATIONS ============
+
+export async function fetchShiftDefinitions() {
+  const supabase = getSupabaseClient();
+  if (!supabase) return [];
+
+  const { data, error } = await supabase
+    .from('shift_definitions')
+    .select('*')
+    .eq('is_active', true)
+    .order('sort_order', { ascending: true });
+
+  if (error) {
+    console.error('Error fetching shift definitions:', error);
+    return [];
+  }
+
+  return toCamelCase(data || []);
+}
+
+export async function insertShiftDefinition(shift: any) {
+  const supabase = getSupabaseClient();
+  if (!supabase) throw new Error('Supabase not connected');
+
+  const snakeCased = toSnakeCase(shift);
+
+  // @ts-ignore
+  const { data, error } = await supabase
+    .from('shift_definitions')
+    .insert(snakeCased)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return toCamelCase(data);
+}
+
+export async function updateShiftDefinition(id: string, updates: any) {
+  const supabase = getSupabaseClient();
+  if (!supabase) throw new Error('Supabase not connected');
+
+  // @ts-ignore
+  const { data, error } = await supabase
+    .from('shift_definitions')
+    .update(toSnakeCase(updates))
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return toCamelCase(data);
+}
+
+export async function deleteShiftDefinition(id: string) {
+  const supabase = getSupabaseClient();
+  if (!supabase) throw new Error('Supabase not connected');
+
+  const { error } = await supabase
+    .from('shift_definitions')
+    .delete()
+    .eq('id', id);
+
+  if (error) throw error;
+}
+
+// ============ STAFF SHIFTS OPERATIONS ============
+
+export async function fetchStaffShifts(staffId?: string) {
+  const supabase = getSupabaseClient();
+  if (!supabase) return [];
+
+  let query = supabase
+    .from('staff_shifts')
+    .select('*, shift:shift_id(*)');
+
+  if (staffId) query = query.eq('staff_id', staffId);
+
+  const { data, error } = await query;
+
+  if (error) {
+    console.error('Error fetching staff shifts:', error);
+    return [];
+  }
+
+  return toCamelCase(data || []);
+}
+
+export async function upsertStaffShift(staffShift: any) {
+  const supabase = getSupabaseClient();
+  if (!supabase) throw new Error('Supabase not connected');
+
+  const snakeCased = toSnakeCase(staffShift);
+
+  // @ts-ignore
+  const { data, error } = await supabase
+    .from('staff_shifts')
+    .upsert(snakeCased, { onConflict: 'staff_id,day_of_week' })
+    .select()
+    .single();
+
+  if (error) throw error;
+  return toCamelCase(data);
+}
+
+export async function deleteStaffShift(id: string) {
+  const supabase = getSupabaseClient();
+  if (!supabase) throw new Error('Supabase not connected');
+
+  const { error } = await supabase
+    .from('staff_shifts')
+    .delete()
+    .eq('id', id);
+
+  if (error) throw error;
+}
+
+// ============ HOLIDAYS OPERATIONS ============
+
+export async function fetchHolidays(year?: number) {
+  const supabase = getSupabaseClient();
+  if (!supabase) return [];
+
+  let query = supabase
+    .from('holidays')
+    .select('*')
+    .order('date', { ascending: true });
+
+  if (year) {
+    query = query.gte('date', `${year}-01-01`).lte('date', `${year}-12-31`);
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    console.error('Error fetching holidays:', error);
+    return [];
+  }
+
+  return toCamelCase(data || []);
+}
+
+export async function insertHoliday(holiday: any) {
+  const supabase = getSupabaseClient();
+  if (!supabase) throw new Error('Supabase not connected');
+
+  const snakeCased = toSnakeCase(holiday);
+
+  // @ts-ignore
+  const { data, error } = await supabase
+    .from('holidays')
+    .insert(snakeCased)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return toCamelCase(data);
+}
+
+export async function deleteHoliday(id: string) {
+  const supabase = getSupabaseClient();
+  if (!supabase) throw new Error('Supabase not connected');
+
+  const { error } = await supabase
+    .from('holidays')
+    .delete()
+    .eq('id', id);
+
+  if (error) throw error;
+}
+
+export async function isHoliday(date: string): Promise<boolean> {
+  const supabase = getSupabaseClient();
+  if (!supabase) return false;
+
+  const { data, error } = await supabase
+    .from('holidays')
+    .select('id')
+    .eq('date', date)
+    .limit(1);
+
+  if (error) {
+    console.error('Error checking holiday:', error);
+    return false;
+  }
+
+  return (data || []).length > 0;
+}
+
+// ============ SYSTEM SETTINGS OPERATIONS ============
+
+export async function fetchSystemSettings(category?: string) {
+  const supabase = getSupabaseClient();
+  if (!supabase) return [];
+
+  let query = supabase
+    .from('system_settings')
+    .select('*')
+    .order('key', { ascending: true });
+
+  if (category) query = query.eq('category', category);
+
+  const { data, error } = await query;
+
+  if (error) {
+    console.error('Error fetching system settings:', error);
+    return [];
+  }
+
+  return toCamelCase(data || []);
+}
+
+export async function getSystemSetting(key: string): Promise<string | null> {
+  const supabase = getSupabaseClient();
+  if (!supabase) return null;
+
+  const { data, error } = await supabase
+    .from('system_settings')
+    .select('value')
+    .eq('key', key)
+    .single();
+
+  if (error) {
+    console.error(`Error fetching setting ${key}:`, error);
+    return null;
+  }
+
+  return data?.value || null;
+}
+
+export async function updateSystemSetting(key: string, value: string, updatedBy?: string) {
+  const supabase = getSupabaseClient();
+  if (!supabase) throw new Error('Supabase not connected');
+
+  // @ts-ignore
+  const { data, error } = await supabase
+    .from('system_settings')
+    .update({ value, updated_at: new Date().toISOString(), updated_by: updatedBy })
+    .eq('key', key)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return toCamelCase(data);
+}
+
+// ============ LATE REASON CATEGORIES OPERATIONS ============
+
+export async function fetchLateReasonCategories() {
+  const supabase = getSupabaseClient();
+  if (!supabase) return [];
+
+  const { data, error } = await supabase
+    .from('late_reason_categories')
+    .select('*')
+    .eq('is_active', true)
+    .order('sort_order', { ascending: true });
+
+  if (error) {
+    console.error('Error fetching late reason categories:', error);
+    return [];
+  }
+
+  return toCamelCase(data || []);
+}
+
