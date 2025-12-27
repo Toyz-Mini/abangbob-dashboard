@@ -39,7 +39,7 @@ import {
 // const CURRENT_STAFF_ID = '2';
 
 export default function ProfilePage() {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const { staff, attendance, isInitialized } = useStaff();
   const { getLeaveBalance } = useStaffPortal();
   const { getStaffKPI } = useKPI();
@@ -77,6 +77,15 @@ export default function ProfilePage() {
     });
   };
 
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      window.location.href = '/login';
+    } catch (error) {
+      console.error('Logout failed', error);
+    }
+  };
+
   if (!isInitialized || !currentStaff) {
     return (
       <MainLayout>
@@ -93,8 +102,16 @@ export default function ProfilePage() {
     <MainLayout>
       <div className="staff-portal animate-fade-in">
         {/* Header */}
-        <div style={{ marginBottom: '1.5rem' }}>
-
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+          <h1 style={{ fontSize: '1.5rem', fontWeight: 700 }}>Profil Saya</h1>
+          <button
+            onClick={handleLogout}
+            className="btn btn-outline btn-sm"
+            style={{ color: 'var(--error)', borderColor: 'var(--error)' }}
+          >
+            <LogOut size={16} style={{ marginRight: '0.5rem' }} />
+            Log Keluar
+          </button>
         </div>
 
         {/* Profile Header Card */}

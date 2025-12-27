@@ -276,6 +276,9 @@ export default function MainLayout({ children }: { children: ReactNode }) {
   // Filter based on permissions (though Admin usually sees all)
   const filteredBottomNavItems = bottomNavItems.filter(item => canViewNavItem(userRole, item.href));
 
+  // Hide TopNav for Staff users
+  const shouldShowTopNav = userRole !== 'Staff';
+
   return (
     <RouteGuard>
       <div className="main-container" ref={containerRef}>
@@ -332,10 +335,19 @@ export default function MainLayout({ children }: { children: ReactNode }) {
           </button>
         )}
 
-        <TopNav onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)} />
+        {shouldShowTopNav && <TopNav onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)} />}
         <main
           id="main-content"
           className={`main-content page-enter ${shouldShowSidebar && isSidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}
+          style={{
+            paddingTop: shouldShowTopNav ? undefined : '1rem',
+            // If sidebar is hidden, we might need to reset margin-left logic handled by CSS classes?
+            // "sidebar-closed" usually implies small margin. "sidebar-open" large.
+            // If sidebar is hidden completely (shouldShowSidebar=false), we want full width.
+            // Classes handle open/closed. We might need a "sidebar-hidden" class or override.
+            marginLeft: shouldShowSidebar ? undefined : 0,
+            width: shouldShowSidebar ? undefined : '100%'
+          }}
         >
           <Breadcrumb />
           {children}
