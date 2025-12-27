@@ -1,6 +1,10 @@
 -- Sync Missing Approved Users to Staff Table
--- Fixes issue where user is 'approved' but has no record in 'staff' table
+-- FIX 3: Alter staff ID to TEXT to support non-UUID user IDs (like 'Hpp...')
 
+-- 1. Alter staff.id to TEXT (This allows any string ID)
+ALTER TABLE public.staff ALTER COLUMN id TYPE text;
+
+-- 2. Insert missing records
 INSERT INTO public.staff (
   id, 
   name, 
@@ -11,17 +15,15 @@ INSERT INTO public.staff (
   join_date
 )
 SELECT 
-  u.id, 
+  u.id::text, 
   u.name, 
   u.email, 
   u.role, 
   'active', 
-  u."outletId", -- camelCase column needs quotes
+  u."outletId", -- user table uses camelCase
   NOW()
 FROM public."user" u
 WHERE u.status = 'approved'
 AND NOT EXISTS (
-  SELECT 1 FROM public.staff s WHERE s.id::text = u.id::text
+  SELECT 1 FROM public.staff s WHERE s.id = u.id::text
 );
-
--- Note: We cast to text to avoid UUID mismatch errors
