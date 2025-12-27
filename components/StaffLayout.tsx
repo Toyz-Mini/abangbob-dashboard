@@ -30,12 +30,11 @@ export default function StaffLayout({ children, showHeader = true }: StaffLayout
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* DEBUG BANNER - TEMPORARY */}
       <div className="bg-red-600 text-white p-4 text-sm font-mono break-all z-50">
-        <strong>DEBUG INFO:</strong><br />
+        <strong>DEBUG INFO (Misteri Nusantara):</strong><br />
         Email: {user?.email}<br />
         Role (AuthContext): {user?.role || 'null'}<br />
         ID: {user?.id}<br />
-        Status: {user?.status}<br />
-        CurrentStaff Role: {currentStaff?.role || 'null'}
+        Target DB: {process.env.NEXT_PUBLIC_SUPABASE_URL}<br />
       </div>
 
       {/* Simple Header */}
