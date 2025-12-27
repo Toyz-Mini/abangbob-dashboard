@@ -156,7 +156,7 @@ INSERT INTO holiday_policies (id, holiday_id, year, is_operating, compensation_t
   ('hp_2025_aidiladha_1', 'ph_2025_aidiladha_1', 2025, false, 'none', 2.0, false),
   ('hp_2025_aidiladha_2', 'ph_2025_aidiladha_2', 2025, false, 'none', 2.0, false),
   ('hp_2025_hijrah', 'ph_2025_hijrah', 2025, true, 'staff_choice', 2.0, true),
-  ('hp_2025_kdymm_bday', 'hp_2025_kdymm_bday', 2025, false, 'none', 2.0, false),
+  ('hp_2025_kdymm_bday', 'ph_2025_kdymm_bday', 2025, false, 'none', 2.0, false),
   ('hp_2025_maulidur_rasul', 'ph_2025_maulidur_rasul', 2025, true, 'staff_choice', 2.0, true),
   ('hp_2025_christmas', 'ph_2025_christmas', 2025, true, 'staff_choice', 2.0, true)
 ON CONFLICT (id) DO NOTHING;
