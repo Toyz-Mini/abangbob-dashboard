@@ -57,7 +57,8 @@ export default function RouteGuard({ children }: { children: React.ReactNode }) 
         }
 
         // Determine effective role
-        const role = user ? 'Admin' : (isStaffLoggedIn && currentStaff ? currentStaff.role : null);
+        // Fix: Do NOT default to Admin. Use the actual role from AuthContext.
+        const role = user ? (user.role as any) : (isStaffLoggedIn && currentStaff ? currentStaff.role : null);
 
         // If no role (not logged in), redirect to login
         // Exception: If we are at root /, allow it? Usually root redirects to dashboard which requires auth.
