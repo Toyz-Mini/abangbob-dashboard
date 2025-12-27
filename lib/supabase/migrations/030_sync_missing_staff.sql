@@ -1,10 +1,22 @@
 -- Sync Missing Approved Users to Staff Table
--- FIX 3: Alter staff ID to TEXT to support non-UUID user IDs (like 'Hpp...')
+-- FIX 4: Drop policy -> Alter Column -> Re-create Policy -> Sync Data
 
--- 1. Alter staff.id to TEXT (This allows any string ID)
+-- 1. Drop existing policies that might depend on the ID column
+DROP POLICY IF EXISTS "Staff can view own profile" ON public.staff;
+
+-- 2. Alter staff.id to TEXT (to support non-UUID IDs)
 ALTER TABLE public.staff ALTER COLUMN id TYPE text;
 
--- 2. Insert missing records
+-- 3. Re-create the policy (Updated for TEXT column)
+-- We check if ID matches auth.uid() (casted to text to be safe)
+CREATE POLICY "Staff can view own profile" 
+ON public.staff 
+FOR SELECT 
+USING (
+  id = auth.uid()::text
+);
+
+-- 4. Insert missing records
 INSERT INTO public.staff (
   id, 
   name, 
@@ -20,7 +32,7 @@ SELECT
   u.email, 
   u.role, 
   'active', 
-  u."outletId", -- user table uses camelCase
+  u."outletId", 
   NOW()
 FROM public."user" u
 WHERE u.status = 'approved'
