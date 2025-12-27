@@ -3,8 +3,9 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import Webcam from 'react-webcam';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MapPin, Camera, CheckCircle, AlertTriangle, X, RefreshCw, ScanFace } from 'lucide-react';
+import { MapPin, Camera, CheckCircle, AlertTriangle, X, RefreshCw, ScanFace, MapPinOff } from 'lucide-react';
 import PremiumButton from './PremiumButton';
+import { getAllowedLocations, calculateDistance, type AllowedLocation } from '@/lib/supabase/attendance-sync';
 
 interface VerificationWizardProps {
     isOpen: boolean;
@@ -21,6 +22,9 @@ export default function VerificationWizard({ isOpen, onClose, onSuccess, staffNa
     const [locationError, setLocationError] = useState<string>('');
     const [capturedImage, setCapturedImage] = useState<string | null>(null);
     const [error, setError] = useState<string>('');
+    const [isFlashing, setIsFlashing] = useState(false);
+    const [nearestOutlet, setNearestOutlet] = useState<AllowedLocation | null>(null);
+    const [isLocating, setIsLocating] = useState(false);
 
     const webcamRef = useRef<Webcam>(null);
 
@@ -32,43 +36,84 @@ export default function VerificationWizard({ isOpen, onClose, onSuccess, staffNa
             setCapturedImage(null);
             setError('');
             setLocationError('');
+            setNearestOutlet(null);
             // Auto-start location check
             startLocationCheck();
         }
     }, [isOpen]);
 
-    const startLocationCheck = () => {
+    const startLocationCheck = async () => {
         if (!navigator.geolocation) {
             setLocationError('Browser tidak menyokong geolokasi.');
             return;
         }
 
+        setIsLocating(true);
         setLocationError('');
+        setNearestOutlet(null);
 
-        // Simulate radar "scanning" delay for effect
-        setTimeout(() => {
+        try {
+            // 1. Fetch allowed locations early
+            const { data: locations, success, error: fetchError } = await getAllowedLocations();
+            if (!success || !locations) {
+                throw new Error(fetchError || 'Gagal memuat naik senarai lokasi outlet.');
+            }
+
+            // 2. Get current position
             navigator.geolocation.getCurrentPosition(
                 (position) => {
-                    setLocation({
-                        lat: position.coords.latitude,
-                        lng: position.coords.longitude
-                    });
-                    // Auto-advance to camera after brief success visual
-                    setTimeout(() => setStep('camera'), 1500);
+                    const currentLat = position.coords.latitude;
+                    const currentLng = position.coords.longitude;
+
+                    setLocation({ lat: currentLat, lng: currentLng });
+
+                    // 3. Find nearest outlet and validate distance
+                    let nearest: AllowedLocation | null = null;
+                    let minDistance = Infinity;
+
+                    for (const loc of locations) {
+                        const dist = calculateDistance(currentLat, currentLng, loc.latitude, loc.longitude);
+                        if (dist < minDistance) {
+                            minDistance = dist;
+                            nearest = loc;
+                        }
+                    }
+
+                    if (nearest && minDistance <= nearest.radius_meters) {
+                        setNearestOutlet(nearest);
+                        setIsLocating(false);
+                        // Auto-advance to camera after brief success visual
+                        setTimeout(() => setStep('camera'), 1500);
+                    } else {
+                        setIsLocating(false);
+                        const distText = nearest ? `${Math.round(minDistance)}m dari ${nearest.name}` : 'Tiada outlet berhampiran';
+                        setLocationError(`Anda berada di luar radius yang dibenarkan (${distText}).`);
+                    }
                 },
                 (err) => {
                     console.error(err);
-                    setLocationError('Gagal mendapatkan lokasi. Sila benarkan akses lokasi.');
+                    setIsLocating(false);
+                    if (err.code === 1) {
+                        setLocationError('Akses lokasi ditolak. Sila benarkan akses lokasi di browser.');
+                    } else {
+                        setLocationError('Gagal mendapatkan lokasi. Sila pastikan GPS anda aktif.');
+                    }
                 },
                 { enableHighAccuracy: true, timeout: 10000 }
             );
-        }, 2000);
+        } catch (err: any) {
+            console.error(err);
+            setIsLocating(false);
+            setLocationError(err.message || 'Ralat teknikal semasa mengesahkan lokasi.');
+        }
     };
 
     const capturePhoto = useCallback(() => {
         const imageSrc = webcamRef.current?.getScreenshot();
         if (imageSrc) {
+            setIsFlashing(true);
             setCapturedImage(imageSrc);
+            setTimeout(() => setIsFlashing(false), 300);
         }
     }, [webcamRef]);
 
@@ -94,10 +139,9 @@ export default function VerificationWizard({ isOpen, onClose, onSuccess, staffNa
                 onClose();
             }, 3000);
         } catch (err: any) {
-            console.error(err);
+            console.error('Verification error:', err);
             setError(err.message || 'Gagal mengesahkan kehadiran.');
-            setStep('camera'); // Go back to camera on failure?? or stay in verifying? 
-            // Actually better to go back to camera so they can retry submission or retake if image was bad
+            setStep('camera'); // Go back to camera so they can see the error and retry
         }
     };
 
@@ -133,33 +177,34 @@ export default function VerificationWizard({ isOpen, onClose, onSuccess, staffNa
                             <div className="flex flex-col items-center gap-6 animate-fade-in w-full">
                                 <div className="relative">
                                     {/* Radar Pulse Rings */}
-                                    {!location && !locationError && (
+                                    {isLocating && (
                                         <>
                                             <div className="absolute inset-0 rounded-full border-2 border-primary/30 animate-ping" />
                                             <div className="absolute inset-[-10px] rounded-full border border-primary/10 animate-ping delay-75" />
                                         </>
                                     )}
 
-                                    <div className={`w-24 h-24 rounded-full flex items-center justify-center transition-all duration-500 ${location ? 'bg-green-100 text-green-600 scale-110' :
-                                            locationError ? 'bg-red-100 text-red-500' : 'bg-primary/10 text-primary'
+                                    <div className={`w-24 h-24 rounded-full flex items-center justify-center transition-all duration-500 ${nearestOutlet ? 'bg-green-100 text-green-600 scale-110' :
+                                        locationError ? 'bg-red-100 text-red-500' : 'bg-primary/10 text-primary'
                                         }`}>
-                                        {location ? <CheckCircle size={40} className="animate-scale-in" /> :
-                                            locationError ? <AlertTriangle size={40} /> : <MapPin size={40} className="animate-bounce" />}
+                                        {nearestOutlet ? <CheckCircle size={40} className="animate-scale-in" /> :
+                                            locationError ? <MapPinOff size={40} /> : <MapPin size={40} className={isLocating ? "animate-bounce" : ""} />}
                                     </div>
                                 </div>
 
                                 <div className="space-y-2">
                                     <h3 className="text-xl font-bold text-gray-900">
-                                        {location ? 'Lokasi Disahkan!' : locationError ? 'Masalah Lokasi' : 'Mengesan Lokasi...'}
+                                        {nearestOutlet ? 'Lokasi Disahkan!' : locationError ? 'Masalah Lokasi' : 'Mengesan Lokasi...'}
                                     </h3>
-                                    <p className="text-sm text-gray-500 max-w-[250px] mx-auto">
-                                        {location ? 'Hebat! Lokasi kedai ditemui.' :
-                                            locationError ? locationError : 'Sila pastikan anda berada di premis kedai.'}
+                                    <p className="text-sm text-gray-500 max-w-[280px] mx-auto">
+                                        {nearestOutlet ? (
+                                            <>Outlet dikesan: <span className="font-bold text-gray-900">{nearestOutlet.name}</span></>
+                                        ) : locationError ? locationError : 'Sila pastikan anda berada di premis kedai.'}
                                     </p>
                                 </div>
 
                                 {locationError && (
-                                    <PremiumButton onClick={startLocationCheck} variant="outline" size="sm">
+                                    <PremiumButton onClick={startLocationCheck} variant="outline" size="sm" icon={RefreshCw}>
                                         Cuba Lagi
                                     </PremiumButton>
                                 )}
@@ -169,9 +214,12 @@ export default function VerificationWizard({ isOpen, onClose, onSuccess, staffNa
                         {/* STEP 2: CAMERA CAPTURE */}
                         {step === 'camera' && (
                             <div className="flex flex-col items-center gap-4 w-full animate-fade-in">
-                                <div className="text-center mb-2">
-                                    <h3 className="text-lg font-bold text-gray-900">Verifikasi Wajah</h3>
-                                    <p className="text-xs text-gray-500">Ambil selfie untuk pengesahan</p>
+                                <div className="text-center mb-1">
+                                    <div className="flex items-center justify-center gap-2 mb-1">
+                                        <ScanFace size={18} className="text-primary" />
+                                        <h3 className="text-lg font-bold text-gray-900">Verifikasi Wajah</h3>
+                                    </div>
+                                    <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Selfie di {nearestOutlet?.name}</p>
                                 </div>
 
                                 <div className="relative w-full aspect-[3/4] max-h-[350px] bg-black rounded-2xl overflow-hidden shadow-inner border border-gray-200">
@@ -185,17 +233,34 @@ export default function VerificationWizard({ isOpen, onClose, onSuccess, staffNa
                                                 screenshotFormat="image/jpeg"
                                                 videoConstraints={{ facingMode: "user" }}
                                                 className="w-full h-full object-cover"
+                                                onUserMediaError={() => setError('Akses kamera ditolak. Sila benarkan akses kamera untuk proceed.')}
                                             />
                                             {/* Face Scanning Overlay */}
                                             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                                                 <div className="w-[70%] h-[50%] border-2 border-dashed border-white/50 rounded-full opacity-60" />
-                                                <ScanFace className="absolute w-12 h-12 text-white/40 animate-pulse" />
                                             </div>
                                         </>
                                     )}
+
+                                    {/* Flash Effect */}
+                                    <AnimatePresence>
+                                        {isFlashing && (
+                                            <motion.div
+                                                initial={{ opacity: 0 }}
+                                                animate={{ opacity: 1 }}
+                                                exit={{ opacity: 0 }}
+                                                className="absolute inset-0 bg-white z-50"
+                                            />
+                                        )}
+                                    </AnimatePresence>
                                 </div>
 
-                                {error && <p className="text-xs text-red-500">{error}</p>}
+                                {error && (
+                                    <div className="p-3 bg-red-50 text-red-600 rounded-lg text-xs font-medium border border-red-100 flex items-center gap-2">
+                                        <AlertTriangle size={14} />
+                                        {error}
+                                    </div>
+                                )}
 
                                 <div className="w-full flex gap-3 mt-2">
                                     {!capturedImage ? (

@@ -83,11 +83,14 @@ export default function AttendancePage() {
                 setMessage({ type: 'success', text: `Berjaya ${wizardMode === 'IN' ? 'Clock In' : 'Clock Out'}!` });
                 await loadTodayAttendance();
             } else {
-                setMessage({ type: 'error', text: result.error || 'Ralat berlaku.' });
+                const errorMsg = result.error || 'Ralat berlaku.';
+                setMessage({ type: 'error', text: errorMsg });
+                throw new Error(errorMsg);
             }
         } catch (err: any) {
             console.error(err);
             setMessage({ type: 'error', text: err.message || 'Ralat tidak dijangka.' });
+            throw err;
         } finally {
             setTimeout(() => setMessage(null), 5000);
         }
