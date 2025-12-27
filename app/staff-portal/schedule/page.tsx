@@ -127,11 +127,33 @@ export default function SchedulePage() {
     return Math.round(totalMinutes / 60 * 10) / 10;
   }, [myWeekSchedule, shifts]);
 
-  if (!isInitialized || !currentStaff) {
+  if (!isInitialized) {
     return (
       <MainLayout>
         <div className="loading-container">
           <LoadingSpinner />
+        </div>
+      </MainLayout>
+    );
+  }
+
+  if (!currentStaff) {
+    return (
+      <MainLayout>
+        <div className="p-4 flex flex-col items-center justify-center min-h-[50vh] text-center">
+          <div className="bg-red-50 text-red-600 p-6 rounded-lg max-w-md">
+            <h3 className="font-bold text-lg mb-2">Akses Gagal / Profil Tidak Dijumpai</h3>
+            <p className="mb-4">
+              Rekod staff anda tidak dapat dijumpai. Ini mungkin disebabkan oleh isu kebenaran data (RLS).
+            </p>
+            <div className="text-xs bg-white p-2 rounded border border-red-100 text-left font-mono">
+              User ID: {user?.id}<br />
+              Status: {user?.status || 'Unknown'}
+            </div>
+            <p className="mt-4 text-sm">
+              Sila hubungi Admin untuk semakan database.
+            </p>
+          </div>
         </div>
       </MainLayout>
     );

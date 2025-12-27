@@ -55,7 +55,14 @@ export default function MainLayout({ children }: { children: ReactNode }) {
   // Determine role for mobile menu filtering
   // If user is accessing admin routes, treat as Admin for UI purposes
   const isUserAdmin = !!user || pathname?.startsWith('/admin');
-  const userRole: UserRole | null = isUserAdmin ? 'Admin' : (isStaffLoggedIn && currentStaff ? currentStaff.role : null);
+  // improved role detection: check user.role from AuthContext as well
+  const userRole: UserRole | null = isUserAdmin && user?.role !== 'Staff'
+    ? 'Admin'
+    : (user?.role === 'Staff' ? 'Staff' : (isStaffLoggedIn && currentStaff ? currentStaff.role : null));
+
+  // Logic to determine if Sidebar should be visible
+  // Hide sidebar for Staff users
+  const shouldShowSidebar = userRole !== 'Staff';
 
   // Debug role detection
   useEffect(() => {
@@ -63,14 +70,17 @@ export default function MainLayout({ children }: { children: ReactNode }) {
       hasUser: !!user,
       isStaffLoggedIn,
       path: pathname,
-      determinedRole: userRole
+      determinedRole: userRole,
+      shouldShowSidebar
     });
-  }, [user, isStaffLoggedIn, pathname, userRole]);
+  }, [user, isStaffLoggedIn, pathname, userRole, shouldShowSidebar]);
 
-  // Open sidebar on mount if desktop
+  // Open sidebar on mount if desktop AND allowed
   useEffect(() => {
-    if (window.innerWidth >= 768) {
+    if (window.innerWidth >= 768 && shouldShowSidebar) {
       setIsSidebarOpen(true);
+    } else if (!shouldShowSidebar) {
+      setIsSidebarOpen(false);
     }
 
     // Offline Sync Recovery
@@ -105,7 +115,7 @@ export default function MainLayout({ children }: { children: ReactNode }) {
     return () => {
       window.removeEventListener('online', handleOnline);
     };
-  }, []);
+  }, [shouldShowSidebar]);
 
   // Command palette state
   const commandPalette = useCommandPalette();
@@ -274,54 +284,58 @@ export default function MainLayout({ children }: { children: ReactNode }) {
           Skip to main content
         </a>
 
-        <div className="desktop-only">
-          <Sidebar
-            ref={sidebarRef}
-            isOpen={isSidebarOpen}
-            onToggle={() => setIsSidebarOpen(prev => !prev)}
-            onNavClick={handleNavClick}
-          />
-        </div>
+        {shouldShowSidebar && (
+          <div className="desktop-only">
+            <Sidebar
+              ref={sidebarRef}
+              isOpen={isSidebarOpen}
+              onToggle={() => setIsSidebarOpen(prev => !prev)}
+              onNavClick={handleNavClick}
+            />
+          </div>
+        )}
 
         {/* Floating Sidebar Toggle (Desktop) */}
-        <button
-          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-          className="desktop-only"
-          style={{
-            position: 'fixed',
-            left: isSidebarOpen ? '280px' : '80px',
-            top: '50%',
-            transform: 'translateY(-50%) translateX(-50%)',
-            zIndex: 100, // Above sidebar content
-            width: '24px',
-            height: '48px', // Pill shape
-            borderRadius: '0 12px 12px 0',
-            background: 'var(--primary)',
-            color: 'white',
-            border: 'none',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: 'pointer',
-            transition: 'left 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-            boxShadow: '2px 0 8px rgba(0,0,0,0.1)',
-            opacity: 0.8,
-          }}
-          onMouseEnter={(e) => e.currentTarget.style.opacity = '1'}
-          onMouseLeave={(e) => e.currentTarget.style.opacity = '0.8'}
-          title={isSidebarOpen ? "Collapse" : "Expand"}
-        >
-          {isSidebarOpen ? (
-            <ChevronLeft size={16} />
-          ) : (
-            <ChevronRight size={16} />
-          )}
-        </button>
+        {shouldShowSidebar && (
+          <button
+            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+            className="desktop-only"
+            style={{
+              position: 'fixed',
+              left: isSidebarOpen ? '280px' : '80px',
+              top: '50%',
+              transform: 'translateY(-50%) translateX(-50%)',
+              zIndex: 100, // Above sidebar content
+              width: '24px',
+              height: '48px', // Pill shape
+              borderRadius: '0 12px 12px 0',
+              background: 'var(--primary)',
+              color: 'white',
+              border: 'none',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              transition: 'left 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              boxShadow: '2px 0 8px rgba(0,0,0,0.1)',
+              opacity: 0.8,
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.opacity = '1'}
+            onMouseLeave={(e) => e.currentTarget.style.opacity = '0.8'}
+            title={isSidebarOpen ? "Collapse" : "Expand"}
+          >
+            {isSidebarOpen ? (
+              <ChevronLeft size={16} />
+            ) : (
+              <ChevronRight size={16} />
+            )}
+          </button>
+        )}
 
         <TopNav onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)} />
         <main
           id="main-content"
-          className={`main-content page-enter ${isSidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}
+          className={`main-content page-enter ${shouldShowSidebar && isSidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}
         >
           <Breadcrumb />
           {children}
