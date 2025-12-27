@@ -4,6 +4,7 @@ import { useState, useMemo } from 'react';
 import MainLayout from '@/components/MainLayout';
 import { useStaff, useStore } from '@/lib/store';
 import Link from 'next/link';
+import { useAuth } from '@/lib/contexts/AuthContext';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import StaffPortalNav from '@/components/StaffPortalNav';
 import {
@@ -20,7 +21,8 @@ import {
 } from 'lucide-react';
 
 
-const CURRENT_STAFF_ID = '2';
+// Demo: Using dynamic user ID
+// const CURRENT_STAFF_ID = '2';
 
 // Payslip Settings (can be loaded from settings in production)
 interface PayslipBranding {
@@ -108,6 +110,7 @@ const mockPayslips: PayslipData[] = [
 ];
 
 export default function PayslipPage() {
+  const { user } = useAuth();
   const { staff, isInitialized } = useStaff();
   const [selectedPayslip, setSelectedPayslip] = useState<PayslipData | null>(mockPayslips[0]);
   const [expandedMonth, setExpandedMonth] = useState<string | null>(mockPayslips[0]?.month);
@@ -121,7 +124,7 @@ export default function PayslipPage() {
     return DEFAULT_PAYSLIP_BRANDING;
   });
 
-  const currentStaff = staff.find(s => s.id === CURRENT_STAFF_ID);
+  const currentStaff = staff.find(s => s.id === user?.id);
 
   // Calculate totals
   const totalEarnings = selectedPayslip
@@ -275,7 +278,7 @@ export default function PayslipPage() {
                   </div>
                   <div className="info-row">
                     <span>Nombor Staff:</span>
-                    <strong>EMP-{CURRENT_STAFF_ID.padStart(4, '0')}</strong>
+                    <strong>EMP-{(user?.id || '').slice(-4).padStart(4, '0')}</strong>
                   </div>
                 </div>
 

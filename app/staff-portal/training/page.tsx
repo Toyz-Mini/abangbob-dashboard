@@ -4,6 +4,7 @@ import { useState } from 'react';
 import MainLayout from '@/components/MainLayout';
 import { useStaff } from '@/lib/store';
 import Link from 'next/link';
+import { useAuth } from '@/lib/contexts/AuthContext';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import StaffPortalNav from '@/components/StaffPortalNav';
 import {
@@ -22,7 +23,8 @@ import {
 } from 'lucide-react';
 
 
-const CURRENT_STAFF_ID = '2';
+// Demo: Using dynamic user ID
+// const CURRENT_STAFF_ID = '2';
 
 interface Training {
   id: string;
@@ -119,10 +121,11 @@ const mockCertificates: Certificate[] = [
 ];
 
 export default function TrainingPage() {
+  const { user } = useAuth();
   const { staff, isInitialized } = useStaff();
   const [activeTab, setActiveTab] = useState<'training' | 'certificates'>('training');
 
-  const currentStaff = staff.find(s => s.id === CURRENT_STAFF_ID);
+  const currentStaff = staff.find(s => s.id === user?.id);
 
   const completedCount = mockTrainings.filter(t => t.status === 'completed').length;
   const inProgressCount = mockTrainings.filter(t => t.status === 'in_progress').length;

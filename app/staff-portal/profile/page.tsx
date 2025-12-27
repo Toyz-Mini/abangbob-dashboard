@@ -5,6 +5,7 @@ import { useStaffPortal, useStaff, useKPI } from '@/lib/store';
 import Link from 'next/link';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import StaffPortalNav from '@/components/StaffPortalNav';
+import { useAuth } from '@/lib/contexts/AuthContext';
 import {
   ArrowLeft,
   Phone,
@@ -34,21 +35,23 @@ import {
 
 
 // Demo: Using staff ID 2 as the logged-in user
-const CURRENT_STAFF_ID = '2';
+// Demo: Using dynamic user ID
+// const CURRENT_STAFF_ID = '2';
 
 export default function ProfilePage() {
+  const { user } = useAuth();
   const { staff, attendance, isInitialized } = useStaff();
   const { getLeaveBalance } = useStaffPortal();
   const { getStaffKPI } = useKPI();
 
-  const currentStaff = staff.find(s => s.id === CURRENT_STAFF_ID);
-  const leaveBalance = getLeaveBalance(CURRENT_STAFF_ID);
-  const kpi = getStaffKPI(CURRENT_STAFF_ID);
+  const currentStaff = staff.find(s => s.id === user?.id);
+  const leaveBalance = getLeaveBalance(user?.id || '');
+  const kpi = getStaffKPI(user?.id || '');
 
   // Calculate attendance stats
   const thisMonthAttendance = attendance.filter(a => {
     const month = new Date().toISOString().slice(0, 7);
-    return a.staffId === CURRENT_STAFF_ID && a.date.startsWith(month);
+    return a.staffId === user?.id && a.date.startsWith(month);
   });
   const daysWorked = thisMonthAttendance.filter(a => a.clockInTime && a.clockOutTime).length;
 
@@ -571,7 +574,7 @@ export default function ProfilePage() {
             </div>
 
             <Link
-              href={`/hr/kpi/${CURRENT_STAFF_ID}`}
+              href={`/hr/kpi/${user?.id || ''}`}
               className="btn btn-outline btn-sm"
               style={{ marginTop: '1.5rem', width: '100%' }}
             >

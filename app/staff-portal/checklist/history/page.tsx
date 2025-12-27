@@ -4,6 +4,7 @@ import { useMemo } from 'react';
 import MainLayout from '@/components/MainLayout';
 import { useStaffPortal, useStaff } from '@/lib/store';
 import Link from 'next/link';
+import { useAuth } from '@/lib/contexts/AuthContext';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import {
   ArrowLeft,
@@ -17,18 +18,21 @@ import {
 
 
 // Demo: Using staff ID 2 (Siti Nurhaliza) as the logged-in user
-const CURRENT_STAFF_ID = '2';
+// Demo: Using dynamic user ID
+// const CURRENT_STAFF_ID = '2';
 
 export default function ChecklistHistoryPage() {
+  const { user } = useAuth();
   const { staff, isInitialized } = useStaff();
   const { checklistCompletions, shifts } = useStaffPortal();
 
-  const currentStaff = staff.find(s => s.id === CURRENT_STAFF_ID);
+  const currentStaff = staff.find(s => s.id === user?.id);
 
   // Get my checklist history
   const myChecklists = useMemo(() => {
+    if (!user) return [];
     return checklistCompletions
-      .filter(c => c.staffId === CURRENT_STAFF_ID)
+      .filter(c => c.staffId === user.id)
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [checklistCompletions]);
 

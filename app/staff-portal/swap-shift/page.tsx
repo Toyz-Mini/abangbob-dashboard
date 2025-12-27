@@ -7,6 +7,7 @@ import Link from 'next/link';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import Modal from '@/components/Modal';
 import StaffPortalNav from '@/components/StaffPortalNav';
+import { useAuth } from '@/lib/contexts/AuthContext';
 import {
   ArrowLeft,
   ArrowRight,
@@ -21,9 +22,6 @@ import {
   Sun,
   Moon
 } from 'lucide-react';
-
-
-const CURRENT_STAFF_ID = '2';
 
 interface SwapRequest {
   id: string;
@@ -66,6 +64,7 @@ const mockSwapRequests: SwapRequest[] = [
 ];
 
 export default function SwapShiftPage() {
+  const { user } = useAuth();
   const { staff, isInitialized } = useStaff();
   const { schedules, shifts } = useStaffPortal();
 
@@ -78,24 +77,28 @@ export default function SwapShiftPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
 
-  const currentStaff = staff.find(s => s.id === CURRENT_STAFF_ID);
+  // Dynamic Staff Finding
+  const currentStaff = useMemo(() => {
+    return staff.find(s => s.id === user?.id) || null;
+  }, [staff, user]);
 
   // Get my upcoming schedules
   const myUpcomingSchedules = useMemo(() => {
+    if (!user) return [];
     const today = new Date().toISOString().split('T')[0];
     return schedules
-      .filter(s => s.staffId === CURRENT_STAFF_ID && s.date >= today)
+      .filter(s => s.staffId === user.id && s.date >= today)
       .sort((a, b) => a.date.localeCompare(b.date))
       .slice(0, 7)
       .map(s => ({
         ...s,
         shift: shifts.find(sh => sh.id === s.shiftId)
       }));
-  }, [schedules, shifts]);
+  }, [schedules, shifts, user]);
 
   // Get available colleagues for swap
   const availableColleagues = useMemo(() => {
-    if (!selectedDate) return [];
+    if (!selectedDate || !user) return [];
 
     const mySchedule = myUpcomingSchedules.find(s => s.date === selectedDate);
     if (!mySchedule) return [];
@@ -106,7 +109,7 @@ export default function SwapShiftPage() {
       .map(s => s.staffId);
 
     return staff
-      .filter(s => s.id !== CURRENT_STAFF_ID && s.status === 'active' && !workingOnDate.includes(s.id))
+      .filter(s => s.id !== user.id && s.status === 'active' && !workingOnDate.includes(s.id))
       .map(s => ({
         ...s,
         // Get their schedules for swap options
@@ -118,10 +121,10 @@ export default function SwapShiftPage() {
             shift: shifts.find(sh => sh.id === sch.shiftId)
           }))
       }));
-  }, [selectedDate, myUpcomingSchedules, schedules, staff, shifts]);
+  }, [selectedDate, myUpcomingSchedules, schedules, staff, shifts, user]);
 
   const handleSubmitRequest = async () => {
-    if (!selectedDate || !selectedColleague || !selectedColleagueDate) return;
+    if (!selectedDate || !selectedColleague || !selectedColleagueDate || !user) return;
 
     setIsSubmitting(true);
     await new Promise(resolve => setTimeout(resolve, 1000));
@@ -133,7 +136,7 @@ export default function SwapShiftPage() {
 
     const newRequest: SwapRequest = {
       id: Date.now().toString(),
-      fromStaffId: CURRENT_STAFF_ID,
+      fromStaffId: user.id,
       fromStaffName: currentStaff?.name || '',
       toStaffId: selectedColleague,
       toStaffName: colleague?.name || '',
@@ -419,4 +422,3 @@ export default function SwapShiftPage() {
     </MainLayout>
   );
 }
-

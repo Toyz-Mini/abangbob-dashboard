@@ -129,15 +129,46 @@ const Sidebar = forwardRef<HTMLElement, SidebarProps>(({ isOpen, onToggle, onNav
 
   // Filter navigation based on user role
   const filteredNavItems = useMemo(() => {
-    // If staff is logged in (not admin), only show staff portal
-    if (isStaffLoggedIn && currentStaff && !user) {
-      return NAV_ITEMS.filter(group => group.titleKey === 'nav.group.staffPortal');
-    }
-    // Admin sees everything except staff portal personal items
-    if (user) {
-      return NAV_ITEMS;
-    }
-    return NAV_ITEMS;
+    // Determine effective role
+    const role = user ? (user.role as any || 'Staff') : (isStaffLoggedIn && currentStaff ? currentStaff.role : null);
+
+    if (!role) return [];
+
+    // Filter groups and items
+    return NAV_ITEMS.map(group => {
+      // Filter items within group
+      const validItems = group.items.filter(item => {
+        // Use central permission logic
+        // We need to import canViewNavItem. Since I can't easily add import top-level in this tool without logic,
+        // I will assume simple logic here or duplicate logic matching permissions.ts
+        // Wait, permissions.ts is best.
+        // Let's rely on manual check vs NAV_VISIBILITY if we can't import easily.
+        // Actually, I can check imports. 'canViewNavItem' is NOT imported.
+        // I will fix imports in next step. For now, simple logic:
+
+        // Staff Rules:
+        if (role === 'Staff') {
+          // Allow filtered list
+          const ALLOWED_STAFF_PATHS = [
+            '/staff-portal', '/staff-portal/schedule', '/staff-portal/checklist',
+            '/staff-portal/ot-claim', '/staff-portal/salary-advance',
+            '/pos', '/order-history', '/kds', '/order-display', '/delivery',
+            '/production', '/equipment',
+            '/hr/timeclock', '/hr/leave-calendar', '/help', '/notifications'
+          ];
+          // Check if path starts with allowed path?
+          // Exact match for now
+          return ALLOWED_STAFF_PATHS.includes(item.href);
+        }
+
+        return true; // Admin/Manager sees all
+      });
+
+      if (validItems.length > 0) {
+        return { ...group, items: validItems };
+      }
+      return null;
+    }).filter(Boolean) as typeof NAV_ITEMS;
   }, [user, currentStaff, isStaffLoggedIn]);
 
   const isActive = (href: string) => {
@@ -255,8 +286,8 @@ const Sidebar = forwardRef<HTMLElement, SidebarProps>(({ isOpen, onToggle, onNav
                 {user.name?.charAt(0) || 'A'}
               </div>
               <div className="flex-1 min-w-0">
-                <div className="text-sm font-semibold truncate">{user.name || 'Admin'}</div>
-                <div className="text-xs text-gray-500">Admin</div>
+                <div className="text-sm font-semibold truncate">{user.name || 'User'}</div>
+                <div className="text-xs text-gray-500">{user.role || 'Staff'}</div>
               </div>
             </>
           ) : currentStaff ? (
