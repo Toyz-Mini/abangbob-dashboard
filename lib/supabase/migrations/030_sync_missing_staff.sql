@@ -1,9 +1,9 @@
--- MEGA MIGRATION: Fix Staff ID Type, Update Dependencies, and Add AUTOMATION (Robust Version)
--- Updated to handle missing tables gracefully (e.g. if 'leaves' doesn't exist yet)
+-- MEGA MIGRATION: Fix Staff ID Type, Update Dependencies, and Add AUTOMATION (Robust Version v2)
+-- Added DELETE policy drops to avoid any remaining dependencies
 
 -- 1. DROP ALL BLOCKING POLICIES (Conditionally)
 
--- Staff Table (Always exists)
+-- Staff Table
 DROP POLICY IF EXISTS "Staff can view own profile" ON public.staff;
 DROP POLICY IF EXISTS "Admins can manage all staff" ON public.staff;
 
@@ -13,8 +13,12 @@ DO $$ BEGIN
         DROP POLICY IF EXISTS "attendance_select_policy" ON public.attendance;
         DROP POLICY IF EXISTS "attendance_insert_policy" ON public.attendance;
         DROP POLICY IF EXISTS "attendance_update_policy" ON public.attendance;
+        DROP POLICY IF EXISTS "attendance_delete_policy" ON public.attendance; -- ADDED
+        
         DROP POLICY IF EXISTS "Enable read access for all users" ON public.attendance;
         DROP POLICY IF EXISTS "Enable insert for authenticated users only" ON public.attendance;
+        DROP POLICY IF EXISTS "Enable update for users based on email" ON public.attendance;
+        DROP POLICY IF EXISTS "Enable delete for users based on email" ON public.attendance;
     END IF;
 END $$;
 
@@ -24,6 +28,7 @@ DO $$ BEGIN
         DROP POLICY IF EXISTS "leaves_select_policy" ON public.leaves;
         DROP POLICY IF EXISTS "leaves_insert_policy" ON public.leaves;
         DROP POLICY IF EXISTS "leaves_update_policy" ON public.leaves;
+        DROP POLICY IF EXISTS "leaves_delete_policy" ON public.leaves; -- ADDED
     END IF;
 END $$;
 
@@ -31,10 +36,13 @@ END $$;
 DO $$ BEGIN
     IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'schedules') THEN
         DROP POLICY IF EXISTS "schedules_select_policy" ON public.schedules;
+        DROP POLICY IF EXISTS "schedules_insert_policy" ON public.schedules;
+        DROP POLICY IF EXISTS "schedules_update_policy" ON public.schedules;
+        DROP POLICY IF EXISTS "schedules_delete_policy" ON public.schedules; -- ADDED
     END IF;
 END $$;
 
--- Storage (Assume exists)
+-- Storage
 DROP POLICY IF EXISTS "Admins can view all attendance photos" ON storage.objects;
 
 -- Cash Registers
@@ -49,7 +57,6 @@ END $$;
 
 
 -- 2. DROP FOREIGN KEYS REFERENCING PUBLIC.STAFF
--- We use a dynamic block to find and drop any FK constraint pointing to staff.id
 DO $$ 
 DECLARE
     r RECORD;
@@ -109,6 +116,10 @@ DO $$ BEGIN
           EXISTS (SELECT 1 FROM public.user u WHERE u.id::text = auth.uid()::text AND u.role = 'Admin')
         );
         CREATE POLICY "attendance_insert_policy" ON public.attendance FOR INSERT WITH CHECK ("staffId" = auth.uid()::text);
+        CREATE POLICY "attendance_delete_policy" ON public.attendance FOR DELETE USING (
+             "staffId" = auth.uid()::text OR 
+             EXISTS (SELECT 1 FROM public.user u WHERE u.id::text = auth.uid()::text AND u.role = 'Admin')
+        );
     END IF;
 END $$;
 
