@@ -1,11 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query } from '@/lib/db';
-import crypto from 'crypto';
+import { auth } from '@/lib/auth/server';
 
-// Simple password hashing (consistent with reset-password API)
-function hashPassword(password: string): string {
-    return crypto.createHash('sha256').update(password).digest('hex');
-}
 
 export async function POST(request: NextRequest) {
     try {
@@ -40,31 +36,13 @@ export async function POST(request: NextRequest) {
         }
 
         const userId = userResult.rows[0].id;
-        const hashedPassword = hashPassword(password);
 
-        // Check if credential account exists
-        const accountResult = await query(
-            `SELECT id FROM "account" WHERE "userId" = $1 AND "providerId" = 'credential'`,
-            [userId]
-        );
-
-        if (accountResult.rowCount === 0) {
-            // Create new credential account
-            const accountId = crypto.randomUUID();
-            await query(
-                `INSERT INTO "account" (id, "accountId", "providerId", "userId", password, "createdAt", "updatedAt")
-                 VALUES ($1, $2, 'credential', $3, $4, NOW(), NOW())`,
-                [accountId, email, userId, hashedPassword]
-            );
-        } else {
-            // Update existing account password
-            await query(
-                `UPDATE "account" 
-                 SET password = $1, "updatedAt" = NOW()
-                 WHERE "userId" = $2 AND "providerId" = 'credential'`,
-                [hashedPassword, userId]
-            );
-        }
+        // Update password using Better Auth's internal adapter
+        // This ensures the hash is in the correct format (bcrypt)
+        await (auth as any).internalAdapter.updatePassword({
+            userId: userId,
+            newPassword: password
+        });
 
         return NextResponse.json({
             success: true,

@@ -1,12 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { rateLimit, getClientIP } from '@/lib/rate-limit';
-import bcrypt from 'crypto';
-
-// Simple password hashing using crypto (Better Auth handles this internally too)
-function hashPassword(password: string): string {
-    return bcrypt.createHash('sha256').update(password).digest('hex');
-}
+import { auth } from '@/lib/auth/server';
 
 export async function POST(request: NextRequest) {
     try {
@@ -65,18 +60,14 @@ export async function POST(request: NextRequest) {
             [`reset:${email}`]
         );
 
-        // Update password - Better Auth stores in account table
-        // The password field in account table is already hashed by Better Auth
-        // We need to hash it the same way
-        const hashedPassword = hashPassword(password);
-
-        await query(
-            `UPDATE "account" 
-       SET password = $1, "updatedAt" = NOW()
-       WHERE "userId" = (SELECT id FROM "user" WHERE email = $2)
-       AND "providerId" = 'credential'`,
-            [hashedPassword, email]
-        );
+        // Update password using Better Auth's internal adapter
+        const userResult = await query(`SELECT id FROM "user" WHERE email = $1`, [email]);
+        if (userResult.rowCount > 0) {
+            await (auth as any).internalAdapter.updatePassword({
+                userId: userResult.rows[0].id,
+                newPassword: password
+            });
+        }
 
         return NextResponse.json({
             success: true,
