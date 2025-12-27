@@ -1,30 +1,55 @@
--- MEGA MIGRATION: Fix Staff ID Type, Update Dependencies, and Add AUTOMATION (Long Term Fix)
+-- MEGA MIGRATION: Fix Staff ID Type, Update Dependencies, and Add AUTOMATION (Robust Version)
+-- Updated to handle missing tables gracefully (e.g. if 'leaves' doesn't exist yet)
 
--- 1. DROP ALL BLOCKING POLICIES (Explicitly named)
+-- 1. DROP ALL BLOCKING POLICIES (Conditionally)
+
+-- Staff Table (Always exists)
 DROP POLICY IF EXISTS "Staff can view own profile" ON public.staff;
 DROP POLICY IF EXISTS "Admins can manage all staff" ON public.staff;
 
-DROP POLICY IF EXISTS "attendance_select_policy" ON public.attendance;
-DROP POLICY IF EXISTS "attendance_insert_policy" ON public.attendance;
-DROP POLICY IF EXISTS "attendance_update_policy" ON public.attendance;
-DROP POLICY IF EXISTS "Enable read access for all users" ON public.attendance;
-DROP POLICY IF EXISTS "Enable insert for authenticated users only" ON public.attendance;
+-- Attendance Table
+DO $$ BEGIN
+    IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'attendance') THEN
+        DROP POLICY IF EXISTS "attendance_select_policy" ON public.attendance;
+        DROP POLICY IF EXISTS "attendance_insert_policy" ON public.attendance;
+        DROP POLICY IF EXISTS "attendance_update_policy" ON public.attendance;
+        DROP POLICY IF EXISTS "Enable read access for all users" ON public.attendance;
+        DROP POLICY IF EXISTS "Enable insert for authenticated users only" ON public.attendance;
+    END IF;
+END $$;
 
-DROP POLICY IF EXISTS "leaves_select_policy" ON public.leaves;
-DROP POLICY IF EXISTS "leaves_insert_policy" ON public.leaves;
-DROP POLICY IF EXISTS "leaves_update_policy" ON public.leaves;
+-- Leaves Table
+DO $$ BEGIN
+    IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'leaves') THEN
+        DROP POLICY IF EXISTS "leaves_select_policy" ON public.leaves;
+        DROP POLICY IF EXISTS "leaves_insert_policy" ON public.leaves;
+        DROP POLICY IF EXISTS "leaves_update_policy" ON public.leaves;
+    END IF;
+END $$;
 
-DROP POLICY IF EXISTS "schedules_select_policy" ON public.schedules;
+-- Schedules Table
+DO $$ BEGIN
+    IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'schedules') THEN
+        DROP POLICY IF EXISTS "schedules_select_policy" ON public.schedules;
+    END IF;
+END $$;
 
+-- Storage (Assume exists)
 DROP POLICY IF EXISTS "Admins can view all attendance photos" ON storage.objects;
 
-DROP POLICY IF EXISTS "Managers can view all cash registers" ON public.cash_registers;
-DROP POLICY IF EXISTS "Staff can view their own cash registers" ON public.cash_registers;
-DROP POLICY IF EXISTS "Staff can insert their own cash registers" ON public.cash_registers;
-DROP POLICY IF EXISTS "Staff can update their own cash registers" ON public.cash_registers;
+-- Cash Registers
+DO $$ BEGIN
+    IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'cash_registers') THEN
+        DROP POLICY IF EXISTS "Managers can view all cash registers" ON public.cash_registers;
+        DROP POLICY IF EXISTS "Staff can view their own cash registers" ON public.cash_registers;
+        DROP POLICY IF EXISTS "Staff can insert their own cash registers" ON public.cash_registers;
+        DROP POLICY IF EXISTS "Staff can update their own cash registers" ON public.cash_registers;
+    END IF;
+END $$;
 
 
 -- 2. DROP FOREIGN KEYS REFERENCING PUBLIC.STAFF
+-- We use a dynamic block to find and drop any FK constraint pointing to staff.id
 DO $$ 
 DECLARE
     r RECORD;
@@ -78,20 +103,24 @@ CREATE POLICY "Admins can manage all staff" ON public.staff FOR ALL USING (
 
 -- Attendance policies
 DO $$ BEGIN
-    CREATE POLICY "attendance_select_policy" ON public.attendance FOR SELECT USING (
-      "staffId" = auth.uid()::text OR 
-      EXISTS (SELECT 1 FROM public.user u WHERE u.id::text = auth.uid()::text AND u.role = 'Admin')
-    );
-    CREATE POLICY "attendance_insert_policy" ON public.attendance FOR INSERT WITH CHECK ("staffId" = auth.uid()::text);
-EXCEPTION WHEN undefined_table THEN NULL; END $$;
+    IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'attendance') THEN
+        CREATE POLICY "attendance_select_policy" ON public.attendance FOR SELECT USING (
+          "staffId" = auth.uid()::text OR 
+          EXISTS (SELECT 1 FROM public.user u WHERE u.id::text = auth.uid()::text AND u.role = 'Admin')
+        );
+        CREATE POLICY "attendance_insert_policy" ON public.attendance FOR INSERT WITH CHECK ("staffId" = auth.uid()::text);
+    END IF;
+END $$;
 
 -- Leaves policies
 DO $$ BEGIN
-    CREATE POLICY "leaves_select_policy" ON public.leaves FOR SELECT USING (
-      "staffId" = auth.uid()::text OR 
-      EXISTS (SELECT 1 FROM public.user u WHERE u.id::text = auth.uid()::text AND u.role = 'Admin')
-    );
-EXCEPTION WHEN undefined_table THEN NULL; END $$;
+    IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'leaves') THEN
+        CREATE POLICY "leaves_select_policy" ON public.leaves FOR SELECT USING (
+          "staffId" = auth.uid()::text OR 
+          EXISTS (SELECT 1 FROM public.user u WHERE u.id::text = auth.uid()::text AND u.role = 'Admin')
+        );
+    END IF;
+END $$;
 
 -- Storage Policy
 CREATE POLICY "Admins can view all attendance photos" ON storage.objects FOR SELECT TO authenticated USING (
@@ -101,19 +130,21 @@ CREATE POLICY "Admins can view all attendance photos" ON storage.objects FOR SEL
 
 -- Cash Register Policies
 DO $$ BEGIN
-    CREATE POLICY "Managers can view all cash registers" ON public.cash_registers FOR ALL USING (
-        EXISTS (SELECT 1 FROM public.user WHERE id::text = auth.uid()::text AND role IN ('Manager', 'Admin'))
-    );
-    CREATE POLICY "Staff can view their own cash registers" ON public.cash_registers FOR SELECT USING (
-        opened_by = auth.uid()::text OR closed_by = auth.uid()::text
-    );
-    CREATE POLICY "Staff can insert their own cash registers" ON public.cash_registers FOR INSERT WITH CHECK (
-        opened_by = auth.uid()::text
-    );
-    CREATE POLICY "Staff can update their own cash registers" ON public.cash_registers FOR UPDATE USING (
-        opened_by = auth.uid()::text
-    );
-EXCEPTION WHEN undefined_table THEN NULL; END $$;
+    IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'cash_registers') THEN
+        CREATE POLICY "Managers can view all cash registers" ON public.cash_registers FOR ALL USING (
+            EXISTS (SELECT 1 FROM public.user WHERE id::text = auth.uid()::text AND role IN ('Manager', 'Admin'))
+        );
+        CREATE POLICY "Staff can view their own cash registers" ON public.cash_registers FOR SELECT USING (
+            opened_by = auth.uid()::text OR closed_by = auth.uid()::text
+        );
+        CREATE POLICY "Staff can insert their own cash registers" ON public.cash_registers FOR INSERT WITH CHECK (
+            opened_by = auth.uid()::text
+        );
+        CREATE POLICY "Staff can update their own cash registers" ON public.cash_registers FOR UPDATE USING (
+            opened_by = auth.uid()::text
+        );
+    END IF;
+END $$;
 
 
 -- 5. SYNC MISSING DATA (Immediate Fix)
@@ -124,11 +155,9 @@ WHERE u.status = 'approved' AND NOT EXISTS (SELECT 1 FROM public.staff s WHERE s
 
 
 -- 6. AUTOMATION TRIGGER (Long Term Fix)
--- Automatically create staff record when user is approved
 CREATE OR REPLACE FUNCTION public.handle_new_approved_staff()
 RETURNS TRIGGER AS $$
 BEGIN
-  -- Only trigger if status becomes 'approved'
   IF NEW.status = 'approved' AND (OLD.status IS DISTINCT FROM 'approved') THEN
     INSERT INTO public.staff (id, name, email, role, status, outlet_id, join_date)
     VALUES (
