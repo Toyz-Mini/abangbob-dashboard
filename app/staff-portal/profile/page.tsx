@@ -359,14 +359,22 @@ export default function ProfilePage() {
                     <CreditCard size={14} style={{ marginRight: '0.25rem' }} />
                     Bank
                   </span>
-                  <strong className="staff-info-value">
-                    {currentStaff.bankDetails.bankName}
-                    {currentStaff.bankDetails.accountNumber && (
-                      <span style={{ color: 'var(--text-secondary)', marginLeft: '0.5rem', fontSize: '0.8rem' }}>
-                        (...{currentStaff.bankDetails.accountNumber.slice(-4)})
+                  <div className="staff-info-value" style={{ display: 'flex', flexDirection: 'column' }}>
+                    <strong>{currentStaff.bankDetails.bankName}</strong>
+                    <span style={{ fontSize: '0.9rem' }}>
+                      {currentStaff.bankDetails.accountNumber}
+                      {currentStaff.bankDetails.accountNumber && (
+                        <span style={{ color: 'var(--text-secondary)', marginLeft: '0.25rem', fontSize: '0.8rem' }}>
+                          (...{currentStaff.bankDetails.accountNumber.slice(-4)})
+                        </span>
+                      )}
+                    </span>
+                    {currentStaff.bankDetails.accountName && (
+                      <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '0.1rem' }}>
+                        {currentStaff.bankDetails.accountName}
                       </span>
                     )}
-                  </strong>
+                  </div>
                 </div>
               )}
             </div>

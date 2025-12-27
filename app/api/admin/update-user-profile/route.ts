@@ -17,6 +17,7 @@ export async function POST(request: NextRequest) {
             medicalConditions,
             bankName,
             bankAccountNo,
+            bankAccountName,
             uniformSize,
             shoeSize,
         } = body;
@@ -51,6 +52,7 @@ export async function POST(request: NextRequest) {
             medicalConditions: medicalConditions || null,
             bankName: bankName || null,
             bankAccountNo: bankAccountNo || null,
+            bankAccountName: bankAccountName || null,
             uniformSize: uniformSize || null,
             shoeSize: shoeSize || null,
         });

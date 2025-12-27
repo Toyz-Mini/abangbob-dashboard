@@ -959,7 +959,373 @@ export async function fetchProductionLogs(startDate?: string, endDate?: string) 
   return toCamelCase(data || []);
 }
 
+// ============ PUBLIC HOLIDAYS OPERATIONS ============
 
+export async function fetchPublicHolidays(year?: number) {
+  const supabase = getSupabaseClient();
+  if (!supabase) return [];
+
+  let query = supabase
+    .from('public_holidays')
+    .select('*')
+    .order('date', { ascending: true });
+
+  if (year) {
+    const startDate = `${year}-01-01`;
+    const endDate = `${year}-12-31`;
+    query = query.gte('date', startDate).lte('date', endDate);
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    console.error('Error fetching public holidays:', error);
+    return [];
+  }
+
+  return toCamelCase(data || []);
+}
+
+export async function insertPublicHoliday(holiday: any) {
+  const supabase = getSupabaseClient();
+  if (!supabase) throw new Error('Supabase not connected');
+
+  const snakeCasedHoliday = toSnakeCase(holiday);
+
+  // @ts-ignore
+  const { data, error } = await supabase
+    .from('public_holidays')
+    .insert(snakeCasedHoliday)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return toCamelCase(data);
+}
+
+export async function updatePublicHoliday(id: string, updates: any) {
+  const supabase = getSupabaseClient();
+  if (!supabase) throw new Error('Supabase not connected');
+
+  // @ts-ignore
+  const { data, error } = await supabase
+    .from('public_holidays')
+    .update({ ...toSnakeCase(updates), updated_at: new Date().toISOString() })
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return toCamelCase(data);
+}
+
+export async function deletePublicHoliday(id: string) {
+  const supabase = getSupabaseClient();
+  if (!supabase) throw new Error('Supabase not connected');
+
+  const { error } = await supabase
+    .from('public_holidays')
+    .delete()
+    .eq('id', id);
+
+  if (error) throw error;
+}
+
+// ============ HOLIDAY POLICIES OPERATIONS ============
+
+export async function fetchHolidayPolicies(year?: number) {
+  const supabase = getSupabaseClient();
+  if (!supabase) return [];
+
+  let query = supabase
+    .from('holiday_policies')
+    .select(`
+      *,
+      public_holidays (name)
+    `)
+    .order('created_at', { ascending: false });
+
+  if (year) {
+    query = query.eq('year', year);
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    console.error('Error fetching holiday policies:', error);
+    return [];
+  }
+
+  // Transform to include holidayName from joined data
+  return (data || []).map((item: any) => ({
+    ...toCamelCase(item),
+    holidayName: item.public_holidays?.name
+  }));
+}
+
+export async function insertHolidayPolicy(policy: any) {
+  const supabase = getSupabaseClient();
+  if (!supabase) throw new Error('Supabase not connected');
+
+  const snakeCasedPolicy = toSnakeCase(policy);
+
+  // @ts-ignore
+  const { data, error } = await supabase
+    .from('holiday_policies')
+    .insert(snakeCasedPolicy)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return toCamelCase(data);
+}
+
+export async function updateHolidayPolicy(id: string, updates: any) {
+  const supabase = getSupabaseClient();
+  if (!supabase) throw new Error('Supabase not connected');
+
+  // @ts-ignore
+  const { data, error } = await supabase
+    .from('holiday_policies')
+    .update({ ...toSnakeCase(updates), updated_at: new Date().toISOString() })
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return toCamelCase(data);
+}
+
+export async function deleteHolidayPolicy(id: string) {
+  const supabase = getSupabaseClient();
+  if (!supabase) throw new Error('Supabase not connected');
+
+  const { error } = await supabase
+    .from('holiday_policies')
+    .delete()
+    .eq('id', id);
+
+  if (error) throw error;
+}
+
+// ============ HOLIDAY WORK LOGS OPERATIONS ============
+
+export async function fetchHolidayWorkLogs(options?: { staffId?: string; holidayId?: string; processed?: boolean }) {
+  const supabase = getSupabaseClient();
+  if (!supabase) return [];
+
+  let query = supabase
+    .from('holiday_work_logs')
+    .select(`
+      *,
+      public_holidays (name)
+    `)
+    .order('work_date', { ascending: false });
+
+  if (options?.staffId) {
+    query = query.eq('staff_id', options.staffId);
+  }
+  if (options?.holidayId) {
+    query = query.eq('holiday_id', options.holidayId);
+  }
+  if (options?.processed !== undefined) {
+    query = query.eq('compensation_processed', options.processed);
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    console.error('Error fetching holiday work logs:', error);
+    return [];
+  }
+
+  return (data || []).map((item: any) => ({
+    ...toCamelCase(item),
+    holidayName: item.public_holidays?.name
+  }));
+}
+
+export async function insertHolidayWorkLog(log: any) {
+  const supabase = getSupabaseClient();
+  if (!supabase) throw new Error('Supabase not connected');
+
+  const snakeCasedLog = toSnakeCase(log);
+
+  // @ts-ignore
+  const { data, error } = await supabase
+    .from('holiday_work_logs')
+    .insert(snakeCasedLog)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return toCamelCase(data);
+}
+
+export async function updateHolidayWorkLog(id: string, updates: any) {
+  const supabase = getSupabaseClient();
+  if (!supabase) throw new Error('Supabase not connected');
+
+  // @ts-ignore
+  const { data, error } = await supabase
+    .from('holiday_work_logs')
+    .update(toSnakeCase(updates))
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return toCamelCase(data);
+}
+
+export async function deleteHolidayWorkLog(id: string) {
+  const supabase = getSupabaseClient();
+  if (!supabase) throw new Error('Supabase not connected');
+
+  const { error } = await supabase
+    .from('holiday_work_logs')
+    .delete()
+    .eq('id', id);
+
+  if (error) throw error;
+}
+
+// ============ REPLACEMENT LEAVES OPERATIONS ============
+
+export async function fetchReplacementLeaves(options?: { staffId?: string; status?: 'available' | 'used' | 'expired' }) {
+  const supabase = getSupabaseClient();
+  if (!supabase) return [];
+
+  let query = supabase
+    .from('replacement_leaves')
+    .select('*')
+    .order('earned_date', { ascending: false });
+
+  if (options?.staffId) {
+    query = query.eq('staff_id', options.staffId);
+  }
+  if (options?.status) {
+    query = query.eq('status', options.status);
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    console.error('Error fetching replacement leaves:', error);
+    return [];
+  }
+
+  return toCamelCase(data || []);
+}
+
+export async function getReplacementLeaveBalance(staffId: string): Promise<number> {
+  const supabase = getSupabaseClient();
+  if (!supabase) return 0;
+
+  const { data, error } = await supabase
+    .from('replacement_leaves')
+    .select('days')
+    .eq('staff_id', staffId)
+    .eq('status', 'available')
+    .gte('expires_at', new Date().toISOString().split('T')[0]);
+
+  if (error) {
+    console.error('Error fetching replacement leave balance:', error);
+    return 0;
+  }
+
+  return (data || []).reduce((sum: number, item: any) => sum + (item.days || 0), 0);
+}
+
+export async function insertReplacementLeave(leave: any) {
+  const supabase = getSupabaseClient();
+  if (!supabase) throw new Error('Supabase not connected');
+
+  const snakeCasedLeave = toSnakeCase(leave);
+
+  // @ts-ignore
+  const { data, error } = await supabase
+    .from('replacement_leaves')
+    .insert(snakeCasedLeave)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return toCamelCase(data);
+}
+
+export async function updateReplacementLeave(id: string, updates: any) {
+  const supabase = getSupabaseClient();
+  if (!supabase) throw new Error('Supabase not connected');
+
+  // @ts-ignore
+  const { data, error } = await supabase
+    .from('replacement_leaves')
+    .update(toSnakeCase(updates))
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return toCamelCase(data);
+}
+
+export async function deleteReplacementLeave(id: string) {
+  const supabase = getSupabaseClient();
+  if (!supabase) throw new Error('Supabase not connected');
+
+  const { error } = await supabase
+    .from('replacement_leaves')
+    .delete()
+    .eq('id', id);
+
+  if (error) throw error;
+}
+
+// Helper: Check if a date is a public holiday
+export async function isPublicHoliday(date: string): Promise<{ isHoliday: boolean; holiday?: any }> {
+  const supabase = getSupabaseClient();
+  if (!supabase) return { isHoliday: false };
+
+  const { data, error } = await supabase
+    .from('public_holidays')
+    .select('*')
+    .eq('date', date)
+    .maybeSingle();
+
+  if (error || !data) {
+    return { isHoliday: false };
+  }
+
+  return { isHoliday: true, holiday: toCamelCase(data) };
+}
+
+// Helper: Get holiday policy for a specific holiday and year
+export async function getHolidayPolicyForDate(date: string): Promise<any | null> {
+  const supabase = getSupabaseClient();
+  if (!supabase) return null;
+
+  const year = new Date(date).getFullYear();
+
+  const { data, error } = await supabase
+    .from('holiday_policies')
+    .select(`
+      *,
+      public_holidays!inner (id, name, date)
+    `)
+    .eq('public_holidays.date', date)
+    .eq('year', year)
+    .maybeSingle();
+
+  if (error || !data) {
+    return null;
+  }
+
+  return {
+    ...toCamelCase(data),
+    holidayName: data.public_holidays?.name
+  };
+}
 
 export async function insertProductionLog(log: any) {
   const supabase = getSupabaseClient();

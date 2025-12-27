@@ -27,9 +27,9 @@ export async function POST(request: NextRequest) {
         }
 
         if (action === 'approve') {
-            // First get user data including phone
+            // First get user data including phone and extendedData
             const userResult = await query(
-                `SELECT id, name, email, phone, "icNumber" FROM "user" WHERE id = $1`,
+                `SELECT id, name, email, phone, "icNumber", "extendedData" FROM "user" WHERE id = $1`,
                 [userId]
             );
 
@@ -41,6 +41,14 @@ export async function POST(request: NextRequest) {
             }
 
             const userData = userResult.rows[0];
+            const extendedData = userData.extendedData || {};
+
+            // Construct bank details from extended data
+            const bankDetails = {
+                bankName: extendedData.bankName || '',
+                accountNumber: extendedData.bankAccountNo || '',
+                accountName: extendedData.bankAccountName || '',
+            };
 
             // Update user status to approved
             await query(
@@ -56,16 +64,28 @@ export async function POST(request: NextRequest) {
             // Create staff record using direct insert to public.staff
             // This ensures it goes to the same table that Supabase reads from
             const staffInsertResult = await query(
-                `INSERT INTO public.staff (id, name, email, phone, role, status, pin, hourly_rate, employment_type, join_date, created_at, updated_at)
-                 VALUES ($1, $2, $3, $4, 'Staff', 'active', '0000', 0, 'part-time', NOW(), NOW(), NOW())
+                `INSERT INTO public.staff (
+                    id, name, email, phone, role, status, pin, 
+                    hourly_rate, employment_type, join_date, 
+                    bank_details,
+                    created_at, updated_at
+                )
+                 VALUES ($1, $2, $3, $4, 'Staff', 'active', '0000', 0, 'part-time', NOW(), $5, NOW(), NOW())
                  ON CONFLICT (id) DO UPDATE SET
                    name = EXCLUDED.name,
                    email = EXCLUDED.email,
                    phone = EXCLUDED.phone,
+                   bank_details = EXCLUDED.bank_details,
                    status = 'active',
                    updated_at = NOW()
                  RETURNING id, name, email`,
-                [userId, userData.name, userData.email, userData.phone || '']
+                [
+                    userId,
+                    userData.name,
+                    userData.email,
+                    userData.phone || '',
+                    JSON.stringify(bankDetails)
+                ]
             );
 
             console.log('Staff insert result:', staffInsertResult.rows);

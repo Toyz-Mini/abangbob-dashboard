@@ -85,9 +85,15 @@ export default function StaffListPage() {
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedStaff, setSelectedStaff] = useState<StaffProfile | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [showPin, setShowPin] = useState(false);
   const [editTab, setEditTab] = useState<EditTab>('personal');
   const [detailTab, setDetailTab] = useState<'info' | 'employment' | 'permissions'>('info');
+
+  // Password modal state
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [passwordForm, setPasswordForm] = useState({ password: '', confirmPassword: '' });
+  const [passwordError, setPasswordError] = useState('');
+  const [passwordSuccess, setPasswordSuccess] = useState('');
+  const [settingPassword, setSettingPassword] = useState(false);
 
   // Edit form state
   const [editForm, setEditForm] = useState<Partial<StaffProfile>>({});
@@ -119,7 +125,6 @@ export default function StaffListPage() {
       },
     });
     setShowEditModal(true);
-    setShowPin(false);
     setEditTab('personal');
   };
 
@@ -154,11 +159,6 @@ export default function StaffListPage() {
       return;
     }
 
-    if (!editForm.pin || editForm.pin.length !== 4 || !/^\d{4}$/.test(editForm.pin)) {
-      alert('PIN mesti 4 digit nombor');
-      return;
-    }
-
     setIsProcessing(true);
     await new Promise(resolve => setTimeout(resolve, 500));
 
@@ -174,7 +174,6 @@ export default function StaffListPage() {
       address: editForm.address || undefined,
       email: editForm.email || undefined,
       phone: editForm.phone?.trim() || '',
-      pin: editForm.pin,
       emergencyContact: editForm.emergencyContact?.name ? editForm.emergencyContact as EmergencyContact : undefined,
 
       // Employment
@@ -234,6 +233,53 @@ export default function StaffListPage() {
     setShowDeleteModal(false);
     setSelectedStaff(null);
   };
+
+  const handleSetPassword = async () => {
+    setPasswordError('');
+    setPasswordSuccess('');
+
+    if (!editForm.email) {
+      setPasswordError('Staff perlu ada email untuk set password');
+      return;
+    }
+
+    if (passwordForm.password.length < 8) {
+      setPasswordError('Password mestilah sekurang-kurangnya 8 aksara');
+      return;
+    }
+
+    if (passwordForm.password !== passwordForm.confirmPassword) {
+      setPasswordError('Password tidak sepadan');
+      return;
+    }
+
+    setSettingPassword(true);
+    try {
+      const response = await fetch('/api/admin/set-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: editForm.email,
+          password: passwordForm.password,
+        }),
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        setPasswordSuccess('Password berjaya ditetapkan!');
+        setTimeout(() => {
+          setShowPasswordModal(false);
+        }, 1500);
+      } else {
+        setPasswordError(data.error || 'Gagal set password');
+      }
+    } catch (error) {
+      setPasswordError('Ralat rangkaian. Sila cuba lagi.');
+    } finally {
+      setSettingPassword(false);
+    }
+  };
+
 
   const getAttendanceStatus = (staffId: string) => {
     const attendance = getStaffAttendanceToday(staffId);
@@ -372,34 +418,6 @@ export default function StaffListPage() {
 
       <div className="grid grid-cols-2" style={{ gap: '1rem' }}>
         <div className="form-group">
-          <label className="form-label">PIN (4 digit) *</label>
-          <div style={{ position: 'relative' }}>
-            <input
-              type={showPin ? 'text' : 'password'}
-              className="form-input"
-              value={editForm.pin || ''}
-              onChange={(e) => updateEditForm('pin', e.target.value.slice(0, 4))}
-              maxLength={4}
-            />
-            <button
-              type="button"
-              onClick={() => setShowPin(!showPin)}
-              style={{
-                position: 'absolute',
-                right: '10px',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                color: 'var(--text-secondary)'
-              }}
-            >
-              {showPin ? <EyeOff size={18} /> : <Eye size={18} />}
-            </button>
-          </div>
-        </div>
-        <div className="form-group">
           <label className="form-label">Jenis Darah</label>
           <select
             className="form-select"
@@ -416,6 +434,26 @@ export default function StaffListPage() {
             <option value="O+">O+</option>
             <option value="O-">O-</option>
           </select>
+        </div>
+        <div className="form-group">
+          <label className="form-label">Password Login</label>
+          <button
+            type="button"
+            onClick={() => {
+              setPasswordForm({ password: '', confirmPassword: '' });
+              setPasswordError('');
+              setPasswordSuccess('');
+              setShowPasswordModal(true);
+            }}
+            className="btn btn-secondary"
+            style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
+          >
+            <Lock size={16} />
+            Set Password
+          </button>
+          <small style={{ color: 'var(--text-secondary)', fontSize: '0.7rem' }}>
+            Set password untuk staff login melalui email
+          </small>
         </div>
       </div>
 
@@ -629,6 +667,16 @@ export default function StaffListPage() {
             onChange={(e) => updateNestedEditForm('bankDetails', 'accountNumber', e.target.value)}
           />
         </div>
+      </div>
+      <div className="form-group" style={{ marginTop: '1rem' }}>
+        <label className="form-label">Pemegang Akaun</label>
+        <input
+          type="text"
+          className="form-input"
+          value={(editForm.bankDetails as BankDetails)?.accountName || ''}
+          onChange={(e) => updateNestedEditForm('bankDetails', 'accountName', e.target.value)}
+          placeholder="Nama seperti dalam buku bank"
+        />
       </div>
 
       <h4 style={{ marginTop: '1.5rem', marginBottom: '1rem', fontSize: '0.9rem', fontWeight: 600, color: 'var(--primary)' }}>
@@ -1517,6 +1565,100 @@ export default function StaffListPage() {
           )}
         </Modal>
       </div>
+
+      {/* Password Modal */}
+      <Modal
+        isOpen={showPasswordModal}
+        onClose={() => setShowPasswordModal(false)}
+        title="Set Password untuk Staff"
+      >
+        <div style={{ padding: '1rem' }}>
+          {!editForm.email ? (
+            <div style={{
+              background: 'var(--warning-bg, #fff3cd)',
+              padding: '1rem',
+              borderRadius: 'var(--radius-md)',
+              marginBottom: '1rem',
+              border: '1px solid var(--warning-border, #ffc107)'
+            }}>
+              <AlertCircle size={16} style={{ marginRight: '0.5rem', display: 'inline' }} />
+              Staff ini tidak mempunyai email. Sila tambah email terlebih dahulu.
+            </div>
+          ) : (
+            <>
+              <p style={{ marginBottom: '1rem', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
+                Set password login untuk <strong>{editForm.name}</strong> ({editForm.email})
+              </p>
+
+              <div className="form-group" style={{ marginBottom: '1rem' }}>
+                <label className="form-label">Password Baru</label>
+                <input
+                  type="password"
+                  className="form-input"
+                  value={passwordForm.password}
+                  onChange={(e) => setPasswordForm(prev => ({ ...prev, password: e.target.value }))}
+                  placeholder="Minimum 8 aksara"
+                />
+              </div>
+
+              <div className="form-group" style={{ marginBottom: '1rem' }}>
+                <label className="form-label">Sahkan Password</label>
+                <input
+                  type="password"
+                  className="form-input"
+                  value={passwordForm.confirmPassword}
+                  onChange={(e) => setPasswordForm(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                  placeholder="Taipkan semula password"
+                />
+              </div>
+
+              {passwordError && (
+                <div style={{
+                  background: 'var(--danger-bg, #f8d7da)',
+                  color: 'var(--danger, #dc3545)',
+                  padding: '0.75rem',
+                  borderRadius: 'var(--radius-md)',
+                  marginBottom: '1rem',
+                  fontSize: '0.875rem'
+                }}>
+                  {passwordError}
+                </div>
+              )}
+
+              {passwordSuccess && (
+                <div style={{
+                  background: 'var(--success-bg, #d4edda)',
+                  color: 'var(--success, #28a745)',
+                  padding: '0.75rem',
+                  borderRadius: 'var(--radius-md)',
+                  marginBottom: '1rem',
+                  fontSize: '0.875rem'
+                }}>
+                  {passwordSuccess}
+                </div>
+              )}
+
+              <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                <button
+                  className="btn btn-secondary"
+                  onClick={() => setShowPasswordModal(false)}
+                  disabled={settingPassword}
+                >
+                  Batal
+                </button>
+                <button
+                  className="btn btn-primary"
+                  onClick={handleSetPassword}
+                  disabled={settingPassword}
+                >
+                  {settingPassword ? <LoadingSpinner size="sm" /> : 'Simpan Password'}
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      </Modal>
+
 
       <style jsx>{`
         .staff-card {

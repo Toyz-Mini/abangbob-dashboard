@@ -1768,6 +1768,74 @@ export interface Holiday {
   createdAt: string;
 }
 
+// ==================== PUBLIC HOLIDAY CALENDAR TYPES ====================
+
+export type HolidayCompensationType =
+  | 'none'           // No extra compensation (company closed)
+  | 'double_pay'     // 2x salary for working
+  | 'replacement_leave' // Get a day off later
+  | 'staff_choice';  // Staff can choose
+
+export interface PublicHoliday {
+  id: string;
+  name: string;
+  date: string;
+  isRecurring: boolean;
+  recurringMonth?: number;
+  recurringDay?: number;
+  country: string;
+  isNational: boolean;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface HolidayPolicy {
+  id: string;
+  holidayId: string;
+  holidayName?: string; // Joined from public_holidays
+  year: number;
+  isOperating: boolean;
+  compensationType: HolidayCompensationType;
+  payMultiplier: number;
+  allowStaffChoice: boolean;
+  notes?: string;
+  createdBy?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface HolidayWorkLog {
+  id: string;
+  holidayId: string;
+  holidayName?: string; // For display
+  staffId: string;
+  staffName: string;
+  workDate: string;
+  shiftId?: string;
+  hoursWorked?: number;
+  compensationChoice: 'double_pay' | 'replacement_leave';
+  compensationProcessed: boolean;
+  payrollEntryId?: string;
+  replacementLeaveId?: string;
+  createdAt: string;
+}
+
+export interface ReplacementLeave {
+  id: string;
+  staffId: string;
+  staffName: string;
+  holidayWorkLogId?: string;
+  holidayName?: string;
+  earnedDate: string;
+  expiresAt: string;
+  days: number;
+  status: 'available' | 'used' | 'expired';
+  usedLeaveRequestId?: string;
+  notes?: string;
+  createdAt: string;
+}
+
 export interface SystemSetting {
   id: string;
   key: string;

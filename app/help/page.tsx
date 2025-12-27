@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
-import { 
+import {
   Search,
   HelpCircle,
   BookOpen,
@@ -142,8 +142,8 @@ const HELP_CATEGORIES = [
 // FAQ Items
 const FAQ_ITEMS = [
   {
-    question: 'Bagaimana nak reset PIN staf?',
-    answer: 'Pergi ke HR > Senarai Staf > Klik pada staf > Edit > Masukkan PIN baru. Pastikan anda simpan perubahan.',
+    question: 'Bagaimana nak set password untuk staf?',
+    answer: 'Pergi ke HR > Senarai Staf > Klik pada staf > Edit > Klik butang "Set Password" > Masukkan password baru (minimum 8 aksara) > Simpan.',
   },
   {
     question: 'Sistem offline, boleh ke masih guna POS?',
@@ -185,10 +185,10 @@ export default function HelpCenterPage() {
   // Filter articles based on search
   const searchResults = useMemo(() => {
     if (!searchQuery.trim()) return [];
-    
+
     const query = searchQuery.toLowerCase();
     const results: { category: typeof HELP_CATEGORIES[0]; article: typeof HELP_CATEGORIES[0]['articles'][0] }[] = [];
-    
+
     HELP_CATEGORIES.forEach(category => {
       category.articles.forEach(article => {
         if (
@@ -200,15 +200,15 @@ export default function HelpCenterPage() {
         }
       });
     });
-    
+
     return results;
   }, [searchQuery]);
 
   // Get current category and article
-  const currentCategory = selectedCategory 
-    ? HELP_CATEGORIES.find(c => c.id === selectedCategory) 
+  const currentCategory = selectedCategory
+    ? HELP_CATEGORIES.find(c => c.id === selectedCategory)
     : null;
-  
+
   const currentArticle = currentCategory && selectedArticle
     ? currentCategory.articles.find(a => a.id === selectedArticle)
     : null;
@@ -228,7 +228,7 @@ export default function HelpCenterPage() {
             </div>
             <h1 className="text-3xl font-bold text-white mb-4">Pusat Bantuan</h1>
             <p className="text-teal-100 mb-8">Cari jawapan untuk soalan anda atau ikuti panduan langkah demi langkah</p>
-            
+
             {/* Search Bar */}
             <div className="relative max-w-2xl mx-auto">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
@@ -318,10 +318,10 @@ export default function HelpCenterPage() {
                   )}
                   <h2 className="text-2xl font-bold text-white">{currentArticle.title}</h2>
                 </div>
-                
+
                 <div className="prose prose-invert max-w-none">
                   <p className="text-slate-300 leading-relaxed">{currentArticle.content}</p>
-                  
+
                   {/* Placeholder for full article content */}
                   <div className="mt-6 p-6 bg-slate-700/50 rounded-xl border border-slate-600">
                     <p className="text-slate-400 text-center">
@@ -485,9 +485,8 @@ export default function HelpCenterPage() {
                       >
                         <span className="font-medium text-white">{faq.question}</span>
                         <ChevronDown
-                          className={`w-5 h-5 text-slate-500 transition-transform ${
-                            expandedFaq === index ? 'rotate-180' : ''
-                          }`}
+                          className={`w-5 h-5 text-slate-500 transition-transform ${expandedFaq === index ? 'rotate-180' : ''
+                            }`}
                         />
                       </button>
                       {expandedFaq === index && (

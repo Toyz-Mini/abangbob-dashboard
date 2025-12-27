@@ -309,6 +309,34 @@ export function useStaffXPRealtime(onStaffXPChange: RealtimeChangeHandler) {
 }
 
 /**
+ * Subscribe to public_holidays table changes
+ */
+export function usePublicHolidaysRealtime(onHolidayChange: RealtimeChangeHandler) {
+  return useSupabaseRealtime('public_holidays', onHolidayChange);
+}
+
+/**
+ * Subscribe to holiday_policies table changes
+ */
+export function useHolidayPoliciesRealtime(onPolicyChange: RealtimeChangeHandler) {
+  return useSupabaseRealtime('holiday_policies', onPolicyChange);
+}
+
+/**
+ * Subscribe to holiday_work_logs table changes
+ */
+export function useHolidayWorkLogsRealtime(onWorkLogChange: RealtimeChangeHandler) {
+  return useSupabaseRealtime('holiday_work_logs', onWorkLogChange);
+}
+
+/**
+ * Subscribe to replacement_leaves table changes
+ */
+export function useReplacementLeavesRealtime(onReplacementLeaveChange: RealtimeChangeHandler) {
+  return useSupabaseRealtime('replacement_leaves', onReplacementLeaveChange);
+}
+
+/**
  * Check if realtime is enabled and working
  */
 export async function testRealtimeConnection(): Promise<boolean> {

@@ -24,6 +24,7 @@ import {
     Shirt,
     User,
 } from 'lucide-react';
+import { BRUNEI_BANKS } from '@/lib/hr-data';
 
 interface ExtendedData {
     bloodType?: string;
@@ -31,6 +32,7 @@ interface ExtendedData {
     medicalConditions?: string;
     bankName?: string;
     bankAccountNo?: string;
+    bankAccountName?: string;
     uniformSize?: string;
     shoeSize?: string;
 }
@@ -66,6 +68,7 @@ interface EditFormData {
     medicalConditions: string;
     bankName: string;
     bankAccountNo: string;
+    bankAccountName: string;
     uniformSize: string;
     shoeSize: string;
 }
@@ -90,6 +93,7 @@ export default function PendingUsersPage() {
         medicalConditions: '',
         bankName: '',
         bankAccountNo: '',
+        bankAccountName: '',
         uniformSize: '',
         shoeSize: '',
     });
@@ -137,6 +141,7 @@ export default function PendingUsersPage() {
             medicalConditions: ext.medicalConditions || '',
             bankName: ext.bankName || '',
             bankAccountNo: ext.bankAccountNo || '',
+            bankAccountName: ext.bankAccountName || '',
             uniformSize: ext.uniformSize || '',
             shoeSize: ext.shoeSize || '',
         });
@@ -653,10 +658,9 @@ export default function PendingUsersPage() {
                                                 style={{ width: '100%', padding: '0.75rem', border: '2px solid #e5e7eb', borderRadius: '8px', fontSize: '0.95rem', background: 'white' }}
                                             >
                                                 <option value="">Pilih bank...</option>
-                                                <option value="BIBD">BIBD</option>
-                                                <option value="Baiduri">Baiduri Bank</option>
-                                                <option value="Standard Chartered">Standard Chartered</option>
-                                                <option value="HSBC">HSBC</option>
+                                                {BRUNEI_BANKS.map((bank) => (
+                                                    <option key={bank} value={bank}>{bank}</option>
+                                                ))}
                                             </select>
                                         </div>
                                         <div>
@@ -666,6 +670,16 @@ export default function PendingUsersPage() {
                                                 value={editForm.bankAccountNo}
                                                 onChange={(e) => setEditForm({ ...editForm, bankAccountNo: e.target.value })}
                                                 placeholder="0123456789"
+                                                style={{ width: '100%', padding: '0.75rem', border: '2px solid #e5e7eb', borderRadius: '8px', fontSize: '0.95rem' }}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label style={{ fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.5rem', display: 'block' }}>Nama Akaun Bank</label>
+                                            <input
+                                                type="text"
+                                                value={editForm.bankAccountName}
+                                                onChange={(e) => setEditForm({ ...editForm, bankAccountName: e.target.value })}
+                                                placeholder="Nama seperti dalam buku bank"
                                                 style={{ width: '100%', padding: '0.75rem', border: '2px solid #e5e7eb', borderRadius: '8px', fontSize: '0.95rem' }}
                                             />
                                         </div>
