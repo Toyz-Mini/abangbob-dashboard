@@ -239,26 +239,6 @@ export default function SchedulePage() {
           </div>
 
           <div className="staff-stagger" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            {/* DEBUG INFO */}
-            <div className="text-[10px] font-mono bg-gray-100 p-2 mb-2 rounded overflow-auto max-h-48 border border-gray-200">
-              <div className="font-bold text-red-500 mb-1">DEBUG MODE (Screenshot ini untuk troubleshoot)</div>
-              <div>My User ID: <span className="text-blue-600 font-bold">{user?.id}</span></div>
-              <div>My Staff ID: <span className="text-blue-600 font-bold">{currentStaff?.id}</span></div>
-              <div>Total Schedules in Store: <span className="text-green-600 font-bold">{schedules.length}</span></div>
-              <div>My Schedules (after filter): <span className="text-green-600 font-bold">{myWeekSchedule.length}</span></div>
-              <div className="mt-1 pt-1 border-t border-gray-300">
-                First Schedule Entry (for comparison):<br />
-                {schedules.length > 0 ? (
-                  <>
-                    <span className="text-purple-600">staffId: &quot;{schedules[0].staffId}&quot;</span><br />
-                    <span className="text-purple-600">date: &quot;{schedules[0].date}&quot;</span><br />
-                    <span className="text-purple-600">staffName: &quot;{schedules[0].staffName}&quot;</span>
-                  </>
-                ) : (
-                  <span className="text-red-600">No schedule entries found in store!</span>
-                )}
-              </div>
-            </div>
 
             {weekDates.map(date => {
               const dateStr = date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0');
