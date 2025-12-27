@@ -29,7 +29,7 @@ export default function StaffPortalNav({ currentPage, pendingCount = 0 }: StaffP
 
   const handleLogout = async () => {
     try {
-      logoutStaff();
+      await logoutStaff();
       window.location.href = '/login';
     } catch (error) {
       console.error('[StaffPortalNav] Logout error:', error);

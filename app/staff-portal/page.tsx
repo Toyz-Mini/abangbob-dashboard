@@ -191,15 +191,17 @@ export default function StaffPortalV2() {
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          marginBottom: '1.5rem'
+          marginBottom: '1rem'
         }}>
-          <div>
-            <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#1f2937', marginBottom: '0.25rem' }}>
-              {getGreeting()}, {currentStaff.name.split(' ')[0]}!
-            </h1>
-            <p style={{ fontSize: '0.875rem', color: '#6b7280' }}>
-              {currentTime.toLocaleDateString('ms-MY', { weekday: 'long', day: 'numeric', month: 'long' })}
-            </p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <img
+              src="/logo.png"
+              alt="AbangBob"
+              style={{ width: '40px', height: '40px' }}
+            />
+            <span style={{ fontWeight: 800, fontSize: '1.25rem', color: '#dc2626', letterSpacing: '-0.025em' }}>
+              AbangBob
+            </span>
           </div>
           <button
             style={{
@@ -234,6 +236,22 @@ export default function StaffPortalV2() {
               }}>{totalPending}</span>
             )}
           </button>
+        </div>
+
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '1.5rem'
+        }}>
+          <div>
+            <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#1f2937', marginBottom: '0.25rem' }}>
+              {getGreeting()}, {currentStaff.name.split(' ')[0]}!
+            </h1>
+            <p style={{ fontSize: '0.875rem', color: '#6b7280' }}>
+              {currentTime.toLocaleDateString('ms-MY', { weekday: 'long', day: 'numeric', month: 'long' })}
+            </p>
+          </div>
         </div>
 
         {/* Clock-In Card */}
