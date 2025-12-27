@@ -48,16 +48,13 @@ export async function GET(request: NextRequest) {
             .eq('id', userId)
             .single();
 
-        if (error) {
-            // If user not found in 'user' table, they might be admin or error
-            console.error('Error fetching user status:', error);
-            // Default to approved only if purely admin/fallback, but for safety maybe 'incomplete_profile'?
-            // If checking 'user' table and fail, it's safer to not assume approved unless we know it's admin.
-            // But let's stick to existing fallback logic or maybe change to 'incomplete_profile' to force check?
-            // Existing logic was 'approved'. Let's keep it but ideally we should be stricter.
+        if (error || !data) {
+            // If user not found in 'user' table, treat as new/incomplete user
+            // DO NOT default to Admin/Approved as that bypasses security
+            console.error('Error fetching user status or user not found:', error);
             return NextResponse.json({
-                status: 'approved',
-                role: 'Admin'
+                status: 'incomplete_profile',
+                role: 'Staff'
             });
         }
 
