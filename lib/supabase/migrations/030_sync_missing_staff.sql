@@ -1,28 +1,23 @@
--- MEGA MIGRATION: Fix Staff ID Type to TEXT and Update All Dependencies & Policies
--- This migration handles foreign keys, RLS policies, and column types across the system.
+-- MEGA MIGRATION: Fix Staff ID Type, Update Dependencies, and Add AUTOMATION (Long Term Fix)
 
--- 1. DROP ALL BLOCKING POLICIES (Explicitly named based on codebase/errors)
--- Staff Table
+-- 1. DROP ALL BLOCKING POLICIES (Explicitly named)
 DROP POLICY IF EXISTS "Staff can view own profile" ON public.staff;
 DROP POLICY IF EXISTS "Admins can manage all staff" ON public.staff;
 
--- Attendance Table
 DROP POLICY IF EXISTS "attendance_select_policy" ON public.attendance;
 DROP POLICY IF EXISTS "attendance_insert_policy" ON public.attendance;
 DROP POLICY IF EXISTS "attendance_update_policy" ON public.attendance;
--- (Just in case generic names exist)
 DROP POLICY IF EXISTS "Enable read access for all users" ON public.attendance;
 DROP POLICY IF EXISTS "Enable insert for authenticated users only" ON public.attendance;
 
--- Leaves Table
 DROP POLICY IF EXISTS "leaves_select_policy" ON public.leaves;
 DROP POLICY IF EXISTS "leaves_insert_policy" ON public.leaves;
 DROP POLICY IF EXISTS "leaves_update_policy" ON public.leaves;
 
--- Storage
+DROP POLICY IF EXISTS "schedules_select_policy" ON public.schedules;
+
 DROP POLICY IF EXISTS "Admins can view all attendance photos" ON storage.objects;
 
--- Cash Registers (Known from fix_missing_tables.sql)
 DROP POLICY IF EXISTS "Managers can view all cash registers" ON public.cash_registers;
 DROP POLICY IF EXISTS "Staff can view their own cash registers" ON public.cash_registers;
 DROP POLICY IF EXISTS "Staff can insert their own cash registers" ON public.cash_registers;
@@ -30,7 +25,6 @@ DROP POLICY IF EXISTS "Staff can update their own cash registers" ON public.cash
 
 
 -- 2. DROP FOREIGN KEYS REFERENCING PUBLIC.STAFF
--- We use a dynamic block to find and drop any FK constraint pointing to staff.id
 DO $$ 
 DECLARE
     r RECORD;
@@ -51,39 +45,30 @@ BEGIN
 END $$;
 
 
--- 3. ALTER COLUMNS TO TEXT (To support non-UUID IDs)
+-- 3. ALTER COLUMNS TO TEXT (Global Schema Fix)
 ALTER TABLE public.staff ALTER COLUMN id TYPE text;
 
--- Dependent Tables (Alter their columns too)
 DO $$ BEGIN
-    -- Attendance
     IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'attendance') THEN
         ALTER TABLE public.attendance ALTER COLUMN "staffId" TYPE text;
     END IF;
-    -- Leaves
     IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'leaves') THEN
         ALTER TABLE public.leaves ALTER COLUMN "staffId" TYPE text;
     END IF;
-    -- Schedules (Trying both names)
     IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'schedules') THEN
         ALTER TABLE public.schedules ALTER COLUMN "staffId" TYPE text;
     END IF;
-    IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'schedule') THEN
-        ALTER TABLE public.schedule ALTER COLUMN "staffId" TYPE text;
-    END IF;
-    -- Cash Registers
     IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'cash_registers') THEN
         ALTER TABLE public.cash_registers ALTER COLUMN "opened_by" TYPE text;
         ALTER TABLE public.cash_registers ALTER COLUMN "closed_by" TYPE text;
     END IF;
-    -- Cash Flows
     IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'cash_flows') THEN
         ALTER TABLE public.cash_flows ALTER COLUMN "closed_by" TYPE text;
     END IF;
 END $$;
 
 
--- 4. RECREATE POLICIES (Updated for TEXT compatibility)
+-- 4. RECREATE POLICIES (Future Proofed for Text IDs)
 
 -- Staff policies
 CREATE POLICY "Staff can view own profile" ON public.staff FOR SELECT USING (id = auth.uid()::text);
@@ -91,7 +76,7 @@ CREATE POLICY "Admins can manage all staff" ON public.staff FOR ALL USING (
   EXISTS (SELECT 1 FROM public.user u WHERE u.id::text = auth.uid()::text AND u.role = 'Admin')
 );
 
--- Attendance policies (Generic permissive for Staff Portal)
+-- Attendance policies
 DO $$ BEGIN
     CREATE POLICY "attendance_select_policy" ON public.attendance FOR SELECT USING (
       "staffId" = auth.uid()::text OR 
@@ -114,7 +99,7 @@ CREATE POLICY "Admins can view all attendance photos" ON storage.objects FOR SEL
   EXISTS (SELECT 1 FROM public.user u WHERE u.id::text = auth.uid()::text AND u.role = 'Admin')
 );
 
--- Cash Register Policies (Restored from previous definition)
+-- Cash Register Policies
 DO $$ BEGIN
     CREATE POLICY "Managers can view all cash registers" ON public.cash_registers FOR ALL USING (
         EXISTS (SELECT 1 FROM public.user WHERE id::text = auth.uid()::text AND role IN ('Manager', 'Admin'))
@@ -131,12 +116,40 @@ DO $$ BEGIN
 EXCEPTION WHEN undefined_table THEN NULL; END $$;
 
 
--- 5. SYNC MISSING DATA
-INSERT INTO public.staff (
-  id, name, email, role, status, outlet_id, join_date
-)
-SELECT 
-  u.id::text, u.name, u.email, u.role, 'active', u."outletId", NOW()
+-- 5. SYNC MISSING DATA (Immediate Fix)
+INSERT INTO public.staff (id, name, email, role, status, outlet_id, join_date)
+SELECT u.id::text, u.name, u.email, u.role, 'active', u."outletId", NOW()
 FROM public."user" u
-WHERE u.status = 'approved'
-AND NOT EXISTS (SELECT 1 FROM public.staff s WHERE s.id = u.id::text);
+WHERE u.status = 'approved' AND NOT EXISTS (SELECT 1 FROM public.staff s WHERE s.id = u.id::text);
+
+
+-- 6. AUTOMATION TRIGGER (Long Term Fix)
+-- Automatically create staff record when user is approved
+CREATE OR REPLACE FUNCTION public.handle_new_approved_staff()
+RETURNS TRIGGER AS $$
+BEGIN
+  -- Only trigger if status becomes 'approved'
+  IF NEW.status = 'approved' AND (OLD.status IS DISTINCT FROM 'approved') THEN
+    INSERT INTO public.staff (id, name, email, role, status, outlet_id, join_date)
+    VALUES (
+      NEW.id::text,
+      NEW.name,
+      NEW.email,
+      NEW.role,
+      'active',
+      NEW."outletId",
+      NOW()
+    )
+    ON CONFLICT (id) DO NOTHING;
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+DROP TRIGGER IF EXISTS on_approve_create_staff ON public."user";
+CREATE TRIGGER on_approve_create_staff
+  AFTER UPDATE ON public."user"
+  FOR EACH ROW
+  EXECUTE FUNCTION public.handle_new_approved_staff();
+
+-- Done
