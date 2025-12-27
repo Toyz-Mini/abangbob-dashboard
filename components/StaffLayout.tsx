@@ -26,18 +26,9 @@ export default function StaffLayout({ children, showHeader = true }: StaffLayout
     }
   };
 
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      {/* DEBUG BANNER - TEMPORARY */}
-      <div className="bg-red-600 text-white p-4 text-sm font-mono break-all z-50">
-        <strong>DEBUG INFO (Misteri Nusantara):</strong><br />
-        Email: {user?.email}<br />
-        Role (AuthContext): {user?.role || 'null'}<br />
-        Raw DB Role: {user?.dbRole || 'null'}<br />
-        ID: {user?.id}<br />
-        Target DB: {process.env.NEXT_PUBLIC_SUPABASE_URL}<br />
-      </div>
-
       {/* Simple Header */}
       {showHeader && (
         <header className="bg-white border-b border-gray-200 sticky top-0 z-30">

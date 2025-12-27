@@ -82,18 +82,13 @@ export async function GET(request: NextRequest) {
 
         return NextResponse.json({
             status: userStatus || 'approved',
-            role: finalRole,
-            queried_id: userId,
-            db_role: data?.role, // What distinct value did DB return?
-            service_key_set: !!supabaseServiceKey // Is Admin Access working?
+            role: finalRole
         });
     } catch (error) {
-        console.error('[API] CRITICAL ERROR fetching user status:', error);
+        console.error('[API] Error fetching user status:', error);
         return NextResponse.json({
-            status: 'approved',
-            role: 'Staff',
-            debug_error: String(error),
-            queried_id_error: userId
+            status: 'incomplete_profile',
+            role: 'Staff'
         });
     }
 }
