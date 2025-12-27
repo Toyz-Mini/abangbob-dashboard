@@ -56,32 +56,55 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [userStatus, setUserStatus] = useState<string | null>(null);
   const [userRole, setUserRole] = useState<string>('Staff');
 
+  // Handle loading state and status fetching
   useEffect(() => {
-    setLoading(isPending);
-  }, [isPending]);
+    let isMounted = true;
 
-  // Fetch user status from database when session changes
-  useEffect(() => {
-    const fetchUserStatus = async () => {
-      if (session?.user?.id) {
-        try {
-          const res = await fetch(`/api/user/status?userId=${session.user.id}`);
-          if (res.ok) {
-            const data = await res.json();
-            setUserStatus(data.status || 'approved');
-            setUserRole(data.role || 'Staff');
-          }
-        } catch (error) {
-          console.error('Error fetching user status:', error);
-          setUserStatus('approved'); // Default to approved on error
+    const initAuth = async () => {
+      // If BetterAuth is still loading, keep loading true
+      if (isPending) {
+        return;
+      }
+
+      // If no session, we are done loading (not authenticated)
+      if (!session?.user?.id) {
+        if (isMounted) {
+          setUserStatus(null);
+          setLoading(false);
         }
-      } else {
-        setUserStatus(null);
+        return;
+      }
+
+      // If we have a session, fetch extended user status from DB
+      try {
+        const res = await fetch(`/api/user/status?userId=${session.user.id}`);
+        if (isMounted && res.ok) {
+          const data = await res.json();
+          setUserStatus(data.status || 'approved');
+          setUserRole(data.role || 'Staff');
+        } else if (isMounted) {
+          // Fallback if API fails
+          console.error('Failed to fetch user status');
+          setUserStatus('approved');
+        }
+      } catch (error) {
+        if (isMounted) {
+          console.error('Error fetching user status:', error);
+          setUserStatus('approved');
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
-    fetchUserStatus();
-  }, [session?.user?.id]);
+    initAuth();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [isPending, session?.user?.id]);
 
   // Create user object from Better Auth session
   const user: User | null = session?.user ? {

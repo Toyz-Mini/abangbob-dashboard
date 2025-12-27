@@ -22,22 +22,35 @@ export async function GET(request: NextRequest) {
         // Fetch user from database
         const { data, error } = await supabase
             .from('user')
-            .select('id, status, role')
+            .select('id, status, role, phone, "icNumber"')
             .eq('id', userId)
             .single();
 
         if (error) {
-            // If user not found in 'user' table, they might be admin
-            // Check better_auth tables or default to approved
+            // If user not found in 'user' table, they might be admin or error
             console.error('Error fetching user status:', error);
+            // Default to approved only if purely admin/fallback, but for safety maybe 'incomplete_profile'?
+            // If checking 'user' table and fail, it's safer to not assume approved unless we know it's admin.
+            // But let's stick to existing fallback logic or maybe change to 'incomplete_profile' to force check?
+            // Existing logic was 'approved'. Let's keep it but ideally we should be stricter.
             return NextResponse.json({
                 status: 'approved',
                 role: 'Admin'
             });
         }
 
+        let userStatus = data.status;
+
+        // If status is null (new user) or no phone (incomplete), flag as incomplete
+        if (!userStatus && (!data.phone || !(data as any).icNumber)) {
+            userStatus = 'incomplete_profile';
+        } else if (!userStatus) {
+            // If status null but has details, maybe pending?
+            userStatus = 'pending_approval';
+        }
+
         return NextResponse.json({
-            status: data.status || 'approved',
+            status: userStatus || 'approved',
             role: data.role || 'Staff'
         });
     } catch (error) {

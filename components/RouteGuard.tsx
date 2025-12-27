@@ -24,6 +24,18 @@ export default function RouteGuard({ children }: { children: React.ReactNode }) 
             return;
         }
 
+        // Check for incomplete profile status
+        // If user is incomplete, they can ONLY access /complete-profile
+        if (user && userStatus === 'incomplete_profile') {
+            if (pathname !== '/complete-profile') {
+                setAuthorized(false);
+                router.push('/complete-profile');
+            } else {
+                setAuthorized(true);
+            }
+            return;
+        }
+
         // Check for pending approval status
         // If user is pending, they can ONLY access /pending-approval
         if (user && userStatus === 'pending_approval') {
@@ -36,8 +48,9 @@ export default function RouteGuard({ children }: { children: React.ReactNode }) 
             return;
         }
 
-        // Redirect away from pending page if approved/active
-        if (user && userStatus !== 'pending_approval' && pathname === '/pending-approval') {
+        // Redirect away from special pages if status is active/approved
+        // If we reached here, status is NOT incomplete_profile or pending_approval (checked above)
+        if (user && (pathname === '/pending-approval' || pathname === '/complete-profile')) {
             setAuthorized(false);
             router.push('/');
             return;

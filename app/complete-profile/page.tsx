@@ -98,8 +98,8 @@ export default function CompleteProfilePage() {
                 throw new Error('Gagal menyimpan profil');
             }
 
-            // Redirect to pending approval page
-            router.push('/pending-approval');
+            // Redirect to pending approval page (force reload to update auth context)
+            window.location.href = '/pending-approval';
         } catch (err) {
             setError('Ralat berlaku. Sila cuba lagi.');
         } finally {
