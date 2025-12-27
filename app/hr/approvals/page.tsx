@@ -19,14 +19,15 @@ import {
   FileText,
   Clock,
   AlertCircle,
-  Calendar
+  Calendar,
+  UserPlus
 } from 'lucide-react';
 
 // Demo: Using staff ID 1 (Manager) as the logged-in approver
 const CURRENT_APPROVER_ID = '1';
 const CURRENT_APPROVER_NAME = 'Ahmad Bin Hassan';
 
-type TabType = 'leave' | 'claims' | 'ot' | 'advance' | 'requests';
+type TabType = 'leave' | 'claims' | 'ot' | 'advance' | 'requests' | 'newstaff';
 
 export default function ApprovalsPage() {
   const searchParams = useSearchParams();
@@ -89,7 +90,7 @@ export default function ApprovalsPage() {
   // Read tab from URL query parameter
   useEffect(() => {
     const tab = searchParams.get('tab');
-    if (tab && ['leave', 'claims', 'ot', 'advance', 'requests'].includes(tab)) {
+    if (tab && ['leave', 'claims', 'ot', 'advance', 'requests', 'newstaff'].includes(tab)) {
       setActiveTab(tab as TabType);
     }
   }, [searchParams]);
@@ -105,6 +106,67 @@ export default function ApprovalsPage() {
   const [selectedRequest, setSelectedRequest] = useState<StaffRequest | null>(null);
   const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
 
+  // Pending New Staff State
+  const [pendingUsers, setPendingUsers] = useState<any[]>([]);
+  const [isLoadingUsers, setIsLoadingUsers] = useState(false);
+
+  // Fetch pending users on mount and when tab changes
+  useEffect(() => {
+    if (activeTab === 'newstaff') {
+      fetchPendingUsers();
+    }
+  }, [activeTab]);
+
+  const fetchPendingUsers = async () => {
+    setIsLoadingUsers(true);
+    try {
+      const res = await fetch('/api/admin/pending-users');
+      const data = await res.json();
+      setPendingUsers(data.users || []);
+    } catch (error) {
+      console.error('Error fetching pending users:', error);
+    } finally {
+      setIsLoadingUsers(false);
+    }
+  };
+
+  const handleApproveUser = async (userId: string) => {
+    setIsProcessing(true);
+    try {
+      const res = await fetch('/api/admin/approve-user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, action: 'approve' }),
+      });
+      if (res.ok) {
+        setPendingUsers(prev => prev.filter(u => u.id !== userId));
+      }
+    } catch (error) {
+      console.error('Error approving user:', error);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleRejectUser = async (userId: string, reason: string) => {
+    setIsProcessing(true);
+    try {
+      const res = await fetch('/api/admin/approve-user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, action: 'reject', reason }),
+      });
+      if (res.ok) {
+        setPendingUsers(prev => prev.filter(u => u.id !== userId));
+      }
+    } catch (error) {
+      console.error('Error rejecting user:', error);
+    } finally {
+      setIsProcessing(false);
+      setShowRejectModal(false);
+    }
+  };
+
   const pendingLeave = getPendingLeaveRequests() || [];
   const pendingClaims = getPendingClaimRequests() || [];
   const pendingOT = getPendingOTClaims() || [];
@@ -118,7 +180,7 @@ export default function ApprovalsPage() {
   const historyAdvances = (salaryAdvances || []).filter(r => r.status !== 'pending').sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   const historyRequests = (staffRequests || []).filter(r => r.status !== 'pending').sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
-  const totalPending = pendingLeave.length + pendingClaims.length + pendingOT.length + pendingAdvances.length + pendingRequests.length;
+  const totalPending = pendingLeave.length + pendingClaims.length + pendingOT.length + pendingAdvances.length + pendingRequests.length + pendingUsers.length;
 
   const handleApprove = async (type: TabType, id: string) => {
     setIsProcessing(true);
@@ -165,6 +227,9 @@ export default function ApprovalsPage() {
       rejectOTClaim(selectedItem.id, CURRENT_APPROVER_ID, CURRENT_APPROVER_NAME, rejectReason);
     } else if (selectedItem.type === 'advance') {
       rejectSalaryAdvance(selectedItem.id, CURRENT_APPROVER_ID, CURRENT_APPROVER_NAME, rejectReason);
+    } else if (selectedItem.type === 'newstaff') {
+      await handleRejectUser(selectedItem.id, rejectReason);
+      return; // handleRejectUser handles its own state cleanup
     } else {
       rejectStaffRequest(selectedItem.id, rejectReason);
       setIsRequestModalOpen(false);
@@ -589,6 +654,13 @@ export default function ApprovalsPage() {
             <FileText size={18} />
             Permohonan Lain {viewMode === 'pending' ? `(${pendingRequests.length})` : ''}
           </button>
+          <button
+            className={`btn ${activeTab === 'newstaff' ? 'btn-primary' : 'btn-outline'}`}
+            onClick={() => setActiveTab('newstaff')}
+          >
+            <UserPlus size={18} />
+            Staff Baru {viewMode === 'pending' ? `(${pendingUsers.length})` : ''}
+          </button>
         </div>
 
         {/* Content */}
@@ -609,6 +681,81 @@ export default function ApprovalsPage() {
           {activeTab === 'ot' && renderOTList(viewMode === 'pending' ? pendingOT : historyOT, viewMode === 'history')}
           {activeTab === 'advance' && renderAdvanceList(viewMode === 'pending' ? pendingAdvances : historyAdvances, viewMode === 'history')}
           {activeTab === 'requests' && renderList(viewMode === 'pending' ? pendingRequests : historyRequests, 'requests', viewMode === 'history')}
+
+          {/* New Staff Registration Tab */}
+          {activeTab === 'newstaff' && (
+            <div>
+              {isLoadingUsers ? (
+                <div style={{ textAlign: 'center', padding: '2rem' }}>
+                  <LoadingSpinner />
+                </div>
+              ) : pendingUsers.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>
+                  <UserPlus size={48} style={{ opacity: 0.3, marginBottom: '1rem' }} />
+                  <p>Tiada staff baru menunggu kelulusan</p>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  {pendingUsers.map(user => (
+                    <div
+                      key={user.id}
+                      style={{
+                        padding: '1.25rem',
+                        borderRadius: 'var(--radius-md)',
+                        background: 'var(--gray-50)',
+                        border: '1px solid var(--gray-200)',
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem', flexWrap: 'wrap' }}>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontWeight: 600, fontSize: '1.1rem', marginBottom: '0.5rem' }}>
+                            {user.name}
+                          </div>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+                            <span>📧 {user.email}</span>
+                            {user.phone && <span>📱 {user.phone}</span>}
+                            {user.icNumber && <span>🪪 {user.icNumber}</span>}
+                          </div>
+                          {user.address && (
+                            <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '0.5rem' }}>
+                              📍 {user.address}
+                            </div>
+                          )}
+                          <div style={{ fontSize: '0.7rem', color: 'var(--text-light)', marginTop: '0.5rem' }}>
+                            <Clock size={10} style={{ display: 'inline', marginRight: '0.25rem' }} />
+                            Didaftar: {new Date(user.createdAt).toLocaleDateString('ms-MY')}
+                          </div>
+                        </div>
+
+                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                          <button
+                            className="btn btn-success btn-sm"
+                            onClick={() => handleApproveUser(user.id)}
+                            disabled={isProcessing}
+                          >
+                            <CheckCircle size={16} />
+                            Luluskan
+                          </button>
+                          <button
+                            className="btn btn-danger btn-sm"
+                            onClick={() => {
+                              setSelectedItem({ type: 'newstaff', id: user.id });
+                              setRejectReason('');
+                              setShowRejectModal(true);
+                            }}
+                            disabled={isProcessing}
+                          >
+                            <XCircle size={16} />
+                            Tolak
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Reject Modal */}
