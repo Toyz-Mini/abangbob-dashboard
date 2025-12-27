@@ -11,7 +11,7 @@ interface StaffLayoutProps {
 }
 
 export default function StaffLayout({ children, showHeader = true }: StaffLayoutProps) {
-  const { currentStaff, logoutStaff, isStaffLoggedIn } = useAuth();
+  const { currentStaff, logoutStaff, isStaffLoggedIn, user } = useAuth();
   const router = useRouter();
 
   const handleLogout = async () => {
@@ -27,10 +27,20 @@ export default function StaffLayout({ children, showHeader = true }: StaffLayout
   };
 
   return (
-    <div className="staff-layout">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      {/* DEBUG BANNER - TEMPORARY */}
+      <div className="bg-red-600 text-white p-4 text-sm font-mono break-all z-50">
+        <strong>DEBUG INFO:</strong><br />
+        Email: {user?.email}<br />
+        Role (AuthContext): {user?.role || 'null'}<br />
+        ID: {user?.id}<br />
+        Status: {user?.status}<br />
+        CurrentStaff Role: {currentStaff?.role || 'null'}
+      </div>
+
       {/* Simple Header */}
       {showHeader && (
-        <header className="staff-header">
+        <header className="bg-white border-b border-gray-200 sticky top-0 z-30">
           <div className="staff-header-left">
             <div className="staff-header-avatar">
               {currentStaff?.name?.charAt(0)?.toUpperCase() || 'S'}
