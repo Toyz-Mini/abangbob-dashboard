@@ -78,12 +78,8 @@ export default function ProfilePage() {
   };
 
   const handleLogout = async () => {
-    try {
-      await signOut();
-      window.location.href = '/login';
-    } catch (error) {
-      console.error('Logout failed', error);
-    }
+    // signOut from AuthContext now handles the redirect logic safely
+    await signOut();
   };
 
   if (!isInitialized || !currentStaff) {
@@ -105,6 +101,7 @@ export default function ProfilePage() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
           <h1 style={{ fontSize: '1.5rem', fontWeight: 700 }}>Profil Saya</h1>
           <button
+            type="button"
             onClick={handleLogout}
             className="btn btn-outline btn-sm"
             style={{ color: 'var(--error)', borderColor: 'var(--error)' }}

@@ -132,10 +132,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = async () => {
     try {
-      await authClient.signOut();
-      window.location.href = '/login';
+      // Race condition: If signOut takes longer than 500ms, force proceed
+      await Promise.race([
+        authClient.signOut(),
+        new Promise(resolve => setTimeout(resolve, 500))
+      ]);
     } catch (error) {
       console.error('Sign out error:', error);
+    } finally {
+      // Always redirect to login page even if server logout fails/hangs
+      if (typeof window !== 'undefined') {
+        window.location.href = '/login';
+      }
     }
   };
 
