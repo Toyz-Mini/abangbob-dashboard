@@ -2022,7 +2022,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  z-index: 2000;
   animation: fadeIn 0.2s ease-out;
 }
 
@@ -2035,6 +2035,13 @@ body {
   max-height: 90vh;
   overflow-y: auto;
   animation: scaleIn 0.2s ease-out;
+}
+
+@media (max-width: 768px) {
+  .modal-content {
+    padding: var(--spacing-lg);
+    max-width: 95%;
+  }
 }
 
 .modal-header {

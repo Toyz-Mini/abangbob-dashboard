@@ -343,7 +343,7 @@ export default function InventoryPage() {
         {/* Stats Grid */}
 
         {/* Tab Navigation */}
-        <div className="flex gap-4 border-b border-gray-200 mb-6">
+        <div className="flex gap-4 border-b border-gray-200 mb-6 overflow-x-auto whitespace-nowrap scrollbar-hide">
           <button
             onClick={() => setActiveTab('inventory')}
             className={`pb-2 px-4 font-medium transition-colors relative ${activeTab === 'inventory'
@@ -365,19 +365,21 @@ export default function InventoryPage() {
               Waste Logs
             </div>
           </button>
-          <button
-            onClick={() => setActiveTab('smart-reorder')}
-            className={`pb-2 px-4 font-medium transition-colors relative ${activeTab === 'smart-reorder'
-              ? 'text-blue-600 border-b-2 border-blue-600'
-              : 'text-gray-500 hover:text-blue-600'
-              }`}
-          >
-            <div className="flex items-center gap-2">
-              <TrendingUp size={16} />
-              Smart Reorder
-              <span className="bg-blue-100 text-blue-700 text-[10px] px-1.5 py-0.5 rounded-full font-bold ml-1">New</span>
-            </div>
-          </button>
+          {canDeleteItems && (
+            <button
+              onClick={() => setActiveTab('smart-reorder')}
+              className={`pb-2 px-4 font-medium transition-colors relative ${activeTab === 'smart-reorder'
+                ? 'text-blue-600 border-b-2 border-blue-600'
+                : 'text-gray-500 hover:text-blue-600'
+                }`}
+            >
+              <div className="flex items-center gap-2">
+                <TrendingUp size={16} />
+                Smart Reorder
+                <span className="bg-blue-100 text-blue-700 text-[10px] px-1.5 py-0.5 rounded-full font-bold ml-1">New</span>
+              </div>
+            </button>
+          )}
         </div>
 
         {
@@ -798,7 +800,7 @@ export default function InventoryPage() {
 
           <div className="form-group">
             <label className="form-label">Jenis Pelarasan</label>
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <div className="flex flex-col sm:flex-row gap-2">
               <button
                 onClick={() => setAdjustmentData(prev => ({ ...prev, type: 'in' }))}
                 className={`btn ${adjustmentData.type === 'in' ? 'btn-primary' : 'btn-outline'}`}
@@ -867,9 +869,9 @@ export default function InventoryPage() {
             </div>
           )}
 
-          <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1.5rem' }}>
+          <div className="flex flex-col sm:flex-row gap-2 mt-6">
             <button
-              className="btn btn-outline"
+              className="btn btn-outline order-2 sm:order-1"
               onClick={closeModal}
               disabled={isProcessing}
               style={{ flex: 1 }}
@@ -877,7 +879,7 @@ export default function InventoryPage() {
               Batal
             </button>
             <button
-              className={`btn ${adjustmentData.type === 'in' ? 'btn-primary' : 'btn-danger'}`}
+              className={`btn ${adjustmentData.type === 'in' ? 'btn-primary' : 'btn-danger'} order-1 sm:order-2`}
               onClick={handleAdjustStock}
               disabled={isProcessing || adjustmentData.quantity <= 0}
               style={{ flex: 1 }}
