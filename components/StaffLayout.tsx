@@ -33,6 +33,7 @@ export default function StaffLayout({ children, showHeader = true }: StaffLayout
         <strong>DEBUG INFO (Misteri Nusantara):</strong><br />
         Email: {user?.email}<br />
         Role (AuthContext): {user?.role || 'null'}<br />
+        Raw DB Role: {user?.dbRole || 'null'}<br />
         ID: {user?.id}<br />
         Target DB: {process.env.NEXT_PUBLIC_SUPABASE_URL}<br />
       </div>

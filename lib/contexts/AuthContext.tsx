@@ -20,6 +20,7 @@ interface User {
   role?: string;
   outletId?: string;
   status?: string;
+  dbRole?: string | null; // Raw DB role for debugging
   user_metadata?: {
     name?: string;
   };
@@ -55,6 +56,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [userStatus, setUserStatus] = useState<string | null>(null);
   const [userRole, setUserRole] = useState<string>('Staff');
+  const [dbRole, setDbRole] = useState<string | null>(null); // Raw DB value for debugging
 
   // Handle loading state and status fetching
   useEffect(() => {
@@ -84,6 +86,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           console.log('[AuthContext] Status Data:', data);
           setUserStatus(data.status || 'approved');
           setUserRole(data.role || 'Staff');
+          setDbRole(data.db_role ?? 'NOT_IN_RESPONSE'); // Capture raw DB value
         } else if (isMounted) {
           // Fallback if API fails - FAIL SAFE (Do NOT default to approved)
           console.error('Failed to fetch user status - falling back to strict mode');
@@ -117,6 +120,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     role: userRole,
     outletId: (session.user as any).outletId || null,
     status: userStatus || 'pending_approval',
+    dbRole: dbRole, // Expose raw DB role for debugging
     user_metadata: {
       name: session.user.name || '',
     },
