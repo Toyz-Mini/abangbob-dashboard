@@ -42,6 +42,8 @@ export const auth = betterAuth({
         "https://www.abangbobeat.store",
         process.env.BETTER_AUTH_URL || "http://localhost:3000",
     ],
+    secret: process.env.BETTER_AUTH_SECRET,
+    baseURL: process.env.BETTER_AUTH_URL || "http://localhost:3000",
 });
 
 export type Session = typeof auth.$Infer.Session;

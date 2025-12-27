@@ -29,10 +29,17 @@ const getConfig = (): PoolConfig => {
 const config = getConfig();
 
 if (process.env.NODE_ENV === 'production') {
+    console.log('[DB] Initializing production pool');
     pool = new Pool(config);
 } else {
     // In development, use a global variable to preserve connection across HMR
     if (!globalWithPg.pgPool) {
+        console.log('[DB] Creating new development pool');
+        if (!process.env.DATABASE_URL) {
+            console.warn('[DB] WARNING: DATABASE_URL is missing in development!');
+        } else {
+            console.log('[DB] DATABASE_URL is present');
+        }
         globalWithPg.pgPool = new Pool(config);
     }
     pool = globalWithPg.pgPool;
