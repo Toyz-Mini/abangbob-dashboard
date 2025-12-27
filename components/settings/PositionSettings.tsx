@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { Plus, Edit2, Trash2, Users, Shield, ChevronDown, ChevronUp } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Plus, Edit2, Trash2, Users, Shield, ChevronDown, ChevronUp, RefreshCw } from 'lucide-react';
 import { StaffPosition, StaffPermissions } from '@/lib/types';
 import { useStore } from '@/lib/store';
 import Modal from '@/components/Modal';
@@ -63,12 +63,32 @@ const PERMISSION_GROUPS = [
 ];
 
 export default function PositionSettings() {
-    const { positions, addPosition, updatePosition, deletePosition } = useStore();
+    const { positions, addPosition, updatePosition, deletePosition, refreshPositions } = useStore();
     const [showModal, setShowModal] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [editingPosition, setEditingPosition] = useState<StaffPosition | null>(null);
     const [positionToDelete, setPositionToDelete] = useState<StaffPosition | null>(null);
     const [expandedGroups, setExpandedGroups] = useState<string[]>(['Pengurusan HR', 'Operasi POS', 'Akses Sistem']);
+    const [isLoading, setIsLoading] = useState(false);
+
+    // Refresh positions from Supabase when component mounts
+    useEffect(() => {
+        console.log('[PositionSettings] Component mounted, refreshing positions...');
+        console.log('[PositionSettings] Current positions count:', positions.length);
+        handleRefresh();
+    }, []);
+
+    const handleRefresh = async () => {
+        setIsLoading(true);
+        try {
+            await refreshPositions();
+            console.log('[PositionSettings] Positions refreshed');
+        } catch (error) {
+            console.error('[PositionSettings] Error refreshing positions:', error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     const [formData, setFormData] = useState<PositionFormData>({
         name: '',
@@ -172,10 +192,19 @@ export default function PositionSettings() {
             </div>
 
             {/* Add Position Button */}
-            <div style={{ marginBottom: '1.5rem' }}>
+            <div style={{ marginBottom: '1.5rem', display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
                 <button className="btn btn-primary" onClick={handleOpenAddModal}>
                     <Plus size={18} />
                     Tambah Posisi
+                </button>
+                <button
+                    className="btn btn-outline"
+                    onClick={handleRefresh}
+                    disabled={isLoading}
+                    title="Refresh dari database"
+                >
+                    <RefreshCw size={18} className={isLoading ? 'spin' : ''} />
+                    {isLoading ? 'Loading...' : 'Refresh'}
                 </button>
             </div>
 
