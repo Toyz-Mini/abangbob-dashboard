@@ -42,13 +42,19 @@ export async function GET(request: NextRequest) {
         const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
         // Fetch user from database
+        console.log('[API] Fetching status for userId:', userId);
         const { data, error } = await supabase
             .from('user')
             .select('id, status, role, phone, "icNumber"')
             .eq('id', userId)
             .single();
 
+        if (error) {
+            console.error('[API] Supabase error fetching user:', error);
+        }
+
         if (error || !data) {
+            console.log('[API] User not found or error, defaulting to Staff');
             // If user not found in 'user' table, treat as new/incomplete user
             // DO NOT default to Admin/Approved as that bypasses security
             console.error('Error fetching user status or user not found:', error);
@@ -57,6 +63,8 @@ export async function GET(request: NextRequest) {
                 role: 'Staff'
             });
         }
+
+        console.log('[API] Found user:', { id: data.id, role: data.role, status: data.status });
 
         let userStatus = data.status;
 
@@ -68,12 +76,15 @@ export async function GET(request: NextRequest) {
             userStatus = 'pending_approval';
         }
 
+        const finalRole = data.role || 'Staff';
+        console.log('[API] Returning:', { status: userStatus, role: finalRole });
+
         return NextResponse.json({
             status: userStatus || 'approved',
-            role: data.role || 'Staff'
+            role: finalRole
         });
     } catch (error) {
-        console.error('Error fetching user status:', error);
+        console.error('[API] CRITICAL ERROR fetching user status:', error);
         return NextResponse.json({
             status: 'approved',
             role: 'Staff'

@@ -78,8 +78,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // If we have a session, fetch extended user status from DB
       try {
         const res = await fetch(`/api/user/status?userId=${session.user.id}`, { cache: 'no-store' });
+        console.log('[AuthContext] Status API Response:', res.status);
         if (isMounted && res.ok) {
           const data = await res.json();
+          console.log('[AuthContext] Status Data:', data);
           setUserStatus(data.status || 'approved');
           setUserRole(data.role || 'Staff');
         } else if (isMounted) {
