@@ -19,6 +19,7 @@ interface User {
   email: string;
   role?: string;
   outletId?: string;
+  status?: string;
   user_metadata?: {
     name?: string;
   };
@@ -29,6 +30,7 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   isAuthenticated: boolean;
+  userStatus: string | null; // User approval status
 
   // Legacy properties for backwards compatibility
   currentStaff: StaffProfile | null;
@@ -51,18 +53,44 @@ const AuthContext = createContext<AuthContextType | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { data: session, isPending, error } = useBetterAuthSession();
   const [loading, setLoading] = useState(true);
+  const [userStatus, setUserStatus] = useState<string | null>(null);
+  const [userRole, setUserRole] = useState<string>('Staff');
 
   useEffect(() => {
     setLoading(isPending);
   }, [isPending]);
+
+  // Fetch user status from database when session changes
+  useEffect(() => {
+    const fetchUserStatus = async () => {
+      if (session?.user?.id) {
+        try {
+          const res = await fetch(`/api/user/status?userId=${session.user.id}`);
+          if (res.ok) {
+            const data = await res.json();
+            setUserStatus(data.status || 'approved');
+            setUserRole(data.role || 'Staff');
+          }
+        } catch (error) {
+          console.error('Error fetching user status:', error);
+          setUserStatus('approved'); // Default to approved on error
+        }
+      } else {
+        setUserStatus(null);
+      }
+    };
+
+    fetchUserStatus();
+  }, [session?.user?.id]);
 
   // Create user object from Better Auth session
   const user: User | null = session?.user ? {
     id: session.user.id,
     name: session.user.name || '',
     email: session.user.email || '',
-    role: (session.user as any).role || 'Staff',
+    role: userRole,
     outletId: (session.user as any).outletId || null,
+    status: userStatus || 'pending_approval',
     user_metadata: {
       name: session.user.name || '',
     },
@@ -73,8 +101,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     id: user.id,
     name: user.name,
     email: user.email,
-    role: (user.role as 'Manager' | 'Staff' | 'Admin') || 'Staff',
-    status: 'active',
+    role: (userRole as 'Manager' | 'Staff' | 'Admin') || 'Staff',
+    status: userStatus || 'pending_approval',
     outlet_id: user.outletId || null,
   } : null;
 
@@ -127,6 +155,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user,
         loading,
         isAuthenticated: !!user,
+        userStatus,
         currentStaff,
         isStaffLoggedIn: !!currentStaff,
         session,

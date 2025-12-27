@@ -11,7 +11,7 @@ const PUBLIC_PATHS = ['/login', '/unauthorized'];
 export default function RouteGuard({ children }: { children: React.ReactNode }) {
     const router = useRouter();
     const pathname = usePathname();
-    const { user, isStaffLoggedIn, currentStaff, loading } = useAuth();
+    const { user, isStaffLoggedIn, currentStaff, loading, userStatus } = useAuth();
     const [authorized, setAuthorized] = useState(false);
 
     useEffect(() => {
@@ -21,6 +21,25 @@ export default function RouteGuard({ children }: { children: React.ReactNode }) 
         // Public paths don't need auth
         if (PUBLIC_PATHS.includes(pathname)) {
             setAuthorized(true);
+            return;
+        }
+
+        // Check for pending approval status
+        // If user is pending, they can ONLY access /pending-approval
+        if (user && userStatus === 'pending_approval') {
+            if (pathname !== '/pending-approval') {
+                setAuthorized(false);
+                router.push('/pending-approval');
+            } else {
+                setAuthorized(true);
+            }
+            return;
+        }
+
+        // Redirect away from pending page if approved/active
+        if (user && userStatus !== 'pending_approval' && pathname === '/pending-approval') {
+            setAuthorized(false);
+            router.push('/');
             return;
         }
 
@@ -60,7 +79,7 @@ export default function RouteGuard({ children }: { children: React.ReactNode }) 
             }
         }
 
-    }, [pathname, user, isStaffLoggedIn, currentStaff, loading, router]);
+    }, [pathname, user, isStaffLoggedIn, currentStaff, loading, router, userStatus]);
 
     // While checking, show nothing or loader
     // If loading auth, show checker

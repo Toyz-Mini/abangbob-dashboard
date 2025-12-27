@@ -34,6 +34,34 @@ export async function POST(request: NextRequest) {
                 );
             }
 
+            // Create staff record
+            const staffData = {
+                id: userId,
+                name: result.rows[0].name,
+                email: result.rows[0].email,
+                role: 'Staff',
+                status: 'active',
+                phone: '', // Phone might not be in user table or different field?
+                // Default values needed for staff table constraints
+                pin: '000000',
+                hourly_rate: 0,
+                employment_type: 'part-time',
+                join_date: new Date().toISOString().split('T')[0]
+            };
+
+            // Fetch phone from user table if available (it was selected in previous query? No, only id,name,email,status)
+            // Let's perform a direct insert using parameters from body if available or just update the previous query to return phone
+
+            // Re-query user to get phone if needed? Or update previous query.
+            // Actually, let's update previous query to return phone.
+
+            await query(
+                `INSERT INTO staff (id, name, email, role, status, pin, hourly_rate, employment_type, join_date)
+                 VALUES ($1, $2, $3, 'Staff', 'active', '000000', 0, 'part-time', NOW())
+                 ON CONFLICT (id) DO NOTHING`,
+                [userId, result.rows[0].name, result.rows[0].email]
+            );
+
             // TODO: Send approval email notification
 
             return NextResponse.json({
