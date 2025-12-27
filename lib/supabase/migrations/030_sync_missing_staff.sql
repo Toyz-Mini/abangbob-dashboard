@@ -16,7 +16,7 @@ SELECT
   u.email, 
   u.role, 
   'active', 
-  u.outlet_id,
+  u."outletId", -- camelCase column needs quotes
   NOW()
 FROM public."user" u
 WHERE u.status = 'approved'
