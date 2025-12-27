@@ -17,6 +17,7 @@ import { RealtimeChannel } from '@supabase/supabase-js';
 import { logSyncError, logSyncSuccess } from './utils/sync-logger';
 import * as PaymentTaxSync from './supabase/payment-tax-sync';
 import * as VoidRefundOps from './supabase/operations';
+import { deductReplacementLeaveBalance } from './supabase/operations';
 import { useCashRegistersRealtime } from './supabase/realtime-hooks';
 import { getNextDayForecast, WeatherForecast } from './services/weather';
 
@@ -3013,6 +3014,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         priority: 'medium',
         targetStaffId: request.staffId,
       });
+    }
+
+    // Deduct Replacement Leave Balance
+    if (request && request.type === 'replacement') {
+      deductReplacementLeaveBalance(request.staffId, request.duration, id)
+        .catch(err => console.error('Failed to deduct replacement leave balance:', err));
     }
   }, [leaveRequests, addNotification]);
 

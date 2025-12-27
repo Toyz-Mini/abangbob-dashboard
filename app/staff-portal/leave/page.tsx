@@ -1,10 +1,11 @@
 'use client';
 
-import { useMemo, useCallback } from 'react';
+import { useMemo, useCallback, useState, useEffect } from 'react';
 import MainLayout from '@/components/MainLayout';
 import { useStaffPortal, useStaff } from '@/lib/store';
-import { useLeaveRequestsRealtime } from '@/lib/supabase/realtime-hooks';
+import { useLeaveRequestsRealtime, useReplacementLeavesRealtime } from '@/lib/supabase/realtime-hooks';
 import { getLeaveTypeLabel, getStatusLabel, getStatusColor } from '@/lib/staff-portal-data';
+import { getReplacementLeaveStats } from '@/lib/supabase/operations';
 import Link from 'next/link';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import StaffPortalNav from '@/components/StaffPortalNav';
@@ -19,10 +20,7 @@ import {
   AlertCircle,
   ChevronRight
 } from 'lucide-react';
-
-
 import { useAuth } from '@/lib/contexts/AuthContext';
-
 
 // Leave Balance Ring Component
 function LeaveBalanceRing({
@@ -34,7 +32,7 @@ function LeaveBalanceRing({
 }: {
   balance: number;
   total: number;
-  type: 'annual' | 'medical' | 'emergency' | 'unpaid';
+  type: 'annual' | 'medical' | 'emergency' | 'unpaid' | 'replacement';
   label: string;
   detail: string;
 }) {
@@ -49,7 +47,8 @@ function LeaveBalanceRing({
     annual: '#6366f1',
     medical: '#3b82f6',
     emergency: '#f59e0b',
-    unpaid: '#94a3b8'
+    unpaid: '#94a3b8',
+    replacement: '#8b5cf6'
   };
 
   return (
@@ -68,13 +67,14 @@ function LeaveBalanceRing({
             cx={size / 2}
             cy={size / 2}
             r={radius}
+            style={{ strokeWidth }}
             strokeDasharray={circumference}
             strokeDashoffset={offset}
-            style={{ strokeWidth }}
+            stroke={colors[type]}
           />
         </svg>
         <div className="leave-progress-center">
-          <span className={`leave-progress-value ${type}`} style={{ fontSize: '1.75rem' }}>{balance}</span>
+          <span className={`leave-progress-value ${type}`} style={{ fontSize: '1.75rem', color: colors[type] }}>{balance}</span>
         </div>
       </div>
       <div className="leave-balance-label">{label}</div>
@@ -86,6 +86,7 @@ function LeaveBalanceRing({
 export default function LeavePage() {
   const { staff, isInitialized } = useStaff();
   const { getLeaveBalance, getStaffLeaveRequests, refreshLeaveRequests } = useStaffPortal();
+  const [replacementStats, setReplacementStats] = useState({ available: 0, used: 0, expired: 0, pending: 0 });
 
   // Realtime subscription for leave requests
   const handleLeaveChange = useCallback(() => {
@@ -95,11 +96,22 @@ export default function LeavePage() {
 
   useLeaveRequestsRealtime(handleLeaveChange);
 
-  /* 
-   * FIXED: Use real logged in user from AuthContext
-   */
   const { currentStaff: authStaff, user } = useAuth();
   const staffId = authStaff?.id || user?.id || '';
+
+  // Fetch Replacement Stats
+  const loadReplacementStats = useCallback(async () => {
+    if (staffId) {
+      const stats = await getReplacementLeaveStats(staffId);
+      setReplacementStats(stats);
+    }
+  }, [staffId]);
+
+  useEffect(() => {
+    loadReplacementStats();
+  }, [loadReplacementStats]);
+
+  useReplacementLeavesRealtime(loadReplacementStats);
 
   const currentStaff = staff.find(s => s.id === staffId);
   const leaveBalance = getLeaveBalance(staffId);
@@ -127,11 +139,9 @@ export default function LeavePage() {
   return (
     <MainLayout>
       <div className="staff-portal animate-fade-in">
-        {/* Header */}
         <div className="page-header">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
             <div>
-
               <h1 className="page-title" style={{ marginTop: '0.5rem' }}>
                 Pengurusan Cuti
               </h1>
@@ -146,7 +156,6 @@ export default function LeavePage() {
           </div>
         </div>
 
-        {/* Leave Balance Cards */}
         {leaveBalance && (
           <div className="card" style={{ marginBottom: '1.5rem' }}>
             <div className="card-header">
@@ -163,6 +172,14 @@ export default function LeavePage() {
                 type="annual"
                 label="Cuti Tahunan"
                 detail={`Diambil: ${leaveBalance.annual?.taken || 0} | Pending: ${leaveBalance.annual?.pending || 0}`}
+              />
+
+              <LeaveBalanceRing
+                balance={replacementStats.available}
+                total={replacementStats.available + replacementStats.used}
+                type="replacement"
+                label="Cuti Ganti"
+                detail={`Available: ${replacementStats.available} | Used: ${replacementStats.used}`}
               />
 
               <LeaveBalanceRing
@@ -192,7 +209,6 @@ export default function LeavePage() {
           </div>
         )}
 
-        {/* Leave Requests History */}
         <div className="card">
           <div className="card-header">
             <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -272,7 +288,6 @@ export default function LeavePage() {
           )}
         </div>
 
-        {/* Bottom Navigation */}
         <StaffPortalNav currentPage="leave" pendingCount={pendingCount} />
       </div>
     </MainLayout>

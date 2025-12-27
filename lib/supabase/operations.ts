@@ -1237,6 +1237,124 @@ export async function getReplacementLeaveBalance(staffId: string): Promise<numbe
   return (data || []).reduce((sum: number, item: any) => sum + (item.days || 0), 0);
 }
 
+export async function getReplacementLeaveStats(staffId: string) {
+  const supabase = getSupabaseClient();
+  if (!supabase) return { available: 0, used: 0, expired: 0, pending: 0 };
+
+  const { data, error } = await supabase
+    .from('replacement_leaves')
+    .select('days, status')
+    .eq('staff_id', staffId);
+
+  if (error) {
+    console.error('Error fetching replacement leave stats:', error);
+    return { available: 0, used: 0, expired: 0, pending: 0 };
+  }
+
+  const stats = (data || []).reduce((acc: any, item: any) => {
+    acc[item.status] = (acc[item.status] || 0) + (item.days || 0);
+    return acc;
+  }, { available: 0, used: 0, expired: 0, pending: 0 }); // 'pending' status? maybe check checks
+
+  return stats;
+}
+
+export async function deductReplacementLeaveBalance(staffId: string, daysToDeduct: number, leaveRequestId: string) {
+  const supabase = getSupabaseClient();
+  if (!supabase) return false;
+
+  // 1. Fetch available leaves, sorted by expiration (earlier expiry first)
+  const { data: availableLeaves, error } = await supabase
+    .from('replacement_leaves')
+    .select('*')
+    .eq('staff_id', staffId)
+    .eq('status', 'available')
+    .gte('expires_at', new Date().toISOString().split('T')[0])
+    .order('expires_at', { ascending: true });
+
+  if (error || !availableLeaves) {
+    console.error('Error fetching replacement leaves for deduction:', error);
+    return false;
+  }
+
+  let remaining = daysToDeduct;
+  const updates = [];
+
+  for (const leave of availableLeaves) {
+    if (remaining <= 0) break;
+
+    const days = leave.days || 0;
+
+    if (days <= remaining) {
+      // Consume entire row
+      updates.push({
+        id: leave.id,
+        status: 'used',
+        used_leave_request_id: leaveRequestId,
+        days: days // Keep days same, just mark used
+      });
+      remaining -= days;
+    } else {
+      // Partial consumption? 
+      // Option A: Split the row. (Ideally insert new row for remaining? Or modify this row to 'used' and create new 'available' row for balance?)
+      // Option B: Allow partial usage on the row? If schema allows?
+      // "days" is the amount.
+      // If I mark "used", it assumes ALL days are used.
+      // Better to split:
+      // 1. Update this row to Used (with amount = used amount?)
+      //    No, schema probably has ID.
+      //    I should UPDATE this row's days to 'days - remaining' (Available)? NO.
+      //    I should UPDATE this row to be 'Used' with 'days = remaining' (amount consumed).
+      //    And INSERT a NEW row for the balance?
+      //    Or: Update this row's `days` to (original - used) -> remains Available.
+      //    And INSERT a NEW row with `status='used'` and `days=used`.
+      //    But tracking origin?
+      // Let's assume simplest: Update `days` of existing row?
+      // If I reduce `days`, I lose track of total earned history if I overwrite it.
+      // But `replacement_leaves` seems to track "Credits".
+      // If I split:
+      // OLD ROW: changes to `days = days - remaining` (Available).
+      // NEW ROW: `days = remaining`, `status = used`, `used_leave_request_id`.
+
+      const usedAmount = remaining;
+      const balanceAmount = days - remaining;
+
+      // 1. Create new row for used portion
+      await supabase.from('replacement_leaves').insert({
+        staff_id: staffId,
+        days: usedAmount,
+        reason: leave.reason + ' (Used)',
+        status: 'used',
+        earned_date: leave.earned_date,
+        expires_at: leave.expires_at,
+        used_leave_request_id: leaveRequestId
+      });
+
+      // 2. Update current row with balance
+      updates.push({
+        id: leave.id,
+        days: balanceAmount,
+        status: 'available' // Still available
+      });
+
+      remaining = 0;
+    }
+  }
+
+  // Execute updates
+  for (const update of updates) {
+    // If status is used
+    if (update.status === 'used') {
+      await supabase.from('replacement_leaves').update({ status: 'used', used_leave_request_id: update.used_leave_request_id }).eq('id', update.id);
+    } else {
+      // Update balance
+      await supabase.from('replacement_leaves').update({ days: update.days }).eq('id', update.id);
+    }
+  }
+
+  return true;
+}
+
 export async function insertReplacementLeave(leave: any) {
   const supabase = getSupabaseClient();
   if (!supabase) throw new Error('Supabase not connected');

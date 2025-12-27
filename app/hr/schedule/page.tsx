@@ -1,10 +1,25 @@
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import MainLayout from '@/components/MainLayout';
 import { useSchedules } from '@/lib/store';
-import { useSchedulesRealtime, useStaffRealtime } from '@/lib/supabase/realtime-hooks';
-import { Shift, ScheduleEntry } from '@/lib/types';
+import {
+  useSchedulesRealtime,
+  useStaffRealtime,
+  usePublicHolidaysRealtime,
+  useHolidayPoliciesRealtime
+} from '@/lib/supabase/realtime-hooks';
+import {
+  Shift,
+  ScheduleEntry,
+  PublicHoliday,
+  HolidayPolicy
+} from '@/lib/types';
+import {
+  fetchPublicHolidays,
+  fetchHolidayPolicies,
+  getHolidayPolicyForDate
+} from '@/lib/supabase/operations';
 import Modal from '@/components/Modal';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import {
@@ -56,6 +71,10 @@ export default function SchedulePage() {
   const [selectedShift, setSelectedShift] = useState<Shift | null>(null);
   const [selectedSchedule, setSelectedSchedule] = useState<ScheduleEntry | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+
+  // Holiday State
+  const [holidays, setHolidays] = useState<PublicHoliday[]>([]);
+  const [policies, setPolicies] = useState<HolidayPolicy[]>([]);
 
   // Week navigation
   const [currentWeekStart, setCurrentWeekStart] = useState(() => {
@@ -137,6 +156,45 @@ export default function SchedulePage() {
     const dateStr = date.toISOString().split('T')[0];
     return weekSchedule.find(s => s.date === dateStr && s.staffId === staffId);
   };
+
+  // Helper: Check for holiday
+  const getHolidayDetails = useCallback((date: Date) => {
+    const dateStr = date.toISOString().split('T')[0];
+    const holiday = holidays.find(h => h.date === dateStr);
+    if (!holiday) return null;
+
+    const policy = policies.find(p => p.holidayId === holiday.id);
+    return { holiday, policy };
+  }, [holidays, policies]);
+
+  // Load holidays data
+  const loadHolidayData = useCallback(async () => {
+    const year = currentWeekStart.getFullYear();
+    try {
+      const [holidaysData, policiesData] = await Promise.all([
+        fetchPublicHolidays(year),
+        fetchHolidayPolicies(year)
+      ]);
+      setHolidays(holidaysData);
+      setPolicies(policiesData);
+    } catch (error) {
+      console.error('Error loading holiday details:', error);
+    }
+  }, [currentWeekStart]);
+
+  // Initial load & Re-fetch on week change (if year changes efficiently handled by memo/deps)
+  // Actually simpler to just effect on currentWeekStart.getFullYear()
+  const currentYear = useMemo(() => currentWeekStart.getFullYear(), [currentWeekStart]);
+
+
+
+  useEffect(() => {
+    loadHolidayData();
+  }, [loadHolidayData, currentYear]);
+
+  // Realtime hooks
+  usePublicHolidaysRealtime(loadHolidayData);
+  useHolidayPoliciesRealtime(loadHolidayData);
 
   // Check for conflicts
   const hasConflict = (staffId: string, date: string, excludeId?: string): boolean => {
@@ -276,6 +334,22 @@ export default function SchedulePage() {
       return;
     }
 
+    // Holiday Check
+    const holidayDetails = getHolidayDetails(new Date(scheduleForm.date));
+    if (holidayDetails) {
+      const { holiday, policy } = holidayDetails;
+      if (policy && !policy.isOperating) {
+        if (!confirm(`AMARAN: ${holiday.name} adalah hari CUTI UMUM (Outlet Tutup). Adakah anda pasti mahu menjadualkan staf?`)) return;
+      } else if (policy) {
+        let msg = `INFO: ${holiday.name} adalah Cuti Umum.\n`;
+        if (policy.compensationType === 'double_pay') msg += 'Staff layak dapat Double Pay.';
+        else if (policy.compensationType === 'replacement_leave') msg += 'Staff layak dapat Replacement Leave.';
+        else if (policy.compensationType === 'staff_choice') msg += 'Staff boleh pilih Double Pay atau Replacement Leave.';
+
+        if (!confirm(`${msg}\n\nTeruskan?`)) return;
+      }
+    }
+
     setIsProcessing(true);
     await new Promise(resolve => setTimeout(resolve, 300));
 
@@ -303,6 +377,18 @@ export default function SchedulePage() {
     if (hasConflict(scheduleForm.staffId, scheduleForm.date, selectedSchedule.id)) {
       alert('Staf sudah ada jadual pada tarikh ini!');
       return;
+    }
+
+    // Holiday Check
+    const holidayDetails = getHolidayDetails(new Date(scheduleForm.date));
+    if (holidayDetails) {
+      const { holiday, policy } = holidayDetails;
+      if (policy && !policy.isOperating) {
+        if (!confirm(`AMARAN: ${holiday.name} adalah hari CUTI UMUM (Outlet Tutup). Adakah anda pasti mahu menjadualkan staf?`)) return;
+      } else if (policy) {
+        // Friendly warning for update too
+        // Optional: maybe less intrusive for update? But safe to show.
+      }
     }
 
     setIsProcessing(true);
@@ -483,12 +569,34 @@ export default function SchedulePage() {
                         key={date.toISOString()}
                         style={{
                           textAlign: 'center',
-                          background: isToday(date) ? '#dbeafe' : undefined,
+                          background: (() => {
+                            const details = getHolidayDetails(date);
+                            if (details?.policy?.isOperating === false) return '#fee2e2'; // Red for closed
+                            if (details) return '#fef3c7'; // Amber for holiday
+                            if (isToday(date)) return '#dbeafe';
+                            return undefined;
+                          })(),
                         }}
                       >
                         <div style={{ fontWeight: isToday(date) ? 700 : 600 }}>
                           {formatDate(date)}
                         </div>
+                        {(() => {
+                          const details = getHolidayDetails(date);
+                          if (details) {
+                            return (
+                              <div style={{
+                                fontSize: '0.65rem',
+                                color: details.policy?.isOperating === false ? 'var(--danger)' : 'var(--primary)',
+                                marginTop: '4px',
+                                fontWeight: 600
+                              }}>
+                                {details.holiday.name}
+                              </div>
+                            );
+                          }
+                          return null;
+                        })()}
                       </th>
                     ))}
                     <th style={{ width: '80px', textAlign: 'center' }}>Jam/Week</th>

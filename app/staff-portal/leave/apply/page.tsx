@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import MainLayout from '@/components/MainLayout';
 import { useStaffPortal, useStaff } from '@/lib/store';
 import { getLeaveTypeLabel, calculateLeaveDays } from '@/lib/staff-portal-data';
+import { getReplacementLeaveStats } from '@/lib/supabase/operations';
 import { LeaveType } from '@/lib/types';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -42,6 +43,17 @@ export default function ApplyLeavePage() {
   const currentStaff = staff.find(s => s.id === staffId);
   const leaveBalance = getLeaveBalance(staffId);
 
+  // Replacement Balance State
+  const [replacementAvailable, setReplacementAvailable] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (staffId) {
+      getReplacementLeaveStats(staffId).then(stats => {
+        setReplacementAvailable(stats.available);
+      });
+    }
+  }, [staffId]);
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [form, setForm] = useState({
     type: 'annual' as LeaveType,
@@ -62,6 +74,8 @@ export default function ApplyLeavePage() {
     if (!leaveBalance) return null;
     if (type === 'unpaid') return null; // unlimited
     if (type === 'study') return null;
+    if (type === 'replacement') return replacementAvailable;
+
     const balanceData = leaveBalance[type as keyof typeof leaveBalance];
     if (typeof balanceData === 'object' && 'balance' in balanceData) {
       return balanceData.balance;

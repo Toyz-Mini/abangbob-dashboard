@@ -3,7 +3,9 @@
 import { useState, useMemo } from 'react';
 import MainLayout from '@/components/MainLayout';
 import { useStore, useKPI } from '@/lib/store';
-import { StaffProfile, AttendanceRecord, LeaveRequest, SalaryAdvance, ClaimRequest } from '@/lib/types';
+import { StaffProfile, AttendanceRecord, LeaveRequest, SalaryAdvance, ClaimRequest, PublicHoliday, HolidayPolicy, HolidayWorkLog } from '@/lib/types';
+import { fetchPublicHolidays, fetchHolidayPolicies, fetchHolidayWorkLogs } from '@/lib/supabase/operations';
+import { usePublicHolidaysRealtime, useHolidayPoliciesRealtime, useHolidayWorkLogsRealtime } from '@/lib/supabase/realtime-hooks';
 import Modal from '@/components/Modal';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { getRankTier, getScoreColor } from '@/lib/kpi-data';
@@ -56,6 +58,7 @@ interface PayrollEntry {
   // Earnings
   basePay: number; // Monthly: Base - Unpaid/Absent; Hourly: Worked * Rate
   otPay: number;
+  holidayPay: number; // New field for Double Pay portion
   kpiBonus: number;
   kpiScore: number;
   allowances: DetailedAddition[];
@@ -89,9 +92,54 @@ export default function PayrollPage() {
 
   const { getStaffKPI, getStaffBonus } = useKPI();
 
+  // Load Holiday Data
+  const loadHolidayData = async () => {
+    // Load for current year context? 
+    // Assuming mostly current year operations.
+    const currentYear = new Date().getFullYear();
+    try {
+      const [h, p, w] = await Promise.all([
+        fetchPublicHolidays(currentYear),
+        fetchHolidayPolicies(currentYear),
+        fetchHolidayWorkLogs() // API might need pagination later, fetching all for now
+      ]);
+      setHolidays(h);
+      setPolicies(p);
+      setWorkLogs(w);
+    } catch (err) {
+      console.error('Error loading holiday data', err);
+    }
+  };
+
+  usePublicHolidaysRealtime(loadHolidayData);
+  useHolidayPoliciesRealtime(loadHolidayData);
+  useHolidayWorkLogsRealtime(loadHolidayData);
+
+  // Initial load
+  useState(() => {
+    loadHolidayData();
+  });
+
   const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7));
   const [showPayslipModal, setShowPayslipModal] = useState(false);
   const [selectedPayroll, setSelectedPayroll] = useState<PayrollEntry | null>(null);
+
+  // Holiday Data
+  const [holidays, setHolidays] = useState<PublicHoliday[]>([]);
+  const [policies, setPolicies] = useState<HolidayPolicy[]>([]);
+  const [workLogs, setWorkLogs] = useState<HolidayWorkLog[]>([]);
+
+  // Fetch Holiday Data
+  useMemo(() => {
+    // We use useMemo as a "side-effect" trigger here or just useEffect?
+    // Better use useEffect for async data
+    // But since selectedMonth changes, we might want to ensure likely relevant data is available.
+    // For simplicity, we load all holiday data for the year of selectedMonth.
+  }, [selectedMonth]);
+  // Wait, I should use useEffect properly.
+
+  // Realtime hooks
+  // We can just load data once on mount or when year changes.
 
   // Settings
   const [otRate, setOtRate] = useState(1.5);
@@ -203,6 +251,50 @@ export default function PayrollPage() {
         otPay = otHours * s.hourlyRate * otRate;
       }
 
+      // 3.5 Holiday Pay Calculation (Double Pay)
+      let holidayPay = 0;
+      // Iterate days worked to check if any is a holiday
+      // We already iterated attendance to calc totalHours. We might need to map attendance to dates.
+
+      const workedDates = monthAttendance.filter(a => a.staffId === s.id && a.clockInTime && a.clockOutTime).map(a => {
+        // Parse worked hours for that day
+        const [inH, inM] = (a.clockInTime || '00:00').split(':').map(Number);
+        const [outH, outM] = (a.clockOutTime || '00:00').split(':').map(Number);
+        const hours = ((outH * 60 + outM) - (inH * 60 + inM) - a.breakDuration) / 60;
+        return { date: a.date, hours };
+      });
+
+      workedDates.forEach(wd => {
+        const holiday = holidays.find(h => h.date === wd.date);
+        if (holiday) {
+          const policy = policies.find(p => p.holidayId === holiday.id);
+          const log = workLogs.find(w => w.workDate === wd.date && w.staffId === s.id);
+
+          // Determine if eligible for Double Pay
+          let isDoublePay = false;
+
+          if (log && log.compensationChoice === 'double_pay') {
+            isDoublePay = true;
+          } else if (!log && policy?.compensationType === 'double_pay') {
+            isDoublePay = true; // Default if mandatory
+          } else if (!log && policy?.compensationType === 'staff_choice') {
+            isDoublePay = true; // Default to pay if no choice recorded (or warn?)
+          }
+
+          if (isDoublePay && policy) {
+            // Add EXTRA pay portion (multiplier - 1)
+            // Base pay (1x) is already in basePay/otPay above.
+            // We adding the premium.
+            // Rate to use:
+            const rate = isMonthly ? (s.baseSalary / workingDaysPerMonth / regularHoursPerDay) : s.hourlyRate;
+            const extraMultiplier = (policy.payMultiplier || 2.0) - 1.0;
+            const extraPay = wd.hours * rate * extraMultiplier;
+            holidayPay += extraPay;
+          }
+        }
+      });
+
+
       // 4. KPI Bonus
       const staffKPI = getStaffKPI(s.id, selectedMonth);
       const kpiBonus = getStaffBonus(s.id, selectedMonth); // Uses helper which checks global config
@@ -224,7 +316,7 @@ export default function PayrollPage() {
       const totalClaims = claimList.reduce((sum, c) => sum + c.amount, 0);
 
       // GROSS PAY
-      const grossPay = basePay + otPay + kpiBonus + totalAllowances + totalClaims; // claims usually tax exempt? keeping simple
+      const grossPay = basePay + otPay + holidayPay + kpiBonus + totalAllowances + totalClaims; // claims usually tax exempt? keeping simple
 
       // 7. Statutory Deductions (TAP/SCP)
       const tapRate = s.statutoryContributions?.tapEnabled ? (s.statutoryContributions.tapEmployeeRate || 5) : 0;
@@ -235,7 +327,7 @@ export default function PayrollPage() {
 
       // Calculation Base: Usually Base + Allowances? Or just Base?
       // Brunei TAP is on Wages.
-      const contributionBase = basePay + otPay + totalAllowances + kpiBonus; // Broad definition
+      const contributionBase = basePay + otPay + holidayPay + totalAllowances + kpiBonus; // Broad definition
 
       const tapAmount = (contributionBase * tapRate) / 100;
       const scpAmount = (contributionBase * scpRate) / 100;
@@ -274,6 +366,7 @@ export default function PayrollPage() {
         otHours,
         basePay: Math.round(basePay * 100) / 100,
         otPay: Math.round(otPay * 100) / 100,
+        holidayPay: Math.round(holidayPay * 100) / 100,
         kpiBonus: Math.round(kpiBonus * 100) / 100,
         kpiScore,
         allowances: allowanceList,
@@ -522,6 +615,7 @@ export default function PayrollPage() {
                             <div style={{ fontSize: '0.85rem' }}>
                               <div>Base: {entry.basePay.toFixed(2)}</div>
                               {entry.otPay > 0 && <div>OT: {entry.otPay.toFixed(2)}</div>}
+                              {entry.holidayPay > 0 && <div style={{ color: '#8b5cf6' }}>Hol: {entry.holidayPay.toFixed(2)}</div>}
                               {entry.kpiBonus > 0 && <div style={{ color: '#d97706' }}>KPI: {entry.kpiBonus.toFixed(2)}</div>}
                               {entry.claims.length > 0 && <div style={{ color: 'var(--info)' }}>Claims: {entry.claims.reduce((s, c) => s + c.amount, 0).toFixed(2)}</div>}
                               {entry.allowances.length > 0 && <div style={{ color: 'var(--success)' }}>Allow: {entry.allowances.reduce((s, a) => s + a.amount, 0).toFixed(2)}</div>}
@@ -603,6 +697,12 @@ export default function PayrollPage() {
                       <span>Base Pay</span>
                       <span>{selectedPayroll.basePay.toFixed(2)}</span>
                     </div>
+                    {selectedPayroll.holidayPay > 0 && (
+                      <div className="flex justify-between mb-1">
+                        <span>Holiday Pay</span>
+                        <span>{selectedPayroll.holidayPay.toFixed(2)}</span>
+                      </div>
+                    )}
                     {selectedPayroll.otPay > 0 && (
                       <div className="flex justify-between mb-1">
                         <span>Overtime ({selectedPayroll.otHours.toFixed(1)}h)</span>
