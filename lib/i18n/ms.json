@@ -37,6 +37,10 @@
     "otClaim": "Tuntutan OT",
     "salaryAdvance": "Pendahuluan Gaji"
   },
+  "topnav": {
+    "accountSettings": "Tetapan Akaun",
+    "switchOutlet": "Tukar Outlet"
+  },
   "common": {
     "save": "Simpan",
     "cancel": "Batal",
@@ -68,6 +72,9 @@
     "recentOrders": "Pesanan Terkini"
   },
   "hr": {
+    "title": "HR & Staf",
+    "subtitle": "Urus staf, kehadiran dan prestasi",
+    "registerNewStaff": "Daftar Staf Baru",
     "onDuty": "Bertugas",
     "offDuty": "Tidak Bertugas"
   },

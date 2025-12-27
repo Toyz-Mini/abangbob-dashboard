@@ -37,6 +37,10 @@
     "otClaim": "OT Claims",
     "salaryAdvance": "Salary Advance"
   },
+  "topnav": {
+    "accountSettings": "Account Settings",
+    "switchOutlet": "Switch Outlet"
+  },
   "common": {
     "save": "Save",
     "cancel": "Cancel",
@@ -68,6 +72,9 @@
     "recentOrders": "Recent Orders"
   },
   "hr": {
+    "title": "HR & Staff",
+    "subtitle": "Manage staff, attendance and performance",
+    "registerNewStaff": "Register New Staff",
     "onDuty": "On Duty",
     "offDuty": "Off Duty"
   },
