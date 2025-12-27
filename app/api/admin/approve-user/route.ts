@@ -27,59 +27,56 @@ export async function POST(request: NextRequest) {
         }
 
         if (action === 'approve') {
-            // Update user status to approved
-            const result = await query(
-                `UPDATE "user" 
-         SET 
-           status = 'approved',
-           "approvedAt" = NOW(),
-           "updatedAt" = NOW()
-         WHERE id = $1
-         RETURNING id, name, email, status`,
+            // First get user data including phone
+            const userResult = await query(
+                `SELECT id, name, email, phone, "icNumber" FROM "user" WHERE id = $1`,
                 [userId]
             );
 
-            if (result.rowCount === 0) {
+            if (userResult.rowCount === 0) {
                 return NextResponse.json(
                     { error: 'User not found' },
                     { status: 404 }
                 );
             }
 
-            // Create staff record
-            const staffData = {
-                id: userId,
-                name: result.rows[0].name,
-                email: result.rows[0].email,
-                role: 'Staff',
-                status: 'active',
-                phone: '', // Phone might not be in user table or different field?
-                // Default values needed for staff table constraints
-                pin: '000000',
-                hourly_rate: 0,
-                employment_type: 'part-time',
-                join_date: new Date().toISOString().split('T')[0]
-            };
+            const userData = userResult.rows[0];
 
-            // Fetch phone from user table if available (it was selected in previous query? No, only id,name,email,status)
-            // Let's perform a direct insert using parameters from body if available or just update the previous query to return phone
-
-            // Re-query user to get phone if needed? Or update previous query.
-            // Actually, let's update previous query to return phone.
-
+            // Update user status to approved
             await query(
-                `INSERT INTO staff (id, name, email, role, status, pin, hourly_rate, employment_type, join_date)
-                 VALUES ($1, $2, $3, 'Staff', 'active', '000000', 0, 'part-time', NOW())
-                 ON CONFLICT (id) DO NOTHING`,
-                [userId, result.rows[0].name, result.rows[0].email]
+                `UPDATE "user" 
+                 SET 
+                   status = 'approved',
+                   "approvedAt" = NOW(),
+                   "updatedAt" = NOW()
+                 WHERE id = $1`,
+                [userId]
             );
+
+            // Create staff record using direct insert to public.staff
+            // This ensures it goes to the same table that Supabase reads from
+            const staffInsertResult = await query(
+                `INSERT INTO public.staff (id, name, email, phone, role, status, pin, hourly_rate, employment_type, join_date, created_at, updated_at)
+                 VALUES ($1, $2, $3, $4, 'Staff', 'active', '0000', 0, 'part-time', NOW(), NOW(), NOW())
+                 ON CONFLICT (id) DO UPDATE SET
+                   name = EXCLUDED.name,
+                   email = EXCLUDED.email,
+                   phone = EXCLUDED.phone,
+                   status = 'active',
+                   updated_at = NOW()
+                 RETURNING id, name, email`,
+                [userId, userData.name, userData.email, userData.phone || '']
+            );
+
+            console.log('Staff insert result:', staffInsertResult.rows);
+
 
             // TODO: Send approval email notification
 
             return NextResponse.json({
                 success: true,
                 message: 'User approved successfully',
-                user: result.rows[0],
+                user: userData,
             });
         } else if (action === 'reject') {
             // Update user status to rejected
