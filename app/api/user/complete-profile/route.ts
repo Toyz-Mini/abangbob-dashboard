@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query } from '@/lib/db';
+import { auth } from '@/lib/auth';
 
 export async function POST(request: NextRequest) {
     try {
@@ -18,6 +19,34 @@ export async function POST(request: NextRequest) {
                 { error: 'User ID is required' },
                 { status: 400 }
             );
+        }
+
+        // Verify session
+        const session = await auth.api.getSession({
+            headers: request.headers
+        });
+
+        if (!session || session.user.id !== userId) {
+            return NextResponse.json(
+                { error: 'Unauthorized' },
+                { status: 401 }
+            );
+        }
+
+        // Check if user is already approved/active
+        const existingUser = await query(
+            'SELECT status FROM "user" WHERE id = $1',
+            [userId]
+        );
+
+        if (existingUser.rows.length > 0) {
+            const status = existingUser.rows[0].status;
+            if (status === 'active' || status === 'approved') {
+                return NextResponse.json(
+                    { error: 'Profile already completed and approved' },
+                    { status: 403 }
+                );
+            }
         }
 
         // Update user profile

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
+import { auth } from '@/lib/auth';
+
 // Initialize Supabase admin client
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -14,6 +16,26 @@ export async function GET(request: NextRequest) {
             return NextResponse.json(
                 { error: 'User ID is required' },
                 { status: 400 }
+            );
+        }
+
+        // Verify session
+        const session = await auth.api.getSession({
+            headers: request.headers
+        });
+
+        if (!session) {
+            return NextResponse.json(
+                { error: 'Unauthorized' },
+                { status: 401 }
+            );
+        }
+
+        // Security Check: Only allow if own ID or Admin
+        if (session.user.id !== userId && (session.user as any).role !== 'Admin') {
+            return NextResponse.json(
+                { error: 'Forbidden' },
+                { status: 403 }
             );
         }
 

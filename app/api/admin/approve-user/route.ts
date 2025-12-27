@@ -14,6 +14,18 @@ export async function POST(request: NextRequest) {
             );
         }
 
+        // Verify session and admin role
+        const session = await auth.api.getSession({
+            headers: request.headers
+        });
+
+        if (!session || (session.user as any).role !== 'Admin') {
+            return NextResponse.json(
+                { error: 'Unauthorized: Admin access required' },
+                { status: 401 }
+            );
+        }
+
         if (action === 'approve') {
             // Update user status to approved
             const result = await query(

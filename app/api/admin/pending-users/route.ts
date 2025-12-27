@@ -1,8 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query } from '@/lib/db';
+import { auth } from '@/lib/auth';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
     try {
+        // Verify session and admin role
+        const session = await auth.api.getSession({
+            headers: request.headers
+        });
+
+        if (!session || (session.user as any).role !== 'Admin') {
+            return NextResponse.json(
+                { error: 'Unauthorized: Admin access required' },
+                { status: 401 }
+            );
+        }
         const result = await query(
             `SELECT 
         id, name, email, phone, "icNumber", "dateOfBirth", 
