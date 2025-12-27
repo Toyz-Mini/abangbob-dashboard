@@ -23,10 +23,10 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [turnstileToken, setTurnstileToken] = useState('');
+  const [turnstileToken, setTurnstileToken] = useState('disabled-temp');
 
   const handleTurnstileVerify = useCallback((token: string) => {
-    setTurnstileToken(token);
+    setTurnstileToken(token || 'disabled-temp');
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -152,8 +152,8 @@ export default function LoginPage() {
               </div>
             )}
 
-            {/* Turnstile CAPTCHA */}
-            <Turnstile onVerify={handleTurnstileVerify} />
+            {/* Turnstile CAPTCHA - Temporarily disabled */}
+            {/* <Turnstile onVerify={handleTurnstileVerify} /> */}
 
             {/* Submit Button */}
             <button type="submit" className="auth-submit" disabled={loading || !turnstileToken}>
