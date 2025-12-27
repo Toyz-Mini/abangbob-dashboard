@@ -286,7 +286,7 @@ export default function SalaryAdvancePage() {
                     </div>
 
                     {filteredAdvances.length === 0 ? (
-                        <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-secondary)' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '3rem', color: 'var(--text-secondary)' }}>
                             <DollarSign size={48} color="var(--gray-300)" style={{ marginBottom: '1rem' }} />
                             <p>Tiada permohonan pendahuluan gaji</p>
                         </div>
