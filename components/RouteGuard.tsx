@@ -102,15 +102,11 @@ export default function RouteGuard({ children }: { children: React.ReactNode }) 
 
     }, [pathname, user, isStaffLoggedIn, currentStaff, loading, router, userStatus]);
 
-    // While checking, show nothing or loader
-    // If loading auth, show checker
-    if (loading) {
+    // If not authorized, show loading spinner to prevent flicker
+    if (!authorized) {
         return <div className="h-screen w-full flex items-center justify-center"><LoadingSpinner /></div>;
     }
 
-    // If not authorized and we have a role (so we failed check), hide content
-    // If no role, we currently allow (to show login?). 
-    // Wait, if no role, canViewNavItem('null') returns false usually.
-
     return <>{children}</>;
 }
+

@@ -1,67 +1,67 @@
-import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function middleware(request: NextRequest) {
-    let response = NextResponse.next({
-        request: {
-            headers: request.headers,
-        },
-    })
+    const sessionCookie = request.cookies.get('better-auth.session_token') ||
+        request.cookies.get('__Secure-better-auth.session_token');
 
-    const supabase = createServerClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-        {
-            cookies: {
-                getAll() {
-                    return request.cookies.getAll()
-                },
-                setAll(cookiesToSet: { name: string; value: string; options: any }[]) {
-                    cookiesToSet.forEach((cookie) => {
-                        request.cookies.set(cookie.name, cookie.value)
-                    })
-                    response = NextResponse.next({
-                        request: {
-                            headers: request.headers,
-                        },
-                    })
-                    cookiesToSet.forEach((cookie) => {
-                        response.cookies.set(cookie.name, cookie.value, cookie.options)
-                    })
-                },
-            },
-        }
-    )
-
-    // const {
-    //     data: { user },
-    // } = await supabase.auth.getUser()
+    const { pathname } = request.nextUrl;
 
     // Protected Routes
-    // const protectedPaths = ['/hr', '/finance', '/inventory', '/settings', '/kitchen', '/pos']
-    // const isProtected = protectedPaths.some(path => request.nextUrl.pathname.startsWith(path))
+    const protectedPaths = [
+        '/',
+        '/hr',
+        '/finance',
+        '/inventory',
+        '/settings',
+        '/kitchen',
+        '/pos',
+        '/production',
+        '/kds',
+        '/staff-portal',
+        '/admin',
+        '/analytics',
+        '/customers',
+        '/recipes',
+        '/suppliers',
+        '/equipment',
+        '/delivery',
+        '/audit-log',
+        '/notifications'
+    ];
 
-    // if (isProtected && !user) {
-    //     return NextResponse.redirect(new URL('/login', request.url))
-    // }
+    const isProtected = protectedPaths.some(path =>
+        pathname === path || pathname.startsWith(`${path}/`)
+    );
 
-    // Auth Routes (redirect to home if already logged in)
-    // if (user && request.nextUrl.pathname.startsWith('/login')) {
-    //     return NextResponse.redirect(new URL('/', request.url))
-    // }
+    // Auth Routes
+    const isAuthPage = pathname.startsWith('/login') || pathname.startsWith('/register');
 
-    return response
+    // If no session and trying to access protected route, redirect to login
+    if (isProtected && !sessionCookie) {
+        const url = new URL('/login', request.url);
+        url.searchParams.set('callbackUrl', pathname);
+        return NextResponse.redirect(url);
+    }
+
+    // If session exists and trying to access auth pages, redirect to home
+    if (isAuthPage && sessionCookie) {
+        return NextResponse.redirect(new URL('/', request.url));
+    }
+
+    return NextResponse.next();
 }
 
 export const config = {
     matcher: [
         /*
          * Match all request paths except for the ones starting with:
+         * - api/auth (auth routes)
          * - _next/static (static files)
          * - _next/image (image optimization files)
          * - favicon.ico (favicon file)
-         * Feel free to modify this pattern to include more paths.
+         * - public images
          */
-        '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+        '/((?!api/auth|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
     ],
 }
+
