@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import MainLayout from '@/components/MainLayout';
-import { useStaff, useStaffPortal } from '@/lib/store';
+import { useStaff, useStaffPortal, useStore } from '@/lib/store';
 import { useStaffRealtime } from '@/lib/supabase/realtime-hooks';
 import {
   StaffProfile,
@@ -56,7 +56,17 @@ type EditTab = 'personal' | 'employment' | 'salary' | 'permissions';
 export default function StaffListPage() {
   const { staff, updateStaff, deleteStaff, getStaffAttendanceToday, refreshStaff, isInitialized } = useStaff();
   const { getLeaveBalance } = useStaffPortal();
-  const { getPositionsForRole, getPositionByName } = usePositionPermissions();
+  const { getPositionsForRole, getPositionByName, positions } = usePositionPermissions();
+  const { refreshPositions } = useStore();
+
+  // Refresh positions on mount for dropdown
+  useEffect(() => {
+    console.log('[StaffPage] Positions available:', positions.length);
+    if (positions.length === 0) {
+      console.log('[StaffPage] Refreshing positions from Supabase...');
+      refreshPositions?.();
+    }
+  }, [positions.length, refreshPositions]);
 
   // Realtime subscription for staff
   const handleStaffChange = useCallback(() => {
