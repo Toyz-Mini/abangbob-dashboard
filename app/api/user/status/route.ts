@@ -8,9 +8,10 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
 export async function GET(request: NextRequest) {
+    let userId: string | null = null;
     try {
         const { searchParams } = new URL(request.url);
-        const userId = searchParams.get('userId');
+        userId = searchParams.get('userId');
 
         if (!userId) {
             return NextResponse.json(
@@ -81,13 +82,16 @@ export async function GET(request: NextRequest) {
 
         return NextResponse.json({
             status: userStatus || 'approved',
-            role: finalRole
+            role: finalRole,
+            queried_id: userId
         });
     } catch (error) {
         console.error('[API] CRITICAL ERROR fetching user status:', error);
         return NextResponse.json({
             status: 'approved',
-            role: 'Staff'
+            role: 'Staff',
+            debug_error: String(error),
+            queried_id_error: userId
         });
     }
 }
