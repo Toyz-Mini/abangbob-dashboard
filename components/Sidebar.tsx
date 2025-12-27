@@ -48,16 +48,6 @@ const NAV_ITEMS = [
     ]
   },
   {
-    titleKey: 'nav.group.staffPortal',
-    items: [
-      { href: '/staff-portal', labelKey: 'nav.portal', icon: UserCircle, tourId: 'staff-portal' },
-      { href: '/staff-portal/schedule', labelKey: 'nav.mySchedule', icon: Calendar, tourId: 'schedule' },
-      { href: '/staff-portal/checklist', labelKey: 'nav.checklist', icon: CheckSquare, tourId: 'checklist' },
-      { href: '/staff-portal/ot-claim', labelKey: 'nav.otClaim', icon: Clock, tourId: 'ot-claim' },
-      { href: '/staff-portal/salary-advance', labelKey: 'nav.salaryAdvance', icon: DollarSign, tourId: 'salary-advance' },
-    ]
-  },
-  {
     titleKey: 'nav.group.operations',
     items: [
       { href: '/pos', labelKey: 'nav.pos', icon: ShoppingCart, tourId: 'pos' },
@@ -83,6 +73,7 @@ const NAV_ITEMS = [
   {
     titleKey: 'nav.group.hrFinance',
     items: [
+      { href: '/staff-portal', labelKey: 'nav.myPortal', icon: UserCircle, tourId: 'staff-portal' },
       { href: '/hr', labelKey: 'nav.hrPortal', icon: Users, tourId: 'hr' },
       { href: '/finance', labelKey: 'nav.finance', icon: DollarSign, tourId: 'finance' },
       { href: '/finance/payroll', labelKey: 'nav.payroll', icon: DollarSign },

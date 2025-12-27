@@ -8,6 +8,7 @@ import Breadcrumb from './Breadcrumb';
 import CommandPalette, { useCommandPalette } from './CommandPalette';
 import BottomNav, { useBottomNav } from './BottomNav';
 import StaffPortalNav from './StaffPortalNav';
+import ManagerPortalNav from './ManagerPortalNav';
 import Sheet from './Sheet';
 import SessionMonitor from './SessionMonitor';
 // import { useTranslation } from '@/lib/contexts/LanguageContext'; // Removed as t is not strictly needed for basic labels or we can add it properly
@@ -56,13 +57,12 @@ export default function MainLayout({ children }: { children: ReactNode }) {
   // If user is accessing admin routes, treat as Admin for UI purposes
   const isUserAdmin = !!user || pathname?.startsWith('/admin');
   // improved role detection: check user.role from AuthContext as well
-  const userRole: UserRole | null = isUserAdmin && user?.role !== 'Staff'
-    ? 'Admin'
-    : (user?.role === 'Staff' ? 'Staff' : (isStaffLoggedIn && currentStaff ? currentStaff.role : null));
+  const userRole: UserRole | null = (user?.role as UserRole) || (isStaffLoggedIn && currentStaff ? currentStaff.role as UserRole : null);
 
   // Logic to determine if Sidebar should be visible
-  // Hide sidebar for Staff users
-  const shouldShowSidebar = userRole !== 'Staff';
+  // Only show sidebar and topnav for Admin role
+  const shouldShowSidebar = userRole === 'Admin';
+  const shouldShowTopNav = userRole === 'Admin';
 
   // Debug role detection
   useEffect(() => {
@@ -276,8 +276,7 @@ export default function MainLayout({ children }: { children: ReactNode }) {
   // Filter based on permissions (though Admin usually sees all)
   const filteredBottomNavItems = bottomNavItems.filter(item => canViewNavItem(userRole, item.href));
 
-  // Hide TopNav for Staff users
-  const shouldShowTopNav = userRole !== 'Staff';
+  // TopNav visibility already handled by shouldShowTopNav
 
   return (
     <RouteGuard>
@@ -363,6 +362,9 @@ export default function MainLayout({ children }: { children: ReactNode }) {
         {pathname?.startsWith('/staff-portal') ? (
           // Page handles its own nav (already inside /staff-portal/page.tsx)
           null
+        ) : pathname?.startsWith('/manager-portal') ? (
+          // Manager Portal handles its own nav (already inside /manager-portal/page.tsx)
+          null
         ) : userRole === 'Admin' ? (
           // Admin gets Admin/Manager Nav
           <BottomNav
@@ -370,6 +372,9 @@ export default function MainLayout({ children }: { children: ReactNode }) {
             showMore={true}
             onMoreClick={bottomNav.openMore}
           />
+        ) : userRole === 'Manager' ? (
+          // IF Manager is browsing other pages, show Manager Nav
+          <ManagerPortalNav />
         ) : isStaffLoggedIn ? (
           // If staff is browsing other pages (like POS/History), show Staff Nav
           <StaffPortalNav />

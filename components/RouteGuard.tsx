@@ -89,6 +89,16 @@ export default function RouteGuard({ children }: { children: React.ReactNode }) 
 
         // Role exists - check permission
         if (canViewNavItem(role, pathname)) {
+            // Specific redirection for Staff and Manager when accessing /
+            if (pathname === '/') {
+                if (role === 'Staff') {
+                    router.push('/staff-portal');
+                    return;
+                } else if (role === 'Manager') {
+                    router.push('/manager-portal');
+                    return;
+                }
+            }
             setAuthorized(true);
         } else {
             setAuthorized(false);

@@ -151,6 +151,7 @@ export const NAV_VISIBILITY: Record<string, UserRole[]> = {
 
   // Staff Portal - All
   '/staff-portal': ['Admin', 'Manager', 'Staff'],
+  '/manager-portal': ['Admin', 'Manager'],
   '/pending-approval': ['Admin', 'Manager', 'Staff'],
   '/complete-profile': ['Admin', 'Manager', 'Staff'],
   '/staff-portal/schedule': ['Admin', 'Manager', 'Staff'],
