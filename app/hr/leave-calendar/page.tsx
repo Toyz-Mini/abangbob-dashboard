@@ -1,17 +1,23 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import MainLayout from '@/components/MainLayout';
 import { useStaffPortal, useStaff } from '@/lib/store';
 import { getLeaveTypeLabel } from '@/lib/staff-portal-data';
 import LoadingSpinner from '@/components/LoadingSpinner';
-import { 
+import {
   Calendar,
   ChevronLeft,
   ChevronRight,
   Users,
-  Plane
+  Plane,
+  Settings
 } from 'lucide-react';
+import Link from 'next/link';
+import { useAuth } from '@/lib/contexts/AuthContext';
+import { fetchPublicHolidays } from '@/lib/supabase/operations';
+import { usePublicHolidaysRealtime } from '@/lib/supabase/realtime-hooks';
+import { PublicHoliday } from '@/lib/types';
 
 export default function LeaveCalendarPage() {
   const { staff, isInitialized } = useStaff();
@@ -22,6 +28,21 @@ export default function LeaveCalendarPage() {
     return new Date(now.getFullYear(), now.getMonth(), 1);
   });
 
+  const [publicHolidays, setPublicHolidays] = useState<PublicHoliday[]>([]);
+  const { currentStaff } = useAuth();
+  const isAdmin = currentStaff?.role === 'Admin' || currentStaff?.role === 'Manager';
+
+  const loadHolidays = useCallback(async () => {
+    const data = await fetchPublicHolidays();
+    setPublicHolidays(data);
+  }, []);
+
+  useEffect(() => {
+    loadHolidays();
+  }, [loadHolidays]);
+
+  usePublicHolidaysRealtime(loadHolidays);
+
   // Get approved leaves for the current month
   const monthLeaves = useMemo(() => {
     const year = currentMonth.getFullYear();
@@ -29,7 +50,7 @@ export default function LeaveCalendarPage() {
     const startOfMonth = new Date(year, month, 1).toISOString().split('T')[0];
     const endOfMonth = new Date(year, month + 1, 0).toISOString().split('T')[0];
 
-    return leaveRequests.filter(l => 
+    return leaveRequests.filter(l =>
       l.status === 'approved' &&
       l.startDate <= endOfMonth &&
       l.endDate >= startOfMonth
@@ -43,26 +64,26 @@ export default function LeaveCalendarPage() {
     const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
     const startDayOfWeek = firstDay.getDay();
-    
+
     const days: (Date | null)[] = [];
-    
+
     // Add empty slots for days before the first day of the month
     for (let i = 0; i < startDayOfWeek; i++) {
       days.push(null);
     }
-    
+
     // Add all days of the month
     for (let day = 1; day <= lastDay.getDate(); day++) {
       days.push(new Date(year, month, day));
     }
-    
+
     return days;
   }, [currentMonth]);
 
   // Get leaves for a specific date
   const getLeavesForDate = (date: Date) => {
     const dateStr = date.toISOString().split('T')[0];
-    return monthLeaves.filter(l => 
+    return monthLeaves.filter(l =>
       l.startDate <= dateStr && l.endDate >= dateStr
     );
   };
@@ -111,6 +132,13 @@ export default function LeaveCalendarPage() {
               Lihat siapa yang bercuti
             </p>
           </div>
+
+          {isAdmin && (
+            <Link href="/hr/public-holidays" className="btn btn-outline">
+              <Settings size={18} />
+              Tetapan Cuti Umum
+            </Link>
+          )}
         </div>
 
         {/* Month Navigation */}
@@ -123,8 +151,8 @@ export default function LeaveCalendarPage() {
               <div style={{ fontWeight: 700, fontSize: '1.25rem' }}>
                 {currentMonth.toLocaleDateString('ms-MY', { month: 'long', year: 'numeric' })}
               </div>
-              <button 
-                className="btn btn-sm btn-outline" 
+              <button
+                className="btn btn-sm btn-outline"
                 onClick={goToCurrentMonth}
                 style={{ marginTop: '0.5rem' }}
               >
@@ -148,7 +176,7 @@ export default function LeaveCalendarPage() {
               </div>
             </div>
           </div>
-          
+
           <div className="card" style={{ background: 'linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%)', color: 'white' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
               <Plane size={32} />
@@ -170,16 +198,16 @@ export default function LeaveCalendarPage() {
           </div>
 
           {/* Day Headers */}
-          <div style={{ 
-            display: 'grid', 
-            gridTemplateColumns: 'repeat(7, 1fr)', 
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(7, 1fr)',
             gap: '2px',
             marginBottom: '2px'
           }}>
             {dayNames.map(day => (
-              <div 
+              <div
                 key={day}
-                style={{ 
+                style={{
                   padding: '0.75rem',
                   textAlign: 'center',
                   fontWeight: 600,
@@ -194,17 +222,17 @@ export default function LeaveCalendarPage() {
           </div>
 
           {/* Calendar Grid */}
-          <div style={{ 
-            display: 'grid', 
-            gridTemplateColumns: 'repeat(7, 1fr)', 
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(7, 1fr)',
             gap: '2px'
           }}>
             {calendarDays.map((date, index) => {
               if (!date) {
                 return (
-                  <div 
+                  <div
                     key={`empty-${index}`}
-                    style={{ 
+                    style={{
                       minHeight: '80px',
                       background: 'var(--gray-50)'
                     }}
@@ -216,16 +244,16 @@ export default function LeaveCalendarPage() {
               const today = isToday(date);
 
               return (
-                <div 
+                <div
                   key={date.toISOString()}
-                  style={{ 
+                  style={{
                     minHeight: '80px',
                     padding: '0.5rem',
                     background: today ? '#dbeafe' : 'var(--gray-50)',
                     border: today ? '2px solid var(--primary)' : 'none'
                   }}
                 >
-                  <div style={{ 
+                  <div style={{
                     fontWeight: today ? 700 : 500,
                     fontSize: '0.875rem',
                     color: today ? 'var(--primary)' : 'inherit',
@@ -234,10 +262,32 @@ export default function LeaveCalendarPage() {
                     {date.getDate()}
                   </div>
 
+                  {/* Public Holiday */}
+                  {publicHolidays.filter(h => h.date === date.toISOString().split('T')[0]).map(holiday => (
+                    <div
+                      key={holiday.id}
+                      style={{
+                        fontSize: '0.65rem',
+                        padding: '0.125rem 0.25rem',
+                        borderRadius: '2px',
+                        background: '#ef4444',
+                        color: 'white',
+                        marginBottom: '0.125rem',
+                        fontWeight: 600,
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis'
+                      }}
+                      title={holiday.name}
+                    >
+                      🎉 {holiday.name}
+                    </div>
+                  ))}
+
                   {dayLeaves.slice(0, 2).map(leave => (
-                    <div 
+                    <div
                       key={leave.id}
-                      style={{ 
+                      style={{
                         fontSize: '0.65rem',
                         padding: '0.125rem 0.25rem',
                         borderRadius: '2px',
@@ -299,9 +349,9 @@ export default function LeaveCalendarPage() {
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               {monthLeaves.map(leave => (
-                <div 
+                <div
                   key={leave.id}
-                  style={{ 
+                  style={{
                     padding: '0.75rem',
                     background: 'var(--gray-50)',
                     borderRadius: 'var(--radius-sm)',

@@ -26,7 +26,7 @@ SELECT
     u.role,
     'active',
     u."outletId"::text,
-    COALESCE(u.created_at, NOW())
+    NOW()
 FROM public."user" u
 WHERE u.status = 'approved' 
   AND NOT EXISTS (SELECT 1 FROM public.staff s WHERE s.id = u.id::text)
