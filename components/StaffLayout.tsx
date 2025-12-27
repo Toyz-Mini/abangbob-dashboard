@@ -20,7 +20,7 @@ export default function StaffLayout({ children, showHeader = true }: StaffLayout
       logoutStaff();
       console.log('[StaffLayout] logoutStaff called successfully');
       // Force reload to clear any cached state
-      window.location.href = '/staff-login';
+      window.location.href = '/login';
     } catch (error) {
       console.error('[StaffLayout] Logout error:', error);
     }

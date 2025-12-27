@@ -38,7 +38,7 @@ export default function StaffPortalV2() {
 
   useEffect(() => {
     if (!isStaffLoggedIn && !user) {
-      router.push('/staff-login');
+      router.push('/login');
     }
   }, [isStaffLoggedIn, user, router]);
 
