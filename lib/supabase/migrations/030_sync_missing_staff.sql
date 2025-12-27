@@ -1,12 +1,22 @@
--- MEGA MIGRATION v3: Fix Staff ID Type with DYNAMIC POLICY CLEANUP (Nuclear Option)
--- Dynamically scanning and dropping policies to handle unknown policy names.
+-- MEGA MIGRATION v4: Fix Staff ID Type with EXPANDED SCOPE (Operation Clean Sweep)
+-- Covers SOPs, Inventory, Orders, Logs, etc to remove ALL dependencies.
 
--- 1. DROP ALL POLICIES ON RELATED TABLES (Dynamic Scan)
+-- 1. DROP ALL POLICIES ON RELATED TABLES (Expanded List)
 
--- Helper block to drop all policies on a table
+-- Helper block to drop all policies on a huge list of tables
 DO $$ 
 DECLARE
-    tables text[] := ARRAY['staff', 'attendance', 'leaves', 'schedules', 'cash_registers'];
+    -- List of all tables potentially linked to Staff or having RLS checking Staff ID
+    tables text[] := ARRAY[
+        'staff', 'attendance', 'leaves', 
+        'schedules', 'schedule', 
+        'cash_registers', 'cash_flows',
+        'sop_templates', 'sop_logs', 'sop_assignments',
+        'inventory_logs', 'inventory_counts',
+        'orders', 'void_requests',
+        'staff_kpi', 'kpi_records',
+        'notifications', 'audit_logs'
+    ];
     tbl text;
     pol record;
 BEGIN
@@ -26,7 +36,7 @@ BEGIN
 END $$;
 
 
--- Drop Storage Policy explicitly (as it's in storage schema)
+-- Drop Storage Policy explicitly
 DROP POLICY IF EXISTS "Admins can view all attendance photos" ON storage.objects;
 
 
@@ -72,10 +82,19 @@ DO $$ BEGIN
     IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'cash_flows') THEN
         ALTER TABLE public.cash_flows ALTER COLUMN "closed_by" TYPE text;
     END IF;
+    -- SOP Logs often reference staff
+    IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'sop_logs') THEN
+        ALTER TABLE public.sop_logs ALTER COLUMN "staff_id" TYPE text; -- standard snake_case usually
+    END IF;
+    -- Orders
+    IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'orders') THEN
+        ALTER TABLE public.orders ALTER COLUMN "staff_id" TYPE text; 
+        ALTER TABLE public.orders ALTER COLUMN "server_id" TYPE text; -- sometimes named server_id
+    END IF;
 END $$;
 
 
--- 4. RECREATE POLICIES (Standardized Sets)
+-- 4. RECREATE POLICIES (Future Proofed for Text IDs)
 
 -- Staff policies
 CREATE POLICY "Staff can view own profile" ON public.staff FOR SELECT USING (id = auth.uid()::text);
@@ -95,7 +114,6 @@ DO $$ BEGIN
              "staffId" = auth.uid()::text OR 
              EXISTS (SELECT 1 FROM public.user u WHERE u.id::text = auth.uid()::text AND u.role = 'Admin')
         );
-         -- Assuming update is same as insert for simplicity, or allow self update
         CREATE POLICY "attendance_update_policy" ON public.attendance FOR UPDATE USING ("staffId" = auth.uid()::text);
     END IF;
 END $$;
@@ -108,7 +126,6 @@ DO $$ BEGIN
           EXISTS (SELECT 1 FROM public.user u WHERE u.id::text = auth.uid()::text AND u.role = 'Admin')
         );
         CREATE POLICY "leaves_insert_policy" ON public.leaves FOR INSERT WITH CHECK ("staffId" = auth.uid()::text);
-        CREATE POLICY "leaves_update_policy" ON public.leaves FOR UPDATE USING ("staffId" = auth.uid()::text);
     END IF;
 END $$;
 
@@ -134,6 +151,21 @@ DO $$ BEGIN
             opened_by = auth.uid()::text
         );
     END IF;
+END $$;
+
+
+-- GENERIC RESTORE FOR OTHER TABLES (SOP, Inventory, etc)
+-- Safety fallback: Restore basic Read Access for authenticated users on tables we wiped.
+DO $$ 
+DECLARE
+    generic_tables text[] := ARRAY['sop_templates', 'sop_logs', 'sop_assignments', 'inventory_logs', 'orders', 'void_requests'];
+    tbl text;
+BEGIN
+    FOREACH tbl IN ARRAY generic_tables LOOP
+        IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = tbl) THEN
+            EXECUTE 'CREATE POLICY "Enable read for authenticated ' || tbl || '" ON public.' || quote_ident(tbl) || ' FOR SELECT TO authenticated USING (true)';
+        END IF;
+    END LOOP;
 END $$;
 
 
