@@ -73,10 +73,12 @@ export default function TopNav({ onMenuClick }: TopNavProps) {
   const handleLogout = async () => {
     setIsUserMenuOpen(false);
     // Clear both staff session and Supabase session
-    logoutStaff();
-    await signOut();
-    // Redirect to login page
-    router.push('/login');
+    try {
+      await logoutStaff();
+    } catch (error) {
+      console.error('Logout error:', error);
+      window.location.href = '/login';
+    }
   };
 
   return (

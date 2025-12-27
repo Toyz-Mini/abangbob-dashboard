@@ -5,139 +5,134 @@ import { useAuth } from '@/lib/contexts/AuthContext';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import {
-    LogOut,
-    LayoutDashboard,
-    ShoppingCart,
-    Package,
-    Users,
-    BarChart3,
-    Settings,
-    Menu,
-    X,
-    ChefHat,
-    History,
-    ClipboardList,
-    Boxes,
+  LogOut,
+  LayoutDashboard,
+  ShoppingCart,
+  Package,
+  Users,
+  BarChart3,
+  Settings,
+  Menu,
+  X,
+  ChefHat,
+  History,
+  ClipboardList,
+  Boxes,
 } from 'lucide-react';
 import { useState } from 'react';
 
 interface ManagerLayoutProps {
-    children: ReactNode;
+  children: ReactNode;
 }
 
 export default function ManagerLayout({ children }: ManagerLayoutProps) {
-    const { currentStaff, user, logoutStaff, signOut } = useAuth();
-    const router = useRouter();
-    const pathname = usePathname();
-    const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { currentStaff, user, logoutStaff, signOut } = useAuth();
+  const router = useRouter();
+  const pathname = usePathname();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
-    const handleLogout = async () => {
-        try {
-            if (currentStaff) {
-                logoutStaff();
-            }
-            if (user) {
-                await signOut();
-            }
-            window.location.href = '/manager-login';
-        } catch (error) {
-            console.error('Logout error:', error);
-        }
-    };
+  const handleLogout = async () => {
+    try {
+      await signOut();
+    } catch (error) {
+      console.error('Logout error:', error);
+      window.location.href = '/login';
+    }
+  };
 
-    // Manager-specific navigation - no Finance/sensitive data
-    const navItems = useMemo(() => [
-        { href: '/', icon: LayoutDashboard, label: 'Dashboard' },
-        { href: '/pos', icon: ShoppingCart, label: 'POS' },
-        { href: '/order-history', icon: History, label: 'Orders' },
-        { href: '/kds', icon: ChefHat, label: 'Kitchen' },
-        { href: '/menu-management', icon: ClipboardList, label: 'Menu' },
-        { href: '/inventory', icon: Package, label: 'Inventory' },
-        { href: '/production', icon: Boxes, label: 'Production' },
-        { href: '/hr', icon: Users, label: 'HR' },
-        { href: '/analytics', icon: BarChart3, label: 'Reports' },
-        { href: '/settings', icon: Settings, label: 'Settings' },
-    ], []);
+  // Manager-specific navigation - no Finance/sensitive data
+  const navItems = useMemo(() => [
+    { href: '/', icon: LayoutDashboard, label: 'Dashboard' },
+    { href: '/pos', icon: ShoppingCart, label: 'POS' },
+    { href: '/order-history', icon: History, label: 'Orders' },
+    { href: '/kds', icon: ChefHat, label: 'Kitchen' },
+    { href: '/menu-management', icon: ClipboardList, label: 'Menu' },
+    { href: '/inventory', icon: Package, label: 'Inventory' },
+    { href: '/production', icon: Boxes, label: 'Production' },
+    { href: '/hr', icon: Users, label: 'HR' },
+    { href: '/analytics', icon: BarChart3, label: 'Reports' },
+    { href: '/settings', icon: Settings, label: 'Settings' },
+  ], []);
 
-    const isActive = (href: string) => {
-        if (href === '/') return pathname === '/';
-        return pathname?.startsWith(href);
-    };
+  const isActive = (href: string) => {
+    if (href === '/') return pathname === '/';
+    return pathname?.startsWith(href);
+  };
 
-    const userName = currentStaff?.name || user?.email?.split('@')[0] || 'Manager';
+  const userName = currentStaff?.name || user?.email?.split('@')[0] || 'Manager';
 
-    return (
-        <div className="manager-layout">
-            {/* Mobile Header */}
-            <header className="manager-header">
-                <button
-                    type="button"
-                    className="menu-toggle"
-                    onClick={() => setSidebarOpen(!sidebarOpen)}
-                >
-                    {sidebarOpen ? <X size={24} /> : <Menu size={24} />}
-                </button>
-                <div className="header-title">
-                    <span className="app-name">AbangBob</span>
-                    <span className="role-badge">Manager</span>
-                </div>
-                <button type="button" className="logout-btn" onClick={handleLogout}>
-                    <LogOut size={20} />
-                </button>
-            </header>
+  return (
+    <div className="manager-layout">
+      {/* Mobile Header */}
+      <header className="manager-header">
+        <button
+          type="button"
+          className="menu-toggle"
+          onClick={() => setSidebarOpen(!sidebarOpen)}
+        >
+          {sidebarOpen ? <X size={24} /> : <Menu size={24} />}
+        </button>
+        <div className="header-title">
+          <span className="app-name">AbangBob</span>
+          <span className="role-badge">Manager</span>
+        </div>
+        <button type="button" className="logout-btn" onClick={handleLogout}>
+          <LogOut size={20} />
+        </button>
+      </header>
 
-            {/* Sidebar */}
-            <aside className={`manager-sidebar ${sidebarOpen ? 'open' : ''}`}>
-                <div className="sidebar-header">
-                    <div className="user-avatar">
-                        {userName.charAt(0).toUpperCase()}
-                    </div>
-                    <div className="user-info">
-                        <div className="user-name">{userName}</div>
-                        <div className="user-role">Outlet Manager</div>
-                    </div>
-                </div>
+      {/* Sidebar */}
+      <aside className={`manager-sidebar ${sidebarOpen ? 'open' : ''}`}>
+        <div className="sidebar-header">
+          <div className="user-avatar">
+            {userName.charAt(0).toUpperCase()}
+          </div>
+          <div className="user-info">
+            <div className="user-name">{userName}</div>
+            <div className="user-role">Outlet Manager</div>
+          </div>
+        </div>
 
-                <nav className="sidebar-nav">
-                    {navItems.map((item) => {
-                        const Icon = item.icon;
-                        const active = isActive(item.href);
-                        return (
-                            <Link
-                                key={item.href}
-                                href={item.href}
-                                className={`nav-item ${active ? 'active' : ''}`}
-                                onClick={() => setSidebarOpen(false)}
-                            >
-                                <Icon size={20} />
-                                <span>{item.label}</span>
-                            </Link>
-                        );
-                    })}
-                </nav>
+        <nav className="sidebar-nav">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const active = isActive(item.href);
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`nav-item ${active ? 'active' : ''}`}
+                onClick={() => setSidebarOpen(false)}
+              >
+                <Icon size={20} />
+                <span>{item.label}</span>
+              </Link>
+            );
+          })}
+        </nav>
 
-                <div className="sidebar-footer">
-                    <button type="button" className="logout-full" onClick={handleLogout}>
-                        <LogOut size={18} />
-                        <span>Logout</span>
-                    </button>
-                </div>
-            </aside>
+        <div className="sidebar-footer">
+          <button type="button" className="logout-full" onClick={handleLogout}>
+            <LogOut size={18} />
+            <span>Logout</span>
+          </button>
+        </div>
+      </aside>
 
-            {/* Overlay for mobile */}
-            {sidebarOpen && (
-                <div
-                    className="sidebar-overlay"
-                    onClick={() => setSidebarOpen(false)}
-                />
-            )}
+      {/* Overlay for mobile */}
+      {sidebarOpen && (
+        <div
+          className="sidebar-overlay"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
 
-            {/* Main Content */}
-            <main className="manager-main">
-                {children}
-            </main>
+      {/* Main Content */}
+      <main className="manager-main">
+        {children}
+      </main>
 
-            <style jsx>{`
+      <style jsx>{`
         .manager-layout {
           min-height: 100vh;
           background: #f5f5f5;
@@ -329,6 +324,6 @@ export default function ManagerLayout({ children }: ManagerLayoutProps) {
           }
         }
       `}</style>
-        </div>
-    );
+    </div>
+  );
 }

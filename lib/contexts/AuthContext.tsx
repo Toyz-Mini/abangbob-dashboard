@@ -138,16 +138,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = async () => {
     try {
-      // Race condition: If signOut takes longer than 500ms, force proceed
+      console.log('[AuthContext] Starting signOut...');
+      // Race condition: If signOut takes longer than 2000ms, force proceed
+      // Increased from 500ms to 2000ms for better mobile reliability
       await Promise.race([
         authClient.signOut(),
-        new Promise(resolve => setTimeout(resolve, 500))
+        new Promise(resolve => setTimeout(resolve, 2000))
       ]);
+      console.log('[AuthContext] BetterAuth signOut completed or timed out');
     } catch (error) {
       console.error('Sign out error:', error);
     } finally {
       // Always redirect to login page even if server logout fails/hangs
       if (typeof window !== 'undefined') {
+        console.log('[AuthContext] Redirecting to /login');
         window.location.href = '/login';
       }
     }
@@ -183,8 +187,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { success: false, error: 'PIN login has been removed. Please use email login.' };
   };
 
-  const logoutStaff = () => {
-    signOut();
+  const logoutStaff = async () => {
+    await signOut();
   };
 
   return (

@@ -11,10 +11,12 @@ import {
   Monitor,
   History,
   Home,
-  MoreHorizontal
+  MoreHorizontal,
+  LogOut
 } from 'lucide-react';
 import { useState } from 'react';
 import Sheet from './Sheet';
+import { useAuth } from '@/lib/contexts/AuthContext';
 
 interface StaffPortalNavProps {
   currentPage?: string;
@@ -23,6 +25,16 @@ interface StaffPortalNavProps {
 
 export default function StaffPortalNav({ currentPage, pendingCount = 0 }: StaffPortalNavProps) {
   const pathname = usePathname();
+  const { logoutStaff } = useAuth();
+
+  const handleLogout = async () => {
+    try {
+      logoutStaff();
+      window.location.href = '/login';
+    } catch (error) {
+      console.error('[StaffPortalNav] Logout error:', error);
+    }
+  };
 
   const navItems = [
     {
@@ -173,6 +185,40 @@ export default function StaffPortalNav({ currentPage, pendingCount = 0 }: StaffP
               </Link>
             );
           })}
+
+          {/* Logout Button */}
+          <button
+            onClick={handleLogout}
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.5rem',
+              background: 'none',
+              border: 'none',
+              padding: 0,
+              cursor: 'pointer',
+              color: 'var(--primary)',
+              gridColumn: 'span 1'
+            }}
+          >
+            <div style={{
+              width: '50px',
+              height: '50px',
+              borderRadius: '16px',
+              background: 'var(--bg-secondary)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'var(--primary)',
+            }}>
+              <LogOut size={24} />
+            </div>
+            <span style={{ fontSize: '0.7rem', fontWeight: 600, textAlign: 'center' }}>
+              Logout
+            </span>
+          </button>
         </div>
       </Sheet>
     </>

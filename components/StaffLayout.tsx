@@ -10,19 +10,20 @@ interface StaffLayoutProps {
   showHeader?: boolean;
 }
 
-export default function StaffLayout({ children, showHeader = true }: StaffLayoutProps) {
+export default function StaffLayout({ children, showHeader = false }: StaffLayoutProps) {
   const { currentStaff, logoutStaff, isStaffLoggedIn, user } = useAuth();
   const router = useRouter();
 
   const handleLogout = async () => {
     console.log('[StaffLayout] Logout button clicked');
     try {
-      logoutStaff();
+      await logoutStaff();
       console.log('[StaffLayout] logoutStaff called successfully');
-      // Force reload to clear any cached state
-      window.location.href = '/login';
+      // Redirection is handled in signOut, but we can have this as ultimate fallback
     } catch (error) {
       console.error('[StaffLayout] Logout error:', error);
+      // Ensure redirect happens even on error
+      window.location.href = '/login';
     }
   };
 

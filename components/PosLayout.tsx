@@ -8,79 +8,79 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 interface PosLayoutProps {
-    children: ReactNode;
-    showHeader?: boolean;
+  children: ReactNode;
+  showHeader?: boolean;
 }
 
 export default function PosLayout({ children, showHeader = true }: PosLayoutProps) {
-    const { currentStaff, logoutStaff } = useAuth();
-    const router = useRouter();
-    const pathname = usePathname();
+  const { currentStaff, logoutStaff } = useAuth();
+  const router = useRouter();
+  const pathname = usePathname();
 
-    const handleLogout = async () => {
-        try {
-            logoutStaff();
-            window.location.href = '/pos-login';
-        } catch (error) {
-            console.error('Logout error:', error);
-        }
-    };
+  const handleLogout = async () => {
+    try {
+      await logoutStaff();
+    } catch (error) {
+      console.error('Logout error:', error);
+      window.location.href = '/login';
+    }
+  };
 
-    const navItems = [
-        { href: '/pos', icon: ShoppingCart, label: 'POS' },
-        { href: '/order-history', icon: History, label: 'Orders' },
-        { href: '/kds', icon: ChefHat, label: 'Kitchen' },
-    ];
+  const navItems = [
+    { href: '/pos', icon: ShoppingCart, label: 'POS' },
+    { href: '/order-history', icon: History, label: 'Orders' },
+    { href: '/kds', icon: ChefHat, label: 'Kitchen' },
+  ];
 
-    const isActive = (href: string) => {
-        if (href === '/pos') return pathname === '/pos';
-        return pathname?.startsWith(href);
-    };
+  const isActive = (href: string) => {
+    if (href === '/pos') return pathname === '/pos';
+    return pathname?.startsWith(href);
+  };
 
-    return (
-        <div className="pos-layout">
-            {/* Compact Header */}
-            {showHeader && (
-                <header className="pos-header">
-                    <div className="pos-header-left">
-                        <div className="pos-header-avatar">
-                            {currentStaff?.name?.charAt(0)?.toUpperCase() || 'C'}
-                        </div>
-                        <div className="pos-header-info">
-                            <div className="pos-header-name">{currentStaff?.name || 'Cashier'}</div>
-                            <div className="pos-header-role">POS Mode</div>
-                        </div>
-                    </div>
-                    <button type="button" className="pos-logout-btn" onClick={handleLogout}>
-                        <LogOut size={20} />
-                    </button>
-                </header>
-            )}
+  return (
+    <div className="pos-layout">
+      {/* Compact Header */}
+      {showHeader && (
+        <header className="pos-header">
+          <div className="pos-header-left">
+            <div className="pos-header-avatar">
+              {currentStaff?.name?.charAt(0)?.toUpperCase() || 'C'}
+            </div>
+            <div className="pos-header-info">
+              <div className="pos-header-name">{currentStaff?.name || 'Cashier'}</div>
+              <div className="pos-header-role">POS Mode</div>
+            </div>
+          </div>
+          <button type="button" className="pos-logout-btn" onClick={handleLogout}>
+            <LogOut size={20} />
+          </button>
+        </header>
+      )}
 
-            {/* Main Content */}
-            <main className="pos-main">
-                {children}
-            </main>
+      {/* Main Content */}
+      <main className="pos-main">
+        {children}
+      </main>
 
-            {/* Bottom Navigation */}
-            <nav className="pos-bottom-nav">
-                {navItems.map((item) => {
-                    const Icon = item.icon;
-                    const active = isActive(item.href);
-                    return (
-                        <Link
-                            key={item.href}
-                            href={item.href}
-                            className={`pos-nav-item ${active ? 'active' : ''}`}
-                        >
-                            <Icon size={24} />
-                            <span>{item.label}</span>
-                        </Link>
-                    );
-                })}
-            </nav>
+      {/* Bottom Navigation */}
+      <nav className="pos-bottom-nav">
+        {navItems.map((item) => {
+          const Icon = item.icon;
+          const active = isActive(item.href);
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`pos-nav-item ${active ? 'active' : ''}`}
+            >
+              <Icon size={24} />
+              <span>{item.label}</span>
+            </Link>
+          );
+        })}
+      </nav>
 
-            <style jsx>{`
+      <style jsx>{`
         .pos-layout {
           min-height: 100vh;
           background: #f5f5f5;
@@ -190,6 +190,6 @@ export default function PosLayout({ children, showHeader = true }: PosLayoutProp
           color: rgba(255, 255, 255, 0.9);
         }
       `}</style>
-        </div>
-    );
+    </div>
+  );
 }
