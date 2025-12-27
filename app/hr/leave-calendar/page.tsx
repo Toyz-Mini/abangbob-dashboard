@@ -125,10 +125,10 @@ export default function LeaveCalendarPage() {
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
           <div>
-            <h1 style={{ fontSize: '2rem', fontWeight: 700, marginBottom: '0.5rem' }}>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">
               Kalendar Cuti Team
             </h1>
-            <p style={{ color: 'var(--text-secondary)' }}>
+            <p className="text-gray-500">
               Lihat siapa yang bercuti
             </p>
           </div>
@@ -167,22 +167,40 @@ export default function LeaveCalendarPage() {
 
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-2" style={{ gap: '1rem', marginBottom: '1.5rem' }}>
-          <div className="card" style={{ background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', color: 'white' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              <Users size={32} />
+          <div className="card" style={{ borderLeft: '4px solid var(--primary)', padding: '1.5rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <div style={{
+                padding: '0.75rem',
+                borderRadius: '50%',
+                background: 'var(--primary-50)',
+                color: 'var(--primary)'
+              }}>
+                <Users size={24} />
+              </div>
               <div>
-                <div style={{ fontSize: '1.5rem', fontWeight: 700 }}>{staff.filter(s => s.status === 'active').length}</div>
-                <div style={{ fontSize: '0.875rem', opacity: 0.9 }}>Staf Aktif</div>
+                <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                  {staff.filter(s => s.status === 'active').length}
+                </div>
+                <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>Staf Aktif</div>
               </div>
             </div>
           </div>
 
-          <div className="card" style={{ background: 'linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%)', color: 'white' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              <Plane size={32} />
+          <div className="card" style={{ borderLeft: '4px solid var(--primary)', padding: '1.5rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <div style={{
+                padding: '0.75rem',
+                borderRadius: '50%',
+                background: 'var(--primary-50)',
+                color: 'var(--primary)'
+              }}>
+                <Plane size={24} />
+              </div>
               <div>
-                <div style={{ fontSize: '1.5rem', fontWeight: 700 }}>{monthLeaves.length}</div>
-                <div style={{ fontSize: '0.875rem', opacity: 0.9 }}>Cuti Bulan Ini</div>
+                <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                  {monthLeaves.length}
+                </div>
+                <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>Cuti Bulan Ini</div>
               </div>
             </div>
           </div>
@@ -247,10 +265,11 @@ export default function LeaveCalendarPage() {
                 <div
                   key={date.toISOString()}
                   style={{
-                    minHeight: '80px',
+                    minHeight: '100px',
                     padding: '0.5rem',
-                    background: today ? '#dbeafe' : 'var(--gray-50)',
-                    border: today ? '2px solid var(--primary)' : 'none'
+                    background: today ? 'var(--primary-50)' : 'var(--bg-card)',
+                    border: today ? '2px solid var(--primary)' : '1px solid var(--border-light)',
+                    position: 'relative'
                   }}
                 >
                   <div style={{
@@ -270,9 +289,9 @@ export default function LeaveCalendarPage() {
                         fontSize: '0.65rem',
                         padding: '0.125rem 0.25rem',
                         borderRadius: '2px',
-                        background: '#ef4444',
+                        background: 'var(--primary)',
                         color: 'white',
-                        marginBottom: '0.125rem',
+                        marginBottom: '0.25rem',
                         fontWeight: 600,
                         whiteSpace: 'nowrap',
                         overflow: 'hidden',
