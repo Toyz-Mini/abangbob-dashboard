@@ -1,5 +1,5 @@
--- MEGA MIGRATION v6: Fix Staff ID Type with GLOBAL POLICY RESET (The "Extinction Event")
--- Scans EVERY table in public schema and drops policies to guarantee no dependencies remain.
+-- MEGA MIGRATION v7: Fix Staff ID Type with DYNAMIC COLUMN DETECTION (The Adaptable Fix)
+-- Handles staffId vs staff_id, and drops all policies globally to ensure success.
 
 -- 1. DROP ALL POLICIES ON ALL TABLES (Global Scan)
 
@@ -8,16 +8,13 @@ DECLARE
     tbl text;
     pol record;
 BEGIN
-    -- Loop through EVERY table in public schema
     FOR tbl IN (
         SELECT tablename 
         FROM pg_tables 
         WHERE schemaname = 'public' 
-        -- Exclude potential system tables if any, though usually in other schemas
         AND tablename NOT LIKE 'pg_%'
         AND tablename NOT LIKE 'sql_%'
     ) LOOP
-        -- Loop through all policies for this table
         FOR pol IN (
             SELECT policyname 
             FROM pg_policies 
@@ -34,7 +31,6 @@ DROP POLICY IF EXISTS "Admins can view all attendance photos" ON storage.objects
 
 
 -- 2. DROP FOREIGN KEYS REFERENCING PUBLIC.STAFF
--- We use a dynamic block to find and drop any FK constraint pointing to staff.id
 DO $$ 
 DECLARE
     r RECORD;
@@ -55,49 +51,56 @@ BEGIN
 END $$;
 
 
--- 3. ALTER COLUMNS TO TEXT (Global Schema Fix)
+-- 3. ALTER COLUMNS TO TEXT (Dynamic Column Check)
 ALTER TABLE public.staff ALTER COLUMN id TYPE text;
 
-DO $$ 
-DECLARE
-    tbl text;
-BEGIN
-    -- Explicitly alter known columns in core tables
-    IF EXISTS (SELECT FROM pg_tables WHERE schemaname='public' AND tablename='attendance') THEN
+DO $$ BEGIN
+    -- Attendance
+    IF EXISTS (SELECT FROM information_schema.columns WHERE table_name='attendance' AND column_name='staffId') THEN
         ALTER TABLE public.attendance ALTER COLUMN "staffId" TYPE text;
     END IF;
-    IF EXISTS (SELECT FROM pg_tables WHERE schemaname='public' AND tablename='leaves') THEN
+    IF EXISTS (SELECT FROM information_schema.columns WHERE table_name='attendance' AND column_name='staff_id') THEN
+        ALTER TABLE public.attendance ALTER COLUMN "staff_id" TYPE text;
+    END IF;
+
+    -- Leaves
+    IF EXISTS (SELECT FROM information_schema.columns WHERE table_name='leaves' AND column_name='staffId') THEN
         ALTER TABLE public.leaves ALTER COLUMN "staffId" TYPE text;
     END IF;
-    IF EXISTS (SELECT FROM pg_tables WHERE schemaname='public' AND tablename='schedules') THEN
+    IF EXISTS (SELECT FROM information_schema.columns WHERE table_name='leaves' AND column_name='staff_id') THEN
+        ALTER TABLE public.leaves ALTER COLUMN "staff_id" TYPE text;
+    END IF;
+
+    -- Schedules
+    IF EXISTS (SELECT FROM information_schema.columns WHERE table_name='schedules' AND column_name='staffId') THEN
         ALTER TABLE public.schedules ALTER COLUMN "staffId" TYPE text;
     END IF;
-    IF EXISTS (SELECT FROM pg_tables WHERE schemaname='public' AND tablename='cash_registers') THEN
+    IF EXISTS (SELECT FROM information_schema.columns WHERE table_name='schedules' AND column_name='staff_id') THEN
+        ALTER TABLE public.schedules ALTER COLUMN "staff_id" TYPE text;
+    END IF;
+
+    -- Cash Registers
+    IF EXISTS (SELECT FROM information_schema.columns WHERE table_name='cash_registers' AND column_name='opened_by') THEN
         ALTER TABLE public.cash_registers ALTER COLUMN "opened_by" TYPE text;
+    END IF;
+    IF EXISTS (SELECT FROM information_schema.columns WHERE table_name='cash_registers' AND column_name='closed_by') THEN
         ALTER TABLE public.cash_registers ALTER COLUMN "closed_by" TYPE text;
     END IF;
-    IF EXISTS (SELECT FROM pg_tables WHERE schemaname='public' AND tablename='cash_flows') THEN
-        ALTER TABLE public.cash_flows ALTER COLUMN "closed_by" TYPE text;
-    END IF;
-    -- SOP
-    IF EXISTS (SELECT FROM pg_tables WHERE schemaname='public' AND tablename='sop_logs') THEN
+    
+    -- SOP / Orders (Snake case mostly)
+    IF EXISTS (SELECT FROM information_schema.columns WHERE table_name='sop_logs' AND column_name='staff_id') THEN
         ALTER TABLE public.sop_logs ALTER COLUMN "staff_id" TYPE text;
     END IF;
-    -- Orders
-    IF EXISTS (SELECT FROM pg_tables WHERE schemaname='public' AND tablename='orders') THEN
-        ALTER TABLE public.orders ALTER COLUMN "staff_id" TYPE text; 
-         IF EXISTS (SELECT FROM information_schema.columns WHERE table_name='orders' AND column_name='server_id') THEN
-             ALTER TABLE public.orders ALTER COLUMN "server_id" TYPE text;
-        END IF;
+    IF EXISTS (SELECT FROM information_schema.columns WHERE table_name='orders' AND column_name='staff_id') THEN
+        ALTER TABLE public.orders ALTER COLUMN "staff_id" TYPE text;
     END IF;
-    -- Promos
-     IF EXISTS (SELECT FROM pg_tables WHERE schemaname='public' AND tablename='promo_codes') THEN
-         -- Check if created_by or similar exists, but usually RLS depends on staff table, not FK column
+     IF EXISTS (SELECT FROM information_schema.columns WHERE table_name='orders' AND column_name='server_id') THEN
+        ALTER TABLE public.orders ALTER COLUMN "server_id" TYPE text;
     END IF;
 END $$;
 
 
--- 4. RECREATE POLICIES (Critical Tables)
+-- 4. RECREATE POLICIES (Dynamic Column Usage)
 
 -- Staff policies
 CREATE POLICY "Staff can view own profile" ON public.staff FOR SELECT USING (id = auth.uid()::text);
@@ -105,30 +108,35 @@ CREATE POLICY "Admins can manage all staff" ON public.staff FOR ALL USING (
   EXISTS (SELECT 1 FROM public.user u WHERE u.id::text = auth.uid()::text AND u.role = 'Admin')
 );
 
--- Attendance (Specific restore)
+-- Attendance policies
 DO $$ BEGIN
     IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'attendance') THEN
-        CREATE POLICY "attendance_select_policy" ON public.attendance FOR SELECT USING (
-          "staffId" = auth.uid()::text OR 
-          EXISTS (SELECT 1 FROM public.user u WHERE u.id::text = auth.uid()::text AND u.role = 'Admin')
-        );
-        CREATE POLICY "attendance_insert_policy" ON public.attendance FOR INSERT WITH CHECK ("staffId" = auth.uid()::text);
-        CREATE POLICY "attendance_delete_policy" ON public.attendance FOR DELETE USING (
-             "staffId" = auth.uid()::text OR 
-             EXISTS (SELECT 1 FROM public.user u WHERE u.id::text = auth.uid()::text AND u.role = 'Admin')
-        );
-        CREATE POLICY "attendance_update_policy" ON public.attendance FOR UPDATE USING ("staffId" = auth.uid()::text);
+        IF EXISTS (SELECT FROM information_schema.columns WHERE table_name='attendance' AND column_name='staffId') THEN
+            -- Use camelCase
+            CREATE POLICY "attendance_select_policy" ON public.attendance FOR SELECT USING ("staffId" = auth.uid()::text OR EXISTS (SELECT 1 FROM public.user u WHERE u.id::text = auth.uid()::text AND u.role = 'Admin'));
+            CREATE POLICY "attendance_insert_policy" ON public.attendance FOR INSERT WITH CHECK ("staffId" = auth.uid()::text);
+            CREATE POLICY "attendance_delete_policy" ON public.attendance FOR DELETE USING ("staffId" = auth.uid()::text OR EXISTS (SELECT 1 FROM public.user u WHERE u.id::text = auth.uid()::text AND u.role = 'Admin'));
+            CREATE POLICY "attendance_update_policy" ON public.attendance FOR UPDATE USING ("staffId" = auth.uid()::text);
+        ELSE
+            -- Use snake_case
+            CREATE POLICY "attendance_select_policy" ON public.attendance FOR SELECT USING (staff_id = auth.uid()::text OR EXISTS (SELECT 1 FROM public.user u WHERE u.id::text = auth.uid()::text AND u.role = 'Admin'));
+            CREATE POLICY "attendance_insert_policy" ON public.attendance FOR INSERT WITH CHECK (staff_id = auth.uid()::text);
+            CREATE POLICY "attendance_delete_policy" ON public.attendance FOR DELETE USING (staff_id = auth.uid()::text OR EXISTS (SELECT 1 FROM public.user u WHERE u.id::text = auth.uid()::text AND u.role = 'Admin'));
+            CREATE POLICY "attendance_update_policy" ON public.attendance FOR UPDATE USING (staff_id = auth.uid()::text);
+        END IF;
     END IF;
 END $$;
 
--- Leaves (Specific restore)
+-- Leaves policies
 DO $$ BEGIN
     IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'leaves') THEN
-        CREATE POLICY "leaves_select_policy" ON public.leaves FOR SELECT USING (
-          "staffId" = auth.uid()::text OR 
-          EXISTS (SELECT 1 FROM public.user u WHERE u.id::text = auth.uid()::text AND u.role = 'Admin')
-        );
-        CREATE POLICY "leaves_insert_policy" ON public.leaves FOR INSERT WITH CHECK ("staffId" = auth.uid()::text);
+        IF EXISTS (SELECT FROM information_schema.columns WHERE table_name='leaves' AND column_name='staffId') THEN
+             CREATE POLICY "leaves_select_policy" ON public.leaves FOR SELECT USING ("staffId" = auth.uid()::text OR EXISTS (SELECT 1 FROM public.user u WHERE u.id::text = auth.uid()::text AND u.role = 'Admin'));
+             CREATE POLICY "leaves_insert_policy" ON public.leaves FOR INSERT WITH CHECK ("staffId" = auth.uid()::text);
+        ELSE
+             CREATE POLICY "leaves_select_policy" ON public.leaves FOR SELECT USING (staff_id = auth.uid()::text OR EXISTS (SELECT 1 FROM public.user u WHERE u.id::text = auth.uid()::text AND u.role = 'Admin'));
+             CREATE POLICY "leaves_insert_policy" ON public.leaves FOR INSERT WITH CHECK (staff_id = auth.uid()::text);
+        END IF;
     END IF;
 END $$;
 
@@ -138,7 +146,7 @@ CREATE POLICY "Admins can view all attendance photos" ON storage.objects FOR SEL
   EXISTS (SELECT 1 FROM public.user u WHERE u.id::text = auth.uid()::text AND u.role = 'Admin')
 );
 
--- Cash Register Policies (Specific restore)
+-- Cash Register Policies
 DO $$ BEGIN
     IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'cash_registers') THEN
         CREATE POLICY "Managers can view all cash registers" ON public.cash_registers FOR ALL USING (
@@ -157,7 +165,7 @@ DO $$ BEGIN
 END $$;
 
 
--- RECREATE GENERIC POLICIES FOR EVERYTHING ELSE (Total Coverage)
+-- RECREATE GENERIC POLICIES FOR EVERYTHING ELSE
 DO $$ 
 DECLARE
     tbl text;
@@ -166,10 +174,9 @@ BEGIN
         SELECT tablename 
         FROM pg_tables 
         WHERE schemaname = 'public' 
-        AND tablename NOT IN ('attendance', 'leaves', 'cash_registers', 'staff', 'user') -- Skip criticals we handled
+        AND tablename NOT IN ('attendance', 'leaves', 'cash_registers', 'staff', 'user') 
         AND tablename NOT LIKE 'pg_%'
     ) LOOP
-        -- Only add policy if Row Level Security is enabled (Check pg_class.relrowsecurity)
         IF EXISTS (SELECT 1 FROM pg_class WHERE relname = tbl AND relrowsecurity = true) THEN
              EXECUTE 'CREATE POLICY "Enable read for authenticated ' || tbl || '" ON public.' || quote_ident(tbl) || ' FOR SELECT TO authenticated USING (true)';
         END IF;
