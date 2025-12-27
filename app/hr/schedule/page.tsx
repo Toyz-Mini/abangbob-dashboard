@@ -126,7 +126,8 @@ export default function SchedulePage() {
 
   // Get schedule for current week
   const weekSchedule = useMemo(() => {
-    return getWeekSchedule(currentWeekStart.toISOString().split('T')[0]);
+    const startStr = currentWeekStart.getFullYear() + '-' + String(currentWeekStart.getMonth() + 1).padStart(2, '0') + '-' + String(currentWeekStart.getDate()).padStart(2, '0');
+    return getWeekSchedule(startStr);
   }, [currentWeekStart, getWeekSchedule, schedules]);
 
   // Navigation
@@ -153,13 +154,13 @@ export default function SchedulePage() {
 
   // Get schedule entries for a specific date and staff
   const getScheduleForCell = (date: Date, staffId: string): ScheduleEntry | undefined => {
-    const dateStr = date.toISOString().split('T')[0];
+    const dateStr = date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0');
     return weekSchedule.find(s => s.date === dateStr && s.staffId === staffId);
   };
 
   // Helper: Check for holiday
   const getHolidayDetails = useCallback((date: Date) => {
-    const dateStr = date.toISOString().split('T')[0];
+    const dateStr = date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0');
     const holiday = holidays.find(h => h.date === dateStr);
     if (!holiday) return null;
 
@@ -257,7 +258,7 @@ export default function SchedulePage() {
     setScheduleForm({
       staffId,
       shiftId: shifts[0]?.id || '',
-      date: date.toISOString().split('T')[0],
+      date: date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0'),
       notes: '',
     });
     setModalType('add-schedule');
