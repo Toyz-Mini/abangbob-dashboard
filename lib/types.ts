@@ -338,6 +338,7 @@ export interface StaffProfile {
   // === Employment Details ===
   role: 'Manager' | 'Staff';
   position?: string;
+  positionId?: string; // Reference to staff_positions table
   department?: string;
   employmentType?: EmploymentType;
   joinDate?: string;

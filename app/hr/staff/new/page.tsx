@@ -28,8 +28,8 @@ import {
   NATIONALITY_OPTIONS,
   RELIGION_OPTIONS,
   DEPARTMENT_OPTIONS,
-  POSITION_OPTIONS,
 } from '@/lib/hr-data';
+import { usePositionPermissions } from '@/lib/hooks/usePositionPermissions';
 import {
   ArrowLeft,
   UserPlus,
@@ -82,6 +82,7 @@ const TABS: TabConfig[] = [
 export default function NewStaffPage() {
   const router = useRouter();
   const { staff, addStaff } = useStaff();
+  const { positions, getPositionsForRole, getPositionByName } = usePositionPermissions();
   const [isProcessing, setIsProcessing] = useState(false);
   const [showPin, setShowPin] = useState(false);
   const [activeTab, setActiveTab] = useState<TabId>('personal');
@@ -584,13 +585,26 @@ export default function NewStaffPage() {
           <select
             className="form-select"
             value={formData.position || ''}
-            onChange={(e) => updateForm('position', e.target.value)}
+            onChange={(e) => {
+              const positionName = e.target.value;
+              updateForm('position', positionName);
+              // Auto-apply permissions from selected position
+              const selectedPosition = getPositionByName(positionName);
+              if (selectedPosition) {
+                updateForm('permissions', selectedPosition.permissions);
+                // Store position ID for reference
+                updateForm('positionId', selectedPosition.id);
+              }
+            }}
           >
             <option value="">Pilih posisi</option>
-            {POSITION_OPTIONS[formData.role || 'Staff'].map(p => (
-              <option key={p} value={p}>{p}</option>
+            {getPositionsForRole(formData.role as 'Manager' | 'Staff' || 'Staff').map(p => (
+              <option key={p.id} value={p.name}>{p.name}</option>
             ))}
           </select>
+          <small style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>
+            Permissions akan diset automatik berdasarkan posisi
+          </small>
         </div>
 
         <div className="form-group">

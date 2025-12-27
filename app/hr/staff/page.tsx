@@ -20,11 +20,9 @@ import {
 import {
   BRUNEI_BANKS,
   RELATION_OPTIONS,
-  NATIONALITY_OPTIONS,
-  RELIGION_OPTIONS,
   DEPARTMENT_OPTIONS,
-  POSITION_OPTIONS,
 } from '@/lib/hr-data';
+import { usePositionPermissions } from '@/lib/hooks/usePositionPermissions';
 import Link from 'next/link';
 import Modal from '@/components/Modal';
 import LoadingSpinner from '@/components/LoadingSpinner';
@@ -58,6 +56,7 @@ type EditTab = 'personal' | 'employment' | 'salary' | 'permissions';
 export default function StaffListPage() {
   const { staff, updateStaff, deleteStaff, getStaffAttendanceToday, refreshStaff, isInitialized } = useStaff();
   const { getLeaveBalance } = useStaffPortal();
+  const { getPositionsForRole, getPositionByName } = usePositionPermissions();
 
   // Realtime subscription for staff
   const handleStaffChange = useCallback(() => {
@@ -483,13 +482,25 @@ export default function StaffListPage() {
           <select
             className="form-select"
             value={editForm.position || ''}
-            onChange={(e) => updateEditForm('position', e.target.value)}
+            onChange={(e) => {
+              const positionName = e.target.value;
+              updateEditForm('position', positionName);
+              // Auto-apply permissions from selected position
+              const selectedPosition = getPositionByName(positionName);
+              if (selectedPosition) {
+                updateEditForm('permissions', selectedPosition.permissions);
+                updateEditForm('positionId', selectedPosition.id);
+              }
+            }}
           >
             <option value="">Pilih</option>
-            {POSITION_OPTIONS[editForm.role || 'Staff'].map(p => (
-              <option key={p} value={p}>{p}</option>
+            {getPositionsForRole(editForm.role as 'Manager' | 'Staff' || 'Staff').map(p => (
+              <option key={p.id} value={p.name}>{p.name}</option>
             ))}
           </select>
+          <small style={{ color: 'var(--text-secondary)', fontSize: '0.7rem' }}>
+            Permissions auto-apply dari posisi
+          </small>
         </div>
         <div className="form-group">
           <label className="form-label">Jabatan</label>
