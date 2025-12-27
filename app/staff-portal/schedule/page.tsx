@@ -203,29 +203,29 @@ export default function SchedulePage() {
         </div>
 
         {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 staff-stagger" style={{ gap: '1rem', marginBottom: '1.5rem' }}>
-          <div className="staff-stat-card primary">
-            <div className="staff-stat-icon primary">
+        <div className="grid grid-cols-3 gap-2 mb-6 staff-stagger">
+          <div className="staff-stat-card primary p-2 sm:p-4 flex flex-col items-center justify-center text-center">
+            <div className="staff-stat-icon primary mb-1 scale-75 sm:scale-100">
               <Calendar size={24} />
             </div>
-            <div className="staff-stat-value">{myWeekSchedule.length}</div>
-            <div className="staff-stat-label">Hari Bekerja</div>
+            <div className="staff-stat-value text-xl sm:text-2xl">{myWeekSchedule.length}</div>
+            <div className="staff-stat-label text-[10px] sm:text-sm leading-tight">Hari Bekerja</div>
           </div>
 
-          <div className="staff-stat-card success">
-            <div className="staff-stat-icon success">
+          <div className="staff-stat-card success p-2 sm:p-4 flex flex-col items-center justify-center text-center">
+            <div className="staff-stat-icon success mb-1 scale-75 sm:scale-100">
               <Clock size={24} />
             </div>
-            <div className="staff-stat-value">{weeklyHours}h</div>
-            <div className="staff-stat-label">Jumlah Jam</div>
+            <div className="staff-stat-value text-xl sm:text-2xl">{weeklyHours}h</div>
+            <div className="staff-stat-label text-[10px] sm:text-sm leading-tight">Jumlah Jam</div>
           </div>
 
-          <div className="staff-stat-card cool">
-            <div className="staff-stat-icon cool">
+          <div className="staff-stat-card cool p-2 sm:p-4 flex flex-col items-center justify-center text-center">
+            <div className="staff-stat-icon cool mb-1 scale-75 sm:scale-100">
               <Coffee size={24} />
             </div>
-            <div className="staff-stat-value">{7 - myWeekSchedule.length}</div>
-            <div className="staff-stat-label">Hari Off</div>
+            <div className="staff-stat-value text-xl sm:text-2xl">{7 - myWeekSchedule.length}</div>
+            <div className="staff-stat-label text-[10px] sm:text-sm leading-tight">Hari Off</div>
           </div>
         </div>
 
@@ -239,15 +239,16 @@ export default function SchedulePage() {
           </div>
 
           <div className="staff-stagger" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            {/* DEBUG INFO - Remove in production */}
-            {/* <div className="text-xs font-mono bg-gray-100 p-2 mb-2 rounded overflow-auto h-24">
-               DEBUG:<br/>
-               User ID: {user?.id}<br/>
-               Staff ID: {currentStaff?.id}<br/>
-               Schedule Count (Raw): {schedules.length}<br/>
-               My Schedule Count (Filtered): {myWeekSchedule.length}<br/>
-               Range: {weekDates[0]?.toISOString().split('T')[0]} to {weekDates[6]?.toISOString().split('T')[0]}<br/>
-            </div> */}
+            {/* DEBUG INFO */}
+            <div className="text-[10px] font-mono bg-gray-100 p-2 mb-2 rounded overflow-auto max-h-32 border border-gray-200">
+              <div className="font-bold text-red-500 mb-1">DEBUG MODE (Screenshot ini jika tiada data)</div>
+              User ID: {user?.id?.substring(0, 8)}...<br />
+              Staff ID: {currentStaff?.id?.substring(0, 8)}...<br />
+              Schedules Found: {schedules.length}<br />
+              My Schedules: {myWeekSchedule.length}<br />
+              Current Week: {weekDates[0]?.toLocaleDateString()} - {weekDates[6]?.toLocaleDateString()}<br />
+              Sample Date: {weekDates[0]?.getFullYear() + '-' + String(weekDates[0]?.getMonth() + 1).padStart(2, '0') + '-' + String(weekDates[0]?.getDate()).padStart(2, '0')}
+            </div>
 
             {weekDates.map(date => {
               const dateStr = date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0');
