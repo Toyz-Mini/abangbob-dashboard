@@ -1,5 +1,5 @@
--- MEGA MIGRATION v7: Fix Staff ID Type with DYNAMIC COLUMN DETECTION (The Adaptable Fix)
--- Handles staffId vs staff_id, and drops all policies globally to ensure success.
+-- MEGA MIGRATION v8: Fix Staff ID AND Outlet ID Types (The "Universal Adaptor")
+-- Now handles staff.id AND staff.outlet_id type mismatches.
 
 -- 1. DROP ALL POLICIES ON ALL TABLES (Global Scan)
 
@@ -30,7 +30,9 @@ END $$;
 DROP POLICY IF EXISTS "Admins can view all attendance photos" ON storage.objects;
 
 
--- 2. DROP FOREIGN KEYS REFERENCING PUBLIC.STAFF
+-- 2. DROP FOREIGN KEYS (Outgoing & Incoming)
+
+-- A) Drop Incoming FKs (Other tables referencing staff.id)
 DO $$ 
 DECLARE
     r RECORD;
@@ -50,9 +52,26 @@ BEGIN
     END LOOP;
 END $$;
 
+-- B) Drop Outgoing FKs from Staff (e.g. staff.outlet_id references outlets)
+-- This allows us to change outlet_id type
+DO $$ 
+DECLARE
+    r RECORD;
+BEGIN
+    FOR r IN (
+        SELECT constraint_name
+        FROM information_schema.table_constraints
+        WHERE table_name = 'staff' 
+        AND constraint_type = 'FOREIGN KEY'
+    ) LOOP
+        EXECUTE 'ALTER TABLE public.staff DROP CONSTRAINT ' || quote_ident(r.constraint_name);
+    END LOOP;
+END $$;
+
 
 -- 3. ALTER COLUMNS TO TEXT (Dynamic Column Check)
 ALTER TABLE public.staff ALTER COLUMN id TYPE text;
+ALTER TABLE public.staff ALTER COLUMN outlet_id TYPE text; -- CHANGED to TEXT
 
 DO $$ BEGIN
     -- Attendance
@@ -177,6 +196,7 @@ BEGIN
         AND tablename NOT IN ('attendance', 'leaves', 'cash_registers', 'staff', 'user') 
         AND tablename NOT LIKE 'pg_%'
     ) LOOP
+        -- Only add policy if Row Level Security is enabled
         IF EXISTS (SELECT 1 FROM pg_class WHERE relname = tbl AND relrowsecurity = true) THEN
              EXECUTE 'CREATE POLICY "Enable read for authenticated ' || tbl || '" ON public.' || quote_ident(tbl) || ' FOR SELECT TO authenticated USING (true)';
         END IF;
@@ -185,8 +205,17 @@ END $$;
 
 
 -- 5. SYNC MISSING DATA (Immediate Fix)
+-- staff.id converted to text. staff.outlet_id converted to text.
+-- Insert now works for ANY string format.
 INSERT INTO public.staff (id, name, email, role, status, outlet_id, join_date)
-SELECT u.id::text, u.name, u.email, u.role, 'active', u."outletId", NOW()
+SELECT 
+    u.id::text, 
+    u.name, 
+    u.email, 
+    u.role, 
+    'active', 
+    u."outletId"::text, -- Safe cast to text
+    NOW()
 FROM public."user" u
 WHERE u.status = 'approved' AND NOT EXISTS (SELECT 1 FROM public.staff s WHERE s.id = u.id::text);
 
@@ -203,7 +232,7 @@ BEGIN
       NEW.email,
       NEW.role,
       'active',
-      NEW."outletId",
+      NEW."outletId"::text, -- Ensure text
       NOW()
     )
     ON CONFLICT (id) DO NOTHING;
