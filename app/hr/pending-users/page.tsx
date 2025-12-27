@@ -284,9 +284,25 @@ export default function PendingUsersPage() {
 
                                     {/* Details */}
                                     <div style={{ flex: 1, minWidth: '200px' }}>
-                                        <h3 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '0.25rem' }}>
-                                            {user.name}
-                                        </h3>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.25rem' }}>
+                                            <h3 style={{ fontSize: '1.1rem', fontWeight: 700 }}>
+                                                {user.name}
+                                            </h3>
+                                            <span style={{
+                                                padding: '0.25rem 0.5rem',
+                                                borderRadius: '6px',
+                                                fontSize: '0.7rem',
+                                                fontWeight: 600,
+                                                background: user.status === 'pending_approval'
+                                                    ? 'rgba(34, 197, 94, 0.15)'
+                                                    : 'rgba(234, 179, 8, 0.15)',
+                                                color: user.status === 'pending_approval'
+                                                    ? '#16a34a'
+                                                    : '#ca8a04',
+                                            }}>
+                                                {user.status === 'pending_approval' ? '✓ Sedia Approve' : '⏳ Profile Belum Lengkap'}
+                                            </span>
+                                        </div>
                                         <div
                                             style={{
                                                 display: 'flex',

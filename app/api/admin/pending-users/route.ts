@@ -20,7 +20,8 @@ export async function GET(request: NextRequest) {
         id, name, email, phone, "icNumber", "dateOfBirth", 
         address, "emergencyContact", status, "createdAt"
        FROM "user" 
-       WHERE status = 'pending_approval'
+       WHERE status IN ('pending_approval', 'profile_incomplete')
+       AND role != 'Admin'
        ORDER BY "createdAt" DESC`
         );
 
