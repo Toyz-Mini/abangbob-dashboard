@@ -317,11 +317,11 @@ export default function PayslipPage() {
                     </div>
                     <div className="section-items">
                       <div className="payslip-item">
-                        <span>EPF (Pekerja)</span>
+                        <span>TAP (Pekerja)</span>
                         <span>BND {selectedPayslip.epfEmployee.toFixed(2)}</span>
                       </div>
                       <div className="payslip-item">
-                        <span>SOCSO</span>
+                        <span>SCP</span>
                         <span>BND {selectedPayslip.socso.toFixed(2)}</span>
                       </div>
                       {selectedPayslip.otherDeductions > 0 && (
@@ -352,7 +352,7 @@ export default function PayslipPage() {
                 {/* Employer Contribution Note */}
                 <div className="payslip-note">
                   <FileText size={14} />
-                  <span>Caruman Majikan EPF: BND {selectedPayslip.epfEmployer.toFixed(2)}</span>
+                  <span>Caruman Majikan TAP: BND {selectedPayslip.epfEmployer.toFixed(2)}</span>
                 </div>
 
                 {/* Footer Note */}
