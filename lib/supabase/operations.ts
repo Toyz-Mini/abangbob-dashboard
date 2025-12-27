@@ -2243,7 +2243,7 @@ export async function fetchScheduleEntries(startDate?: string, endDate?: string)
   if (!supabase) return [];
 
   let query = supabase
-    .from('schedules')
+    .from('schedule_entries')
     .select('*')
     .order('date', { ascending: true });
 
@@ -2268,7 +2268,7 @@ export async function insertScheduleEntry(entry: any) {
 
   // @ts-ignore
   const { data, error } = await supabase
-    .from('schedules')
+    .from('schedule_entries')
     .insert(snakeCasedEntry)
     .select()
     .single();
@@ -2283,7 +2283,7 @@ export async function updateScheduleEntry(id: string, updates: any) {
 
   // @ts-ignore
   const { data, error } = await supabase
-    .from('schedules')
+    .from('schedule_entries')
     .update(toSnakeCase(updates))
     .eq('id', id)
     .select()
@@ -2298,7 +2298,7 @@ export async function deleteScheduleEntry(id: string) {
   if (!supabase) throw new Error('Supabase not connected');
 
   const { error } = await supabase
-    .from('schedules')
+    .from('schedule_entries')
     .delete()
     .eq('id', id);
 
