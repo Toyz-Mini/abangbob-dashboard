@@ -13,17 +13,18 @@ DROP POLICY IF EXISTS "Admins can manage all staff" ON public.staff;
 DROP POLICY IF EXISTS "Enable read access for all users" ON public.staff;
 
 -- Policy for Staff (view own)
--- staff.id is TEXT, so we cast auth.uid() to text
+-- Universally cast both sides to text to prevent type mismatch
 CREATE POLICY "Staff can view own profile"
 ON public.staff
 FOR SELECT
 TO authenticated
 USING (
-  id = auth.uid()::text
+  id::text = auth.uid()::text
 );
 
 -- Policy for Admin (view/edit all)
--- user.id is UUID, so we DO NOT cast auth.uid()
+-- Checks the public.user table for 'Admin' role
+-- Universally cast both sides to text to prevent type mismatch
 CREATE POLICY "Admins can manage all staff"
 ON public.staff
 FOR ALL
@@ -31,7 +32,7 @@ TO authenticated
 USING (
   EXISTS (
     SELECT 1 FROM public."user"
-    WHERE id = auth.uid()
+    WHERE id::text = auth.uid()::text
     AND role = 'Admin'
   )
 );
