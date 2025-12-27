@@ -83,14 +83,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setUserStatus(data.status || 'approved');
           setUserRole(data.role || 'Staff');
         } else if (isMounted) {
-          // Fallback if API fails
-          console.error('Failed to fetch user status');
-          setUserStatus('approved');
+          // Fallback if API fails - FAIL SAFE (Do NOT default to approved)
+          console.error('Failed to fetch user status - falling back to strict mode');
+          setUserStatus('incomplete_profile');
         }
       } catch (error) {
         if (isMounted) {
           console.error('Error fetching user status:', error);
-          setUserStatus('approved');
+          // Fail Safe
+          setUserStatus('incomplete_profile');
         }
       } finally {
         if (isMounted) {
