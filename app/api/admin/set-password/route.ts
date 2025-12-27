@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
             [email]
         );
 
-        if (userResult.rowCount === 0) {
+        if (!userResult.rowCount || userResult.rowCount === 0) {
             return NextResponse.json(
                 { error: 'User dengan email ini tidak wujud' },
                 { status: 404 }

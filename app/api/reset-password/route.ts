@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
 
         // Update password using Better Auth's internal adapter
         const userResult = await query(`SELECT id FROM "user" WHERE email = $1`, [email]);
-        if (userResult.rowCount > 0) {
+        if (userResult.rowCount && userResult.rowCount > 0) {
             await (auth as any).internalAdapter.updatePassword({
                 userId: userResult.rows[0].id,
                 newPassword: password
