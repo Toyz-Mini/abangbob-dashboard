@@ -171,6 +171,18 @@ export interface StaffPermissions {
   canManageMenu: boolean;
 }
 
+export interface StaffPosition {
+  id: string;
+  name: string;
+  description?: string;
+  role: 'Manager' | 'Staff';
+  isActive: boolean;
+  displayOrder: number;
+  permissions: StaffPermissions;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export interface SchedulePreferences {
   defaultShiftId?: string;
   workDaysPerWeek: number;

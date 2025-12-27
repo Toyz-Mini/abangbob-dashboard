@@ -16,7 +16,9 @@ export type SyncTable =
     | 'ot_claims'
     | 'disciplinary_actions'
     | 'staff_training'
-    | 'staff_documents';
+    | 'staff_documents'
+    | 'staff_positions';
+
 
 export interface SyncItem {
     id: string; // UUID of the item being acted on

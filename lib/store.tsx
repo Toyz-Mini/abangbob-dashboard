@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
-import { StockItem, StaffProfile, AttendanceRecord, Order, ProductionLog, DeliveryOrder, Expense, DailyCashFlow, Customer, Supplier, PurchaseOrder, Recipe, Shift, ScheduleEntry, Promotion, Notification, MenuItem, ModifierGroup, ModifierOption, StaffKPI, LeaveRecord, TrainingRecord, OTRecord, CustomerReview, KPIMetrics, ChecklistItemTemplate, ChecklistCompletion, LeaveBalance, LeaveRequest, ClaimRequest, StaffRequest, Announcement, OrderHistoryItem, VoidRefundRequest, VoidRefundType, OrderHistoryFilters, RefundItem, OilTracker, OilChangeRequest, OilActionHistory, OilActionType, Equipment, MaintenanceSchedule, MaintenanceLog, WasteLog, MenuCategory, PaymentMethodConfig, TaxRate, CashRegister, InventoryLog, StockSuggestion, DEFAULT_MENU_CATEGORIES, DEFAULT_PAYMENT_METHODS, DEFAULT_TAX_RATES, OTClaim, SalaryAdvance, DisciplinaryAction, StaffTraining, StaffDocument, PerformanceReview, OnboardingChecklist, ExitInterview, StaffComplaint } from './types';
+import { StockItem, StaffProfile, AttendanceRecord, Order, ProductionLog, DeliveryOrder, Expense, DailyCashFlow, Customer, Supplier, PurchaseOrder, Recipe, Shift, ScheduleEntry, Promotion, Notification, MenuItem, ModifierGroup, ModifierOption, StaffKPI, LeaveRecord, TrainingRecord, OTRecord, CustomerReview, KPIMetrics, ChecklistItemTemplate, ChecklistCompletion, LeaveBalance, LeaveRequest, ClaimRequest, StaffRequest, Announcement, OrderHistoryItem, VoidRefundRequest, VoidRefundType, OrderHistoryFilters, RefundItem, OilTracker, OilChangeRequest, OilActionHistory, OilActionType, Equipment, MaintenanceSchedule, MaintenanceLog, WasteLog, MenuCategory, PaymentMethodConfig, TaxRate, CashRegister, InventoryLog, StockSuggestion, DEFAULT_MENU_CATEGORIES, DEFAULT_PAYMENT_METHODS, DEFAULT_TAX_RATES, OTClaim, SalaryAdvance, DisciplinaryAction, StaffTraining, StaffDocument, PerformanceReview, OnboardingChecklist, ExitInterview, StaffComplaint, StaffPosition } from './types';
 import { MOCK_ORDER_HISTORY, MOCK_VOID_REFUND_REQUESTS, ORDER_HISTORY_STORAGE_KEYS } from './order-history-data';
 import { MOCK_STOCK } from './inventory-data';
 import { MOCK_STAFF, MOCK_ATTENDANCE, MOCK_PAYROLL } from './hr-data';
@@ -134,6 +134,8 @@ const STORAGE_KEYS = {
   EXIT_INTERVIEWS: 'abangbob_exit_interviews',
   // Staff Complaints
   STAFF_COMPLAINTS: 'abangbob_staff_complaints',
+  // Staff Positions
+  STAFF_POSITIONS: 'abangbob_staff_positions',
 };
 
 // Inventory log type for tracking stock changes
@@ -507,6 +509,14 @@ interface StoreState {
   checkRegisterStatus: (staffId: string) => void;
   refreshCashRegisters: () => Promise<void>;
 
+  // Staff Positions
+  positions: StaffPosition[];
+  addPosition: (position: Omit<StaffPosition, 'id' | 'createdAt' | 'updatedAt'>) => void;
+  updatePosition: (id: string, updates: Partial<StaffPosition>) => void;
+  deletePosition: (id: string) => void;
+  refreshPositions: () => Promise<void>;
+  getPositionsForRole: (role: 'Manager' | 'Staff') => StaffPosition[];
+
   // Utility
   isInitialized: boolean;
 }
@@ -634,6 +644,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   // Weather State
   const [weatherForecast, setWeatherForecast] = useState<WeatherForecast | null>(null);
+
+  // Staff Positions state
+  const [positions, setPositions] = useState<StaffPosition[]>([]);
 
   // Fetch weather on mount
   useEffect(() => {
@@ -890,6 +903,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         }
       } else {
         setTaxRates(getFromStorage(STORAGE_KEYS.TAX_RATES, DEFAULT_TAX_RATES));
+      }
+
+      // Load Staff Positions from Supabase
+      if (supabaseConnected && supabaseData.positions && supabaseData.positions.length > 0) {
+        setPositions(supabaseData.positions);
+        console.log(`[Data Init] Positions: Loaded ${supabaseData.positions.length} items from Supabase`);
+      } else {
+        setPositions(getFromStorage(STORAGE_KEYS.STAFF_POSITIONS, []));
       }
 
       // Log initialization summary
@@ -2427,6 +2448,43 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       return date >= start && date < end;
     });
   }, [schedules]);
+
+  // Staff Position actions
+  const addPosition = useCallback((positionData: Omit<StaffPosition, 'id' | 'createdAt' | 'updatedAt'>) => {
+    const newPosition: StaffPosition = {
+      ...positionData,
+      id: generateUUID(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    setPositions(prev => [...prev, newPosition]);
+    // Sync to Supabase
+    SupabaseSync.syncAddPosition(newPosition);
+  }, []);
+
+  const updatePosition = useCallback((id: string, updates: Partial<StaffPosition>) => {
+    const updatedData = { ...updates, updatedAt: new Date().toISOString() };
+    setPositions(prev => prev.map(p => p.id === id ? { ...p, ...updatedData } : p));
+    // Sync to Supabase
+    SupabaseSync.syncUpdatePosition(id, updatedData);
+  }, []);
+
+  const deletePosition = useCallback((id: string) => {
+    setPositions(prev => prev.filter(p => p.id !== id));
+    // Sync to Supabase
+    SupabaseSync.syncDeletePosition(id);
+  }, []);
+
+  const refreshPositions = useCallback(async () => {
+    const data = await SupabaseSync.loadPositionsFromSupabase();
+    if (data && data.length > 0) {
+      setPositions(data);
+    }
+  }, []);
+
+  const getPositionsForRole = useCallback((role: 'Manager' | 'Staff'): StaffPosition[] => {
+    return positions.filter(p => p.role === role && p.isActive);
+  }, [positions]);
 
   // Promotion actions
   const addPromotion = useCallback((promoData: Omit<Promotion, 'id' | 'createdAt' | 'usageCount'>) => {
@@ -5019,6 +5077,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     deleteScheduleEntry,
     getWeekSchedule,
     refreshSchedules,
+
+    // Staff Positions
+    positions,
+    addPosition,
+    updatePosition,
+    deletePosition,
+    refreshPositions,
+    getPositionsForRole,
 
     // Promotions
     promotions,

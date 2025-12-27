@@ -67,8 +67,9 @@ import { pixelTracker } from '@/lib/services/pixel-tracker';
 import { FileText, Building2, Truck, Timer } from 'lucide-react';
 import DeliveryPlatformSettings from '@/components/settings/DeliveryPlatformSettings';
 import ShiftSettings from '@/components/settings/ShiftSettings';
+import PositionSettings from '@/components/settings/PositionSettings';
 
-type SettingSection = 'outlet' | 'operations' | 'receipt' | 'printer' | 'data' | 'notifications' | 'supabase' | 'payment' | 'tax' | 'appearance' | 'security' | 'locations' | 'pixel' | 'payslip' | 'delivery' | 'shifts';
+type SettingSection = 'outlet' | 'operations' | 'receipt' | 'printer' | 'data' | 'notifications' | 'supabase' | 'payment' | 'tax' | 'appearance' | 'security' | 'locations' | 'pixel' | 'payslip' | 'delivery' | 'shifts' | 'positions';
 type PaymentModalType = 'add-payment' | 'edit-payment' | 'delete-payment' | null;
 type TaxModalType = 'add-tax' | 'edit-tax' | 'delete-tax' | null;
 
@@ -674,6 +675,7 @@ export default function SettingsPage() {
     { id: 'tax', labelKey: 'Cukai', icon: Percent },
     { id: 'locations', labelKey: 'Lokasi Kehadiran', icon: MapPin },
     { id: 'shifts', labelKey: 'Shift & Kehadiran', icon: Timer },
+    { id: 'positions', labelKey: 'Posisi Staff', icon: Users },
     { id: 'appearance', labelKey: 'settings.appearance', icon: Palette },
     { id: 'security', labelKey: 'settings.security', icon: Lock },
     { id: 'notifications', labelKey: 'settings.notifications', icon: Bell },
@@ -1998,6 +2000,11 @@ export default function SettingsPage() {
             {/* Shift & Attendance Settings */}
             {activeSection === 'shifts' && (
               <ShiftSettings />
+            )}
+
+            {/* Staff Positions Settings */}
+            {activeSection === 'positions' && (
+              <PositionSettings />
             )}
 
             {/* Notification Settings */}

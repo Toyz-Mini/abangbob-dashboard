@@ -1625,6 +1625,7 @@ export async function loadAllDataFromSupabase() {
       oilTrackers: [],
       oilChangeRequests: [],
       oilActionHistory: [],
+      positions: [],
     };
   }
 
@@ -1666,6 +1667,7 @@ export async function loadAllDataFromSupabase() {
       ops.fetchOilChangeRequests(),
       ops.fetchOilActionHistory(),
       ops.fetchCashRegisters(), // Index 34
+      loadPositionsFromSupabase(), // Index 35
     ]);
 
     // Helper to get value or default
@@ -1718,6 +1720,7 @@ export async function loadAllDataFromSupabase() {
       oilChangeRequests: getResult(32, []),
       oilActionHistory: getResult(33, []),
       cashRegisters: getResult(34, []),
+      positions: getResult(35, []),
     };
   } catch (error) {
     console.error('Critical failure in loadAllDataFromSupabase:', error);
@@ -1758,6 +1761,7 @@ export async function loadAllDataFromSupabase() {
       oilActionHistory: [],
       // missing inventoryLogs in original catch return, adding it
       inventoryLogs: [],
+      positions: [],
     };
   }
 }
@@ -1899,4 +1903,116 @@ export async function syncAddLoyaltyTransaction(transaction: any) {
   }
 }
 
+// ============ STAFF POSITIONS SYNC ============
 
+export async function syncAddPosition(position: any) {
+  if (!isSupabaseSyncEnabled()) return null;
+
+  try {
+    const supabase = getSupabaseClient();
+    if (!supabase) return null;
+
+    const { data, error } = await supabase
+      .from('staff_positions')
+      .insert({
+        id: position.id,
+        name: position.name,
+        description: position.description,
+        role: position.role,
+        is_active: position.isActive,
+        display_order: position.displayOrder,
+        permissions: position.permissions,
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error('Failed to sync position to Supabase:', error);
+    addToSyncQueue({ id: position.id, table: 'staff_positions', action: 'CREATE', payload: position });
+    return null;
+  }
+}
+
+export async function syncUpdatePosition(id: string, updates: any) {
+  if (!isSupabaseSyncEnabled()) return null;
+
+  try {
+    const supabase = getSupabaseClient();
+    if (!supabase) return null;
+
+    const dbUpdates: any = {};
+    if (updates.name !== undefined) dbUpdates.name = updates.name;
+    if (updates.description !== undefined) dbUpdates.description = updates.description;
+    if (updates.role !== undefined) dbUpdates.role = updates.role;
+    if (updates.isActive !== undefined) dbUpdates.is_active = updates.isActive;
+    if (updates.displayOrder !== undefined) dbUpdates.display_order = updates.displayOrder;
+    if (updates.permissions !== undefined) dbUpdates.permissions = updates.permissions;
+
+    const { data, error } = await supabase
+      .from('staff_positions')
+      .update(dbUpdates)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error('Failed to update position in Supabase:', error);
+    addToSyncQueue({ id, table: 'staff_positions', action: 'UPDATE', payload: updates });
+    return null;
+  }
+}
+
+export async function syncDeletePosition(id: string) {
+  if (!isSupabaseSyncEnabled()) return;
+
+  try {
+    const supabase = getSupabaseClient();
+    if (!supabase) return;
+
+    const { error } = await supabase
+      .from('staff_positions')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw error;
+  } catch (error) {
+    console.error('Failed to delete position from Supabase:', error);
+    addToSyncQueue({ id, table: 'staff_positions', action: 'DELETE', payload: {} });
+  }
+}
+
+export async function loadPositionsFromSupabase() {
+  if (!isSupabaseSyncEnabled()) return [];
+
+  try {
+    const supabase = getSupabaseClient();
+    if (!supabase) return [];
+
+    const { data, error } = await supabase
+      .from('staff_positions')
+      .select('*')
+      .order('display_order', { ascending: true });
+
+    if (error) throw error;
+
+    // Transform from snake_case to camelCase
+    return (data || []).map((p: any) => ({
+      id: p.id,
+      name: p.name,
+      description: p.description,
+      role: p.role,
+      isActive: p.is_active,
+      displayOrder: p.display_order,
+      permissions: p.permissions || {},
+      createdAt: p.created_at,
+      updatedAt: p.updated_at,
+    }));
+  } catch (error) {
+    console.error('Failed to load positions from Supabase:', error);
+    return [];
+  }
+}
