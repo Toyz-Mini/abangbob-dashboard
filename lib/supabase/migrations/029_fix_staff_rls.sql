@@ -9,20 +9,22 @@ DROP POLICY IF EXISTS "Staff can view own profile" ON public.staff;
 DROP POLICY IF EXISTS "Admins can view all staff" ON public.staff;
 DROP POLICY IF EXISTS "Staff view own profile" ON public.staff;
 DROP POLICY IF EXISTS "Admin view all" ON public.staff;
+DROP POLICY IF EXISTS "Admins can manage all staff" ON public.staff;
 DROP POLICY IF EXISTS "Enable read access for all users" ON public.staff;
 
 -- Policy for Staff (view own)
--- This ensures 'search' queries for specific ID work if ID matches auth.uid()
+-- Cast auth.uid() to text because 'id' column is text
 CREATE POLICY "Staff can view own profile"
 ON public.staff
 FOR SELECT
 TO authenticated
 USING (
-  auth.uid() = id
+  id = auth.uid()::text
 );
 
 -- Policy for Admin (view/edit all)
 -- Checks the public.user table for 'Admin' role
+-- Cast auth.uid() to text because 'user.id' is text
 CREATE POLICY "Admins can manage all staff"
 ON public.staff
 FOR ALL
@@ -30,7 +32,7 @@ TO authenticated
 USING (
   EXISTS (
     SELECT 1 FROM public."user"
-    WHERE id = auth.uid()
+    WHERE id = auth.uid()::text
     AND role = 'Admin'
   )
 );
