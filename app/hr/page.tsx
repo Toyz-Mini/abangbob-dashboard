@@ -391,7 +391,27 @@ export default function HRDashboardPage() {
                 <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                   ✅ Kelulusan & Permohonan
                 </div>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                  <Link href="/hr/pending-users">
+                    <div className="hover-lift" style={{
+                      padding: '1.25rem 1rem',
+                      background: 'linear-gradient(135deg, rgba(234, 179, 8, 0.1), rgba(251, 191, 36, 0.05))',
+                      borderRadius: 'var(--radius-md)',
+                      textAlign: 'center',
+                      cursor: 'pointer',
+                      border: '2px solid rgba(234, 179, 8, 0.3)',
+                      boxShadow: 'var(--shadow-sm)'
+                    }}>
+                      <div style={{
+                        width: '40px', height: '40px', margin: '0 auto 0.75rem',
+                        borderRadius: '10px', background: 'rgba(234, 179, 8, 0.2)', color: 'var(--warning)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center'
+                      }}>
+                        <UserPlus size={20} />
+                      </div>
+                      <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-primary)' }}>Pending Users</div>
+                    </div>
+                  </Link>
                   <Link href="/hr/approvals?tab=leave">
                     <div className="hover-lift" style={{
                       padding: '1.25rem 1rem',
