@@ -190,24 +190,32 @@ export default function PendingUsersPage() {
         }
 
         setActionLoading(userId);
+        setError(null); // Clear previous errors
         try {
+            console.log('[Approve] Starting approval for:', userId, userName);
             const res = await fetch('/api/admin/approve-user', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ userId, action: 'approve' }),
             });
 
+            const data = await res.json();
+            console.log('[Approve] Response:', res.status, data);
+
             if (!res.ok) {
-                const data = await res.json();
-                throw new Error(data.error || 'Gagal meluluskan pengguna');
+                throw new Error(data.error || `Gagal meluluskan pengguna (Status: ${res.status})`);
             }
 
             setSuccessMessage(`${userName} telah diluluskan dan ditambah ke senarai staf!`);
             setPendingUsers((prev) => prev.filter((u) => u.id !== userId));
 
-            setTimeout(() => setSuccessMessage(null), 5000);
+            setTimeout(() => setSuccessMessage(null), 8000);
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Ralat semasa meluluskan');
+            const errorMessage = err instanceof Error ? err.message : 'Ralat semasa meluluskan';
+            console.error('[Approve] Error:', errorMessage, err);
+            setError(errorMessage);
+            // Keep error visible longer
+            setTimeout(() => setError(null), 10000);
         } finally {
             setActionLoading(null);
         }
@@ -406,8 +414,15 @@ export default function PendingUsersPage() {
                                             icon={CheckCircle}
                                             variant="primary"
                                             size="sm"
-                                            onClick={() => handleApprove(user.id, user.name)}
-                                            disabled={actionLoading === user.id || !isProfileComplete(user)}
+                                            onClick={() => {
+                                                if (!isProfileComplete(user)) {
+                                                    if (!confirm(`⚠️ AMARAN: Profil ${user.name} belum lengkap (tiada telefon/IC).\n\nAdakah anda masih mahu meneruskan kelulusan?`)) {
+                                                        return;
+                                                    }
+                                                }
+                                                handleApprove(user.id, user.name);
+                                            }}
+                                            disabled={actionLoading === user.id}
                                         >
                                             {actionLoading === user.id ? '...' : 'Luluskan'}
                                         </PremiumButton>

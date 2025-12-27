@@ -3,11 +3,14 @@ import { query } from '@/lib/db';
 import { auth } from '@/lib/auth';
 
 export async function POST(request: NextRequest) {
+    console.log('[approve-user] API called');
     try {
         const body = await request.json();
         const { userId, action, reason } = body;
+        console.log('[approve-user] Request body:', { userId, action, reason: reason ? '[REDACTED]' : undefined });
 
         if (!userId || !action) {
+            console.log('[approve-user] Missing userId or action');
             return NextResponse.json(
                 { error: 'User ID and action are required' },
                 { status: 400 }
@@ -15,11 +18,14 @@ export async function POST(request: NextRequest) {
         }
 
         // Verify session and admin role
+        console.log('[approve-user] Verifying session...');
         const session = await auth.api.getSession({
             headers: request.headers
         });
+        console.log('[approve-user] Session:', session ? { userId: session.user?.id, role: (session.user as any)?.role } : 'null');
 
         if (!session || (session.user as any).role !== 'Admin') {
+            console.log('[approve-user] Unauthorized - session:', !!session, 'role:', (session?.user as any)?.role);
             return NextResponse.json(
                 { error: 'Unauthorized: Admin access required' },
                 { status: 401 }
@@ -27,13 +33,16 @@ export async function POST(request: NextRequest) {
         }
 
         if (action === 'approve') {
+            console.log('[approve-user] Processing approve action for userId:', userId);
             // First get user data including phone and extendedData
             const userResult = await query(
                 `SELECT id, name, email, phone, "icNumber", "extendedData" FROM "user" WHERE id = $1`,
                 [userId]
             );
+            console.log('[approve-user] User query result:', userResult.rowCount, 'rows');
 
             if (userResult.rowCount === 0) {
+                console.log('[approve-user] User not found');
                 return NextResponse.json(
                     { error: 'User not found' },
                     { status: 404 }
@@ -41,6 +50,7 @@ export async function POST(request: NextRequest) {
             }
 
             const userData = userResult.rows[0];
+            console.log('[approve-user] User data:', { name: userData.name, email: userData.email });
             const extendedData = userData.extendedData || {};
 
             // Construct bank details from extended data
@@ -51,6 +61,7 @@ export async function POST(request: NextRequest) {
             };
 
             // Update user status to approved
+            console.log('[approve-user] Updating user status to approved...');
             await query(
                 `UPDATE "user" 
                  SET 
@@ -60,9 +71,11 @@ export async function POST(request: NextRequest) {
                  WHERE id = $1`,
                 [userId]
             );
+            console.log('[approve-user] User status updated');
 
             // Create staff record using direct insert to public.staff
             // This ensures it goes to the same table that Supabase reads from
+            console.log('[approve-user] Inserting into public.staff...');
             const staffInsertResult = await query(
                 `INSERT INTO public.staff (
                     id, name, email, phone, role, status, pin, 
@@ -88,7 +101,7 @@ export async function POST(request: NextRequest) {
                 ]
             );
 
-            console.log('Staff insert result:', staffInsertResult.rows);
+            console.log('[approve-user] Staff insert result:', staffInsertResult.rows);
 
 
             // TODO: Send approval email notification

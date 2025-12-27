@@ -55,10 +55,10 @@ export default function SchedulePage() {
 
   // Get my schedule for the week
   const myWeekSchedule = useMemo(() => {
-    const startStr = currentWeekStart.toISOString().split('T')[0];
+    const startStr = currentWeekStart.getFullYear() + '-' + String(currentWeekStart.getMonth() + 1).padStart(2, '0') + '-' + String(currentWeekStart.getDate()).padStart(2, '0');
     const endDate = new Date(currentWeekStart);
     endDate.setDate(endDate.getDate() + 7);
-    const endStr = endDate.toISOString().split('T')[0];
+    const endStr = endDate.getFullYear() + '-' + String(endDate.getMonth() + 1).padStart(2, '0') + '-' + String(endDate.getDate()).padStart(2, '0');
 
     return schedules.filter(s =>
       s.staffId === user?.id &&
@@ -109,7 +109,7 @@ export default function SchedulePage() {
   };
 
   const getScheduleForDate = (date: Date) => {
-    const dateStr = date.toISOString().split('T')[0];
+    const dateStr = date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0');
     return myWeekSchedule.find(s => s.date === dateStr);
   };
 
@@ -238,106 +238,161 @@ export default function SchedulePage() {
             </div>
           </div>
 
-          <div className="staff-stagger" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          <div className="staff-stagger" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            {/* DEBUG INFO - Remove in production */}
+            {/* <div className="text-xs font-mono bg-gray-100 p-2 mb-2 rounded overflow-auto h-24">
+               DEBUG:<br/>
+               User ID: {user?.id}<br/>
+               Staff ID: {currentStaff?.id}<br/>
+               Schedule Count (Raw): {schedules.length}<br/>
+               My Schedule Count (Filtered): {myWeekSchedule.length}<br/>
+               Range: {weekDates[0]?.toISOString().split('T')[0]} to {weekDates[6]?.toISOString().split('T')[0]}<br/>
+            </div> */}
+
             {weekDates.map(date => {
-              const schedule = getScheduleForDate(date);
+              const dateStr = date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0');
+              // const schedule = getScheduleForDate(date);
+              // Direct find to debug if helper is issue
+              const schedule = schedules.find(s =>
+                s.date === dateStr &&
+                s.staffId === user?.id
+              );
+
               const shift = schedule ? shifts.find(s => s.id === schedule.shiftId) : null;
-              const colleagues = schedule && shift ? getColleaguesOnShift(date.toISOString().split('T')[0], shift.id) : [];
+              const colleagues = schedule && shift ? getColleaguesOnShift(dateStr, shift.id) : [];
               const today = isToday(date);
               const isPast = date < new Date() && !today;
 
+              if (!schedule) {
+                // COMPACT "OFF" VIEW
+                return (
+                  <div
+                    key={date.toISOString()}
+                    style={{
+                      padding: '0.5rem 0.75rem',
+                      borderRadius: 'var(--radius-md)',
+                      background: today ? 'linear-gradient(90deg, rgba(99, 102, 241, 0.1), transparent)' : 'var(--gray-50)',
+                      border: today ? '1px solid #6366f1' : '1px solid transparent',
+                      opacity: isPast ? 0.6 : 1,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      color: 'var(--text-secondary)'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                      <div style={{ fontWeight: today ? 700 : 500, color: today ? '#6366f1' : 'inherit', width: '3.5rem' }}>
+                        {formatDate(date).split(' ')[0]} <span style={{ fontSize: '0.8em' }}>{date.getDate()}</span>
+                      </div>
+                      <div style={{ height: '1.5rem', width: '1px', background: 'var(--gray-200)' }}></div>
+                      <div style={{ fontSize: '0.875rem', fontStyle: 'italic' }}>Hari Off</div>
+                    </div>
+                    {today && <span className="text-[10px] font-bold text-indigo-500 bg-indigo-50 px-2 py-0.5 rounded-full">HARI INI</span>}
+                  </div>
+                );
+              }
+
+              // COMPACT "WORKING" VIEW
               return (
                 <div
                   key={date.toISOString()}
                   style={{
-                    padding: '1rem',
+                    padding: '0.75rem',
                     borderRadius: 'var(--radius-lg)',
-                    background: today
-                      ? 'linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.05) 100%)'
-                      : schedule ? 'var(--gray-50)' : 'transparent',
-                    border: today ? '2px solid #6366f1' : '1px solid var(--gray-200)',
-                    opacity: isPast ? 0.6 : 1,
-                    transition: 'all 0.2s ease'
+                    background: 'white',
+                    border: today ? '1px solid #6366f1' : '1px solid var(--gray-200)',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+                    opacity: isPast ? 0.8 : 1,
+                    position: 'relative',
+                    overflow: 'hidden'
                   }}
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem', flexWrap: 'wrap' }}>
-                    <div style={{ minWidth: '100px' }}>
-                      <div style={{
-                        fontWeight: 700,
-                        fontSize: today ? '1.1rem' : '1rem',
-                        color: today ? '#6366f1' : 'inherit'
+                  {/* Left Decoration Bar */}
+                  {shift && (
+                    <div style={{
+                      position: 'absolute',
+                      left: 0,
+                      top: 0,
+                      bottom: 0,
+                      width: '4px',
+                      background: shift.color || '#3b82f6'
+                    }} />
+                  )}
+
+                  <div style={{ display: 'flex', gap: '0.75rem', paddingLeft: '0.5rem' }}>
+                    {/* Date Column */}
+                    <div style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      minWidth: '3.5rem',
+                      paddingRight: '0.75rem',
+                      borderRight: '1px solid var(--gray-100)'
+                    }}>
+                      <span style={{
+                        fontSize: '0.75rem',
+                        textTransform: 'uppercase',
+                        fontWeight: 600,
+                        color: today ? '#6366f1' : 'var(--text-secondary)'
                       }}>
-                        {formatDate(date)}
-                      </div>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                        {date.toLocaleDateString('ms-MY', { month: 'short' })}
-                      </div>
+                        {date.toLocaleDateString('ms-MY', { weekday: 'short' })}
+                      </span>
+                      <span style={{
+                        fontSize: '1.25rem',
+                        fontWeight: 700,
+                        color: today ? '#6366f1' : 'var(--text-primary)'
+                      }}>
+                        {date.getDate()}
+                      </span>
                       {today && (
-                        <span className="badge badge-info" style={{ fontSize: '0.65rem', marginTop: '0.25rem' }}>
+                        <span className="text-[9px] font-bold text-indigo-600 mt-1">
                           HARI INI
                         </span>
                       )}
                     </div>
 
-                    {schedule && shift ? (
-                      <div style={{ flex: 1 }}>
-                        <div style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '0.5rem',
-                          padding: '0.75rem',
-                          background: `${shift.color}15`,
-                          borderLeft: `4px solid ${shift.color}`,
-                          borderRadius: 'var(--radius-md)'
-                        }}>
-                          {shift.startTime < '12:00' ? (
-                            <Sun size={20} color={shift.color} />
-                          ) : (
-                            <Moon size={20} color={shift.color} />
-                          )}
-                          <div style={{ flex: 1 }}>
-                            <div style={{ fontWeight: 600, color: shift.color }}>
+                    {/* Content Column */}
+                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                      {shift ? (
+                        <>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
+                            <div style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '0.95rem' }}>
                               Shift {shift.name}
                             </div>
-                            <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+                            <div className="flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full"
+                              style={{ background: `${shift.color}15`, color: shift.color }}>
+                              {shift.startTime < '12:00' ? <Sun size={10} /> : <Moon size={10} />}
                               {shift.startTime} - {shift.endTime}
-                              <span style={{ marginLeft: '0.5rem', fontSize: '0.75rem' }}>
-                                ({Math.round(((parseInt(shift.endTime.split(':')[0]) * 60 + parseInt(shift.endTime.split(':')[1])) -
-                                  (parseInt(shift.startTime.split(':')[0]) * 60 + parseInt(shift.startTime.split(':')[1])) -
-                                  shift.breakDuration) / 60)}j kerja)
-                              </span>
                             </div>
                           </div>
-                        </div>
 
-                        {colleagues.length > 0 && (
-                          <div style={{ marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <Users size={14} color="var(--text-secondary)" />
-                            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                              Bersama: {colleagues.slice(0, 3).join(', ')}{colleagues.length > 3 ? ` +${colleagues.length - 3}` : ''}
+                          <div className="flex flex-wrap items-center gap-3 text-xs text-gray-500">
+                            <span className="flex items-center gap-1">
+                              <Clock size={12} />
+                              {Math.round(((parseInt(shift.endTime.split(':')[0]) * 60 + parseInt(shift.endTime.split(':')[1])) -
+                                (parseInt(shift.startTime.split(':')[0]) * 60 + parseInt(shift.startTime.split(':')[1])) -
+                                shift.breakDuration) / 60)}j kerja
                             </span>
-                          </div>
-                        )}
 
-                        {schedule.notes && (
-                          <div style={{ marginTop: '0.5rem', fontSize: '0.75rem', color: 'var(--text-secondary)', fontStyle: 'italic' }}>
-                            Nota: {schedule.notes}
+                            {colleagues.length > 0 && (
+                              <span className="flex items-center gap-1">
+                                <Users size={12} />
+                                {colleagues.length} rakan
+                              </span>
+                            )}
                           </div>
-                        )}
-                      </div>
-                    ) : (
-                      <div style={{
-                        flex: 1,
-                        padding: '1rem',
-                        textAlign: 'center',
-                        color: 'var(--text-light)',
-                        background: 'var(--gray-100)',
-                        borderRadius: 'var(--radius-md)'
-                      }}>
-                        <Coffee size={24} color="var(--gray-400)" style={{ marginBottom: '0.25rem' }} />
-                        <div style={{ fontWeight: 500 }}>Hari Off</div>
-                      </div>
-                    )}
+
+                          {schedule.notes && (
+                            <div style={{ marginTop: '0.5rem', fontSize: '0.75rem', color: 'var(--text-secondary)', background: 'var(--gray-50)', padding: '0.25rem 0.5rem', borderRadius: '4px' }}>
+                              Note: {schedule.notes}
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        <div className="text-red-500 text-sm">Shift data missing</div>
+                      )}
+                    </div>
                   </div>
                 </div>
               );
