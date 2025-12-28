@@ -362,16 +362,14 @@ body {
   background: var(--bg-primary);
   border-right: 1px solid var(--border-color);
   position: fixed;
-  top: 64px;
-  /* Space for BrandHeader */
+  top: 0;
   left: 0;
-  height: calc(100vh - 64px);
+  height: 100vh;
   overflow-y: auto;
   overflow-x: hidden;
   padding: var(--spacing-lg);
   box-shadow: var(--shadow-md);
   z-index: 99;
-  /* Lower z-index below BrandHeader (1000) */
   transition: width 0.3s ease-in-out, padding 0.3s ease-in-out, background-color 0.3s ease;
 }
 
@@ -442,6 +440,8 @@ body {
     /* Increased for BottomNav */
     margin-left: 0 !important;
     width: 100%;
+    margin-top: 64px;
+    /* Space for Mobile BrandHeader */
   }
 
   /* Reduce card padding on mobile */
@@ -2156,8 +2156,7 @@ body {
 /* Top Navigation Bar */
 .top-nav {
   position: fixed;
-  top: 64px;
-  /* Space for BrandHeader */
+  top: 0;
   left: var(--sidebar-width);
   right: 0;
   height: 70px;

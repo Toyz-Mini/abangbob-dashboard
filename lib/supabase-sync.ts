@@ -2012,12 +2012,21 @@ export async function syncAddLoyaltyTransaction(transaction: any) {
 // ============ STAFF POSITIONS SYNC ============
 
 export async function syncAddPosition(position: any) {
-  if (!isSupabaseSyncEnabled()) return null;
+  console.log('[PositionSync] Attempting to add position:', position.name);
+
+  if (!isSupabaseSyncEnabled()) {
+    console.warn('[PositionSync] Supabase sync is disabled');
+    return null;
+  }
 
   try {
     const supabase = getSupabaseClient();
-    if (!supabase) return null;
+    if (!supabase) {
+      console.warn('[PositionSync] No Supabase client available');
+      return null;
+    }
 
+    console.log('[PositionSync] Inserting to staff_positions table...');
     const { data, error } = await supabase
       .from('staff_positions')
       .insert({
@@ -2032,11 +2041,27 @@ export async function syncAddPosition(position: any) {
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error('[PositionSync] Database error:', error.message, error.code, error.details);
+      // Check if table doesn't exist
+      if (error.code === '42P01' || error.message?.includes('does not exist')) {
+        console.error('[PositionSync] ⚠️ Table staff_positions does not exist! Please run the migration.');
+        alert('Error: Table staff_positions tidak wujud di database. Sila jalankan migration SQL.');
+      } else if (error.code === '23505') {
+        console.error('[PositionSync] ⚠️ Duplicate position name - position already exists');
+        alert('Error: Nama posisi sudah wujud. Sila gunakan nama yang berbeza.');
+      } else {
+        alert(`Error sync ke database: ${error.message}`);
+      }
+      throw error;
+    }
+
+    console.log('[PositionSync] ✅ Position added successfully:', data);
     return data;
-  } catch (error) {
-    console.error('Failed to sync position to Supabase:', error);
+  } catch (error: any) {
+    console.error('[PositionSync] Failed to sync position to Supabase:', error);
     addToSyncQueue({ id: position.id, table: 'staff_positions', action: 'CREATE', payload: position });
+    console.log('[PositionSync] Added to offline sync queue');
     return null;
   }
 }
@@ -2092,21 +2117,37 @@ export async function syncDeletePosition(id: string) {
 }
 
 export async function loadPositionsFromSupabase() {
-  if (!isSupabaseSyncEnabled()) return [];
+  console.log('[PositionSync] Loading positions from Supabase...');
+
+  if (!isSupabaseSyncEnabled()) {
+    console.warn('[PositionSync] Supabase sync is disabled, returning empty array');
+    return [];
+  }
 
   try {
     const supabase = getSupabaseClient();
-    if (!supabase) return [];
+    if (!supabase) {
+      console.warn('[PositionSync] No Supabase client available');
+      return [];
+    }
 
     const { data, error } = await supabase
       .from('staff_positions')
       .select('*')
       .order('display_order', { ascending: true });
 
-    if (error) throw error;
+    if (error) {
+      console.error('[PositionSync] Load error:', error.message, error.code);
+      if (error.code === '42P01' || error.message?.includes('does not exist')) {
+        console.error('[PositionSync] ⚠️ Table staff_positions does not exist! Please run the migration.');
+      }
+      throw error;
+    }
+
+    console.log('[PositionSync] Fetched', data?.length || 0, 'positions from database');
 
     // Transform from snake_case to camelCase
-    return (data || []).map((p: any) => ({
+    const transformed = (data || []).map((p: any) => ({
       id: p.id,
       name: p.name,
       description: p.description,
@@ -2117,8 +2158,11 @@ export async function loadPositionsFromSupabase() {
       createdAt: p.created_at,
       updatedAt: p.updated_at,
     }));
-  } catch (error) {
-    console.error('Failed to load positions from Supabase:', error);
+
+    console.log('[PositionSync] ✅ Positions loaded:', transformed.map(p => p.name));
+    return transformed;
+  } catch (error: any) {
+    console.error('[PositionSync] Failed to load positions from Supabase:', error);
     return [];
   }
 }

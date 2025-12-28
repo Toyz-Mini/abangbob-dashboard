@@ -57,7 +57,14 @@ export default function BrandHeader() {
           background: var(--bg-card); /* Adaptive background */
           border-top: 4px solid #CC1512; /* Brand Red Top Border */
           box-shadow: 0 4px 20px -5px rgba(0,0,0,0.1); /* Premium Shadow */
+          box-shadow: 0 4px 20px -5px rgba(0,0,0,0.1); /* Premium Shadow */
           transition: background 0.3s ease, color 0.3s ease;
+        }
+
+        @media (min-width: 769px) {
+          .brand-header {
+            display: none;
+          }
         }
 
         .brand-header-content {
