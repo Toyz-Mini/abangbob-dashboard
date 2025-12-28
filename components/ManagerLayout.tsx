@@ -20,6 +20,7 @@ import {
   Boxes,
 } from 'lucide-react';
 import { useState } from 'react';
+import BrandHeader from '@/components/BrandHeader';
 
 interface ManagerLayoutProps {
   children: ReactNode;
@@ -62,75 +63,79 @@ export default function ManagerLayout({ children }: ManagerLayoutProps) {
   const userName = currentStaff?.name || user?.email?.split('@')[0] || 'Manager';
 
   return (
-    <div className="manager-layout">
-      {/* Mobile Header */}
-      <header className="manager-header">
-        <button
-          type="button"
-          className="menu-toggle"
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-        >
-          {sidebarOpen ? <X size={24} /> : <Menu size={24} />}
-        </button>
-        <div className="header-title">
-          <span className="app-name">AbangBob</span>
-          <span className="role-badge">Manager</span>
-        </div>
-        <button type="button" className="logout-btn" onClick={handleLogout}>
-          <LogOut size={20} />
-        </button>
-      </header>
-
-      {/* Sidebar */}
-      <aside className={`manager-sidebar ${sidebarOpen ? 'open' : ''}`}>
-        <div className="sidebar-header">
-          <div className="user-avatar">
-            {userName.charAt(0).toUpperCase()}
-          </div>
-          <div className="user-info">
-            <div className="user-name">{userName}</div>
-            <div className="user-role">Outlet Manager</div>
-          </div>
-        </div>
-
-        <nav className="sidebar-nav">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const active = isActive(item.href);
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`nav-item ${active ? 'active' : ''}`}
-                onClick={() => setSidebarOpen(false)}
-              >
-                <Icon size={20} />
-                <span>{item.label}</span>
-              </Link>
-            );
-          })}
-        </nav>
-
-        <div className="sidebar-footer">
-          <button type="button" className="logout-full" onClick={handleLogout}>
-            <LogOut size={18} />
-            <span>Logout</span>
+    <div className="manager-layout-container">
+      <BrandHeader />
+      <div className="manager-layout">
+        {/* Mobile Header */}
+        <header className="manager-header">
+          <button
+            type="button"
+            className="menu-toggle"
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+          >
+            {sidebarOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
-        </div>
-      </aside>
+          <div className="header-title">
+            <span className="app-name">AbangBob</span>
+            <span className="role-badge">Manager</span>
+          </div>
+          <button type="button" className="logout-btn" onClick={handleLogout}>
+            <LogOut size={20} />
+          </button>
+        </header>
 
-      {/* Overlay for mobile */}
-      {sidebarOpen && (
-        <div
-          className="sidebar-overlay"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
+        {/* Sidebar */}
+        <aside className={`manager-sidebar ${sidebarOpen ? 'open' : ''}`}>
+          <div className="sidebar-header">
+            <div className="user-avatar">
+              {userName.charAt(0).toUpperCase()}
+            </div>
+            <div className="user-info">
+              <div className="user-name">{userName}</div>
+              <div className="user-role">Outlet Manager</div>
+            </div>
+          </div>
 
-      {/* Main Content */}
-      <main className="manager-main">
-        {children}
-      </main>
+          <nav className="sidebar-nav">
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const active = isActive(item.href);
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`nav-item ${active ? 'active' : ''}`}
+                  onClick={() => setSidebarOpen(false)}
+                >
+                  <Icon size={20} />
+                  <span>{item.label}</span>
+                </Link>
+              );
+            })}
+          </nav>
+
+          <div className="sidebar-footer">
+            <button type="button" className="logout-full" onClick={handleLogout}>
+              <LogOut size={18} />
+              <span>Logout</span>
+            </button>
+          </div>
+        </aside>
+
+        {/* Overlay for mobile */}
+        {sidebarOpen && (
+          <div
+            className="sidebar-overlay"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+
+        {/* Main Content */}
+        <main className="manager-main">
+          {children}
+        </main>
+
+      </div>
 
       <style jsx>{`
         .manager-layout {
@@ -143,14 +148,16 @@ export default function ManagerLayout({ children }: ManagerLayoutProps) {
           align-items: center;
           justify-content: space-between;
           padding: 0.75rem 1rem;
-          padding-top: 48px;
+          padding: 0.75rem 1rem;
+          /* padding-top: 48px; removed - BrandHeader takes top */
           background: linear-gradient(135deg, #1e3a5f 0%, #0d1b2a 100%);
           color: white;
           position: fixed;
-          top: 0;
+          top: 64px; /* BrandHeader height approx */
           left: 0;
           right: 0;
           z-index: 100;
+          height: 60px; /* Explicit height */
         }
 
         .menu-toggle {
@@ -192,14 +199,14 @@ export default function ManagerLayout({ children }: ManagerLayoutProps) {
 
         .manager-sidebar {
           position: fixed;
-          top: 0;
+          top: 64px;
           left: -280px;
           width: 280px;
-          height: 100vh;
+          height: calc(100vh - 64px);
           background: linear-gradient(180deg, #1e3a5f 0%, #0d1b2a 100%);
           color: white;
           padding: 1rem;
-          padding-top: 48px;
+          /* padding-top: 48px; removed */
           z-index: 150;
           transition: left 0.3s ease;
           display: flex;
@@ -298,9 +305,9 @@ export default function ManagerLayout({ children }: ManagerLayoutProps) {
         }
 
         .manager-main {
-          margin-top: 100px;
+          margin-top: 60px; /* Space for ManagerHeader (fixed) */
           padding: 1rem;
-          min-height: calc(100vh - 100px);
+          min-height: calc(100vh - 64px);
         }
 
         @media (min-width: 1024px) {

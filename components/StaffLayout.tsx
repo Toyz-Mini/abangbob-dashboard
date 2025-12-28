@@ -5,6 +5,7 @@ import { useAuth } from '@/lib/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { LogOut, User } from 'lucide-react';
 import StaffPortalNav from '@/components/StaffPortalNav';
+import BrandHeader from '@/components/BrandHeader';
 
 interface StaffLayoutProps {
   children: ReactNode;
@@ -31,7 +32,10 @@ export default function StaffLayout({ children, showHeader = false }: StaffLayou
 
   return (
     <div className="min-h-screen light-brand flex flex-col">
-      {/* Simple Header */}
+      {/* Global Brand Header */}
+      <BrandHeader />
+
+      {/* Simple Header (Optional per page) */}
       {showHeader && (
         <header className="bg-white border-b border-gray-200 sticky top-0 z-30">
           <div className="staff-header-left">
