@@ -3,23 +3,21 @@
 import { useState, useMemo } from 'react';
 import StaffLayout from '@/components/StaffLayout';
 import { useStaffPortal, useStaff } from '@/lib/store';
-import Link from 'next/link';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import {
-  ArrowLeft,
   ChevronLeft,
   ChevronRight,
   Clock,
-  MapPin,
-  User,
-  Coffee,
   Calendar,
   Users,
   Sun,
-  Moon
+  Moon,
+  Coffee,
+  Briefcase
 } from 'lucide-react';
-
+import { cn } from '@/lib/utils';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function SchedulePage() {
   const { user } = useAuth();
@@ -64,7 +62,7 @@ export default function SchedulePage() {
       s.date >= startStr &&
       s.date < endStr
     );
-  }, [schedules, currentWeekStart]);
+  }, [schedules, currentWeekStart, user?.id]);
 
   // Get colleagues on the same shift
   const getColleaguesOnShift = (date: string, shiftId: string) => {
@@ -77,12 +75,14 @@ export default function SchedulePage() {
   };
 
   // Navigation
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const goToPreviousWeek = () => {
     const newStart = new Date(currentWeekStart);
     newStart.setDate(newStart.getDate() - 7);
     setCurrentWeekStart(newStart);
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const goToNextWeek = () => {
     const newStart = new Date(currentWeekStart);
     newStart.setDate(newStart.getDate() + 7);
@@ -98,18 +98,9 @@ export default function SchedulePage() {
     setCurrentWeekStart(monday);
   };
 
-  const formatDate = (date: Date) => {
-    return date.toLocaleDateString('ms-MY', { weekday: 'short', day: 'numeric' });
-  };
-
   const isToday = (date: Date) => {
     const today = new Date();
     return date.toDateString() === today.toDateString();
-  };
-
-  const getScheduleForDate = (date: Date) => {
-    const dateStr = date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0');
-    return myWeekSchedule.find(s => s.date === dateStr);
   };
 
   // Calculate total hours for the week
@@ -129,7 +120,7 @@ export default function SchedulePage() {
   if (!isInitialized) {
     return (
       <StaffLayout>
-        <div className="loading-container">
+        <div className="flex items-center justify-center min-h-[60vh]">
           <LoadingSpinner />
         </div>
       </StaffLayout>
@@ -139,19 +130,16 @@ export default function SchedulePage() {
   if (!currentStaff) {
     return (
       <StaffLayout>
-        <div className="p-4 flex flex-col items-center justify-center min-h-[50vh] text-center">
-          <div className="bg-red-50 text-red-600 p-6 rounded-lg max-w-md">
-            <h3 className="font-bold text-lg mb-2">Akses Gagal / Profil Tidak Dijumpai</h3>
-            <p className="mb-4">
-              Rekod staff anda tidak dapat dijumpai. Ini mungkin disebabkan oleh isu kebenaran data (RLS).
+        <div className="p-8 flex flex-col items-center justify-center min-h-[60vh] text-center">
+          <div className="bg-red-50 text-red-600 p-8 rounded-2xl max-w-md shadow-sm border border-red-100">
+            <h3 className="font-bold text-xl mb-3">Akses Gagal</h3>
+            <p className="mb-6 text-red-700/80 leading-relaxed">
+              Rekod staff anda tidak dapat dijumpai. Sila hubungi Admin untuk bantuan.
             </p>
-            <div className="text-xs bg-white p-2 rounded border border-red-100 text-left font-mono">
+            <div className="text-xs bg-white/50 p-4 rounded-xl border border-red-100 text-left font-mono text-red-500">
               User ID: {user?.id}<br />
               Status: {user?.status || 'Unknown'}
             </div>
-            <p className="mt-4 text-sm">
-              Sila hubungi Admin untuk semakan database.
-            </p>
           </div>
         </div>
       </StaffLayout>
@@ -160,276 +148,197 @@ export default function SchedulePage() {
 
   return (
     <StaffLayout>
-      <div className="staff-portal animate-fade-in">
-        {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
-          <div>
+      <div className="max-w-md mx-auto sm:max-w-2xl lg:max-w-4xl animate-fade-in pb-20 pt-4 px-4 sm:px-6">
 
-            <h1 style={{ fontSize: '1.75rem', fontWeight: 700, marginTop: '0.5rem' }}>
-              Jadual Kerja Saya
-            </h1>
-            <p style={{ color: 'var(--text-secondary)' }}>
-              Lihat jadual shift mingguan anda
-            </p>
+        {/* Header Section - Modern & Clean */}
+        <header className="mb-8">
+          <div className="flex items-center justify-between mb-2">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Jadual Kerja</h1>
+              <p className="text-sm text-gray-500 font-medium">Mingguan anda</p>
+            </div>
+
+            <button
+              onClick={goToCurrentWeek}
+              className="px-4 py-2 bg-white border border-gray-200 shadow-sm rounded-xl text-xs font-semibold text-gray-700 active:scale-95 transition-all hover:bg-gray-50 flex items-center gap-2"
+            >
+              <Calendar className="w-3.5 h-3.5" />
+              Minggu Ini
+            </button>
+          </div>
+
+          {/* Week Navigation Pill */}
+          <div className="bg-white rounded-2xl p-2 shadow-sm border border-gray-100 flex items-center justify-between">
+            <button
+              onClick={goToPreviousWeek}
+              className="p-2.5 hover:bg-gray-50 rounded-xl text-gray-400 hover:text-gray-900 transition-colors active:scale-95"
+            >
+              <ChevronLeft size={20} />
+            </button>
+
+            <div className="text-center">
+              <span className="block text-sm font-bold text-gray-900">
+                {weekDates[0].toLocaleDateString('ms-MY', { day: 'numeric', month: 'short' })}
+                {' - '}
+                {weekDates[6].toLocaleDateString('ms-MY', { day: 'numeric', month: 'short' })}
+              </span>
+              <span className="text-xs text-gray-400 font-medium">{weekDates[6].getFullYear()}</span>
+            </div>
+
+            <button
+              onClick={goToNextWeek}
+              className="p-2.5 hover:bg-gray-50 rounded-xl text-gray-400 hover:text-gray-900 transition-colors active:scale-95"
+            >
+              <ChevronRight size={20} />
+            </button>
+          </div>
+        </header>
+
+        {/* Metrics Overview - Compact Grid */}
+        <div className="grid grid-cols-3 gap-3 mb-8">
+          <div className="bg-white p-4 rounded-2xl border border-blue-50 shadow-sm flex flex-col items-center justify-center gap-1 group">
+            <div className="bg-blue-50 text-blue-600 p-2 rounded-xl mb-1 group-hover:scale-110 transition-transform">
+              <Briefcase size={18} />
+            </div>
+            <span className="text-2xl font-bold text-gray-900">{myWeekSchedule.length}</span>
+            <span className="text-[10px] uppercase tracking-wider font-semibold text-gray-400">Kerja</span>
+          </div>
+
+          <div className="bg-white p-4 rounded-2xl border border-emerald-50 shadow-sm flex flex-col items-center justify-center gap-1 group">
+            <div className="bg-emerald-50 text-emerald-600 p-2 rounded-xl mb-1 group-hover:scale-110 transition-transform">
+              <Clock size={18} />
+            </div>
+            <span className="text-2xl font-bold text-gray-900">{weeklyHours}h</span>
+            <span className="text-[10px] uppercase tracking-wider font-semibold text-gray-400">Jam</span>
+          </div>
+
+          <div className="bg-white p-4 rounded-2xl border border-amber-50 shadow-sm flex flex-col items-center justify-center gap-1 group">
+            <div className="bg-amber-50 text-amber-600 p-2 rounded-xl mb-1 group-hover:scale-110 transition-transform">
+              <Coffee size={18} />
+            </div>
+            <span className="text-2xl font-bold text-gray-900">{7 - myWeekSchedule.length}</span>
+            <span className="text-[10px] uppercase tracking-wider font-semibold text-gray-400">Cuti</span>
           </div>
         </div>
 
-        {/* Week Navigation */}
-        <div className="card" style={{ marginBottom: '1.5rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem', flexWrap: 'wrap' }}>
-            <button className="btn btn-outline btn-sm" onClick={goToPreviousWeek}>
-              <ChevronLeft size={18} />
-              <span className="hide-mobile">Minggu Lepas</span>
-            </button>
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ fontWeight: 700, fontSize: '1.1rem' }}>
-                {weekDates[0].toLocaleDateString('ms-MY', { day: 'numeric', month: 'short' })} - {' '}
-                {weekDates[6].toLocaleDateString('ms-MY', { day: 'numeric', month: 'short', year: 'numeric' })}
-              </div>
-              <button
-                className="btn btn-sm btn-outline"
-                onClick={goToCurrentWeek}
-                style={{ marginTop: '0.5rem' }}
+        {/* Schedule List */}
+        <div className="space-y-3">
+          {weekDates.map((date, index) => {
+            const dateStr = date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0');
+            const schedule = schedules.find(s => s.date === dateStr && s.staffId === user?.id);
+            const shift = schedule ? shifts.find(s => s.id === schedule.shiftId) : null;
+            const colleagues = schedule && shift ? getColleaguesOnShift(dateStr, shift.id) : [];
+            const today = isToday(date);
+            const isPast = date < new Date() && !today;
+
+            return (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: isPast ? 0.6 : 1, y: 0 }}
+                transition={{ delay: index * 0.05 }}
+                key={date.toISOString()}
+                className={cn(
+                  "relative overflow-hidden rounded-2xl transition-all",
+                  !schedule
+                    ? "bg-transparent border border-transparent p-2"
+                    : "bg-white shadow-sm border border-gray-100 p-0"
+                )}
               >
-                Minggu Ini
-              </button>
-            </div>
-            <button className="btn btn-outline btn-sm" onClick={goToNextWeek}>
-              <span className="hide-mobile">Minggu Depan</span>
-              <ChevronRight size={18} />
-            </button>
-          </div>
-        </div>
-
-        {/* Summary Cards */}
-        <div className="grid grid-cols-3 gap-2 mb-6 staff-stagger">
-          <div className="staff-stat-card primary p-2 sm:p-4 flex flex-col items-center justify-center text-center">
-            <div className="staff-stat-icon primary mb-1 scale-75 sm:scale-100">
-              <Calendar size={24} />
-            </div>
-            <div className="staff-stat-value text-xl sm:text-2xl">{myWeekSchedule.length}</div>
-            <div className="staff-stat-label text-[10px] sm:text-sm leading-tight">Hari Bekerja</div>
-          </div>
-
-          <div className="staff-stat-card success p-2 sm:p-4 flex flex-col items-center justify-center text-center">
-            <div className="staff-stat-icon success mb-1 scale-75 sm:scale-100">
-              <Clock size={24} />
-            </div>
-            <div className="staff-stat-value text-xl sm:text-2xl">{weeklyHours}h</div>
-            <div className="staff-stat-label text-[10px] sm:text-sm leading-tight">Jumlah Jam</div>
-          </div>
-
-          <div className="staff-stat-card cool p-2 sm:p-4 flex flex-col items-center justify-center text-center">
-            <div className="staff-stat-icon cool mb-1 scale-75 sm:scale-100">
-              <Coffee size={24} />
-            </div>
-            <div className="staff-stat-value text-xl sm:text-2xl">{7 - myWeekSchedule.length}</div>
-            <div className="staff-stat-label text-[10px] sm:text-sm leading-tight">Hari Off</div>
-          </div>
-        </div>
-
-        {/* Weekly Schedule */}
-        <div className="card">
-          <div className="card-header">
-            <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <Calendar size={20} />
-              Jadual Minggu Ini
-            </div>
-          </div>
-
-          <div className="staff-stagger" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-
-            {weekDates.map(date => {
-              const dateStr = date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0');
-              // const schedule = getScheduleForDate(date);
-              // Direct find to debug if helper is issue
-              const schedule = schedules.find(s =>
-                s.date === dateStr &&
-                s.staffId === user?.id
-              );
-
-              const shift = schedule ? shifts.find(s => s.id === schedule.shiftId) : null;
-              const colleagues = schedule && shift ? getColleaguesOnShift(dateStr, shift.id) : [];
-              const today = isToday(date);
-              const isPast = date < new Date() && !today;
-
-              if (!schedule) {
-                // COMPACT "OFF" VIEW
-                return (
-                  <div
-                    key={date.toISOString()}
-                    style={{
-                      padding: '0.5rem 0.75rem',
-                      borderRadius: 'var(--radius-md)',
-                      background: today ? 'linear-gradient(90deg, rgba(99, 102, 241, 0.1), transparent)' : 'var(--gray-50)',
-                      border: today ? '1px solid #6366f1' : '1px solid transparent',
-                      opacity: isPast ? 0.6 : 1,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      color: 'var(--text-secondary)'
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                      <div style={{ fontWeight: today ? 700 : 500, color: today ? '#6366f1' : 'inherit', width: '3.5rem' }}>
-                        {formatDate(date).split(' ')[0]} <span style={{ fontSize: '0.8em' }}>{date.getDate()}</span>
-                      </div>
-                      <div style={{ height: '1.5rem', width: '1px', background: 'var(--gray-200)' }}></div>
-                      <div style={{ fontSize: '0.875rem', fontStyle: 'italic' }}>Hari Off</div>
-                    </div>
-                    {today && <span className="text-[10px] font-bold text-indigo-500 bg-indigo-50 px-2 py-0.5 rounded-full">HARI INI</span>}
-                  </div>
-                );
-              }
-
-              // COMPACT "WORKING" VIEW
-              return (
-                <div
-                  key={date.toISOString()}
-                  style={{
-                    padding: '0.75rem',
-                    borderRadius: 'var(--radius-lg)',
-                    background: 'white',
-                    border: today ? '1px solid #6366f1' : '1px solid var(--gray-200)',
-                    boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-                    opacity: isPast ? 0.8 : 1,
-                    position: 'relative',
-                    overflow: 'hidden'
-                  }}
-                >
-                  {/* Left Decoration Bar */}
-                  {shift && (
-                    <div style={{
-                      position: 'absolute',
-                      left: 0,
-                      top: 0,
-                      bottom: 0,
-                      width: '4px',
-                      background: shift.color || '#3b82f6'
-                    }} />
-                  )}
-
-                  <div style={{ display: 'flex', gap: '0.75rem', paddingLeft: '0.5rem' }}>
-                    {/* Date Column */}
-                    <div style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      minWidth: '3.5rem',
-                      paddingRight: '0.75rem',
-                      borderRight: '1px solid var(--gray-100)'
-                    }}>
-                      <span style={{
-                        fontSize: '0.75rem',
-                        textTransform: 'uppercase',
-                        fontWeight: 600,
-                        color: today ? '#6366f1' : 'var(--text-secondary)'
-                      }}>
+                {!schedule ? (
+                  // OFF DAY VIEW
+                  <div className="flex items-center justify-between py-2 px-4 rounded-xl hover:bg-gray-50 transition-colors">
+                    <div className="flex items-center gap-4">
+                      <div className={cn("text-sm font-semibold w-12", today ? "text-primary" : "text-gray-400")}>
                         {date.toLocaleDateString('ms-MY', { weekday: 'short' })}
-                      </span>
-                      <span style={{
-                        fontSize: '1.25rem',
-                        fontWeight: 700,
-                        color: today ? '#6366f1' : 'var(--text-primary)'
-                      }}>
-                        {date.getDate()}
-                      </span>
-                      {today && (
-                        <span className="text-[9px] font-bold text-indigo-600 mt-1">
-                          HARI INI
-                        </span>
-                      )}
+                        <span className="ml-1 opacity-60 text-xs font-normal">{date.getDate()}</span>
+                      </div>
+                      <div className="h-8 w-[1px] bg-gray-200/60 mx-1"></div>
+                      <span className="text-sm font-medium text-gray-400 italic">Cuti / Off Day</span>
                     </div>
+                    {today && <span className="text-[10px] font-bold bg-primary/10 text-primary px-2 py-1 rounded-full">HARI INI</span>}
+                  </div>
+                ) : (
+                  // WORKING DAY VIEW
+                  <div className="flex">
+                    {/* Color Bar */}
+                    <div
+                      className="w-1.5 shrink-0"
+                      style={{ backgroundColor: shift?.color || '#cbd5e1' }}
+                    />
 
-                    {/* Content Column */}
-                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                      {shift ? (
-                        <>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
-                            <div style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '0.95rem' }}>
-                              Shift {shift.name}
-                            </div>
-                            <div className="flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full"
-                              style={{ background: `${shift.color}15`, color: shift.color }}>
-                              {shift.startTime < '12:00' ? <Sun size={10} /> : <Moon size={10} />}
-                              {shift.startTime} - {shift.endTime}
-                            </div>
-                          </div>
-
-                          <div className="flex flex-wrap items-center gap-3 text-xs text-gray-500">
-                            <span className="flex items-center gap-1">
-                              <Clock size={12} />
-                              {Math.round(((parseInt(shift.endTime.split(':')[0]) * 60 + parseInt(shift.endTime.split(':')[1])) -
-                                (parseInt(shift.startTime.split(':')[0]) * 60 + parseInt(shift.startTime.split(':')[1])) -
-                                shift.breakDuration) / 60)}j kerja
+                    <div className="flex-1 p-4 pl-4 sm:pl-5">
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex items-center gap-3">
+                          {/* Date Badge */}
+                          <div className={cn(
+                            "flex flex-col items-center justify-center w-12 h-12 rounded-xl border",
+                            today
+                              ? "bg-primary/5 border-primary/20 text-primary"
+                              : "bg-gray-50 border-gray-100 text-gray-600"
+                          )}>
+                            <span className="text-[10px] font-bold uppercase tracking-wider leading-none mb-0.5">
+                              {date.toLocaleDateString('ms-MY', { weekday: 'short' })}
                             </span>
-
-                            {colleagues.length > 0 && (
-                              <span className="flex items-center gap-1">
-                                <Users size={12} />
-                                {colleagues.length} rakan
-                              </span>
-                            )}
+                            <span className="text-lg font-bold leading-none">
+                              {date.getDate()}
+                            </span>
                           </div>
 
-                          {schedule.notes && (
-                            <div style={{ marginTop: '0.5rem', fontSize: '0.75rem', color: 'var(--text-secondary)', background: 'var(--gray-50)', padding: '0.25rem 0.5rem', borderRadius: '4px' }}>
-                              Note: {schedule.notes}
+                          <div>
+                            <h3 className="font-bold text-gray-900 text-base leading-tight mb-1">
+                              {shift?.name || 'Shift'}
+                            </h3>
+                            <div className="flex items-center gap-1.5">
+                              <span className={cn(
+                                "text-xs font-medium px-2 py-0.5 rounded-full flex items-center gap-1",
+                                shift && shift.startTime < '12:00' ? "bg-amber-50 text-amber-700" : "bg-indigo-50 text-indigo-700"
+                              )}>
+                                {shift && shift.startTime < '12:00' ? <Sun size={10} /> : <Moon size={10} />}
+                                {shift?.startTime} - {shift?.endTime}
+                              </span>
                             </div>
-                          )}
-                        </>
-                      ) : (
-                        <div className="text-red-500 text-sm">Shift data missing</div>
+                          </div>
+                        </div>
+
+                        {today && (
+                          <span className="text-[10px] font-bold bg-primary/10 text-primary px-2.5 py-1 rounded-full shadow-sm">
+                            HARI INI
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Footer Info */}
+                      <div className="flex items-center gap-4 text-xs text-gray-500 pl-[3.75rem]">
+                        <div className="flex items-center gap-1.5">
+                          <Clock size={14} className="text-gray-400" />
+                          <span>
+                            {shift && Math.round(((parseInt(shift.endTime.split(':')[0]) * 60 + parseInt(shift.endTime.split(':')[1])) -
+                              (parseInt(shift.startTime.split(':')[0]) * 60 + parseInt(shift.startTime.split(':')[1])) -
+                              shift.breakDuration) / 60)} Jam
+                          </span>
+                        </div>
+
+                        {colleagues.length > 0 && (
+                          <div className="flex items-center gap-1.5">
+                            <Users size={14} className="text-gray-400" />
+                            <span>{colleagues.length} Rakan</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {schedule.notes && (
+                        <div className="mt-3 ml-[3.75rem] text-xs text-gray-500 italic bg-gray-50 p-2 rounded-lg border border-gray-100">
+                          "{schedule.notes}"
+                        </div>
                       )}
                     </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
+                )}
+              </motion.div>
+            );
+          })}
         </div>
 
-        {/* Legend */}
-        {shifts.length > 0 && (
-          <div className="card" style={{ marginTop: '1.5rem' }}>
-            <div className="card-header">
-              <div className="card-title">Shift Templates</div>
-            </div>
-            <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-              {shifts.map(shift => (
-                <div
-                  key={shift.id}
-                  style={{
-                    padding: '0.5rem 1rem',
-                    borderRadius: 'var(--radius-md)',
-                    background: `${shift.color}15`,
-                    borderLeft: `4px solid ${shift.color}`,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem'
-                  }}
-                >
-                  {shift.startTime < '12:00' ? (
-                    <Sun size={16} color={shift.color} />
-                  ) : (
-                    <Moon size={16} color={shift.color} />
-                  )}
-                  <div>
-                    <div style={{ fontWeight: 600, fontSize: '0.875rem', color: shift.color }}>
-                      {shift.name}
-                    </div>
-                    <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>
-                      {shift.startTime} - {shift.endTime}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Bottom Navigation */}
       </div>
     </StaffLayout>
   );
