@@ -420,8 +420,8 @@ interface StoreState {
   addStaffRequest: (request: Omit<StaffRequest, 'id' | 'createdAt'>) => void;
   updateStaffRequest: (id: string, updates: Partial<StaffRequest>) => void;
   deleteStaffRequest: (id: string) => void;
-  completeStaffRequest: (id: string, responseNote?: string) => void;
-  rejectStaffRequest: (id: string, responseNote: string) => void;
+  completeStaffRequest: (id: string, responseNote?: string, approverName?: string) => void;
+  rejectStaffRequest: (id: string, responseNote: string, approverName?: string) => void;
   getStaffRequestsByStaff: (staffId: string) => StaffRequest[];
   getPendingStaffRequests: () => StaffRequest[];
   refreshStaffRequests: () => Promise<void>;
