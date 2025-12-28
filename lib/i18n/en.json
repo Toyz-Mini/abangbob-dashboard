@@ -42,6 +42,11 @@
     "accountSettings": "Account Settings",
     "switchOutlet": "Switch Outlet"
   },
+  "greetings": {
+    "morning": "Good Morning",
+    "afternoon": "Good Afternoon",
+    "evening": "Good Evening"
+  },
   "common": {
     "save": "Save",
     "cancel": "Cancel",

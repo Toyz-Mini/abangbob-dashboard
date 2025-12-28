@@ -42,6 +42,11 @@
     "accountSettings": "Tetapan Akaun",
     "switchOutlet": "Tukar Outlet"
   },
+  "greetings": {
+    "morning": "Selamat Pagi",
+    "afternoon": "Selamat Petang",
+    "evening": "Selamat Malam"
+  },
   "common": {
     "save": "Simpan",
     "cancel": "Batal",

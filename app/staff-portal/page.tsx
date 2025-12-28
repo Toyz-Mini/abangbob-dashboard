@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import StaffLayout from '@/components/StaffLayout';
 import { useStaffPortal, useStaff } from '@/lib/store';
 import { useAuth } from '@/lib/contexts/AuthContext';
+import { useTranslation } from '@/lib/contexts/LanguageContext';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import LoadingSpinner from '@/components/LoadingSpinner';
@@ -34,6 +35,7 @@ import { useSOPLogsRealtime, useStaffXPRealtime } from '@/lib/supabase/realtime-
 export default function StaffPortalV2() {
   const router = useRouter();
   const { currentStaff: authStaff, isStaffLoggedIn, user } = useAuth();
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (!isStaffLoggedIn && !user) {
@@ -122,9 +124,9 @@ export default function StaffPortalV2() {
 
   const getGreeting = () => {
     const hour = currentTime.getHours();
-    if (hour < 12) return 'Selamat Pagi';
-    if (hour < 18) return 'Selamat Petang';
-    return 'Selamat Malam';
+    if (hour < 12) return t('greetings.morning');
+    if (hour < 18) return t('greetings.afternoon');
+    return t('greetings.evening');
   };
 
   const handleClockIn = () => {

@@ -3,10 +3,12 @@
 import { useTheme } from '@/lib/contexts/ThemeContext';
 import { useLanguage } from '@/lib/contexts/LanguageContext';
 import { Moon, Sun, Globe } from 'lucide-react';
+import { useToast } from '@/lib/contexts/ToastContext';
 
 export default function BrandHeader() {
   const { theme, toggleTheme } = useTheme();
   const { language, toggleLanguage } = useLanguage();
+  const { showToast } = useToast();
 
   return (
     <header className="brand-header">
@@ -24,6 +26,7 @@ export default function BrandHeader() {
             onClick={() => {
               console.log('Language toggle clicked');
               toggleLanguage();
+              showToast(language === 'ms' ? 'Switched to English' : 'Tukar ke Bahasa Melayu', 'success');
             }}
             className="brand-action-btn"
             aria-label="Toggle Language"
