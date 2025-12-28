@@ -447,9 +447,9 @@ export default function HRDashboardPage() {
                         borderRadius: '10px', background: 'rgba(5, 150, 105, 0.1)', color: 'var(--success)',
                         display: 'flex', alignItems: 'center', justifyContent: 'center'
                       }}>
-                        <DollarSign size={20} />
+                        <CheckCircle size={20} />
                       </div>
-                      <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-primary)' }}>Tuntutan</div>
+                      <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-primary)' }}>Approval</div>
                     </div>
                   </Link>
                   <Link href="/hr/approvals?tab=ot">
