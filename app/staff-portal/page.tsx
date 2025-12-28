@@ -415,14 +415,13 @@ export default function StaffPortalV2() {
                 width: `${checklistProgress}%`,
                 height: '100%',
                 background: checklistProgress === 100 ? 'var(--success)' : 'var(--warning)',
-                transition: 'width 0.3s_
-                  `
+                transition: 'width 0.3s'
               }} />
             </div>
           </div>
 
           {/* Task Preview */}
-          <div style={{ fontSize: '0.8rem', color: '#6b7280' }}>
+          <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
             {checklistCompleted === 0 ? (
               <>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>☐ Bersihkan meja</div>
@@ -430,7 +429,7 @@ export default function StaffPortalV2() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>☐ Susun display</div>
               </>
             ) : (
-              <div style={{ color: '#059669', fontWeight: 500 }}>✓ Semua tugas selesai!</div>
+              <div style={{ color: 'var(--success)', fontWeight: 500 }}>✓ Semua tugas selesai!</div>
             )}
           </div>
         </div>
@@ -444,76 +443,76 @@ export default function StaffPortalV2() {
         }}>
           {/* Row 1 */}
           <Link href="/staff-portal/schedule" style={{ textDecoration: 'none' }}>
-            <div style={{ background: 'white', padding: '1rem 0.5rem', borderRadius: '12px', textAlign: 'center', border: '1px solid #e5e7eb' }}>
-              <div style={{ background: '#dbeafe', margin: '0 auto', width: '40px', height: '40px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '0.5rem' }}>
-                <Calendar size={20} color="#2563eb" />
+            <div style={{ background: 'var(--bg-primary)', padding: '1rem 0.5rem', borderRadius: '12px', textAlign: 'center', border: '1px solid var(--border-color)' }}>
+              <div style={{ background: 'var(--primary-light)', margin: '0 auto', width: '40px', height: '40px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '0.5rem' }}>
+                <Calendar size={20} color="var(--primary)" />
               </div>
-              <div style={{ fontSize: '0.75rem', fontWeight: 500, color: '#1f2937' }}>Jadual</div>
+              <div style={{ fontSize: '0.75rem', fontWeight: 500, color: 'var(--text-primary)' }}>Jadual</div>
             </div>
           </Link>
 
           <Link href="/staff-portal/leave" style={{ textDecoration: 'none' }}>
-            <div style={{ background: 'white', padding: '1rem 0.5rem', borderRadius: '12px', textAlign: 'center', border: '1px solid #e5e7eb', position: 'relative' }}>
-              <div style={{ background: '#d1fae5', margin: '0 auto', width: '40px', height: '40px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '0.5rem' }}>
-                <Plane size={20} color="#059669" />
+            <div style={{ background: 'var(--bg-primary)', padding: '1rem 0.5rem', borderRadius: '12px', textAlign: 'center', border: '1px solid var(--border-color)', position: 'relative' }}>
+              <div style={{ background: 'var(--success-light)', margin: '0 auto', width: '40px', height: '40px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '0.5rem' }}>
+                <Plane size={20} color="var(--success)" />
               </div>
-              <div style={{ fontSize: '0.75rem', fontWeight: 500, color: '#1f2937' }}>Cuti</div>
-              {pendingLeaveCount > 0 && <span style={{ position: 'absolute', top: '4px', right: '4px', width: '8px', height: '8px', background: '#dc2626', borderRadius: '50%' }} />}
+              <div style={{ fontSize: '0.75rem', fontWeight: 500, color: 'var(--text-primary)' }}>Cuti</div>
+              {pendingLeaveCount > 0 && <span style={{ position: 'absolute', top: '4px', right: '4px', width: '8px', height: '8px', background: 'var(--primary)', borderRadius: '50%' }} />}
             </div>
           </Link>
 
           <Link href="/staff-portal/claims" style={{ textDecoration: 'none' }}>
-            <div style={{ background: 'white', padding: '1rem 0.5rem', borderRadius: '12px', textAlign: 'center', border: '1px solid #e5e7eb' }}>
-              <div style={{ background: '#fef3c7', margin: '0 auto', width: '40px', height: '40px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '0.5rem' }}>
-                <DollarSign size={20} color="#d97706" />
+            <div style={{ background: 'var(--bg-primary)', padding: '1rem 0.5rem', borderRadius: '12px', textAlign: 'center', border: '1px solid var(--border-color)' }}>
+              <div style={{ background: 'var(--warning-light)', margin: '0 auto', width: '40px', height: '40px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '0.5rem' }}>
+                <DollarSign size={20} color="var(--warning)" />
               </div>
-              <div style={{ fontSize: '0.75rem', fontWeight: 500, color: '#1f2937' }}>Claim</div>
+              <div style={{ fontSize: '0.75rem', fontWeight: 500, color: 'var(--text-primary)' }}>Claim</div>
             </div>
           </Link>
 
           <Link href="/staff-portal/ot-claim" style={{ textDecoration: 'none' }}>
-            <div style={{ background: 'white', padding: '1rem 0.5rem', borderRadius: '12px', textAlign: 'center', border: '1px solid #e5e7eb' }}>
-              <div style={{ background: '#ede9fe', margin: '0 auto', width: '40px', height: '40px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '0.5rem' }}>
-                <Timer size={20} color="#7c3aed" />
+            <div style={{ background: 'var(--bg-primary)', padding: '1rem 0.5rem', borderRadius: '12px', textAlign: 'center', border: '1px solid var(--border-color)' }}>
+              <div style={{ background: 'var(--info-light)', margin: '0 auto', width: '40px', height: '40px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '0.5rem' }}>
+                <Timer size={20} color="var(--info)" />
               </div>
-              <div style={{ fontSize: '0.75rem', fontWeight: 500, color: '#1f2937' }}>OT</div>
+              <div style={{ fontSize: '0.75rem', fontWeight: 500, color: 'var(--text-primary)' }}>OT</div>
             </div>
           </Link>
 
           {/* Row 2 */}
           <Link href="/staff-portal/payslip" style={{ textDecoration: 'none' }}>
-            <div style={{ background: 'white', padding: '1rem 0.5rem', borderRadius: '12px', textAlign: 'center', border: '1px solid #e5e7eb' }}>
-              <div style={{ background: '#fee2e2', margin: '0 auto', width: '40px', height: '40px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '0.5rem' }}>
-                <Receipt size={20} color="#dc2626" />
+            <div style={{ background: 'var(--bg-primary)', padding: '1rem 0.5rem', borderRadius: '12px', textAlign: 'center', border: '1px solid var(--border-color)' }}>
+              <div style={{ background: 'var(--danger-light)', margin: '0 auto', width: '40px', height: '40px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '0.5rem' }}>
+                <Receipt size={20} color="var(--primary)" />
               </div>
-              <div style={{ fontSize: '0.75rem', fontWeight: 500, color: '#1f2937' }}>Gaji</div>
+              <div style={{ fontSize: '0.75rem', fontWeight: 500, color: 'var(--text-primary)' }}>Gaji</div>
             </div>
           </Link>
 
           <Link href="/staff-portal/swap-shift" style={{ textDecoration: 'none' }}>
-            <div style={{ background: 'white', padding: '1rem 0.5rem', borderRadius: '12px', textAlign: 'center', border: '1px solid #e5e7eb' }}>
-              <div style={{ background: '#fce7f3', margin: '0 auto', width: '40px', height: '40px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '0.5rem' }}>
-                <ArrowLeftRight size={20} color="#db2777" />
+            <div style={{ background: 'var(--bg-primary)', padding: '1rem 0.5rem', borderRadius: '12px', textAlign: 'center', border: '1px solid var(--border-color)' }}>
+              <div style={{ background: 'var(--accent-light)', margin: '0 auto', width: '40px', height: '40px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '0.5rem' }}>
+                <ArrowLeftRight size={20} color="var(--accent)" />
               </div>
-              <div style={{ fontSize: '0.75rem', fontWeight: 500, color: '#1f2937' }}>Swap</div>
+              <div style={{ fontSize: '0.75rem', fontWeight: 500, color: 'var(--text-primary)' }}>Swap</div>
             </div>
           </Link>
 
           <Link href="/equipment" style={{ textDecoration: 'none' }}>
-            <div style={{ background: 'white', padding: '1rem 0.5rem', borderRadius: '12px', textAlign: 'center', border: '1px solid #e5e7eb' }}>
-              <div style={{ background: '#fef3c7', margin: '0 auto', width: '40px', height: '40px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '0.5rem' }}>
-                <Wrench size={20} color="#d97706" />
+            <div style={{ background: 'var(--bg-primary)', padding: '1rem 0.5rem', borderRadius: '12px', textAlign: 'center', border: '1px solid var(--border-color)' }}>
+              <div style={{ background: 'var(--warning-light)', margin: '0 auto', width: '40px', height: '40px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '0.5rem' }}>
+                <Wrench size={20} color="var(--warning)" />
               </div>
-              <div style={{ fontSize: '0.75rem', fontWeight: 500, color: '#1f2937' }}>Issue</div>
+              <div style={{ fontSize: '0.75rem', fontWeight: 500, color: 'var(--text-primary)' }}>Issue</div>
             </div>
           </Link>
 
           <Link href="/inventory" style={{ textDecoration: 'none' }}>
-            <div style={{ background: 'white', padding: '1rem 0.5rem', borderRadius: '12px', textAlign: 'center', border: '1px solid #e5e7eb' }}>
-              <div style={{ background: '#dbeafe', margin: '0 auto', width: '40px', height: '40px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '0.5rem' }}>
-                <Package size={20} color="#2563eb" />
+            <div style={{ background: 'var(--bg-primary)', padding: '1rem 0.5rem', borderRadius: '12px', textAlign: 'center', border: '1px solid var(--border-color)' }}>
+              <div style={{ background: 'var(--primary-light)', margin: '0 auto', width: '40px', height: '40px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '0.5rem' }}>
+                <Package size={20} color="var(--primary)" />
               </div>
-              <div style={{ fontSize: '0.75rem', fontWeight: 500, color: '#1f2937' }}>Stock</div>
+              <div style={{ fontSize: '0.75rem', fontWeight: 500, color: 'var(--text-primary)' }}>Stock</div>
             </div>
           </Link>
         </div>
@@ -528,25 +527,25 @@ export default function StaffPortalV2() {
           border: '1px solid #e5e7eb'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
-            <Plane size={18} color="#059669" />
-            <span style={{ fontWeight: 600, fontSize: '0.9rem', color: '#1f2937' }}>Baki Cuti</span>
+            <Plane size={18} color="var(--success)" />
+            <span style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-primary)' }}>Baki Cuti</span>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem' }}>
-            <div style={{ textAlign: 'center', padding: '0.5rem', background: '#d1fae5', borderRadius: '8px' }}>
-              <div style={{ fontSize: '1.25rem', fontWeight: 700, color: '#059669' }}>{leaveBalance?.annual?.balance || 0}</div>
-              <div style={{ fontSize: '0.65rem', color: '#047857' }}>Tahunan</div>
+            <div style={{ textAlign: 'center', padding: '0.5rem', background: 'var(--success-light)', borderRadius: '8px' }}>
+              <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--success)' }}>{leaveBalance?.annual?.balance || 0}</div>
+              <div style={{ fontSize: '0.65rem', color: 'var(--success-dark)' }}>Tahunan</div>
             </div>
-            <div style={{ textAlign: 'center', padding: '0.5rem', background: '#dbeafe', borderRadius: '8px' }}>
-              <div style={{ fontSize: '1.25rem', fontWeight: 700, color: '#2563eb' }}>{leaveBalance?.medical?.balance || 0}</div>
-              <div style={{ fontSize: '0.65rem', color: '#1d4ed8' }}>MC</div>
+            <div style={{ textAlign: 'center', padding: '0.5rem', background: 'var(--primary-light)', borderRadius: '8px' }}>
+              <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--primary)' }}>{leaveBalance?.medical?.balance || 0}</div>
+              <div style={{ fontSize: '0.65rem', color: 'var(--primary-dark)' }}>MC</div>
             </div>
-            <div style={{ textAlign: 'center', padding: '0.5rem', background: '#fef3c7', borderRadius: '8px' }}>
-              <div style={{ fontSize: '1.25rem', fontWeight: 700, color: '#d97706' }}>{leaveBalance?.emergency?.balance || 0}</div>
-              <div style={{ fontSize: '0.65rem', color: '#b45309' }}>Kecemasan</div>
+            <div style={{ textAlign: 'center', padding: '0.5rem', background: 'var(--warning-light)', borderRadius: '8px' }}>
+              <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--warning)' }}>{leaveBalance?.emergency?.balance || 0}</div>
+              <div style={{ fontSize: '0.65rem', color: 'var(--warning-dark)' }}>Kecemasan</div>
             </div>
-            <div style={{ textAlign: 'center', padding: '0.5rem', background: '#f3f4f6', borderRadius: '8px' }}>
-              <div style={{ fontSize: '1.25rem', fontWeight: 700, color: '#6b7280' }}>{leaveBalance?.unpaid?.taken || 0}</div>
-              <div style={{ fontSize: '0.65rem', color: '#4b5563' }}>Unpaid</div>
+            <div style={{ textAlign: 'center', padding: '0.5rem', background: 'var(--bg-secondary)', borderRadius: '8px' }}>
+              <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-secondary)' }}>{leaveBalance?.unpaid?.taken || 0}</div>
+              <div style={{ fontSize: '0.65rem', color: 'var(--text-light)' }}>Unpaid</div>
             </div>
           </div>
         </div>
@@ -562,12 +561,12 @@ export default function StaffPortalV2() {
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <AlertCircle size={18} color="#f59e0b" />
-              <span style={{ fontWeight: 600, fontSize: '0.9rem', color: '#1f2937' }}>Permohonan</span>
+              <AlertCircle size={18} color="var(--warning)" />
+              <span style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-primary)' }}>Permohonan</span>
             </div>
             <span style={{
-              background: totalPending > 0 ? '#fef3c7' : '#d1fae5',
-              color: totalPending > 0 ? '#92400e' : '#065f46',
+              background: totalPending > 0 ? 'var(--warning-light)' : 'var(--success-light)',
+              color: totalPending > 0 ? 'var(--warning-dark)' : 'var(--success-dark)',
               padding: '0.25rem 0.5rem',
               borderRadius: '6px',
               fontSize: '0.7rem',
@@ -582,16 +581,16 @@ export default function StaffPortalV2() {
               justifyContent: 'space-between',
               alignItems: 'center',
               padding: '0.5rem',
-              background: '#f9fafb',
+              background: 'var(--bg-secondary)',
               borderRadius: '8px',
               marginBottom: '0.5rem',
               fontSize: '0.8rem'
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <Plane size={14} color="#6b7280" />
+                <Plane size={14} color="var(--text-secondary)" />
                 <span>{req.type === 'annual' ? 'Cuti Tahunan' : req.type === 'medical' ? 'MC' : 'Cuti'}</span>
               </div>
-              <span style={{ color: '#f59e0b', fontWeight: 500 }}>⏳ Menunggu</span>
+              <span style={{ color: 'var(--warning)', fontWeight: 500 }}>⏳ Menunggu</span>
             </div>
           ))}
           {pendingClaimCount > 0 && (
