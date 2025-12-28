@@ -2057,12 +2057,8 @@ export async function syncAddPosition(position: any) {
       // Check if table doesn't exist
       if (error.code === '42P01' || error.message?.includes('does not exist')) {
         console.error('[PositionSync] ⚠️ Table staff_positions does not exist! Please run the migration.');
-        alert('Error: Table staff_positions tidak wujud di database. Sila jalankan migration SQL.');
       } else if (error.code === '23505') {
         console.error('[PositionSync] ⚠️ Duplicate position name - position already exists');
-        alert('Error: Nama posisi sudah wujud. Sila gunakan nama yang berbeza.');
-      } else {
-        alert(`Error sync ke database: ${error.message}`);
       }
       throw error;
     }

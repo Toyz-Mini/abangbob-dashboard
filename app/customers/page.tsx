@@ -8,6 +8,7 @@ import { useCallback } from 'react';
 import { Customer } from '@/lib/types';
 import Modal from '@/components/Modal';
 import LoadingSpinner from '@/components/LoadingSpinner';
+import { useToast } from '@/lib/contexts/ToastContext';
 import {
   UserCheck,
   Plus,
@@ -51,6 +52,7 @@ export default function CustomersPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterSegment, setFilterSegment] = useState<'all' | 'new' | 'regular' | 'vip'>('all');
+  const { showToast } = useToast();
 
   // Form state
   const [formData, setFormData] = useState({
@@ -144,13 +146,13 @@ export default function CustomersPage() {
 
   const handleAddCustomer = async () => {
     if (!formData.name.trim() || !formData.phone.trim()) {
-      alert('Sila masukkan nama dan nombor telefon');
+      showToast('Sila masukkan nama dan nombor telefon', 'warning');
       return;
     }
 
     // Check for duplicate phone
     if (customers.some(c => c.phone === formData.phone)) {
-      alert('Nombor telefon ini sudah didaftarkan');
+      showToast('Nombor telefon ini sudah didaftarkan', 'warning');
       return;
     }
 
@@ -187,7 +189,7 @@ export default function CustomersPage() {
 
   const handlePointsAction = async () => {
     if (!selectedCustomer || pointsForm.points <= 0) {
-      alert('Sila masukkan jumlah mata ganjaran yang sah');
+      showToast('Sila masukkan jumlah mata ganjaran yang sah', 'warning');
       return;
     }
 
@@ -199,7 +201,7 @@ export default function CustomersPage() {
     } else {
       const success = redeemLoyaltyPoints(selectedCustomer.id, pointsForm.points);
       if (!success) {
-        alert('Mata ganjaran tidak mencukupi');
+        showToast('Mata ganjaran tidak mencukupi', 'error');
         setIsProcessing(false);
         return;
       }

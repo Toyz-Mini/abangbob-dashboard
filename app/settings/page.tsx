@@ -8,6 +8,7 @@ import Modal from '@/components/Modal';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import DataMigration from '@/components/DataMigration';
 import { useAuth } from '@/lib/contexts/AuthContext';
+import { useToast } from '@/lib/contexts/ToastContext';
 import LogoUpload from '@/components/LogoUpload';
 import ReceiptDesigner from '@/components/ReceiptDesigner';
 import SupabaseSetupChecker from '@/components/SupabaseSetupChecker';
@@ -337,6 +338,7 @@ export default function SettingsPage() {
   const { isInitialized } = useStore();
   const { currentStaff, isSupabaseConnected, logoutStaff } = useAuth();
   const { t, language } = useTranslation();
+  const { showToast } = useToast();
   const [activeSection, setActiveSection] = useState<SettingSection>('outlet');
   const [isSaving, setIsSaving] = useState(false);
   const [showResetModal, setShowResetModal] = useState(false);
@@ -611,10 +613,10 @@ export default function SettingsPage() {
       // Also save receipt settings using the existing service
       saveReceiptSettings(receiptSettings);
 
-      alert(t('settings.saveSuccess'));
+      showToast(t('settings.saveSuccess'), 'success');
     } catch (error) {
       console.error('[Settings] Save error:', error);
-      alert('Gagal menyimpan settings. Sila cuba lagi.');
+      showToast('Gagal menyimpan settings. Sila cuba lagi.', 'error');
     } finally {
       setIsSaving(false);
     }
@@ -654,7 +656,7 @@ export default function SettingsPage() {
     });
 
     setShowResetModal(false);
-    alert(t('settings.resetSuccess'));
+    showToast(t('settings.resetSuccess'), 'success');
     window.location.reload();
   };
 
@@ -694,13 +696,13 @@ export default function SettingsPage() {
       const connected = await thermalPrinter.connect();
       if (connected) {
         setPrinterSettings(prev => ({ ...prev, isConnected: true }));
-        alert('Printer berjaya disambung!');
+        showToast('Printer berjaya disambung!', 'success');
       } else {
-        alert('Gagal menyambung printer. Sila pastikan printer disambung dan cuba lagi.');
+        showToast('Gagal menyambung printer. Sila pastikan printer disambung dan cuba lagi.', 'error');
       }
     } catch (error) {
       console.error('Printer connection error:', error);
-      alert('Ralat menyambung printer. Pastikan browser menyokong Web Serial API.');
+      showToast('Ralat menyambung printer. Pastikan browser menyokong Web Serial API.', 'error');
     } finally {
       setIsPrinterConnecting(false);
     }
@@ -720,19 +722,19 @@ export default function SettingsPage() {
         await thermalPrinter.printText(new Date().toLocaleString('ms-MY'), { align: 'center' });
         await thermalPrinter.feedLines(3);
         await thermalPrinter.cutPaper();
-        alert('Test print berjaya!');
+        showToast('Test print berjaya!', 'success');
       } catch (error) {
         console.error('Test print error:', error);
-        alert('Gagal mencetak. Sila cuba lagi.');
+        showToast('Gagal mencetak. Sila cuba lagi.', 'error');
       }
     } else {
-      alert('Sila sambung printer terlebih dahulu.');
+      showToast('Sila sambung printer terlebih dahulu.', 'warning');
     }
   };
 
   const handleTestDrawer = async () => {
     if (printerSettings.useRawbt) {
-      alert('Untuk mode RawBT, sila gunakan butang "Test Print" untuk menguji drawer (drawer dibuka selepas print).');
+      showToast('Untuk mode RawBT, sila gunakan butang "Test Print" untuk menguji drawer (drawer dibuka selepas print).', 'info');
       return;
     }
 
@@ -744,13 +746,13 @@ export default function SettingsPage() {
         await new Promise(r => setTimeout(r, 100));
         // Try Pin 5
         await thermalPrinter.openCashDrawer(5);
-        alert('Signal buka drawer dihantar ke Pin 2 & 5!');
+        showToast('Signal buka drawer dihantar ke Pin 2 & 5!', 'success');
       } catch (error) {
         console.error('Drawer error:', error);
-        alert('Gagal membuka drawer. Sila pastikan drawer disambung ke printer.');
+        showToast('Gagal membuka drawer. Sila pastikan drawer disambung ke printer.', 'error');
       }
     } else {
-      alert('Sila sambung printer terlebih dahulu.');
+      showToast('Sila sambung printer terlebih dahulu.', 'warning');
     }
   };
 
@@ -1175,7 +1177,7 @@ export default function SettingsPage() {
                   onSettingsChange={(newSettings) => setReceiptSettings(newSettings)}
                   onSave={() => {
                     saveReceiptSettings(receiptSettings);
-                    alert('Tetapan receipt berjaya disimpan!');
+                    showToast('Tetapan receipt berjaya disimpan!', 'success');
                   }}
                 />
               </div>
@@ -2757,7 +2759,7 @@ export default function SettingsPage() {
                   className="btn btn-primary"
                   onClick={() => {
                     localStorage.setItem('payslipBranding', JSON.stringify(payslipBranding));
-                    alert('Tetapan slip gaji berjaya disimpan!');
+                    showToast('Tetapan slip gaji berjaya disimpan!', 'success');
                   }}
                   style={{ alignSelf: 'flex-start' }}
                 >
@@ -3142,7 +3144,7 @@ export default function SettingsPage() {
               className="btn btn-primary"
               onClick={() => {
                 if (!paymentForm.name.trim() || !paymentForm.code.trim()) {
-                  alert('Sila masukkan nama dan kod');
+                  showToast('Sila masukkan nama dan kod', 'warning');
                   return;
                 }
                 if (paymentModalType === 'add-payment') {
@@ -3324,7 +3326,7 @@ export default function SettingsPage() {
               className="btn btn-primary"
               onClick={() => {
                 if (!taxForm.name.trim()) {
-                  alert('Sila masukkan nama cukai');
+                  showToast('Sila masukkan nama cukai', 'warning');
                   return;
                 }
                 if (taxModalType === 'add-tax') {
