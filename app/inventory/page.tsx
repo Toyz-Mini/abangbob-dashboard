@@ -93,11 +93,12 @@ export default function InventoryPage() {
     customReason: '',
   });
 
-  const lowStock = inventory.filter(item => item.currentQuantity <= item.minQuantity);
+  const lowStock = (inventory || []).filter(item => item && item.currentQuantity <= item.minQuantity);
 
-  const filteredStock = inventory.filter(item => {
+  const filteredStock = (inventory || []).filter(item => {
+    if (!item || !item.name) return false;
     const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.category.toLowerCase().includes(searchTerm.toLowerCase());
+      (item.category && item.category.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesCategory = filterCategory === 'All' || item.category === filterCategory;
     return matchesSearch && matchesCategory;
   });
@@ -338,7 +339,7 @@ export default function InventoryPage() {
               <div className="text-right">
                 <div className="text-sm text-secondary">Inventory Logic</div>
                 <div className={`text-lg font-bold ${weatherForecast.impactFactor < 1 ? 'text-red-500' : weatherForecast.impactFactor > 1 ? 'text-green-500' : 'text-gray-700'}`}>
-                  {weatherForecast.impactFactor === 1 ? 'Normal Order' : weatherForecast.impactFactor < 1 ? `Kurangkan ${(1 - weatherForecast.impactFactor) * 100}%` : `Lebihkan ${(weatherForecast.impactFactor - 1) * 100}%`}
+                  {weatherForecast.impactFactor === 1 ? 'Normal Order' : weatherForecast.impactFactor < 1 ? `Kurangkan ${(1 - (weatherForecast.impactFactor || 1)) * 100}%` : `Lebihkan ${((weatherForecast.impactFactor || 1) - 1) * 100}%`}
                 </div>
               </div>
             </div>

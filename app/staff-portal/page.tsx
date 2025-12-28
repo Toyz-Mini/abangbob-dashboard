@@ -187,13 +187,21 @@ export default function StaffPortalV2() {
         paddingBottom: '5rem'
       }}>
         {/* Header */}
-        {/* Notification Bell Only (Logo moved to BrandHeader) */}
         <div style={{
           display: 'flex',
-          justifyContent: 'flex-end', // Aligned to right
-          alignItems: 'center',
-          marginBottom: '1rem'
+          justifyContent: 'space-between',
+          alignItems: 'flex-start', // Align tp top
+          marginBottom: '1.5rem'
         }}>
+          <div>
+            <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.25rem' }}>
+              {getGreeting()}, {currentStaff.name.split(' ')[0]}!
+            </h1>
+            <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+              {currentTime.toLocaleDateString('ms-MY', { weekday: 'long', day: 'numeric', month: 'long' })}
+            </p>
+          </div>
+
           <button
             style={{
               background: 'var(--bg-primary)',
@@ -205,7 +213,8 @@ export default function StaffPortalV2() {
               alignItems: 'center',
               justifyContent: 'center',
               cursor: 'pointer',
-              position: 'relative'
+              position: 'relative',
+              flexShrink: 0
             }}
           >
             <Bell size={20} color="var(--text-secondary)" />
@@ -227,22 +236,6 @@ export default function StaffPortalV2() {
               }}>{totalPending}</span>
             )}
           </button>
-        </div>
-
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '1.5rem'
-        }}>
-          <div>
-            <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.25rem' }}>
-              {getGreeting()}, {currentStaff.name.split(' ')[0]}!
-            </h1>
-            <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
-              {currentTime.toLocaleDateString('ms-MY', { weekday: 'long', day: 'numeric', month: 'long' })}
-            </p>
-          </div>
         </div>
 
         {/* Clock-In Card */}
