@@ -155,7 +155,7 @@ export default function RequestDetailModal({
                 )}
 
                 {/* Action Buttons for Approver */}
-                {isApprover && request.status === 'pending' && onApprove && onReject && (
+                {isApprover && (request.status === 'pending' || (request.status === 'in_progress' && request.category === 'shift_swap')) && onApprove && onReject && (
                     <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid var(--border-color)' }}>
                         <button
                             className="btn btn-danger"

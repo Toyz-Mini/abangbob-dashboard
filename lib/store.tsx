@@ -4271,7 +4271,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, [staffRequests, staff]);
 
   const getPendingStaffRequests = useCallback((): StaffRequest[] => {
-    return staffRequests.filter(r => r.status === 'pending');
+    return staffRequests.filter(r =>
+      r.status === 'pending' ||
+      (r.category === 'shift_swap' && r.status === 'in_progress')
+    );
   }, [staffRequests]);
 
   // Staff Portal - Announcement actions

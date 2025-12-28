@@ -178,7 +178,10 @@ export default function ApprovalsPage() {
   const historyClaims = (claimRequests || []).filter(r => r.status !== 'pending').sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   const historyOT = (otClaims || []).filter(r => r.status !== 'pending').sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   const historyAdvances = (salaryAdvances || []).filter(r => r.status !== 'pending').sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-  const historyRequests = (staffRequests || []).filter(r => r.status !== 'pending').sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  const historyRequests = (staffRequests || []).filter(r => {
+    if (r.category === 'shift_swap' && r.status === 'in_progress') return false;
+    return r.status !== 'pending';
+  }).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
   const totalPending = pendingLeave.length + pendingClaims.length + pendingOT.length + pendingAdvances.length + pendingRequests.length + pendingUsers.length;
 
@@ -395,7 +398,7 @@ export default function ApprovalsPage() {
                     disabled={isProcessing}
                   >
                     <CheckCircle size={16} />
-                    {type === 'requests' ? 'Selesai' : 'Lulus'}
+                    {type === 'requests' && item.status === 'pending' ? 'Selesai' : 'Lulus'}
                   </button>
                   <button
                     className="btn btn-danger btn-sm"
