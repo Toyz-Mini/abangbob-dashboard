@@ -29,21 +29,30 @@ export async function POST(request: NextRequest) {
 
         console.log('[SendVerification] Generated token, saving to database...');
 
-        // Save verification token - use UPSERT on identifier (email) instead of id
+        // Save verification token - DELETE existing first, then INSERT new
         try {
+            // First, delete any existing tokens for this email
             await query(
+                `DELETE FROM "verification" WHERE LOWER(identifier) = LOWER($1)`,
+                [email]
+            );
+            console.log('[SendVerification] Cleared old tokens for email');
+
+            // Then insert new token
+            const insertResult = await query(
                 `INSERT INTO "verification" (id, identifier, value, "expiresAt", "createdAt", "updatedAt")
                  VALUES ($1, $2, $3, $4, NOW(), NOW())
-                 ON CONFLICT (identifier) DO UPDATE SET 
-                     value = EXCLUDED.value, 
-                     "expiresAt" = EXCLUDED."expiresAt", 
-                     "updatedAt" = NOW()`,
+                 RETURNING id`,
                 [verificationId, email, token, expiresAt]
             );
-            console.log('[SendVerification] Token saved to database');
+            console.log('[SendVerification] ✅ Token saved to database:', insertResult.rows[0]);
         } catch (dbError: any) {
-            console.error('[SendVerification] Database error:', dbError.message);
-            // Continue anyway - the email link might still work if we can send it
+            console.error('[SendVerification] ❌ Database error:', dbError.message);
+            // Don't continue - if we can't save token, verification won't work
+            return NextResponse.json(
+                { error: 'Failed to save verification token', details: dbError.message },
+                { status: 500 }
+            );
         }
 
         // Create verification URL
