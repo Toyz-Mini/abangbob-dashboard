@@ -31,7 +31,7 @@ export default function StaffLayout({ children, showHeader = false }: StaffLayou
 
 
   return (
-    <div className="min-h-screen light-brand flex flex-col">
+    <div className="min-h-screen flex flex-col">
       {/* Global Brand Header */}
       <BrandHeader />
 

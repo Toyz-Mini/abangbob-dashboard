@@ -187,22 +187,13 @@ export default function StaffPortalV2() {
         paddingBottom: '5rem'
       }}>
         {/* Header */}
+        {/* Notification Bell Only (Logo moved to BrandHeader) */}
         <div style={{
           display: 'flex',
-          justifyContent: 'space-between',
+          justifyContent: 'flex-end', // Aligned to right
           alignItems: 'center',
           marginBottom: '1rem'
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <img
-              src="/logo.png"
-              alt="AbangBob"
-              style={{ width: '40px', height: '40px' }}
-            />
-            <span style={{ fontWeight: 800, fontSize: '1.25rem', color: 'var(--primary)', letterSpacing: '-0.025em' }}>
-              AbangBob
-            </span>
-          </div>
           <button
             style={{
               background: 'var(--bg-primary)',

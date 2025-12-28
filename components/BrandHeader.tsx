@@ -5,42 +5,48 @@ import { useLanguage } from '@/lib/contexts/LanguageContext';
 import { Moon, Sun, Globe } from 'lucide-react';
 
 export default function BrandHeader() {
-    const { theme, toggleTheme } = useTheme();
-    const { language, toggleLanguage } = useLanguage();
+  const { theme, toggleTheme } = useTheme();
+  const { language, toggleLanguage } = useLanguage();
 
-    return (
-        <header className="brand-header">
-            <div className="brand-header-content">
-                {/* Brand / Logo */}
-                <div className="brand-logo">
-                    <div className="brand-logo-icon">AB</div>
-                    <span className="brand-name">AbangBob</span>
-                </div>
+  return (
+    <header className="brand-header">
+      <div className="brand-header-content">
+        {/* Brand / Logo */}
+        <div className="brand-logo">
+          <div className="brand-logo-icon">AB</div>
+          <span className="brand-name">AbangBob</span>
+        </div>
 
-                {/* Toggles */}
-                <div className="brand-actions">
-                    {/* Language Toggle */}
-                    <button
-                        onClick={toggleLanguage}
-                        className="brand-action-btn"
-                        aria-label="Toggle Language"
-                    >
-                        <Globe size={18} />
-                        <span className="lang-text">{language.toUpperCase()}</span>
-                    </button>
+        {/* Toggles */}
+        <div className="brand-actions">
+          <button
+            type="button"
+            onClick={() => {
+              console.log('Language toggle clicked');
+              toggleLanguage();
+            }}
+            className="brand-action-btn"
+            aria-label="Toggle Language"
+          >
+            <Globe size={18} />
+            <span className="lang-text">{language ? language.toUpperCase() : 'MS'}</span>
+          </button>
 
-                    {/* Theme Toggle */}
-                    <button
-                        onClick={toggleTheme}
-                        className="brand-action-btn"
-                        aria-label="Toggle Theme"
-                    >
-                        {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
-                    </button>
-                </div>
-            </div>
+          <button
+            type="button"
+            onClick={() => {
+              console.log('Theme toggle clicked');
+              toggleTheme();
+            }}
+            className="brand-action-btn"
+            aria-label="Toggle Theme"
+          >
+            {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+          </button>
+        </div>
+      </div>
 
-            <style jsx>{`
+      <style jsx>{`
         .brand-header {
           position: sticky;
           top: 0;
@@ -126,6 +132,6 @@ export default function BrandHeader() {
           }
         }
       `}</style>
-        </header>
-    );
+    </header>
+  );
 }
