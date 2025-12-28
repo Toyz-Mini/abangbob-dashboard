@@ -31,7 +31,7 @@ function LeaveBalanceRing({
 }: {
   balance: number;
   total: number;
-  type: 'annual' | 'medical' | 'emergency' | 'unpaid' | 'replacement';
+  type: 'annual' | 'medical' | 'emergency' | 'unpaid' | 'replacement' | 'compassionate';
   label: string;
   detail: string;
 }) {
@@ -47,7 +47,8 @@ function LeaveBalanceRing({
     medical: 'var(--success)',
     emergency: 'var(--warning)',
     unpaid: 'var(--text-secondary)',
-    replacement: 'var(--accent)'
+    replacement: 'var(--accent)',
+    compassionate: 'var(--info)'
   };
 
   return (
@@ -166,11 +167,11 @@ export default function LeavePage() {
 
             <div className="grid grid-cols-2 md:grid-cols-4 staff-stagger" style={{ gap: '1rem' }}>
               <LeaveBalanceRing
-                balance={leaveBalance.annual?.balance || 0}
-                total={leaveBalance.annual?.entitled || 0}
+                balance={leaveBalance.annual?.balance ?? 0}
+                total={leaveBalance.annual?.entitled ?? 0}
                 type="annual"
                 label="Cuti Tahunan"
-                detail={`Diambil: ${leaveBalance.annual?.taken || 0} | Pending: ${leaveBalance.annual?.pending || 0}`}
+                detail={`Diambil: ${leaveBalance.annual?.taken ?? 0} | Pending: ${leaveBalance.annual?.pending ?? 0}`}
               />
 
               <LeaveBalanceRing
@@ -182,23 +183,31 @@ export default function LeavePage() {
               />
 
               <LeaveBalanceRing
-                balance={leaveBalance.medical?.balance || 0}
-                total={leaveBalance.medical?.entitled || 0}
+                balance={leaveBalance.medical?.balance ?? 0}
+                total={leaveBalance.medical?.entitled ?? 0}
                 type="medical"
                 label="Cuti Sakit"
-                detail={`Diambil: ${leaveBalance.medical?.taken || 0}`}
+                detail={`Diambil: ${leaveBalance.medical?.taken ?? 0}`}
               />
 
               <LeaveBalanceRing
-                balance={leaveBalance.emergency?.balance || 0}
-                total={leaveBalance.emergency?.entitled || 0}
+                balance={leaveBalance.emergency?.balance ?? 0}
+                total={leaveBalance.emergency?.entitled ?? 0}
                 type="emergency"
                 label="Cuti Kecemasan"
-                detail={`Diambil: ${leaveBalance.emergency?.taken || 0}`}
+                detail={`Diambil: ${leaveBalance.emergency?.taken ?? 0}`}
               />
 
               <LeaveBalanceRing
-                balance={leaveBalance.unpaid?.taken || 0}
+                balance={leaveBalance.compassionate?.balance ?? 0}
+                total={leaveBalance.compassionate?.entitled ?? 0}
+                type="compassionate"
+                label="Cuti Ehsan"
+                detail={`Diambil: ${leaveBalance.compassionate?.taken ?? 0}`}
+              />
+
+              <LeaveBalanceRing
+                balance={leaveBalance.unpaid?.taken ?? 0}
                 total={5}
                 type="unpaid"
                 label="Tanpa Gaji"

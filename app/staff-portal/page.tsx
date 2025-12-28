@@ -526,21 +526,25 @@ export default function StaffPortalV2() {
             <Plane size={18} color="var(--primary)" />
             <span style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-primary)' }}>Baki Cuti</span>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.75rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(70px, 1fr))', gap: '0.75rem' }}>
             <div style={{ textAlign: 'center', padding: '0.75rem 0.25rem', background: 'var(--bg-secondary)', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
-              <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--primary)' }}>{leaveBalance?.annual?.balance || 0}</div>
+              <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--primary)' }}>{leaveBalance?.annual?.balance ?? 0}</div>
               <div style={{ fontSize: '0.6rem', color: 'var(--text-secondary)', fontWeight: 600, textTransform: 'uppercase' }}>Annual</div>
             </div>
             <div style={{ textAlign: 'center', padding: '0.75rem 0.25rem', background: 'var(--bg-secondary)', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
-              <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--primary)' }}>{leaveBalance?.medical?.balance || 0}</div>
+              <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--primary)' }}>{leaveBalance?.medical?.balance ?? 0}</div>
               <div style={{ fontSize: '0.6rem', color: 'var(--text-secondary)', fontWeight: 600, textTransform: 'uppercase' }}>MC</div>
             </div>
             <div style={{ textAlign: 'center', padding: '0.75rem 0.25rem', background: 'var(--bg-secondary)', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
-              <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--primary)' }}>{leaveBalance?.emergency?.balance || 0}</div>
+              <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--primary)' }}>{leaveBalance?.emergency?.balance ?? 0}</div>
               <div style={{ fontSize: '0.6rem', color: 'var(--text-secondary)', fontWeight: 600, textTransform: 'uppercase' }}>EL</div>
             </div>
             <div style={{ textAlign: 'center', padding: '0.75rem 0.25rem', background: 'var(--bg-secondary)', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
-              <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-secondary)' }}>{leaveBalance?.unpaid?.taken || 0}</div>
+              <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--primary)' }}>{leaveBalance?.compassionate?.balance ?? 0}</div>
+              <div style={{ fontSize: '0.6rem', color: 'var(--text-secondary)', fontWeight: 600, textTransform: 'uppercase' }}>Ehsan</div>
+            </div>
+            <div style={{ textAlign: 'center', padding: '0.75rem 0.25rem', background: 'var(--bg-secondary)', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+              <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-secondary)' }}>{leaveBalance?.unpaid?.taken ?? 0}</div>
               <div style={{ fontSize: '0.6rem', color: 'var(--text-light)', fontWeight: 600, textTransform: 'uppercase' }}>Unpaid</div>
             </div>
           </div>

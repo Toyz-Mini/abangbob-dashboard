@@ -471,14 +471,14 @@ export default function ProfilePage() {
             <div className="leave-balance-item">
               <div className="leave-balance-label">Cuti Tahunan</div>
               <div className="leave-balance-value">
-                <span className="leave-balance-current">{leaveBalance?.annual.balance || currentStaff.leaveEntitlement?.annual || 14}</span>
-                <span className="leave-balance-total">/ {currentStaff.leaveEntitlement?.annual || 14} hari</span>
+                <span className="leave-balance-current">{leaveBalance?.annual.balance ?? currentStaff.leaveEntitlement?.annual ?? 14}</span>
+                <span className="leave-balance-total">/ {leaveBalance?.annual.entitled ?? currentStaff.leaveEntitlement?.annual ?? 14} hari</span>
               </div>
               <div className="leave-balance-bar">
                 <div
                   className="leave-balance-fill"
                   style={{
-                    width: `${((leaveBalance?.annual.balance || currentStaff.leaveEntitlement?.annual || 14) / (currentStaff.leaveEntitlement?.annual || 14)) * 100}%`,
+                    width: `${((leaveBalance?.annual.balance ?? 0) / (leaveBalance?.annual.entitled ?? currentStaff.leaveEntitlement?.annual ?? 14)) * 100}%`,
                     background: 'var(--primary)'
                   }}
                 />
@@ -488,14 +488,14 @@ export default function ProfilePage() {
             <div className="leave-balance-item">
               <div className="leave-balance-label">Cuti Sakit (MC)</div>
               <div className="leave-balance-value">
-                <span className="leave-balance-current">{leaveBalance?.medical.balance || currentStaff.leaveEntitlement?.medical || 14}</span>
-                <span className="leave-balance-total">/ {currentStaff.leaveEntitlement?.medical || 14} hari</span>
+                <span className="leave-balance-current">{leaveBalance?.medical.balance ?? currentStaff.leaveEntitlement?.medical ?? 14}</span>
+                <span className="leave-balance-total">/ {leaveBalance?.medical.entitled ?? currentStaff.leaveEntitlement?.medical ?? 14} hari</span>
               </div>
               <div className="leave-balance-bar">
                 <div
                   className="leave-balance-fill"
                   style={{
-                    width: `${((leaveBalance?.medical.balance || currentStaff.leaveEntitlement?.medical || 14) / (currentStaff.leaveEntitlement?.medical || 14)) * 100}%`,
+                    width: `${((leaveBalance?.medical.balance ?? 0) / (leaveBalance?.medical.entitled ?? currentStaff.leaveEntitlement?.medical ?? 14)) * 100}%`,
                     background: 'var(--success)'
                   }}
                 />
@@ -505,14 +505,14 @@ export default function ProfilePage() {
             <div className="leave-balance-item">
               <div className="leave-balance-label">Cuti Kecemasan</div>
               <div className="leave-balance-value">
-                <span className="leave-balance-current">{leaveBalance?.emergency.balance || currentStaff.leaveEntitlement?.emergency || 3}</span>
-                <span className="leave-balance-total">/ {currentStaff.leaveEntitlement?.emergency || 3} hari</span>
+                <span className="leave-balance-current">{leaveBalance?.emergency.balance ?? currentStaff.leaveEntitlement?.emergency ?? 3}</span>
+                <span className="leave-balance-total">/ {leaveBalance?.emergency.entitled ?? currentStaff.leaveEntitlement?.emergency ?? 3} hari</span>
               </div>
               <div className="leave-balance-bar">
                 <div
                   className="leave-balance-fill"
                   style={{
-                    width: `${((leaveBalance?.emergency.balance || currentStaff.leaveEntitlement?.emergency || 3) / (currentStaff.leaveEntitlement?.emergency || 3)) * 100}%`,
+                    width: `${((leaveBalance?.emergency.balance ?? 0) / (leaveBalance?.emergency.entitled ?? currentStaff.leaveEntitlement?.emergency ?? 3)) * 100}%`,
                     background: 'var(--warning)'
                   }}
                 />
@@ -522,14 +522,14 @@ export default function ProfilePage() {
             <div className="leave-balance-item">
               <div className="leave-balance-label">Cuti Ehsan</div>
               <div className="leave-balance-value">
-                <span className="leave-balance-current">{leaveBalance?.compassionate.balance || currentStaff.leaveEntitlement?.compassionate || 3}</span>
-                <span className="leave-balance-total">/ {currentStaff.leaveEntitlement?.compassionate || 3} hari</span>
+                <span className="leave-balance-current">{leaveBalance?.compassionate.balance ?? currentStaff.leaveEntitlement?.compassionate ?? 3}</span>
+                <span className="leave-balance-total">/ {leaveBalance?.compassionate.entitled ?? currentStaff.leaveEntitlement?.compassionate ?? 3} hari</span>
               </div>
               <div className="leave-balance-bar">
                 <div
                   className="leave-balance-fill"
                   style={{
-                    width: `${((leaveBalance?.compassionate.balance || currentStaff.leaveEntitlement?.compassionate || 3) / (currentStaff.leaveEntitlement?.compassionate || 3)) * 100}%`,
+                    width: `${((leaveBalance?.compassionate.balance ?? 0) / (leaveBalance?.compassionate.entitled ?? currentStaff.leaveEntitlement?.compassionate ?? 3)) * 100}%`,
                     background: 'var(--info)'
                   }}
                 />
