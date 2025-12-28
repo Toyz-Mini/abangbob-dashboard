@@ -77,13 +77,8 @@ export default function SwapShiftPage() {
     const mySchedule = myUpcomingSchedules.find(s => s.date === selectedDate);
     if (!mySchedule) return [];
 
-    // Find colleagues who are NOT working on this date
-    const workingOnDate = schedules
-      .filter(s => s.date === selectedDate)
-      .map(s => s.staffId);
-
     return staff
-      .filter(s => s.id !== user.id && s.status === 'active' && !workingOnDate.includes(s.id))
+      .filter(s => s.id !== user.id && s.status === 'active')
       .map(s => ({
         ...s,
         // Get their schedules for swap options
