@@ -1,14 +1,13 @@
 'use client';
 
 import { useMemo, useCallback, useState, useEffect } from 'react';
-import MainLayout from '@/components/MainLayout';
+import StaffLayout from '@/components/StaffLayout';
 import { useStaffPortal, useStaff } from '@/lib/store';
 import { useLeaveRequestsRealtime, useReplacementLeavesRealtime } from '@/lib/supabase/realtime-hooks';
 import { getLeaveTypeLabel, getStatusLabel, getStatusColor } from '@/lib/staff-portal-data';
 import { getReplacementLeaveStats } from '@/lib/supabase/operations';
 import Link from 'next/link';
 import LoadingSpinner from '@/components/LoadingSpinner';
-import StaffPortalNav from '@/components/StaffPortalNav';
 import {
   Plane,
   Plus,
@@ -44,11 +43,11 @@ function LeaveBalanceRing({
   const offset = circumference - (percentage / 100) * circumference;
 
   const colors = {
-    annual: '#6366f1',
-    medical: '#3b82f6',
-    emergency: '#f59e0b',
-    unpaid: '#94a3b8',
-    replacement: '#8b5cf6'
+    annual: 'var(--primary)',
+    medical: 'var(--success)',
+    emergency: 'var(--warning)',
+    unpaid: 'var(--text-secondary)',
+    replacement: 'var(--accent)'
   };
 
   return (
@@ -128,16 +127,16 @@ export default function LeavePage() {
 
   if (!isInitialized || !currentStaff) {
     return (
-      <MainLayout>
+      <StaffLayout>
         <div className="loading-container">
           <LoadingSpinner />
         </div>
-      </MainLayout>
+      </StaffLayout>
     );
   }
 
   return (
-    <MainLayout>
+    <StaffLayout>
       <div className="staff-portal animate-fade-in">
         <div className="page-header">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
@@ -288,8 +287,7 @@ export default function LeavePage() {
           )}
         </div>
 
-        <StaffPortalNav currentPage="leave" pendingCount={pendingCount} />
       </div>
-    </MainLayout>
+    </StaffLayout>
   );
 }

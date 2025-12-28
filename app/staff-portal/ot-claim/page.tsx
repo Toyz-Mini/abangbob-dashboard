@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import MainLayout from '@/components/MainLayout';
+import StaffLayout from '@/components/StaffLayout';
 import { useStaffPortal } from '@/lib/store';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import Modal from '@/components/Modal';
@@ -134,18 +134,18 @@ export default function OTClaimPage() {
 
     if (!isStaffLoggedIn || !currentStaff) {
         return (
-            <MainLayout>
+            <StaffLayout>
                 <div className="card" style={{ textAlign: 'center', padding: '3rem' }}>
                     <AlertCircle size={48} color="var(--warning)" style={{ marginBottom: '1rem' }} />
                     <h2>Sila Log Masuk</h2>
                     <p>Anda perlu log masuk sebagai staf untuk mengakses halaman ini.</p>
                 </div>
-            </MainLayout>
+            </StaffLayout>
         );
     }
 
     return (
-        <MainLayout>
+        <StaffLayout>
             <div className="animate-fade-in">
                 <div className="page-header">
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
@@ -328,6 +328,6 @@ export default function OTClaimPage() {
                     </div>
                 </Modal>
             </div>
-        </MainLayout>
+        </StaffLayout>
     );
 }

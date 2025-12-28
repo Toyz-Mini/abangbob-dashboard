@@ -14,18 +14,26 @@ import {
   MoreHorizontal,
   LogOut
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import Sheet from './Sheet';
 import { useAuth } from '@/lib/contexts/AuthContext';
+import { useStaffPortal } from '@/lib/store';
 
 interface StaffPortalNavProps {
   currentPage?: string;
   pendingCount?: number;
 }
 
-export default function StaffPortalNav({ currentPage, pendingCount = 0 }: StaffPortalNavProps) {
+export default function StaffPortalNav({ currentPage, pendingCount: propPendingCount }: StaffPortalNavProps) {
   const pathname = usePathname();
-  const { logoutStaff } = useAuth();
+  const { logoutStaff, currentStaff } = useAuth();
+  const { getStaffLeaveRequests } = useStaffPortal();
+
+  const pendingCount = useMemo(() => {
+    if (propPendingCount !== undefined) return propPendingCount;
+    if (!currentStaff) return 0;
+    return getStaffLeaveRequests(currentStaff.id).filter(r => r.status === 'pending').length;
+  }, [propPendingCount, currentStaff, getStaffLeaveRequests]);
 
   const handleLogout = async () => {
     try {

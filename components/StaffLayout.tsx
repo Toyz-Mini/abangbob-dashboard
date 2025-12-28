@@ -4,6 +4,7 @@ import { ReactNode } from 'react';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { LogOut, User } from 'lucide-react';
+import StaffPortalNav from '@/components/StaffPortalNav';
 
 interface StaffLayoutProps {
   children: ReactNode;
@@ -52,6 +53,8 @@ export default function StaffLayout({ children, showHeader = false }: StaffLayou
       <main className="staff-main">
         {children}
       </main>
+
+      <StaffPortalNav />
 
       <style jsx>{`
         .staff-layout {

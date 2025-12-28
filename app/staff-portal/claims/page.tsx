@@ -1,13 +1,12 @@
 'use client';
 
 import { useMemo, useCallback, useState } from 'react';
-import MainLayout from '@/components/MainLayout';
+import StaffLayout from '@/components/StaffLayout';
 import { useStaffPortal, useStaff } from '@/lib/store';
 import { useClaimRequestsRealtime } from '@/lib/supabase/realtime-hooks';
 import { getClaimTypeLabel, getStatusLabel, getStatusColor } from '@/lib/staff-portal-data';
 import Link from 'next/link';
 import LoadingSpinner from '@/components/LoadingSpinner';
-import StaffPortalNav from '@/components/StaffPortalNav';
 import {
   DollarSign,
   Plus,
@@ -71,16 +70,16 @@ export default function ClaimsPage() {
 
   if (!isInitialized || !currentStaff) {
     return (
-      <MainLayout>
+      <StaffLayout>
         <div className="loading-container">
           <LoadingSpinner />
         </div>
-      </MainLayout>
+      </StaffLayout>
     );
   }
 
   return (
-    <MainLayout>
+    <StaffLayout>
       <div className="staff-portal animate-fade-in">
         {/* Header */}
         <div className="page-header">
@@ -181,7 +180,7 @@ export default function ClaimsPage() {
                       <div style={{
                         fontSize: '1.25rem',
                         fontWeight: 700,
-                        background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+                        background: 'var(--primary)',
                         WebkitBackgroundClip: 'text',
                         WebkitTextFillColor: 'transparent',
                         backgroundClip: 'text',
@@ -232,9 +231,7 @@ export default function ClaimsPage() {
           claim={selectedClaim}
         />
 
-        {/* Bottom Navigation */}
-        <StaffPortalNav pendingCount={pendingCount} />
       </div>
-    </MainLayout>
+    </StaffLayout>
   );
 }

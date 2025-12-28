@@ -1,10 +1,9 @@
 'use client';
 
-import MainLayout from '@/components/MainLayout';
+import StaffLayout from '@/components/StaffLayout';
 import { useStaffPortal, useStaff, useKPI } from '@/lib/store';
 import Link from 'next/link';
 import LoadingSpinner from '@/components/LoadingSpinner';
-import StaffPortalNav from '@/components/StaffPortalNav';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import {
   ArrowLeft,
@@ -84,18 +83,18 @@ export default function ProfilePage() {
 
   if (!isInitialized || !currentStaff) {
     return (
-      <MainLayout>
+      <StaffLayout>
         <div className="loading-container">
           <LoadingSpinner />
         </div>
-      </MainLayout>
+      </StaffLayout>
     );
   }
 
   const age = calculateAge(currentStaff.dateOfBirth);
 
   return (
-    <MainLayout>
+    <StaffLayout>
       <div className="staff-portal animate-fade-in">
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
@@ -604,9 +603,7 @@ export default function ProfilePage() {
             </Link>
           </div>
         )}
-
-        {/* Bottom Navigation */}
-        <StaffPortalNav currentPage="profile" />
+        {/* Bottom Navigation is now in StaffLayout */}
       </div>
 
       <style jsx>{`
@@ -707,6 +704,6 @@ export default function ProfilePage() {
           transition: width 0.3s ease;
         }
       `}</style>
-    </MainLayout>
+    </StaffLayout>
   );
 }
