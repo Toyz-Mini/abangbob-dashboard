@@ -41,8 +41,12 @@ import { useAuth } from '@/lib/contexts/AuthContext';
 import { useToast } from '@/lib/contexts/ToastContext';
 import { canViewNavItem, type UserRole } from '@/lib/permissions';
 import { processSyncQueue } from '@/lib/sync-queue';
-import * as ops from '@/lib/supabase/operations';
+import * as operations from '@/lib/supabase/operations';
+import * as supabaseSync from '@/lib/supabase-sync';
 import BrandHeader from '@/components/BrandHeader';
+
+// Merge all sync operations into a single object for the sync queue processor
+const ops = { ...operations, ...supabaseSync };
 
 export default function MainLayout({ children }: { children: ReactNode }) {
   // Default to open for better UX on desktop
