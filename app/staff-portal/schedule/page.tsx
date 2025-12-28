@@ -5,6 +5,7 @@ import StaffLayout from '@/components/StaffLayout';
 import { useStaffPortal, useStaff, useKPI } from '@/lib/store';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import LoadingSpinner from '@/components/LoadingSpinner';
+import ConfirmModal from '@/components/ConfirmModal';
 import {
   ChevronLeft,
   ChevronRight,
@@ -43,6 +44,20 @@ export default function SchedulePage() {
   const [selectedShiftForSwap, setSelectedShiftForSwap] = useState<{ schedule: ScheduleEntry, shift: Shift, date: Date } | null>(null);
   const [swapReason, setSwapReason] = useState('');
   const [isSubmittingSwap, setIsSubmittingSwap] = useState(false);
+
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm?: () => void;
+    type?: 'primary' | 'danger' | 'success' | 'warning' | 'info';
+    showCancel?: boolean;
+    confirmText?: string;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+  });
 
   const currentStaff = useMemo(() => {
     if (!user) return null;
@@ -160,7 +175,14 @@ export default function SchedulePage() {
   const handleSwapClick = (schedule: ScheduleEntry, shift: Shift, date: Date) => {
     // Only allow swapping future shifts
     if (new Date(schedule.date + 'T' + shift.startTime) < new Date()) {
-      alert("Anda tidak boleh menukar shift yang telah berlalu.");
+      setConfirmModal({
+        isOpen: true,
+        title: 'Tindakan Tidak Sah',
+        message: 'Anda tidak boleh menukar shift yang telah berlalu.',
+        type: 'warning',
+        showCancel: false,
+        confirmText: 'Faham'
+      });
       return;
     }
 
@@ -171,7 +193,14 @@ export default function SchedulePage() {
   const submitSwapRequest = async () => {
     if (!selectedShiftForSwap || !user || !currentStaff) return;
     if (!swapReason.trim()) {
-      alert("Sila berikan sebab penukaran.");
+      setConfirmModal({
+        isOpen: true,
+        title: 'Maklumat Diperlukan',
+        message: 'Sila berikan sebab penukaran shift.',
+        type: 'warning',
+        showCancel: false,
+        confirmText: 'Faham'
+      });
       return;
     }
 
@@ -191,10 +220,25 @@ export default function SchedulePage() {
       setSwapModalOpen(false);
       setSwapReason('');
       setSelectedShiftForSwap(null);
-      alert("Permohonan tukar shift berjaya dihantar!");
+
+      setConfirmModal({
+        isOpen: true,
+        title: 'Permohonan Dihantar',
+        message: 'Permohonan tukar shift berjaya dihantar dan sedang menunggu kelulusan pengurus.',
+        type: 'success',
+        showCancel: false,
+        confirmText: 'Selesai'
+      });
     } catch (error) {
       console.error("Swap request failed", error);
-      alert("Gagal menghantar permohonan. Sila cuba lagi.");
+      setConfirmModal({
+        isOpen: true,
+        title: 'Ralat Penghantaran',
+        message: 'Gagal menghantar permohonan. Sila cuba lagi sebentar.',
+        type: 'danger',
+        showCancel: false,
+        confirmText: 'Kembali'
+      });
     } finally {
       setIsSubmittingSwap(false);
     }
@@ -613,6 +657,20 @@ export default function SchedulePage() {
           </>
         )}
       </AnimatePresence>
+
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        onConfirm={() => {
+          if (confirmModal.onConfirm) confirmModal.onConfirm();
+          setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        }}
+        type={confirmModal.type}
+        showCancel={confirmModal.showCancel}
+        confirmText={confirmModal.confirmText}
+      />
 
     </StaffLayout>
   );

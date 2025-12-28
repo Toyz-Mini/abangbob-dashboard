@@ -9,6 +9,7 @@ import { LeaveType } from '@/lib/types';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import LoadingSpinner from '@/components/LoadingSpinner';
+import ConfirmModal from '@/components/ConfirmModal';
 import {
   ArrowLeft,
   Calendar,
@@ -64,6 +65,20 @@ export default function ApplyLeavePage() {
     reason: '',
   });
 
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm?: () => void;
+    type?: 'primary' | 'danger' | 'success' | 'warning' | 'info';
+    showCancel?: boolean;
+    confirmText?: string;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+  });
+
   // Calculate duration
   const duration = form.startDate && form.endDate
     ? calculateLeaveDays(form.startDate, form.endDate, form.isHalfDay)
@@ -87,18 +102,39 @@ export default function ApplyLeavePage() {
     e.preventDefault();
 
     if (!form.startDate || !form.endDate) {
-      alert('Sila pilih tarikh');
+      setConfirmModal({
+        isOpen: true,
+        title: 'Maklumat Tidak Lengkap',
+        message: 'Sila pilih tarikh mula dan tamat cuti anda.',
+        type: 'warning',
+        showCancel: false,
+        confirmText: 'Faham'
+      });
       return;
     }
 
     if (!form.reason.trim()) {
-      alert('Sila masukkan sebab');
+      setConfirmModal({
+        isOpen: true,
+        title: 'Maklumat Tidak Lengkap',
+        message: 'Sila masukkan sebab permohonan cuti anda.',
+        type: 'warning',
+        showCancel: false,
+        confirmText: 'Faham'
+      });
       return;
     }
 
     const available = getAvailableBalance(form.type);
     if (available !== null && duration > available) {
-      alert(`Baki cuti tidak mencukupi. Baki: ${available} hari`);
+      setConfirmModal({
+        isOpen: true,
+        title: 'Baki Tidak Mencukupi',
+        message: `Baki cuti ${getLeaveTypeLabel(form.type)} anda tidak mencukupi (Tinggal ${available} hari).`,
+        type: 'danger',
+        showCancel: false,
+        confirmText: 'Kembali'
+      });
       return;
     }
 
@@ -119,7 +155,18 @@ export default function ApplyLeavePage() {
     });
 
     setIsSubmitting(false);
-    router.push('/staff-portal/leave');
+
+    setConfirmModal({
+      isOpen: true,
+      title: 'Permohonan Dihantar',
+      message: 'Permohonan cuti anda telah berjaya dihantar dan sedang menunggu kelulusan pengurus.',
+      type: 'success',
+      showCancel: false,
+      confirmText: 'Selesai',
+      onConfirm: () => {
+        router.push('/staff-portal/leave');
+      }
+    });
   };
 
   if (!isInitialized || !currentStaff) {
@@ -295,6 +342,23 @@ export default function ApplyLeavePage() {
             </div>
           </div>
         </form>
+
+        <ConfirmModal
+          isOpen={confirmModal.isOpen}
+          onClose={() => {
+            if (confirmModal.onConfirm) confirmModal.onConfirm();
+            setConfirmModal(prev => ({ ...prev, isOpen: false }));
+          }}
+          title={confirmModal.title}
+          message={confirmModal.message}
+          onConfirm={() => {
+            if (confirmModal.onConfirm) confirmModal.onConfirm();
+            setConfirmModal(prev => ({ ...prev, isOpen: false }));
+          }}
+          type={confirmModal.type}
+          showCancel={confirmModal.showCancel}
+          confirmText={confirmModal.confirmText}
+        />
       </div>
     </MainLayout>
   );

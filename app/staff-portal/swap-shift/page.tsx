@@ -5,6 +5,7 @@ import StaffLayout from '@/components/StaffLayout';
 import { useStaffPortal, useStaff } from '@/lib/store';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import Modal from '@/components/Modal';
+import ConfirmModal from '@/components/ConfirmModal';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { StaffRequest } from '@/lib/types';
 import {
@@ -50,15 +51,15 @@ export default function SwapShiftPage() {
     isOpen: boolean;
     title: string;
     message: string;
-    onConfirm: () => void;
+    onConfirm?: () => void;
     confirmText?: string;
     cancelText?: string;
-    type?: 'primary' | 'danger' | 'success';
+    type?: 'primary' | 'danger' | 'success' | 'warning' | 'info';
+    showCancel?: boolean;
   }>({
     isOpen: false,
     title: '',
     message: '',
-    onConfirm: () => { }
   });
 
   // Dynamic Staff Finding
@@ -161,7 +162,14 @@ export default function SwapShiftPage() {
       }, 2000);
     } catch (error) {
       console.error('Failed to submit swap request:', error);
-      alert('Gagal menghantar permohonan. Sila cuba lagi.');
+      setConfirmModal({
+        isOpen: true,
+        title: 'Ralat Penghantaran',
+        message: 'Gagal menghantar permohonan pertukaran. Sila cuba lagi sebentar.',
+        type: 'danger',
+        showCancel: false,
+        confirmText: 'Kembali'
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -204,9 +212,14 @@ export default function SwapShiftPage() {
           status: 'in_progress',
           responseNote: 'Bersetuju dengan pertukaran. Menunggu maklum balas pengurus.'
         });
-        setConfirmModal(prev => ({ ...prev, isOpen: false }));
-        // Using confirm modal for success feedback too if possible, but alert is fine for simplicity here
-        // Replace alert with info modal if desired
+        setConfirmModal({
+          isOpen: true,
+          title: 'Berjaya',
+          message: 'Terima kasih! Persetujuan anda telah direkodkan. Kini menunggu kelulusan pengurus.',
+          type: 'success',
+          showCancel: false,
+          confirmText: 'Tutup'
+        });
       },
       confirmText: 'Ya, Setuju',
       cancelText: 'Kembali',
@@ -565,44 +578,18 @@ export default function SwapShiftPage() {
           )}
         </Modal>
 
-        {/* Custom Confirmation Modal */}
-        <Modal
+        {/* Standardized Confirmation Modal */}
+        <ConfirmModal
           isOpen={confirmModal.isOpen}
           onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
           title={confirmModal.title}
-          maxWidth="400px"
-        >
-          <div style={{ textAlign: 'center', padding: '1rem 0' }}>
-            <div style={{ marginBottom: '1.5rem', color: 'var(--text-secondary)', lineHeight: '1.6' }}>
-              {confirmModal.message}
-            </div>
-            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
-              <button
-                className="btn btn-outline"
-                onClick={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
-                style={{ flex: 1, padding: '0.75rem' }}
-              >
-                {confirmModal.cancelText || 'Batal'}
-              </button>
-              <button
-                className="btn"
-                onClick={confirmModal.onConfirm}
-                style={{
-                  flex: 1,
-                  padding: '0.75rem',
-                  background: confirmModal.type === 'danger' ? 'var(--danger)' :
-                    confirmModal.type === 'success' ? 'var(--success)' : 'var(--primary)',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '0.5rem',
-                  fontWeight: 600
-                }}
-              >
-                {confirmModal.confirmText || 'Sahkan'}
-              </button>
-            </div>
-          </div>
-        </Modal>
+          message={confirmModal.message}
+          onConfirm={confirmModal.onConfirm}
+          confirmText={confirmModal.confirmText}
+          cancelText={confirmModal.cancelText}
+          type={confirmModal.type}
+          showCancel={confirmModal.showCancel}
+        />
       </div>
     </StaffLayout>
   );

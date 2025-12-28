@@ -9,6 +9,7 @@ import { RequestCategory, StaffRequest } from '@/lib/types';
 import Modal from '@/components/Modal';
 import Link from 'next/link';
 import LoadingSpinner from '@/components/LoadingSpinner';
+import ConfirmModal from '@/components/ConfirmModal';
 import RequestDetailModal from '@/components/staff-portal/RequestDetailModal';
 import {
   FileText,
@@ -65,6 +66,20 @@ export default function RequestsPage() {
     priority: 'medium' as 'low' | 'medium' | 'high',
   });
 
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm?: () => void;
+    type?: 'primary' | 'danger' | 'success' | 'warning' | 'info';
+    showCancel?: boolean;
+    confirmText?: string;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+  });
+
   // State for detail modal
   const [selectedRequest, setSelectedRequest] = useState<StaffRequest | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
@@ -83,7 +98,14 @@ export default function RequestsPage() {
 
   const handleSubmit = async () => {
     if (!form.title.trim() || !form.description.trim()) {
-      alert('Sila isi semua maklumat');
+      setConfirmModal({
+        isOpen: true,
+        title: 'Maklumat Tidak Lengkap',
+        message: 'Sila isi tajuk dan penerangan permohonan anda.',
+        type: 'warning',
+        showCancel: false,
+        confirmText: 'Faham'
+      });
       return;
     }
 
@@ -107,6 +129,15 @@ export default function RequestsPage() {
       title: '',
       description: '',
       priority: 'medium',
+    });
+
+    setConfirmModal({
+      isOpen: true,
+      title: 'Berjaya Dihantar',
+      message: 'Permohonan anda telah berjaya dihantar dan akan diproses secepat mungkin.',
+      type: 'success',
+      showCancel: false,
+      confirmText: 'Selesai'
     });
   };
 
@@ -325,6 +356,20 @@ export default function RequestsPage() {
             </button>
           </div>
         </Modal>
+
+        <ConfirmModal
+          isOpen={confirmModal.isOpen}
+          onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+          title={confirmModal.title}
+          message={confirmModal.message}
+          onConfirm={() => {
+            if (confirmModal.onConfirm) confirmModal.onConfirm();
+            setConfirmModal(prev => ({ ...prev, isOpen: false }));
+          }}
+          type={confirmModal.type}
+          showCancel={confirmModal.showCancel}
+          confirmText={confirmModal.confirmText}
+        />
       </div>
     </MainLayout>
   );

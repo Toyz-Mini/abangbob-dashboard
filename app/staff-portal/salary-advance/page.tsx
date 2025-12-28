@@ -6,6 +6,7 @@ import { useStaffPortal } from '@/lib/store';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import Modal from '@/components/Modal';
 import LoadingSpinner from '@/components/LoadingSpinner';
+import ConfirmModal from '@/components/ConfirmModal';
 import StatCard from '@/components/StatCard';
 import { SalaryAdvance } from '@/lib/types';
 import {
@@ -39,6 +40,20 @@ export default function SalaryAdvancePage() {
     const [reason, setReason] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'approved' | 'rejected' | 'deducted'>('all');
+
+    const [confirmModal, setConfirmModal] = useState<{
+        isOpen: boolean;
+        title: string;
+        message: string;
+        onConfirm?: () => void;
+        type?: 'primary' | 'danger' | 'success' | 'warning' | 'info';
+        showCancel?: boolean;
+        confirmText?: string;
+    }>({
+        isOpen: false,
+        title: '',
+        message: '',
+    });
 
     // Calculate days worked this month and max advance
     const { daysWorkedThisMonth, dailyRate, maxAdvance, earnedSoFar, alreadyAdvanced } = useMemo(() => {
@@ -118,18 +133,39 @@ export default function SalaryAdvancePage() {
 
     const handleSubmit = async () => {
         if (!currentStaff || !amount || !reason.trim()) {
-            alert('Sila isi semua maklumat');
+            setConfirmModal({
+                isOpen: true,
+                title: 'Maklumat Tidak Lengkap',
+                message: 'Sila isi jumlah dan sebab permohonan.',
+                type: 'warning',
+                showCancel: false,
+                confirmText: 'Faham'
+            });
             return;
         }
 
         const amountNum = parseFloat(amount);
         if (isNaN(amountNum) || amountNum <= 0) {
-            alert('Jumlah tidak sah');
+            setConfirmModal({
+                isOpen: true,
+                title: 'Jumlah Tidak Sah',
+                message: 'Sila masukkan jumlah permohonan yang sah.',
+                type: 'warning',
+                showCancel: false,
+                confirmText: 'Faham'
+            });
             return;
         }
 
         if (amountNum > maxAdvance) {
-            alert(`Jumlah melebihi had berdasarkan hari bekerja. Maksimum: BND ${maxAdvance.toFixed(2)}`);
+            setConfirmModal({
+                isOpen: true,
+                title: 'Melebihi Had',
+                message: `Maksimum yang boleh dipohon berdasarkan hari bekerja anda adalah BND ${maxAdvance.toFixed(2)}.`,
+                type: 'danger',
+                showCancel: false,
+                confirmText: 'Kembali'
+            });
             return;
         }
 
@@ -148,6 +184,15 @@ export default function SalaryAdvancePage() {
         setReason('');
         setShowAddModal(false);
         setIsSubmitting(false);
+
+        setConfirmModal({
+            isOpen: true,
+            title: 'Berjaya Dihantar',
+            message: 'Permohonan pendahuluan gaji anda telah dihantar dan akan disemak oleh pihak pengurusan.',
+            type: 'success',
+            showCancel: false,
+            confirmText: 'Selesai'
+        });
     };
 
     const getStatusBadge = (status: SalaryAdvance['status']) => {
@@ -447,6 +492,20 @@ export default function SalaryAdvancePage() {
                         </>
                     )}
                 </Modal>
+
+                <ConfirmModal
+                    isOpen={confirmModal.isOpen}
+                    onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+                    title={confirmModal.title}
+                    message={confirmModal.message}
+                    onConfirm={() => {
+                        if (confirmModal.onConfirm) confirmModal.onConfirm();
+                        setConfirmModal(prev => ({ ...prev, isOpen: false }));
+                    }}
+                    type={confirmModal.type}
+                    showCancel={confirmModal.showCancel}
+                    confirmText={confirmModal.confirmText}
+                />
             </div>
         </MainLayout>
     );

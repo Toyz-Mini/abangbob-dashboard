@@ -8,6 +8,7 @@ import { ClaimType } from '@/lib/types';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import LoadingSpinner from '@/components/LoadingSpinner';
+import ConfirmModal from '@/components/ConfirmModal';
 import {
   ArrowLeft,
   Send,
@@ -56,6 +57,20 @@ export default function NewClaimPage() {
     locations: '',
   });
 
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm?: () => void;
+    type?: 'primary' | 'danger' | 'success' | 'warning' | 'info';
+    showCancel?: boolean;
+    confirmText?: string;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+  });
+
   const [mileageRate, setMileageRate] = useState(0.60);
 
   // Load configured mileage rate
@@ -74,12 +89,26 @@ export default function NewClaimPage() {
 
     const amount = parseFloat(form.amount);
     if (isNaN(amount) || amount <= 0) {
-      alert('Sila masukkan jumlah yang sah');
+      setConfirmModal({
+        isOpen: true,
+        title: 'Jumlah Tidak Sah',
+        message: 'Sila masukkan jumlah tuntutan yang sah.',
+        type: 'warning',
+        showCancel: false,
+        confirmText: 'Faham'
+      });
       return;
     }
 
     if (!form.description.trim()) {
-      alert('Sila masukkan penerangan');
+      setConfirmModal({
+        isOpen: true,
+        title: 'Maklumat Tidak Lengkap',
+        message: 'Sila masukkan penerangan atau tujuan tuntutan ini.',
+        type: 'warning',
+        showCancel: false,
+        confirmText: 'Faham'
+      });
       return;
     }
 
@@ -103,9 +132,19 @@ export default function NewClaimPage() {
       ratePerKm: form.category === 'mileage' ? mileageRate : undefined,
       locations: form.category === 'mileage' ? form.locations : undefined,
     });
-
     setIsSubmitting(false);
-    router.push('/staff-portal/claims');
+
+    setConfirmModal({
+      isOpen: true,
+      title: 'Tuntutan Dihantar',
+      message: 'Tuntutan anda telah berjaya dihantar untuk semakan pihak pengurusan.',
+      type: 'success',
+      showCancel: false,
+      confirmText: 'Selesai',
+      onConfirm: () => {
+        router.push('/staff-portal/claims');
+      }
+    });
   };
 
   if (!isInitialized || !currentStaff) {
@@ -352,6 +391,23 @@ export default function NewClaimPage() {
           </div>
         </form>
       </div>
+
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => {
+          if (confirmModal.onConfirm) confirmModal.onConfirm();
+          setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        }}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        onConfirm={() => {
+          if (confirmModal.onConfirm) confirmModal.onConfirm();
+          setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        }}
+        type={confirmModal.type}
+        showCancel={confirmModal.showCancel}
+        confirmText={confirmModal.confirmText}
+      />
     </MainLayout>
   );
 }

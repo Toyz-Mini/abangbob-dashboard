@@ -4,6 +4,7 @@ import StaffLayout from '@/components/StaffLayout';
 import { useStaffPortal, useStaff, useKPI } from '@/lib/store';
 import Link from 'next/link';
 import LoadingSpinner from '@/components/LoadingSpinner';
+import ConfirmModal from '@/components/ConfirmModal';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import {
   ArrowLeft,
@@ -48,6 +49,20 @@ export default function ProfilePage() {
 
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm?: () => void;
+    type?: 'primary' | 'danger' | 'success' | 'warning' | 'info';
+    showCancel?: boolean;
+    confirmText?: string;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+  });
 
   const currentStaff = staff.find(s => s.id === user?.id);
   const leaveBalance = getLeaveBalance(user?.id || '');
@@ -101,11 +116,25 @@ export default function ProfilePage() {
       if (result.success && result.url) {
         updateStaff(currentStaff.id, { profilePhotoUrl: result.url });
       } else {
-        alert('Gagal memuat naik gambar: ' + (result.error || 'Ralat tidak diketahui'));
+        setConfirmModal({
+          isOpen: true,
+          title: 'Gagal Muat Naik',
+          message: 'Gambar tidak dapat dimuat naik: ' + (result.error || 'Ralat sistem.'),
+          type: 'danger',
+          showCancel: false,
+          confirmText: 'Kembali'
+        });
       }
     } catch (error) {
       console.error('Upload error:', error);
-      alert('Ralat semasa memuat naik gambar.');
+      setConfirmModal({
+        isOpen: true,
+        title: 'Ralat Teknikal',
+        message: 'Berlaku ralat semasa memuat naik gambar. Sila cuba lagi nanti.',
+        type: 'danger',
+        showCancel: false,
+        confirmText: 'Faham'
+      });
     } finally {
       setIsUploading(false);
       // Reset input
@@ -652,6 +681,20 @@ export default function ProfilePage() {
         )}
         {/* Bottom Navigation is now in StaffLayout */}
       </div>
+
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        onConfirm={() => {
+          if (confirmModal.onConfirm) confirmModal.onConfirm();
+          setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        }}
+        type={confirmModal.type}
+        showCancel={confirmModal.showCancel}
+        confirmText={confirmModal.confirmText}
+      />
 
       <style jsx>{`
         .staff-profile-avatar-container {

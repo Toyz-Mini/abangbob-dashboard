@@ -6,6 +6,7 @@ import { useStaffPortal } from '@/lib/store';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import Modal from '@/components/Modal';
 import LoadingSpinner from '@/components/LoadingSpinner';
+import ConfirmModal from '@/components/ConfirmModal';
 import {
     Clock,
     Plus,
@@ -32,6 +33,20 @@ export default function OTClaimPage() {
     const [showModal, setShowModal] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
     const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'approved' | 'rejected' | 'paid'>('all');
+
+    const [confirmModal, setConfirmModal] = useState<{
+        isOpen: boolean;
+        title: string;
+        message: string;
+        onConfirm?: () => void;
+        type?: 'primary' | 'danger' | 'success' | 'warning' | 'info';
+        showCancel?: boolean;
+        confirmText?: string;
+    }>({
+        isOpen: false,
+        title: '',
+        message: '',
+    });
 
     // Form state
     const [formData, setFormData] = useState({
@@ -85,11 +100,25 @@ export default function OTClaimPage() {
     const handleSubmit = async () => {
         if (!currentStaff) return;
         if (!formData.reason.trim()) {
-            alert('Sila masukkan sebab OT');
+            setConfirmModal({
+                isOpen: true,
+                title: 'Maklumat Tidak Lengkap',
+                message: 'Sila masukkan sebab untuk tuntutan OT ini.',
+                type: 'warning',
+                showCancel: false,
+                confirmText: 'Faham'
+            });
             return;
         }
         if (hoursWorked <= 0) {
-            alert('Masa OT tidak sah');
+            setConfirmModal({
+                isOpen: true,
+                title: 'Masa Tidak Sah',
+                message: 'Sila pastikan masa mula dan tamat adalah betul.',
+                type: 'warning',
+                showCancel: false,
+                confirmText: 'Faham'
+            });
             return;
         }
 
@@ -119,6 +148,15 @@ export default function OTClaimPage() {
             reason: '',
             hourlyRate: DEFAULT_OT_RATE,
             multiplier: DEFAULT_MULTIPLIER,
+        });
+
+        setConfirmModal({
+            isOpen: true,
+            title: 'Berjaya Dihantar',
+            message: 'Tuntutan OT anda telah berjaya dihantar untuk semakan.',
+            type: 'success',
+            showCancel: false,
+            confirmText: 'Selesai'
         });
     };
 
@@ -383,6 +421,20 @@ export default function OTClaimPage() {
                         </div>
                     </div>
                 </Modal>
+
+                <ConfirmModal
+                    isOpen={confirmModal.isOpen}
+                    onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+                    title={confirmModal.title}
+                    message={confirmModal.message}
+                    onConfirm={() => {
+                        if (confirmModal.onConfirm) confirmModal.onConfirm();
+                        setConfirmModal(prev => ({ ...prev, isOpen: false }));
+                    }}
+                    type={confirmModal.type}
+                    showCancel={confirmModal.showCancel}
+                    confirmText={confirmModal.confirmText}
+                />
             </div>
         </StaffLayout>
     );
