@@ -1,12 +1,11 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import MainLayout from '@/components/MainLayout';
+import StaffLayout from '@/components/StaffLayout';
 import { useStaffPortal, useStaff } from '@/lib/store';
 import Link from 'next/link';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import Modal from '@/components/Modal';
-import StaffPortalNav from '@/components/StaffPortalNav';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import {
   ArrowLeft,
@@ -165,16 +164,16 @@ export default function SwapShiftPage() {
 
   if (!isInitialized || !currentStaff) {
     return (
-      <MainLayout>
+      <StaffLayout>
         <div className="loading-container">
           <LoadingSpinner />
         </div>
-      </MainLayout>
+      </StaffLayout>
     );
   }
 
   return (
-    <MainLayout>
+    <StaffLayout>
       <div className="staff-portal animate-fade-in">
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
@@ -417,8 +416,7 @@ export default function SwapShiftPage() {
           )}
         </Modal>
 
-        <StaffPortalNav />
       </div>
-    </MainLayout>
+    </StaffLayout>
   );
 }

@@ -1,12 +1,11 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import MainLayout from '@/components/MainLayout';
+import StaffLayout from '@/components/StaffLayout';
 import { useStaffPortal, useStaff } from '@/lib/store';
 import Link from 'next/link';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import LoadingSpinner from '@/components/LoadingSpinner';
-import StaffPortalNav from '@/components/StaffPortalNav';
 import {
   ArrowLeft,
   ChevronLeft,
@@ -129,17 +128,17 @@ export default function SchedulePage() {
 
   if (!isInitialized) {
     return (
-      <MainLayout>
+      <StaffLayout>
         <div className="loading-container">
           <LoadingSpinner />
         </div>
-      </MainLayout>
+      </StaffLayout>
     );
   }
 
   if (!currentStaff) {
     return (
-      <MainLayout>
+      <StaffLayout>
         <div className="p-4 flex flex-col items-center justify-center min-h-[50vh] text-center">
           <div className="bg-red-50 text-red-600 p-6 rounded-lg max-w-md">
             <h3 className="font-bold text-lg mb-2">Akses Gagal / Profil Tidak Dijumpai</h3>
@@ -155,12 +154,12 @@ export default function SchedulePage() {
             </p>
           </div>
         </div>
-      </MainLayout>
+      </StaffLayout>
     );
   }
 
   return (
-    <MainLayout>
+    <StaffLayout>
       <div className="staff-portal animate-fade-in">
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
@@ -431,8 +430,7 @@ export default function SchedulePage() {
         )}
 
         {/* Bottom Navigation */}
-        <StaffPortalNav currentPage="schedule" />
       </div>
-    </MainLayout>
+    </StaffLayout>
   );
 }

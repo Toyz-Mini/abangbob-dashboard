@@ -762,12 +762,21 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       setOrders(ordersResult.data);
       dataSourceInfo.orders = ordersResult.source;
 
-      // Other core data (using simplified logic for non-critical entities)
-      setCustomers(supabaseConnected && supabaseData.customers?.length > 0 ? supabaseData.customers : getFromStorage(STORAGE_KEYS.CUSTOMERS, []));
-      setExpenses(supabaseConnected && supabaseData.expenses?.length > 0 ? supabaseData.expenses : getFromStorage(STORAGE_KEYS.EXPENSES, MOCK_EXPENSES));
-      setAttendance(supabaseConnected && supabaseData.attendance?.length > 0 ? supabaseData.attendance : getFromStorage(STORAGE_KEYS.ATTENDANCE, MOCK_ATTENDANCE));
-      setSuppliers(supabaseConnected && supabaseData.suppliers?.length > 0 ? supabaseData.suppliers : getFromStorage(STORAGE_KEYS.SUPPLIERS, []));
-      setPurchaseOrders(supabaseConnected && supabaseData.purchaseOrders?.length > 0 ? supabaseData.purchaseOrders : getFromStorage(STORAGE_KEYS.PURCHASE_ORDERS, []));
+      // Other core data
+      const customersResult = getDataWithSource(supabaseData.customers, STORAGE_KEYS.CUSTOMERS, [], 'Customers');
+      setCustomers(customersResult.data);
+
+      const expensesResult = getDataWithSource(supabaseData.expenses, STORAGE_KEYS.EXPENSES, MOCK_EXPENSES, 'Expenses');
+      setExpenses(expensesResult.data);
+
+      const attendanceResult = getDataWithSource(supabaseData.attendance, STORAGE_KEYS.ATTENDANCE, MOCK_ATTENDANCE, 'Attendance');
+      setAttendance(attendanceResult.data);
+
+      const suppliersResult = getDataWithSource(supabaseData.suppliers, STORAGE_KEYS.SUPPLIERS, [], 'Suppliers');
+      setSuppliers(suppliersResult.data);
+
+      const purchaseOrdersResult = getDataWithSource(supabaseData.purchaseOrders, STORAGE_KEYS.PURCHASE_ORDERS, [], 'Purchase Orders');
+      setPurchaseOrders(purchaseOrdersResult.data);
 
       // Extended data - now also from Supabase (using supabaseConnected flag for consistency)
       setInventoryLogs(getFromStorage(STORAGE_KEYS.INVENTORY_LOGS, [])); // TODO: Add to Supabase later
@@ -808,66 +817,100 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         }
       }
 
-      setPromotions(supabaseConnected && supabaseData.promotions?.length > 0 ? supabaseData.promotions : getFromStorage(STORAGE_KEYS.PROMOTIONS, []));
-      setNotifications(supabaseConnected && supabaseData.notifications?.length > 0 ? supabaseData.notifications : getFromStorage(STORAGE_KEYS.NOTIFICATIONS, []));
+      const promotionsResult = getDataWithSource(supabaseData.promotions, STORAGE_KEYS.PROMOTIONS, [], 'Promotions');
+      setPromotions(promotionsResult.data);
+
+      const notificationsResult = getDataWithSource(supabaseData.notifications, STORAGE_KEYS.NOTIFICATIONS, [], 'Notifications');
+      setNotifications(notificationsResult.data);
 
       // KPI & Gamification
-      setStaffKPI(supabaseConnected && supabaseData.staffKPI?.length > 0 ? supabaseData.staffKPI : getFromStorage(STORAGE_KEYS.STAFF_KPI, MOCK_STAFF_KPI));
-      setLeaveRecords(supabaseConnected && supabaseData.leaveRecords?.length > 0 ? supabaseData.leaveRecords : getFromStorage(STORAGE_KEYS.LEAVE_RECORDS, MOCK_LEAVE_RECORDS));
-      setTrainingRecords(supabaseConnected && supabaseData.trainingRecords?.length > 0 ? supabaseData.trainingRecords : getFromStorage(STORAGE_KEYS.TRAINING_RECORDS, MOCK_TRAINING_RECORDS));
-      setOTRecords(supabaseConnected && supabaseData.otRecords?.length > 0 ? supabaseData.otRecords : getFromStorage(STORAGE_KEYS.OT_RECORDS, MOCK_OT_RECORDS));
-      setCustomerReviews(supabaseConnected && supabaseData.customerReviews?.length > 0 ? supabaseData.customerReviews : getFromStorage(STORAGE_KEYS.CUSTOMER_REVIEWS, MOCK_CUSTOMER_REVIEWS));
+      const staffKPIResult = getDataWithSource(supabaseData.staffKPI, STORAGE_KEYS.STAFF_KPI, MOCK_STAFF_KPI, 'Staff KPI');
+      setStaffKPI(staffKPIResult.data);
+
+      const leaveRecordsResult = getDataWithSource(supabaseData.leaveRecords, STORAGE_KEYS.LEAVE_RECORDS, MOCK_LEAVE_RECORDS, 'Leave Records');
+      setLeaveRecords(leaveRecordsResult.data);
+
+      const trainingRecordsResult = getDataWithSource(supabaseData.trainingRecords, STORAGE_KEYS.TRAINING_RECORDS, MOCK_TRAINING_RECORDS, 'Training Records');
+      setTrainingRecords(trainingRecordsResult.data);
+
+      const otRecordsResult = getDataWithSource(supabaseData.otRecords, STORAGE_KEYS.OT_RECORDS, MOCK_OT_RECORDS, 'OT Records');
+      setOTRecords(otRecordsResult.data);
+
+      const customerReviewsResult = getDataWithSource(supabaseData.customerReviews, STORAGE_KEYS.CUSTOMER_REVIEWS, MOCK_CUSTOMER_REVIEWS, 'Customer Reviews');
+      setCustomerReviews(customerReviewsResult.data);
 
       // Staff Portal
-      setChecklistTemplates(supabaseConnected && supabaseData.checklistTemplates?.length > 0 ? supabaseData.checklistTemplates : getFromStorage(STORAGE_KEYS.CHECKLIST_TEMPLATES, MOCK_CHECKLIST_TEMPLATES));
-      setChecklistCompletions(supabaseConnected && supabaseData.checklistCompletions?.length > 0 ? supabaseData.checklistCompletions : getFromStorage(STORAGE_KEYS.CHECKLIST_COMPLETIONS, MOCK_CHECKLIST_COMPLETIONS));
-      setLeaveBalances(supabaseConnected && supabaseData.leaveBalances?.length > 0 ? supabaseData.leaveBalances : getFromStorage(STORAGE_KEYS.LEAVE_BALANCES, MOCK_LEAVE_BALANCES));
-      setLeaveRequests(supabaseConnected && supabaseData.leaveRequests?.length > 0 ? supabaseData.leaveRequests : getFromStorage(STORAGE_KEYS.LEAVE_REQUESTS, MOCK_LEAVE_REQUESTS));
-      setClaimRequests(supabaseConnected && supabaseData.claimRequests?.length > 0 ? supabaseData.claimRequests : getFromStorage(STORAGE_KEYS.CLAIM_REQUESTS, MOCK_CLAIM_REQUESTS));
-      setOTClaims(getFromStorage(STORAGE_KEYS.OT_CLAIMS, []));
-      setSalaryAdvances(getFromStorage(STORAGE_KEYS.SALARY_ADVANCES, []));
-      setDisciplinaryActions(getFromStorage(STORAGE_KEYS.DISCIPLINARY_ACTIONS, []));
-      setStaffTraining(getFromStorage(STORAGE_KEYS.STAFF_TRAINING, []));
-      setStaffDocuments(getFromStorage(STORAGE_KEYS.STAFF_DOCUMENTS, []));
-      setPerformanceReviews(getFromStorage(STORAGE_KEYS.PERFORMANCE_REVIEWS, []));
-      setOnboardingChecklists(getFromStorage(STORAGE_KEYS.ONBOARDING_CHECKLISTS, []));
-      setExitInterviews(getFromStorage(STORAGE_KEYS.EXIT_INTERVIEWS, []));
-      setStaffComplaints(getFromStorage(STORAGE_KEYS.STAFF_COMPLAINTS, []));
-      setStaffRequests(supabaseConnected && supabaseData.staffRequests?.length > 0 ? supabaseData.staffRequests : getFromStorage(STORAGE_KEYS.STAFF_REQUESTS, MOCK_STAFF_REQUESTS));
-      setAnnouncements(supabaseConnected && supabaseData.announcements?.length > 0 ? supabaseData.announcements : getFromStorage(STORAGE_KEYS.ANNOUNCEMENTS, MOCK_ANNOUNCEMENTS));
+      const checklistTemplatesResult = getDataWithSource(supabaseData.checklistTemplates, STORAGE_KEYS.CHECKLIST_TEMPLATES, MOCK_CHECKLIST_TEMPLATES, 'Checklist Templates');
+      setChecklistTemplates(checklistTemplatesResult.data);
+
+      const checklistCompletionsResult = getDataWithSource(supabaseData.checklistCompletions, STORAGE_KEYS.CHECKLIST_COMPLETIONS, MOCK_CHECKLIST_COMPLETIONS, 'Checklist Completions');
+      setChecklistCompletions(checklistCompletionsResult.data);
+
+      const leaveBalancesResult = getDataWithSource(supabaseData.leaveBalances, STORAGE_KEYS.LEAVE_BALANCES, MOCK_LEAVE_BALANCES, 'Leave Balances');
+      setLeaveBalances(leaveBalancesResult.data);
+
+      const leaveRequestsResult = getDataWithSource(supabaseData.leaveRequests, STORAGE_KEYS.LEAVE_REQUESTS, MOCK_LEAVE_REQUESTS, 'Leave Requests');
+      setLeaveRequests(leaveRequestsResult.data);
+
+      const claimRequestsResult = getDataWithSource(supabaseData.claimRequests, STORAGE_KEYS.CLAIM_REQUESTS, MOCK_CLAIM_REQUESTS, 'Claim Requests');
+      setClaimRequests(claimRequestsResult.data);
+
+      const otClaimsResult = getDataWithSource(supabaseData.otClaims, STORAGE_KEYS.OT_CLAIMS, [], 'OT Claims');
+      setOTClaims(otClaimsResult.data);
+
+      const salaryAdvancesResult = getDataWithSource(supabaseData.salaryAdvances, STORAGE_KEYS.SALARY_ADVANCES, [], 'Salary Advances');
+      setSalaryAdvances(salaryAdvancesResult.data);
+
+      const disciplinaryActionsResult = getDataWithSource(supabaseData.disciplinaryActions, STORAGE_KEYS.DISCIPLINARY_ACTIONS, [], 'Disciplinary Actions');
+      setDisciplinaryActions(disciplinaryActionsResult.data);
+
+      const staffTrainingResult = getDataWithSource(supabaseData.staffTraining, STORAGE_KEYS.STAFF_TRAINING, [], 'Staff Training');
+      setStaffTraining(staffTrainingResult.data);
+
+      const staffDocumentsResult = getDataWithSource(supabaseData.staffDocuments, STORAGE_KEYS.STAFF_DOCUMENTS, [], 'Staff Documents');
+      setStaffDocuments(staffDocumentsResult.data);
+
+      const performanceReviewsResult = getDataWithSource(supabaseData.performanceReviews, STORAGE_KEYS.PERFORMANCE_REVIEWS, [], 'Performance Reviews');
+      setPerformanceReviews(performanceReviewsResult.data);
+
+      const onboardingChecklistsResult = getDataWithSource(supabaseData.onboardingChecklists, STORAGE_KEYS.ONBOARDING_CHECKLISTS, [], 'Onboarding Checklists');
+      setOnboardingChecklists(onboardingChecklistsResult.data);
+
+      const exitInterviewsResult = getDataWithSource(supabaseData.exitInterviews, STORAGE_KEYS.EXIT_INTERVIEWS, [], 'Exit Interviews');
+      setExitInterviews(exitInterviewsResult.data);
+
+      const staffComplaintsResult = getDataWithSource(supabaseData.staffComplaints, STORAGE_KEYS.STAFF_COMPLAINTS, [], 'Staff Complaints');
+      setStaffComplaints(staffComplaintsResult.data);
+
+      const staffRequestsResult = getDataWithSource(supabaseData.staffRequests, STORAGE_KEYS.STAFF_REQUESTS, MOCK_STAFF_REQUESTS, 'Staff Requests');
+      setStaffRequests(staffRequestsResult.data);
+
+      const announcementsResult = getDataWithSource(supabaseData.announcements, STORAGE_KEYS.ANNOUNCEMENTS, MOCK_ANNOUNCEMENTS, 'Announcements');
+      setAnnouncements(announcementsResult.data);
 
       // Order History (void refund uses orders table)
       setOrderHistory(getFromStorage(STORAGE_KEYS.ORDER_HISTORY, MOCK_ORDER_HISTORY));
 
-      // Load Void Refund Requests from Supabase
-      if (supabaseConnected) {
-        try {
-          const voidRefundData = await VoidRefundOps.fetchVoidRefundRequests();
-          // Trust Supabase data if it exists (even if empty array)
-          if (Array.isArray(voidRefundData)) {
-            setVoidRefundRequests(voidRefundData);
-          } else {
-            setVoidRefundRequests(getFromStorage(STORAGE_KEYS.VOID_REFUND_REQUESTS, MOCK_VOID_REFUND_REQUESTS));
-          }
-        } catch (error) {
-          console.error('Failed to load void refund requests from Supabase:', error);
-          setVoidRefundRequests(getFromStorage(STORAGE_KEYS.VOID_REFUND_REQUESTS, MOCK_VOID_REFUND_REQUESTS));
-        }
-      } else {
-        setVoidRefundRequests(getFromStorage(STORAGE_KEYS.VOID_REFUND_REQUESTS, MOCK_VOID_REFUND_REQUESTS));
-      }
+      setVoidRefundRequests(getDataWithSource(supabaseData.voidRefundRequests, STORAGE_KEYS.VOID_REFUND_REQUESTS, MOCK_VOID_REFUND_REQUESTS, 'Void Refund Requests').data);
 
       // Oil Trackers / Equipment
-      // Oil Tracker Data
-      setOilTrackers(supabaseConnected && supabaseData.oilTrackers?.length > 0 ? supabaseData.oilTrackers : getFromStorage(STORAGE_KEYS.OIL_TRACKERS, MOCK_OIL_TRACKERS));
+      const oilTrackersResult = getDataWithSource(supabaseData.oilTrackers, STORAGE_KEYS.OIL_TRACKERS, MOCK_OIL_TRACKERS, 'Oil Trackers');
+      setOilTrackers(oilTrackersResult.data);
 
-      // Equipment & Maintenance Data
-      // For now, load empty or waiting for implementation of MOCK data if needed
-      setEquipment(getFromStorage(STORAGE_KEYS.EQUIPMENT, []));
-      setMaintenanceSchedules(getFromStorage(STORAGE_KEYS.MAINTENANCE_SCHEDULE, []));
-      setMaintenanceLogs(getFromStorage(STORAGE_KEYS.MAINTENANCE_LOGS, []));
-      setOilChangeRequests(supabaseConnected && supabaseData.oilChangeRequests?.length > 0 ? supabaseData.oilChangeRequests : getFromStorage(STORAGE_KEYS.OIL_CHANGE_REQUESTS, []));
-      setOilActionHistory(supabaseConnected && supabaseData.oilActionHistory?.length > 0 ? supabaseData.oilActionHistory : getFromStorage(STORAGE_KEYS.OIL_ACTION_HISTORY, []));
+      const equipmentResult = getDataWithSource(supabaseData.equipment, STORAGE_KEYS.EQUIPMENT, [], 'Equipment');
+      setEquipment(equipmentResult.data);
+
+      const maintenanceSchedulesResult = getDataWithSource(supabaseData.maintenanceSchedules, STORAGE_KEYS.MAINTENANCE_SCHEDULE, [], 'Maintenance Schedules');
+      setMaintenanceSchedules(maintenanceSchedulesResult.data);
+
+      const maintenanceLogsResult = getDataWithSource(supabaseData.maintenanceLogs, STORAGE_KEYS.MAINTENANCE_LOGS, [], 'Maintenance Logs');
+      setMaintenanceLogs(maintenanceLogsResult.data);
+
+      const oilChangeRequestsResult = getDataWithSource(supabaseData.oilChangeRequests, STORAGE_KEYS.OIL_CHANGE_REQUESTS, [], 'Oil Change Requests');
+      setOilChangeRequests(oilChangeRequestsResult.data);
+
+      const oilActionHistoryResult = getDataWithSource(supabaseData.oilActionHistory, STORAGE_KEYS.OIL_ACTION_HISTORY, [], 'Oil Action History');
+      setOilActionHistory(oilActionHistoryResult.data);
 
       // Menu Categories, Payment Methods, Tax Rates
       // Load Menu Categories from Supabase
@@ -906,13 +949,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         setTaxRates(getFromStorage(STORAGE_KEYS.TAX_RATES, DEFAULT_TAX_RATES));
       }
 
-      // Load Staff Positions from Supabase
-      if (supabaseConnected && supabaseData.positions && supabaseData.positions.length > 0) {
-        setPositions(supabaseData.positions);
-        console.log(`[Data Init] Positions: Loaded ${supabaseData.positions.length} items from Supabase`);
-      } else {
-        setPositions(getFromStorage(STORAGE_KEYS.STAFF_POSITIONS, []));
-      }
+      // Load Staff Positions
+      const positionsResult = getDataWithSource(supabaseData.positions, STORAGE_KEYS.STAFF_POSITIONS, [], 'Staff Positions');
+      setPositions(positionsResult.data);
 
       // Log initialization summary
       const sourceInfo = supabaseConnected ? 'Supabase (primary)' : 'localStorage (offline mode)';
@@ -1235,7 +1274,94 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }
   }, [taxRates, isInitialized]);
 
-  // Cash Registers persistence
+  // Staff Positions persistence
+  useEffect(() => {
+    if (isInitialized) {
+      setToStorage(STORAGE_KEYS.STAFF_POSITIONS, positions);
+    }
+  }, [positions, isInitialized]);
+
+  // Equipment & Maintenance persistence
+  useEffect(() => {
+    if (isInitialized) {
+      setToStorage(STORAGE_KEYS.EQUIPMENT, equipment);
+    }
+  }, [equipment, isInitialized]);
+
+  useEffect(() => {
+    if (isInitialized) {
+      setToStorage(STORAGE_KEYS.MAINTENANCE_SCHEDULE, maintenanceSchedules);
+    }
+  }, [maintenanceSchedules, isInitialized]);
+
+  useEffect(() => {
+    if (isInitialized) {
+      setToStorage(STORAGE_KEYS.MAINTENANCE_LOGS, maintenanceLogs);
+    }
+  }, [maintenanceLogs, isInitialized]);
+
+  useEffect(() => {
+    if (isInitialized) {
+      setToStorage(STORAGE_KEYS.WASTE_LOGS, wasteLogs);
+    }
+  }, [wasteLogs, isInitialized]);
+
+  // HR Extended persistence
+  useEffect(() => {
+    if (isInitialized) {
+      setToStorage(STORAGE_KEYS.OT_CLAIMS, otClaims);
+    }
+  }, [otClaims, isInitialized]);
+
+  useEffect(() => {
+    if (isInitialized) {
+      setToStorage(STORAGE_KEYS.SALARY_ADVANCES, salaryAdvances);
+    }
+  }, [salaryAdvances, isInitialized]);
+
+  useEffect(() => {
+    if (isInitialized) {
+      setToStorage(STORAGE_KEYS.DISCIPLINARY_ACTIONS, disciplinaryActions);
+    }
+  }, [disciplinaryActions, isInitialized]);
+
+  useEffect(() => {
+    if (isInitialized) {
+      setToStorage(STORAGE_KEYS.STAFF_TRAINING, staffTraining);
+    }
+  }, [staffTraining, isInitialized]);
+
+  useEffect(() => {
+    if (isInitialized) {
+      setToStorage(STORAGE_KEYS.STAFF_DOCUMENTS, staffDocuments);
+    }
+  }, [staffDocuments, isInitialized]);
+
+  useEffect(() => {
+    if (isInitialized) {
+      setToStorage(STORAGE_KEYS.PERFORMANCE_REVIEWS, performanceReviews);
+    }
+  }, [performanceReviews, isInitialized]);
+
+  useEffect(() => {
+    if (isInitialized) {
+      setToStorage(STORAGE_KEYS.ONBOARDING_CHECKLISTS, onboardingChecklists);
+    }
+  }, [onboardingChecklists, isInitialized]);
+
+  useEffect(() => {
+    if (isInitialized) {
+      setToStorage(STORAGE_KEYS.EXIT_INTERVIEWS, exitInterviews);
+    }
+  }, [exitInterviews, isInitialized]);
+
+  useEffect(() => {
+    if (isInitialized) {
+      setToStorage(STORAGE_KEYS.STAFF_COMPLAINTS, staffComplaints);
+    }
+  }, [staffComplaints, isInitialized]);
+
+  // Cash Register persistence
   useEffect(() => {
     if (isInitialized) {
       setToStorage(STORAGE_KEYS.CASH_REGISTERS, cashRegisters);
@@ -2478,7 +2604,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   const refreshPositions = useCallback(async () => {
     const data = await SupabaseSync.loadPositionsFromSupabase();
-    if (data && data.length > 0) {
+    // Always set data if it's an array, even if empty, to reflect DB state
+    if (Array.isArray(data)) {
       setPositions(data);
     }
   }, []);

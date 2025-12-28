@@ -411,7 +411,7 @@ export default function SettingsPage() {
 
   // Appearance settings
   const [appearanceSettings, setAppearanceSettings] = useState({
-    theme: 'dark' as 'light' | 'dark' | 'auto',
+    theme: 'light' as 'light' | 'dark' | 'auto',
     compactMode: false,
   });
 

@@ -51,7 +51,7 @@ export default function InventoryPage() {
   useInventoryRealtime(handleInventoryChange);
 
   const { user, isStaffLoggedIn, currentStaff } = useAuth();
-  const role = user ? 'Admin' : (isStaffLoggedIn && currentStaff ? currentStaff.role : null);
+  const role = user?.role || (isStaffLoggedIn && currentStaff ? currentStaff.role : null);
   // TEMPORARY: Allow all users to edit for setup/testing
   const canDeleteItems = role === 'Admin' || role === 'Manager';
 
@@ -64,6 +64,11 @@ export default function InventoryPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('grid');
   const [activeTab, setActiveTab] = useState<'inventory' | 'waste' | 'smart-reorder'>('inventory');
+
+  // Security check: If staff somehow lands on smart-reorder, switch back to inventory
+  if (!canDeleteItems && activeTab === 'smart-reorder') {
+    setActiveTab('inventory');
+  }
 
   // ... (existing form states)
 
@@ -295,7 +300,7 @@ export default function InventoryPage() {
           title={t('inventory.title')}
           subtitle={t('inventory.subtitle')}
           rightContent={
-            canDeleteItems && (
+            (role === 'Admin' || role === 'Manager') && (
               <div className="flex gap-2 w-full sm:w-auto">
                 <PremiumButton
                   onClick={() => setShowImportModal(true)}
@@ -809,14 +814,16 @@ export default function InventoryPage() {
                 <ArrowUp size={18} />
                 Stok Masuk
               </button>
-              <button
-                onClick={() => setAdjustmentData(prev => ({ ...prev, type: 'out' }))}
-                className={`btn ${adjustmentData.type === 'out' ? 'btn-danger' : 'btn-outline'}`}
-                style={{ flex: 1 }}
-              >
-                <ArrowDown size={18} />
-                Stok Keluar
-              </button>
+              {(role === 'Admin' || role === 'Manager') && (
+                <button
+                  onClick={() => setAdjustmentData(prev => ({ ...prev, type: 'out' }))}
+                  className={`btn ${adjustmentData.type === 'out' ? 'btn-danger' : 'btn-outline'}`}
+                  style={{ flex: 1 }}
+                >
+                  <ArrowDown size={18} />
+                  Stok Keluar
+                </button>
+              )}
             </div>
           </div>
 

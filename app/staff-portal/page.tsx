@@ -181,7 +181,7 @@ export default function StaffPortalV2() {
   return (
     <StaffLayout>
       <div style={{
-        background: '#f9fafb',
+        background: 'var(--bg-secondary)',
         minHeight: '100vh',
         padding: '1rem',
         paddingBottom: '5rem'
@@ -199,14 +199,14 @@ export default function StaffPortalV2() {
               alt="AbangBob"
               style={{ width: '40px', height: '40px' }}
             />
-            <span style={{ fontWeight: 800, fontSize: '1.25rem', color: '#dc2626', letterSpacing: '-0.025em' }}>
+            <span style={{ fontWeight: 800, fontSize: '1.25rem', color: 'var(--primary)', letterSpacing: '-0.025em' }}>
               AbangBob
             </span>
           </div>
           <button
             style={{
-              background: 'white',
-              border: '1px solid #e5e7eb',
+              background: 'var(--bg-primary)',
+              border: '1px solid var(--border-color)',
               borderRadius: '50%',
               width: '44px',
               height: '44px',
@@ -217,14 +217,14 @@ export default function StaffPortalV2() {
               position: 'relative'
             }}
           >
-            <Bell size={20} color="#6b7280" />
+            <Bell size={20} color="var(--text-secondary)" />
             {totalPending > 0 && (
               <span style={{
                 position: 'absolute',
                 top: '-4px',
                 right: '-4px',
-                background: '#dc2626',
-                color: 'white',
+                background: 'var(--primary)',
+                color: 'var(--text-inverse)',
                 fontSize: '0.65rem',
                 width: '18px',
                 height: '18px',
@@ -245,10 +245,10 @@ export default function StaffPortalV2() {
           marginBottom: '1.5rem'
         }}>
           <div>
-            <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#1f2937', marginBottom: '0.25rem' }}>
+            <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.25rem' }}>
               {getGreeting()}, {currentStaff.name.split(' ')[0]}!
             </h1>
-            <p style={{ fontSize: '0.875rem', color: '#6b7280' }}>
+            <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
               {currentTime.toLocaleDateString('ms-MY', { weekday: 'long', day: 'numeric', month: 'long' })}
             </p>
           </div>
@@ -256,19 +256,19 @@ export default function StaffPortalV2() {
 
         {/* Clock-In Card */}
         <div style={{
-          background: 'white',
+          background: 'var(--bg-primary)',
           borderRadius: '16px',
           padding: '1.5rem',
           marginBottom: '1rem',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-          border: '1px solid #e5e7eb'
+          boxShadow: 'var(--shadow-sm)',
+          border: '1px solid var(--border-color)'
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
-              <div style={{ fontSize: '2.5rem', fontWeight: 800, color: '#1f2937' }}>
+              <div style={{ fontSize: '2.5rem', fontWeight: 800, color: 'var(--text-primary)' }}>
                 {currentTime.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit' })}
               </div>
-              <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>
+              <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
                 Shift: {currentShift?.name || 'Tiada Shift'} {currentShift ? `(${currentShift.startTime} - ${currentShift.endTime})` : ''}
               </div>
             </div>
@@ -276,9 +276,9 @@ export default function StaffPortalV2() {
               onClick={isClockedIn ? handleClockOut : hasCompletedShift ? undefined : handleClockIn}
               disabled={hasCompletedShift || isClocking}
               style={{
-                background: hasCompletedShift ? '#9ca3af' : isClockedIn ? '#fef3c7' : '#dc2626',
-                color: hasCompletedShift ? 'white' : isClockedIn ? '#92400e' : 'white',
-                border: isClockedIn ? '2px solid #f59e0b' : 'none',
+                background: hasCompletedShift ? 'var(--gray-400)' : isClockedIn ? 'var(--warning-light)' : 'var(--primary)',
+                color: hasCompletedShift ? 'var(--text-inverse)' : isClockedIn ? 'var(--warning-dark)' : 'var(--text-inverse)',
+                border: isClockedIn ? '2px solid var(--warning)' : 'none',
                 borderRadius: '12px',
                 padding: '1rem 1.5rem',
                 fontWeight: 700,
@@ -298,18 +298,18 @@ export default function StaffPortalV2() {
             <div style={{
               marginTop: '1rem',
               paddingTop: '1rem',
-              borderTop: '1px solid #e5e7eb',
+              borderTop: '1px solid var(--border-color)',
               display: 'flex',
               gap: '2rem'
             }}>
               <div>
-                <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>Masuk</div>
-                <div style={{ fontWeight: 600, color: '#059669' }}>{todayAttendance.clockInTime}</div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Masuk</div>
+                <div style={{ fontWeight: 600, color: 'var(--success)' }}>{todayAttendance.clockInTime}</div>
               </div>
               {todayAttendance.clockOutTime && (
                 <div>
-                  <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>Keluar</div>
-                  <div style={{ fontWeight: 600, color: '#dc2626' }}>{todayAttendance.clockOutTime}</div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Keluar</div>
+                  <div style={{ fontWeight: 600, color: 'var(--primary)' }}>{todayAttendance.clockOutTime}</div>
                 </div>
               )}
             </div>
@@ -319,8 +319,8 @@ export default function StaffPortalV2() {
         {/* Clock Message */}
         {clockMessage && (
           <div style={{
-            background: clockMessage.includes('berjaya') ? '#d1fae5' : '#fee2e2',
-            color: clockMessage.includes('berjaya') ? '#065f46' : '#991b1b',
+            background: clockMessage.includes('berjaya') ? 'var(--success-light)' : 'var(--danger-light)',
+            color: clockMessage.includes('berjaya') ? 'var(--success-dark)' : 'var(--danger-dark)',
             padding: '0.75rem 1rem',
             borderRadius: '12px',
             marginBottom: '1rem',
@@ -341,19 +341,19 @@ export default function StaffPortalV2() {
           gap: '0.75rem',
           marginBottom: '1rem'
         }}>
-          <div style={{ background: 'white', padding: '0.75rem', borderRadius: '12px', textAlign: 'center', border: '1px solid #e5e7eb' }}>
-            <div style={{ fontSize: '0.7rem', color: '#6b7280', marginBottom: '0.25rem' }}>Hari Ini</div>
-            <div style={{ fontWeight: 700, color: todayAttendance?.clockInTime ? '#059669' : '#6b7280', fontSize: '0.9rem' }}>
+          <div style={{ background: 'var(--bg-primary)', padding: '0.75rem', borderRadius: '12px', textAlign: 'center', border: '1px solid var(--border-color)' }}>
+            <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>Hari Ini</div>
+            <div style={{ fontWeight: 700, color: todayAttendance?.clockInTime ? 'var(--success)' : 'var(--text-secondary)', fontSize: '0.9rem' }}>
               {todayAttendance?.clockInTime ? '✓ On Time' : '—'}
             </div>
           </div>
-          <div style={{ background: 'white', padding: '0.75rem', borderRadius: '12px', textAlign: 'center', border: '1px solid #e5e7eb' }}>
-            <div style={{ fontSize: '0.7rem', color: '#6b7280', marginBottom: '0.25rem' }}>Level</div>
-            <div style={{ fontWeight: 700, color: '#1f2937', fontSize: '0.9rem' }}>⭐ Lv.{xpData?.currentLevel || 1}</div>
+          <div style={{ background: 'var(--bg-primary)', padding: '0.75rem', borderRadius: '12px', textAlign: 'center', border: '1px solid var(--border-color)' }}>
+            <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>Level</div>
+            <div style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '0.9rem' }}>⭐ Lv.{xpData?.currentLevel || 1}</div>
           </div>
-          <div style={{ background: 'white', padding: '0.75rem', borderRadius: '12px', textAlign: 'center', border: '1px solid #e5e7eb' }}>
-            <div style={{ fontSize: '0.7rem', color: '#6b7280', marginBottom: '0.25rem' }}>XP</div>
-            <div style={{ fontWeight: 700, color: '#dc2626', fontSize: '0.9rem' }}>{xpData?.currentXP || 0}</div>
+          <div style={{ background: 'var(--bg-primary)', padding: '0.75rem', borderRadius: '12px', textAlign: 'center', border: '1px solid var(--border-color)' }}>
+            <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>XP</div>
+            <div style={{ fontWeight: 700, color: 'var(--primary)', fontSize: '0.9rem' }}>{xpData?.currentXP || 0}</div>
           </div>
         </div>
 
@@ -361,30 +361,30 @@ export default function StaffPortalV2() {
         <div
           onClick={() => setShowWizard(true)}
           style={{
-            background: 'white',
+            background: 'var(--bg-primary)',
             borderRadius: '16px',
             padding: '1.25rem',
             marginBottom: '1rem',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-            border: '1px solid #e5e7eb',
+            boxShadow: 'var(--shadow-sm)',
+            border: '1px solid var(--border-color)',
             cursor: 'pointer'
           }}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
               <div style={{
-                background: '#fef3c7',
+                background: 'var(--warning-light)',
                 padding: '0.5rem',
                 borderRadius: '10px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center'
               }}>
-                <CheckSquare size={20} color="#d97706" />
+                <CheckSquare size={20} color="var(--warning)" />
               </div>
               <div>
-                <div style={{ fontWeight: 600, color: '#1f2937' }}>Checklist Shift</div>
-                <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>
+                <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>Checklist Shift</div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
                   {isOpeningShift ? '☀️ Opening' : isClosingShift ? '🌙 Closing' : '📋 Harian'}
                 </div>
               </div>
@@ -392,30 +392,31 @@ export default function StaffPortalV2() {
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               {checklistCompleted === 0 && (
                 <span style={{
-                  background: '#fee2e2',
-                  color: '#dc2626',
+                  background: 'var(--danger-light)',
+                  color: 'var(--primary)',
                   padding: '0.25rem 0.5rem',
                   borderRadius: '6px',
                   fontSize: '0.7rem',
                   fontWeight: 600
                 }}>Pending</span>
               )}
-              <ChevronRight size={20} color="#9ca3af" />
+              <ChevronRight size={20} color="var(--text-light)" />
             </div>
           </div>
 
           {/* Progress Bar */}
           <div style={{ marginBottom: '0.75rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-              <span style={{ fontSize: '0.75rem', color: '#6b7280' }}>{checklistCompleted}/{checklistTotal} selesai</span>
-              <span style={{ fontSize: '0.75rem', fontWeight: 600, color: checklistProgress === 100 ? '#059669' : '#d97706' }}>{checklistProgress}%</span>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{checklistCompleted}/{checklistTotal} selesai</span>
+              <span style={{ fontSize: '0.75rem', fontWeight: 600, color: checklistProgress === 100 ? 'var(--success)' : 'var(--warning)' }}>{checklistProgress}%</span>
             </div>
-            <div style={{ height: '8px', background: '#e5e7eb', borderRadius: '4px', overflow: 'hidden' }}>
+            <div style={{ height: '8px', background: 'var(--bg-secondary)', borderRadius: '4px', overflow: 'hidden' }}>
               <div style={{
                 width: `${checklistProgress}%`,
                 height: '100%',
-                background: checklistProgress === 100 ? '#059669' : '#f59e0b',
-                transition: 'width 0.3s ease'
+                background: checklistProgress === 100 ? 'var(--success)' : 'var(--warning)',
+                transition: 'width 0.3s_
+                  `
               }} />
             </div>
           </div>

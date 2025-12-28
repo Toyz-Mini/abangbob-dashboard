@@ -3661,3 +3661,357 @@ export async function fetchLateReasonCategories() {
   return toCamelCase(data || []);
 }
 
+// ============ EQUIPMENT & MAINTENANCE OPERATIONS ============
+
+export async function fetchEquipment() {
+  const supabase = getSupabaseClient();
+  if (!supabase) return [];
+
+  const { data, error } = await supabase
+    .from('equipment')
+    .select('*')
+    .order('name', { ascending: true });
+
+  if (error) {
+    console.error('Error fetching equipment:', error);
+    return [];
+  }
+
+  return toCamelCase(data || []);
+}
+
+export async function insertEquipment(item: any) {
+  const supabase = getSupabaseClient();
+  if (!supabase) throw new Error('Supabase not connected');
+
+  const snakeCased = toSnakeCase(item);
+
+  // @ts-ignore
+  const { data, error } = await supabase
+    .from('equipment')
+    .insert(snakeCased)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return toCamelCase(data);
+}
+
+export async function updateEquipment(id: string, updates: any) {
+  const supabase = getSupabaseClient();
+  if (!supabase) throw new Error('Supabase not connected');
+
+  // @ts-ignore
+  const { data, error } = await supabase
+    .from('equipment')
+    .update(toSnakeCase(updates))
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return toCamelCase(data);
+}
+
+export async function deleteEquipment(id: string) {
+  const supabase = getSupabaseClient();
+  if (!supabase) throw new Error('Supabase not connected');
+
+  const { error } = await supabase
+    .from('equipment')
+    .delete()
+    .eq('id', id);
+
+  if (error) throw error;
+}
+
+export async function fetchMaintenanceSchedules() {
+  const supabase = getSupabaseClient();
+  if (!supabase) return [];
+
+  const { data, error } = await supabase
+    .from('maintenance_schedule')
+    .select('*')
+    .order('next_date', { ascending: true });
+
+  if (error) {
+    console.error('Error fetching maintenance schedules:', error);
+    return [];
+  }
+
+  return toCamelCase(data || []);
+}
+
+export async function insertMaintenanceSchedule(schedule: any) {
+  const supabase = getSupabaseClient();
+  if (!supabase) throw new Error('Supabase not connected');
+
+  const snakeCased = toSnakeCase(schedule);
+
+  // @ts-ignore
+  const { data, error } = await supabase
+    .from('maintenance_schedule')
+    .insert(snakeCased)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return toCamelCase(data);
+}
+
+export async function updateMaintenanceSchedule(id: string, updates: any) {
+  const supabase = getSupabaseClient();
+  if (!supabase) throw new Error('Supabase not connected');
+
+  // @ts-ignore
+  const { data, error } = await supabase
+    .from('maintenance_schedule')
+    .update(toSnakeCase(updates))
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return toCamelCase(data);
+}
+
+export async function fetchMaintenanceLogs() {
+  const supabase = getSupabaseClient();
+  if (!supabase) return [];
+
+  const { data, error } = await supabase
+    .from('maintenance_logs')
+    .select('*')
+    .order('date', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching maintenance logs:', error);
+    return [];
+  }
+
+  return toCamelCase(data || []);
+}
+
+export async function insertMaintenanceLog(log: any) {
+  const supabase = getSupabaseClient();
+  if (!supabase) throw new Error('Supabase not connected');
+
+  const snakeCased = toSnakeCase(log);
+
+  // @ts-ignore
+  const { data, error } = await supabase
+    .from('maintenance_logs')
+    .insert(snakeCased)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return toCamelCase(data);
+}
+
+export async function updateMaintenanceLog(id: string, updates: any) {
+  const supabase = getSupabaseClient();
+  if (!supabase) throw new Error('Supabase not connected');
+
+  // @ts-ignore
+  const { data, error } = await supabase
+    .from('maintenance_logs')
+    .update(toSnakeCase(updates))
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return toCamelCase(data);
+}
+
+// ============ WASTE LOGS OPERATIONS ============
+
+export async function fetchWasteLogs() {
+  const supabase = getSupabaseClient();
+  if (!supabase) return [];
+
+  const { data, error } = await supabase
+    .from('waste_logs')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching waste logs:', error);
+    return [];
+  }
+
+  return toCamelCase(data || []);
+}
+
+export async function insertWasteLog(log: any) {
+  const supabase = getSupabaseClient();
+  if (!supabase) throw new Error('Supabase not connected');
+
+  const snakeCased = toSnakeCase(log);
+
+  // @ts-ignore
+  const { data, error } = await supabase
+    .from('waste_logs')
+    .insert(snakeCased)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return toCamelCase(data);
+}
+
+// ============ MORE HR OPERATIONS ============
+
+export async function fetchOTClaims() {
+  const supabase = getSupabaseClient();
+  if (!supabase) return [];
+
+  const { data, error } = await supabase
+    .from('ot_claims')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching OT claims:', error);
+    return [];
+  }
+
+  return toCamelCase(data || []);
+}
+
+export async function fetchSalaryAdvances() {
+  const supabase = getSupabaseClient();
+  if (!supabase) return [];
+
+  const { data, error } = await supabase
+    .from('salary_advances')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching salary advances:', error);
+    return [];
+  }
+
+  return toCamelCase(data || []);
+}
+
+export async function fetchDisciplinaryActions() {
+  const supabase = getSupabaseClient();
+  if (!supabase) return [];
+
+  const { data, error } = await supabase
+    .from('disciplinary_actions')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching disciplinary actions:', error);
+    return [];
+  }
+
+  return toCamelCase(data || []);
+}
+
+export async function fetchStaffTraining() {
+  const supabase = getSupabaseClient();
+  if (!supabase) return [];
+
+  const { data, error } = await supabase
+    .from('staff_training')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching staff training:', error);
+    return [];
+  }
+
+  return toCamelCase(data || []);
+}
+
+export async function fetchStaffDocuments() {
+  const supabase = getSupabaseClient();
+  if (!supabase) return [];
+
+  const { data, error } = await supabase
+    .from('staff_documents')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching staff documents:', error);
+    return [];
+  }
+
+  return toCamelCase(data || []);
+}
+
+export async function fetchPerformanceReviews() {
+  const supabase = getSupabaseClient();
+  if (!supabase) return [];
+
+  const { data, error } = await supabase
+    .from('performance_reviews')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching performance reviews:', error);
+    return [];
+  }
+
+  return toCamelCase(data || []);
+}
+
+export async function fetchOnboardingChecklists() {
+  const supabase = getSupabaseClient();
+  if (!supabase) return [];
+
+  const { data, error } = await supabase
+    .from('onboarding_checklists')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching onboarding checklists:', error);
+    return [];
+  }
+
+  return toCamelCase(data || []);
+}
+
+export async function fetchExitInterviews() {
+  const supabase = getSupabaseClient();
+  if (!supabase) return [];
+
+  const { data, error } = await supabase
+    .from('exit_interviews')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching exit interviews:', error);
+    return [];
+  }
+
+  return toCamelCase(data || []);
+}
+
+export async function fetchStaffComplaints() {
+  const supabase = getSupabaseClient();
+  if (!supabase) return [];
+
+  const { data, error } = await supabase
+    .from('staff_complaints')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching staff complaints:', error);
+    return [];
+  }
+
+  return toCamelCase(data || []);
+}

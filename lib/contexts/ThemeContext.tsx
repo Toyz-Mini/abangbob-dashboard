@@ -16,7 +16,7 @@ const ThemeContext = createContext<ThemeContextType | null>(null);
 const STORAGE_KEY = 'abangbob_theme';
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>('system');
+  const [theme, setThemeState] = useState<Theme>('light');
   const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('light');
   const [mounted, setMounted] = useState(false);
 
@@ -45,9 +45,9 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   // Initialize theme from localStorage
   useEffect(() => {
     const stored = localStorage.getItem(STORAGE_KEY) as Theme | null;
-    const initialTheme = stored || 'system';
+    const initialTheme = stored || 'light';
     setThemeState(initialTheme);
-    
+
     const resolved = resolveTheme(initialTheme);
     setResolvedTheme(resolved);
     applyTheme(resolved);
@@ -59,7 +59,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     if (!mounted) return;
 
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    
+
     const handleChange = () => {
       if (theme === 'system') {
         const resolved = getSystemTheme();
@@ -76,7 +76,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const setTheme = (newTheme: Theme) => {
     setThemeState(newTheme);
     localStorage.setItem(STORAGE_KEY, newTheme);
-    
+
     const resolved = resolveTheme(newTheme);
     setResolvedTheme(resolved);
     applyTheme(resolved);

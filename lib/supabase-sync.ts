@@ -5,6 +5,7 @@
 import { getSupabaseClient, getConnectionState } from './supabase/client';
 import * as ops from './supabase/operations';
 import * as attendanceOps from './supabase/attendance-sync';
+import * as PaymentTaxSync from './supabase/payment-tax-sync';
 import { addToSyncQueue } from './sync-queue';
 import {
   logSyncSuccess,
@@ -107,6 +108,7 @@ export async function syncAddStockItem(item: any) {
     return await ops.insertInventoryItem(item);
   } catch (error) {
     console.error('Failed to sync inventory item to Supabase:', error);
+    addToSyncQueue({ id: item.id, table: 'inventory', action: 'CREATE', payload: item });
     return null;
   }
 }
@@ -132,6 +134,7 @@ export async function syncDeleteStockItem(id: string) {
     await ops.deleteInventoryItem(id);
   } catch (error) {
     console.error('Failed to delete inventory item from Supabase:', error);
+    addToSyncQueue({ id, table: 'inventory', action: 'DELETE', payload: {} });
   }
 }
 
@@ -171,6 +174,7 @@ export async function syncAddStaff(staff: any) {
     return await ops.insertStaff(staff);
   } catch (error) {
     console.error('Failed to sync staff to Supabase:', error);
+    addToSyncQueue({ id: staff.id, table: 'staff', action: 'CREATE', payload: staff });
     return null;
   }
 }
@@ -182,6 +186,7 @@ export async function syncUpdateStaff(id: string, updates: any) {
     return await ops.updateStaff(id, updates);
   } catch (error) {
     console.error('Failed to update staff in Supabase:', error);
+    addToSyncQueue({ id, table: 'staff', action: 'UPDATE', payload: updates });
     return null;
   }
 }
@@ -193,6 +198,7 @@ export async function syncDeleteStaff(id: string) {
     await ops.deleteStaff(id);
   } catch (error) {
     console.error('Failed to delete staff from Supabase:', error);
+    addToSyncQueue({ id, table: 'staff', action: 'DELETE', payload: {} });
   }
 }
 
@@ -527,6 +533,7 @@ export async function syncAddExpense(expense: any) {
     return await ops.insertExpense(expense);
   } catch (error) {
     console.error('Failed to sync expense to Supabase:', error);
+    addToSyncQueue({ id: expense.id, table: 'expenses', action: 'CREATE', payload: expense });
     return null;
   }
 }
@@ -538,6 +545,7 @@ export async function syncUpdateExpense(id: string, updates: any) {
     return await ops.updateExpense(id, updates);
   } catch (error) {
     console.error('Failed to update expense in Supabase:', error);
+    addToSyncQueue({ id, table: 'expenses', action: 'UPDATE', payload: updates });
     return null;
   }
 }
@@ -549,6 +557,7 @@ export async function syncDeleteExpense(id: string) {
     await ops.deleteExpense(id);
   } catch (error) {
     console.error('Failed to delete expense from Supabase:', error);
+    addToSyncQueue({ id, table: 'expenses', action: 'DELETE', payload: {} });
   }
 }
 
@@ -607,6 +616,7 @@ export async function syncAddSupplier(supplier: any) {
     return await ops.insertSupplier(supplier);
   } catch (error) {
     console.error('Failed to sync supplier to Supabase:', error);
+    addToSyncQueue({ id: supplier.id, table: 'suppliers', action: 'CREATE', payload: supplier });
     return null;
   }
 }
@@ -618,6 +628,7 @@ export async function syncUpdateSupplier(id: string, updates: any) {
     return await ops.updateSupplier(id, updates);
   } catch (error) {
     console.error('Failed to update supplier in Supabase:', error);
+    addToSyncQueue({ id, table: 'suppliers', action: 'UPDATE', payload: updates });
     return null;
   }
 }
@@ -629,6 +640,7 @@ export async function syncDeleteSupplier(id: string) {
     await ops.deleteSupplier(id);
   } catch (error) {
     console.error('Failed to delete supplier from Supabase:', error);
+    addToSyncQueue({ id, table: 'suppliers', action: 'DELETE', payload: {} });
   }
 }
 
@@ -652,6 +664,7 @@ export async function syncAddPurchaseOrder(po: any) {
     return await ops.insertPurchaseOrder(po);
   } catch (error) {
     console.error('Failed to sync purchase order to Supabase:', error);
+    addToSyncQueue({ id: po.id, table: 'purchase_orders', action: 'CREATE', payload: po });
     return null;
   }
 }
@@ -663,6 +676,7 @@ export async function syncUpdatePurchaseOrder(id: string, updates: any) {
     return await ops.updatePurchaseOrder(id, updates);
   } catch (error) {
     console.error('Failed to update purchase order in Supabase:', error);
+    addToSyncQueue({ id, table: 'purchase_orders', action: 'UPDATE', payload: updates });
     return null;
   }
 }
@@ -698,6 +712,7 @@ export async function syncUpsertCashFlow(cashFlow: any) {
     return await ops.upsertCashFlow(cashFlow);
   } catch (error) {
     console.error('Failed to sync cash flow to Supabase:', error);
+    addToSyncQueue({ id: cashFlow.id, table: 'cash_flows', action: 'CREATE', payload: cashFlow });
     return null;
   }
 }
@@ -798,6 +813,7 @@ export async function syncAddShift(shift: any) {
     return await ops.insertShift(shift);
   } catch (error) {
     console.error('Failed to sync shift to Supabase:', error);
+    addToSyncQueue({ id: shift.id, table: 'shifts', action: 'CREATE', payload: shift });
     return null;
   }
 }
@@ -809,6 +825,7 @@ export async function syncUpdateShift(id: string, updates: any) {
     return await ops.updateShift(id, updates);
   } catch (error) {
     console.error('Failed to update shift in Supabase:', error);
+    addToSyncQueue({ id, table: 'shifts', action: 'UPDATE', payload: updates });
     return null;
   }
 }
@@ -820,6 +837,7 @@ export async function syncDeleteShift(id: string) {
     await ops.deleteShift(id);
   } catch (error) {
     console.error('Failed to delete shift from Supabase:', error);
+    addToSyncQueue({ id, table: 'shifts', action: 'DELETE', payload: {} });
   }
 }
 
@@ -843,6 +861,7 @@ export async function syncAddScheduleEntry(entry: any) {
     return await ops.insertScheduleEntry(entry);
   } catch (error) {
     console.error('Failed to sync schedule entry to Supabase:', error);
+    addToSyncQueue({ id: entry.id, table: 'schedule_entries', action: 'CREATE', payload: entry });
     return null;
   }
 }
@@ -854,6 +873,7 @@ export async function syncUpdateScheduleEntry(id: string, updates: any) {
     return await ops.updateScheduleEntry(id, updates);
   } catch (error) {
     console.error('Failed to update schedule entry in Supabase:', error);
+    addToSyncQueue({ id, table: 'schedule_entries', action: 'UPDATE', payload: updates });
     return null;
   }
 }
@@ -865,6 +885,7 @@ export async function syncDeleteScheduleEntry(id: string) {
     await ops.deleteScheduleEntry(id);
   } catch (error) {
     console.error('Failed to delete schedule entry from Supabase:', error);
+    addToSyncQueue({ id, table: 'schedule_entries', action: 'DELETE', payload: {} });
   }
 }
 
@@ -1002,6 +1023,7 @@ export async function syncAddDeliveryOrder(order: any) {
     return await ops.insertDeliveryOrder(order);
   } catch (error) {
     console.error('Failed to sync delivery order to Supabase:', error);
+    addToSyncQueue({ id: order.id, table: 'delivery_orders', action: 'CREATE', payload: order });
     return null;
   }
 }
@@ -1013,6 +1035,7 @@ export async function syncUpdateDeliveryOrder(id: string, updates: any) {
     return await ops.updateDeliveryOrder(id, updates);
   } catch (error) {
     console.error('Failed to update delivery order in Supabase:', error);
+    addToSyncQueue({ id, table: 'delivery_orders', action: 'UPDATE', payload: updates });
     return null;
   }
 }
@@ -1038,6 +1061,7 @@ export async function syncUpsertStaffKPI(kpi: any) {
     return await ops.upsertStaffKPI(kpi);
   } catch (error) {
     console.error('Failed to sync staff KPI to Supabase:', error);
+    addToSyncQueue({ id: kpi.id, table: 'staff_kpi', action: 'CREATE', payload: kpi });
     return null;
   }
 }
@@ -1062,6 +1086,7 @@ export async function syncAddLeaveRecord(record: any) {
     return await ops.insertLeaveRecord(record);
   } catch (error) {
     console.error('Failed to sync leave record to Supabase:', error);
+    addToSyncQueue({ id: record.id, table: 'leave_records', action: 'CREATE', payload: record });
     return null;
   }
 }
@@ -1073,6 +1098,7 @@ export async function syncUpdateLeaveRecord(id: string, updates: any) {
     return await ops.updateLeaveRecord(id, updates);
   } catch (error) {
     console.error('Failed to update leave record in Supabase:', error);
+    addToSyncQueue({ id, table: 'leave_records', action: 'UPDATE', payload: updates });
     return null;
   }
 }
@@ -1097,6 +1123,7 @@ export async function syncAddTrainingRecord(record: any) {
     return await ops.insertTrainingRecord(record);
   } catch (error) {
     console.error('Failed to sync training record to Supabase:', error);
+    addToSyncQueue({ id: record.id, table: 'training_records', action: 'CREATE', payload: record });
     return null;
   }
 }
@@ -1108,6 +1135,7 @@ export async function syncUpdateTrainingRecord(id: string, updates: any) {
     return await ops.updateTrainingRecord(id, updates);
   } catch (error) {
     console.error('Failed to update training record in Supabase:', error);
+    addToSyncQueue({ id, table: 'training_records', action: 'UPDATE', payload: updates });
     return null;
   }
 }
@@ -1132,6 +1160,7 @@ export async function syncAddOTRecord(record: any) {
     return await ops.insertOTRecord(record);
   } catch (error) {
     console.error('Failed to sync OT record to Supabase:', error);
+    addToSyncQueue({ id: record.id, table: 'ot_records', action: 'CREATE', payload: record });
     return null;
   }
 }
@@ -1143,6 +1172,7 @@ export async function syncUpdateOTRecord(id: string, updates: any) {
     return await ops.updateOTRecord(id, updates);
   } catch (error) {
     console.error('Failed to update OT record in Supabase:', error);
+    addToSyncQueue({ id, table: 'ot_records', action: 'UPDATE', payload: updates });
     return null;
   }
 }
@@ -1167,6 +1197,7 @@ export async function syncAddCustomerReview(review: any) {
     return await ops.insertCustomerReview(review);
   } catch (error) {
     console.error('Failed to sync customer review to Supabase:', error);
+    addToSyncQueue({ id: review.id, table: 'customer_reviews', action: 'CREATE', payload: review });
     return null;
   }
 }
@@ -1191,6 +1222,7 @@ export async function syncAddChecklistTemplate(template: any) {
     return await ops.insertChecklistTemplate(template);
   } catch (error) {
     console.error('Failed to sync checklist template to Supabase:', error);
+    addToSyncQueue({ id: template.id, table: 'checklist_templates', action: 'CREATE', payload: template });
     return null;
   }
 }
@@ -1202,6 +1234,7 @@ export async function syncUpdateChecklistTemplate(id: string, updates: any) {
     return await ops.updateChecklistTemplate(id, updates);
   } catch (error) {
     console.error('Failed to update checklist template in Supabase:', error);
+    addToSyncQueue({ id, table: 'checklist_templates', action: 'UPDATE', payload: updates });
     return null;
   }
 }
@@ -1213,6 +1246,7 @@ export async function syncDeleteChecklistTemplate(id: string) {
     await ops.deleteChecklistTemplate(id);
   } catch (error) {
     console.error('Failed to delete checklist template from Supabase:', error);
+    addToSyncQueue({ id, table: 'checklist_templates', action: 'DELETE', payload: {} });
   }
 }
 
@@ -1236,6 +1270,7 @@ export async function syncAddChecklistCompletion(completion: any) {
     return await ops.insertChecklistCompletion(completion);
   } catch (error) {
     console.error('Failed to sync checklist completion to Supabase:', error);
+    addToSyncQueue({ id: completion.id, table: 'checklist_completions', action: 'CREATE', payload: completion });
     return null;
   }
 }
@@ -1247,6 +1282,7 @@ export async function syncUpdateChecklistCompletion(id: string, updates: any) {
     return await ops.updateChecklistCompletion(id, updates);
   } catch (error) {
     console.error('Failed to update checklist completion in Supabase:', error);
+    addToSyncQueue({ id, table: 'checklist_completions', action: 'UPDATE', payload: updates });
     return null;
   }
 }
@@ -1271,6 +1307,7 @@ export async function syncUpsertLeaveBalance(balance: any) {
     return await ops.upsertLeaveBalance(balance);
   } catch (error) {
     console.error('Failed to sync leave balance to Supabase:', error);
+    addToSyncQueue({ id: balance.id || balance.staffId, table: 'leave_balances', action: 'CREATE', payload: balance });
     return null;
   }
 }
@@ -1295,6 +1332,7 @@ export async function syncAddLeaveRequest(request: any) {
     return await ops.insertLeaveRequest(request);
   } catch (error) {
     console.error('Failed to sync leave request to Supabase:', error);
+    addToSyncQueue({ id: request.id, table: 'leave_requests', action: 'CREATE', payload: request });
     return null;
   }
 }
@@ -1306,6 +1344,7 @@ export async function syncUpdateLeaveRequest(id: string, updates: any) {
     return await ops.updateLeaveRequest(id, updates);
   } catch (error) {
     console.error('Failed to update leave request in Supabase:', error);
+    addToSyncQueue({ id, table: 'leave_requests', action: 'UPDATE', payload: updates });
     return null;
   }
 }
@@ -1330,6 +1369,7 @@ export async function syncAddClaimRequest(request: any) {
     return await ops.insertClaimRequest(request);
   } catch (error) {
     console.error('Failed to sync claim request to Supabase:', error);
+    addToSyncQueue({ id: request.id, table: 'claim_requests', action: 'CREATE', payload: request });
     return null;
   }
 }
@@ -1341,6 +1381,7 @@ export async function syncUpdateClaimRequest(id: string, updates: any) {
     return await ops.updateClaimRequest(id, updates);
   } catch (error) {
     console.error('Failed to update claim request in Supabase:', error);
+    addToSyncQueue({ id, table: 'claim_requests', action: 'UPDATE', payload: updates });
     return null;
   }
 }
@@ -1410,6 +1451,7 @@ export async function syncAddStaffRequest(request: any) {
     return await ops.insertStaffRequest(request);
   } catch (error) {
     console.error('Failed to sync staff request to Supabase:', error);
+    addToSyncQueue({ id: request.id, table: 'staff_requests', action: 'CREATE', payload: request });
     return null;
   }
 }
@@ -1421,6 +1463,7 @@ export async function syncUpdateStaffRequest(id: string, updates: any) {
     return await ops.updateStaffRequest(id, updates);
   } catch (error) {
     console.error('Failed to update staff request in Supabase:', error);
+    addToSyncQueue({ id, table: 'staff_requests', action: 'UPDATE', payload: updates });
     return null;
   }
 }
@@ -1445,6 +1488,7 @@ export async function syncAddAnnouncement(announcement: any) {
     return await ops.insertAnnouncement(announcement);
   } catch (error) {
     console.error('Failed to sync announcement to Supabase:', error);
+    addToSyncQueue({ id: announcement.id, table: 'announcements', action: 'CREATE', payload: announcement });
     return null;
   }
 }
@@ -1456,6 +1500,7 @@ export async function syncUpdateAnnouncement(id: string, updates: any) {
     return await ops.updateAnnouncement(id, updates);
   } catch (error) {
     console.error('Failed to update announcement in Supabase:', error);
+    addToSyncQueue({ id, table: 'announcements', action: 'UPDATE', payload: updates });
     return null;
   }
 }
@@ -1467,6 +1512,7 @@ export async function syncDeleteAnnouncement(id: string) {
     await ops.deleteAnnouncement(id);
   } catch (error) {
     console.error('Failed to delete announcement from Supabase:', error);
+    addToSyncQueue({ id, table: 'announcements', action: 'DELETE', payload: {} });
   }
 }
 
@@ -1490,6 +1536,7 @@ export async function syncAddOilTracker(tracker: any) {
     return await ops.insertOilTracker(tracker);
   } catch (error) {
     console.error('Failed to sync oil tracker to Supabase:', error);
+    addToSyncQueue({ id: tracker.id || tracker.fryerId, table: 'oil_trackers', action: 'CREATE', payload: tracker });
     return null;
   }
 }
@@ -1501,6 +1548,7 @@ export async function syncUpdateOilTracker(fryerId: string, updates: any) {
     return await ops.updateOilTracker(fryerId, updates);
   } catch (error) {
     console.error('Failed to update oil tracker in Supabase:', error);
+    addToSyncQueue({ id: fryerId, table: 'oil_trackers', action: 'UPDATE', payload: updates });
     return null;
   }
 }
@@ -1512,6 +1560,7 @@ export async function syncDeleteOilTracker(fryerId: string) {
     await ops.deleteOilTracker(fryerId);
   } catch (error) {
     console.error('Failed to delete oil tracker from Supabase:', error);
+    addToSyncQueue({ id: fryerId, table: 'oil_trackers', action: 'DELETE', payload: {} });
   }
 }
 
@@ -1535,6 +1584,7 @@ export async function syncAddOilChangeRequest(request: any) {
     return await ops.insertOilChangeRequest(request);
   } catch (error) {
     console.error('Failed to sync oil change request to Supabase:', error);
+    addToSyncQueue({ id: request.id, table: 'oil_change_requests', action: 'CREATE', payload: request });
     return null;
   }
 }
@@ -1546,6 +1596,7 @@ export async function syncUpdateOilChangeRequest(id: string, updates: any) {
     return await ops.updateOilChangeRequest(id, updates);
   } catch (error) {
     console.error('Failed to update oil change request in Supabase:', error);
+    addToSyncQueue({ id, table: 'oil_change_requests', action: 'UPDATE', payload: updates });
     return null;
   }
 }
@@ -1570,6 +1621,7 @@ export async function syncAddOilActionHistory(history: any) {
     return await ops.insertOilActionHistory(history);
   } catch (error) {
     console.error('Failed to sync oil action history to Supabase:', error);
+    addToSyncQueue({ id: history.id, table: 'oil_action_history', action: 'CREATE', payload: history });
     return null;
   }
 }
@@ -1626,6 +1678,13 @@ export async function loadAllDataFromSupabase() {
       oilChangeRequests: [],
       oilActionHistory: [],
       positions: [],
+      equipment: [],
+      maintenanceSchedules: [],
+      maintenanceLogs: [],
+      voidRefundRequests: [],
+      menuCategories: [],
+      paymentMethods: [],
+      taxRates: [],
     };
   }
 
@@ -1664,10 +1723,25 @@ export async function loadAllDataFromSupabase() {
       ops.fetchAnnouncements(),
       ops.fetchOilTrackers(),
       ops.fetchOilChangeRequests(),
-      ops.fetchOilChangeRequests(),
       ops.fetchOilActionHistory(),
       ops.fetchCashRegisters(), // Index 34
       loadPositionsFromSupabase(), // Index 35
+      ops.fetchEquipment(), // Index 36
+      ops.fetchMaintenanceSchedules(), // Index 37
+      ops.fetchMaintenanceLogs(), // Index 38
+      ops.fetchOTClaims(), // Index 39
+      ops.fetchSalaryAdvances(), // Index 40
+      ops.fetchDisciplinaryActions(), // Index 41
+      ops.fetchStaffTraining(), // Index 42
+      ops.fetchStaffDocuments(), // Index 43
+      ops.fetchPerformanceReviews(), // Index 44
+      ops.fetchOnboardingChecklists(), // Index 45
+      ops.fetchExitInterviews(), // Index 46
+      ops.fetchStaffComplaints(), // Index 47
+      ops.fetchVoidRefundRequests(), // Index 48
+      PaymentTaxSync.getAllMenuCategories(), // Index 49
+      PaymentTaxSync.getAllPaymentMethods(), // Index 50
+      PaymentTaxSync.getAllTaxRates(), // Index 51
     ]);
 
     // Helper to get value or default
@@ -1721,6 +1795,22 @@ export async function loadAllDataFromSupabase() {
       oilActionHistory: getResult(33, []),
       cashRegisters: getResult(34, []),
       positions: getResult(35, []),
+      equipment: getResult(36, []),
+      maintenanceSchedules: getResult(37, []),
+      maintenanceLogs: getResult(38, []),
+      otClaims: getResult(39, []),
+      salaryAdvances: getResult(40, []),
+      disciplinaryActions: getResult(41, []),
+      staffTraining: getResult(42, []),
+      staffDocuments: getResult(43, []),
+      performanceReviews: getResult(44, []),
+      onboardingChecklists: getResult(45, []),
+      exitInterviews: getResult(46, []),
+      staffComplaints: getResult(47, []),
+      voidRefundRequests: getResult(48, []),
+      menuCategories: getResult<any>(49, { data: [] }).data || [],
+      paymentMethods: getResult<any>(50, { data: [] }).data || [],
+      taxRates: getResult<any>(51, { data: [] }).data || [],
     };
   } catch (error) {
     console.error('Critical failure in loadAllDataFromSupabase:', error);
@@ -1762,6 +1852,22 @@ export async function loadAllDataFromSupabase() {
       // missing inventoryLogs in original catch return, adding it
       inventoryLogs: [],
       positions: [],
+      equipment: [],
+      maintenanceSchedules: [],
+      maintenanceLogs: [],
+      otClaims: [],
+      salaryAdvances: [],
+      disciplinaryActions: [],
+      staffTraining: [],
+      staffDocuments: [],
+      performanceReviews: [],
+      onboardingChecklists: [],
+      exitInterviews: [],
+      staffComplaints: [],
+      voidRefundRequests: [],
+      menuCategories: [],
+      paymentMethods: [],
+      taxRates: [],
     };
   }
 }
