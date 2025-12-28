@@ -195,29 +195,30 @@ export default function SchedulePage() {
         </header>
 
         {/* Metrics Overview - Compact Grid */}
-        <div className="grid grid-cols-3 gap-3 mb-8">
-          <div className="bg-white p-4 rounded-2xl border border-blue-50 shadow-sm flex flex-col items-center justify-center gap-1 group">
-            <div className="bg-blue-50 text-blue-600 p-2 rounded-xl mb-1 group-hover:scale-110 transition-transform">
-              <Briefcase size={18} />
+        {/* Metrics Overview - Compact Row */}
+        <div className="flex flex-row items-center justify-between gap-3 mb-8">
+          <div className="flex-1 bg-white py-3 px-2 rounded-2xl border border-blue-50 shadow-sm flex flex-col items-center justify-center gap-1 group min-w-0">
+            <div className="bg-blue-50 text-blue-600 p-1.5 rounded-xl mb-1 group-hover:scale-110 transition-transform">
+              <Briefcase size={16} />
             </div>
-            <span className="text-2xl font-bold text-gray-900">{myWeekSchedule.length}</span>
-            <span className="text-[10px] uppercase tracking-wider font-semibold text-gray-400">Kerja</span>
+            <span className="text-xl font-bold text-gray-900 leading-none">{myWeekSchedule.length}</span>
+            <span className="text-[9px] uppercase tracking-wider font-semibold text-gray-400 truncate">Kerja</span>
           </div>
 
-          <div className="bg-white p-4 rounded-2xl border border-emerald-50 shadow-sm flex flex-col items-center justify-center gap-1 group">
-            <div className="bg-emerald-50 text-emerald-600 p-2 rounded-xl mb-1 group-hover:scale-110 transition-transform">
-              <Clock size={18} />
+          <div className="flex-1 bg-white py-3 px-2 rounded-2xl border border-emerald-50 shadow-sm flex flex-col items-center justify-center gap-1 group min-w-0">
+            <div className="bg-emerald-50 text-emerald-600 p-1.5 rounded-xl mb-1 group-hover:scale-110 transition-transform">
+              <Clock size={16} />
             </div>
-            <span className="text-2xl font-bold text-gray-900">{weeklyHours}h</span>
-            <span className="text-[10px] uppercase tracking-wider font-semibold text-gray-400">Jam</span>
+            <span className="text-xl font-bold text-gray-900 leading-none">{weeklyHours}h</span>
+            <span className="text-[9px] uppercase tracking-wider font-semibold text-gray-400 truncate">Jam</span>
           </div>
 
-          <div className="bg-white p-4 rounded-2xl border border-amber-50 shadow-sm flex flex-col items-center justify-center gap-1 group">
-            <div className="bg-amber-50 text-amber-600 p-2 rounded-xl mb-1 group-hover:scale-110 transition-transform">
-              <Coffee size={18} />
+          <div className="flex-1 bg-white py-3 px-2 rounded-2xl border border-amber-50 shadow-sm flex flex-col items-center justify-center gap-1 group min-w-0">
+            <div className="bg-amber-50 text-amber-600 p-1.5 rounded-xl mb-1 group-hover:scale-110 transition-transform">
+              <Coffee size={16} />
             </div>
-            <span className="text-2xl font-bold text-gray-900">{7 - myWeekSchedule.length}</span>
-            <span className="text-[10px] uppercase tracking-wider font-semibold text-gray-400">Cuti</span>
+            <span className="text-xl font-bold text-gray-900 leading-none">{7 - myWeekSchedule.length}</span>
+            <span className="text-[9px] uppercase tracking-wider font-semibold text-gray-400 truncate">Cuti</span>
           </div>
         </div>
 
