@@ -124,6 +124,7 @@ export default function SwapShiftPage() {
         category: 'shift_swap',
         title: `Tukar Shift: ${formattedDate}`,
         description: `Permohonan tukar shift pada ${formattedDate} (${mySchedule?.shift?.name || 'Unknown'}) dengan ${colleague?.name || 'Unknown'} pada ${formattedColleagueDate} (${colleagueShift?.name || 'Unknown'}). Sebab: ${reason || 'Tiada sebab dinyatakan'}`,
+        targetStaffId: selectedColleague,
         priority: 'medium',
         status: 'pending'
       });
@@ -267,7 +268,11 @@ export default function SwapShiftPage() {
                         </div>
                         <div className="swap-with">
                           <User size={14} />
-                          <span>Dengan: <strong>{details.colleagueName}</strong></span>
+                          {request.staffId === user?.id ? (
+                            <span>Dengan: <strong>{details.colleagueName}</strong></span>
+                          ) : (
+                            <span>Dari: <strong>{request.staffName}</strong></span>
+                          )}
                         </div>
                       </div>
                       <span className={`badge badge-${request.status === 'completed' ? 'success' : request.status === 'rejected' ? 'danger' : 'warning'}`}>
@@ -288,7 +293,7 @@ export default function SwapShiftPage() {
                       </div>
                     )}
 
-                    {request.status === 'pending' && (
+                    {request.status === 'pending' && request.staffId === user?.id && (
                       <div style={{ marginTop: '0.75rem', display: 'flex', justifyContent: 'flex-end' }}>
                         <button
                           className="btn btn-sm btn-outline-danger"

@@ -1339,6 +1339,7 @@ export interface StaffRequest {
   title: string;
   description: string;
   priority: 'low' | 'medium' | 'high';
+  targetStaffId?: string;
   attachments?: string[];
   status: 'pending' | 'in_progress' | 'completed' | 'rejected';
   assignedTo?: string;

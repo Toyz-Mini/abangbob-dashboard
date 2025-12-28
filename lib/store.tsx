@@ -4258,7 +4258,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, [staffRequests]);
 
   const getStaffRequestsByStaff = useCallback((staffId: string): StaffRequest[] => {
-    return staffRequests.filter(r => r.staffId === staffId);
+    return staffRequests.filter(r => r.staffId === staffId || r.targetStaffId === staffId);
   }, [staffRequests]);
 
   const getPendingStaffRequests = useCallback((): StaffRequest[] => {
