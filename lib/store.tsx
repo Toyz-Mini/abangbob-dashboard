@@ -2081,9 +2081,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const refreshStaffRequests = useCallback(async () => {
     try {
       const supabaseStaffRequests = await VoidRefundOps.fetchStaffRequests();
-      if (supabaseStaffRequests && supabaseStaffRequests.length > 0) {
+      if (supabaseStaffRequests) {
         setStaffRequests(supabaseStaffRequests);
-        console.log('[Realtime] Staff requests refreshed from Supabase:', supabaseStaffRequests.length);
+        if (supabaseStaffRequests.length > 0) {
+          console.log('[Realtime] Staff requests refreshed from Supabase:', supabaseStaffRequests.length);
+        }
       }
     } catch (error) {
       console.error('Failed to refresh staff requests from Supabase:', error);
@@ -4258,8 +4260,15 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, [staffRequests]);
 
   const getStaffRequestsByStaff = useCallback((staffId: string): StaffRequest[] => {
-    return staffRequests.filter(r => r.staffId === staffId || r.targetStaffId === staffId);
-  }, [staffRequests]);
+    const currentStaffProfile = staff.find(s => s.id === staffId);
+    const staffName = currentStaffProfile?.name || '';
+
+    return staffRequests.filter(r =>
+      r.staffId === staffId ||
+      r.targetStaffId === staffId ||
+      (r.category === 'shift_swap' && staffName && r.description.includes(staffName))
+    );
+  }, [staffRequests, staff]);
 
   const getPendingStaffRequests = useCallback((): StaffRequest[] => {
     return staffRequests.filter(r => r.status === 'pending');

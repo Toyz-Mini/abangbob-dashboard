@@ -2145,9 +2145,9 @@ export async function fetchStaffRequests(staffId?: string, status?: string) {
     .select('*')
     .order('created_at', { ascending: false });
 
-  if (staffId) {
-    query = query.or(`staff_id.eq.${staffId},target_staff_id.eq.${staffId}`);
-  }
+  // if (staffId) {
+  //   query = query.or(`staff_id.eq.${staffId},target_staff_id.eq.${staffId}`);
+  // }
   if (status) query = query.eq('status', status);
 
   const { data, error } = await query;
