@@ -2603,10 +2603,20 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const refreshPositions = useCallback(async () => {
-    const data = await SupabaseSync.loadPositionsFromSupabase();
-    // Always set data if it's an array, even if empty, to reflect DB state
-    if (Array.isArray(data)) {
-      setPositions(data);
+    console.log('[Store] refreshPositions called');
+    try {
+      const data = await SupabaseSync.loadPositionsFromSupabase();
+      console.log('[Store] loadPositionsFromSupabase returned:', data?.length, 'items');
+      console.log('[Store] Sample data:', data?.[0]);
+      // Always set data if it's an array, even if empty, to reflect DB state
+      if (Array.isArray(data)) {
+        setPositions(data);
+        console.log('[Store] Positions state updated with', data.length, 'items');
+      } else {
+        console.warn('[Store] loadPositionsFromSupabase did not return an array:', data);
+      }
+    } catch (error) {
+      console.error('[Store] refreshPositions error:', error);
     }
   }, []);
 

@@ -36,9 +36,20 @@ CREATE INDEX IF NOT EXISTS idx_staff_positions_order ON public.staff_positions(d
 -- Enable RLS
 ALTER TABLE public.staff_positions ENABLE ROW LEVEL SECURITY;
 
--- RLS Policies
-CREATE POLICY "Anyone can view staff positions" ON public.staff_positions FOR SELECT USING (true);
-CREATE POLICY "Admin can manage staff positions" ON public.staff_positions FOR ALL USING (true);
+-- RLS Policies - Allow public read access for anon key
+CREATE POLICY "Allow public read access" 
+ON public.staff_positions 
+FOR SELECT 
+TO anon, authenticated
+USING (true);
+
+-- Allow authenticated users to manage (insert/update/delete)
+CREATE POLICY "Allow authenticated manage" 
+ON public.staff_positions 
+FOR ALL 
+TO authenticated
+USING (true)
+WITH CHECK (true);
 
 -- Add trigger for updated_at
 CREATE TRIGGER update_staff_positions_updated_at BEFORE UPDATE ON public.staff_positions
