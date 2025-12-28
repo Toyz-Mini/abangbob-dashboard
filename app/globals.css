@@ -6045,14 +6045,15 @@ html {
 
 /* Staff Profile Page Enhancements */
 .staff-profile-header {
-  background: var(--staff-gradient);
+  background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+  padding: 2rem 1.5rem;
   border-radius: var(--radius-xl);
-  padding: 2rem;
   color: white;
   text-align: center;
+  margin-bottom: 2rem;
   position: relative;
   overflow: hidden;
-  margin-bottom: 1.5rem;
+  box-shadow: 0 10px 25px -5px rgba(220, 38, 38, 0.4);
 }
 
 .staff-profile-header::before {
@@ -6115,39 +6116,18 @@ html {
 /* Staff Stats Cards */
 .staff-stat-card {
   background: var(--bg-card);
-  border: 1px solid var(--border-color);
+  /* border: 1px solid var(--border-color); removed for clean look */
   border-radius: var(--radius-xl);
   padding: 1.25rem;
   text-align: center;
   position: relative;
   overflow: hidden;
   transition: all 0.3s ease;
+  box-shadow: var(--shadow-sm);
+  /* Soft shadow */
 }
 
-.staff-stat-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
-}
-
-.staff-stat-card.primary::before {
-  background: var(--staff-gradient);
-}
-
-.staff-stat-card.success::before {
-  background: var(--staff-gradient-success);
-}
-
-.staff-stat-card.cool::before {
-  background: var(--staff-gradient-cool);
-}
-
-.staff-stat-card.warm::before {
-  background: var(--staff-gradient-warm);
-}
+/* Removed ::before strip for cleaner look */
 
 .staff-stat-card:hover {
   transform: translateY(-4px);
@@ -6165,8 +6145,10 @@ html {
 }
 
 .staff-stat-icon.primary {
-  background: rgba(99, 102, 241, 0.1);
-  color: #6366f1;
+  background: rgba(220, 38, 38, 0.1);
+  /* Red soft bg */
+  color: #dc2626;
+  /* Red icon */
 }
 
 .staff-stat-icon.success {

@@ -343,17 +343,17 @@ export default function StaffPortalV2() {
           paddingBottom: '0.5rem',
           scrollSnapType: 'x mandatory'
         }}>
-          <div style={{ minWidth: '120px', flex: '0 0 auto', scrollSnapAlign: 'start', background: 'var(--bg-primary)', padding: '0.85rem 0.5rem', borderRadius: '12px', textAlign: 'center', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)' }}>
+          <div style={{ minWidth: '120px', flex: '0 0 auto', scrollSnapAlign: 'start', background: 'var(--bg-primary)', padding: '1rem 0.5rem', borderRadius: '16px', textAlign: 'center', boxShadow: 'var(--shadow-sm)' }}>
             <div style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', marginBottom: '0.25rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Hari Ini</div>
             <div style={{ fontWeight: 800, color: todayAttendance?.clockInTime ? 'var(--success)' : 'var(--text-secondary)', fontSize: '0.95rem' }}>
               {todayAttendance?.clockInTime ? '✓ HADIR' : '—'}
             </div>
           </div>
-          <div style={{ minWidth: '120px', flex: '0 0 auto', scrollSnapAlign: 'start', background: 'var(--bg-primary)', padding: '0.85rem 0.5rem', borderRadius: '12px', textAlign: 'center', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)' }}>
+          <div style={{ minWidth: '120px', flex: '0 0 auto', scrollSnapAlign: 'start', background: 'var(--bg-primary)', padding: '1rem 0.5rem', borderRadius: '16px', textAlign: 'center', boxShadow: 'var(--shadow-sm)' }}>
             <div style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', marginBottom: '0.25rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Level</div>
             <div style={{ fontWeight: 800, color: 'var(--text-primary)', fontSize: '0.95rem' }}>⭐ {xpData?.currentLevel || 1}</div>
           </div>
-          <div style={{ minWidth: '120px', flex: '0 0 auto', scrollSnapAlign: 'start', background: 'var(--bg-primary)', padding: '0.85rem 0.5rem', borderRadius: '12px', textAlign: 'center', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)' }}>
+          <div style={{ minWidth: '120px', flex: '0 0 auto', scrollSnapAlign: 'start', background: 'var(--bg-primary)', padding: '1rem 0.5rem', borderRadius: '16px', textAlign: 'center', boxShadow: 'var(--shadow-sm)' }}>
             <div style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', marginBottom: '0.25rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>XP</div>
             <div style={{ fontWeight: 800, color: 'var(--primary)', fontSize: '0.95rem' }}>{xpData?.currentXP || 0}</div>
           </div>

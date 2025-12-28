@@ -730,9 +730,9 @@ export default function ProfilePage() {
           display: flex;
           align-items: center;
           justify-content: center;
-          background: var(--primary-light);
-          color: var(--primary);
-          border-radius: var(--radius-md);
+          background: rgba(220, 38, 38, 0.08); /* brand-red-50/100 equivalent */
+          color: #dc2626; /* brand-red-600 */
+          border-radius: 50%;
           flex-shrink: 0;
         }
 
