@@ -656,48 +656,43 @@ export default function InventoryPage() {
         >
           <div className="form-group">
             <label className="form-label">Nama Item *</label>
-            <input
-              type="text"
-              className={`form-input ${duplicateItem ? 'border-amber-500 focus:border-amber-500 focus:ring-amber-500' : ''}`}
-              value={formData.name}
-              onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-              placeholder="Contoh: Ayam, Nasi, dll"
-            />
-
-            {/* Duplicate Warning */}
-            {duplicateItem && modalType === 'add' && (
-              <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                <div className="flex items-start gap-3">
-                  <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-amber-800">
-                      Item "{duplicateItem.name}" sudah wujud!
-                    </p>
-                    <p className="text-xs text-amber-700 mt-1">
-                      Kuantiti semasa: <strong>{duplicateItem.currentQuantity} {duplicateItem.unit}</strong>
-                    </p>
-                    <div className="flex flex-col sm:flex-row gap-2 mt-3">
-                      <button
-                        type="button"
-                        className="btn btn-sm bg-amber-600 hover:bg-amber-700 text-white"
-                        onClick={() => {
-                          closeModal();
-                          openAdjustModal(duplicateItem);
-                        }}
-                      >
-                        <ArrowUp size={14} className="mr-1" />
-                        Laras Stok Sedia Ada
-                      </button>
-                      <button
-                        type="button"
-                        className="btn btn-sm btn-outline text-amber-700 border-amber-300 hover:bg-amber-100"
-                        onClick={() => setFormData(prev => ({ ...prev, name: prev.name + ' (Baru)' }))}
-                      >
-                        Tetap Tambah Baru
-                      </button>
-                    </div>
-                  </div>
+            <div className="relative">
+              <input
+                type="text"
+                className={`form-input ${duplicateItem ? 'border-red-500 focus:border-red-500 focus:ring-red-200 pr-10' : ''}`}
+                value={formData.name}
+                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                placeholder="Contoh: Ayam, Nasi, dll"
+              />
+              {duplicateItem && modalType === 'add' && (
+                <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                  <div className="w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse" />
                 </div>
+              )}
+            </div>
+
+            {/* Duplicate Warning - Enhanced */}
+            {duplicateItem && modalType === 'add' && (
+              <div className="mt-3 px-3 py-2.5 bg-red-50 border-l-3 border-red-500 rounded-r-lg flex items-center justify-between gap-3"
+                style={{ borderLeftWidth: '3px' }}
+              >
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="text-red-500 text-base">⚠️</span>
+                  <span className="text-red-700">
+                    <strong>"{duplicateItem.name}"</strong> sudah wujud
+                    <span className="text-red-500 ml-1">• {duplicateItem.currentQuantity} {duplicateItem.unit}</span>
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  className="px-3 py-1.5 bg-red-100 hover:bg-red-200 text-red-700 font-medium text-sm rounded-md flex items-center gap-1 transition-all hover:shadow-sm whitespace-nowrap"
+                  onClick={() => {
+                    closeModal();
+                    openAdjustModal(duplicateItem);
+                  }}
+                >
+                  Laras stok →
+                </button>
               </div>
             )}
           </div>
