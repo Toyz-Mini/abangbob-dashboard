@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import StaffLayout from '@/components/StaffLayout';
-import { useStaffPortal, useStaff } from '@/lib/store';
+import { useStaffPortal, useStaff, useKPI } from '@/lib/store';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import {
@@ -14,20 +14,52 @@ import {
   Sun,
   Moon,
   Coffee,
-  Briefcase
+  Briefcase,
+  Timer,
+  Award,
+  Palmtree,
+  ArrowRightLeft,
+  X,
+  Send
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
+import { ScheduleEntry, Shift } from '@/lib/types'; // Import for types
 
 export default function SchedulePage() {
   const { user } = useAuth();
   const { staff, isInitialized } = useStaff();
-  const { schedules, shifts } = useStaffPortal();
+  const {
+    schedules,
+    shifts,
+    getLeaveBalance,
+    addStaffRequest,
+    isInitialized: staffPortalInitialized
+  } = useStaffPortal();
+
+  const { getStaffKPI, isInitialized: kpiInitialized } = useKPI();
+
+  const [swapModalOpen, setSwapModalOpen] = useState(false);
+  const [selectedShiftForSwap, setSelectedShiftForSwap] = useState<{ schedule: ScheduleEntry, shift: Shift, date: Date } | null>(null);
+  const [swapReason, setSwapReason] = useState('');
+  const [isSubmittingSwap, setIsSubmittingSwap] = useState(false);
 
   const currentStaff = useMemo(() => {
     if (!user) return null;
     return staff.find(s => s.id === user.id) || null;
   }, [user, staff]);
+
+  // KPI & Leave Data
+  const staffKPI = useMemo(() => {
+    if (!user) return null;
+    return getStaffKPI(user.id);
+  }, [user, getStaffKPI]);
+
+  const leaveBalance = useMemo(() => {
+    if (!user) return null;
+    const balance = getLeaveBalance(user.id);
+    return balance ? balance.annual.balance : 0;
+  }, [user, getLeaveBalance]);
 
   // Week navigation
   const [currentWeekStart, setCurrentWeekStart] = useState(() => {
@@ -64,6 +96,57 @@ export default function SchedulePage() {
     );
   }, [schedules, currentWeekStart, user?.id]);
 
+  // NEXT SHIFT LOGIC
+  const nextShift = useMemo(() => {
+    if (!user || schedules.length === 0) return null;
+
+    const now = new Date();
+    // Filter future schedules
+    const futureSchedules = schedules
+      .filter(s => s.staffId === user.id)
+      .map(s => {
+        const shift = shifts.find(sh => sh.id === s.shiftId);
+        if (!shift) return null;
+
+        const scheduleDateTime = new Date(s.date + 'T' + shift.startTime);
+        return { schedule: s, shift, dateTime: scheduleDateTime };
+      })
+      .filter((item): item is { schedule: ScheduleEntry; shift: Shift; dateTime: Date } => item !== null && item.dateTime > now)
+      .sort((a, b) => a.dateTime.getTime() - b.dateTime.getTime());
+
+    return futureSchedules[0] || null;
+  }, [schedules, shifts, user]);
+
+  const [timeToNextShift, setTimeToNextShift] = useState<string>('');
+
+  useEffect(() => {
+    if (!nextShift) return;
+
+    const updateTimer = () => {
+      const now = new Date();
+      const diff = nextShift.dateTime.getTime() - now.getTime();
+
+      if (diff <= 0) {
+        setTimeToNextShift('Sekarang');
+        return;
+      }
+
+      const hours = Math.floor(diff / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+
+      if (hours > 24) {
+        const days = Math.floor(hours / 24);
+        setTimeToNextShift(`${days} Hari lagi`);
+      } else {
+        setTimeToNextShift(`${hours}j ${minutes}m lagi`);
+      }
+    };
+
+    updateTimer();
+    const interval = setInterval(updateTimer, 60000); // Update every minute
+    return () => clearInterval(interval);
+  }, [nextShift]);
+
   // Get colleagues on the same shift
   const getColleaguesOnShift = (date: string, shiftId: string) => {
     return schedules
@@ -72,6 +155,49 @@ export default function SchedulePage() {
         const colleague = staff.find(st => st.id === s.staffId);
         return colleague?.name || s.staffName;
       });
+  };
+
+  const handleSwapClick = (schedule: ScheduleEntry, shift: Shift, date: Date) => {
+    // Only allow swapping future shifts
+    if (new Date(schedule.date + 'T' + shift.startTime) < new Date()) {
+      alert("Anda tidak boleh menukar shift yang telah berlalu.");
+      return;
+    }
+
+    setSelectedShiftForSwap({ schedule, shift, date });
+    setSwapModalOpen(true);
+  };
+
+  const submitSwapRequest = async () => {
+    if (!selectedShiftForSwap || !user || !currentStaff) return;
+    if (!swapReason.trim()) {
+      alert("Sila berikan sebab penukaran.");
+      return;
+    }
+
+    setIsSubmittingSwap(true);
+
+    try {
+      addStaffRequest({
+        staffId: user.id,
+        staffName: currentStaff.name,
+        category: 'shift_swap',
+        title: `Tukar Shift: ${selectedShiftForSwap.date.toLocaleDateString('ms-MY')}`,
+        description: `Request to swap shift on ${selectedShiftForSwap.date.toLocaleDateString('ms-MY')} (${selectedShiftForSwap.shift.name}). Reason: ${swapReason}`,
+        priority: 'medium',
+        status: 'pending'
+      });
+
+      setSwapModalOpen(false);
+      setSwapReason('');
+      setSelectedShiftForSwap(null);
+      alert("Permohonan tukar shift berjaya dihantar!");
+    } catch (error) {
+      console.error("Swap request failed", error);
+      alert("Gagal menghantar permohonan. Sila cuba lagi.");
+    } finally {
+      setIsSubmittingSwap(false);
+    }
   };
 
   // Navigation
@@ -117,7 +243,7 @@ export default function SchedulePage() {
     return Math.round(totalMinutes / 60 * 10) / 10;
   }, [myWeekSchedule, shifts]);
 
-  if (!isInitialized) {
+  if (!isInitialized || !staffPortalInitialized) {
     return (
       <StaffLayout>
         <div className="flex items-center justify-center min-h-[60vh]">
@@ -136,10 +262,6 @@ export default function SchedulePage() {
             <p className="mb-6 text-red-700/80 leading-relaxed">
               Rekod staff anda tidak dapat dijumpai. Sila hubungi Admin untuk bantuan.
             </p>
-            <div className="text-xs bg-white/50 p-4 rounded-xl border border-red-100 text-left font-mono text-red-500">
-              User ID: {user?.id}<br />
-              Status: {user?.status || 'Unknown'}
-            </div>
           </div>
         </div>
       </StaffLayout>
@@ -151,8 +273,8 @@ export default function SchedulePage() {
       <div className="max-w-md mx-auto sm:max-w-2xl lg:max-w-4xl animate-fade-in pb-20 pt-4 px-4 sm:px-6">
 
         {/* Header Section - Modern & Clean */}
-        <header className="mb-8">
-          <div className="flex items-center justify-between mb-2">
+        <header className="mb-6">
+          <div className="flex items-center justify-between mb-4">
             <div>
               <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Jadual Kerja</h1>
               <p className="text-sm text-gray-500 font-medium">Mingguan anda</p>
@@ -167,8 +289,75 @@ export default function SchedulePage() {
             </button>
           </div>
 
+          {/* NEW: Widgets Row */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+            {/* 1. Next Shift Countdown */}
+            <div className="bg-gradient-to-br from-indigo-600 to-violet-600 rounded-2xl p-4 text-white shadow-md relative overflow-hidden">
+              <div className="absolute top-0 right-0 p-3 opacity-10">
+                <Clock size={48} />
+              </div>
+              <div className="relative z-10">
+                <div className="flex items-center gap-2 mb-1 opacity-90">
+                  <Timer size={14} />
+                  <span className="text-xs font-semibold uppercase tracking-wider">Shift Seterusnya</span>
+                </div>
+                {nextShift ? (
+                  <div>
+                    <div className="text-2xl font-bold mb-1">{timeToNextShift}</div>
+                    <div className="text-xs text-indigo-100 font-medium">
+                      {nextShift.dateTime.toLocaleDateString('ms-MY', { weekday: 'long', day: 'numeric', month: 'short' })}
+                      {' • '}
+                      {nextShift.shift.startTime}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-sm opacity-90 font-medium mt-1">Tiada shift akan datang</div>
+                )}
+              </div>
+            </div>
+
+            {/* 2 & 3. KPI & Leave (Split Column) */}
+            <div className="grid grid-cols-2 gap-3">
+              {/* Mini KPI */}
+              <div className="bg-white rounded-2xl p-3 border border-gray-100 shadow-sm flex flex-col justify-center relative overflow-hidden">
+                <div className="absolute -right-2 -bottom-2 opacity-5">
+                  <Award size={48} className="text-amber-500" />
+                </div>
+                <div className="flex items-center gap-1.5 mb-1 text-gray-500">
+                  <Award size={14} />
+                  <span className="text-[10px] font-bold uppercase">Prestasi</span>
+                </div>
+                <div className="flex items-baseline gap-1">
+                  <span className="text-xl font-bold text-gray-900">{staffKPI?.overallScore || '-'}</span>
+                  <span className="text-[10px] text-gray-400">/100</span>
+                </div>
+                <div className="text-[10px] font-medium text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full w-fit mt-1">
+                  Rank #{staffKPI?.rank || '-'}
+                </div>
+              </div>
+
+              {/* Leave Balance */}
+              <div className="bg-white rounded-2xl p-3 border border-gray-100 shadow-sm flex flex-col justify-center relative overflow-hidden">
+                <div className="absolute -right-2 -bottom-2 opacity-5">
+                  <Palmtree size={48} className="text-emerald-500" />
+                </div>
+                <div className="flex items-center gap-1.5 mb-1 text-gray-500">
+                  <Palmtree size={14} />
+                  <span className="text-[10px] font-bold uppercase">Baki Cuti</span>
+                </div>
+                <div className="flex items-baseline gap-1">
+                  <span className="text-xl font-bold text-gray-900">{leaveBalance}</span>
+                  <span className="text-[10px] text-gray-400">Hari</span>
+                </div>
+                <div className="text-[10px] font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full w-fit mt-1">
+                  Available
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Week Navigation Pill */}
-          <div className="bg-white rounded-2xl p-2 shadow-sm border border-gray-100 flex items-center justify-between">
+          <div className="bg-white rounded-2xl p-2 shadow-sm border border-gray-100 flex items-center justify-between mb-6">
             <button
               onClick={goToPreviousWeek}
               className="p-2.5 hover:bg-gray-50 rounded-xl text-gray-400 hover:text-gray-900 transition-colors active:scale-95"
@@ -194,7 +383,6 @@ export default function SchedulePage() {
           </div>
         </header>
 
-        {/* Metrics Overview - Compact Grid */}
         {/* Metrics Overview - Compact Row */}
         <div className="flex flex-row items-center justify-between gap-3 mb-8">
           <div className="flex-1 bg-white py-3 px-2 rounded-2xl border border-blue-50 shadow-sm flex flex-col items-center justify-center gap-1 group min-w-0">
@@ -242,8 +430,13 @@ export default function SchedulePage() {
                   "relative overflow-hidden rounded-2xl transition-all",
                   !schedule
                     ? "bg-transparent border border-transparent p-2"
-                    : "bg-white shadow-sm border border-gray-100 p-0"
+                    : "bg-white shadow-sm border border-gray-100 p-0 hover:shadow-md cursor-pointer group"
                 )}
+                onClick={() => {
+                  if (schedule && shift) {
+                    handleSwapClick(schedule, shift, date);
+                  }
+                }}
               >
                 {!schedule ? (
                   // OFF DAY VIEW
@@ -286,8 +479,11 @@ export default function SchedulePage() {
                           </div>
 
                           <div>
-                            <h3 className="font-bold text-gray-900 text-base leading-tight mb-1">
+                            <h3 className="font-bold text-gray-900 text-base leading-tight mb-1 flex items-center gap-2">
                               {shift?.name || 'Shift'}
+                              {!isPast && (
+                                <ArrowRightLeft size={12} className="text-gray-300 group-hover:text-primary transition-colors" />
+                              )}
                             </h3>
                             <div className="flex items-center gap-1.5">
                               <span className={cn(
@@ -341,6 +537,83 @@ export default function SchedulePage() {
         </div>
 
       </div>
+
+      {/* SWAP REQUEST MODAL */}
+      <AnimatePresence>
+        {swapModalOpen && selectedShiftForSwap && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/60 z-[60] backdrop-blur-sm"
+              onClick={() => setSwapModalOpen(false)}
+            />
+            <motion.div
+              initial={{ opacity: 0, y: 100, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 100, scale: 0.95 }}
+              className="fixed bottom-0 sm:bottom-auto sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 w-full sm:w-[400px] bg-white rounded-t-2xl sm:rounded-2xl z-[70] p-6 shadow-xl"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-bold text-gray-900">Tukar Shift?</h3>
+                <button onClick={() => setSwapModalOpen(false)} className="p-2 bg-gray-100 rounded-full hover:bg-gray-200">
+                  <X size={18} />
+                </button>
+              </div>
+
+              <div className="bg-gray-50 p-4 rounded-xl border border-gray-100 mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="flex flex-col items-center justify-center bg-white border border-gray-200 rounded-lg h-12 w-12 shadow-sm">
+                    <span className="text-[10px] uppercase font-bold text-gray-500">
+                      {selectedShiftForSwap.date.toLocaleDateString('ms-MY', { weekday: 'short' })}
+                    </span>
+                    <span className="text-lg font-bold text-gray-900 leading-none">
+                      {selectedShiftForSwap.date.getDate()}
+                    </span>
+                  </div>
+                  <div>
+                    <div className="font-bold text-gray-900">{selectedShiftForSwap.shift.name}</div>
+                    <div className="text-xs text-gray-500">
+                      {selectedShiftForSwap.shift.startTime} - {selectedShiftForSwap.shift.endTime}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Sebab Penukaran</label>
+                <textarea
+                  className="w-full p-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm"
+                  placeholder="Contoh: Ada urusan kecemasan / keluarga..."
+                  rows={3}
+                  value={swapReason}
+                  onChange={(e) => setSwapReason(e.target.value)}
+                />
+                <p className="text-xs text-gray-400 mt-2">
+                  Permohonan anda akan dihantar kepada Manager untuk kelulusan.
+                </p>
+              </div>
+
+              <button
+                onClick={submitSwapRequest}
+                disabled={isSubmittingSwap || !swapReason.trim()}
+                className="w-full py-3 bg-primary text-white font-bold rounded-xl shadow-lg shadow-primary/20 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {isSubmittingSwap ? (
+                  <LoadingSpinner size="sm" />
+                ) : (
+                  <>
+                    <Send size={18} />
+                    Hantar Permohonan
+                  </>
+                )}
+              </button>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
     </StaffLayout>
   );
 }
