@@ -29,8 +29,11 @@ import {
   Building,
   Banknote,
   Camera,
-  LogOut
+  LogOut,
+  Upload
 } from 'lucide-react';
+import { uploadFile } from '@/lib/supabase/storage-utils';
+import { useState, useRef } from 'react';
 
 
 // Demo: Using staff ID 2 as the logged-in user
@@ -38,10 +41,13 @@ import {
 // const CURRENT_STAFF_ID = '2';
 
 export default function ProfilePage() {
-  const { user, signOut } = useAuth();
-  const { staff, attendance, isInitialized } = useStaff();
+  const { user } = useAuth();
+  const { staff, updateStaff, attendance, isInitialized } = useStaff();
   const { getLeaveBalance } = useStaffPortal();
   const { getStaffKPI } = useKPI();
+
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const currentStaff = staff.find(s => s.id === user?.id);
   const leaveBalance = getLeaveBalance(user?.id || '');
@@ -76,9 +82,37 @@ export default function ProfilePage() {
     });
   };
 
-  const handleLogout = async () => {
-    // signOut from AuthContext now handles the redirect logic safely
-    await signOut();
+  const handleAvatarClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !currentStaff) return;
+
+    setIsUploading(true);
+    try {
+      const result = await uploadFile(file, {
+        bucket: 'staff-photos',
+        folder: 'avatars',
+        allowedTypes: ['image/jpeg', 'image/png', 'image/webp']
+      });
+
+      if (result.success && result.url) {
+        updateStaff(currentStaff.id, { profilePhotoUrl: result.url });
+      } else {
+        alert('Gagal memuat naik gambar: ' + (result.error || 'Ralat tidak diketahui'));
+      }
+    } catch (error) {
+      console.error('Upload error:', error);
+      alert('Ralat semasa memuat naik gambar.');
+    } finally {
+      setIsUploading(false);
+      // Reset input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
   };
 
   if (!isInitialized || !currentStaff) {
@@ -97,23 +131,34 @@ export default function ProfilePage() {
     <StaffLayout>
       <div className="staff-portal animate-fade-in">
         {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+        <div style={{ marginBottom: '1.5rem' }}>
           <h1 style={{ fontSize: '1.5rem', fontWeight: 700 }}>Profil Saya</h1>
-          <button
-            type="button"
-            onClick={handleLogout}
-            className="btn btn-outline btn-sm"
-            style={{ color: 'var(--error)', borderColor: 'var(--error)' }}
-          >
-            <LogOut size={16} style={{ marginRight: '0.5rem' }} />
-            Log Keluar
-          </button>
         </div>
 
         {/* Profile Header Card */}
         <div className="staff-profile-header">
-          <div className="staff-profile-avatar">
-            {currentStaff.name.charAt(0)}
+          <div className="staff-profile-avatar-container" onClick={handleAvatarClick}>
+            {currentStaff.profilePhotoUrl ? (
+              <img
+                src={currentStaff.profilePhotoUrl}
+                alt={currentStaff.name}
+                className="staff-profile-avatar-img"
+              />
+            ) : (
+              <div className="staff-profile-avatar">
+                {currentStaff.name.charAt(0)}
+              </div>
+            )}
+            <div className="staff-profile-avatar-overlay">
+              {isUploading ? <LoadingSpinner size="sm" color="white" /> : <Camera size={20} color="white" />}
+            </div>
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              accept="image/jpeg,image/png,image/webp"
+              style={{ display: 'none' }}
+            />
           </div>
           <h2 className="staff-profile-name">{currentStaff.name}</h2>
           <p className="staff-profile-role">
@@ -136,38 +181,40 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 staff-stagger" style={{ gap: '1rem', marginBottom: '1.5rem' }}>
-          <div className="staff-stat-card primary">
-            <div className="staff-stat-icon primary">
-              <Clock size={24} />
+        {/* Stats Scroller */}
+        <div className="stats-scroller-container">
+          <div className="stats-scroller">
+            <div className="staff-stat-card primary">
+              <div className="staff-stat-icon primary">
+                <Clock size={24} />
+              </div>
+              <div className="staff-stat-value">{daysWorked}</div>
+              <div className="staff-stat-label">Hari Bekerja</div>
             </div>
-            <div className="staff-stat-value">{daysWorked}</div>
-            <div className="staff-stat-label">Hari Bekerja</div>
-          </div>
 
-          <div className="staff-stat-card success">
-            <div className="staff-stat-icon success">
-              <Calendar size={24} />
+            <div className="staff-stat-card success">
+              <div className="staff-stat-icon success">
+                <Calendar size={24} />
+              </div>
+              <div className="staff-stat-value">{leaveBalance?.annual.balance || 0}</div>
+              <div className="staff-stat-label">Baki Cuti</div>
             </div>
-            <div className="staff-stat-value">{leaveBalance?.annual.balance || 0}</div>
-            <div className="staff-stat-label">Baki Cuti</div>
-          </div>
 
-          <div className="staff-stat-card cool">
-            <div className="staff-stat-icon cool">
-              <TrendingUp size={24} />
+            <div className="staff-stat-card cool">
+              <div className="staff-stat-icon cool">
+                <TrendingUp size={24} />
+              </div>
+              <div className="staff-stat-value">{kpi?.overallScore || 0}%</div>
+              <div className="staff-stat-label">Skor KPI</div>
             </div>
-            <div className="staff-stat-value">{kpi?.overallScore || 0}%</div>
-            <div className="staff-stat-label">Skor KPI</div>
-          </div>
 
-          <div className="staff-stat-card warm">
-            <div className="staff-stat-icon warm">
-              <Star size={24} />
+            <div className="staff-stat-card warm">
+              <div className="staff-stat-icon warm">
+                <Star size={24} />
+              </div>
+              <div className="staff-stat-value">#{kpi?.rank || '-'}</div>
+              <div className="staff-stat-label">Ranking</div>
             </div>
-            <div className="staff-stat-value">#{kpi?.rank || '-'}</div>
-            <div className="staff-stat-label">Ranking</div>
           </div>
         </div>
 
@@ -607,6 +654,58 @@ export default function ProfilePage() {
       </div>
 
       <style jsx>{`
+        .staff-profile-avatar-container {
+          position: relative;
+          cursor: pointer;
+          display: inline-block;
+          margin-bottom: 0.5rem;
+        }
+
+        .staff-profile-avatar-img {
+          width: 80px;
+          height: 80px;
+          border-radius: 50%;
+          object-fit: cover;
+          border: 3px solid white;
+          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .staff-profile-avatar-overlay {
+          position: absolute;
+          inset: 0;
+          background: rgba(0, 0, 0, 0.3);
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          opacity: 0;
+          transition: opacity 0.2s;
+        }
+
+        .staff-profile-avatar-container:hover .staff-profile-avatar-overlay {
+          opacity: 1;
+        }
+
+        .stats-scroller-container {
+          margin-bottom: 1.5rem;
+          margin-right: -1rem; /* Negative margin to overflow right */
+        }
+        
+        .stats-scroller {
+          display: flex;
+          gap: 1rem;
+          overflow-x: auto;
+          padding-bottom: 0.5rem; /* Space for scrollbar if visible */
+          padding-right: 1rem; /* Right padding for overflow */
+          scroll-snap-type: x mandatory;
+        }
+        
+        .staff-stat-card {
+           min-width: 140px;
+           flex: 0 0 auto;
+           scroll-snap-align: start;
+        }
+
         .profile-info-grid {
           display: grid;
           grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));

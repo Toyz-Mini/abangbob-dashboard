@@ -147,17 +147,17 @@ export default function OTClaimPage() {
                         <p className="text-sm text-gray-500 font-medium">Rekod kerja lebih masa</p>
                     </div>
                     <button
-                        className="p-3 bg-primary text-white rounded-xl shadow-lg shadow-primary/20 hover:bg-primary/90 active:scale-95 transition-all"
+                        className="p-3 bg-red-600 text-white rounded-xl shadow-lg shadow-red-200 hover:bg-red-700 active:scale-95 transition-all"
                         onClick={() => setShowModal(true)}
                     >
                         <Plus size={20} />
                     </button>
                 </header>
 
-                {/* Compact Stats Row */}
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
+                {/* Compact Stats Row - Horizontal Scroll */}
+                <div className="flex items-center gap-3 mb-8 overflow-x-auto pb-4 -mx-4 px-4 sm:mx-0 sm:px-0 scrollbar-hide">
                     {/* Pending Stat */}
-                    <div className="bg-white p-3 rounded-2xl border border-amber-50 shadow-sm flex flex-col items-center justify-center text-center gap-1">
+                    <div className="min-w-[140px] flex-1 bg-white p-3 rounded-2xl border border-amber-50 shadow-sm flex flex-col items-center justify-center text-center gap-1 shrink-0">
                         <div className="bg-amber-50 p-1.5 rounded-lg text-amber-600 mb-1">
                             <Clock size={16} />
                         </div>
@@ -166,7 +166,7 @@ export default function OTClaimPage() {
                     </div>
 
                     {/* Approved Stat */}
-                    <div className="bg-white p-3 rounded-2xl border border-emerald-50 shadow-sm flex flex-col items-center justify-center text-center gap-1">
+                    <div className="min-w-[140px] flex-1 bg-white p-3 rounded-2xl border border-emerald-50 shadow-sm flex flex-col items-center justify-center text-center gap-1 shrink-0">
                         <div className="bg-emerald-50 p-1.5 rounded-lg text-emerald-600 mb-1">
                             <CheckCircle size={16} />
                         </div>
@@ -175,7 +175,7 @@ export default function OTClaimPage() {
                     </div>
 
                     {/* Amount Stat */}
-                    <div className="bg-white p-3 rounded-2xl border border-blue-50 shadow-sm flex flex-col items-center justify-center text-center gap-1">
+                    <div className="min-w-[140px] flex-1 bg-white p-3 rounded-2xl border border-blue-50 shadow-sm flex flex-col items-center justify-center text-center gap-1 shrink-0">
                         <div className="bg-blue-50 p-1.5 rounded-lg text-blue-600 mb-1">
                             <DollarSign size={16} />
                         </div>
@@ -187,7 +187,7 @@ export default function OTClaimPage() {
                     </div>
 
                     {/* Hours Stat */}
-                    <div className="bg-white p-3 rounded-2xl border border-purple-50 shadow-sm flex flex-col items-center justify-center text-center gap-1">
+                    <div className="min-w-[140px] flex-1 bg-white p-3 rounded-2xl border border-purple-50 shadow-sm flex flex-col items-center justify-center text-center gap-1 shrink-0">
                         <div className="bg-purple-50 p-1.5 rounded-lg text-purple-600 mb-1">
                             <Briefcase size={16} />
                         </div>

@@ -68,6 +68,7 @@ export default function StaffPortalV2() {
     role: authStaff.role,
     email: authStaff.email || '',
     status: authStaff.status,
+    profilePhotoUrl: undefined,
   } : null);
 
   const todayAttendance = staffId ? getStaffAttendanceToday(staffId) : undefined;
@@ -335,22 +336,24 @@ export default function StaffPortalV2() {
 
         {/* Stats Row */}
         <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(3, 1fr)',
-          gap: '0.75rem',
-          marginBottom: '1rem'
+          display: 'flex',
+          overflowX: 'auto',
+          gap: '1rem',
+          marginBottom: '1rem',
+          paddingBottom: '0.5rem',
+          scrollSnapType: 'x mandatory'
         }}>
-          <div style={{ background: 'var(--bg-primary)', padding: '0.85rem 0.5rem', borderRadius: '12px', textAlign: 'center', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)' }}>
+          <div style={{ minWidth: '120px', flex: '0 0 auto', scrollSnapAlign: 'start', background: 'var(--bg-primary)', padding: '0.85rem 0.5rem', borderRadius: '12px', textAlign: 'center', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)' }}>
             <div style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', marginBottom: '0.25rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Hari Ini</div>
             <div style={{ fontWeight: 800, color: todayAttendance?.clockInTime ? 'var(--success)' : 'var(--text-secondary)', fontSize: '0.95rem' }}>
               {todayAttendance?.clockInTime ? '✓ HADIR' : '—'}
             </div>
           </div>
-          <div style={{ background: 'var(--bg-primary)', padding: '0.85rem 0.5rem', borderRadius: '12px', textAlign: 'center', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)' }}>
+          <div style={{ minWidth: '120px', flex: '0 0 auto', scrollSnapAlign: 'start', background: 'var(--bg-primary)', padding: '0.85rem 0.5rem', borderRadius: '12px', textAlign: 'center', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)' }}>
             <div style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', marginBottom: '0.25rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Level</div>
             <div style={{ fontWeight: 800, color: 'var(--text-primary)', fontSize: '0.95rem' }}>⭐ {xpData?.currentLevel || 1}</div>
           </div>
-          <div style={{ background: 'var(--bg-primary)', padding: '0.85rem 0.5rem', borderRadius: '12px', textAlign: 'center', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)' }}>
+          <div style={{ minWidth: '120px', flex: '0 0 auto', scrollSnapAlign: 'start', background: 'var(--bg-primary)', padding: '0.85rem 0.5rem', borderRadius: '12px', textAlign: 'center', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)' }}>
             <div style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', marginBottom: '0.25rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>XP</div>
             <div style={{ fontWeight: 800, color: 'var(--primary)', fontSize: '0.95rem' }}>{xpData?.currentXP || 0}</div>
           </div>
@@ -744,9 +747,17 @@ export default function StaffPortalV2() {
             alignItems: 'center'
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              <div style={{ width: '40px', height: '40px', background: 'var(--bg-secondary)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <User size={20} color="var(--text-secondary)" />
-              </div>
+              {currentStaff.profilePhotoUrl ? (
+                <img
+                  src={currentStaff.profilePhotoUrl}
+                  alt={currentStaff.name}
+                  style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover', border: '1px solid var(--border-color)' }}
+                />
+              ) : (
+                <div style={{ width: '40px', height: '40px', background: 'var(--bg-secondary)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <User size={20} color="var(--text-secondary)" />
+                </div>
+              )}
               <div>
                 <div style={{ fontWeight: 500, color: 'var(--text-primary)' }}>{currentStaff.name}</div>
                 <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{currentStaff.role}</div>
