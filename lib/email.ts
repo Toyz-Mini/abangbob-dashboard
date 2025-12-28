@@ -4,51 +4,56 @@ import { Resend } from 'resend';
 let resend: Resend | null = null;
 
 function getResendClient() {
-    if (!resend && process.env.RESEND_API_KEY) {
-        resend = new Resend(process.env.RESEND_API_KEY);
-    }
-    return resend;
+  if (!resend && process.env.RESEND_API_KEY) {
+    resend = new Resend(process.env.RESEND_API_KEY);
+  }
+  return resend;
 }
 
-const FROM_EMAIL = process.env.FROM_EMAIL || 'AbangBob <onboarding@resend.dev>';
+// Use verified domain abangbobeat.store for sending emails
+const FROM_EMAIL = process.env.FROM_EMAIL || 'AbangBob <no-reply@abangbobeat.store>';
 
 interface SendEmailParams {
-    to: string;
-    subject: string;
-    html: string;
+  to: string;
+  subject: string;
+  html: string;
 }
 
 export async function sendEmail({ to, subject, html }: SendEmailParams) {
-    try {
-        const client = getResendClient();
+  console.log('[Email] Attempting to send email:', { to, subject, from: FROM_EMAIL });
 
-        if (!client) {
-            console.error('Resend client not initialized. Missing RESEND_API_KEY.');
-            return { success: false, error: 'Email service not configured' };
-        }
+  try {
+    const client = getResendClient();
 
-        const { data, error } = await client.emails.send({
-            from: FROM_EMAIL,
-            to,
-            subject,
-            html,
-        });
-
-        if (error) {
-            console.error('Email send error:', error);
-            return { success: false, error };
-        }
-
-        return { success: true, data };
-    } catch (error) {
-        console.error('Email service error:', error);
-        return { success: false, error };
+    if (!client) {
+      console.error('[Email] Resend client not initialized. Missing RESEND_API_KEY.');
+      return { success: false, error: 'Email service not configured' };
     }
+
+    console.log('[Email] Sending via Resend...');
+    const { data, error } = await client.emails.send({
+      from: FROM_EMAIL,
+      to,
+      subject,
+      html,
+    });
+
+    if (error) {
+      console.error('[Email] Send error:', error);
+      return { success: false, error };
+    }
+
+    console.log('[Email] ✅ Email sent successfully:', data);
+    return { success: true, data };
+  } catch (error) {
+    console.error('[Email] Service error:', error);
+    return { success: false, error };
+  }
 }
 
 // Email Templates
 export function getVerificationEmailTemplate(name: string, verificationUrl: string) {
-    return `
+  return `
     <!DOCTYPE html>
     <html>
     <head>
@@ -106,13 +111,13 @@ export function getVerificationEmailTemplate(name: string, verificationUrl: stri
 }
 
 export function getApprovalEmailTemplate(name: string, approved: boolean, reason?: string) {
-    const statusColor = approved ? '#22c55e' : '#ef4444';
-    const statusText = approved ? 'DILULUSKAN' : 'DITOLAK';
-    const message = approved
-        ? 'Tahniah! Akaun anda telah diluluskan. Anda kini boleh log masuk ke dashboard.'
-        : `Maaf, permohonan anda telah ditolak.${reason ? ` Sebab: ${reason}` : ''}`;
+  const statusColor = approved ? '#22c55e' : '#ef4444';
+  const statusText = approved ? 'DILULUSKAN' : 'DITOLAK';
+  const message = approved
+    ? 'Tahniah! Akaun anda telah diluluskan. Anda kini boleh log masuk ke dashboard.'
+    : `Maaf, permohonan anda telah ditolak.${reason ? ` Sebab: ${reason}` : ''}`;
 
-    return `
+  return `
     <!DOCTYPE html>
     <html>
     <head>

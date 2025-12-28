@@ -6,7 +6,7 @@ import { useAuth } from '@/lib/contexts/AuthContext';
 import { canViewNavItem } from '@/lib/permissions';
 import LoadingSpinner from './LoadingSpinner';
 
-const PUBLIC_PATHS = ['/login', '/unauthorized'];
+const PUBLIC_PATHS = ['/login', '/unauthorized', '/register', '/verify-email-required', '/verification-success', '/verification-failed'];
 
 export default function RouteGuard({ children }: { children: React.ReactNode }) {
     const router = useRouter();
@@ -21,6 +21,18 @@ export default function RouteGuard({ children }: { children: React.ReactNode }) 
         // Public paths don't need auth
         if (PUBLIC_PATHS.includes(pathname)) {
             setAuthorized(true);
+            return;
+        }
+
+        // Check for email not verified status
+        // If user's email is not verified, they can ONLY access /verify-email-required
+        if (user && userStatus === 'email_not_verified') {
+            if (pathname !== '/verify-email-required') {
+                setAuthorized(false);
+                router.push('/verify-email-required');
+            } else {
+                setAuthorized(true);
+            }
             return;
         }
 
@@ -49,8 +61,8 @@ export default function RouteGuard({ children }: { children: React.ReactNode }) 
         }
 
         // Redirect away from special pages if status is active/approved
-        // If we reached here, status is NOT incomplete_profile or pending_approval (checked above)
-        if (user && (pathname === '/pending-approval' || pathname === '/complete-profile')) {
+        // If we reached here, status is NOT email_not_verified, incomplete_profile or pending_approval (checked above)
+        if (user && (pathname === '/pending-approval' || pathname === '/complete-profile' || pathname === '/verify-email-required')) {
             setAuthorized(false);
             router.push('/');
             return;

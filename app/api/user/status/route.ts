@@ -42,11 +42,11 @@ export async function GET(request: NextRequest) {
 
         const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-        // Fetch user from database
+        // Fetch user from database - include emailVerified
         console.log('[API] Fetching status for userId:', userId);
         const { data, error } = await supabase
             .from('user')
-            .select('id, status, role, phone, "icNumber"')
+            .select('id, status, role, phone, "icNumber", "emailVerified"')
             .eq('id', userId)
             .single();
 
@@ -61,15 +61,28 @@ export async function GET(request: NextRequest) {
             console.error('Error fetching user status or user not found:', error);
             return NextResponse.json({
                 status: 'incomplete_profile',
-                role: 'Staff'
+                role: 'Staff',
+                emailVerified: false
             });
         }
 
-        console.log('[API] Found user:', { id: data.id, role: data.role, status: data.status });
+        console.log('[API] Found user:', { id: data.id, role: data.role, status: data.status, emailVerified: data.emailVerified });
 
+        const emailVerified = data.emailVerified === true;
         let userStatus = data.status;
 
-        // If status is null (new user) or no phone (incomplete), flag as incomplete
+        // PRIORITY 1: Check email verification first
+        // If email is not verified, block access regardless of other status
+        if (!emailVerified) {
+            console.log('[API] Email not verified, returning email_not_verified status');
+            return NextResponse.json({
+                status: 'email_not_verified',
+                role: data.role || 'Staff',
+                emailVerified: false
+            });
+        }
+
+        // PRIORITY 2: If status is null (new user) or no phone (incomplete), flag as incomplete
         if (!userStatus && (!data.phone || !(data as any).icNumber)) {
             userStatus = 'incomplete_profile';
         } else if (!userStatus) {
@@ -78,17 +91,20 @@ export async function GET(request: NextRequest) {
         }
 
         const finalRole = data.role || 'Staff';
-        console.log('[API] Returning:', { status: userStatus, role: finalRole });
+        console.log('[API] Returning:', { status: userStatus, role: finalRole, emailVerified });
 
         return NextResponse.json({
             status: userStatus || 'approved',
-            role: finalRole
+            role: finalRole,
+            emailVerified: true
         });
     } catch (error) {
         console.error('[API] Error fetching user status:', error);
         return NextResponse.json({
             status: 'incomplete_profile',
-            role: 'Staff'
+            role: 'Staff',
+            emailVerified: false
         });
     }
 }
+

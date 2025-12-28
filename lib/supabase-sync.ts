@@ -2159,7 +2159,7 @@ export async function loadPositionsFromSupabase() {
       updatedAt: p.updated_at,
     }));
 
-    console.log('[PositionSync] ✅ Positions loaded:', transformed.map(p => p.name));
+    console.log('[PositionSync] ✅ Positions loaded:', transformed.map((p: { name: string }) => p.name));
     return transformed;
   } catch (error: any) {
     console.error('[PositionSync] Failed to load positions from Supabase:', error);
