@@ -4210,15 +4210,22 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   const completeStaffRequest = useCallback((id: string, responseNote?: string, approverName?: string) => {
     const request = staffRequests.find(r => r.id === id);
+    const updates = {
+      status: 'completed' as const,
+      responseNote,
+      completedAt: new Date().toISOString(),
+    };
     setStaffRequests(prev => prev.map(r => {
       if (r.id !== id) return r;
-      return {
-        ...r,
-        status: 'completed' as const,
-        responseNote,
-        completedAt: new Date().toISOString(),
-      };
+      return { ...r, ...updates };
     }));
+
+    // Sync to Supabase
+    SupabaseSync.syncUpdateStaffRequest(id, {
+      status: 'completed',
+      response_note: responseNote,
+      completed_at: updates.completedAt,
+    });
 
     // Send email notification to staff
     if (request) {
@@ -4235,15 +4242,22 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   const rejectStaffRequest = useCallback((id: string, responseNote: string, approverName?: string) => {
     const request = staffRequests.find(r => r.id === id);
+    const updates = {
+      status: 'rejected' as const,
+      responseNote,
+      completedAt: new Date().toISOString(),
+    };
     setStaffRequests(prev => prev.map(r => {
       if (r.id !== id) return r;
-      return {
-        ...r,
-        status: 'rejected' as const,
-        responseNote,
-        completedAt: new Date().toISOString(),
-      };
+      return { ...r, ...updates };
     }));
+
+    // Sync to Supabase
+    SupabaseSync.syncUpdateStaffRequest(id, {
+      status: 'rejected',
+      response_note: responseNote,
+      completed_at: updates.completedAt,
+    });
 
     // Send email notification to staff
     if (request) {
