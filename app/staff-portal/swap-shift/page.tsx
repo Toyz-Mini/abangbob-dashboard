@@ -12,6 +12,8 @@ import {
   CheckCircle,
   XCircle,
   User,
+  Check,
+  X,
   AlertCircle,
   Send,
   Sun,
@@ -28,7 +30,9 @@ export default function SwapShiftPage() {
     schedules,
     shifts,
     addStaffRequest,
+    updateStaffRequest,
     deleteStaffRequest,
+    rejectStaffRequest,
     getStaffRequestsByStaff,
     refreshStaffRequests
   } = useStaffPortal();
@@ -159,9 +163,26 @@ export default function SwapShiftPage() {
     };
   };
 
-  const handleCancelRequest = (requestId: string) => {
-    if (window.confirm('Adakah anda pasti ingin membatalkan permohonan ini?')) {
-      deleteStaffRequest(requestId);
+  const handleCancelRequest = async (id: string) => {
+    if (window.confirm('Adakah anda pasti mahu membatalkan permohonan ini?')) {
+      deleteStaffRequest(id);
+    }
+  };
+
+  const handleAcceptSwap = async (id: string) => {
+    if (window.confirm('Adakah anda bersetuju untuk menukar shift ini?')) {
+      // Set status to in_progress (meaning accepted by colleague, pending manager)
+      updateStaffRequest(id, {
+        status: 'in_progress',
+        responseNote: 'Bersetuju dengan pertukaran. Menunggu maklum balas pengurus.'
+      });
+      alert('Anda telah bersetuju. Permohonan kini menunggu kelulusan pengurus.');
+    }
+  };
+
+  const handleDeclineSwap = async (id: string) => {
+    if (window.confirm('Adakah anda mahu menolak pertukaran shift ini?')) {
+      rejectStaffRequest(id, 'Ditolak oleh rakan sekerja.', currentStaff?.name || 'Rakan Sekerja');
     }
   };
 
@@ -293,25 +314,61 @@ export default function SwapShiftPage() {
                       </div>
                     )}
 
-                    {request.status === 'pending' && request.staffId === user?.id && (
-                      <div style={{ marginTop: '0.75rem', display: 'flex', justifyContent: 'flex-end' }}>
-                        <button
-                          className="btn btn-sm btn-outline-danger"
-                          onClick={() => handleCancelRequest(request.id)}
-                          style={{
-                            fontSize: '0.75rem',
-                            padding: '0.25rem 0.5rem',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.4rem',
-                            color: 'var(--danger)',
-                            borderColor: 'var(--danger)',
-                            background: 'transparent'
-                          }}
-                        >
-                          <Trash2 size={12} />
-                          Batal Permohonan
-                        </button>
+                    {request.status === 'pending' && (
+                      <div style={{ marginTop: '0.75rem', display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
+                        {request.staffId === user?.id ? (
+                          <button
+                            className="btn btn-sm btn-outline-danger"
+                            onClick={() => handleCancelRequest(request.id)}
+                            style={{
+                              fontSize: '0.75rem',
+                              padding: '0.25rem 0.5rem',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '0.4rem',
+                              color: 'var(--danger)',
+                              borderColor: 'var(--danger)',
+                              background: 'transparent'
+                            }}
+                          >
+                            <Trash2 size={12} />
+                            Batal Permohonan
+                          </button>
+                        ) : (
+                          <>
+                            <button
+                              className="btn btn-sm btn-outline-danger"
+                              onClick={() => handleDeclineSwap(request.id)}
+                              style={{
+                                fontSize: '0.75rem',
+                                padding: '0.25rem 0.5rem',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.4rem'
+                              }}
+                            >
+                              <X size={12} />
+                              Tolak
+                            </button>
+                            <button
+                              className="btn btn-sm btn-success"
+                              onClick={() => handleAcceptSwap(request.id)}
+                              style={{
+                                fontSize: '0.75rem',
+                                padding: '0.25rem 0.5rem',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.4rem',
+                                background: 'var(--success)',
+                                color: 'white',
+                                border: 'none'
+                              }}
+                            >
+                              <Check size={12} />
+                              Terima
+                            </button>
+                          </>
+                        )}
                       </div>
                     )}
                     {request.responseNote && (
