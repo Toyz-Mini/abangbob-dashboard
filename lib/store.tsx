@@ -20,6 +20,7 @@ import * as VoidRefundOps from './supabase/operations';
 import { deductReplacementLeaveBalance } from './supabase/operations';
 import { useCashRegistersRealtime } from './supabase/realtime-hooks';
 import { getNextDayForecast, WeatherForecast } from './services/weather';
+import { notifyLeaveRequest, notifyOTClaim, notifyClaimRequest, notifySalaryAdvance, notifyStaffRequest, notifyLeaveResult, notifyOTClaimResult, notifyClaimResult, notifySalaryAdvanceResult, notifyStaffRequestResult } from './approval-notifications';
 
 
 // Helper function to generate UUID for Supabase compatibility
@@ -3096,6 +3097,17 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         updatedAt: new Date().toISOString(),
       };
     }));
+
+    // Send email notification to approvers
+    notifyLeaveRequest({
+      staffName: request.staffName,
+      leaveType: request.type,
+      startDate: request.startDate,
+      endDate: request.endDate,
+      duration: request.duration,
+      reason: request.reason,
+      isHalfDay: request.isHalfDay,
+    });
   }, []);
 
   const updateLeaveRequest = useCallback((id: string, updates: Partial<LeaveRequest>) => {
@@ -3151,6 +3163,17 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         priority: 'medium',
         targetStaffId: request.staffId,
       });
+
+      // Send email notification to staff
+      notifyLeaveResult({
+        staffId: request.staffId,
+        staffName: request.staffName,
+        isApproved: true,
+        approverName,
+        leaveType: request.type,
+        startDate: request.startDate,
+        endDate: request.endDate,
+      });
     }
 
     // Deduct Replacement Leave Balance
@@ -3197,6 +3220,18 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         message: `Permohonan cuti anda untuk ${request.type} dari ${request.startDate} hingga ${request.endDate} telah ditolak. Sebab: ${reason}`,
         priority: 'high',
         targetStaffId: request.staffId,
+      });
+
+      // Send email notification to staff
+      notifyLeaveResult({
+        staffId: request.staffId,
+        staffName: request.staffName,
+        isApproved: false,
+        approverName,
+        rejectionReason: reason,
+        leaveType: request.type,
+        startDate: request.startDate,
+        endDate: request.endDate,
       });
     }
   }, [leaveRequests, addNotification]);
@@ -3247,6 +3282,15 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     setClaimRequests(prev => [newClaim, ...prev]);
     // Sync to Supabase
     SupabaseSync.syncAddClaimRequest(newClaim);
+
+    // Send email notification to approvers
+    notifyClaimRequest({
+      staffName: claim.staffName,
+      claimType: claim.type,
+      amount: claim.amount,
+      description: claim.description,
+      claimDate: claim.claimDate,
+    });
   }, []);
 
   const updateClaimRequest = useCallback((id: string, updates: Partial<ClaimRequest>) => {
@@ -3256,6 +3300,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const approveClaimRequest = useCallback((id: string, approverId: string, approverName: string) => {
+    const claim = claimRequests.find(c => c.id === id);
     setClaimRequests(prev => prev.map(c => {
       if (c.id !== id) return c;
       return {
@@ -3266,9 +3311,22 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         approvedAt: new Date().toISOString(),
       };
     }));
-  }, []);
+
+    // Send email notification to staff
+    if (claim) {
+      notifyClaimResult({
+        staffId: claim.staffId,
+        staffName: claim.staffName,
+        isApproved: true,
+        approverName,
+        claimType: claim.type,
+        amount: claim.amount,
+      });
+    }
+  }, [claimRequests]);
 
   const rejectClaimRequest = useCallback((id: string, approverId: string, approverName: string, reason: string) => {
+    const claim = claimRequests.find(c => c.id === id);
     setClaimRequests(prev => prev.map(c => {
       if (c.id !== id) return c;
       return {
@@ -3280,7 +3338,20 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         rejectionReason: reason,
       };
     }));
-  }, []);
+
+    // Send email notification to staff
+    if (claim) {
+      notifyClaimResult({
+        staffId: claim.staffId,
+        staffName: claim.staffName,
+        isApproved: false,
+        approverName,
+        rejectionReason: reason,
+        claimType: claim.type,
+        amount: claim.amount,
+      });
+    }
+  }, [claimRequests]);
 
   const markClaimAsPaid = useCallback((id: string) => {
     setClaimRequests(prev => prev.map(c => {
@@ -3317,6 +3388,17 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
     // Sync to Supabase
     SupabaseSync.syncAddOTClaim(newClaim);
+
+    // Send email notification to approvers
+    notifyOTClaim({
+      staffName: claim.staffName,
+      date: claim.date,
+      startTime: claim.startTime,
+      endTime: claim.endTime,
+      hoursWorked: claim.hoursWorked,
+      totalAmount: claim.totalAmount,
+      reason: claim.reason,
+    });
   }, []);
 
   const updateOTClaim = useCallback((id: string, updates: Partial<OTClaim>) => {
@@ -3330,6 +3412,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const approveOTClaim = useCallback((id: string, approverId: string, approverName: string) => {
+    const claim = otClaims.find(c => c.id === id);
     setOTClaims(prev => {
       const updated = prev.map(c => {
         if (c.id !== id) return c;
@@ -3352,9 +3435,22 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       approverName: approverName,
       approvedAt: new Date().toISOString()
     });
-  }, []);
+
+    // Send email notification to staff
+    if (claim) {
+      notifyOTClaimResult({
+        staffId: claim.staffId,
+        staffName: claim.staffName,
+        isApproved: true,
+        approverName,
+        date: claim.date,
+        totalAmount: claim.totalAmount,
+      });
+    }
+  }, [otClaims]);
 
   const rejectOTClaim = useCallback((id: string, approverId: string, approverName: string, reason: string) => {
+    const claim = otClaims.find(c => c.id === id);
     setOTClaims(prev => {
       const updated = prev.map(c => {
         if (c.id !== id) return c;
@@ -3370,7 +3466,20 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       setToStorage(STORAGE_KEYS.OT_CLAIMS, updated);
       return updated;
     });
-  }, []);
+
+    // Send email notification to staff
+    if (claim) {
+      notifyOTClaimResult({
+        staffId: claim.staffId,
+        staffName: claim.staffName,
+        isApproved: false,
+        approverName,
+        rejectionReason: reason,
+        date: claim.date,
+        totalAmount: claim.totalAmount,
+      });
+    }
+  }, [otClaims]);
 
   const markOTClaimAsPaid = useCallback((id: string) => {
     setOTClaims(prev => {
@@ -3409,9 +3518,17 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       setToStorage(STORAGE_KEYS.SALARY_ADVANCES, updated);
       return updated;
     });
+
+    // Send email notification to approvers
+    notifySalaryAdvance({
+      staffName: advance.staffName,
+      amount: advance.amount,
+      reason: advance.reason,
+    });
   }, []);
 
   const approveSalaryAdvance = useCallback((id: string, approverId: string, approverName: string) => {
+    const advance = salaryAdvances.find(a => a.id === id);
     setSalaryAdvances(prev => {
       const updated = prev.map(a => {
         if (a.id !== id) return a;
@@ -3426,9 +3543,21 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       setToStorage(STORAGE_KEYS.SALARY_ADVANCES, updated);
       return updated;
     });
-  }, []);
+
+    // Send email notification to staff
+    if (advance) {
+      notifySalaryAdvanceResult({
+        staffId: advance.staffId,
+        staffName: advance.staffName,
+        isApproved: true,
+        approverName,
+        amount: advance.amount,
+      });
+    }
+  }, [salaryAdvances]);
 
   const rejectSalaryAdvance = useCallback((id: string, approverId: string, approverName: string, reason: string) => {
+    const advance = salaryAdvances.find(a => a.id === id);
     setSalaryAdvances(prev => {
       const updated = prev.map(a => {
         if (a.id !== id) return a;
@@ -3444,7 +3573,19 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       setToStorage(STORAGE_KEYS.SALARY_ADVANCES, updated);
       return updated;
     });
-  }, []);
+
+    // Send email notification to staff
+    if (advance) {
+      notifySalaryAdvanceResult({
+        staffId: advance.staffId,
+        staffName: advance.staffName,
+        isApproved: false,
+        approverName,
+        rejectionReason: reason,
+        amount: advance.amount,
+      });
+    }
+  }, [salaryAdvances]);
 
   const markSalaryAdvanceAsDeducted = useCallback((id: string, month: string) => {
     setSalaryAdvances(prev => {
@@ -4035,6 +4176,15 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     setStaffRequests(prev => [newRequest, ...prev]);
     // Sync to Supabase
     SupabaseSync.syncAddStaffRequest(newRequest);
+
+    // Send email notification to approvers
+    notifyStaffRequest({
+      staffName: request.staffName,
+      category: request.category,
+      title: request.title,
+      description: request.description,
+      priority: request.priority,
+    });
   }, []);
 
   const updateStaffRequest = useCallback((id: string, updates: Partial<StaffRequest>) => {
@@ -4043,7 +4193,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     SupabaseSync.syncUpdateStaffRequest(id, updates);
   }, []);
 
-  const completeStaffRequest = useCallback((id: string, responseNote?: string) => {
+  const completeStaffRequest = useCallback((id: string, responseNote?: string, approverName?: string) => {
+    const request = staffRequests.find(r => r.id === id);
     setStaffRequests(prev => prev.map(r => {
       if (r.id !== id) return r;
       return {
@@ -4053,9 +4204,22 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         completedAt: new Date().toISOString(),
       };
     }));
-  }, []);
 
-  const rejectStaffRequest = useCallback((id: string, responseNote: string) => {
+    // Send email notification to staff
+    if (request) {
+      notifyStaffRequestResult({
+        staffId: request.staffId,
+        staffName: request.staffName,
+        isApproved: true,
+        approverName: approverName || 'Admin',
+        category: request.category,
+        title: request.title,
+      });
+    }
+  }, [staffRequests]);
+
+  const rejectStaffRequest = useCallback((id: string, responseNote: string, approverName?: string) => {
+    const request = staffRequests.find(r => r.id === id);
     setStaffRequests(prev => prev.map(r => {
       if (r.id !== id) return r;
       return {
@@ -4065,7 +4229,20 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         completedAt: new Date().toISOString(),
       };
     }));
-  }, []);
+
+    // Send email notification to staff
+    if (request) {
+      notifyStaffRequestResult({
+        staffId: request.staffId,
+        staffName: request.staffName,
+        isApproved: false,
+        approverName: approverName || 'Admin',
+        rejectionReason: responseNote,
+        category: request.category,
+        title: request.title,
+      });
+    }
+  }, [staffRequests]);
 
   const getStaffRequestsByStaff = useCallback((staffId: string): StaffRequest[] => {
     return staffRequests.filter(r => r.staffId === staffId);

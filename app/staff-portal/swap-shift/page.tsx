@@ -1,17 +1,13 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import StaffLayout from '@/components/StaffLayout';
 import { useStaffPortal, useStaff } from '@/lib/store';
-import Link from 'next/link';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import Modal from '@/components/Modal';
 import { useAuth } from '@/lib/contexts/AuthContext';
+import { StaffRequest } from '@/lib/types';
 import {
-  ArrowLeft,
-  ArrowRight,
-  Clock,
-  Calendar,
   ArrowLeftRight,
   CheckCircle,
   XCircle,
@@ -19,60 +15,27 @@ import {
   AlertCircle,
   Send,
   Sun,
-  Moon
+  Moon,
+  Calendar,
+  Clock
 } from 'lucide-react';
-
-interface SwapRequest {
-  id: string;
-  fromStaffId: string;
-  fromStaffName: string;
-  toStaffId: string;
-  toStaffName: string;
-  fromDate: string;
-  fromShift: string;
-  toDate: string;
-  toShift: string;
-  status: 'pending' | 'approved' | 'rejected';
-  createdAt: string;
-  reason?: string;
-}
-
-// Helper function to get future date string
-const getFutureDate = (daysFromNow: number): string => {
-  const date = new Date();
-  date.setDate(date.getDate() + daysFromNow);
-  return date.toISOString().split('T')[0];
-};
-
-// Mock swap requests with dynamic dates
-const mockSwapRequests: SwapRequest[] = [
-  {
-    id: '1',
-    fromStaffId: '2',
-    fromStaffName: 'Siti Nurhaliza',
-    toStaffId: '3',
-    toStaffName: 'Muhammad Ali',
-    fromDate: getFutureDate(3), // 3 days from now
-    fromShift: 'Pagi',
-    toDate: getFutureDate(4), // 4 days from now
-    toShift: 'Petang',
-    status: 'pending',
-    createdAt: new Date().toISOString().split('T')[0],
-    reason: 'Ada urusan keluarga'
-  }
-];
 
 export default function SwapShiftPage() {
   const { user } = useAuth();
   const { staff, isInitialized } = useStaff();
-  const { schedules, shifts } = useStaffPortal();
+  const {
+    schedules,
+    shifts,
+    addStaffRequest,
+    getStaffRequestsByStaff,
+    refreshStaffRequests
+  } = useStaffPortal();
 
   const [showRequestModal, setShowRequestModal] = useState(false);
   const [selectedDate, setSelectedDate] = useState<string>('');
   const [selectedColleague, setSelectedColleague] = useState<string>('');
   const [selectedColleagueDate, setSelectedColleagueDate] = useState<string>('');
   const [reason, setReason] = useState('');
-  const [swapRequests, setSwapRequests] = useState<SwapRequest[]>(mockSwapRequests);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
 
@@ -80,6 +43,18 @@ export default function SwapShiftPage() {
   const currentStaff = useMemo(() => {
     return staff.find(s => s.id === user?.id) || null;
   }, [staff, user]);
+
+  // Get my swap requests from store (filter by category 'shift_swap')
+  const mySwapRequests = useMemo(() => {
+    if (!user) return [];
+    const allRequests = getStaffRequestsByStaff(user.id);
+    return allRequests.filter(r => r.category === 'shift_swap');
+  }, [user, getStaffRequestsByStaff]);
+
+  // Refresh data on mount
+  useEffect(() => {
+    refreshStaffRequests();
+  }, [refreshStaffRequests]);
 
   // Get my upcoming schedules
   const myUpcomingSchedules = useMemo(() => {
@@ -123,43 +98,67 @@ export default function SwapShiftPage() {
   }, [selectedDate, myUpcomingSchedules, schedules, staff, shifts, user]);
 
   const handleSubmitRequest = async () => {
-    if (!selectedDate || !selectedColleague || !selectedColleagueDate || !user) return;
+    if (!selectedDate || !selectedColleague || !selectedColleagueDate || !user || !currentStaff) return;
 
     setIsSubmitting(true);
-    await new Promise(resolve => setTimeout(resolve, 1000));
 
-    const mySchedule = myUpcomingSchedules.find(s => s.date === selectedDate);
-    const colleague = staff.find(s => s.id === selectedColleague);
-    const colleagueSchedule = schedules.find(s => s.staffId === selectedColleague && s.date === selectedColleagueDate);
-    const colleagueShift = colleagueSchedule ? shifts.find(sh => sh.id === colleagueSchedule.shiftId) : null;
+    try {
+      const mySchedule = myUpcomingSchedules.find(s => s.date === selectedDate);
+      const colleague = staff.find(s => s.id === selectedColleague);
+      const colleagueSchedule = schedules.find(s => s.staffId === selectedColleague && s.date === selectedColleagueDate);
+      const colleagueShift = colleagueSchedule ? shifts.find(sh => sh.id === colleagueSchedule.shiftId) : null;
 
-    const newRequest: SwapRequest = {
-      id: Date.now().toString(),
-      fromStaffId: user.id,
-      fromStaffName: currentStaff?.name || '',
-      toStaffId: selectedColleague,
-      toStaffName: colleague?.name || '',
-      fromDate: selectedDate,
-      fromShift: mySchedule?.shift?.name || '',
-      toDate: selectedColleagueDate,
-      toShift: colleagueShift?.name || '',
-      status: 'pending',
-      createdAt: new Date().toISOString(),
-      reason
+      const formattedDate = new Date(selectedDate).toLocaleDateString('ms-MY', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'short'
+      });
+
+      const formattedColleagueDate = new Date(selectedColleagueDate).toLocaleDateString('ms-MY', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'short'
+      });
+
+      // Call addStaffRequest to persist to Supabase
+      addStaffRequest({
+        staffId: user.id,
+        staffName: currentStaff.name,
+        category: 'shift_swap',
+        title: `Tukar Shift: ${formattedDate}`,
+        description: `Permohonan tukar shift pada ${formattedDate} (${mySchedule?.shift?.name || 'Unknown'}) dengan ${colleague?.name || 'Unknown'} pada ${formattedColleagueDate} (${colleagueShift?.name || 'Unknown'}). Sebab: ${reason || 'Tiada sebab dinyatakan'}`,
+        priority: 'medium',
+        status: 'pending'
+      });
+
+      setSubmitSuccess(true);
+
+      setTimeout(() => {
+        setSubmitSuccess(false);
+        setShowRequestModal(false);
+        setSelectedDate('');
+        setSelectedColleague('');
+        setSelectedColleagueDate('');
+        setReason('');
+      }, 2000);
+    } catch (error) {
+      console.error('Failed to submit swap request:', error);
+      alert('Gagal menghantar permohonan. Sila cuba lagi.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Helper to parse swap request details
+  const parseSwapDetails = (request: StaffRequest) => {
+    // Try to extract colleague name and dates from description
+    const match = request.description?.match(/dengan (.+?) pada/);
+    const colleagueName = match ? match[1] : 'Tidak diketahui';
+
+    return {
+      colleagueName,
+      date: request.title?.replace('Tukar Shift: ', '') || 'Unknown'
     };
-
-    setSwapRequests(prev => [newRequest, ...prev]);
-    setIsSubmitting(false);
-    setSubmitSuccess(true);
-
-    setTimeout(() => {
-      setSubmitSuccess(false);
-      setShowRequestModal(false);
-      setSelectedDate('');
-      setSelectedColleague('');
-      setSelectedColleagueDate('');
-      setReason('');
-    }, 2000);
   };
 
   if (!isInitialized || !currentStaff) {
@@ -178,7 +177,6 @@ export default function SwapShiftPage() {
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
           <div>
-
             <h1 style={{ fontSize: '1.75rem', fontWeight: 700, marginTop: '0.5rem' }}>
               Tukar Shift
             </h1>
@@ -201,33 +199,43 @@ export default function SwapShiftPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4" style={{ gap: '0.75rem' }}>
-            {myUpcomingSchedules.map(schedule => (
-              <div
-                key={schedule.date}
-                className="shift-card"
-                style={{
-                  background: `${schedule.shift?.color}15`,
-                  borderLeft: `4px solid ${schedule.shift?.color}`
-                }}
-              >
-                <div className="shift-date">
-                  {new Date(schedule.date).toLocaleDateString('ms-MY', { weekday: 'short', day: 'numeric', month: 'short' })}
+          {myUpcomingSchedules.length > 0 ? (
+            <div className="grid grid-cols-2 md:grid-cols-4" style={{ gap: '0.75rem' }}>
+              {myUpcomingSchedules.map(schedule => (
+                <div
+                  key={schedule.date}
+                  className="shift-card"
+                  style={{
+                    background: `${schedule.shift?.color}15`,
+                    borderLeft: `4px solid ${schedule.shift?.color}`
+                  }}
+                >
+                  <div className="shift-date">
+                    {new Date(schedule.date).toLocaleDateString('ms-MY', { weekday: 'short', day: 'numeric', month: 'short' })}
+                  </div>
+                  <div className="shift-name" style={{ color: schedule.shift?.color }}>
+                    {schedule.shift?.startTime && schedule.shift.startTime < '12:00' ? (
+                      <Sun size={14} />
+                    ) : (
+                      <Moon size={14} />
+                    )}
+                    {schedule.shift?.name}
+                  </div>
+                  <div className="shift-time">
+                    {schedule.shift?.startTime} - {schedule.shift?.endTime}
+                  </div>
                 </div>
-                <div className="shift-name" style={{ color: schedule.shift?.color }}>
-                  {schedule.shift?.startTime && schedule.shift.startTime < '12:00' ? (
-                    <Sun size={14} />
-                  ) : (
-                    <Moon size={14} />
-                  )}
-                  {schedule.shift?.name}
-                </div>
-                <div className="shift-time">
-                  {schedule.shift?.startTime} - {schedule.shift?.endTime}
-                </div>
+              ))}
+            </div>
+          ) : (
+            <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>
+              <Calendar size={40} color="var(--gray-300)" style={{ marginBottom: '0.75rem' }} />
+              <div>Tiada shift dijadualkan dalam 7 hari akan datang</div>
+              <div style={{ fontSize: '0.875rem', marginTop: '0.5rem' }}>
+                Sila hubungi admin untuk maklumat jadual kerja anda
               </div>
-            ))}
-          </div>
+            </div>
+          )}
         </div>
 
         {/* Swap Requests */}
@@ -237,47 +245,53 @@ export default function SwapShiftPage() {
               <ArrowLeftRight size={20} />
               Permohonan Pertukaran
             </div>
-            <div className="card-subtitle">{swapRequests.length} permohonan</div>
+            <div className="card-subtitle">{mySwapRequests.length} permohonan</div>
           </div>
 
-          {swapRequests.length > 0 ? (
+          {mySwapRequests.length > 0 ? (
             <div className="staff-stagger" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              {swapRequests.map(request => (
-                <div key={request.id} className="swap-request-card">
-                  <div className="swap-request-header">
-                    <div className="swap-info">
-                      <div className="swap-dates">
-                        <div className="swap-from">
-                          <Calendar size={14} />
-                          <span>{new Date(request.fromDate).toLocaleDateString('ms-MY', { day: 'numeric', month: 'short' })}</span>
-                          <span className="swap-shift-name">{request.fromShift}</span>
+              {mySwapRequests.map(request => {
+                const details = parseSwapDetails(request);
+                return (
+                  <div key={request.id} className="swap-request-card">
+                    <div className="swap-request-header">
+                      <div className="swap-info">
+                        <div className="swap-dates">
+                          <div className="swap-from">
+                            <Calendar size={14} />
+                            <span>{details.date}</span>
+                          </div>
                         </div>
-                        <ArrowLeftRight size={16} className="swap-arrow" />
-                        <div className="swap-to">
-                          <Calendar size={14} />
-                          <span>{new Date(request.toDate).toLocaleDateString('ms-MY', { day: 'numeric', month: 'short' })}</span>
-                          <span className="swap-shift-name">{request.toShift}</span>
+                        <div className="swap-with">
+                          <User size={14} />
+                          <span>Dengan: <strong>{details.colleagueName}</strong></span>
                         </div>
                       </div>
-                      <div className="swap-with">
-                        <User size={14} />
-                        <span>Dengan: <strong>{request.toStaffName}</strong></span>
-                      </div>
+                      <span className={`badge badge-${request.status === 'completed' ? 'success' : request.status === 'rejected' ? 'danger' : 'warning'}`}>
+                        {request.status === 'completed' && <CheckCircle size={12} />}
+                        {request.status === 'rejected' && <XCircle size={12} />}
+                        {request.status === 'pending' && <AlertCircle size={12} />}
+                        {request.status === 'in_progress' && <Clock size={12} />}
+                        {request.status === 'completed' ? 'Diluluskan' :
+                          request.status === 'rejected' ? 'Ditolak' :
+                            request.status === 'in_progress' ? 'Dalam Proses' : 'Menunggu'}
+                      </span>
                     </div>
-                    <span className={`badge badge-${request.status === 'approved' ? 'success' : request.status === 'rejected' ? 'danger' : 'warning'}`}>
-                      {request.status === 'approved' && <CheckCircle size={12} />}
-                      {request.status === 'rejected' && <XCircle size={12} />}
-                      {request.status === 'pending' && <AlertCircle size={12} />}
-                      {request.status === 'approved' ? 'Diluluskan' : request.status === 'rejected' ? 'Ditolak' : 'Menunggu'}
-                    </span>
+                    {request.description && (
+                      <div className="swap-reason" style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '0.5rem' }}>
+                        {request.description.length > 100
+                          ? request.description.substring(0, 100) + '...'
+                          : request.description}
+                      </div>
+                    )}
+                    {request.responseNote && (
+                      <div style={{ marginTop: '0.5rem', padding: '0.5rem', background: 'var(--bg-secondary)', borderRadius: '0.5rem', fontSize: '0.8rem' }}>
+                        <strong>Maklum balas:</strong> {request.responseNote}
+                      </div>
+                    )}
                   </div>
-                  {request.reason && (
-                    <div className="swap-reason">
-                      Sebab: {request.reason}
-                    </div>
-                  )}
-                </div>
-              ))}
+                );
+              })}
             </div>
           ) : (
             <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>
@@ -305,22 +319,29 @@ export default function SwapShiftPage() {
               {/* Select My Shift */}
               <div className="form-group">
                 <label className="form-label">Pilih Shift Anda</label>
-                <select
-                  className="form-select"
-                  value={selectedDate}
-                  onChange={(e) => {
-                    setSelectedDate(e.target.value);
-                    setSelectedColleague('');
-                    setSelectedColleagueDate('');
-                  }}
-                >
-                  <option value="">-- Pilih tarikh --</option>
-                  {myUpcomingSchedules.map(s => (
-                    <option key={s.date} value={s.date}>
-                      {new Date(s.date).toLocaleDateString('ms-MY', { weekday: 'long', day: 'numeric', month: 'short' })} - {s.shift?.name}
-                    </option>
-                  ))}
-                </select>
+                {myUpcomingSchedules.length > 0 ? (
+                  <select
+                    className="form-select"
+                    value={selectedDate}
+                    onChange={(e) => {
+                      setSelectedDate(e.target.value);
+                      setSelectedColleague('');
+                      setSelectedColleagueDate('');
+                    }}
+                  >
+                    <option value="">-- Pilih tarikh --</option>
+                    {myUpcomingSchedules.map(s => (
+                      <option key={s.date} value={s.date}>
+                        {new Date(s.date).toLocaleDateString('ms-MY', { weekday: 'long', day: 'numeric', month: 'short' })} - {s.shift?.name}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <div className="form-hint" style={{ color: 'var(--warning)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <AlertCircle size={14} />
+                    Tiada shift dijadualkan. Sila hubungi admin.
+                  </div>
+                )}
               </div>
 
               {/* Select Colleague */}

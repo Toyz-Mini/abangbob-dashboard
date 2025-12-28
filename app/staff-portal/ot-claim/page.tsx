@@ -374,7 +374,7 @@ export default function OTClaimPage() {
                                 Batal
                             </button>
                             <button
-                                className="flex-1 py-3 px-4 rounded-xl bg-primary text-white font-bold shadow-lg shadow-primary/20 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                className="flex-1 py-3 px-4 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold shadow-lg shadow-red-600/20 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                                 onClick={handleSubmit}
                                 disabled={isProcessing || hoursWorked <= 0 || !formData.reason.trim()}
                             >

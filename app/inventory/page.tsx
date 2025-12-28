@@ -9,7 +9,7 @@ import { useAuth } from '@/lib/contexts/AuthContext';
 import { useTranslation } from '@/lib/contexts/LanguageContext';
 import { StockItem } from '@/lib/types';
 import Modal from '@/components/Modal';
-import { AlertTriangle, Plus, Edit2, Trash2, ArrowUp, ArrowDown, History, Package, LayoutGrid, List as ListIcon, Search, Filter, ClipboardList, Upload, TrendingUp } from 'lucide-react';
+import { AlertTriangle, Plus, Edit2, Trash2, ArrowUp, ArrowDown, History, Package, LayoutGrid, List as ListIcon, Search, Filter, ClipboardList, Upload, TrendingUp, AlertCircle } from 'lucide-react';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import LivePageHeader from '@/components/LivePageHeader';
 import GlassCard from '@/components/GlassCard';
@@ -92,6 +92,15 @@ export default function InventoryPage() {
     reason: ADJUSTMENT_REASONS[0],
     customReason: '',
   });
+
+  // Duplicate detection - find existing items with similar names
+  const duplicateItem = useMemo(() => {
+    if (!formData.name.trim() || modalType !== 'add') return null;
+    const searchName = formData.name.trim().toLowerCase();
+    return (inventory || []).find(item =>
+      item && item.name && item.name.toLowerCase() === searchName
+    );
+  }, [formData.name, inventory, modalType]);
 
   const lowStock = (inventory || []).filter(item => item && item.currentQuantity <= item.minQuantity);
 
@@ -649,11 +658,48 @@ export default function InventoryPage() {
             <label className="form-label">Nama Item *</label>
             <input
               type="text"
-              className="form-input"
+              className={`form-input ${duplicateItem ? 'border-amber-500 focus:border-amber-500 focus:ring-amber-500' : ''}`}
               value={formData.name}
               onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
               placeholder="Contoh: Ayam, Nasi, dll"
             />
+
+            {/* Duplicate Warning */}
+            {duplicateItem && modalType === 'add' && (
+              <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-amber-800">
+                      Item "{duplicateItem.name}" sudah wujud!
+                    </p>
+                    <p className="text-xs text-amber-700 mt-1">
+                      Kuantiti semasa: <strong>{duplicateItem.currentQuantity} {duplicateItem.unit}</strong>
+                    </p>
+                    <div className="flex flex-col sm:flex-row gap-2 mt-3">
+                      <button
+                        type="button"
+                        className="btn btn-sm bg-amber-600 hover:bg-amber-700 text-white"
+                        onClick={() => {
+                          closeModal();
+                          openAdjustModal(duplicateItem);
+                        }}
+                      >
+                        <ArrowUp size={14} className="mr-1" />
+                        Laras Stok Sedia Ada
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-sm btn-outline text-amber-700 border-amber-300 hover:bg-amber-100"
+                        onClick={() => setFormData(prev => ({ ...prev, name: prev.name + ' (Baru)' }))}
+                      >
+                        Tetap Tambah Baru
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="grid grid-cols-2" style={{ gap: '1rem' }}>
