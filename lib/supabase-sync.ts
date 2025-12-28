@@ -1468,6 +1468,17 @@ export async function syncUpdateStaffRequest(id: string, updates: any) {
   }
 }
 
+export async function syncDeleteStaffRequest(id: string) {
+  if (!isSupabaseSyncEnabled()) return;
+
+  try {
+    await ops.deleteStaffRequest(id);
+  } catch (error) {
+    console.error('Failed to delete staff request from Supabase:', error);
+    addToSyncQueue({ id, table: 'staff_requests', action: 'DELETE', payload: {} });
+  }
+}
+
 export async function loadStaffRequestsFromSupabase(staffId?: string) {
   if (!isSupabaseSyncEnabled()) return [];
 

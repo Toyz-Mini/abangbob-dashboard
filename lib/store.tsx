@@ -419,6 +419,7 @@ interface StoreState {
   staffRequests: StaffRequest[];
   addStaffRequest: (request: Omit<StaffRequest, 'id' | 'createdAt'>) => void;
   updateStaffRequest: (id: string, updates: Partial<StaffRequest>) => void;
+  deleteStaffRequest: (id: string) => void;
   completeStaffRequest: (id: string, responseNote?: string) => void;
   rejectStaffRequest: (id: string, responseNote: string) => void;
   getStaffRequestsByStaff: (staffId: string) => StaffRequest[];
@@ -992,7 +993,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
           if (payload.eventType === 'INSERT') {
             const newItem = VoidRefundOps.toCamelCase(payload.new) as T;
-            setter(prev => [...prev, newItem]);
+            setter(prev => {
+              // Check if item already exists in local state to avoid duplicates
+              if (prev.some(item => item.id === newItem.id)) {
+                return prev;
+              }
+              return [...prev, newItem];
+            });
           } else if (payload.eventType === 'UPDATE') {
             const updatedItem = VoidRefundOps.toCamelCase(payload.new) as T;
             setter(prev => prev.map(item => item.id === updatedItem.id ? updatedItem : item));
@@ -4193,6 +4200,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     SupabaseSync.syncUpdateStaffRequest(id, updates);
   }, []);
 
+  const deleteStaffRequest = useCallback((id: string) => {
+    setStaffRequests(prev => prev.filter(r => r.id !== id));
+    // Sync to Supabase
+    SupabaseSync.syncDeleteStaffRequest(id);
+  }, []);
+
   const completeStaffRequest = useCallback((id: string, responseNote?: string, approverName?: string) => {
     const request = staffRequests.find(r => r.id === id);
     setStaffRequests(prev => prev.map(r => {
@@ -5585,6 +5598,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     staffRequests,
     addStaffRequest,
     updateStaffRequest,
+    deleteStaffRequest,
     completeStaffRequest,
     rejectStaffRequest,
     getStaffRequestsByStaff,
@@ -6077,6 +6091,7 @@ export function useStaffPortal() {
     staffRequests: store.staffRequests,
     addStaffRequest: store.addStaffRequest,
     updateStaffRequest: store.updateStaffRequest,
+    deleteStaffRequest: store.deleteStaffRequest,
     completeStaffRequest: store.completeStaffRequest,
     rejectStaffRequest: store.rejectStaffRequest,
     getStaffRequestsByStaff: store.getStaffRequestsByStaff,

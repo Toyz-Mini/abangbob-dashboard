@@ -2191,6 +2191,18 @@ export async function updateStaffRequest(id: string, updates: any) {
   return toCamelCase(data);
 }
 
+export async function deleteStaffRequest(id: string) {
+  const supabase = getSupabaseClient();
+  if (!supabase) throw new Error('Supabase not connected');
+
+  const { error } = await supabase
+    .from('staff_requests')
+    .delete()
+    .eq('id', id);
+
+  if (error) throw error;
+}
+
 // ============ ANNOUNCEMENTS OPERATIONS ============
 
 export async function fetchAnnouncements(isActive?: boolean) {

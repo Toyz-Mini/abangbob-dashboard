@@ -17,7 +17,8 @@ import {
   Sun,
   Moon,
   Calendar,
-  Clock
+  Clock,
+  Trash2
 } from 'lucide-react';
 
 export default function SwapShiftPage() {
@@ -27,6 +28,7 @@ export default function SwapShiftPage() {
     schedules,
     shifts,
     addStaffRequest,
+    deleteStaffRequest,
     getStaffRequestsByStaff,
     refreshStaffRequests
   } = useStaffPortal();
@@ -156,6 +158,12 @@ export default function SwapShiftPage() {
     };
   };
 
+  const handleCancelRequest = (requestId: string) => {
+    if (window.confirm('Adakah anda pasti ingin membatalkan permohonan ini?')) {
+      deleteStaffRequest(requestId);
+    }
+  };
+
   if (!isInitialized || !currentStaff) {
     return (
       <StaffLayout>
@@ -277,6 +285,28 @@ export default function SwapShiftPage() {
                         {request.description.length > 100
                           ? request.description.substring(0, 100) + '...'
                           : request.description}
+                      </div>
+                    )}
+
+                    {request.status === 'pending' && (
+                      <div style={{ marginTop: '0.75rem', display: 'flex', justifyContent: 'flex-end' }}>
+                        <button
+                          className="btn btn-sm btn-outline-danger"
+                          onClick={() => handleCancelRequest(request.id)}
+                          style={{
+                            fontSize: '0.75rem',
+                            padding: '0.25rem 0.5rem',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.4rem',
+                            color: 'var(--danger)',
+                            borderColor: 'var(--danger)',
+                            background: 'transparent'
+                          }}
+                        >
+                          <Trash2 size={12} />
+                          Batal Permohonan
+                        </button>
                       </div>
                     )}
                     {request.responseNote && (
