@@ -45,6 +45,22 @@ export default function SwapShiftPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
 
+  // Custom confirmation state
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    confirmText?: string;
+    cancelText?: string;
+    type?: 'primary' | 'danger' | 'success';
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: () => { }
+  });
+
   // Dynamic Staff Finding
   const currentStaff = useMemo(() => {
     return staff.find(s => s.id === user?.id) || null;
@@ -163,27 +179,54 @@ export default function SwapShiftPage() {
     };
   };
 
-  const handleCancelRequest = async (id: string) => {
-    if (window.confirm('Adakah anda pasti mahu membatalkan permohonan ini?')) {
-      deleteStaffRequest(id);
-    }
+  const handleCancelRequest = (id: string) => {
+    setConfirmModal({
+      isOpen: true,
+      title: 'Batal Permohonan',
+      message: 'Adakah anda benar-benar mahukan membatalkan permohonan pertukaran ini?',
+      onConfirm: () => {
+        deleteStaffRequest(id);
+        setConfirmModal(prev => ({ ...prev, isOpen: false }));
+      },
+      confirmText: 'Ya, Batal',
+      cancelText: 'Tidak',
+      type: 'danger'
+    });
   };
 
-  const handleAcceptSwap = async (id: string) => {
-    if (window.confirm('Adakah anda bersetuju untuk menukar shift ini?')) {
-      // Set status to in_progress (meaning accepted by colleague, pending manager)
-      updateStaffRequest(id, {
-        status: 'in_progress',
-        responseNote: 'Bersetuju dengan pertukaran. Menunggu maklum balas pengurus.'
-      });
-      alert('Anda telah bersetuju. Permohonan kini menunggu kelulusan pengurus.');
-    }
+  const handleAcceptSwap = (id: string) => {
+    setConfirmModal({
+      isOpen: true,
+      title: 'Terima Pertukaran',
+      message: 'Adakah anda bersetuju untuk menukar shift dengan rakan sekerja anda?',
+      onConfirm: () => {
+        updateStaffRequest(id, {
+          status: 'in_progress',
+          responseNote: 'Bersetuju dengan pertukaran. Menunggu maklum balas pengurus.'
+        });
+        setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        // Using confirm modal for success feedback too if possible, but alert is fine for simplicity here
+        // Replace alert with info modal if desired
+      },
+      confirmText: 'Ya, Setuju',
+      cancelText: 'Kembali',
+      type: 'success'
+    });
   };
 
-  const handleDeclineSwap = async (id: string) => {
-    if (window.confirm('Adakah anda mahu menolak pertukaran shift ini?')) {
-      rejectStaffRequest(id, 'Ditolak oleh rakan sekerja.', currentStaff?.name || 'Rakan Sekerja');
-    }
+  const handleDeclineSwap = (id: string) => {
+    setConfirmModal({
+      isOpen: true,
+      title: 'Tolak Pertukaran',
+      message: 'Adakah anda mahu menolak permohonan pertukaran ini?',
+      onConfirm: () => {
+        rejectStaffRequest(id, 'Ditolak oleh rakan sekerja.', currentStaff?.name || 'Rakan Sekerja');
+        setConfirmModal(prev => ({ ...prev, isOpen: false }));
+      },
+      confirmText: 'Ya, Tolak',
+      cancelText: 'Kembali',
+      type: 'danger'
+    });
   };
 
   if (!isInitialized || !currentStaff) {
@@ -225,20 +268,22 @@ export default function SwapShiftPage() {
           </div>
 
           {myUpcomingSchedules.length > 0 ? (
-            <div className="grid grid-cols-2 md:grid-cols-4" style={{ gap: '0.75rem' }}>
+            <div className="grid grid-cols-2 md:grid-cols-4" style={{ gap: '0.75rem', padding: '1rem' }}>
               {myUpcomingSchedules.map(schedule => (
                 <div
                   key={schedule.date}
                   className="shift-card"
                   style={{
                     background: `${schedule.shift?.color}15`,
-                    borderLeft: `4px solid ${schedule.shift?.color}`
+                    borderLeft: `4px solid ${schedule.shift?.color}`,
+                    padding: '0.75rem',
+                    borderRadius: '0.5rem'
                   }}
                 >
-                  <div className="shift-date">
+                  <div className="shift-date" style={{ fontSize: '0.8rem', fontWeight: 600 }}>
                     {new Date(schedule.date).toLocaleDateString('ms-MY', { weekday: 'short', day: 'numeric', month: 'short' })}
                   </div>
-                  <div className="shift-name" style={{ color: schedule.shift?.color }}>
+                  <div className="shift-name" style={{ color: schedule.shift?.color, fontSize: '1rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.25rem', margin: '0.25rem 0' }}>
                     {schedule.shift?.startTime && schedule.shift.startTime < '12:00' ? (
                       <Sun size={14} />
                     ) : (
@@ -246,7 +291,7 @@ export default function SwapShiftPage() {
                     )}
                     {schedule.shift?.name}
                   </div>
-                  <div className="shift-time">
+                  <div className="shift-time" style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
                     {schedule.shift?.startTime} - {schedule.shift?.endTime}
                   </div>
                 </div>
@@ -274,20 +319,18 @@ export default function SwapShiftPage() {
           </div>
 
           {mySwapRequests.length > 0 ? (
-            <div className="staff-stagger" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            <div className="staff-stagger" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', padding: '1rem' }}>
               {mySwapRequests.map(request => {
                 const details = parseSwapDetails(request);
                 return (
-                  <div key={request.id} className="swap-request-card">
-                    <div className="swap-request-header">
+                  <div key={request.id} className="swap-request-card" style={{ padding: '1rem', background: 'var(--bg-secondary)', borderRadius: '0.75rem', border: '1px solid var(--border-color)' }}>
+                    <div className="swap-request-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                       <div className="swap-info">
-                        <div className="swap-dates">
-                          <div className="swap-from">
-                            <Calendar size={14} />
-                            <span>{details.date}</span>
-                          </div>
+                        <div className="swap-dates" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
+                          <Calendar size={14} color="var(--primary)" />
+                          <span style={{ fontWeight: 600 }}>{details.date}</span>
                         </div>
-                        <div className="swap-with">
+                        <div className="swap-with" style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                           <User size={14} />
                           {request.staffId === user?.id ? (
                             <span>Dengan: <strong>{details.colleagueName}</strong></span>
@@ -296,7 +339,7 @@ export default function SwapShiftPage() {
                           )}
                         </div>
                       </div>
-                      <span className={`badge badge-${request.status === 'completed' ? 'success' : request.status === 'rejected' ? 'danger' : 'warning'}`}>
+                      <span className={`badge badge-${request.status === 'completed' ? 'success' : request.status === 'rejected' ? 'danger' : 'warning'}`} style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', padding: '0.25rem 0.5rem', borderRadius: '1rem', fontSize: '0.7rem', fontWeight: 600 }}>
                         {request.status === 'completed' && <CheckCircle size={12} />}
                         {request.status === 'rejected' && <XCircle size={12} />}
                         {request.status === 'pending' && <AlertCircle size={12} />}
@@ -307,10 +350,10 @@ export default function SwapShiftPage() {
                       </span>
                     </div>
                     {request.description && (
-                      <div className="swap-reason" style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '0.5rem' }}>
-                        {request.description.length > 100
+                      <div className="swap-reason" style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '0.5rem', fontStyle: 'italic' }}>
+                        "{request.description.length > 100
                           ? request.description.substring(0, 100) + '...'
-                          : request.description}
+                          : request.description}"
                       </div>
                     )}
 
@@ -325,10 +368,7 @@ export default function SwapShiftPage() {
                               padding: '0.25rem 0.5rem',
                               display: 'flex',
                               alignItems: 'center',
-                              gap: '0.4rem',
-                              color: 'var(--danger)',
-                              borderColor: 'var(--danger)',
-                              background: 'transparent'
+                              gap: '0.4rem'
                             }}
                           >
                             <Trash2 size={12} />
@@ -372,7 +412,7 @@ export default function SwapShiftPage() {
                       </div>
                     )}
                     {request.responseNote && (
-                      <div style={{ marginTop: '0.5rem', padding: '0.5rem', background: 'var(--bg-secondary)', borderRadius: '0.5rem', fontSize: '0.8rem' }}>
+                      <div style={{ marginTop: '0.75rem', padding: '0.5rem', background: 'var(--bg-primary)', borderRadius: '0.5rem', fontSize: '0.8rem', border: '1px dashed var(--border-color)' }}>
                         <strong>Maklum balas:</strong> {request.responseNote}
                       </div>
                     )}
@@ -396,8 +436,8 @@ export default function SwapShiftPage() {
           maxWidth="500px"
         >
           {submitSuccess ? (
-            <div className="swap-success">
-              <CheckCircle size={48} color="var(--success)" />
+            <div className="swap-success" style={{ textAlign: 'center', padding: '2rem' }}>
+              <CheckCircle size={48} color="var(--success)" style={{ marginBottom: '1rem' }} />
               <h3>Permohonan Dihantar!</h3>
               <p>Permohonan anda akan disemak oleh pengurus.</p>
             </div>
@@ -433,7 +473,7 @@ export default function SwapShiftPage() {
 
               {/* Select Colleague */}
               {selectedDate && (
-                <div className="form-group">
+                <div className="form-group" style={{ marginTop: '1rem' }}>
                   <label className="form-label">Tukar Dengan</label>
                   {availableColleagues.length > 0 ? (
                     <select
@@ -460,7 +500,7 @@ export default function SwapShiftPage() {
 
               {/* Select Colleague's Shift */}
               {selectedColleague && (
-                <div className="form-group">
+                <div className="form-group" style={{ marginTop: '1rem' }}>
                   <label className="form-label">Pilih Shift Mereka</label>
                   {(() => {
                     const colleague = availableColleagues.find(c => c.id === selectedColleague);
@@ -485,7 +525,7 @@ export default function SwapShiftPage() {
               )}
 
               {/* Reason */}
-              <div className="form-group">
+              <div className="form-group" style={{ marginTop: '1rem' }}>
                 <label className="form-label">Sebab Pertukaran</label>
                 <textarea
                   className="form-input"
@@ -493,6 +533,7 @@ export default function SwapShiftPage() {
                   onChange={(e) => setReason(e.target.value)}
                   placeholder="Nyatakan sebab pertukaran (optional)"
                   rows={2}
+                  style={{ width: '100%', padding: '0.50rem', borderRadius: '0.5rem', border: '1px solid var(--border-color)', background: 'var(--bg-secondary)' }}
                 />
               </div>
 
@@ -508,7 +549,7 @@ export default function SwapShiftPage() {
                 </button>
                 <button
                   className="btn btn-primary"
-                  style={{ flex: 1 }}
+                  style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
                   onClick={handleSubmitRequest}
                   disabled={!selectedDate || !selectedColleague || !selectedColleagueDate || isSubmitting}
                 >
@@ -524,6 +565,44 @@ export default function SwapShiftPage() {
           )}
         </Modal>
 
+        {/* Custom Confirmation Modal */}
+        <Modal
+          isOpen={confirmModal.isOpen}
+          onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+          title={confirmModal.title}
+          maxWidth="400px"
+        >
+          <div style={{ textAlign: 'center', padding: '1rem 0' }}>
+            <div style={{ marginBottom: '1.5rem', color: 'var(--text-secondary)', lineHeight: '1.6' }}>
+              {confirmModal.message}
+            </div>
+            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
+              <button
+                className="btn btn-outline"
+                onClick={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+                style={{ flex: 1, padding: '0.75rem' }}
+              >
+                {confirmModal.cancelText || 'Batal'}
+              </button>
+              <button
+                className="btn"
+                onClick={confirmModal.onConfirm}
+                style={{
+                  flex: 1,
+                  padding: '0.75rem',
+                  background: confirmModal.type === 'danger' ? 'var(--danger)' :
+                    confirmModal.type === 'success' ? 'var(--success)' : 'var(--primary)',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '0.5rem',
+                  fontWeight: 600
+                }}
+              >
+                {confirmModal.confirmText || 'Sahkan'}
+              </button>
+            </div>
+          </div>
+        </Modal>
       </div>
     </StaffLayout>
   );
