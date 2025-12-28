@@ -42,6 +42,7 @@ import { useToast } from '@/lib/contexts/ToastContext';
 import { canViewNavItem, type UserRole } from '@/lib/permissions';
 import { processSyncQueue } from '@/lib/sync-queue';
 import * as ops from '@/lib/supabase/operations';
+import BrandHeader from '@/components/BrandHeader';
 
 export default function MainLayout({ children }: { children: ReactNode }) {
   // Default to open for better UX on desktop
@@ -280,6 +281,9 @@ export default function MainLayout({ children }: { children: ReactNode }) {
 
   return (
     <RouteGuard>
+      {/* Global Brand Header */}
+      <BrandHeader />
+
       <div className="main-container" ref={containerRef}>
         {/* Skip to main content link for accessibility */}
         <a href="#main-content" className="skip-link">
