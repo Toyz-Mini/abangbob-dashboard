@@ -50,6 +50,8 @@ export default function StaffPortalV2() {
     getStaffLeaveRequests,
     getStaffClaimRequests,
     getStaffSalaryAdvances,
+    getStaffOTClaims,
+    getStaffRequestsByStaff,
     getTodayChecklist,
     schedules,
     shifts,
@@ -105,10 +107,14 @@ export default function StaffPortalV2() {
   const leaveRequests = getStaffLeaveRequests(staffId);
   const claimRequests = getStaffClaimRequests(staffId);
   const salaryAdvances = getStaffSalaryAdvances(staffId);
+  const otClaims = getStaffOTClaims(staffId);
+  const staffRequestsList = getStaffRequestsByStaff(staffId);
   const pendingLeaveCount = leaveRequests?.filter(r => r.status === 'pending').length || 0;
   const pendingClaimCount = claimRequests?.filter(r => r.status === 'pending').length || 0;
   const pendingAdvanceCount = salaryAdvances?.filter(a => a.status === 'pending').length || 0;
-  const totalPending = pendingLeaveCount + pendingClaimCount + pendingAdvanceCount;
+  const pendingOTCount = otClaims?.filter(o => o.status === 'pending').length || 0;
+  const pendingRequestCount = staffRequestsList?.filter(r => r.status === 'pending').length || 0;
+  const totalPending = pendingLeaveCount + pendingClaimCount + pendingAdvanceCount + pendingOTCount + pendingRequestCount;
 
   const openingChecklist = getTodayChecklist('opening');
   const closingChecklist = getTodayChecklist('closing');
@@ -642,6 +648,44 @@ export default function StaffPortalV2() {
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                 <Banknote size={14} color="var(--primary)" />
                 <span style={{ fontWeight: 500 }}>Advance ({pendingAdvanceCount})</span>
+              </div>
+              <span style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>Processing...</span>
+            </div>
+          )}
+          {pendingOTCount > 0 && (
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              padding: '0.75rem',
+              background: 'var(--bg-secondary)',
+              borderRadius: '10px',
+              marginBottom: '0.5rem',
+              fontSize: '0.8rem',
+              border: '1px solid var(--border-color)'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <Timer size={14} color="var(--primary)" />
+                <span style={{ fontWeight: 500 }}>OT ({pendingOTCount})</span>
+              </div>
+              <span style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>Processing...</span>
+            </div>
+          )}
+          {pendingRequestCount > 0 && (
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              padding: '0.75rem',
+              background: 'var(--bg-secondary)',
+              borderRadius: '10px',
+              marginBottom: '0.5rem',
+              fontSize: '0.8rem',
+              border: '1px solid var(--border-color)'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <AlertCircle size={14} color="var(--primary)" />
+                <span style={{ fontWeight: 500 }}>Permohonan Lain ({pendingRequestCount})</span>
               </div>
               <span style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>Processing...</span>
             </div>
