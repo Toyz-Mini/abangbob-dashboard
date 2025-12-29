@@ -466,7 +466,7 @@ export default function SalaryAdvancePage() {
                                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem' }}>
                                     <AlertCircle size={18} color="var(--warning)" style={{ marginTop: '2px' }} />
                                     <div style={{ fontSize: '0.875rem', color: 'var(--warning-dark)' }}>
-                                        <strong>Perhatian:</strong> Pendahuluan gaji akan dipotong secara automatik dari gaji bulan hadapan selepas diluluskan.
+                                        <strong>Perhatian:</strong> Pendahuluan gaji akan dipotong secara automatik dari gaji bulan ini selepas diluluskan.
                                     </div>
                                 </div>
                             </div>
