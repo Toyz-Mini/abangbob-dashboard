@@ -24,7 +24,8 @@ import {
   Package,
   Bell,
   Timer,
-  Trophy
+  Trophy,
+  Banknote
 } from 'lucide-react';
 import VerificationWizard from '@/components/VerificationWizard';
 import SOPWizard from '@/components/staff/SOPWizard';
@@ -491,6 +492,15 @@ export default function StaffPortalV2() {
                 <ArrowLeftRight size={20} color="var(--primary)" />
               </div>
               <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-primary)' }}>Swap</div>
+            </div>
+          </Link>
+
+          <Link href="/staff-portal/salary-advance" style={{ textDecoration: 'none' }}>
+            <div style={{ background: 'var(--bg-primary)', padding: '1rem 0.5rem', borderRadius: '12px', textAlign: 'center', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)' }}>
+              <div style={{ background: 'var(--primary-50)', margin: '0 auto', width: '40px', height: '40px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '0.5rem' }}>
+                <Banknote size={20} color="var(--primary)" />
+              </div>
+              <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-primary)' }}>Advance</div>
             </div>
           </Link>
 
