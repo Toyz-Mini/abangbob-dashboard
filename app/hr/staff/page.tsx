@@ -925,11 +925,12 @@ export default function StaffListPage() {
       </div>
     );
 
-    const Field = ({ label, value, badge }: { label: string, value: string | number | undefined | null, badge?: string }) => (
+    const Field = ({ label, value, badge, sub }: { label: string, value: string | number | undefined | null, badge?: string, sub?: string }) => (
       <div className="flex flex-col gap-1.5">
         <span className="text-[11px] uppercase tracking-wider text-gray-400 font-semibold leading-none">{label}</span>
         <div className="text-[14px] font-medium text-gray-900 break-words flex items-center gap-2 leading-snug">
           {value || <span className="text-gray-300 italic font-normal text-xs">Tidak dinyatakan</span>}
+          {sub && <span className="text-gray-400 text-xs font-normal">({sub})</span>}
           {badge && <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide ${badge === 'active' ? 'bg-green-100 text-green-700' :
             badge === 'permanent' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700'
             }`}>{badge}</span>}
