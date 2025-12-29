@@ -49,6 +49,7 @@ export default function StaffPortalV2() {
     getLeaveBalance,
     getStaffLeaveRequests,
     getStaffClaimRequests,
+    getStaffSalaryAdvances,
     getTodayChecklist,
     schedules,
     shifts,
@@ -103,9 +104,11 @@ export default function StaffPortalV2() {
   const leaveBalance = getLeaveBalance(staffId);
   const leaveRequests = getStaffLeaveRequests(staffId);
   const claimRequests = getStaffClaimRequests(staffId);
+  const salaryAdvances = getStaffSalaryAdvances(staffId);
   const pendingLeaveCount = leaveRequests?.filter(r => r.status === 'pending').length || 0;
   const pendingClaimCount = claimRequests?.filter(r => r.status === 'pending').length || 0;
-  const totalPending = pendingLeaveCount + pendingClaimCount;
+  const pendingAdvanceCount = salaryAdvances?.filter(a => a.status === 'pending').length || 0;
+  const totalPending = pendingLeaveCount + pendingClaimCount + pendingAdvanceCount;
 
   const openingChecklist = getTodayChecklist('opening');
   const closingChecklist = getTodayChecklist('closing');
@@ -613,12 +616,32 @@ export default function StaffPortalV2() {
               padding: '0.75rem',
               background: 'var(--bg-secondary)',
               borderRadius: '10px',
+              marginBottom: '0.5rem',
               fontSize: '0.8rem',
               border: '1px solid var(--border-color)'
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                 <DollarSign size={14} color="var(--primary)" />
                 <span style={{ fontWeight: 500 }}>Tuntutan ({pendingClaimCount})</span>
+              </div>
+              <span style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>Processing...</span>
+            </div>
+          )}
+          {pendingAdvanceCount > 0 && (
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              padding: '0.75rem',
+              background: 'var(--bg-secondary)',
+              borderRadius: '10px',
+              marginBottom: '0.5rem',
+              fontSize: '0.8rem',
+              border: '1px solid var(--border-color)'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <Banknote size={14} color="var(--primary)" />
+                <span style={{ fontWeight: 500 }}>Advance ({pendingAdvanceCount})</span>
               </div>
               <span style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>Processing...</span>
             </div>
