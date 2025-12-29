@@ -569,7 +569,7 @@ export default function StaffPortalV2() {
           </div>
         </div>
 
-        {/* 2. Pending Requests Widget */}
+        {/* 2. Pending Requests Widget - Premium Redesign */}
         <div style={{
           background: 'white',
           borderRadius: '16px',
@@ -580,121 +580,198 @@ export default function StaffPortalV2() {
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <AlertCircle size={18} color="var(--primary)" />
-              <span style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-primary)' }}>Permohonan</span>
+              <div style={{ background: 'var(--primary-50)', padding: '0.4rem', borderRadius: '8px' }}>
+                <AlertCircle size={16} color="var(--primary)" />
+              </div>
+              <span style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--text-primary)' }}>Permohonan Saya</span>
             </div>
-            <span style={{
-              background: totalPending > 0 ? 'var(--primary-50)' : 'var(--success-light)',
-              color: totalPending > 0 ? 'var(--primary)' : 'var(--success-dark)',
-              padding: '0.25rem 0.6rem',
-              borderRadius: '20px',
-              fontSize: '0.7rem',
-              fontWeight: 700,
-              border: totalPending > 0 ? '1px solid var(--primary-100)' : 'none'
-            }}>
-              {totalPending > 0 ? `${totalPending} Pending` : 'Tiada pending'}
-            </span>
+            {totalPending > 0 && (
+              <span style={{
+                background: 'linear-gradient(135deg, var(--primary) 0%, #ff6b6b 100%)',
+                color: 'white',
+                padding: '0.3rem 0.75rem',
+                borderRadius: '20px',
+                fontSize: '0.7rem',
+                fontWeight: 700,
+                boxShadow: '0 2px 8px rgba(220, 38, 38, 0.3)'
+              }}>
+                {totalPending} Pending
+              </span>
+            )}
           </div>
-          {leaveRequests && leaveRequests.filter(r => r.status === 'pending').slice(0, 2).map((req, idx) => (
-            <div key={idx} style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              padding: '0.75rem',
-              background: 'var(--bg-secondary)',
-              borderRadius: '10px',
-              marginBottom: '0.5rem',
-              fontSize: '0.8rem',
-              border: '1px solid var(--border-color)'
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <Plane size={14} color="var(--primary)" />
-                <span style={{ fontWeight: 500 }}>{req.type === 'annual' ? 'Cuti Tahunan' : req.type === 'medical' ? 'MC' : 'Cuti'}</span>
+
+          {/* Request Cards */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            {/* Leave Requests */}
+            {pendingLeaveCount > 0 && (
+              <Link href="/staff-portal/leave" style={{ textDecoration: 'none' }}>
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  padding: '0.875rem 1rem',
+                  background: 'linear-gradient(135deg, #fef3f2 0%, #fff 100%)',
+                  borderRadius: '12px',
+                  border: '1px solid #fecaca',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <div style={{ background: '#fee2e2', padding: '0.5rem', borderRadius: '10px' }}>
+                      <Plane size={18} color="var(--primary)" />
+                    </div>
+                    <div>
+                      <div style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-primary)' }}>Cuti</div>
+                      <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>{pendingLeaveCount} permohonan menunggu kelulusan</div>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <span style={{ background: '#fef3c7', color: '#92400e', padding: '0.2rem 0.5rem', borderRadius: '6px', fontSize: '0.65rem', fontWeight: 600 }}>PENDING</span>
+                    <ChevronRight size={18} color="var(--text-light)" />
+                  </div>
+                </div>
+              </Link>
+            )}
+
+            {/* Claim Requests */}
+            {pendingClaimCount > 0 && (
+              <Link href="/staff-portal/claims" style={{ textDecoration: 'none' }}>
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  padding: '0.875rem 1rem',
+                  background: 'linear-gradient(135deg, #ecfdf5 0%, #fff 100%)',
+                  borderRadius: '12px',
+                  border: '1px solid #a7f3d0',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <div style={{ background: '#d1fae5', padding: '0.5rem', borderRadius: '10px' }}>
+                      <DollarSign size={18} color="#059669" />
+                    </div>
+                    <div>
+                      <div style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-primary)' }}>Tuntutan</div>
+                      <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>{pendingClaimCount} tuntutan menunggu kelulusan</div>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <span style={{ background: '#fef3c7', color: '#92400e', padding: '0.2rem 0.5rem', borderRadius: '6px', fontSize: '0.65rem', fontWeight: 600 }}>PENDING</span>
+                    <ChevronRight size={18} color="var(--text-light)" />
+                  </div>
+                </div>
+              </Link>
+            )}
+
+            {/* Salary Advance */}
+            {pendingAdvanceCount > 0 && (
+              <Link href="/staff-portal/salary-advance" style={{ textDecoration: 'none' }}>
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  padding: '0.875rem 1rem',
+                  background: 'linear-gradient(135deg, #eff6ff 0%, #fff 100%)',
+                  borderRadius: '12px',
+                  border: '1px solid #bfdbfe',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <div style={{ background: '#dbeafe', padding: '0.5rem', borderRadius: '10px' }}>
+                      <Banknote size={18} color="#2563eb" />
+                    </div>
+                    <div>
+                      <div style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-primary)' }}>Pendahuluan Gaji</div>
+                      <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>{pendingAdvanceCount} permohonan menunggu kelulusan</div>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <span style={{ background: '#fef3c7', color: '#92400e', padding: '0.2rem 0.5rem', borderRadius: '6px', fontSize: '0.65rem', fontWeight: 600 }}>PENDING</span>
+                    <ChevronRight size={18} color="var(--text-light)" />
+                  </div>
+                </div>
+              </Link>
+            )}
+
+            {/* OT Claims */}
+            {pendingOTCount > 0 && (
+              <Link href="/staff-portal/ot-claim" style={{ textDecoration: 'none' }}>
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  padding: '0.875rem 1rem',
+                  background: 'linear-gradient(135deg, #faf5ff 0%, #fff 100%)',
+                  borderRadius: '12px',
+                  border: '1px solid #e9d5ff',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <div style={{ background: '#f3e8ff', padding: '0.5rem', borderRadius: '10px' }}>
+                      <Timer size={18} color="#9333ea" />
+                    </div>
+                    <div>
+                      <div style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-primary)' }}>OT Claim</div>
+                      <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>{pendingOTCount} tuntutan OT menunggu kelulusan</div>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <span style={{ background: '#fef3c7', color: '#92400e', padding: '0.2rem 0.5rem', borderRadius: '6px', fontSize: '0.65rem', fontWeight: 600 }}>PENDING</span>
+                    <ChevronRight size={18} color="var(--text-light)" />
+                  </div>
+                </div>
+              </Link>
+            )}
+
+            {/* Staff Requests */}
+            {pendingRequestCount > 0 && (
+              <Link href="/staff-portal/requests" style={{ textDecoration: 'none' }}>
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  padding: '0.875rem 1rem',
+                  background: 'linear-gradient(135deg, #fff7ed 0%, #fff 100%)',
+                  borderRadius: '12px',
+                  border: '1px solid #fed7aa',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <div style={{ background: '#ffedd5', padding: '0.5rem', borderRadius: '10px' }}>
+                      <ArrowLeftRight size={18} color="#ea580c" />
+                    </div>
+                    <div>
+                      <div style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-primary)' }}>Permohonan Lain</div>
+                      <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>{pendingRequestCount} permohonan (swap shift, dll)</div>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <span style={{ background: '#fef3c7', color: '#92400e', padding: '0.2rem 0.5rem', borderRadius: '6px', fontSize: '0.65rem', fontWeight: 600 }}>PENDING</span>
+                    <ChevronRight size={18} color="var(--text-light)" />
+                  </div>
+                </div>
+              </Link>
+            )}
+
+            {/* Empty State */}
+            {totalPending === 0 && (
+              <div style={{
+                textAlign: 'center',
+                padding: '1.5rem',
+                background: 'linear-gradient(135deg, #f0fdf4 0%, #fff 100%)',
+                borderRadius: '12px',
+                border: '1px dashed #86efac'
+              }}>
+                <CheckCircle size={32} color="#22c55e" style={{ marginBottom: '0.5rem' }} />
+                <div style={{ fontWeight: 600, color: '#16a34a', fontSize: '0.9rem' }}>Semua Selesai! ✨</div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>Tiada permohonan yang pending</div>
               </div>
-              <span style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>Processing...</span>
-            </div>
-          ))}
-          {pendingClaimCount > 0 && (
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              padding: '0.75rem',
-              background: 'var(--bg-secondary)',
-              borderRadius: '10px',
-              marginBottom: '0.5rem',
-              fontSize: '0.8rem',
-              border: '1px solid var(--border-color)'
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <DollarSign size={14} color="var(--primary)" />
-                <span style={{ fontWeight: 500 }}>Tuntutan ({pendingClaimCount})</span>
-              </div>
-              <span style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>Processing...</span>
-            </div>
-          )}
-          {pendingAdvanceCount > 0 && (
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              padding: '0.75rem',
-              background: 'var(--bg-secondary)',
-              borderRadius: '10px',
-              marginBottom: '0.5rem',
-              fontSize: '0.8rem',
-              border: '1px solid var(--border-color)'
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <Banknote size={14} color="var(--primary)" />
-                <span style={{ fontWeight: 500 }}>Advance ({pendingAdvanceCount})</span>
-              </div>
-              <span style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>Processing...</span>
-            </div>
-          )}
-          {pendingOTCount > 0 && (
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              padding: '0.75rem',
-              background: 'var(--bg-secondary)',
-              borderRadius: '10px',
-              marginBottom: '0.5rem',
-              fontSize: '0.8rem',
-              border: '1px solid var(--border-color)'
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <Timer size={14} color="var(--primary)" />
-                <span style={{ fontWeight: 500 }}>OT ({pendingOTCount})</span>
-              </div>
-              <span style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>Processing...</span>
-            </div>
-          )}
-          {pendingRequestCount > 0 && (
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              padding: '0.75rem',
-              background: 'var(--bg-secondary)',
-              borderRadius: '10px',
-              marginBottom: '0.5rem',
-              fontSize: '0.8rem',
-              border: '1px solid var(--border-color)'
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <AlertCircle size={14} color="var(--primary)" />
-                <span style={{ fontWeight: 500 }}>Permohonan Lain ({pendingRequestCount})</span>
-              </div>
-              <span style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>Processing...</span>
-            </div>
-          )}
-          {totalPending === 0 && (
-            <div style={{ textAlign: 'center', color: 'var(--text-light)', fontSize: '0.8rem', padding: '0.5rem 0' }}>
-              Semua permohonan telah dikemaskini.
-            </div>
-          )}
+            )}
+          </div>
         </div>
 
         {/* 3. Next Shift Widget */}
