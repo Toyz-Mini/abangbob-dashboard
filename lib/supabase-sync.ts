@@ -1431,6 +1431,24 @@ export async function syncUpdateOTClaim(id: string, updates: any) {
     return null;
   }
 }
+
+// ============ SALARY ADVANCES SYNC ============
+
+export async function syncUpdateSalaryAdvance(id: string, updates: any) {
+  if (!isSupabaseSyncEnabled()) return null;
+
+  try {
+    const updatedAdvance = await ops.updateSalaryAdvance(id, updates);
+    return updatedAdvance;
+  } catch (error) {
+    console.error('Failed to sync salary advance update to Supabase:', error);
+    // Offline Queue
+    addToSyncQueue({ id: id, table: 'salary_advances', action: 'UPDATE', payload: updates });
+    console.log('Saved to offline queue (Salary Advance Update)');
+    return null;
+  }
+}
+
 export async function loadClaimRequestsFromSupabase(staffId?: string) {
   if (!isSupabaseSyncEnabled()) return [];
 

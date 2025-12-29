@@ -3911,6 +3911,22 @@ export async function fetchSalaryAdvances() {
   return toCamelCase(data || []);
 }
 
+export async function updateSalaryAdvance(id: string, updates: any) {
+  const supabase = getSupabaseClient();
+  if (!supabase) throw new Error('Supabase not connected');
+
+  // @ts-ignore
+  const { data, error } = await supabase
+    .from('salary_advances')
+    .update(toSnakeCase(updates))
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return toCamelCase(data);
+}
+
 export async function fetchDisciplinaryActions() {
   const supabase = getSupabaseClient();
   if (!supabase) return [];

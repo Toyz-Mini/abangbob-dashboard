@@ -3553,6 +3553,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       return updated;
     });
 
+    // Sync to Supabase
+    SupabaseSync.syncUpdateSalaryAdvance(id, {
+      status: 'approved',
+      approvedBy: approverId,
+      approverName: approverName,
+      approvedAt: new Date().toISOString()
+    });
+
     // Send email notification to staff
     if (advance) {
       notifySalaryAdvanceResult({
@@ -3581,6 +3589,15 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       });
       setToStorage(STORAGE_KEYS.SALARY_ADVANCES, updated);
       return updated;
+    });
+
+    // Sync to Supabase
+    SupabaseSync.syncUpdateSalaryAdvance(id, {
+      status: 'rejected',
+      approvedBy: approverId,
+      approverName: approverName,
+      approvedAt: new Date().toISOString(),
+      rejectionReason: reason
     });
 
     // Send email notification to staff
