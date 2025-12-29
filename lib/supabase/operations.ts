@@ -2041,24 +2041,92 @@ export async function fetchLeaveRequests(staffId?: string, status?: string) {
     return [];
   }
 
-  return toCamelCase(data || []);
+  // Custom mapping: Database uses different field names than frontend
+  // Database: leave_type, days, attachment_url, approved_by_name
+  // Frontend: type, duration, attachments, approverName
+  return (data || []).map((row: any) => ({
+    id: row.id,
+    staffId: row.staff_id,
+    staffName: row.staff_name,
+    type: row.leave_type || row.type, // Support both column names
+    startDate: row.start_date,
+    endDate: row.end_date,
+    duration: row.days || row.duration || 1, // Support both column names
+    isHalfDay: row.is_half_day || false,
+    halfDayType: row.half_day_type,
+    reason: row.reason,
+    attachments: row.attachment_url ? [row.attachment_url] : (row.attachments || []),
+    status: row.status,
+    approvedBy: row.approved_by,
+    approverName: row.approved_by_name || row.approver_name,
+    approvedAt: row.approved_at,
+    rejectionReason: row.rejection_reason,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  }));
 }
 
 export async function insertLeaveRequest(request: any) {
   const supabase = getSupabaseClient();
   if (!supabase) throw new Error('Supabase not connected');
 
-  const snakeCasedRequest = toSnakeCase(request);
+  // Custom mapping: Frontend uses different field names than database
+  // Frontend: type, duration, attachments, approverName, isHalfDay, halfDayType
+  // Database: leave_type, days, attachment_url, approved_by_name, is_half_day, half_day_type
+  const dbRecord: any = {
+    id: request.id,
+    staff_id: request.staffId,
+    staff_name: request.staffName,
+    leave_type: request.type, // Map 'type' to 'leave_type'
+    start_date: request.startDate,
+    end_date: request.endDate,
+    days: request.duration, // Map 'duration' to 'days'
+    reason: request.reason || '',
+    attachment_url: request.attachments?.[0] || null, // Map 'attachments' array to single 'attachment_url'
+    status: request.status || 'pending',
+    approved_by: request.approvedBy || null,
+    approved_by_name: request.approverName || null,
+    approved_at: request.approvedAt || null,
+    rejection_reason: request.rejectionReason || null,
+    created_at: request.createdAt,
+  };
+
+  console.log('[insertLeaveRequest] Sending to Supabase:', dbRecord);
 
   // @ts-ignore
   const { data, error } = await supabase
     .from('leave_requests')
-    .insert(snakeCasedRequest)
+    .insert(dbRecord)
     .select()
     .single();
 
-  if (error) throw error;
-  return toCamelCase(data);
+  if (error) {
+    console.error('[insertLeaveRequest] Supabase error:', error);
+    console.error('[insertLeaveRequest] Error details:', JSON.stringify(error, null, 2));
+    throw error;
+  }
+
+  // Map back to frontend format
+  const frontendData = {
+    id: data.id,
+    staffId: data.staff_id,
+    staffName: data.staff_name,
+    type: data.leave_type,
+    startDate: data.start_date,
+    endDate: data.end_date,
+    duration: data.days,
+    reason: data.reason,
+    attachments: data.attachment_url ? [data.attachment_url] : [],
+    status: data.status,
+    approvedBy: data.approved_by,
+    approverName: data.approved_by_name,
+    approvedAt: data.approved_at,
+    rejectionReason: data.rejection_reason,
+    createdAt: data.created_at,
+  };
+
+  console.log('[insertLeaveRequest] Success, data:', frontendData);
+  return frontendData;
 }
 
 export async function updateLeaveRequest(id: string, updates: any) {
