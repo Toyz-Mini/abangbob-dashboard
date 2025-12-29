@@ -16,6 +16,12 @@ export async function POST(request: NextRequest) {
             dateOfBirth,
             address,
             emergencyContact,
+            // New fields
+            bankName,
+            bankAccountNo,
+            bankAccountHolder,
+            tshirtSize,
+            shoeSize
         } = body;
 
         console.log('[CompleteProfile] UserId:', userId);
@@ -40,9 +46,9 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // Check current user status
+        // Check current user status and fetch extendedData
         const existingUser = await query(
-            'SELECT status, phone, "icNumber" FROM "user" WHERE id = $1',
+            'SELECT status, phone, "icNumber", "extendedData" FROM "user" WHERE id = $1',
             [userId]
         );
 
@@ -54,6 +60,7 @@ export async function POST(request: NextRequest) {
         }
 
         const currentStatus = existingUser.rows[0].status;
+        const currentExtendedData = existingUser.rows[0].extendedData || {}; // Get existing JSONB
         console.log('[CompleteProfile] Current status:', currentStatus);
 
         // Determine new status:
@@ -67,6 +74,16 @@ export async function POST(request: NextRequest) {
 
         console.log('[CompleteProfile] New status will be:', newStatus);
 
+        // Prepare new extendedData
+        const newExtendedData = {
+            ...currentExtendedData,
+            bankName: bankName || currentExtendedData.bankName,
+            bankAccountNo: bankAccountNo || currentExtendedData.bankAccountNo,
+            bankAccountHolder: bankAccountHolder || currentExtendedData.bankAccountHolder,
+            tshirtSize: tshirtSize || currentExtendedData.tshirtSize,
+            shoeSize: shoeSize || currentExtendedData.shoeSize,
+        };
+
         // Update user profile
         const result = await query(
             `UPDATE "user" 
@@ -77,8 +94,9 @@ export async function POST(request: NextRequest) {
                address = COALESCE($4, address),
                "emergencyContact" = COALESCE($5, "emergencyContact"),
                status = $6,
+               "extendedData" = $7,
                "updatedAt" = NOW()
-             WHERE id = $7
+             WHERE id = $8
              RETURNING id, name, email, status`,
             [
                 phone || null,
@@ -87,6 +105,7 @@ export async function POST(request: NextRequest) {
                 address || null,
                 emergencyContact ? JSON.stringify(emergencyContact) : null,
                 newStatus,
+                JSON.stringify(newExtendedData), // Create json string for the column
                 userId,
             ]
         );
@@ -112,4 +131,5 @@ export async function POST(request: NextRequest) {
         );
     }
 }
+
 

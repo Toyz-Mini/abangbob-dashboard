@@ -14,6 +14,9 @@ import {
     Users,
     CheckCircle,
     ChevronRight,
+    CreditCard,
+    Shirt,
+    ArrowLeft
 } from 'lucide-react';
 
 interface ProfileFormData {
@@ -24,7 +27,33 @@ interface ProfileFormData {
     emergencyContactName: string;
     emergencyContactRelation: string;
     emergencyContactPhone: string;
+    bankName: string;
+    bankAccountNo: string;
+    bankAccountHolder: string;
+    tshirtSize: string;
+    shoeSize: string;
 }
+
+const SHIRT_SIZES = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL'];
+const SHOE_SIZES = ['35', '36', '37', '38', '39', '40', '41', '42', '43', '44', '45', '46'];
+const BANKS = [
+    'Maybank',
+    'CIMB Bank',
+    'Public Bank',
+    'RHB Bank',
+    'Hong Leong Bank',
+    'AmBank',
+    'Bank Islam',
+    'Bank Rakyat',
+    'BSN',
+    'HSBC',
+    'OCBC',
+    'Standard Chartered',
+    'UOB',
+    'Alliance Bank',
+    'Affin Bank',
+    'MBSB Bank'
+];
 
 export default function CompleteProfilePage() {
     const router = useRouter();
@@ -38,6 +67,11 @@ export default function CompleteProfilePage() {
         emergencyContactName: '',
         emergencyContactRelation: '',
         emergencyContactPhone: '',
+        bankName: '',
+        bankAccountNo: '',
+        bankAccountHolder: '',
+        tshirtSize: '',
+        shoeSize: '',
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -52,28 +86,43 @@ export default function CompleteProfilePage() {
 
     const handleInputChange = (field: keyof ProfileFormData, value: string) => {
         setFormData(prev => ({ ...prev, [field]: value }));
+        setError(''); // Clear error on change
     };
 
     const validateStep1 = () => {
-        if (!formData.phone || !formData.icNumber || !formData.dateOfBirth) {
-            setError('Sila isi semua maklumat yang diperlukan');
+        if (!formData.phone || !formData.icNumber || !formData.dateOfBirth || !formData.address) {
+            setError('Sila isi semua maklumat peribadi (Telefon, No. KP, Tarikh Lahir, Alamat)');
             return false;
         }
-        setError('');
         return true;
     };
 
     const validateStep2 = () => {
-        if (!formData.emergencyContactName || !formData.emergencyContactPhone) {
-            setError('Sila isi maklumat kenalan kecemasan');
+        if (!formData.emergencyContactName || !formData.emergencyContactPhone || !formData.emergencyContactRelation) {
+            setError('Sila isi semua maklumat kenalan kecemasan');
             return false;
         }
-        setError('');
         return true;
     };
 
+    const validateStep3 = () => {
+        if (!formData.bankName || !formData.bankAccountNo || !formData.bankAccountHolder || !formData.tshirtSize || !formData.shoeSize) {
+            setError('Sila isi semua maklumat bank dan saiz');
+            return false;
+        }
+        return true;
+    };
+
+    const handleNext = () => {
+        if (step === 1) {
+            if (validateStep1()) setStep(2);
+        } else if (step === 2) {
+            if (validateStep2()) setStep(3);
+        }
+    };
+
     const handleSubmit = async () => {
-        if (!validateStep2()) return;
+        if (!validateStep3()) return;
 
         setLoading(true);
         setError('');
@@ -124,26 +173,31 @@ export default function CompleteProfilePage() {
                         {user?.name?.charAt(0)?.toUpperCase() || 'U'}
                     </div>
                     <h1>Lengkapkan Profil Anda</h1>
-                    <p>Selamat datang, {user?.name}! Sila lengkapkan maklumat anda.</p>
+                    <p>Selamat datang, {user?.name}! Sila isikan maklumat lengkap anda.</p>
                 </div>
 
                 {/* Progress Steps */}
                 <div className="profile-steps">
                     <div className={`step ${step >= 1 ? 'active' : ''}`}>
                         <div className="step-number">1</div>
-                        <span>Maklumat Peribadi</span>
+                        <span className="step-label">Peribadi</span>
                     </div>
-                    <div className="step-line" />
+                    <div className={`step-line ${step >= 2 ? 'active' : ''}`} />
                     <div className={`step ${step >= 2 ? 'active' : ''}`}>
                         <div className="step-number">2</div>
-                        <span>Kenalan Kecemasan</span>
+                        <span className="step-label">Waris</span>
+                    </div>
+                    <div className={`step-line ${step >= 3 ? 'active' : ''}`} />
+                    <div className={`step ${step >= 3 ? 'active' : ''}`}>
+                        <div className="step-number">3</div>
+                        <span className="step-label">Lain-lain</span>
                     </div>
                 </div>
 
                 {/* Form */}
                 <div className="profile-form">
                     {step === 1 && (
-                        <div className="form-step">
+                        <div className="form-step fade-in">
                             <h2>
                                 <User size={20} />
                                 Maklumat Peribadi
@@ -158,7 +212,7 @@ export default function CompleteProfilePage() {
                                     type="tel"
                                     value={formData.phone}
                                     onChange={(e) => handleInputChange('phone', e.target.value)}
-                                    placeholder="+673 XXXXXXX"
+                                    placeholder="+60 1X-XXXXXXX"
                                 />
                             </div>
 
@@ -171,7 +225,7 @@ export default function CompleteProfilePage() {
                                     type="text"
                                     value={formData.icNumber}
                                     onChange={(e) => handleInputChange('icNumber', e.target.value)}
-                                    placeholder="00-XXXXXX"
+                                    placeholder="XXXXXX-XX-XXXX"
                                 />
                             </div>
 
@@ -190,44 +244,27 @@ export default function CompleteProfilePage() {
                             <div className="form-group">
                                 <label>
                                     <MapPin size={16} />
-                                    Alamat Rumah
+                                    Alamat Rumah *
                                 </label>
                                 <textarea
                                     value={formData.address}
                                     onChange={(e) => handleInputChange('address', e.target.value)}
-                                    placeholder="Alamat penuh anda"
+                                    placeholder="Alamat penuh surat-menyurat"
                                     rows={3}
                                 />
                             </div>
-
-                            {error && (
-                                <div className="form-error">
-                                    <AlertCircle size={16} />
-                                    {error}
-                                </div>
-                            )}
-
-                            <button
-                                className="btn-next"
-                                onClick={() => {
-                                    if (validateStep1()) setStep(2);
-                                }}
-                            >
-                                Seterusnya
-                                <ChevronRight size={20} />
-                            </button>
                         </div>
                     )}
 
                     {step === 2 && (
-                        <div className="form-step">
+                        <div className="form-step fade-in">
                             <h2>
                                 <Users size={20} />
                                 Kenalan Kecemasan
                             </h2>
 
                             <div className="form-group">
-                                <label>Nama Kenalan *</label>
+                                <label>Nama Waris *</label>
                                 <input
                                     type="text"
                                     value={formData.emergencyContactName}
@@ -237,7 +274,7 @@ export default function CompleteProfilePage() {
                             </div>
 
                             <div className="form-group">
-                                <label>Hubungan</label>
+                                <label>Hubungan *</label>
                                 <select
                                     value={formData.emergencyContactRelation}
                                     onChange={(e) => handleInputChange('emergencyContactRelation', e.target.value)}
@@ -249,53 +286,143 @@ export default function CompleteProfilePage() {
                                     <option value="Anak">Anak</option>
                                     <option value="Saudara">Saudara</option>
                                     <option value="Kawan">Kawan</option>
+                                    <option value="Lain-lain">Lain-lain</option>
                                 </select>
                             </div>
 
                             <div className="form-group">
                                 <label>
                                     <Phone size={16} />
-                                    Nombor Telefon *
+                                    No. Telefon Waris *
                                 </label>
                                 <input
                                     type="tel"
                                     value={formData.emergencyContactPhone}
                                     onChange={(e) => handleInputChange('emergencyContactPhone', e.target.value)}
-                                    placeholder="+673 XXXXXXX"
+                                    placeholder="+60 1X-XXXXXXX"
                                 />
-                            </div>
-
-                            {error && (
-                                <div className="form-error">
-                                    <AlertCircle size={16} />
-                                    {error}
-                                </div>
-                            )}
-
-                            <div className="form-buttons">
-                                <button
-                                    className="btn-back"
-                                    onClick={() => setStep(1)}
-                                >
-                                    Kembali
-                                </button>
-                                <button
-                                    className="btn-submit"
-                                    onClick={handleSubmit}
-                                    disabled={loading}
-                                >
-                                    {loading ? (
-                                        <LoadingSpinner size="sm" />
-                                    ) : (
-                                        <>
-                                            <CheckCircle size={20} />
-                                            Hantar
-                                        </>
-                                    )}
-                                </button>
                             </div>
                         </div>
                     )}
+
+                    {step === 3 && (
+                        <div className="form-step fade-in">
+                            <h2>
+                                <CreditCard size={20} />
+                                Maklumat Bank & Saiz
+                            </h2>
+
+                            <div className="form-group">
+                                <label>Nama Bank *</label>
+                                <select
+                                    value={formData.bankName}
+                                    onChange={(e) => handleInputChange('bankName', e.target.value)}
+                                >
+                                    <option value="">Pilih Bank</option>
+                                    {BANKS.map(bank => (
+                                        <option key={bank} value={bank}>{bank}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="form-group">
+                                <label>Nombor Akaun *</label>
+                                <input
+                                    type="text"
+                                    value={formData.bankAccountNo}
+                                    onChange={(e) => handleInputChange('bankAccountNo', e.target.value)}
+                                    placeholder="Nombor akaun bank anda"
+                                />
+                            </div>
+
+                            <div className="form-group">
+                                <label>Nama Pemegang Akaun *</label>
+                                <input
+                                    type="text"
+                                    value={formData.bankAccountHolder}
+                                    onChange={(e) => handleInputChange('bankAccountHolder', e.target.value)}
+                                    placeholder="Nama seperti dalam buku bank"
+                                />
+                            </div>
+
+                            <div className="grid-2-cols">
+                                <div className="form-group">
+                                    <label>
+                                        <Shirt size={16} />
+                                        Saiz Baju *
+                                    </label>
+                                    <select
+                                        value={formData.tshirtSize}
+                                        onChange={(e) => handleInputChange('tshirtSize', e.target.value)}
+                                    >
+                                        <option value="">Pilih</option>
+                                        {SHIRT_SIZES.map(size => (
+                                            <option key={size} value={size}>{size}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div className="form-group">
+                                    <label>
+                                        <AlertCircle size={16} />
+                                        Saiz Kasut *
+                                    </label>
+                                    <select
+                                        value={formData.shoeSize}
+                                        onChange={(e) => handleInputChange('shoeSize', e.target.value)}
+                                    >
+                                        <option value="">Pilih</option>
+                                        {SHOE_SIZES.map(size => (
+                                            <option key={size} value={size}>EU {size}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {error && (
+                        <div className="form-error">
+                            <AlertCircle size={16} />
+                            {error}
+                        </div>
+                    )}
+
+                    <div className="form-buttons">
+                        {step > 1 && (
+                            <button
+                                className="btn-back"
+                                onClick={() => setStep(step - 1)}
+                            >
+                                <ArrowLeft size={16} />
+                                Kembali
+                            </button>
+                        )}
+
+                        {step < 3 ? (
+                            <button
+                                className="btn-next"
+                                onClick={handleNext}
+                            >
+                                Seterusnya
+                                <ChevronRight size={20} />
+                            </button>
+                        ) : (
+                            <button
+                                className="btn-submit"
+                                onClick={handleSubmit}
+                                disabled={loading}
+                            >
+                                {loading ? (
+                                    <LoadingSpinner size="sm" />
+                                ) : (
+                                    <>
+                                        <CheckCircle size={20} />
+                                        Hantar Profil
+                                    </>
+                                )}
+                            </button>
+                        )}
+                    </div>
                 </div>
             </div>
 
@@ -305,22 +432,23 @@ export default function CompleteProfilePage() {
           display: flex;
           align-items: center;
           justify-content: center;
-          background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%);
+          background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
           padding: 1rem;
+          font-family: system-ui, -apple-system, sans-serif;
         }
 
         .profile-container {
           width: 100%;
-          max-width: 500px;
+          max-width: 550px;
           background: white;
           border-radius: 24px;
-          padding: 2rem;
-          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+          padding: 2.5rem;
+          box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
         }
 
         .profile-header {
           text-align: center;
-          margin-bottom: 2rem;
+          margin-bottom: 2.5rem;
         }
 
         .profile-avatar {
@@ -334,80 +462,113 @@ export default function CompleteProfilePage() {
           justify-content: center;
           font-weight: 700;
           font-size: 2rem;
-          margin: 0 auto 1rem;
+          margin: 0 auto 1.5rem;
+          box-shadow: 0 10px 20px rgba(220, 38, 38, 0.2);
         }
 
         .profile-header h1 {
-          font-size: 1.5rem;
-          font-weight: 700;
-          color: #1a1a1a;
+          font-size: 1.75rem;
+          font-weight: 800;
+          color: #1e293b;
           margin: 0 0 0.5rem;
+          letter-spacing: -0.025em;
         }
 
         .profile-header p {
-          color: #666;
-          font-size: 0.9rem;
+          color: #64748b;
+          font-size: 1rem;
         }
 
         .profile-steps {
           display: flex;
           align-items: center;
-          justify-content: center;
-          margin-bottom: 2rem;
+          justify-content: space-between;
+          margin-bottom: 2.5rem;
+          padding: 0 1rem;
+          position: relative;
         }
 
         .step {
           display: flex;
+          flex-direction: column;
           align-items: center;
           gap: 0.5rem;
-          opacity: 0.4;
+          z-index: 1;
+          opacity: 0.5;
+          transition: all 0.3s ease;
         }
-
+        
         .step.active {
           opacity: 1;
         }
 
         .step-number {
-          width: 32px;
-          height: 32px;
-          background: #e5e7eb;
+          width: 36px;
+          height: 36px;
+          background: #f1f5f9;
+          border: 2px solid #e2e8f0;
           border-radius: 50%;
           display: flex;
           align-items: center;
           justify-content: center;
           font-weight: 600;
-          font-size: 0.875rem;
+          font-size: 0.9rem;
+          color: #64748b;
+          transition: all 0.3s ease;
         }
 
         .step.active .step-number {
           background: #CC1512;
+          border-color: #CC1512;
           color: white;
+          box-shadow: 0 4px 6px rgba(220, 38, 38, 0.2);
         }
 
-        .step span {
-          font-size: 0.875rem;
-          font-weight: 500;
+        .step-label {
+          font-size: 0.75rem;
+          font-weight: 600;
+          color: #64748b;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+        }
+        
+        .step.active .step-label {
+          color: #CC1512;
         }
 
         .step-line {
-          width: 40px;
+          flex: 1;
           height: 2px;
-          background: #e5e7eb;
-          margin: 0 0.5rem;
+          background: #e2e8f0;
+          margin: 0 10px;
+          margin-bottom: 20px; /* Align with number */
+          transition: all 0.3s ease;
+        }
+        
+        .step-line.active {
+          background: #CC1512;
         }
 
         .form-step h2 {
           display: flex;
           align-items: center;
-          gap: 0.5rem;
-          font-size: 1.1rem;
-          font-weight: 600;
-          color: #1a1a1a;
+          gap: 0.75rem;
+          font-size: 1.25rem;
+          font-weight: 700;
+          color: #1e293b;
           margin-bottom: 1.5rem;
+          padding-bottom: 1rem;
+          border-bottom: 1px solid #e2e8f0;
         }
 
         .form-group {
-          margin-bottom: 1.25rem;
+          margin-bottom: 1.5rem;
+        }
+
+        .grid-2-cols {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 1rem;
         }
 
         .form-group label {
@@ -415,8 +576,8 @@ export default function CompleteProfilePage() {
           align-items: center;
           gap: 0.5rem;
           font-size: 0.875rem;
-          font-weight: 500;
-          color: #333;
+          font-weight: 600;
+          color: #475569;
           margin-bottom: 0.5rem;
         }
 
@@ -425,11 +586,12 @@ export default function CompleteProfilePage() {
         .form-group select {
           width: 100%;
           padding: 0.875rem 1rem;
-          border: 2px solid #e5e7eb;
+          border: 2px solid #e2e8f0;
           border-radius: 12px;
           font-size: 1rem;
           transition: all 0.2s;
-          background: #fafafa;
+          background: #f8fafc;
+          color: #1e293b;
         }
 
         .form-group input:focus,
@@ -440,18 +602,29 @@ export default function CompleteProfilePage() {
           background: white;
           box-shadow: 0 0 0 4px rgba(204, 21, 18, 0.1);
         }
+        
+        .form-group input::placeholder {
+           color: #94a3b8;
+        }
 
         .form-error {
           display: flex;
           align-items: center;
           gap: 0.5rem;
-          padding: 0.75rem 1rem;
+          padding: 1rem;
           background: #fef2f2;
           border: 1px solid #fecaca;
-          border-radius: 10px;
+          border-radius: 12px;
           color: #dc2626;
           font-size: 0.875rem;
-          margin-bottom: 1rem;
+          font-weight: 500;
+          margin-bottom: 1.5rem;
+        }
+
+        .form-buttons {
+          display: flex;
+          gap: 1rem;
+          margin-top: 2rem;
         }
 
         .btn-next,
@@ -460,11 +633,29 @@ export default function CompleteProfilePage() {
           align-items: center;
           justify-content: center;
           gap: 0.5rem;
-          width: 100%;
+          flex: 2;
           padding: 1rem;
           background: linear-gradient(135deg, #CC1512 0%, #8B0000 100%);
           color: white;
           border: none;
+          border-radius: 12px;
+          font-size: 1rem;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s;
+          box-shadow: 0 4px 6px -1px rgba(185, 28, 28, 0.2);
+        }
+
+        .btn-back {
+          flex: 1;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 0.5rem;
+          padding: 1rem;
+          background: white;
+          color: #64748b;
+          border: 2px solid #e2e8f0;
           border-radius: 12px;
           font-size: 1rem;
           font-weight: 600;
@@ -475,35 +666,31 @@ export default function CompleteProfilePage() {
         .btn-next:hover,
         .btn-submit:hover:not(:disabled) {
           transform: translateY(-2px);
-          box-shadow: 0 8px 25px rgba(204, 21, 18, 0.4);
+          box-shadow: 0 10px 15px -3px rgba(185, 28, 28, 0.3);
+        }
+        
+        .btn-back:hover {
+          background: #f8fafc;
+          border-color: #cbd5e1;
+          color: #475569;
         }
 
         .btn-submit:disabled {
           opacity: 0.7;
           cursor: not-allowed;
+          transform: none;
         }
-
-        .form-buttons {
-          display: flex;
-          gap: 1rem;
+        
+        .fade-in {
+            animation: fadeIn 0.4s ease-out forwards;
         }
-
-        .btn-back {
-          flex: 1;
-          padding: 1rem;
-          background: #f5f5f5;
-          color: #333;
-          border: none;
-          border-radius: 12px;
-          font-size: 1rem;
-          font-weight: 500;
-          cursor: pointer;
-        }
-
-        .btn-submit {
-          flex: 2;
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
       `}</style>
         </div>
     );
 }
+
