@@ -333,17 +333,10 @@ export function calculateLeaveDays(startDate: string, endDate: string, isHalfDay
 
   const start = new Date(startDate);
   const end = new Date(endDate);
-  let days = 0;
 
-  const current = new Date(start);
-  while (current <= end) {
-    const dayOfWeek = current.getDay();
-    // Skip weekends (0 = Sunday, 6 = Saturday)
-    if (dayOfWeek !== 0 && dayOfWeek !== 6) {
-      days++;
-    }
-    current.setDate(current.getDate() + 1);
-  }
+  // Calculate total days including weekends (all calendar days)
+  const diffTime = end.getTime() - start.getTime();
+  const days = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1; // +1 to include both start and end dates
 
   return days;
 }
