@@ -215,6 +215,7 @@ export default function StaffPortalV2() {
           </div>
 
           <button
+            onClick={() => router.push('/notifications')}
             style={{
               background: 'var(--bg-primary)',
               border: '1px solid var(--border-color)',
