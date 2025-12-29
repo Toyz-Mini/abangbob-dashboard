@@ -2085,7 +2085,7 @@ export async function insertLeaveRequest(request: any) {
     attachment_url: request.attachments?.[0] || null, // Map 'attachments' array to single 'attachment_url'
     status: request.status || 'pending',
     approved_by: request.approvedBy || null,
-    approved_by_name: request.approverName || null,
+    approver_name: request.approverName || null,
     approved_at: request.approvedAt || null,
     rejection_reason: request.rejectionReason || null,
     created_at: request.createdAt,
@@ -2137,7 +2137,7 @@ export async function updateLeaveRequest(id: string, updates: any) {
   const dbUpdates: any = {};
   if (updates.status !== undefined) dbUpdates.status = updates.status;
   if (updates.approvedBy !== undefined) dbUpdates.approved_by = updates.approvedBy;
-  if (updates.approverName !== undefined) dbUpdates.approved_by_name = updates.approverName;
+  if (updates.approverName !== undefined) dbUpdates.approver_name = updates.approverName;
   if (updates.approvedAt !== undefined) dbUpdates.approved_at = updates.approvedAt;
   if (updates.rejectionReason !== undefined) dbUpdates.rejection_reason = updates.rejectionReason;
 

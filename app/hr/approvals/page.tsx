@@ -11,6 +11,7 @@ import LoadingSpinner from '@/components/LoadingSpinner';
 import ClaimDetailModal from '@/components/staff-portal/ClaimDetailModal';
 import RequestDetailModal from '@/components/staff-portal/RequestDetailModal';
 import { ClaimRequest, StaffRequest, OTClaim, SalaryAdvance } from '@/lib/types';
+import { useAuth } from '@/lib/contexts/AuthContext';
 import {
   CheckCircle,
   XCircle,
@@ -23,14 +24,12 @@ import {
   UserPlus
 } from 'lucide-react';
 
-// Demo: Using staff ID 1 (Manager) as the logged-in approver
-const CURRENT_APPROVER_ID = '1';
-const CURRENT_APPROVER_NAME = 'Ahmad Bin Hassan';
-
 type TabType = 'leave' | 'claims' | 'ot' | 'advance' | 'requests' | 'newstaff';
 
 export default function ApprovalsPage() {
   const searchParams = useSearchParams();
+  const { user } = useAuth();
+
   const {
     // Leave
     leaveRequests,
@@ -186,20 +185,28 @@ export default function ApprovalsPage() {
   const totalPending = pendingLeave.length + pendingClaims.length + pendingOT.length + pendingAdvances.length + pendingRequests.length + pendingUsers.length;
 
   const handleApprove = async (type: TabType, id: string) => {
+    if (!user) {
+      alert('Sila log masuk untuk membuat kelulusan');
+      return;
+    }
+
+    const approverId = user.id;
+    const approverName = user.name || 'Admin';
+
     setIsProcessing(true);
     await new Promise(resolve => setTimeout(resolve, 300));
 
     if (type === 'leave') {
-      approveLeaveRequest(id, CURRENT_APPROVER_ID, CURRENT_APPROVER_NAME);
+      approveLeaveRequest(id, approverId, approverName);
     } else if (type === 'claims') {
-      approveClaimRequest(id, CURRENT_APPROVER_ID, CURRENT_APPROVER_NAME);
+      approveClaimRequest(id, approverId, approverName);
       setIsClaimModalOpen(false); // Close modal if open
     } else if (type === 'ot') {
-      approveOTClaim(id, CURRENT_APPROVER_ID, CURRENT_APPROVER_NAME);
+      approveOTClaim(id, approverId, approverName);
     } else if (type === 'advance') {
-      approveSalaryAdvance(id, CURRENT_APPROVER_ID, CURRENT_APPROVER_NAME);
+      approveSalaryAdvance(id, approverId, approverName);
     } else {
-      completeStaffRequest(id, 'Diluluskan');
+      completeStaffRequest(id, 'Diluluskan', approverName);
       setIsRequestModalOpen(false); // Close modal if open
     }
 
@@ -218,23 +225,31 @@ export default function ApprovalsPage() {
       return;
     }
 
+    if (!user) {
+      alert('Sila log masuk untuk membuat kelulusan');
+      return;
+    }
+
+    const approverId = user.id;
+    const approverName = user.name || 'Admin';
+
     setIsProcessing(true);
     await new Promise(resolve => setTimeout(resolve, 300));
 
     if (selectedItem.type === 'leave') {
-      rejectLeaveRequest(selectedItem.id, CURRENT_APPROVER_ID, CURRENT_APPROVER_NAME, rejectReason);
+      rejectLeaveRequest(selectedItem.id, approverId, approverName, rejectReason);
     } else if (selectedItem.type === 'claims') {
-      rejectClaimRequest(selectedItem.id, CURRENT_APPROVER_ID, CURRENT_APPROVER_NAME, rejectReason);
+      rejectClaimRequest(selectedItem.id, approverId, approverName, rejectReason);
       setIsClaimModalOpen(false);
     } else if (selectedItem.type === 'ot') {
-      rejectOTClaim(selectedItem.id, CURRENT_APPROVER_ID, CURRENT_APPROVER_NAME, rejectReason);
+      rejectOTClaim(selectedItem.id, approverId, approverName, rejectReason);
     } else if (selectedItem.type === 'advance') {
-      rejectSalaryAdvance(selectedItem.id, CURRENT_APPROVER_ID, CURRENT_APPROVER_NAME, rejectReason);
+      rejectSalaryAdvance(selectedItem.id, approverId, approverName, rejectReason);
     } else if (selectedItem.type === 'newstaff') {
       await handleRejectUser(selectedItem.id, rejectReason);
       return; // handleRejectUser handles its own state cleanup
     } else {
-      rejectStaffRequest(selectedItem.id, rejectReason);
+      rejectStaffRequest(selectedItem.id, rejectReason, approverName);
       setIsRequestModalOpen(false);
     }
 
