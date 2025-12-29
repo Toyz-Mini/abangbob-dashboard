@@ -2133,15 +2133,30 @@ export async function updateLeaveRequest(id: string, updates: any) {
   const supabase = getSupabaseClient();
   if (!supabase) throw new Error('Supabase not connected');
 
+  // Custom mapping for approval fields
+  const dbUpdates: any = {};
+  if (updates.status !== undefined) dbUpdates.status = updates.status;
+  if (updates.approvedBy !== undefined) dbUpdates.approved_by = updates.approvedBy;
+  if (updates.approverName !== undefined) dbUpdates.approved_by_name = updates.approverName;
+  if (updates.approvedAt !== undefined) dbUpdates.approved_at = updates.approvedAt;
+  if (updates.rejectionReason !== undefined) dbUpdates.rejection_reason = updates.rejectionReason;
+
+  console.log('[updateLeaveRequest] Updating id:', id, 'with:', dbUpdates);
+
   // @ts-ignore
   const { data, error } = await supabase
     .from('leave_requests')
-    .update(toSnakeCase(updates))
+    .update(dbUpdates)
     .eq('id', id)
     .select()
     .single();
 
-  if (error) throw error;
+  if (error) {
+    console.error('[updateLeaveRequest] Error:', error);
+    throw error;
+  }
+
+  console.log('[updateLeaveRequest] Success:', data);
   return toCamelCase(data);
 }
 

@@ -3137,6 +3137,15 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         approvedAt: new Date().toISOString(),
       };
     }));
+
+    // Sync to Supabase
+    SupabaseSync.syncUpdateLeaveRequest(id, {
+      status: 'approved',
+      approvedBy: approverId,
+      approverName: approverName,
+      approvedAt: new Date().toISOString()
+    });
+
     // Update leave balance
     if (request) {
       setLeaveBalances(prev => prev.map(lb => {
@@ -3205,6 +3214,16 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         rejectionReason: reason,
       };
     }));
+
+    // Sync to Supabase
+    SupabaseSync.syncUpdateLeaveRequest(id, {
+      status: 'rejected',
+      approvedBy: approverId,
+      approverName: approverName,
+      approvedAt: new Date().toISOString(),
+      rejectionReason: reason
+    });
+
     // Remove from pending in balance
     if (request) {
       setLeaveBalances(prev => prev.map(lb => {
