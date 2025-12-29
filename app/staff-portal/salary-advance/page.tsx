@@ -56,9 +56,9 @@ export default function SalaryAdvancePage() {
     });
 
     // Calculate days worked this month and max advance
-    const { daysWorkedThisMonth, dailyRate, maxAdvance, earnedSoFar, alreadyAdvanced } = useMemo(() => {
+    const { daysWorkedThisMonth, dailyRate, maxAdvance, earnedSoFar, alreadyAdvanced, monthlyLimit, monthlySalary } = useMemo(() => {
         if (!currentStaff) {
-            return { daysWorkedThisMonth: 0, dailyRate: 0, maxAdvance: 0, earnedSoFar: 0, alreadyAdvanced: 0 };
+            return { daysWorkedThisMonth: 0, dailyRate: 0, maxAdvance: 0, earnedSoFar: 0, alreadyAdvanced: 0, monthlyLimit: 0, monthlySalary: 0 };
         }
 
         // Get current month start and end
@@ -83,8 +83,8 @@ export default function SalaryAdvancePage() {
 
         // Calculate daily rate from monthly salary
         const fullProfile = staff.find(s => s.id === currentStaff.id);
-        const monthlySalary = fullProfile?.baseSalary || 1500; // Default BND 1500 if not set
-        const rate = monthlySalary / WORKING_DAYS_PER_MONTH;
+        const salary = fullProfile?.baseSalary || 1500; // Default BND 1500 if not set
+        const rate = salary / WORKING_DAYS_PER_MONTH;
 
         // Calculate earned so far
         const earned = rate * actualDaysWorked;
@@ -99,15 +99,24 @@ export default function SalaryAdvancePage() {
         });
         const alreadyAdvancedAmt = pendingOrApproved.reduce((sum, a) => sum + a.amount, 0);
 
-        // Max advance = earned so far - already advanced
-        const maxAdv = Math.max(0, Math.floor(earned - alreadyAdvancedAmt));
+        // Monthly limit = 50% of monthly salary
+        const maxMonthlyLimit = salary * 0.5;
+        const remainingMonthlyLimit = Math.max(0, maxMonthlyLimit - alreadyAdvancedAmt);
+
+        // Max based on days worked = earned so far - already advanced
+        const maxBasedOnDaysWorked = Math.max(0, Math.floor(earned - alreadyAdvancedAmt));
+
+        // Final max = minimum of (days worked limit) and (monthly 50% limit)
+        const maxAdv = Math.min(maxBasedOnDaysWorked, remainingMonthlyLimit);
 
         return {
             daysWorkedThisMonth: actualDaysWorked,
             dailyRate: rate,
-            maxAdvance: maxAdv,
+            maxAdvance: Math.floor(maxAdv),
             earnedSoFar: earned,
-            alreadyAdvanced: alreadyAdvancedAmt
+            alreadyAdvanced: alreadyAdvancedAmt,
+            monthlyLimit: maxMonthlyLimit,
+            monthlySalary: salary
         };
     }, [currentStaff, attendance, getStaffSalaryAdvances, salaryAdvances, staff]);
 
@@ -270,6 +279,10 @@ export default function SalaryAdvancePage() {
                             <Clock size={18} color="var(--info)" />
                             <span><strong>Dah Advance:</strong> BND {alreadyAdvanced.toFixed(2)}</span>
                         </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <AlertCircle size={18} color="var(--warning)" />
+                            <span><strong>Had Bulanan (50%):</strong> BND {monthlyLimit.toFixed(2)}</span>
+                        </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 700, color: maxAdvance > 0 ? 'var(--success)' : 'var(--danger)' }}>
                             <CheckCircle size={18} />
                             <span>Boleh Mohon: BND {maxAdvance.toFixed(2)}</span>
@@ -420,6 +433,10 @@ export default function SalaryAdvancePage() {
                                     <strong>BND {earnedSoFar.toFixed(2)}</strong>
                                 </div>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+                                    <span>Had Bulanan (50% gaji):</span>
+                                    <span>BND {monthlyLimit.toFixed(2)}</span>
+                                </div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
                                     <span>Dah Advance:</span>
                                     <span>BND {alreadyAdvanced.toFixed(2)}</span>
                                 </div>
@@ -441,7 +458,7 @@ export default function SalaryAdvancePage() {
                                     max={maxAdvance}
                                 />
                                 <small style={{ color: 'var(--text-secondary)', marginTop: '0.25rem', display: 'block' }}>
-                                    Maksimum BND {maxAdvance.toFixed(2)} berdasarkan hari bekerja
+                                    Maksimum BND {maxAdvance.toFixed(2)} (had 50% gaji atau hari bekerja)
                                 </small>
                             </div>
 
