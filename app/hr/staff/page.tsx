@@ -972,6 +972,47 @@ export default function StaffListPage() {
                   selectedStaff.salaryType === 'hourly' ? 'Per Jam' :
                     selectedStaff.salaryType === 'daily' ? 'Harian' : 'Bulanan'
               } />
+
+              {/* Salary Advance Display */}
+              {(() => {
+                const { salaryAdvances, markSalaryAdvanceAsDeducted } = useStore();
+                const staffAdvances = salaryAdvances?.filter(a => a.staffId === selectedStaff.id);
+
+                // Calculate outstanding advance: Approved but not deducted (deductedMonth is falsy)
+                const outstandingAdvance = staffAdvances
+                  ?.filter(a => a.status === 'approved' && !a.deductedMonth)
+                  .reduce((sum, a) => sum + a.amount, 0) || 0;
+
+                if (outstandingAdvance > 0) {
+                  return (
+                    <div className="flex items-center justify-between">
+                      <Field
+                        label="Advance Terkumpul"
+                        value={`BND ${outstandingAdvance.toLocaleString()}`}
+                        badge="outstanding"
+                      />
+                      <button
+                        onClick={() => {
+                          if (confirm('Adakah anda pasti mahu tandakan advance ini sebagai selesai (telah dipotong gaji)?')) {
+                            const currentMonth = new Date().toISOString().slice(0, 7);
+                            // Find the outstanding advances
+                            const advancesToDeduct = staffAdvances?.filter(a => a.status === 'approved' && !a.deductedMonth) || [];
+                            advancesToDeduct.forEach(a => {
+                              markSalaryAdvanceAsDeducted(a.id, currentMonth);
+                            });
+                            alert('Advance telah ditandakan sebagai selesai.');
+                          }
+                        }}
+                        className="btn btn-xs btn-outline-primary"
+                        style={{ marginTop: '-4px' }}
+                      >
+                        Selesai
+                      </button>
+                    </div>
+                  );
+                }
+                return null;
+              })()}
             </div>
           </SectionCard>
 
@@ -980,23 +1021,45 @@ export default function StaffListPage() {
             <div className="grid grid-cols-2 gap-x-4 gap-y-6">
               {(() => {
                 const currentYear = new Date().getFullYear();
-                const balance = getLeaveBalance(selectedStaff.id, currentYear);
-                // Priority: Balance (Current Year) -> Profile Config -> Default
-                const annual = balance?.annual?.entitled ?? selectedStaff.leaveEntitlement?.annual ?? 14;
-                const medical = balance?.medical?.entitled ?? selectedStaff.leaveEntitlement?.medical ?? 14;
-                const emergency = balance?.emergency?.entitled ?? selectedStaff.leaveEntitlement?.emergency ?? 3;
-                const compassionate = balance?.compassionate?.entitled ?? selectedStaff.leaveEntitlement?.compassionate ?? 3;
-                const maternity = balance?.maternity?.entitled ?? selectedStaff.leaveEntitlement?.maternity ?? 105;
-                const paternity = balance?.paternity?.entitled ?? selectedStaff.leaveEntitlement?.paternity ?? 3;
+                const bal = getLeaveBalance(selectedStaff.id, currentYear);
+
+                // Helper to get formatted value
+                const getVal = (type: keyof LeaveEntitlement, defaultDays: number) => {
+                  // If we have a balance record, use it
+                  if (bal) {
+                    // @ts-ignore - Indexing balance by type
+                    const b = bal[type];
+                    if (b) {
+                      return {
+                        text: `${b.balance} / ${b.entitled} hari`,
+                        sub: b.taken > 0 ? `${b.taken} digunakan` : undefined
+                      };
+                    }
+                  }
+
+                  // Fallback to profile config
+                  const entitled = selectedStaff.leaveEntitlement?.[type] ?? defaultDays;
+                  return {
+                    text: `${entitled} / ${entitled} hari`,
+                    sub: 'Tiada rekod'
+                  };
+                };
+
+                const annual = getVal('annual', 14);
+                const medical = getVal('medical', 14);
+                const emergency = getVal('emergency', 3);
+                const compassionate = getVal('compassionate', 3);
+                const maternity = getVal('maternity', 105);
+                const paternity = getVal('paternity', 3);
 
                 return (
                   <>
-                    <Field label="Tahunan" value={`${annual} hari`} />
-                    <Field label="Sakit" value={`${medical} hari`} />
-                    <Field label="Kecemasan" value={`${emergency} hari`} />
-                    <Field label="Ehsan" value={`${compassionate} hari`} />
-                    <Field label="Bersalin" value={`${maternity} hari`} />
-                    <Field label="Paterniti" value={`${paternity} hari`} />
+                    <Field label="Tahunan" value={annual.text} sub={annual.sub} />
+                    <Field label="Sakit" value={medical.text} sub={medical.sub} />
+                    <Field label="Kecemasan" value={emergency.text} sub={emergency.sub} />
+                    <Field label="Ehsan" value={compassionate.text} sub={compassionate.sub} />
+                    <Field label="Bersalin" value={maternity.text} sub={maternity.sub} />
+                    <Field label="Paterniti" value={paternity.text} sub={paternity.sub} />
                   </>
                 );
               })()}

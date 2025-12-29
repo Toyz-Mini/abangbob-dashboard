@@ -1133,6 +1133,7 @@ export interface SalaryAdvance {
   status: SalaryAdvanceStatus;
   approvedBy?: string;
   approverName?: string;
+  approvedByName?: string;
   approvedAt?: string;
   rejectionReason?: string;
   deductedMonth?: string;      // Month when deducted from salary (e.g., "2024-01")
@@ -1564,6 +1565,7 @@ export interface StaffAdvance {
   remainingBalance?: number; // Remaining amount to be deducted
   approvedBy?: string;
   approvedByName?: string;
+  approverName?: string;
   approvedAt?: string;
   notes?: string;
   createdAt: string;

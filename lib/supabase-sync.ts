@@ -1434,6 +1434,21 @@ export async function syncUpdateOTClaim(id: string, updates: any) {
 
 // ============ SALARY ADVANCES SYNC ============
 
+export async function syncAddSalaryAdvance(advance: any) {
+  if (!isSupabaseSyncEnabled()) return null;
+
+  try {
+    const newAdvance = await ops.insertSalaryAdvance(advance);
+    return newAdvance;
+  } catch (error) {
+    console.error('Failed to sync salary advance addition to Supabase:', error);
+    // Offline Queue
+    addToSyncQueue({ id: advance.id, table: 'staff_advances', action: 'CREATE', payload: advance });
+    console.log('Saved to offline queue (Salary Advance Create)');
+    return null;
+  }
+}
+
 export async function syncUpdateSalaryAdvance(id: string, updates: any) {
   if (!isSupabaseSyncEnabled()) return null;
 
@@ -1443,7 +1458,7 @@ export async function syncUpdateSalaryAdvance(id: string, updates: any) {
   } catch (error) {
     console.error('Failed to sync salary advance update to Supabase:', error);
     // Offline Queue
-    addToSyncQueue({ id: id, table: 'salary_advances', action: 'UPDATE', payload: updates });
+    addToSyncQueue({ id: id, table: 'staff_advances', action: 'UPDATE', payload: updates });
     console.log('Saved to offline queue (Salary Advance Update)');
     return null;
   }

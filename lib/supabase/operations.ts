@@ -3982,7 +3982,7 @@ export async function fetchSalaryAdvances() {
   if (!supabase) return [];
 
   const { data, error } = await supabase
-    .from('salary_advances')
+    .from('staff_advances')
     .select('*')
     .order('created_at', { ascending: false });
 
@@ -4000,9 +4000,24 @@ export async function updateSalaryAdvance(id: string, updates: any) {
 
   // @ts-ignore
   const { data, error } = await supabase
-    .from('salary_advances')
+    .from('staff_advances')
     .update(toSnakeCase(updates))
     .eq('id', id)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return toCamelCase(data);
+}
+
+export async function insertSalaryAdvance(advance: any) {
+  const supabase = getSupabaseClient();
+  if (!supabase) throw new Error('Supabase not connected');
+
+  // @ts-ignore
+  const { data, error } = await supabase
+    .from('staff_advances')
+    .insert(toSnakeCase(advance))
     .select()
     .single();
 

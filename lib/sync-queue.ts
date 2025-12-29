@@ -50,7 +50,7 @@ export type SyncTable =
     | 'payment_methods'
     | 'tax_rates'
     | 'cash_registers'
-    | 'salary_advances'
+    | 'staff_advances'
     | 'onboarding_checklists'
     | 'exit_interviews'
     | 'staff_complaints'
@@ -393,7 +393,7 @@ export async function processSyncQueue(ops: any): Promise<{ successCount: number
                     if (item.action === 'UPDATE') await ops.syncUpdateCashRegister(item.id, item.payload);
                     break;
 
-                case 'salary_advances':
+                case 'staff_advances':
                     if (item.action === 'CREATE') await ops.syncAddSalaryAdvance(item.payload);
                     if (item.action === 'UPDATE') await ops.syncUpdateSalaryAdvance(item.id, item.payload);
                     break;

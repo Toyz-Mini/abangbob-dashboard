@@ -3340,6 +3340,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       };
     }));
 
+    // Sync to Supabase
+    SupabaseSync.syncUpdateClaimRequest(id, {
+      status: 'approved',
+      approvedBy: approverId,
+      approverName,
+      approvedAt: new Date().toISOString(),
+    });
+
     // Send email notification to staff
     if (claim) {
       notifyClaimResult({
@@ -3366,6 +3374,15 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         rejectionReason: reason,
       };
     }));
+
+    // Sync to Supabase
+    SupabaseSync.syncUpdateClaimRequest(id, {
+      status: 'rejected',
+      approvedBy: approverId,
+      approverName,
+      approvedAt: new Date().toISOString(),
+      rejectionReason: reason,
+    });
 
     // Send email notification to staff
     if (claim) {
@@ -3553,6 +3570,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       amount: advance.amount,
       reason: advance.reason,
     });
+
+    // Sync to Supabase
+    SupabaseSync.syncAddSalaryAdvance(newAdvance);
   }, []);
 
   const approveSalaryAdvance = useCallback((id: string, approverId: string, approverName: string) => {
@@ -3640,6 +3660,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       });
       setToStorage(STORAGE_KEYS.SALARY_ADVANCES, updated);
       return updated;
+    });
+
+    // Sync to Supabase
+    SupabaseSync.syncUpdateSalaryAdvance(id, {
+      status: 'deducted',
+      deducted_month: month
     });
   }, []);
 
@@ -4261,6 +4287,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       status: 'completed',
       response_note: responseNote,
       completed_at: updates.completedAt,
+      approver_name: approverName, // Add approver name to sync
+      approved_by_name: approverName, // Legacy fallback
     });
 
     // Send email notification to staff
@@ -4293,6 +4321,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       status: 'rejected',
       response_note: responseNote,
       completed_at: updates.completedAt,
+      approver_name: approverName, // Add approver name to sync
+      approved_by_name: approverName, // Legacy fallback
     });
 
     // Send email notification to staff
