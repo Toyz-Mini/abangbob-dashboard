@@ -130,12 +130,7 @@ export default function PayrollPage() {
   const [workLogs, setWorkLogs] = useState<HolidayWorkLog[]>([]);
 
   // Fetch Holiday Data
-  useMemo(() => {
-    // We use useMemo as a "side-effect" trigger here or just useEffect?
-    // Better use useEffect for async data
-    // But since selectedMonth changes, we might want to ensure likely relevant data is available.
-    // For simplicity, we load all holiday data for the year of selectedMonth.
-  }, [selectedMonth]);
+
   // Wait, I should use useEffect properly.
 
   // Realtime hooks
@@ -385,7 +380,7 @@ export default function PayrollPage() {
         netPay: Math.round(netPay * 100) / 100,
       };
     }).sort((a, b) => b.netPay - a.netPay);
-  }, [staff, attendance, selectedMonth, otRate, regularHoursPerDay, workingDaysPerMonth, leaveRequests, salaryAdvances, claimRequests, getStaffKPI, getStaffBonus]);
+  }, [staff, attendance, selectedMonth, otRate, regularHoursPerDay, workingDaysPerMonth, leaveRequests, salaryAdvances, claimRequests, getStaffKPI, getStaffBonus, holidays, policies, workLogs]);
 
   const summary = useMemo(() => {
     return {

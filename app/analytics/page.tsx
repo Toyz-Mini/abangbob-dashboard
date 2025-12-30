@@ -417,7 +417,7 @@ export default function AnalyticsPage() {
     } finally {
       setIsExporting(false);
     }
-  }, [activeTab, dailySalesTrend, menuPerformance, staffProductivity, profitData, dateRange, showToast]);
+  }, [activeTab, dailySalesTrend, menuPerformance, staffProductivity, profitData, rangeStart, rangeEnd, showToast]);
 
   const handleExportPDF = useCallback(() => {
     try {
@@ -453,7 +453,7 @@ export default function AnalyticsPage() {
       console.error('PDF export error:', error);
       showToast('Ralat semasa menjana PDF', 'error');
     }
-  }, [activeTab, filteredOrders, inventory, dateRange, showToast]);
+  }, [activeTab, filteredOrders, inventory, rangeStart, rangeEnd, showToast]);
 
   if (!isInitialized) {
     return (

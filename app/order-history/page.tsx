@@ -213,7 +213,7 @@ export default function OrderHistoryPage() {
     historyItems.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
     return historyItems;
-  }, [orders, filters, canViewAll, currentStaff, voidRefundRequests]);
+  }, [orders, filters, canViewAll, currentStaff, voidRefundRequests, userRole]);
 
   // Get pending requests for Manager/Admin
   const pendingRequests = getPendingVoidRefundRequests();

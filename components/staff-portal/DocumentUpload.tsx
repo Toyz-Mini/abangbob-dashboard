@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { Upload, X, File, Image, CheckCircle, AlertCircle, Cloud, HardDrive } from 'lucide-react';
+import { Upload, X, File, Image as ImageIcon, CheckCircle, AlertCircle, Cloud, HardDrive } from 'lucide-react';
+import NextImage from 'next/image';
 import { uploadFile } from '@/lib/supabase/storage-utils';
 
 interface UploadedFile {
@@ -55,7 +56,7 @@ export default function DocumentUpload({
     }
 
     setIsUploading(true);
-    
+
     try {
       // Upload file using storage utils
       const result = await uploadFile(file, {
@@ -138,14 +139,14 @@ export default function DocumentUpload({
   };
 
   const getFileIcon = (type: string) => {
-    if (type.startsWith('image/')) return <Image size={20} />;
+    if (type.startsWith('image/')) return <ImageIcon size={20} />;
     return <File size={20} />;
   };
 
   return (
     <div className="document-upload">
       {label && <label className="form-label">{label}</label>}
-      
+
       <div
         className={`upload-dropzone ${isDragging ? 'dragging' : ''} ${error ? 'error' : ''} ${isUploading ? 'uploading' : ''}`}
         onClick={handleClick}
@@ -162,7 +163,7 @@ export default function DocumentUpload({
           hidden
           disabled={isUploading}
         />
-        
+
         <div className="upload-icon">
           {isUploading ? (
             <div className="upload-spinner" />
@@ -175,10 +176,10 @@ export default function DocumentUpload({
             {isUploading ? 'Memuat naik...' : 'Klik atau seret fail ke sini'}
           </span>
           <span className="upload-secondary">
-            {accept.includes('image') && accept.includes('pdf') 
-              ? 'Gambar atau PDF' 
-              : accept.includes('image') 
-                ? 'Gambar sahaja' 
+            {accept.includes('image') && accept.includes('pdf')
+              ? 'Gambar atau PDF'
+              : accept.includes('image')
+                ? 'Gambar sahaja'
                 : 'PDF sahaja'
             } (max {maxSize}MB)
           </span>
@@ -199,8 +200,8 @@ export default function DocumentUpload({
           {files.map(file => (
             <div key={file.id} className="uploaded-file">
               {file.preview ? (
-                <div className="file-preview">
-                  <img src={file.preview} alt={file.name} />
+                <div className="file-preview" style={{ position: 'relative', width: '40px', height: '40px' }}>
+                  <NextImage src={file.preview} alt={file.name} fill style={{ objectFit: 'cover' }} unoptimized />
                 </div>
               ) : (
                 <div className="file-icon">
@@ -212,10 +213,10 @@ export default function DocumentUpload({
                 <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                   <span className="file-size">{formatFileSize(file.size)}</span>
                   {file.isLocal !== undefined && (
-                    <span style={{ 
-                      fontSize: '0.7rem', 
-                      display: 'flex', 
-                      alignItems: 'center', 
+                    <span style={{
+                      fontSize: '0.7rem',
+                      display: 'flex',
+                      alignItems: 'center',
                       gap: '0.25rem',
                       color: 'var(--text-secondary)'
                     }}>
@@ -234,7 +235,7 @@ export default function DocumentUpload({
                   )}
                 </div>
               </div>
-              <button 
+              <button
                 className="file-remove"
                 onClick={(e) => {
                   e.stopPropagation();

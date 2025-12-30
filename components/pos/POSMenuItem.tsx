@@ -1,6 +1,7 @@
 import React, { memo } from 'react';
 import { MenuItem } from '@/lib/types';
 import { UtensilsCrossed, Sandwich, Coffee } from 'lucide-react';
+import Image from 'next/image';
 
 interface POSMenuItemProps {
     item: MenuItem;
@@ -36,11 +37,12 @@ const POSMenuItem = memo(({ item, onClick }: POSMenuItemProps) => {
                 overflow: 'hidden'
             }}>
                 {item.image ? (
-                    <img
+                    <Image
                         src={item.image}
                         alt={item.name}
                         className="w-full h-full object-cover"
-                        loading="lazy"
+                        fill
+                        unoptimized
                     />
                 ) : (
                     item.category === 'Nasi Lemak' ? <UtensilsCrossed size={40} /> :

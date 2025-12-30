@@ -24,6 +24,7 @@ import {
     Check,
     Banknote
 } from 'lucide-react';
+import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { verifyPromoCode, getCustomerPoints, calculateRedemptionValue, calculatePointsEarned, PromoValidationResult } from '@/lib/logic/promo-loyalty';
 import { PromoCode } from '@/lib/supabase/types';
@@ -273,10 +274,12 @@ export default function CheckoutPage() {
                                     className="min-w-[160px] bg-white rounded-xl p-3 shadow-sm border border-gray-100 flex flex-col snap-center first:ml-0 last:mr-4 ml-4 first:ml-4"
                                 >
                                     <div className="h-24 bg-gray-100 rounded-lg mb-2 relative overflow-hidden">
-                                        <img
+                                        <Image
                                             src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=300"
-                                            className="w-full h-full object-cover"
+                                            className="object-cover"
                                             alt={item.name}
+                                            fill
+                                            unoptimized
                                         />
                                     </div>
                                     <h3 className="font-bold text-sm text-gray-800 line-clamp-1 mb-1">{item.name}</h3>

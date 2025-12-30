@@ -1,6 +1,8 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
+
+import React, { useState, useEffect, useCallback } from 'react';
 import Sidebar from '@/components/Sidebar';
 import { getSOPLogs, getSOPLogDetails } from '@/lib/supabase/sop-sync';
 import { useStaff } from '@/lib/store';
@@ -16,16 +18,16 @@ export default function SOPAuditPage() {
     const [detailLoading, setDetailLoading] = useState(false);
     const [detailData, setDetailData] = useState<any | null>(null);
 
-    useEffect(() => {
-        loadLogs();
-    }, [selectedDate]);
-
-    const loadLogs = async () => {
+    const loadLogs = useCallback(async () => {
         setLoading(true);
         const data = await getSOPLogs(selectedDate);
         setLogs(data);
         setLoading(false);
-    };
+    }, [selectedDate]);
+
+    useEffect(() => {
+        loadLogs();
+    }, [loadLogs]);
 
     const handleViewDetail = async (log: any) => {
         setSelectedLog(log);
@@ -195,10 +197,12 @@ export default function SOPAuditPage() {
                                                                     <Camera size={12} /> Photo Evidence:
                                                                 </div>
                                                                 <div className="w-full h-48 bg-gray-200 rounded-lg overflow-hidden relative group">
-                                                                    <img
+                                                                    <Image
                                                                         src={item.photoUrl}
                                                                         alt="Evidence"
-                                                                        className="w-full h-full object-cover"
+                                                                        fill
+                                                                        className="object-cover"
+                                                                        unoptimized
                                                                     />
                                                                     {/* Zoom overlay could go here */}
                                                                 </div>

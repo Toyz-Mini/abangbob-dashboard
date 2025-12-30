@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { ShiftDefinition, StaffShift } from '@/lib/types';
 import {
     fetchShiftDefinitions,
@@ -22,6 +22,14 @@ interface AttendanceSetting {
     description: string;
 }
 
+// Settings descriptions
+const settingsConfig: Record<string, { label: string; description: string }> = {
+    late_threshold_minutes: { label: 'Grace Period (minit)', description: 'Minit selepas shift mula dikira lewat' },
+    early_clock_in_limit_minutes: { label: 'Had Clock In Awal (minit)', description: 'Berapa minit awal staff boleh clock in' },
+    overtime_threshold_minutes: { label: 'OT Threshold (minit)', description: 'Minit selepas shift tamat untuk dikira OT' },
+    max_late_per_month: { label: 'Max Lewat/Bulan', description: 'Bilangan max lewat sebulan sebelum eskalasi' },
+};
+
 export default function ShiftSettings() {
     const { showToast } = useToast();
     const [shifts, setShifts] = useState<ShiftDefinition[]>([]);
@@ -41,20 +49,9 @@ export default function ShiftSettings() {
         color: '#3b82f6',
     });
 
-    // Settings descriptions
-    const settingsConfig: Record<string, { label: string; description: string }> = {
-        late_threshold_minutes: { label: 'Grace Period (minit)', description: 'Minit selepas shift mula dikira lewat' },
-        early_clock_in_limit_minutes: { label: 'Had Clock In Awal (minit)', description: 'Berapa minit awal staff boleh clock in' },
-        overtime_threshold_minutes: { label: 'OT Threshold (minit)', description: 'Minit selepas shift tamat untuk dikira OT' },
-        max_late_per_month: { label: 'Max Lewat/Bulan', description: 'Bilangan max lewat sebulan sebelum eskalasi' },
-    };
 
-    // Load shifts and settings
-    useEffect(() => {
-        loadData();
-    }, []);
 
-    async function loadData() {
+    const loadData = useCallback(async () => {
         setLoading(true);
         try {
             const [shiftData, settingsData] = await Promise.all([
@@ -79,7 +76,14 @@ export default function ShiftSettings() {
         } finally {
             setLoading(false);
         }
-    }
+    }, [showToast]);
+
+    // Load shifts and settings
+    useEffect(() => {
+        loadData();
+    }, [loadData]);
+
+
 
     function openAddModal() {
         setEditingShift(null);

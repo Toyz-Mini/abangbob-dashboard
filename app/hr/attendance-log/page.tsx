@@ -1,6 +1,8 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import Image from 'next/image';
+
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import MainLayout from '@/components/MainLayout';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { useAuth } from '@/lib/contexts/AuthContext';
@@ -70,7 +72,7 @@ export default function AttendanceLogPage() {
     });
 
     // Calculate date range
-    const getDateRange = () => {
+    const getDateRange = useCallback(() => {
         const today = new Date();
         let startDate = selectedDate;
         let endDate = selectedDate;
@@ -98,10 +100,10 @@ export default function AttendanceLogPage() {
         }
 
         return { startDate, endDate };
-    };
+    }, [dateRange, selectedDate]);
 
     // Load attendance data
-    const loadAttendance = async () => {
+    const loadAttendance = useCallback(async () => {
         setIsLoading(true);
         setError(null);
 
@@ -120,11 +122,11 @@ export default function AttendanceLogPage() {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [getDateRange]);
 
     useEffect(() => {
         loadAttendance();
-    }, [dateRange, selectedDate]);
+    }, [loadAttendance]);
 
     // Filter and sort records
     const filteredRecords = useMemo(() => {
@@ -722,14 +724,19 @@ export default function AttendanceLogPage() {
 
                             {/* Photo */}
                             <div style={{ padding: '1.5rem' }}>
-                                <img
+                                <Image
                                     src={photoModal.photoUrl}
                                     alt={`Selfie ${photoModal.staffName}`}
+                                    width={0}
+                                    height={0}
+                                    sizes="100vw"
                                     style={{
                                         width: '100%',
+                                        height: 'auto',
                                         borderRadius: '12px',
                                         boxShadow: 'var(--shadow-md)'
                                     }}
+                                    unoptimized
                                 />
                             </div>
                         </div>

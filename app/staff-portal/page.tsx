@@ -27,6 +27,7 @@ import {
   Trophy,
   Banknote
 } from 'lucide-react';
+import Image from 'next/image';
 import VerificationWizard from '@/components/VerificationWizard';
 import SOPWizard from '@/components/staff/SOPWizard';
 import { AnimatePresence } from 'framer-motion';
@@ -893,10 +894,13 @@ export default function StaffPortalV2() {
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
               {currentStaff.profilePhotoUrl ? (
-                <img
+                <Image
                   src={currentStaff.profilePhotoUrl}
                   alt={currentStaff.name}
-                  style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover', border: '1px solid var(--border-color)' }}
+                  width={40}
+                  height={40}
+                  style={{ borderRadius: '50%', objectFit: 'cover', border: '1px solid var(--border-color)' }}
+                  unoptimized
                 />
               ) : (
                 <div style={{ width: '40px', height: '40px', background: 'var(--bg-secondary)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>

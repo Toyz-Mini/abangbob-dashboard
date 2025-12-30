@@ -128,7 +128,7 @@ export default function SchedulePage() {
   const weekSchedule = useMemo(() => {
     const startStr = currentWeekStart.getFullYear() + '-' + String(currentWeekStart.getMonth() + 1).padStart(2, '0') + '-' + String(currentWeekStart.getDate()).padStart(2, '0');
     return getWeekSchedule(startStr);
-  }, [currentWeekStart, getWeekSchedule, schedules]);
+  }, [currentWeekStart, getWeekSchedule]);
 
   // Navigation
   const goToPreviousWeek = () => {

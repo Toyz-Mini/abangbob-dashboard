@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Plus, Edit2, Trash2, Users, Shield, ChevronDown, ChevronUp, RefreshCw } from 'lucide-react';
 import { StaffPosition, StaffPermissions } from '@/lib/types';
 import { useStore } from '@/lib/store';
@@ -72,13 +72,7 @@ export default function PositionSettings() {
     const [isLoading, setIsLoading] = useState(false);
 
     // Refresh positions from Supabase when component mounts
-    useEffect(() => {
-        console.log('[PositionSettings] Component mounted, refreshing positions...');
-        console.log('[PositionSettings] Current positions count:', positions.length);
-        handleRefresh();
-    }, []);
-
-    const handleRefresh = async () => {
+    const handleRefresh = useCallback(async () => {
         setIsLoading(true);
         try {
             await refreshPositions();
@@ -88,7 +82,14 @@ export default function PositionSettings() {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [refreshPositions]);
+
+    useEffect(() => {
+        console.log('[PositionSettings] Component mounted, refreshing positions...');
+        handleRefresh();
+    }, [handleRefresh]);
+
+
 
     const [formData, setFormData] = useState<PositionFormData>({
         name: '',

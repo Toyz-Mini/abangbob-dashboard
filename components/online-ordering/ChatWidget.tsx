@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { getSupabaseClient } from '@/lib/supabase/client';
 import { MessageCircle, X, Send, Minus, User, Phone, Mail } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -28,6 +28,43 @@ export default function ChatWidget() {
     const [isLoading, setIsLoading] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
+    const scrollToBottom = useCallback(() => {
+        setTimeout(() => {
+            messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        }, 100);
+    }, []);
+
+    const fetchMessages = useCallback(async (sessionId: string) => {
+        if (!supabase) return;
+        const { data } = await supabase
+            .from('chat_messages')
+            .select('*')
+            .eq('session_id', sessionId)
+            .order('created_at', { ascending: true });
+
+        if (data) {
+            setMessages(data as Message[]);
+            scrollToBottom();
+        }
+    }, [supabase, scrollToBottom]);
+
+    const fetchSession = useCallback(async (sessionId: string) => {
+        if (!supabase) return;
+        const { data, error } = await supabase
+            .from('chat_sessions')
+            .select('*')
+            .eq('id', sessionId)
+            .single();
+
+        if (data && !error) {
+            setSession(data);
+            fetchMessages(sessionId);
+        } else {
+            // Invalid session, clear it
+            localStorage.removeItem('chatSessionId');
+        }
+    }, [supabase, fetchMessages]);
+
     // Load session from local storage on mount
     useEffect(() => {
         if (!supabase) return;
@@ -42,7 +79,7 @@ export default function ChatWidget() {
             const c = JSON.parse(savedCustomer);
             setDetails({ name: c.name || '', phone: c.phone || '', email: c.email || '' });
         }
-    }, []);
+    }, [supabase, fetchSession]);
 
     // Subscribe to messages when session is active
     useEffect(() => {
@@ -72,44 +109,7 @@ export default function ChatWidget() {
         return () => {
             supabase.removeChannel(channel);
         };
-    }, [session?.id, supabase]);
-
-    const fetchSession = async (sessionId: string) => {
-        if (!supabase) return;
-        const { data, error } = await supabase
-            .from('chat_sessions')
-            .select('*')
-            .eq('id', sessionId)
-            .single();
-
-        if (data && !error) {
-            setSession(data);
-            fetchMessages(sessionId);
-        } else {
-            // Invalid session, clear it
-            localStorage.removeItem('chatSessionId');
-        }
-    };
-
-    const fetchMessages = async (sessionId: string) => {
-        if (!supabase) return;
-        const { data } = await supabase
-            .from('chat_messages')
-            .select('*')
-            .eq('session_id', sessionId)
-            .order('created_at', { ascending: true });
-
-        if (data) {
-            setMessages(data as Message[]);
-            scrollToBottom();
-        }
-    };
-
-    const scrollToBottom = () => {
-        setTimeout(() => {
-            messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-        }, 100);
-    };
+    }, [session?.id, supabase, scrollToBottom]);
 
     const handleStartChat = async (e: React.FormEvent) => {
         e.preventDefault();

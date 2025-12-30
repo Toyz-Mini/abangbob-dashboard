@@ -85,7 +85,7 @@ interface SetupContextType {
   currentStep: number;
   totalSteps: number;
   setupData: SetupState;
-  
+
   // Setup Actions
   setCurrentStep: (step: number) => void;
   updateBusinessInfo: (info: Partial<BusinessInfo>) => void;
@@ -95,20 +95,20 @@ interface SetupContextType {
   updatePaymentMethods: (methods: PaymentMethod[]) => void;
   completeSetup: () => void;
   resetSetup: () => void;
-  
+
   // Tour State
   isTourActive: boolean;
   currentTourStep: number;
   activeTour: TourConfig | null;
   hasCompletedTour: boolean;
-  
+
   // Tour Actions
   startTour: (tourId: string) => void;
   nextTourStep: () => void;
   prevTourStep: () => void;
   skipTour: () => void;
   endTour: () => void;
-  
+
   // Help Center
   showHelpCenter: boolean;
   setShowHelpCenter: (show: boolean) => void;
@@ -346,29 +346,29 @@ export function SetupProvider({ children }: { children: ReactNode }) {
   const [isSetupComplete, setIsSetupComplete] = useState(true); // Default to true, check on mount
   const [currentStep, setCurrentStep] = useState(1);
   const [setupData, setSetupData] = useState<SetupState>(DEFAULT_SETUP_STATE);
-  
+
   // Tour state
   const [isTourActive, setIsTourActive] = useState(false);
   const [currentTourStep, setCurrentTourStep] = useState(0);
   const [activeTour, setActiveTour] = useState<TourConfig | null>(null);
   const [hasCompletedTour, setHasCompletedTour] = useState(false);
-  
+
   // Help center state
   const [showHelpCenter, setShowHelpCenter] = useState(false);
-  
+
   const totalSteps = 5;
 
   // Load state from localStorage on mount
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    
+
     const setupComplete = localStorage.getItem(SETUP_COMPLETE_KEY);
     const tourComplete = localStorage.getItem(TOUR_COMPLETE_KEY);
     const savedSetup = localStorage.getItem(SETUP_STORAGE_KEY);
-    
+
     setIsSetupComplete(setupComplete === 'true');
     setHasCompletedTour(tourComplete === 'true');
-    
+
     if (savedSetup) {
       try {
         setSetupData(JSON.parse(savedSetup));
@@ -454,6 +454,17 @@ export function SetupProvider({ children }: { children: ReactNode }) {
     setCurrentStep(1);
   }, []);
 
+  // End tour (complete)
+  const endTour = useCallback(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(TOUR_COMPLETE_KEY, 'true');
+    }
+    setIsTourActive(false);
+    setActiveTour(null);
+    setCurrentTourStep(0);
+    setHasCompletedTour(true);
+  }, []);
+
   // Start tour
   const startTour = useCallback((tourId: string) => {
     const tour = TOUR_CONFIGS.find(t => t.id === tourId);
@@ -467,13 +478,13 @@ export function SetupProvider({ children }: { children: ReactNode }) {
   // Next tour step
   const nextTourStep = useCallback(() => {
     if (!activeTour) return;
-    
+
     if (currentTourStep < activeTour.steps.length - 1) {
       setCurrentTourStep(prev => prev + 1);
     } else {
       endTour();
     }
-  }, [activeTour, currentTourStep]);
+  }, [activeTour, currentTourStep, endTour]);
 
   // Previous tour step
   const prevTourStep = useCallback(() => {
@@ -489,16 +500,7 @@ export function SetupProvider({ children }: { children: ReactNode }) {
     setCurrentTourStep(0);
   }, []);
 
-  // End tour (complete)
-  const endTour = useCallback(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(TOUR_COMPLETE_KEY, 'true');
-    }
-    setIsTourActive(false);
-    setActiveTour(null);
-    setCurrentTourStep(0);
-    setHasCompletedTour(true);
-  }, []);
+
 
   return (
     <SetupContext.Provider

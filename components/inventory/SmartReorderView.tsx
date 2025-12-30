@@ -26,7 +26,7 @@ export default function SmartReorderView() {
     const [isGenerating, setIsGenerating] = useState(false);
 
     // Get suggestions
-    const suggestions = useMemo(() => getRestockSuggestions(), [getRestockSuggestions, inventoryLogs]);
+    const suggestions = useMemo(() => getRestockSuggestions(), [getRestockSuggestions]);
 
     // Calculations
     const totalEstimatedCost = suggestions.reduce((sum, item) => sum + item.estimatedCost, 0);

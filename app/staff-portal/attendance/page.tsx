@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { getTodayAttendance, clockIn, clockOut, type AttendanceRecord } from '@/lib/supabase/attendance-sync';
@@ -17,15 +17,7 @@ export default function AttendancePage() {
     const [wizardMode, setWizardMode] = useState<'IN' | 'OUT'>('IN');
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
-    useEffect(() => {
-        if (!isStaffLoggedIn || !currentStaff) {
-            router.push('/login');
-            return;
-        }
-        loadTodayAttendance();
-    }, [isStaffLoggedIn, currentStaff, router]);
-
-    const loadTodayAttendance = async () => {
+    const loadTodayAttendance = useCallback(async () => {
         if (!currentStaff) return;
         setIsLoading(true);
         try {
@@ -40,7 +32,17 @@ export default function AttendancePage() {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [currentStaff]);
+
+    useEffect(() => {
+        if (!isStaffLoggedIn || !currentStaff) {
+            router.push('/login');
+            return;
+        }
+        loadTodayAttendance();
+    }, [isStaffLoggedIn, currentStaff, router, loadTodayAttendance]);
+
+
 
     const handleClockInClick = () => {
         setWizardMode('IN');

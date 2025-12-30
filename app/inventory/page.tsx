@@ -52,7 +52,7 @@ export default function InventoryPage() {
   const updateInventoryItemMutation = useUpdateInventoryItemMutation();
   const deleteInventoryItemMutation = useDeleteInventoryItemMutation();
 
-  const inventory = inventoryData || [];
+  const inventory = useMemo(() => inventoryData || [], [inventoryData]);
   const isInitialized = !inventoryLoading;
 
   const { t, language } = useTranslation();

@@ -34,7 +34,7 @@ export default function ChecklistHistoryPage() {
     return checklistCompletions
       .filter(c => c.staffId === user.id)
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  }, [checklistCompletions]);
+  }, [checklistCompletions, user]);
 
   // Group by date
   const groupedByDate = useMemo(() => {

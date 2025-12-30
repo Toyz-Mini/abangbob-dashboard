@@ -15,32 +15,34 @@ const ThemeContext = createContext<ThemeContextType | null>(null);
 
 const STORAGE_KEY = 'abangbob_theme';
 
+// Get system preference
+const getSystemTheme = (): 'light' | 'dark' => {
+  if (typeof window === 'undefined') return 'light';
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+};
+
+// Resolve theme based on setting
+const resolveTheme = (themeSetting: Theme): 'light' | 'dark' => {
+  if (themeSetting === 'system') {
+    return getSystemTheme();
+  }
+  return themeSetting;
+};
+
+// Apply theme to document
+const applyTheme = (resolved: 'light' | 'dark') => {
+  const root = document.documentElement;
+  root.classList.remove('light', 'dark');
+  root.classList.add(resolved);
+  root.setAttribute('data-theme', resolved);
+};
+
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<Theme>('light');
   const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('light');
   const [mounted, setMounted] = useState(false);
 
-  // Get system preference
-  const getSystemTheme = (): 'light' | 'dark' => {
-    if (typeof window === 'undefined') return 'light';
-    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-  };
 
-  // Resolve theme based on setting
-  const resolveTheme = (themeSetting: Theme): 'light' | 'dark' => {
-    if (themeSetting === 'system') {
-      return getSystemTheme();
-    }
-    return themeSetting;
-  };
-
-  // Apply theme to document
-  const applyTheme = (resolved: 'light' | 'dark') => {
-    const root = document.documentElement;
-    root.classList.remove('light', 'dark');
-    root.classList.add(resolved);
-    root.setAttribute('data-theme', resolved);
-  };
 
   // Initialize theme from localStorage
   useEffect(() => {

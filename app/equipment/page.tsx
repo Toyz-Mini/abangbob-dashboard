@@ -6,6 +6,7 @@ import { useEquipment } from '@/lib/store';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { useOilTrackersRealtime } from '@/lib/supabase/realtime-hooks';
 import { OilTracker, OilChangeRequest, OilActionHistory, OilActionType, Equipment, MaintenanceLog } from '@/lib/types';
+import NextImage from 'next/image';
 import {
   Plus,
   Wrench,
@@ -608,7 +609,16 @@ export default function EquipmentPage() {
               )
             ) : (
               <div className="relative">
-                <img src={capturedPhoto} className="w-full rounded" />
+                <NextImage
+                  src={capturedPhoto}
+                  alt="Captured Proof"
+                  width={0}
+                  height={0}
+                  sizes="100vw"
+                  style={{ width: '100%', height: 'auto' }}
+                  className="rounded"
+                  unoptimized
+                />
                 <button className="btn btn-sm btn-circle btn-error absolute top-2 right-2 text-white" onClick={() => setCapturedPhoto('')}><X size={14} /></button>
               </div>
             )}
@@ -619,7 +629,18 @@ export default function EquipmentPage() {
 
       {/* 4. Photo Proof Modal */}
       <Modal isOpen={showPhotoModal} onClose={() => setShowPhotoModal(false)} title="Bukti Gambar">
-        <img src={selectedPhoto} alt="Proof" className="w-full rounded" />
+        <div className="relative w-full h-auto">
+          <NextImage
+            src={selectedPhoto}
+            alt="Proof"
+            width={0}
+            height={0}
+            sizes="100vw"
+            style={{ width: '100%', height: 'auto' }}
+            className="rounded"
+            unoptimized
+          />
+        </div>
       </Modal>
 
     </MainLayout>

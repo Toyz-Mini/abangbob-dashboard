@@ -6,6 +6,7 @@ import Link from 'next/link';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import ConfirmModal from '@/components/ConfirmModal';
 import { useAuth } from '@/lib/contexts/AuthContext';
+import Image from 'next/image';
 import {
   ArrowLeft,
   Phone,
@@ -168,10 +169,13 @@ export default function ProfilePage() {
         <div className="staff-profile-header">
           <div className="staff-profile-avatar-container" onClick={handleAvatarClick}>
             {currentStaff.profilePhotoUrl ? (
-              <img
+              <Image
                 src={currentStaff.profilePhotoUrl}
                 alt={currentStaff.name}
+                width={80}
+                height={80}
                 className="staff-profile-avatar-img"
+                unoptimized
               />
             ) : (
               <div className="staff-profile-avatar">

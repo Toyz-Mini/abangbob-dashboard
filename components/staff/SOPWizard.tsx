@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Camera, Check, ChevronRight, AlertTriangle, Upload, X } from 'lucide-react';
 import { SOPTemplate, SOPStep, SOPLog } from '@/lib/types';
 import * as SOPSync from '@/lib/supabase/sop-sync';
+import Image from 'next/image';
 import { generateUUID } from '@/lib/utils';
 import { awardXP } from '@/lib/gamification';
 import { Trophy } from 'lucide-react';
@@ -33,11 +34,7 @@ export default function SOPWizard({ shiftType, staffId, onComplete, onCancel }: 
     const [error, setError] = useState<string | null>(null);
 
     // Load Template on Mount
-    useEffect(() => {
-        loadSOP();
-    }, [shiftType]);
-
-    const loadSOP = async () => {
+    const loadSOP = useCallback(async () => {
         setLoading(true);
         const { template, steps } = await SOPSync.getActiveSOPTemplate(shiftType);
         if (template && steps.length > 0) {
@@ -48,7 +45,13 @@ export default function SOPWizard({ shiftType, staffId, onComplete, onCancel }: 
             setLog(newLog);
         }
         setLoading(false);
-    };
+    }, [shiftType, staffId]);
+
+    useEffect(() => {
+        loadSOP();
+    }, [loadSOP]);
+
+
 
     const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
@@ -271,7 +274,9 @@ export default function SOPWizard({ shiftType, staffId, onComplete, onCancel }: 
                                             />
 
                                             {photoPreview ? (
-                                                <img src={photoPreview} alt="Preview" className="w-full h-full object-cover" />
+                                                <div className="relative w-full h-full">
+                                                    <Image src={photoPreview} alt="Preview" fill className="object-cover" unoptimized />
+                                                </div>
                                             ) : (
                                                 <div className="text-center p-4">
                                                     <Camera className="w-8 h-8 text-gray-400 mx-auto mb-2 group-hover:text-gray-600" />

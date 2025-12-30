@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { Search, Bell, User, Menu, Sun, Moon, Volume2, VolumeX, Languages, Settings, LogOut, ChevronDown, Store } from 'lucide-react';
 import { useTheme } from '@/lib/contexts/ThemeContext';
 import { useSound } from '@/lib/contexts/SoundContext';
@@ -91,10 +92,12 @@ export default function TopNav({ onMenuClick }: TopNavProps) {
         )}
 
         {/* Logo untuk mobile */}
-        <img
+        <Image
           src="/logo.png"
           alt="Abang Bob"
           className="topnav-logo"
+          width={40}
+          height={40}
         />
 
         {/* Search Bar */}

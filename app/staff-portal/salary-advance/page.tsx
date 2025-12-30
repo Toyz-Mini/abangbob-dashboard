@@ -118,13 +118,13 @@ export default function SalaryAdvancePage() {
             monthlyLimit: maxMonthlyLimit,
             monthlySalary: salary
         };
-    }, [currentStaff, attendance, getStaffSalaryAdvances, salaryAdvances, staff]);
+    }, [currentStaff, attendance, getStaffSalaryAdvances, staff]);
 
     // Get current staff's advances
     const myAdvances = useMemo(() => {
         if (!currentStaff) return [];
-        return getStaffSalaryAdvances(currentStaff.id);
-    }, [currentStaff, getStaffSalaryAdvances, salaryAdvances]);
+        return salaryAdvances.filter(a => a.staffId === currentStaff.id);
+    }, [currentStaff, salaryAdvances]);
 
     const filteredAdvances = useMemo(() => {
         if (statusFilter === 'all') return myAdvances;

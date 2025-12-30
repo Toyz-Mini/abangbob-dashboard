@@ -9,6 +9,7 @@ import LoadingSpinner from '@/components/LoadingSpinner';
 import Webcam from 'react-webcam';
 import PremiumButton from '@/components/PremiumButton';
 import { Clock, LogIn, LogOut, User, CheckCircle, XCircle, History, Camera, MapPin, RefreshCw } from 'lucide-react';
+import Image from 'next/image';
 
 export default function TimeClockPage() {
   const { staff, attendance, clockIn, clockOut, getStaffAttendanceToday, refreshStaff, refreshAttendance, isInitialized } = useStaff();
@@ -610,7 +611,13 @@ export default function TimeClockPage() {
             {/* Camera View */}
             <div className="relative w-full aspect-[4/3] bg-black rounded-xl overflow-hidden shadow-lg border-2 border-slate-200">
               {capturedImage ? (
-                <img src={capturedImage} alt="Selfie" className="w-full h-full object-cover" />
+                <Image
+                  src={capturedImage}
+                  alt="Selfie"
+                  fill
+                  className="object-cover"
+                  unoptimized
+                />
               ) : (
                 <Webcam
                   audio={false}

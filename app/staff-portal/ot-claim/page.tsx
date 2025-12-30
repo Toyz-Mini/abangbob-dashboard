@@ -62,8 +62,8 @@ export default function OTClaimPage() {
     const myClaims = useMemo(() => {
         if (!currentStaff) return [];
         // Sort by date descending
-        return getStaffOTClaims(currentStaff.id).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-    }, [currentStaff, getStaffOTClaims, otClaims]);
+        return otClaims.filter(c => c.staffId === currentStaff.id).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    }, [currentStaff, otClaims]);
 
     // Filtered claims
     const filteredClaims = useMemo(() => {

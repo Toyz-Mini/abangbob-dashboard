@@ -1,189 +1,189 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { useStore } from '@/lib/store';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import {
-    ShoppingCart,
-    ChevronRight,
+  ShoppingCart,
+  ChevronRight,
 } from 'lucide-react';
 
 export default function PosLoginPage() {
-    const router = useRouter();
-    const { loginWithPin, isStaffLoggedIn, loading: authLoading } = useAuth();
-    const { staff, isInitialized } = useStore();
+  const router = useRouter();
+  const { loginWithPin, isStaffLoggedIn, loading: authLoading } = useAuth();
+  const { staff, isInitialized } = useStore();
 
-    const [selectedStaffId, setSelectedStaffId] = useState('');
-    const [pin, setPin] = useState('');
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState('');
+  const [selectedStaffId, setSelectedStaffId] = useState('');
+  const [pin, setPin] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-    // Redirect if already logged in
-    useEffect(() => {
-        if (!authLoading && isStaffLoggedIn) {
-            router.push('/pos');
-        }
-    }, [isStaffLoggedIn, authLoading, router]);
+  // Redirect if already logged in
+  useEffect(() => {
+    if (!authLoading && isStaffLoggedIn) {
+      router.push('/pos');
+    }
+  }, [isStaffLoggedIn, authLoading, router]);
 
-    // Get active staff only
-    const activeStaff = staff.filter(s => s.status === 'active');
+  // Get active staff only
+  const activeStaff = staff.filter(s => s.status === 'active');
 
-    const handlePinInput = (digit: string) => {
-        if (pin.length < 4) {
-            setPin(prev => prev + digit);
-        }
-    };
+  const handlePinInput = (digit: string) => {
+    if (pin.length < 4) {
+      setPin(prev => prev + digit);
+    }
+  };
 
-    const handlePinBackspace = () => {
-        setPin(prev => prev.slice(0, -1));
-    };
+  const handlePinBackspace = () => {
+    setPin(prev => prev.slice(0, -1));
+  };
 
-    const handlePinClear = () => {
-        setPin('');
-    };
+  const handlePinClear = () => {
+    setPin('');
+  };
 
-    const handleLogin = async () => {
-        if (!selectedStaffId) {
-            setError('Sila pilih nama anda');
-            return;
-        }
-
-        if (pin.length !== 4) {
-            setError('PIN mestilah 4 digit');
-            return;
-        }
-
-        setError('');
-        setLoading(true);
-
-        const result = await loginWithPin(selectedStaffId, pin);
-
-        if (result.success) {
-            router.push('/pos');
-        } else {
-            setError(result.error || 'PIN tidak sah');
-            setPin('');
-        }
-
-        setLoading(false);
-    };
-
-    // Auto-submit when PIN is 4 digits
-    useEffect(() => {
-        if (pin.length === 4 && selectedStaffId) {
-            handleLogin();
-        }
-    }, [pin]);
-
-    if (authLoading || !isInitialized) {
-        return (
-            <div className="pos-login-page">
-                <LoadingSpinner />
-            </div>
-        );
+  const handleLogin = useCallback(async () => {
+    if (!selectedStaffId) {
+      setError('Sila pilih nama anda');
+      return;
     }
 
+    if (pin.length !== 4) {
+      setError('PIN mestilah 4 digit');
+      return;
+    }
+
+    setError('');
+    setLoading(true);
+
+    const result = await loginWithPin(selectedStaffId, pin);
+
+    if (result.success) {
+      router.push('/pos');
+    } else {
+      setError(result.error || 'PIN tidak sah');
+      setPin('');
+    }
+
+    setLoading(false);
+  }, [selectedStaffId, pin, loginWithPin, router]);
+
+  // Auto-submit when PIN is 4 digits
+  useEffect(() => {
+    if (pin.length === 4 && selectedStaffId) {
+      handleLogin();
+    }
+  }, [pin, selectedStaffId, handleLogin]);
+
+  if (authLoading || !isInitialized) {
     return (
-        <div className="pos-login-page">
-            <div className="pos-login-container">
-                {/* Header */}
-                <div className="pos-login-header">
-                    <div className="pos-login-logo">
-                        <ShoppingCart size={40} />
-                    </div>
-                    <h1>AbangBob POS</h1>
-                    <p>Cashier Mode</p>
-                </div>
+      <div className="pos-login-page">
+        <LoadingSpinner />
+      </div>
+    );
+  }
 
-                {/* Staff Selection */}
-                {!selectedStaffId ? (
-                    <div className="staff-selection">
-                        <h2>Pilih Nama Anda</h2>
-                        <div className="staff-list">
-                            {activeStaff.map(s => (
-                                <button
-                                    key={s.id}
-                                    className="staff-item"
-                                    onClick={() => setSelectedStaffId(s.id)}
-                                >
-                                    <div className="staff-avatar">
-                                        {s.name.charAt(0).toUpperCase()}
-                                    </div>
-                                    <div className="staff-name">{s.name}</div>
-                                    <ChevronRight size={20} />
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                ) : (
-                    <div className="pin-entry">
-                        {/* Selected Staff */}
-                        <div className="selected-staff">
-                            <div className="staff-avatar large">
-                                {activeStaff.find(s => s.id === selectedStaffId)?.name.charAt(0).toUpperCase()}
-                            </div>
-                            <div className="staff-name">
-                                {activeStaff.find(s => s.id === selectedStaffId)?.name}
-                            </div>
-                            <button
-                                className="change-staff-btn"
-                                onClick={() => {
-                                    setSelectedStaffId('');
-                                    setPin('');
-                                    setError('');
-                                }}
-                            >
-                                Tukar
-                            </button>
-                        </div>
+  return (
+    <div className="pos-login-page">
+      <div className="pos-login-container">
+        {/* Header */}
+        <div className="pos-login-header">
+          <div className="pos-login-logo">
+            <ShoppingCart size={40} />
+          </div>
+          <h1>AbangBob POS</h1>
+          <p>Cashier Mode</p>
+        </div>
 
-                        {/* PIN Display */}
-                        <h2>Masukkan PIN</h2>
-                        <div className="pin-display">
-                            {[0, 1, 2, 3].map(i => (
-                                <div key={i} className={`pin-dot ${pin.length > i ? 'filled' : ''}`} />
-                            ))}
-                        </div>
-
-                        {/* Error Message */}
-                        {error && (
-                            <div className="login-error">
-                                {error}
-                            </div>
-                        )}
-
-                        {/* PIN Pad */}
-                        <div className="pin-pad">
-                            {['1', '2', '3', '4', '5', '6', '7', '8', '9', 'C', '0', '⌫'].map(key => (
-                                <button
-                                    key={key}
-                                    className={`pin-key ${key === 'C' || key === '⌫' ? 'action' : ''}`}
-                                    onClick={() => {
-                                        if (key === '⌫') handlePinBackspace();
-                                        else if (key === 'C') handlePinClear();
-                                        else handlePinInput(key);
-                                    }}
-                                    disabled={loading}
-                                >
-                                    {key}
-                                </button>
-                            ))}
-                        </div>
-
-                        {/* Loading */}
-                        {loading && (
-                            <div className="login-loading">
-                                <LoadingSpinner size="sm" />
-                                <span>Mengesahkan...</span>
-                            </div>
-                        )}
-                    </div>
-                )}
+        {/* Staff Selection */}
+        {!selectedStaffId ? (
+          <div className="staff-selection">
+            <h2>Pilih Nama Anda</h2>
+            <div className="staff-list">
+              {activeStaff.map(s => (
+                <button
+                  key={s.id}
+                  className="staff-item"
+                  onClick={() => setSelectedStaffId(s.id)}
+                >
+                  <div className="staff-avatar">
+                    {s.name.charAt(0).toUpperCase()}
+                  </div>
+                  <div className="staff-name">{s.name}</div>
+                  <ChevronRight size={20} />
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className="pin-entry">
+            {/* Selected Staff */}
+            <div className="selected-staff">
+              <div className="staff-avatar large">
+                {activeStaff.find(s => s.id === selectedStaffId)?.name.charAt(0).toUpperCase()}
+              </div>
+              <div className="staff-name">
+                {activeStaff.find(s => s.id === selectedStaffId)?.name}
+              </div>
+              <button
+                className="change-staff-btn"
+                onClick={() => {
+                  setSelectedStaffId('');
+                  setPin('');
+                  setError('');
+                }}
+              >
+                Tukar
+              </button>
             </div>
 
-            <style jsx>{`
+            {/* PIN Display */}
+            <h2>Masukkan PIN</h2>
+            <div className="pin-display">
+              {[0, 1, 2, 3].map(i => (
+                <div key={i} className={`pin-dot ${pin.length > i ? 'filled' : ''}`} />
+              ))}
+            </div>
+
+            {/* Error Message */}
+            {error && (
+              <div className="login-error">
+                {error}
+              </div>
+            )}
+
+            {/* PIN Pad */}
+            <div className="pin-pad">
+              {['1', '2', '3', '4', '5', '6', '7', '8', '9', 'C', '0', '⌫'].map(key => (
+                <button
+                  key={key}
+                  className={`pin-key ${key === 'C' || key === '⌫' ? 'action' : ''}`}
+                  onClick={() => {
+                    if (key === '⌫') handlePinBackspace();
+                    else if (key === 'C') handlePinClear();
+                    else handlePinInput(key);
+                  }}
+                  disabled={loading}
+                >
+                  {key}
+                </button>
+              ))}
+            </div>
+
+            {/* Loading */}
+            {loading && (
+              <div className="login-loading">
+                <LoadingSpinner size="sm" />
+                <span>Mengesahkan...</span>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      <style jsx>{`
         .pos-login-page {
           min-height: 100vh;
           display: flex;
@@ -389,6 +389,6 @@ export default function PosLoginPage() {
           color: rgba(255, 255, 255, 0.7);
         }
       `}</style>
-        </div>
-    );
+    </div>
+  );
 }

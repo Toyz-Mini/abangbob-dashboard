@@ -51,7 +51,7 @@ export default function NotificationsPage() {
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Generate smart notifications based on current data
-  const generateSmartNotifications = () => {
+  const generateSmartNotifications = useCallback(() => {
     setIsRefreshing(true);
 
     // Check for low stock
@@ -140,14 +140,14 @@ export default function NotificationsPage() {
     }
 
     setTimeout(() => setIsRefreshing(false), 1000);
-  };
+  }, [inventory, notifications, addNotification, deliveryOrders, getTodayOrders, productionLogs]);
 
   // Auto-generate on mount
   useEffect(() => {
     if (isInitialized) {
       generateSmartNotifications();
     }
-  }, [isInitialized]);
+  }, [isInitialized, generateSmartNotifications]);
 
   // Calculate stats
   const stats = useMemo(() => {

@@ -28,7 +28,7 @@ const TOUR_ID_KEY = 'abangbob_last_tour_id';
 export function TourProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
-  
+
   const [isTourActive, setIsTourActive] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [activeTour, setActiveTour] = useState<TourConfig | null>(null);
@@ -73,7 +73,7 @@ export function TourProvider({ children }: { children: ReactNode }) {
       setActiveTour(tour);
       setCurrentStep(0);
       setIsTourActive(true);
-      
+
       // Save tour ID for restart
       if (typeof window !== 'undefined') {
         localStorage.setItem(TOUR_ID_KEY, tourId);
@@ -81,15 +81,25 @@ export function TourProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const endTour = useCallback(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(TOUR_COMPLETE_KEY, 'true');
+    }
+    setIsTourActive(false);
+    setActiveTour(null);
+    setCurrentStep(0);
+    setTargetElement(null);
+  }, []);
+
   const nextStep = useCallback(() => {
     if (!activeTour) return;
-    
+
     if (currentStep < activeTour.steps.length - 1) {
       setCurrentStep(prev => prev + 1);
     } else {
       endTour();
     }
-  }, [activeTour, currentStep]);
+  }, [activeTour, currentStep, endTour]);
 
   const prevStep = useCallback(() => {
     if (currentStep > 0) {
@@ -98,16 +108,6 @@ export function TourProvider({ children }: { children: ReactNode }) {
   }, [currentStep]);
 
   const skipTour = useCallback(() => {
-    setIsTourActive(false);
-    setActiveTour(null);
-    setCurrentStep(0);
-    setTargetElement(null);
-  }, []);
-
-  const endTour = useCallback(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(TOUR_COMPLETE_KEY, 'true');
-    }
     setIsTourActive(false);
     setActiveTour(null);
     setCurrentStep(0);
@@ -156,10 +156,10 @@ export function TourProvider({ children }: { children: ReactNode }) {
       }}
     >
       {children}
-      
+
       {/* Tour Overlay */}
       {isTourActive && <TourOverlay targetElement={targetElement} />}
-      
+
       {/* Tour Tooltip */}
       {isTourActive && currentStepData && (
         <TourTooltip

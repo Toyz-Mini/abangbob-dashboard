@@ -120,7 +120,7 @@ export default function MainLayout({ children }: { children: ReactNode }) {
     return () => {
       window.removeEventListener('online', handleOnline);
     };
-  }, [shouldShowSidebar]);
+  }, [shouldShowSidebar, showToast]);
 
   // Command palette state
   const commandPalette = useCommandPalette();

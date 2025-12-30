@@ -37,6 +37,7 @@ import {
   MessageCircle,
   type LucideIcon
 } from 'lucide-react';
+import Image from 'next/image';
 
 
 
@@ -188,10 +189,12 @@ const Sidebar = forwardRef<HTMLElement, SidebarProps>(({ isOpen, onMouseEnter, o
       onClick={onClick}
     >
       <div className="nav-logo">
-        <img
+        <Image
           src="/logo.png"
           alt="Abang Bob"
           className="sidebar-logo-img"
+          width={40}
+          height={40}
         />
         {isOpen && <span>{t('app.name')}</span>}
       </div>

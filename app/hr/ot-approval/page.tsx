@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import MainLayout from '@/components/MainLayout';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import Modal from '@/components/Modal';
@@ -46,11 +46,8 @@ export default function OTApprovalPage() {
     const [rejectReason, setRejectReason] = useState('');
     const [processing, setProcessing] = useState(false);
 
-    useEffect(() => {
-        loadPendingOT();
-    }, [filterStatus]);
 
-    async function loadPendingOT() {
+    const loadPendingOT = useCallback(async () => {
         setLoading(true);
         const supabase = getSupabaseClient();
         if (!supabase) {
@@ -100,7 +97,11 @@ export default function OTApprovalPage() {
         } finally {
             setLoading(false);
         }
-    }
+    }, [filterStatus, staff, showToast]);
+
+    useEffect(() => {
+        loadPendingOT();
+    }, [loadPendingOT]);
 
     async function handleApprove(ot: PendingOT) {
         setProcessing(true);

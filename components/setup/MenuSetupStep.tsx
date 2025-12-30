@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { useSetup, MenuCategory, SetupMenuItem } from '@/lib/contexts/SetupContext';
-import { 
-  Plus, 
-  Trash2, 
-  Edit2, 
+import {
+  Plus,
+  Trash2,
+  Edit2,
   UtensilsCrossed,
   Coffee,
   Cake,
@@ -40,13 +40,13 @@ const SAMPLE_CATEGORIES: MenuCategory[] = [
 export default function MenuSetupStep({ onValidChange }: Props) {
   const { setupData, updateMenuCategories, updateMenuItems } = useSetup();
   const { menuCategories, menuItems } = setupData;
-  
+
   const [showCategoryForm, setShowCategoryForm] = useState(false);
   const [showItemForm, setShowItemForm] = useState(false);
   const [editingCategory, setEditingCategory] = useState<MenuCategory | null>(null);
   const [editingItem, setEditingItem] = useState<SetupMenuItem | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>('');
-  
+
   // Form states
   const [categoryName, setCategoryName] = useState('');
   const [categoryIcon, setCategoryIcon] = useState('utensils');
@@ -65,23 +65,23 @@ export default function MenuSetupStep({ onValidChange }: Props) {
     if (menuCategories.length === 0) {
       updateMenuCategories(SAMPLE_CATEGORIES);
     }
-  }, []);
+  }, [menuCategories.length, updateMenuCategories]);
 
   const handleAddCategory = () => {
     if (!categoryName.trim()) return;
-    
+
     const newCategory: MenuCategory = {
       id: editingCategory?.id || `cat_${Date.now()}`,
       name: categoryName,
       icon: categoryIcon,
     };
-    
+
     if (editingCategory) {
       updateMenuCategories(menuCategories.map(c => c.id === editingCategory.id ? newCategory : c));
     } else {
       updateMenuCategories([...menuCategories, newCategory]);
     }
-    
+
     resetCategoryForm();
   };
 
@@ -107,7 +107,7 @@ export default function MenuSetupStep({ onValidChange }: Props) {
 
   const handleAddItem = () => {
     if (!itemName.trim() || !itemPrice || !itemCategory) return;
-    
+
     const newItem: SetupMenuItem = {
       id: editingItem?.id || `item_${Date.now()}`,
       name: itemName,
@@ -115,13 +115,13 @@ export default function MenuSetupStep({ onValidChange }: Props) {
       category: itemCategory,
       description: itemDescription,
     };
-    
+
     if (editingItem) {
       updateMenuItems(menuItems.map(i => i.id === editingItem.id ? newItem : i));
     } else {
       updateMenuItems([...menuItems, newItem]);
     }
-    
+
     resetItemForm();
   };
 
@@ -152,7 +152,7 @@ export default function MenuSetupStep({ onValidChange }: Props) {
     return found?.icon || UtensilsCrossed;
   };
 
-  const filteredItems = selectedCategory 
+  const filteredItems = selectedCategory
     ? menuItems.filter(i => i.category === selectedCategory)
     : menuItems;
 
@@ -200,11 +200,10 @@ export default function MenuSetupStep({ onValidChange }: Props) {
                         key={id}
                         type="button"
                         onClick={() => setCategoryIcon(id)}
-                        className={`p-3 rounded-xl transition-all ${
-                          categoryIcon === id 
-                            ? 'bg-teal-500 text-white' 
+                        className={`p-3 rounded-xl transition-all ${categoryIcon === id
+                            ? 'bg-teal-500 text-white'
                             : 'bg-slate-700 text-slate-400 hover:bg-slate-600'
-                        }`}
+                          }`}
                         title={label}
                       >
                         <Icon className="w-5 h-5" />
@@ -242,8 +241,8 @@ export default function MenuSetupStep({ onValidChange }: Props) {
                 key={category.id}
                 className={`
                   group flex items-center gap-2 px-4 py-2 rounded-xl border transition-all cursor-pointer
-                  ${selectedCategory === category.id 
-                    ? 'bg-teal-500/20 border-teal-500 text-teal-400' 
+                  ${selectedCategory === category.id
+                    ? 'bg-teal-500/20 border-teal-500 text-teal-400'
                     : 'bg-slate-700/50 border-slate-600 text-slate-300 hover:border-slate-500'
                   }
                 `}
@@ -376,9 +375,9 @@ export default function MenuSetupStep({ onValidChange }: Props) {
           <div className="text-center py-12 bg-slate-700/30 rounded-xl">
             <UtensilsCrossed className="w-12 h-12 text-slate-500 mx-auto mb-3" />
             <p className="text-slate-400">
-              {menuCategories.length === 0 
+              {menuCategories.length === 0
                 ? 'Sila tambah kategori dahulu'
-                : selectedCategory 
+                : selectedCategory
                   ? 'Tiada item dalam kategori ini'
                   : 'Belum ada item menu. Klik "Tambah Item" untuk mula.'
               }

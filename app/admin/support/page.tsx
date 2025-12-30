@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { getSupabaseClient } from '@/lib/supabase/client';
 import { MessageCircle, Search, Send, CheckCircle, Clock, User, Phone, Mail } from 'lucide-react';
 import { format } from 'date-fns';
@@ -32,6 +32,34 @@ export default function SupportPage() {
     const [newMessage, setNewMessage] = useState('');
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
+    const scrollToBottom = useCallback(() => {
+        setTimeout(() => {
+            messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        }, 100);
+    }, []);
+
+    const fetchSessions = useCallback(async () => {
+        if (!supabase) return;
+        const { data } = await supabase
+            .from('chat_sessions')
+            .select('*')
+            .order('updated_at', { ascending: false }); // Show recent first
+        if (data) setSessions(data as Session[]);
+    }, [supabase]);
+
+    const fetchMessages = useCallback(async (sessionId: string) => {
+        if (!supabase) return;
+        const { data } = await supabase
+            .from('chat_messages')
+            .select('*')
+            .eq('session_id', sessionId)
+            .order('created_at', { ascending: true });
+        if (data) {
+            setMessages(data as Message[]);
+            scrollToBottom();
+        }
+    }, [supabase, scrollToBottom]);
+
     // Load sessions
     useEffect(() => {
         if (!supabase) return;
@@ -48,7 +76,7 @@ export default function SupportPage() {
         return () => {
             supabase.removeChannel(channel);
         };
-    }, []);
+    }, [fetchSessions, supabase]);
 
     // Load messages for selected session
     useEffect(() => {
@@ -69,35 +97,9 @@ export default function SupportPage() {
         return () => {
             supabase.removeChannel(channel);
         };
-    }, [selectedSessionId]);
+    }, [selectedSessionId, fetchMessages, supabase, scrollToBottom]);
 
-    const fetchSessions = async () => {
-        if (!supabase) return;
-        const { data } = await supabase
-            .from('chat_sessions')
-            .select('*')
-            .order('updated_at', { ascending: false }); // Show recent first
-        if (data) setSessions(data as Session[]);
-    };
 
-    const fetchMessages = async (sessionId: string) => {
-        if (!supabase) return;
-        const { data } = await supabase
-            .from('chat_messages')
-            .select('*')
-            .eq('session_id', sessionId)
-            .order('created_at', { ascending: true });
-        if (data) {
-            setMessages(data as Message[]);
-            scrollToBottom();
-        }
-    };
-
-    const scrollToBottom = () => {
-        setTimeout(() => {
-            messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-        }, 100);
-    };
 
     const handleSendMessage = async (e: React.FormEvent) => {
         e.preventDefault();

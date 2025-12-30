@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import MainLayout from '@/components/MainLayout';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { useAuth } from '@/lib/contexts/AuthContext';
@@ -73,11 +73,8 @@ export default function AttendanceAnalyticsPage() {
     // Parse month for filtering
     const [year, month] = selectedMonth.split('-').map(Number);
 
-    useEffect(() => {
-        loadAnalytics();
-    }, [selectedMonth, staff]);
 
-    async function loadAnalytics() {
+    const loadAnalytics = useCallback(async () => {
         setLoading(true);
         const supabase = getSupabaseClient();
         if (!supabase) {
@@ -185,7 +182,11 @@ export default function AttendanceAnalyticsPage() {
         } finally {
             setLoading(false);
         }
-    }
+    }, [selectedMonth, staff, year, month]);
+
+    useEffect(() => {
+        loadAnalytics();
+    }, [loadAnalytics]);
 
     function getWorkingDaysInMonth(year: number, month: number): number {
         const firstDay = new Date(year, month - 1, 1);

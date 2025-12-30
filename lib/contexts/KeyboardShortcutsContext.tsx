@@ -97,7 +97,7 @@ export function KeyboardShortcutsProvider({ children }: KeyboardShortcutsProvide
       }
 
       const now = Date.now();
-      
+
       // Check for "g" prefix (go) shortcuts
       if (e.key === 'g' && !e.ctrlKey && !e.metaKey && !e.altKey) {
         lastKey.current = 'g';
@@ -137,7 +137,7 @@ export function KeyboardShortcutsProvider({ children }: KeyboardShortcutsProvide
         const ctrlMatch = shortcut.ctrl ? (e.ctrlKey || e.metaKey) : (!e.ctrlKey && !e.metaKey);
         const shiftMatch = shortcut.shift ? e.shiftKey : !e.shiftKey;
         const altMatch = shortcut.alt ? e.altKey : !e.altKey;
-        
+
         if (e.key.toLowerCase() === shortcut.key.toLowerCase() && ctrlMatch && shiftMatch && altMatch) {
           e.preventDefault();
           shortcut.action();
@@ -171,13 +171,13 @@ export function KeyboardShortcutsProvider({ children }: KeyboardShortcutsProvide
       {children}
       {/* Keyboard Shortcuts Help Modal */}
       {showHelp && (
-        <div 
-          className="modal-overlay" 
+        <div
+          className="modal-overlay"
           onClick={() => setShowHelp(false)}
           style={{ zIndex: 10000 }}
         >
-          <div 
-            className="modal keyboard-shortcuts-modal" 
+          <div
+            className="modal keyboard-shortcuts-modal"
             onClick={e => e.stopPropagation()}
           >
             <div className="modal-header">
@@ -204,7 +204,8 @@ export function useShortcut(
   const id = useRef(`shortcut-${Math.random().toString(36).substr(2, 9)}`);
 
   useEffect(() => {
-    registerShortcut(id.current, {
+    const shortcutId = id.current;
+    registerShortcut(shortcutId, {
       key,
       ctrl: options.ctrl,
       shift: options.shift,
@@ -213,39 +214,43 @@ export function useShortcut(
       description: options.description || `Shortcut: ${key}`,
     });
 
-    return () => unregisterShortcut(id.current);
+    return () => unregisterShortcut(shortcutId);
   }, [key, action, options.ctrl, options.shift, options.alt, options.description, registerShortcut, unregisterShortcut]);
 }
 
 // Keyboard shortcut help modal content
 export function KeyboardShortcutsHelp() {
   const shortcuts = [
-    { category: 'Navigation (g + key)', items: [
-      { key: 'g h', description: 'Go to Dashboard' },
-      { key: 'g p', description: 'Go to POS' },
-      { key: 'g i', description: 'Go to Inventory' },
-      { key: 'g k', description: 'Go to KDS' },
-      { key: 'g t', description: 'Go to Tables' },
-      { key: 'g r', description: 'Go to HR' },
-      { key: 'g f', description: 'Go to Finance' },
-      { key: 'g a', description: 'Go to Analytics' },
-      { key: 'g s', description: 'Go to Settings' },
-      { key: 'g n', description: 'Go to Notifications' },
-    ]},
-    { category: 'Actions', items: [
-      { key: '⌘ K', description: 'Open Command Palette' },
-      { key: 'Esc', description: 'Close modal/dialog' },
-      { key: '?', description: 'Show keyboard shortcuts' },
-    ]},
+    {
+      category: 'Navigation (g + key)', items: [
+        { key: 'g h', description: 'Go to Dashboard' },
+        { key: 'g p', description: 'Go to POS' },
+        { key: 'g i', description: 'Go to Inventory' },
+        { key: 'g k', description: 'Go to KDS' },
+        { key: 'g t', description: 'Go to Tables' },
+        { key: 'g r', description: 'Go to HR' },
+        { key: 'g f', description: 'Go to Finance' },
+        { key: 'g a', description: 'Go to Analytics' },
+        { key: 'g s', description: 'Go to Settings' },
+        { key: 'g n', description: 'Go to Notifications' },
+      ]
+    },
+    {
+      category: 'Actions', items: [
+        { key: '⌘ K', description: 'Open Command Palette' },
+        { key: 'Esc', description: 'Close modal/dialog' },
+        { key: '?', description: 'Show keyboard shortcuts' },
+      ]
+    },
   ];
 
   return (
     <div style={{ minWidth: 400 }}>
       {shortcuts.map(group => (
         <div key={group.category} style={{ marginBottom: '1.5rem' }}>
-          <h4 style={{ 
-            fontSize: '0.75rem', 
-            fontWeight: 600, 
+          <h4 style={{
+            fontSize: '0.75rem',
+            fontWeight: 600,
             textTransform: 'uppercase',
             letterSpacing: '0.05em',
             color: 'var(--text-secondary)',
@@ -255,10 +260,10 @@ export function KeyboardShortcutsHelp() {
           </h4>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             {group.items.map(item => (
-              <div 
+              <div
                 key={item.key}
-                style={{ 
-                  display: 'flex', 
+                style={{
+                  display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center',
                   padding: '0.375rem 0'

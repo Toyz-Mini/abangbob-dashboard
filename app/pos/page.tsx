@@ -354,7 +354,21 @@ export default function POSPage() {
     setModalType('checkout');
   };
 
-  const proceedToPayment = async (retrying: boolean = false) => {
+  const handlePrintReceipt = useCallback(async (orderToPrint?: Order) => {
+    const order = orderToPrint || lastOrder;
+    if (!order) return;
+
+    try {
+      // Use thermal printer if connected, otherwise use browser print
+      await thermalPrinter.print(order, receiptSettings);
+    } catch (error) {
+      console.error('Print error:', error);
+      // Fallback to browser print
+      thermalPrinter.printWithBrowser(order, receiptSettings);
+    }
+  }, [lastOrder, receiptSettings]);
+
+  const proceedToPayment = useCallback(async (retrying: boolean = false) => {
     // Robust validation: Strip country code to check if actual digits exist
     // default countryCode is +673 (4 chars). If user typed nothing, length is 4.
     // We want to ensure they have at least 3-4 digits of actual number.
@@ -510,13 +524,19 @@ export default function POSPage() {
     } finally {
       setIsProcessing(false);
     }
-  };
+  }, [
+    customerPhone, selectedCountry, showToast, paymentMethod, cashReceived,
+    finalPayable, currentTransactionId, cart, cartTotal, customerName,
+    selectedCustomer, pointsToRedeem, redemptionAmount, orderType,
+    currentStaff, inventory, addOrder, adjustStock, receiptSettings,
+    handlePrintReceipt, playSound
+  ]);
 
   // Retry payment after network error
   const handleRetryPayment = useCallback(() => {
     setModalType('checkout');
     proceedToPayment(true);
-  }, [currentTransactionId]);
+  }, [proceedToPayment]);
 
   // Cancel payment and clear transaction
   const handleCancelPayment = useCallback(() => {
@@ -526,19 +546,7 @@ export default function POSPage() {
     setModalType(null);
   }, []);
 
-  const handlePrintReceipt = async (orderToPrint?: Order) => {
-    const order = orderToPrint || lastOrder;
-    if (!order) return;
 
-    try {
-      // Use thermal printer if connected, otherwise use browser print
-      await thermalPrinter.print(order, receiptSettings);
-    } catch (error) {
-      console.error('Print error:', error);
-      // Fallback to browser print
-      thermalPrinter.printWithBrowser(order, receiptSettings);
-    }
-  };
 
   const todayOrders = getTodayOrders();
   const pendingOrders = todayOrders.filter(o => o.status === 'pending');

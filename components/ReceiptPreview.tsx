@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
+import Image from 'next/image';
 import { ReceiptSettings, Order, CartItem, DEFAULT_RECEIPT_SETTINGS } from '@/lib/types';
 
 interface ReceiptPreviewProps {
@@ -100,21 +101,20 @@ export default function ReceiptPreview({
         }}
       >
         {/* Logo Top */}
-        {mergedSettings.showLogoTop && mergedSettings.logoTopUrl && (
-          <div style={{ textAlign: 'center', marginBottom: '8px' }}>
-            <img
+        <div style={{ textAlign: 'center', marginBottom: '8px' }}>
+          <div style={{ position: 'relative', height: '60px', width: '100%', marginBottom: '4px' }}>
+            <Image
               src={mergedSettings.logoTopUrl}
               alt="Logo"
+              fill
               style={{
-                maxWidth: '80%',
-                maxHeight: '60px',
                 objectFit: 'contain',
-                display: 'block',
-                margin: '0 auto'
               }}
+              unoptimized
             />
           </div>
-        )}
+        </div>
+
 
         {/* Business Name & Tagline */}
         <div style={{ textAlign: 'center', marginBottom: '8px' }}>
@@ -377,21 +377,20 @@ export default function ReceiptPreview({
         )}
 
         {/* Logo Bottom */}
-        {mergedSettings.showLogoBottom && mergedSettings.logoBottomUrl && (
-          <div style={{ textAlign: 'center', marginTop: '8px' }}>
-            <img
+        <div style={{ textAlign: 'center', marginTop: '8px' }}>
+          <div style={{ position: 'relative', height: '40px', width: '100%' }}>
+            <Image
               src={mergedSettings.logoBottomUrl}
               alt="Logo"
+              fill
               style={{
-                maxWidth: '60%',
-                maxHeight: '40px',
                 objectFit: 'contain',
-                display: 'block',
-                margin: '0 auto'
               }}
+              unoptimized
             />
           </div>
-        )}
+        </div>
+
 
         {/* Receipt End */}
         <div style={{

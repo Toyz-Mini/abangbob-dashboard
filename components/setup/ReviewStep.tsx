@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { useSetup } from '@/lib/contexts/SetupContext';
-import { 
+import {
   Building2,
   UtensilsCrossed,
   Users,
@@ -17,6 +17,7 @@ import {
   Sparkles,
   Rocket
 } from 'lucide-react';
+import Image from 'next/image';
 
 interface Props {
   onValidChange: (isValid: boolean) => void;
@@ -65,7 +66,7 @@ export default function ReviewStep({ onValidChange }: Props) {
         <div className="p-4 space-y-3">
           <div className="flex items-center gap-4">
             {businessInfo.logo ? (
-              <img src={businessInfo.logo} alt="Logo" className="w-16 h-16 rounded-xl object-cover" />
+              <Image src={businessInfo.logo} alt="Logo" className="rounded-xl object-cover" width={64} height={64} unoptimized />
             ) : (
               <div className="w-16 h-16 rounded-xl bg-slate-600 flex items-center justify-center">
                 <Building2 className="w-8 h-8 text-slate-400" />
@@ -78,7 +79,7 @@ export default function ReviewStep({ onValidChange }: Props) {
               <p className="text-sm text-slate-400">{businessInfo.currency} • {businessInfo.timezone}</p>
             </div>
           </div>
-          
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
             <div className="flex items-center gap-2 text-sm text-slate-300">
               <MapPin className="w-4 h-4 text-slate-500" />

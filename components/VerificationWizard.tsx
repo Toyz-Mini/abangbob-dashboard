@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import Webcam from 'react-webcam';
+import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MapPin, Camera, CheckCircle, AlertTriangle, X, RefreshCw, ScanFace, MapPinOff } from 'lucide-react';
 import PremiumButton from './PremiumButton';
@@ -224,7 +225,7 @@ export default function VerificationWizard({ isOpen, onClose, onSuccess, staffNa
 
                                 <div className="relative w-full aspect-[3/4] max-h-[350px] bg-black rounded-2xl overflow-hidden shadow-inner border border-gray-200">
                                     {capturedImage ? (
-                                        <img src={capturedImage} alt="Selfie" className="w-full h-full object-cover" />
+                                        <Image src={capturedImage} alt="Selfie" fill className="w-full h-full object-cover" unoptimized />
                                     ) : (
                                         <>
                                             <Webcam
@@ -290,7 +291,7 @@ export default function VerificationWizard({ isOpen, onClose, onSuccess, staffNa
                                     <div className="absolute inset-2 rounded-full border-4 border-dashed border-secondary/30 animate-spin-reverse" />
                                     <div className="absolute inset-0 flex items-center justify-center">
                                         <div className="w-16 h-16 rounded-full bg-gray-50 flex items-center justify-center overflow-hidden border border-gray-200">
-                                            {capturedImage && <img src={capturedImage} className="w-full h-full object-cover opacity-50" />}
+                                            {capturedImage && <Image src={capturedImage} alt="Selfie preview" fill className="w-full h-full object-cover opacity-50" unoptimized />}
                                         </div>
                                     </div>
                                 </div>

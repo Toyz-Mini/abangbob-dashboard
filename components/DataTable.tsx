@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback, ReactNode } from 'react';
+import { useState, useMemo, useCallback, useEffect, ReactNode } from 'react';
 import { Search, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 
 export interface Column<T> {
@@ -102,7 +102,7 @@ export default function DataTable<T extends Record<string, unknown>>({
 
       const aStr = String(aValue).toLowerCase();
       const bStr = String(bValue).toLowerCase();
-      
+
       if (sortDirection === 'asc') {
         return aStr.localeCompare(bStr);
       }
@@ -150,13 +150,13 @@ export default function DataTable<T extends Record<string, unknown>>({
   const handleSelectRow = useCallback((row: T) => {
     const rowKey = String(row[keyField]);
     const newSelected = new Set(selectedRows);
-    
+
     if (newSelected.has(rowKey)) {
       newSelected.delete(rowKey);
     } else {
       newSelected.add(rowKey);
     }
-    
+
     setSelectedRows(newSelected);
     onSelectionChange?.(data.filter(r => newSelected.has(String(r[keyField]))));
   }, [selectedRows, keyField, data, onSelectionChange]);
@@ -173,7 +173,7 @@ export default function DataTable<T extends Record<string, unknown>>({
   }, []);
 
   // Reset to page 1 when search changes
-  useMemo(() => {
+  useEffect(() => {
     setCurrentPage(1);
   }, [searchQuery]);
 
@@ -262,7 +262,7 @@ export default function DataTable<T extends Record<string, unknown>>({
               paginatedData.map(row => {
                 const rowKey = String(row[keyField]);
                 const isSelected = selectedRows.has(rowKey);
-                
+
                 return (
                   <tr key={rowKey} className={isSelected ? 'selected' : ''}>
                     {selectable && (
@@ -302,7 +302,7 @@ export default function DataTable<T extends Record<string, unknown>>({
               </span>
             )}
           </div>
-          
+
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
             <select
               value={pageSize}

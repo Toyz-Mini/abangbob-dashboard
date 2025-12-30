@@ -2,16 +2,17 @@
 
 import { useEffect, useState } from 'react';
 import { useSetup } from '@/lib/contexts/SetupContext';
-import { 
-  Building2, 
-  MapPin, 
-  Phone, 
-  Mail, 
-  Clock, 
+import {
+  Building2,
+  MapPin,
+  Phone,
+  Mail,
+  Clock,
   Percent,
   ImagePlus,
   Globe
 } from 'lucide-react';
+import Image from 'next/image';
 
 interface Props {
   onValidChange: (isValid: boolean) => void;
@@ -30,12 +31,12 @@ const DAYS = [
 export default function BusinessInfoStep({ onValidChange }: Props) {
   const { setupData, updateBusinessInfo } = useSetup();
   const { businessInfo } = setupData;
-  
+
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
 
   // Validate on change
   useEffect(() => {
-    const isValid = 
+    const isValid =
       businessInfo.name.trim().length > 0 &&
       businessInfo.address.trim().length > 0 &&
       businessInfo.phone.trim().length > 0;
@@ -76,16 +77,18 @@ export default function BusinessInfoStep({ onValidChange }: Props) {
             <div className={`
               w-32 h-32 rounded-2xl border-2 border-dashed flex items-center justify-center
               transition-all cursor-pointer hover:border-teal-500 hover:bg-slate-700/50
-              ${logoPreview || businessInfo.logo 
-                ? 'border-teal-500 bg-slate-700/50' 
+              ${logoPreview || businessInfo.logo
+                ? 'border-teal-500 bg-slate-700/50'
                 : 'border-slate-600 bg-slate-800'
               }
             `}>
               {logoPreview || businessInfo.logo ? (
-                <img 
-                  src={logoPreview || businessInfo.logo} 
-                  alt="Logo" 
-                  className="w-full h-full object-cover rounded-2xl"
+                <Image
+                  src={logoPreview || businessInfo.logo || ''}
+                  alt="Logo"
+                  className="rounded-2xl object-cover"
+                  fill
+                  unoptimized
                 />
               ) : (
                 <ImagePlus className="w-8 h-8 text-slate-500" />

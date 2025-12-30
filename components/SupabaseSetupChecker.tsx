@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Cloud,
   CheckCircle,
@@ -81,11 +81,7 @@ INSERT INTO storage.buckets (id, name, public)
 VALUES ('outlet-logos', 'outlet-logos', true);`
   };
 
-  useEffect(() => {
-    runChecks();
-  }, []);
-
-  const runChecks = async () => {
+  const runChecks = useCallback(async () => {
     setIsTesting(true);
 
     // 1. Check environment variables
@@ -126,7 +122,11 @@ VALUES ('outlet-logos', 'outlet-logos', true);`
     setStatus(prev => ({ ...prev, permissions: permCheck }));
 
     setIsTesting(false);
-  };
+  }, []);
+
+  useEffect(() => {
+    runChecks();
+  }, [runChecks]);
 
   const checkEnvironmentVars = (): CheckResult => {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;

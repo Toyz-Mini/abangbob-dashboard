@@ -1,12 +1,13 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { 
-  Upload, 
-  FileText, 
-  Image, 
-  Trash2, 
-  Eye, 
+import NextImage from 'next/image';
+import {
+  Upload,
+  FileText,
+  Image as ImageIcon,
+  Trash2,
+  Eye,
   Download,
   X,
   Check,
@@ -47,8 +48,8 @@ const DOCUMENT_TYPE_LABELS: Record<DocumentType, string> = {
 };
 
 const DOCUMENT_TYPE_ICONS: Record<DocumentType, React.ReactNode> = {
-  ic_front: <Image size={24} />,
-  ic_back: <Image size={24} />,
+  ic_front: <ImageIcon size={24} />,
+  ic_back: <ImageIcon size={24} />,
   contract: <FileText size={24} />,
   resume: <FileText size={24} />,
   offer_letter: <FileText size={24} />,
@@ -61,7 +62,7 @@ const DOCUMENT_TYPE_ICONS: Record<DocumentType, React.ReactNode> = {
 function DocumentCard({ document, onView, onDelete, readonly }: DocumentCardProps) {
   const isImage = document.url.match(/\.(jpg|jpeg|png|gif|webp)$/i);
   const isPdf = document.url.match(/\.pdf$/i);
-  
+
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString('ms-MY', {
       day: 'numeric',
@@ -73,7 +74,7 @@ function DocumentCard({ document, onView, onDelete, readonly }: DocumentCardProp
   return (
     <div className="document-card">
       <div className="document-icon">
-        {isImage ? <Image size={24} /> : <FileText size={24} />}
+        {isImage ? <ImageIcon size={24} /> : <FileText size={24} />}
       </div>
       <div className="document-info">
         <div className="document-name">{document.name}</div>
@@ -89,7 +90,7 @@ function DocumentCard({ document, onView, onDelete, readonly }: DocumentCardProp
         )}
       </div>
       <div className="document-actions">
-        <button 
+        <button
           type="button"
           className="document-action-btn"
           onClick={onView}
@@ -98,7 +99,7 @@ function DocumentCard({ document, onView, onDelete, readonly }: DocumentCardProp
           <Eye size={16} />
         </button>
         {!readonly && onDelete && (
-          <button 
+          <button
             type="button"
             className="document-action-btn delete"
             onClick={onDelete}
@@ -320,7 +321,7 @@ export default function DocumentUpload({ documents, onUpload, onDelete, readonly
 
     setSelectedFile(file);
     setUploadError(null);
-    
+
     // Create preview
     const preview = URL.createObjectURL(file);
     setPreviewFileUrl(preview);
@@ -390,7 +391,7 @@ export default function DocumentUpload({ documents, onUpload, onDelete, readonly
         <div className="document-grid">
           {requiredDocTypes.map(type => {
             const existingDoc = getDocumentOfType(type);
-            
+
             if (existingDoc) {
               return (
                 <DocumentCard
@@ -402,7 +403,7 @@ export default function DocumentUpload({ documents, onUpload, onDelete, readonly
                 />
               );
             }
-            
+
             if (readonly) {
               return (
                 <div key={type} className="document-missing">
@@ -411,7 +412,7 @@ export default function DocumentUpload({ documents, onUpload, onDelete, readonly
                 </div>
               );
             }
-            
+
             return (
               <UploadPlaceholder
                 key={type}
@@ -429,7 +430,7 @@ export default function DocumentUpload({ documents, onUpload, onDelete, readonly
         <div className="document-section-header">
           <h4 className="document-section-title">Dokumen Tambahan</h4>
           {!readonly && (
-            <button 
+            <button
               type="button"
               className="btn btn-outline btn-sm"
               onClick={() => handleUploadClick('other')}
@@ -439,7 +440,7 @@ export default function DocumentUpload({ documents, onUpload, onDelete, readonly
             </button>
           )}
         </div>
-        
+
         {documents.filter(d => optionalDocTypes.includes(d.type)).length > 0 ? (
           <div className="document-list">
             {documents
@@ -498,14 +499,14 @@ export default function DocumentUpload({ documents, onUpload, onDelete, readonly
 
         <div className="form-group">
           <label className="form-label">Muat Naik Fail</label>
-          <div 
+          <div
             className="file-upload-zone"
             onClick={() => fileInputRef.current?.click()}
           >
             {previewFileUrl ? (
               <div className="file-preview">
                 {selectedFile?.type.startsWith('image/') ? (
-                  <img src={previewFileUrl} alt="Preview" style={{ maxWidth: '100%', maxHeight: '200px', borderRadius: 'var(--radius-md)' }} />
+                  <NextImage src={previewFileUrl} alt="Preview" width={400} height={300} style={{ objectFit: 'contain', maxWidth: '100%', maxHeight: '200px', borderRadius: 'var(--radius-md)', width: 'auto', height: 'auto' }} unoptimized />
                 ) : (
                   <>
                     <FileText size={48} color="var(--primary)" />
@@ -551,13 +552,13 @@ export default function DocumentUpload({ documents, onUpload, onDelete, readonly
             style={{ display: 'none' }}
             onChange={(e) => handleFileSelect(e.target.files?.[0] || null)}
           />
-          
+
           {storageMode && (
-            <div style={{ 
-              marginTop: '0.5rem', 
-              fontSize: '0.75rem', 
-              display: 'flex', 
-              alignItems: 'center', 
+            <div style={{
+              marginTop: '0.5rem',
+              fontSize: '0.75rem',
+              display: 'flex',
+              alignItems: 'center',
               gap: '0.375rem',
               color: 'var(--text-secondary)'
             }}>
@@ -654,15 +655,15 @@ export default function DocumentUpload({ documents, onUpload, onDelete, readonly
           <div className="document-preview">
             {previewDocument.url.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
               <div className="document-preview-image">
-                <img src={previewDocument.url} alt={previewDocument.name} />
+                <NextImage src={previewDocument.url} alt={previewDocument.name} width={800} height={600} style={{ maxWidth: '100%', height: 'auto', objectFit: 'contain' }} unoptimized />
               </div>
             ) : (
               <div className="document-preview-file">
                 <FileText size={64} color="var(--text-light)" />
                 <p>{previewDocument.name}</p>
-                <a 
-                  href={previewDocument.url} 
-                  target="_blank" 
+                <a
+                  href={previewDocument.url}
+                  target="_blank"
                   rel="noopener noreferrer"
                   className="btn btn-primary btn-sm"
                 >
@@ -671,7 +672,7 @@ export default function DocumentUpload({ documents, onUpload, onDelete, readonly
                 </a>
               </div>
             )}
-            
+
             <div className="document-preview-info">
               <div className="document-preview-row">
                 <span>Jenis:</span>
@@ -690,7 +691,7 @@ export default function DocumentUpload({ documents, onUpload, onDelete, readonly
             </div>
           </div>
         )}
-        
+
         <button
           type="button"
           className="btn btn-outline"

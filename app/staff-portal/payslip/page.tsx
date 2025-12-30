@@ -18,6 +18,7 @@ import {
   Printer,
   Building2
 } from 'lucide-react';
+import Image from 'next/image';
 
 
 // Demo: Using dynamic user ID
@@ -113,6 +114,7 @@ export default function PayslipPage() {
   const { staff, isInitialized } = useStaff();
   const [selectedPayslip, setSelectedPayslip] = useState<PayslipData | null>(mockPayslips[0]);
   const [expandedMonth, setExpandedMonth] = useState<string | null>(mockPayslips[0]?.month);
+  const [logoError, setLogoError] = useState(false);
 
   // Get branding from localStorage or use defaults
   const [branding, setBranding] = useState<PayslipBranding>(() => {
@@ -217,15 +219,15 @@ export default function PayslipPage() {
                         border: '1px solid var(--border-light)',
                         overflow: 'hidden'
                       }}>
-                        {branding.companyLogo ? (
-                          <img
+                        {branding.companyLogo && !logoError ? (
+                          <Image
                             src={branding.companyLogo}
                             alt="Logo"
-                            style={{ width: '50px', height: '50px', objectFit: 'contain' }}
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).style.display = 'none';
-                              (e.target as HTMLImageElement).parentElement!.innerHTML = '<span style="font-size: 1.5rem; font-weight: 700; color: var(--primary)">AB</span>';
-                            }}
+                            width={50}
+                            height={50}
+                            style={{ objectFit: 'contain' }}
+                            onError={() => setLogoError(true)}
+                            unoptimized
                           />
                         ) : (
                           <Building2 size={28} color={branding.primaryColor} />

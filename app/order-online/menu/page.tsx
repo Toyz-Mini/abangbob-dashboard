@@ -6,6 +6,7 @@ import { useMenu } from '@/lib/store';
 import { MenuItem, OrderItem, SelectedModifier } from '@/lib/types';
 import { Search, ShoppingBag, X, Plus, Minus, ChevronLeft, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import Image from 'next/image';
 
 // Mock Product Images for Demo if missing
 const getProductImage = (category: string) => {
@@ -181,7 +182,13 @@ export default function OnlineMenuPage() {
                                 {/* Placeholder Image */}
                                 <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-400 text-xs">
                                     {/* Real implementation would use item.image */}
-                                    <img src={getProductImage(item.category)} alt={item.name} className="w-full h-full object-cover" />
+                                    <Image
+                                        src={getProductImage(item.category)}
+                                        alt={item.name}
+                                        fill
+                                        className="object-cover"
+                                        unoptimized
+                                    />
                                 </div>
                             </div>
                             <h3 className="font-bold text-gray-800 text-sm leading-tight mb-1">{item.name}</h3>
@@ -255,7 +262,14 @@ export default function OnlineMenuPage() {
                                 </div>
 
                                 <div className="bg-gray-50 rounded-xl p-4 mb-6 min-h-[150px] flex items-center justify-center">
-                                    <img src={getProductImage(selectedItem.category)} alt={selectedItem.name} className="rounded-lg max-h-[140px] object-cover" />
+                                    <Image
+                                        src={getProductImage(selectedItem.category)}
+                                        alt={selectedItem.name}
+                                        width={400}
+                                        height={300}
+                                        className="rounded-lg max-h-[140px] w-auto object-cover"
+                                        unoptimized
+                                    />
                                 </div>
 
                                 <div className="mb-8">

@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { Upload, Trash2, Image, AlertCircle, Check, Cloud, HardDrive, RefreshCw } from 'lucide-react';
+import { Upload, Trash2, Image as ImageIcon, AlertCircle, Check, Cloud, HardDrive, RefreshCw } from 'lucide-react';
+import NextImage from 'next/image';
 import { getSupabaseClient } from '@/lib/supabase/client';
 import { useTranslation } from '@/lib/contexts/LanguageContext';
 
@@ -14,6 +15,86 @@ interface LogoUploadProps {
 type StorageMode = 'supabase' | 'local' | 'checking';
 type ErrorType = 'bucket_not_found' | 'permission_denied' | 'network_error' | 'file_too_large' | 'invalid_format' | 'unknown';
 
+const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
+const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+const LOCAL_STORAGE_KEY = 'abangbob_logo_';
+
+const validateFile = (file: File): { valid: boolean; error?: string; errorType?: ErrorType } => {
+  if (!ALLOWED_TYPES.includes(file.type)) {
+    return {
+      valid: false,
+      error: 'Format fail tidak disokong. Sila gunakan JPG, PNG, WebP, atau GIF.',
+      errorType: 'invalid_format'
+    };
+  }
+  if (file.size > MAX_FILE_SIZE) {
+    return {
+      valid: false,
+      error: 'Saiz fail terlalu besar. Maksimum 2MB.',
+      errorType: 'file_too_large'
+    };
+  }
+  return { valid: true };
+};
+
+const fileToBase64 = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+};
+
+const saveToLocalStorage = async (file: File): Promise<string> => {
+  try {
+    const base64 = await fileToBase64(file);
+    const storageKey = `${LOCAL_STORAGE_KEY}${Date.now()}`;
+    localStorage.setItem(storageKey, base64);
+    console.log('✅ Logo saved to localStorage:', storageKey);
+    return base64;
+  } catch (error) {
+    console.error('❌ Failed to save to localStorage:', error);
+    throw new Error('Gagal menyimpan logo ke local storage');
+  }
+};
+
+const getDetailedError = (error: any): { message: string; type: ErrorType } => {
+  if (error?.message) {
+    const msg = error.message.toLowerCase();
+
+    if (msg.includes('bucket') && (msg.includes('not found') || msg.includes('does not exist'))) {
+      console.error('❌ Bucket Error: outlet-logos bucket does not exist');
+      return {
+        message: 'Bucket storage belum dibuat. Sila setup Supabase Storage terlebih dahulu atau logo akan disimpan secara local.',
+        type: 'bucket_not_found'
+      };
+    }
+
+    if (msg.includes('permission') || msg.includes('unauthorized') || msg.includes('forbidden') || error?.statusCode === 403) {
+      console.error('❌ Permission Error: No access to upload files');
+      return {
+        message: 'Tiada kebenaran untuk upload. Sila login atau semak storage policies.',
+        type: 'permission_denied'
+      };
+    }
+
+    if (msg.includes('network') || msg.includes('fetch') || msg.includes('connection')) {
+      console.error('❌ Network Error: Cannot connect to Supabase');
+      return {
+        message: 'Ralat sambungan. Logo akan disimpan secara local.',
+        type: 'network_error'
+      };
+    }
+  }
+
+  console.error('❌ Unknown Upload Error:', error);
+  return {
+    message: 'Gagal memuat naik logo. Logo akan disimpan secara local.',
+    type: 'unknown'
+  };
+};
+
 export default function LogoUpload({ currentLogoUrl, onLogoChange, disabled = false }: LogoUploadProps) {
   const { t } = useTranslation();
   const [isUploading, setIsUploading] = useState(false);
@@ -25,10 +106,6 @@ export default function LogoUpload({ currentLogoUrl, onLogoChange, disabled = fa
   const [storageMode, setStorageMode] = useState<StorageMode>('checking');
   const [lastFile, setLastFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
-  const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-  const LOCAL_STORAGE_KEY = 'abangbob_logo_';
 
   // Check Supabase availability on mount
   useEffect(() => {
@@ -45,88 +122,9 @@ export default function LogoUpload({ currentLogoUrl, onLogoChange, disabled = fa
     checkSupabase();
   }, []);
 
-  const validateFile = (file: File): { valid: boolean; error?: string; errorType?: ErrorType } => {
-    if (!ALLOWED_TYPES.includes(file.type)) {
-      return { 
-        valid: false, 
-        error: 'Format fail tidak disokong. Sila gunakan JPG, PNG, WebP, atau GIF.',
-        errorType: 'invalid_format'
-      };
-    }
-    if (file.size > MAX_FILE_SIZE) {
-      return { 
-        valid: false, 
-        error: 'Saiz fail terlalu besar. Maksimum 2MB.',
-        errorType: 'file_too_large'
-      };
-    }
-    return { valid: true };
-  };
-
-  // Convert file to base64 for localStorage
-  const fileToBase64 = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
-  };
-
-  // Save to localStorage as fallback
-  const saveToLocalStorage = async (file: File): Promise<string> => {
-    try {
-      const base64 = await fileToBase64(file);
-      const storageKey = `${LOCAL_STORAGE_KEY}${Date.now()}`;
-      localStorage.setItem(storageKey, base64);
-      console.log('✅ Logo saved to localStorage:', storageKey);
-      return base64;
-    } catch (error) {
-      console.error('❌ Failed to save to localStorage:', error);
-      throw new Error('Gagal menyimpan logo ke local storage');
-    }
-  };
-
-  const getDetailedError = (error: any): { message: string; type: ErrorType } => {
-    // Check for specific Supabase errors
-    if (error?.message) {
-      const msg = error.message.toLowerCase();
-      
-      if (msg.includes('bucket') && (msg.includes('not found') || msg.includes('does not exist'))) {
-        console.error('❌ Bucket Error: outlet-logos bucket does not exist');
-        return {
-          message: 'Bucket storage belum dibuat. Sila setup Supabase Storage terlebih dahulu atau logo akan disimpan secara local.',
-          type: 'bucket_not_found'
-        };
-      }
-      
-      if (msg.includes('permission') || msg.includes('unauthorized') || msg.includes('forbidden') || error?.statusCode === 403) {
-        console.error('❌ Permission Error: No access to upload files');
-        return {
-          message: 'Tiada kebenaran untuk upload. Sila login atau semak storage policies.',
-          type: 'permission_denied'
-        };
-      }
-      
-      if (msg.includes('network') || msg.includes('fetch') || msg.includes('connection')) {
-        console.error('❌ Network Error: Cannot connect to Supabase');
-        return {
-          message: 'Ralat sambungan. Logo akan disimpan secara local.',
-          type: 'network_error'
-        };
-      }
-    }
-    
-    console.error('❌ Unknown Upload Error:', error);
-    return {
-      message: 'Gagal memuat naik logo. Logo akan disimpan secara local.',
-      type: 'unknown'
-    };
-  };
-
-  const uploadToSupabase = async (file: File): Promise<string> => {
+  const uploadToSupabase = useCallback(async (file: File): Promise<string> => {
     const supabase = getSupabaseClient();
-    
+
     if (!supabase) {
       console.log('⚠️ Supabase not configured, using local storage');
       return await saveToLocalStorage(file);
@@ -138,7 +136,7 @@ export default function LogoUpload({ currentLogoUrl, onLogoChange, disabled = fa
 
     try {
       console.log('📤 Uploading to Supabase Storage:', filePath);
-      
+
       const { data, error } = await supabase.storage
         .from('outlet-logos')
         .upload(filePath, file, {
@@ -149,7 +147,7 @@ export default function LogoUpload({ currentLogoUrl, onLogoChange, disabled = fa
       if (error) {
         console.error('❌ Supabase Upload Error:', error);
         const detailedError = getDetailedError(error);
-        
+
         // For certain errors, fallback to local storage
         if (detailedError.type === 'bucket_not_found' || detailedError.type === 'network_error') {
           console.log('⚠️ Falling back to local storage...');
@@ -159,7 +157,7 @@ export default function LogoUpload({ currentLogoUrl, onLogoChange, disabled = fa
           setErrorType(detailedError.type);
           return localUrl;
         }
-        
+
         throw new Error(detailedError.message);
       }
 
@@ -177,15 +175,9 @@ export default function LogoUpload({ currentLogoUrl, onLogoChange, disabled = fa
       setStorageMode('local');
       return await saveToLocalStorage(file);
     }
-  };
+  }, []);
 
-  const handleRetry = () => {
-    if (lastFile) {
-      handleFileSelect(lastFile);
-    }
-  };
-
-  const handleFileSelect = async (file: File) => {
+  const handleFileSelect = useCallback(async (file: File) => {
     setUploadError(null);
     setErrorType(null);
     setUploadSuccess(false);
@@ -221,14 +213,20 @@ export default function LogoUpload({ currentLogoUrl, onLogoChange, disabled = fa
     } finally {
       setIsUploading(false);
     }
-  };
+  }, [currentLogoUrl, onLogoChange, uploadToSupabase]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleRetry = useCallback(() => {
+    if (lastFile) {
+      handleFileSelect(lastFile);
+    }
+  }, [handleFileSelect, lastFile]);
+
+  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       handleFileSelect(file);
     }
-  };
+  }, [handleFileSelect]);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -245,14 +243,14 @@ export default function LogoUpload({ currentLogoUrl, onLogoChange, disabled = fa
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
-    
+
     if (disabled) return;
 
     const file = e.dataTransfer.files?.[0];
     if (file) {
       handleFileSelect(file);
     }
-  }, [disabled]);
+  }, [disabled, handleFileSelect]);
 
   const handleRemoveLogo = async () => {
     const supabase = getSupabaseClient();
@@ -278,7 +276,7 @@ export default function LogoUpload({ currentLogoUrl, onLogoChange, disabled = fa
 
   return (
     <div className="logo-upload">
-      <div 
+      <div
         className={`upload-zone ${isDragging ? 'dragging' : ''} ${previewUrl ? 'has-preview' : ''} ${disabled ? 'disabled' : ''}`}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
@@ -287,11 +285,18 @@ export default function LogoUpload({ currentLogoUrl, onLogoChange, disabled = fa
       >
         {previewUrl ? (
           <div className="preview-container">
-            <img src={previewUrl} alt="Logo" className="logo-preview" />
+            <NextImage
+              src={previewUrl}
+              alt="Logo"
+              className="logo-preview"
+              fill
+              style={{ objectFit: 'contain', padding: '0.5rem' }}
+              unoptimized
+            />
             <div className="preview-overlay">
               {!disabled && (
                 <div className="preview-actions">
-                  <button 
+                  <button
                     type="button"
                     className="action-btn change"
                     onClick={(e) => {
@@ -302,7 +307,7 @@ export default function LogoUpload({ currentLogoUrl, onLogoChange, disabled = fa
                     <Upload size={16} />
                     Tukar
                   </button>
-                  <button 
+                  <button
                     type="button"
                     className="action-btn remove"
                     onClick={(e) => {
@@ -327,7 +332,7 @@ export default function LogoUpload({ currentLogoUrl, onLogoChange, disabled = fa
             ) : (
               <>
                 <div className="upload-icon">
-                  <Image size={32} />
+                  <ImageIcon size={32} />
                 </div>
                 <span className="upload-text">Seret & lepas logo di sini</span>
                 <span className="upload-hint">atau klik untuk pilih fail</span>

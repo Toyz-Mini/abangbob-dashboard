@@ -1,10 +1,18 @@
 import * as Sentry from '@sentry/nextjs';
 import type { Metadata, Viewport } from 'next'
 import type { ReactNode } from 'react'
+import { Plus_Jakarta_Sans } from 'next/font/google'
 import './globals.css'
 import Providers from '@/components/Providers'
 import { ServiceWorkerRegistration } from '@/components/ServiceWorkerRegistration'
 import { SpeedInsights } from "@vercel/speed-insights/next"
+
+const plusJakartaSans = Plus_Jakarta_Sans({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700', '800'],
+  display: 'swap',
+  variable: '--font-jakarta'
+})
 
 export function generateMetadata(): Metadata {
   return {
@@ -53,7 +61,7 @@ export default function RootLayout({
   children: ReactNode
 }) {
   return (
-    <html lang="ms" suppressHydrationWarning>
+    <html lang="ms" suppressHydrationWarning className={plusJakartaSans.variable}>
       <head>
         {/* PWA Meta Tags */}
         <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
@@ -63,12 +71,6 @@ export default function RootLayout({
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="msapplication-TileColor" content="#0d9488" />
         <meta name="msapplication-tap-highlight" content="no" />
-
-        {/* Preconnect for performance */}
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        {/* Premium Font - Plus Jakarta Sans */}
-        <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
       </head>
       <body>
         <Providers>

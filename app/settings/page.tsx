@@ -58,6 +58,7 @@ import {
   MapPin,
   BarChart3,
 } from 'lucide-react';
+import Image from 'next/image';
 import SupabaseStatusIndicator from '@/components/SupabaseStatusIndicator';
 import { getDataSourceInfo, DataSource } from '@/lib/store';
 import { getSyncLogs, getSyncStats, clearSyncLogs, SyncLogEntry } from '@/lib/utils/sync-logger';
@@ -343,6 +344,7 @@ export default function SettingsPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [showResetModal, setShowResetModal] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
+  const [logoPreviewError, setLogoPreviewError] = useState(false);
 
   // Days of week with translations
   const DAYS_OF_WEEK = useMemo(() => language === 'en'
@@ -2679,14 +2681,15 @@ export default function SettingsPage() {
                         border: '2px dashed var(--border-light)',
                         overflow: 'hidden'
                       }}>
-                        {payslipBranding.companyLogo ? (
-                          <img
+                        {payslipBranding.companyLogo && !logoPreviewError ? (
+                          <Image
                             src={payslipBranding.companyLogo}
                             alt="Logo"
+                            width={80}
+                            height={80}
                             style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).style.display = 'none';
-                            }}
+                            onError={() => setLogoPreviewError(true)}
+                            unoptimized
                           />
                         ) : (
                           <Building2 size={32} color="var(--text-secondary)" />

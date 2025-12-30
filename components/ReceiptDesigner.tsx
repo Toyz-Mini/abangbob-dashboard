@@ -1,20 +1,20 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { 
-  ReceiptSettings, 
+import {
+  ReceiptSettings,
   PrinterSettings,
   DEFAULT_RECEIPT_SETTINGS,
   DEFAULT_PRINTER_SETTINGS
 } from '@/lib/types';
 import ReceiptPreview from './ReceiptPreview';
 import LogoUpload from './LogoUpload';
-import { 
-  Receipt, 
-  Image, 
-  Type, 
-  MessageSquare, 
-  Share2, 
+import {
+  Receipt,
+  Image as ImageIcon,
+  Type,
+  MessageSquare,
+  Share2,
   QrCode,
   User,
   Printer,
@@ -129,16 +129,16 @@ export default function ReceiptDesigner({
 
   return (
     <div className="receipt-designer">
-      <div style={{ 
-        display: 'grid', 
-        gridTemplateColumns: '1fr 320px', 
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: '1fr 320px',
         gap: '2rem',
         alignItems: 'start',
       }}>
         {/* Editor Panel */}
         <div className="editor-panel">
           {/* Logo Section */}
-          <CollapsibleSection title="Logo" icon={<Image size={18} />}>
+          <CollapsibleSection title="Logo" icon={<ImageIcon size={18} />}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
               <div>
                 <label className="form-label" style={{ marginBottom: '0.5rem', display: 'block' }}>
@@ -148,10 +148,10 @@ export default function ReceiptDesigner({
                   currentLogoUrl={settings.logoTopUrl}
                   onLogoChange={(url) => updateSettings({ logoTopUrl: url || '' })}
                 />
-                <label style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: '0.5rem', 
+                <label style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
                   marginTop: '0.5rem',
                   cursor: 'pointer',
                   fontSize: '0.875rem',
@@ -172,10 +172,10 @@ export default function ReceiptDesigner({
                   currentLogoUrl={settings.logoBottomUrl}
                   onLogoChange={(url) => updateSettings({ logoBottomUrl: url || '' })}
                 />
-                <label style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: '0.5rem', 
+                <label style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
                   marginTop: '0.5rem',
                   cursor: 'pointer',
                   fontSize: '0.875rem',
@@ -280,10 +280,10 @@ export default function ReceiptDesigner({
 
           {/* Social Media Section */}
           <CollapsibleSection title="Media Sosial" icon={<Share2 size={18} />} defaultOpen={false}>
-            <label style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: '0.5rem', 
+            <label style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
               marginBottom: '1rem',
               cursor: 'pointer',
             }}>
@@ -347,10 +347,10 @@ export default function ReceiptDesigner({
 
           {/* QR Code Section */}
           <CollapsibleSection title="QR Code" icon={<QrCode size={18} />} defaultOpen={false}>
-            <label style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: '0.5rem', 
+            <label style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
               marginBottom: '1rem',
               cursor: 'pointer',
             }}>
@@ -396,10 +396,10 @@ export default function ReceiptDesigner({
             <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '1rem' }}>
               Pilih maklumat pelanggan yang akan dipaparkan pada receipt
             </p>
-            <label style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: '0.75rem', 
+            <label style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.75rem',
               marginBottom: '0.75rem',
               cursor: 'pointer',
               padding: '0.75rem',
@@ -419,10 +419,10 @@ export default function ReceiptDesigner({
                 </div>
               </div>
             </label>
-            <label style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: '0.75rem', 
+            <label style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.75rem',
               cursor: 'pointer',
               padding: '0.75rem',
               background: 'var(--gray-50)',
@@ -474,10 +474,10 @@ export default function ReceiptDesigner({
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '1rem' }}>
-              <label style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                gap: '0.75rem', 
+              <label style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.75rem',
                 cursor: 'pointer',
                 padding: '0.75rem',
                 background: 'var(--gray-50)',
@@ -497,10 +497,10 @@ export default function ReceiptDesigner({
                 </div>
               </label>
 
-              <label style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                gap: '0.75rem', 
+              <label style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.75rem',
                 cursor: 'pointer',
                 padding: '0.75rem',
                 background: 'var(--gray-50)',
@@ -520,10 +520,10 @@ export default function ReceiptDesigner({
                 </div>
               </label>
 
-              <label style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                gap: '0.75rem', 
+              <label style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.75rem',
                 cursor: 'pointer',
                 padding: '0.75rem',
                 background: 'var(--gray-50)',
@@ -546,9 +546,9 @@ export default function ReceiptDesigner({
           </CollapsibleSection>
 
           {/* Action Buttons */}
-          <div style={{ 
-            display: 'flex', 
-            gap: '0.75rem', 
+          <div style={{
+            display: 'flex',
+            gap: '0.75rem',
             paddingTop: '1rem',
             borderTop: '1px solid var(--gray-200)',
             marginTop: '1rem',
@@ -578,20 +578,20 @@ export default function ReceiptDesigner({
 
         {/* Preview Panel */}
         <div className="preview-panel" style={{ position: 'sticky', top: '1rem' }}>
-          <div style={{ 
-            background: 'var(--gray-100)', 
+          <div style={{
+            background: 'var(--gray-100)',
             borderRadius: 'var(--radius-lg)',
             padding: '1rem',
           }}>
-            <div style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
               justifyContent: 'space-between',
               marginBottom: '1rem',
             }}>
-              <div style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
                 gap: '0.5rem',
                 fontWeight: 600,
               }}>
@@ -616,7 +616,7 @@ export default function ReceiptDesigner({
               </div>
             </div>
 
-            <div style={{ 
+            <div style={{
               background: '#e5e5e5',
               borderRadius: 'var(--radius-md)',
               padding: '1.5rem 1rem',
@@ -626,14 +626,14 @@ export default function ReceiptDesigner({
               alignItems: 'flex-start',
               overflow: 'auto',
             }}>
-              <ReceiptPreview 
-                settings={settings} 
+              <ReceiptPreview
+                settings={settings}
                 width={previewWidth}
                 scale={previewWidth === '58mm' ? 0.9 : 0.85}
               />
             </div>
 
-            <div style={{ 
+            <div style={{
               marginTop: '1rem',
               padding: '0.75rem',
               background: 'var(--gray-50)',

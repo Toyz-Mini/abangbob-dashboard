@@ -1735,158 +1735,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     return true;
   }, [customers]);
 
-  // Order actions
-  const addOrder = useCallback(async (orderData: Omit<Order, 'id' | 'orderNumber'>): Promise<Order> => {
-    const timestamp = Date.now();
 
-    // Get order prefix from localStorage (default to 'ORD')
-    const orderPrefix = typeof window !== 'undefined'
-      ? localStorage.getItem('orderNumberPrefix') || 'ORD'
-      : 'ORD';
-
-    const newOrder: Order = {
-      ...orderData,
-      id: generateUUID(),
-      orderNumber: `${orderPrefix}-${timestamp.toString().slice(-6)}`,
-    };
-
-    // Sync to Supabase
-    try {
-      // 1. Handle "Walk-in" Customer Details (Auto-create or Find)
-      let finalCustomerId = newOrder.customerId;
-
-      if (!finalCustomerId && newOrder.customerName && newOrder.customerPhone) {
-        // Check if customer already exists locally
-        const existingCustomer = customers.find(c => c.phone === newOrder.customerPhone);
-
-        if (existingCustomer) {
-          finalCustomerId = existingCustomer.id;
-          console.log(`[Order] Found existing customer by phone: ${existingCustomer.name}`);
-        } else {
-          // Create new customer
-          try {
-            console.log(`[Order] Auto-creating new customer: ${newOrder.customerName}`);
-            const newCustomer = await addCustomer({
-              name: newOrder.customerName,
-              phone: newOrder.customerPhone,
-              email: undefined,
-              birthday: undefined,
-              notes: 'Auto-created from POS Order'
-            });
-            finalCustomerId = newCustomer.id;
-          } catch (err) {
-            console.error('[Order] Failed to auto-create customer:', err);
-            // Proceed without ID, just text details
-          }
-        }
-      }
-
-      // Update order with resolved customer ID
-      if (finalCustomerId) {
-        newOrder.customerId = finalCustomerId;
-      }
-
-      // 2. Sync Order to Supabase
-      const supabaseOrder = await SupabaseSync.syncAddOrder(newOrder);
-      if (supabaseOrder && supabaseOrder.id) {
-        newOrder.id = supabaseOrder.id;
-      }
-    } catch (error) {
-      console.error('Failed to sync order to Supabase:', error);
-    }
-
-    setOrders(prev => [newOrder, ...prev]);
-
-    // Also add to orderHistory for Order History page
-    const historyItem: OrderHistoryItem = {
-      ...newOrder,
-      voidRefundStatus: 'none',
-      refundAmount: 0,
-    };
-    setOrderHistory(prev => [historyItem, ...prev]);
-
-    // AUTOMATIC INVENTORY DEDUCTION LOGIC
-    // Check if ordered items have recipes and deduct ingredients from inventory
-    if (recipes.length > 0 && inventory.length > 0) {
-      const inventoryUpdates = new Map<string, number>();
-
-      newOrder.items.forEach(cartItem => {
-        // Find recipe for this item
-        const recipe = recipes.find(r => r.menuItemId === cartItem.id);
-
-        if (recipe) {
-          console.log(`[Inventory] Deducting ingredients for ${cartItem.name} (Recipe found)`);
-
-          recipe.ingredients.forEach(ingredient => {
-            const currentDeduction = inventoryUpdates.get(ingredient.stockItemId) || 0;
-            // Total deduction = ingredient quantity per item * item quantity in cart
-            const deductionAmount = ingredient.quantity * cartItem.quantity;
-            inventoryUpdates.set(ingredient.stockItemId, currentDeduction + deductionAmount);
-          });
-        }
-
-        // Deduct Modifier Ingredients
-        if (cartItem.selectedModifiers && cartItem.selectedModifiers.length > 0) {
-          cartItem.selectedModifiers.forEach((mod: any) => {
-            const modifierOption = modifierOptions.find(m => m.id === mod.id);
-            if (modifierOption && modifierOption.ingredients && modifierOption.ingredients.length > 0) {
-              console.log(`[Inventory] Deducting ingredients for modifier ${modifierOption.name}`);
-              modifierOption.ingredients.forEach(ingredient => {
-                const currentDeduction = inventoryUpdates.get(ingredient.stockItemId) || 0;
-                const deductionAmount = ingredient.quantity * cartItem.quantity;
-                inventoryUpdates.set(ingredient.stockItemId, currentDeduction + deductionAmount);
-              });
-            }
-          });
-        }
-      });
-
-      // Apply updates if any
-      if (inventoryUpdates.size > 0) {
-        setInventory(prevInventory => {
-          return prevInventory.map(stockItem => {
-            const deduction = inventoryUpdates.get(stockItem.id);
-            if (deduction) {
-              const newQuantity = stockItem.currentQuantity - deduction;
-              console.log(`[Inventory] Updating ${stockItem.name}: ${stockItem.currentQuantity} -> ${newQuantity}`);
-
-              // Sync to Supabase
-              SupabaseSync.syncUpdateStockItem(stockItem.id, {
-                currentQuantity: newQuantity
-              }).catch(err => console.error('Failed to sync inventory deduction:', err));
-
-              return { ...stockItem, currentQuantity: newQuantity };
-            }
-            return stockItem;
-          });
-        });
-      }
-    }
-
-
-
-    // LOYALTY SYSTEM: Redemption and Earning
-    if (newOrder.customerId) {
-      // 1. Deduct Redeemed Points
-      if (newOrder.redeemedPoints && newOrder.redeemedPoints > 0) {
-        redeemLoyaltyPoints(newOrder.customerId, newOrder.redeemedPoints);
-        console.log(`[Loyalty] Redeemed ${newOrder.redeemedPoints} points from customer ${newOrder.customerId}`);
-      }
-
-      // 2. Award Points on Net Spend (Total - Redemption)
-      // Policy: 1 Point = $1 spend
-      const redemptionValue = newOrder.redemptionAmount || 0;
-      const netTotal = Math.max(0, newOrder.total - redemptionValue);
-      const pointsToEarn = Math.floor(netTotal);
-
-      if (pointsToEarn > 0) {
-        addLoyaltyPoints(newOrder.customerId, pointsToEarn, newOrder.total);
-        console.log(`[Loyalty] Awarded ${pointsToEarn} points to customer ${newOrder.customerId} (Net Spend: $${netTotal.toFixed(2)})`);
-      }
-    }
-
-    return newOrder;
-  }, [recipes, inventory, addLoyaltyPoints, redeemLoyaltyPoints]);
 
   const updateOrderStatus = useCallback(async (orderId: string, status: Order['status'], staffId?: string) => {
     setOrders(prev => prev.map(order => {
@@ -2360,6 +2209,157 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
     setCustomers(prev => prev.map(c => c.id === id ? { ...c, ...updates } : c));
   }, []);
+
+  // Order actions
+  const addOrder = useCallback(async (orderData: Omit<Order, 'id' | 'orderNumber'>): Promise<Order> => {
+    const timestamp = Date.now();
+
+    // Get order prefix from localStorage (default to 'ORD')
+    const orderPrefix = typeof window !== 'undefined'
+      ? localStorage.getItem('orderNumberPrefix') || 'ORD'
+      : 'ORD';
+
+    const newOrder: Order = {
+      ...orderData,
+      id: generateUUID(),
+      orderNumber: `${orderPrefix}-${timestamp.toString().slice(-6)}`,
+    };
+
+    // Sync to Supabase
+    try {
+      // 1. Handle "Walk-in" Customer Details (Auto-create or Find)
+      let finalCustomerId = newOrder.customerId;
+
+      if (!finalCustomerId && newOrder.customerName && newOrder.customerPhone) {
+        // Check if customer already exists locally
+        const existingCustomer = customers.find(c => c.phone === newOrder.customerPhone);
+
+        if (existingCustomer) {
+          finalCustomerId = existingCustomer.id;
+          console.log(`[Order] Found existing customer by phone: ${existingCustomer.name}`);
+        } else {
+          // Create new customer
+          try {
+            console.log(`[Order] Auto-creating new customer: ${newOrder.customerName}`);
+            const newCustomer = await addCustomer({
+              name: newOrder.customerName,
+              phone: newOrder.customerPhone,
+              email: undefined,
+              birthday: undefined,
+              notes: 'Auto-created from POS Order'
+            });
+            finalCustomerId = newCustomer.id;
+          } catch (err) {
+            console.error('[Order] Failed to auto-create customer:', err);
+            // Proceed without ID, just text details
+          }
+        }
+      }
+
+      // Update order with resolved customer ID
+      if (finalCustomerId) {
+        newOrder.customerId = finalCustomerId;
+      }
+
+      // 2. Sync Order to Supabase
+      const supabaseOrder = await SupabaseSync.syncAddOrder(newOrder);
+      if (supabaseOrder && supabaseOrder.id) {
+        newOrder.id = supabaseOrder.id;
+      }
+    } catch (error) {
+      console.error('Failed to sync order to Supabase:', error);
+    }
+
+    setOrders(prev => [newOrder, ...prev]);
+
+    // Also add to orderHistory for Order History page
+    const historyItem: OrderHistoryItem = {
+      ...newOrder,
+      voidRefundStatus: 'none',
+      refundAmount: 0,
+    };
+    setOrderHistory(prev => [historyItem, ...prev]);
+
+    // AUTOMATIC INVENTORY DEDUCTION LOGIC
+    // Check if ordered items have recipes and deduct ingredients from inventory
+    if (recipes.length > 0 && inventory.length > 0) {
+      const inventoryUpdates = new Map<string, number>();
+
+      newOrder.items.forEach(cartItem => {
+        // Find recipe for this item
+        const recipe = recipes.find(r => r.menuItemId === cartItem.id);
+
+        if (recipe) {
+          console.log(`[Inventory] Deducting ingredients for ${cartItem.name} (Recipe found)`);
+
+          recipe.ingredients.forEach(ingredient => {
+            const currentDeduction = inventoryUpdates.get(ingredient.stockItemId) || 0;
+            // Total deduction = ingredient quantity per item * item quantity in cart
+            const deductionAmount = ingredient.quantity * cartItem.quantity;
+            inventoryUpdates.set(ingredient.stockItemId, currentDeduction + deductionAmount);
+          });
+        }
+
+        // Deduct Modifier Ingredients
+        if (cartItem.selectedModifiers && cartItem.selectedModifiers.length > 0) {
+          cartItem.selectedModifiers.forEach((mod: any) => {
+            const modifierOption = modifierOptions.find(m => m.id === mod.id);
+            if (modifierOption && modifierOption.ingredients && modifierOption.ingredients.length > 0) {
+              console.log(`[Inventory] Deducting ingredients for modifier ${modifierOption.name}`);
+              modifierOption.ingredients.forEach(ingredient => {
+                const currentDeduction = inventoryUpdates.get(ingredient.stockItemId) || 0;
+                const deductionAmount = ingredient.quantity * cartItem.quantity;
+                inventoryUpdates.set(ingredient.stockItemId, currentDeduction + deductionAmount);
+              });
+            }
+          });
+        }
+      });
+
+      // Apply updates if any
+      if (inventoryUpdates.size > 0) {
+        setInventory(prevInventory => {
+          return prevInventory.map(stockItem => {
+            const deduction = inventoryUpdates.get(stockItem.id);
+            if (deduction) {
+              const newQuantity = stockItem.currentQuantity - deduction;
+              console.log(`[Inventory] Updating ${stockItem.name}: ${stockItem.currentQuantity} -> ${newQuantity}`);
+
+              // Sync to Supabase
+              SupabaseSync.syncUpdateStockItem(stockItem.id, {
+                currentQuantity: newQuantity
+              }).catch(err => console.error('Failed to sync inventory deduction:', err));
+
+              return { ...stockItem, currentQuantity: newQuantity };
+            }
+            return stockItem;
+          });
+        });
+      }
+    }
+
+    // LOYALTY SYSTEM: Redemption and Earning
+    if (newOrder.customerId) {
+      // 1. Deduct Redeemed Points
+      if (newOrder.redeemedPoints && newOrder.redeemedPoints > 0) {
+        redeemLoyaltyPoints(newOrder.customerId, newOrder.redeemedPoints);
+        console.log(`[Loyalty] Redeemed ${newOrder.redeemedPoints} points from customer ${newOrder.customerId}`);
+      }
+
+      // 2. Award Points on Net Spend (Total - Redemption)
+      // Policy: 1 Point = $1 spend
+      const redemptionValue = newOrder.redemptionAmount || 0;
+      const netTotal = Math.max(0, newOrder.total - redemptionValue);
+      const pointsToEarn = Math.floor(netTotal);
+
+      if (pointsToEarn > 0) {
+        addLoyaltyPoints(newOrder.customerId, pointsToEarn, newOrder.total);
+        console.log(`[Loyalty] Awarded ${pointsToEarn} points to customer ${newOrder.customerId} (Net Spend: $${netTotal.toFixed(2)})`);
+      }
+    }
+
+    return newOrder;
+  }, [recipes, inventory, addLoyaltyPoints, redeemLoyaltyPoints, addCustomer, customers, modifierOptions]);
 
 
 
@@ -4514,7 +4514,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     setOrders(prev => prev.map(updateOrder));
 
     return { success: true };
-  }, [orderHistory, orders, cashFlows]);
+  }, [orderHistory, orders]);
 
   const requestRefund = useCallback(async (
     orderId: string,
@@ -4580,7 +4580,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     setOrders(prev => prev.map(updateOrder));
 
     return { success: true };
-  }, [orderHistory, orders, cashFlows]);
+  }, [orderHistory, orders]);
 
   const approveVoidRefund = useCallback(async (
     requestId: string,
@@ -4761,7 +4761,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }
 
     return { success: true };
-  }, [voidRefundRequests, orderHistory, orders, cashFlows]);
+  }, [voidRefundRequests, orderHistory, orders, cashFlows, customers]);
 
   const rejectVoidRefund = useCallback(async (
     requestId: string,
