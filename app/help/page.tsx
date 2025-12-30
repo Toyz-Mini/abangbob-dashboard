@@ -254,7 +254,7 @@ export default function HelpCenterPage() {
               {searchResults.length === 0 ? (
                 <div className="bg-slate-800/50 rounded-xl p-8 text-center">
                   <AlertCircle className="w-12 h-12 text-slate-500 mx-auto mb-3" />
-                  <p className="text-slate-400">Tiada hasil ditemui untuk "{searchQuery}"</p>
+                  <p className="text-slate-400">Tiada hasil ditemui untuk &quot;{searchQuery}&quot;</p>
                 </div>
               ) : (
                 <div className="space-y-2">

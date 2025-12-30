@@ -27,9 +27,9 @@ export function DataMigrationComponent() {
       const migrationResults = await migrateAllData((prog) => {
         setProgress(prog);
       });
-      
+
       setResults(migrationResults);
-      
+
       // Check if all migrations were successful
       const allSuccessful = migrationResults.every(r => r.success);
       if (allSuccessful) {
@@ -57,7 +57,7 @@ export function DataMigrationComponent() {
   return (
     <div className="p-6 bg-gray-800 rounded-lg border border-gray-700">
       <h3 className="text-xl font-bold mb-4 text-white">🚀 Data Migration</h3>
-      
+
       {hasData ? (
         <div className="space-y-4">
           <div className="p-4 bg-blue-900/30 border border-blue-700/50 rounded">
@@ -100,14 +100,14 @@ export function DataMigrationComponent() {
                   <span className="text-white font-semibold">Migrating...</span>
                   <span className="text-gray-400">{progress.completed} / {progress.total}</span>
                 </div>
-                
+
                 <div className="w-full bg-gray-600 rounded-full h-3 mb-2">
                   <div
                     className="bg-blue-500 h-3 rounded-full transition-all duration-300"
                     style={{ width: `${(progress.completed / progress.total) * 100}%` }}
                   />
                 </div>
-                
+
                 <p className="text-gray-400 text-sm">
                   Current: <span className="text-white">{progress.current}</span>
                 </p>
@@ -118,11 +118,10 @@ export function DataMigrationComponent() {
                   {progress.results.map((result, idx) => (
                     <div
                       key={idx}
-                      className={`p-3 rounded flex items-center justify-between ${
-                        result.success
+                      className={`p-3 rounded flex items-center justify-between ${result.success
                           ? 'bg-green-900/30 border border-green-700/50'
                           : 'bg-red-900/30 border border-red-700/50'
-                      }`}
+                        }`}
                     >
                       <span className="text-white">{result.table}</span>
                       <div className="flex items-center gap-2">
@@ -147,11 +146,10 @@ export function DataMigrationComponent() {
 
           {results && !migrating && (
             <div className="space-y-4">
-              <div className={`p-4 rounded ${
-                results.every(r => r.success)
+              <div className={`p-4 rounded ${results.every(r => r.success)
                   ? 'bg-green-900/50 border border-green-700'
                   : 'bg-yellow-900/50 border border-yellow-700'
-              }`}>
+                }`}>
                 <div className="flex items-center gap-2 mb-2">
                   <span className="text-2xl">
                     {results.every(r => r.success) ? '✅' : '⚠️'}
@@ -172,11 +170,10 @@ export function DataMigrationComponent() {
                 {results.map((result, idx) => (
                   <div
                     key={idx}
-                    className={`p-3 rounded ${
-                      result.success
+                    className={`p-3 rounded ${result.success
                         ? 'bg-green-900/30 border border-green-700/50'
                         : 'bg-red-900/30 border border-red-700/50'
-                    }`}
+                      }`}
                   >
                     <div className="flex items-center justify-between">
                       <span className="text-white font-medium">{result.table}</span>
@@ -198,7 +195,7 @@ export function DataMigrationComponent() {
               {showClearOption && (
                 <div className="pt-4 border-t border-gray-700">
                   <div className="p-3 bg-yellow-900/30 border border-yellow-700/50 rounded text-yellow-400 text-sm mb-3">
-                    ⚠️ <strong>Optional:</strong> You can now clear localStorage data since it's safely stored in Supabase. However, keeping it provides offline backup.
+                    ⚠️ <strong>Optional:</strong> You can now clear localStorage data since it&apos;s safely stored in Supabase. However, keeping it provides offline backup.
                   </div>
                   <button
                     onClick={handleClearLocalStorage}

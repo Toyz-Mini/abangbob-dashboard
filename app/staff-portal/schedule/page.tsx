@@ -245,14 +245,12 @@ export default function SchedulePage() {
   };
 
   // Navigation
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const goToPreviousWeek = () => {
     const newStart = new Date(currentWeekStart);
     newStart.setDate(newStart.getDate() - 7);
     setCurrentWeekStart(newStart);
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const goToNextWeek = () => {
     const newStart = new Date(currentWeekStart);
     newStart.setDate(newStart.getDate() + 7);
@@ -569,7 +567,7 @@ export default function SchedulePage() {
 
                       {schedule.notes && (
                         <div className="mt-3 ml-[3.75rem] text-xs text-gray-500 italic bg-gray-50 p-2 rounded-lg border border-gray-100">
-                          "{schedule.notes}"
+                          &quot;{schedule.notes}&quot;
                         </div>
                       )}
                     </div>

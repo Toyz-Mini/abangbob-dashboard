@@ -1250,7 +1250,7 @@ export default function SettingsPage() {
                       <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
                         {printerSettings.isConnected
                           ? 'Thermal printer sedia untuk digunakan'
-                          : 'Klik "Sambung Printer" untuk mula'}
+                          : 'Klik &quot;Sambung Printer&quot; untuk mula'}
                       </div>
                     </div>
                   </div>
@@ -1416,7 +1416,7 @@ export default function SettingsPage() {
                         <ol style={{ paddingLeft: '1.25rem', margin: '0.5rem 0' }}>
                           <li>Gunakan Chrome/Edge pada laptop/PC</li>
                           <li>Connect printer via USB</li>
-                          <li>Klik "Connect Printer" di atas</li>
+                          <li>Klik &quot;Connect Printer&quot; di atas</li>
                         </ol>
                         <div style={{ color: 'var(--warning)', marginTop: '0.5rem' }}>
                           ⚠️ Tidak support Android!
@@ -1536,9 +1536,9 @@ export default function SettingsPage() {
                   </div>
                   <ol style={{ fontSize: '0.875rem', color: '#1e40af', paddingLeft: '1.25rem', margin: 0 }}>
                     <li>Pastikan thermal printer disambung ke komputer via USB</li>
-                    <li>Klik "Sambung Printer" dan pilih printer dari senarai</li>
+                    <li>Klik &quot;Sambung Printer&quot; dan pilih printer dari senarai</li>
                     <li>Untuk cash drawer, sambung kabel RJ12 dari drawer ke port DK pada printer</li>
-                    <li>Gunakan "Test Print" dan "Test Cash Drawer" untuk memastikan semua berfungsi</li>
+                    <li>Gunakan &quot;Test Print&quot; dan &quot;Test Cash Drawer&quot; untuk memastikan semua berfungsi</li>
                   </ol>
                 </div>
               </div>

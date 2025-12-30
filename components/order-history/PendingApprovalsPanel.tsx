@@ -166,7 +166,7 @@ export default function PendingApprovalsPanel({
                 fontSize: '0.95rem'
               }}>
                 <span style={{ fontWeight: 600, display: 'block', marginBottom: '0.25rem', fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-secondary)' }}>Reason</span>
-                "{request.reason}"
+                &quot;{request.reason}&quot;
               </div>
 
               {/* Items List (if partial) */}

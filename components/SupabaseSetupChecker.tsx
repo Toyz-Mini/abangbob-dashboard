@@ -161,7 +161,7 @@ VALUES ('outlet-logos', 'outlet-logos', true);`
       if (!supabase) {
         return {
           status: 'error',
-          message: 'Supabase client tidak boleh dibuat',
+          message: "Database is not accessible. Please check your Supabase credentials in your .env.local file. If you haven't set them up yet, check the console for instructions.",
           details: 'Check environment variables dan network'
         };
       }
@@ -510,7 +510,7 @@ VALUES ('outlet-logos', 'outlet-logos', true);`
               <div className="guide-note">
                 <AlertTriangle size={16} />
                 <span>
-                  Selepas setup, klik "Test Semula" untuk verify configuration.
+                  Selepas setup, klik &quot;Test Semula&quot; untuk verify configuration.
                 </span>
               </div>
             </div>

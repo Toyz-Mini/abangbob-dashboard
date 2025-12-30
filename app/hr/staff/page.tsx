@@ -74,7 +74,7 @@ export default function StaffListPage() {
 
   const { getLeaveBalance } = useStaffPortal();
   const { getPositionsForRole, getPositionByName, positions } = usePositionPermissions();
-  const { refreshPositions } = useStore();
+  const { refreshPositions, salaryAdvances, markSalaryAdvanceAsDeducted } = useStore();
 
   // Refresh positions on mount for dropdown
   useEffect(() => {
@@ -996,7 +996,6 @@ export default function StaffListPage() {
 
               {/* Salary Advance Display */}
               {(() => {
-                const { salaryAdvances, markSalaryAdvanceAsDeducted } = useStore();
                 const staffAdvances = salaryAdvances?.filter(a => a.staffId === selectedStaff.id);
 
                 // Calculate outstanding advance: Approved but not deducted (deductedMonth is falsy)

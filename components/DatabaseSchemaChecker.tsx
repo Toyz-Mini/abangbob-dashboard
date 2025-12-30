@@ -10,7 +10,7 @@ export function DatabaseSchemaChecker() {
   const checkSchema = async () => {
     setChecking(true);
     setResult(null);
-    
+
     try {
       const testResult = await testSupabaseConnection();
       setResult(testResult);
@@ -29,7 +29,7 @@ export function DatabaseSchemaChecker() {
   return (
     <div className="p-6 bg-gray-800 rounded-lg border border-gray-700">
       <h3 className="text-xl font-bold mb-4 text-white">🗄️ Database Schema Verification</h3>
-      
+
       <button
         onClick={checkSchema}
         disabled={checking}
@@ -57,15 +57,15 @@ export function DatabaseSchemaChecker() {
               <p className="text-red-400 text-sm mb-4">
                 You need to run the schema.sql file in Supabase Dashboard.
               </p>
-              
+
               <div className="bg-gray-900 p-3 rounded text-sm text-gray-300 space-y-2">
                 <p className="font-semibold text-white">Setup Instructions:</p>
                 <ol className="list-decimal list-inside space-y-1 ml-2">
                   <li>Go to <a href="https://supabase.com" target="_blank" rel="noopener" className="text-blue-400 hover:underline">Supabase Dashboard</a></li>
                   <li>Navigate to <strong>SQL Editor</strong></li>
-                  <li>Click <strong>"New Query"</strong></li>
+                  <li>Click <strong>&quot;New Query&quot;</strong></li>
                   <li>Copy contents from <code className="bg-gray-800 px-1">lib/supabase/schema.sql</code></li>
-                  <li>Paste and click <strong>"Run"</strong></li>
+                  <li>Paste and click <strong>&quot;Run&quot;</strong></li>
                 </ol>
               </div>
             </div>
@@ -78,11 +78,10 @@ export function DatabaseSchemaChecker() {
                 {result.tables.map((table) => (
                   <div
                     key={table.name}
-                    className={`p-3 rounded ${
-                      table.exists 
-                        ? 'bg-green-900/30 border border-green-700/50' 
+                    className={`p-3 rounded ${table.exists
+                        ? 'bg-green-900/30 border border-green-700/50'
                         : 'bg-red-900/30 border border-red-700/50'
-                    }`}
+                      }`}
                   >
                     <div className="flex items-center justify-between">
                       <span className="text-white text-sm font-medium">{table.name}</span>

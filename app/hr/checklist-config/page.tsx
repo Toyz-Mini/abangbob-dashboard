@@ -5,7 +5,7 @@ import MainLayout from '@/components/MainLayout';
 import { useStaffPortal } from '@/lib/store';
 import Modal from '@/components/Modal';
 import LoadingSpinner from '@/components/LoadingSpinner';
-import { 
+import {
   Settings,
   Plus,
   Edit2,
@@ -19,12 +19,12 @@ import {
 } from 'lucide-react';
 
 export default function ChecklistConfigPage() {
-  const { 
+  const {
     checklistTemplates,
     addChecklistTemplate,
     updateChecklistTemplate,
     deleteChecklistTemplate,
-    isInitialized 
+    isInitialized
   } = useStaffPortal();
 
   const [activeTab, setActiveTab] = useState<'opening' | 'closing'>('opening');
@@ -59,7 +59,7 @@ export default function ChecklistConfigPage() {
   const openEditModal = (id: string) => {
     const item = checklistTemplates.find(t => t.id === id);
     if (!item) return;
-    
+
     setEditingItem(id);
     setForm({
       title: item.title,
@@ -173,9 +173,9 @@ export default function ChecklistConfigPage() {
           {filteredTemplates.length > 0 ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               {filteredTemplates.map((item, index) => (
-                <div 
+                <div
                   key={item.id}
-                  style={{ 
+                  style={{
                     padding: '1rem',
                     borderRadius: 'var(--radius-md)',
                     background: item.isActive ? 'var(--gray-50)' : 'var(--gray-100)',
@@ -187,27 +187,27 @@ export default function ChecklistConfigPage() {
                   }}
                 >
                   <GripVertical size={20} color="var(--gray-400)" style={{ cursor: 'grab', marginTop: '0.125rem' }} />
-                  
+
                   <div style={{ flex: 1 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
-                      <span style={{ 
-                        fontWeight: 600, 
-                        fontSize: '0.75rem', 
-                        background: 'var(--gray-200)', 
-                        padding: '0.125rem 0.5rem', 
-                        borderRadius: 'var(--radius-sm)' 
+                      <span style={{
+                        fontWeight: 600,
+                        fontSize: '0.75rem',
+                        background: 'var(--gray-200)',
+                        padding: '0.125rem 0.5rem',
+                        borderRadius: 'var(--radius-sm)'
                       }}>
                         #{index + 1}
                       </span>
                       <span style={{ fontWeight: 500 }}>{item.title}</span>
                     </div>
-                    
+
                     {item.description && (
                       <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
                         {item.description}
                       </div>
                     )}
-                    
+
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
                       {item.requirePhoto && (
                         <span className="badge badge-info" style={{ fontSize: '0.65rem' }}>
@@ -230,20 +230,20 @@ export default function ChecklistConfigPage() {
                   </div>
 
                   <div style={{ display: 'flex', gap: '0.25rem' }}>
-                    <button 
+                    <button
                       className="btn btn-outline btn-sm"
                       onClick={() => toggleActive(item.id, item.isActive)}
                       title={item.isActive ? 'Nyahaktif' : 'Aktifkan'}
                     >
                       <CheckCircle size={14} color={item.isActive ? 'var(--success)' : 'var(--gray-400)'} />
                     </button>
-                    <button 
+                    <button
                       className="btn btn-outline btn-sm"
                       onClick={() => openEditModal(item.id)}
                     >
                       <Edit2 size={14} />
                     </button>
-                    <button 
+                    <button
                       className="btn btn-outline btn-sm"
                       onClick={() => handleDelete(item.id)}
                       style={{ color: 'var(--danger)' }}
@@ -256,7 +256,7 @@ export default function ChecklistConfigPage() {
             </div>
           ) : (
             <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>
-              Tiada item. Klik "Tambah Item" untuk mula.
+              Tiada item. Klik &quot;Tambah Item&quot; untuk mula.
             </div>
           )}
         </div>

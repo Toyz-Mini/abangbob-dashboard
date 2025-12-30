@@ -287,7 +287,7 @@ export default function OTClaimPage() {
                                                 {claim.status === 'pending' && <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />}
                                                 {claim.status === 'approved' && <span className="w-2 h-2 rounded-full bg-emerald-500" />}
                                             </div>
-                                            <p className="text-xs text-gray-500 line-clamp-1 italic">"{claim.reason}"</p>
+                                            <p className="text-xs text-gray-500 line-clamp-1 italic">&quot;{claim.reason}&quot;</p>
 
                                             <div className="flex items-center gap-3 mt-2">
                                                 <span className="text-[10px] font-medium px-2 py-0.5 bg-gray-100 text-gray-600 rounded-lg">

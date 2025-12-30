@@ -13,7 +13,7 @@ interface RegisterModalProps {
 }
 
 export default function RegisterModal({ isOpen, onClose, mode }: RegisterModalProps) {
-    const { openRegister, closeRegister, currentRegister, getTodayOrders, getTodayCashFlow } = useStore();
+    const { openRegister, closeRegister, currentRegister, getTodayOrders, getTodayCashFlow, orders } = useStore();
     const { user, currentStaff } = useAuth();
 
     const [amount, setAmount] = useState<string>('');
@@ -80,7 +80,6 @@ export default function RegisterModal({ isOpen, onClose, mode }: RegisterModalPr
 
         // We can't easily get precise session sales without querying orders > openedAt.
         // Let's do a quick client-side filtering of `orders`
-        const { orders } = useStore(); // Need to destructure orders inside component
 
         const sessionOrders = orders.filter(o =>
             o.status === 'completed' &&

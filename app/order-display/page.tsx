@@ -393,7 +393,7 @@ export default function OrderDisplayPage() {
 
       {/* Footer */}
       <div style={{ textAlign: 'center', color: '#64748b', fontSize: '0.875rem', fontWeight: 500 }}>
-        Sila semak nombor pesanan anda di bahagian "Sedia Diambil"
+        Sila semak nombor pesanan anda di bahagian &quot;Sedia Diambil&quot;
       </div>
     </div>
   );

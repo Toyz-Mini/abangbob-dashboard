@@ -698,7 +698,7 @@ export default function InventoryPage() {
                 <div className="flex items-center gap-2 text-sm">
                   <span className="text-red-500 text-base">⚠️</span>
                   <span className="text-red-700">
-                    <strong>"{duplicateItem.name}"</strong> sudah wujud
+                    <strong>&quot;{duplicateItem.name}&quot;</strong> sudah wujud
                     <span className="text-red-500 ml-1">• {duplicateItem.currentQuantity} {duplicateItem.unit}</span>
                   </span>
                 </div>

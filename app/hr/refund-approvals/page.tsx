@@ -57,25 +57,13 @@ export default function RefundApprovalsPage() {
   const userRole = currentStaff?.role || 'Staff';
   const canApprove = canApproveVoidRefund(userRole);
 
-  // Redirect if not authorized
-  if (!canApprove) {
-    return (
-      <MainLayout>
-        <div style={{ textAlign: 'center', padding: '3rem' }}>
-          <AlertTriangle size={48} style={{ color: 'var(--danger)', marginBottom: '1rem' }} />
-          <h2>Access Denied</h2>
-          <p>You do not have permission to view this page.</p>
-        </div>
-      </MainLayout>
-    );
-  }
 
   // Get pending requests - add defensive fallbacks
   const pendingRequests = getPendingVoidRefundRequests() || [];
   const pendingCount = getPendingVoidRefundCount() || 0;
 
   // Ensure voidRefundRequests is always an array
-  const safeVoidRefundRequests = voidRefundRequests || [];
+  const safeVoidRefundRequests = useMemo(() => voidRefundRequests || [], [voidRefundRequests]);
 
   // Get filtered requests
   const filteredRequests = useMemo(() => {
@@ -103,6 +91,10 @@ export default function RefundApprovalsPage() {
       pendingAmount: pending.reduce((sum, r) => sum + (r.amount || 0), 0),
     };
   }, [safeVoidRefundRequests]);
+
+  // Redirect if not authorized (handled in render)
+  // Hooks must run before any return
+
 
   // Handle view order details
   const handleViewOrder = (request: VoidRefundRequest) => {
@@ -232,6 +224,18 @@ export default function RefundApprovalsPage() {
       <MainLayout>
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
           <LoadingSpinner />
+        </div>
+      </MainLayout>
+    );
+  }
+
+  if (!canApprove) {
+    return (
+      <MainLayout>
+        <div style={{ textAlign: 'center', padding: '3rem' }}>
+          <AlertTriangle size={48} style={{ color: 'var(--danger)', marginBottom: '1rem' }} />
+          <h2>Access Denied</h2>
+          <p>You do not have permission to view this page.</p>
         </div>
       </MainLayout>
     );

@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { useSetup, SetupStaffMember } from '@/lib/contexts/SetupContext';
-import { 
-  Plus, 
-  Trash2, 
-  Edit2, 
+import {
+  Plus,
+  Trash2,
+  Edit2,
   Users,
   Shield,
   UserCog,
@@ -35,11 +35,11 @@ function generatePin(): string {
 export default function StaffSetupStep({ onValidChange }: Props) {
   const { setupData, updateStaffMembers } = useSetup();
   const { staffMembers } = setupData;
-  
+
   const [showForm, setShowForm] = useState(false);
   const [editingStaff, setEditingStaff] = useState<SetupStaffMember | null>(null);
   const [showPins, setShowPins] = useState<Record<string, boolean>>({});
-  
+
   // Form states
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -54,7 +54,7 @@ export default function StaffSetupStep({ onValidChange }: Props) {
 
   const handleAddStaff = () => {
     if (!name.trim() || !pin) return;
-    
+
     const newStaff: SetupStaffMember = {
       id: editingStaff?.id || `staff_${Date.now()}`,
       name,
@@ -63,13 +63,13 @@ export default function StaffSetupStep({ onValidChange }: Props) {
       role,
       pin,
     };
-    
+
     if (editingStaff) {
       updateStaffMembers(staffMembers.map(s => s.id === editingStaff.id ? newStaff : s));
     } else {
       updateStaffMembers([...staffMembers, newStaff]);
     }
-    
+
     resetForm();
   };
 
@@ -205,8 +205,8 @@ export default function StaffSetupStep({ onValidChange }: Props) {
                         onClick={() => setRole(r.id as 'Admin' | 'Manager' | 'Staff')}
                         className={`
                           p-3 rounded-xl border-2 transition-all text-center
-                          ${role === r.id 
-                            ? 'border-teal-500 bg-teal-500/10' 
+                          ${role === r.id
+                            ? 'border-teal-500 bg-teal-500/10'
                             : 'border-slate-600 hover:border-slate-500'
                           }
                         `}
@@ -274,16 +274,17 @@ export default function StaffSetupStep({ onValidChange }: Props) {
         <div className="text-center py-12 bg-slate-700/30 rounded-xl">
           <Users className="w-12 h-12 text-slate-500 mx-auto mb-3" />
           <p className="text-slate-400 mb-2">Belum ada staf didaftarkan</p>
-          <p className="text-sm text-slate-500">Klik "Tambah Staf" untuk mula mendaftarkan pekerja anda</p>
+          <p className="text-sm text-slate-500">Klik &quot;Tambah Staf&quot; untuk mula mendaftarkan pekerja anda
+          </p>
         </div>
       ) : (
         <div className="space-y-6">
           {ROLES.map(roleInfo => {
             const staffInRole = staffByRole[roleInfo.id as keyof typeof staffByRole];
             if (staffInRole.length === 0) return null;
-            
+
             const Icon = roleInfo.icon;
-            
+
             return (
               <div key={roleInfo.id}>
                 <h4 className={`text-sm font-medium ${roleInfo.color} mb-3 flex items-center gap-2`}>
@@ -326,7 +327,7 @@ export default function StaffSetupStep({ onValidChange }: Props) {
                             )}
                           </button>
                         </div>
-                        
+
                         {/* Actions */}
                         <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                           <button

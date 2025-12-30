@@ -254,7 +254,7 @@ export default function ShiftWizardModal({ isOpen, onClose, mode }: ShiftWizardM
                 </div>
                 {notes && (
                     <div className="text-sm text-gray-500 italic pt-2">
-                        "{notes}"
+                        &quot;{notes}&quot;
                     </div>
                 )}
             </div>

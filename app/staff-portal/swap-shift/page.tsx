@@ -364,9 +364,9 @@ export default function SwapShiftPage() {
                     </div>
                     {request.description && (
                       <div className="swap-reason" style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '0.5rem', fontStyle: 'italic' }}>
-                        "{request.description.length > 100
+                        &quot;{request.description.length > 100
                           ? request.description.substring(0, 100) + '...'
-                          : request.description}"
+                          : request.description}&quot;
                       </div>
                     )}
 
