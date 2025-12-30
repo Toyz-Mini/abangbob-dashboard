@@ -15,10 +15,13 @@ import {
     MoreHorizontal,
     LayoutDashboard,
     ShoppingCart,
-    Tv
+    Tv,
+    LogOut,
+    User
 } from 'lucide-react';
 import { useState } from 'react';
 import Sheet from './Sheet';
+import { useAuth } from '@/lib/contexts/AuthContext';
 
 interface ManagerPortalNavProps {
     currentPage?: string;
@@ -27,7 +30,17 @@ interface ManagerPortalNavProps {
 
 export default function ManagerPortalNav({ currentPage, pendingCount = 0 }: ManagerPortalNavProps) {
     const pathname = usePathname();
+    const { logoutStaff, signOut } = useAuth();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+    const handleLogout = async () => {
+        try {
+            await signOut();
+            window.location.href = '/login';
+        } catch (error) {
+            console.error('[ManagerPortalNav] Logout error:', error);
+        }
+    };
 
     const navItems = [
         {
@@ -68,10 +81,16 @@ export default function ManagerPortalNav({ currentPage, pendingCount = 0 }: Mana
 
     const managementItems = [
         {
+            href: '/staff-portal/profile',
+            label: 'Profil',
+            icon: User,
+            color: 'var(--primary)'
+        },
+        {
             href: '/hr',
             label: 'HR Portal',
             icon: Users,
-            color: 'var(--primary)'
+            color: 'var(--success)'
         },
         {
             href: '/hr/approvals',
@@ -83,13 +102,13 @@ export default function ManagerPortalNav({ currentPage, pendingCount = 0 }: Mana
             href: '/finance',
             label: 'Kewangan',
             icon: DollarSign,
-            color: 'var(--success)'
+            color: 'var(--info)'
         },
         {
             href: '/inventory',
             label: 'Stok',
             icon: Package,
-            color: 'var(--info)'
+            color: 'var(--primary)'
         },
         {
             href: '/kds',
@@ -101,7 +120,7 @@ export default function ManagerPortalNav({ currentPage, pendingCount = 0 }: Mana
             href: '/order-display',
             label: 'Display',
             icon: Tv,
-            color: 'var(--primary)'
+            color: 'var(--text-secondary)'
         },
         {
             href: '/order-history',
@@ -179,23 +198,57 @@ export default function ManagerPortalNav({ currentPage, pendingCount = 0 }: Mana
                                 onClick={() => setIsMenuOpen(false)}
                             >
                                 <div style={{
-                                    width: '45px',
-                                    height: '45px',
-                                    borderRadius: '12px',
+                                    width: '50px',
+                                    height: '50px',
+                                    borderRadius: '16px',
                                     background: 'var(--bg-secondary)',
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
                                     color: item.color || 'var(--text-primary)',
                                 }}>
-                                    <Icon size={20} />
+                                    <Icon size={24} />
                                 </div>
-                                <span style={{ fontSize: '0.65rem', fontWeight: 600, textAlign: 'center' }}>
+                                <span style={{ fontSize: '0.7rem', fontWeight: 600, textAlign: 'center' }}>
                                     {item.label}
                                 </span>
                             </Link>
                         );
                     })}
+
+                    {/* Logout Button */}
+                    <button
+                        onClick={handleLogout}
+                        style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '0.5rem',
+                            background: 'none',
+                            border: 'none',
+                            padding: 0,
+                            cursor: 'pointer',
+                            color: 'var(--primary)',
+                            gridColumn: 'span 1'
+                        }}
+                    >
+                        <div style={{
+                            width: '50px',
+                            height: '50px',
+                            borderRadius: '16px',
+                            background: 'var(--bg-secondary)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: 'var(--primary)',
+                        }}>
+                            <LogOut size={24} />
+                        </div>
+                        <span style={{ fontSize: '0.7rem', fontWeight: 600, textAlign: 'center' }}>
+                            Logout
+                        </span>
+                    </button>
                 </div>
             </Sheet>
         </>

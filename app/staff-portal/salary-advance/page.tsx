@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import MainLayout from '@/components/MainLayout';
+import StaffLayout from '@/components/StaffLayout';
 import { useStaffPortal } from '@/lib/store';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import Modal from '@/components/Modal';
@@ -219,17 +219,17 @@ export default function SalaryAdvancePage() {
 
     if (!isInitialized) {
         return (
-            <MainLayout>
+            <StaffLayout>
                 <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
                     <LoadingSpinner />
                 </div>
-            </MainLayout>
+            </StaffLayout>
         );
     }
 
     if (!isStaffLoggedIn || !currentStaff) {
         return (
-            <MainLayout>
+            <StaffLayout>
                 <div className="card" style={{ textAlign: 'center', padding: '3rem' }}>
                     <AlertCircle size={48} color="var(--warning)" style={{ marginBottom: '1rem' }} />
                     <h2>Sila Log Masuk</h2>
@@ -237,12 +237,12 @@ export default function SalaryAdvancePage() {
                         Anda perlu log masuk sebagai staf untuk memohon pendahuluan gaji.
                     </p>
                 </div>
-            </MainLayout>
+            </StaffLayout>
         );
     }
 
     return (
-        <MainLayout>
+        <StaffLayout>
             <div className="animate-fade-in">
                 {/* Header */}
                 <div style={{ marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '1rem' }}>
@@ -524,6 +524,6 @@ export default function SalaryAdvancePage() {
                     confirmText={confirmModal.confirmText}
                 />
             </div>
-        </MainLayout>
+        </StaffLayout>
     );
 }

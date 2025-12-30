@@ -37,7 +37,7 @@ export interface ClockInData {
     staff_id: string;
     latitude: number;
     longitude: number;
-    selfie_file: File;
+    selfie_file: File | Blob;
 }
 
 // =====================================================
@@ -204,11 +204,21 @@ export async function verifyLocation(latitude: number, longitude: number) {
 // PHOTO UPLOAD
 // =====================================================
 
-export async function uploadAttendancePhoto(staffId: string, file: File): Promise<{ path: string | null; error: string | null }> {
+export async function uploadAttendancePhoto(staffId: string, file: File | Blob): Promise<{ path: string | null; error: string | null }> {
     const supabase = getSupabaseClient();
     if (!supabase) return { path: null, error: 'Supabase not configured' };
 
-    const fileExt = file.name.split('.').pop();
+    // Handle both File and Blob objects - Blob doesn't have a name property
+    let fileExt = 'jpg'; // Default to jpg since webcam captures are usually jpeg
+    if (file instanceof File && file.name) {
+        fileExt = file.name.split('.').pop() || 'jpg';
+    } else if (file.type) {
+        // Fallback: extract extension from MIME type (e.g., 'image/jpeg' -> 'jpeg')
+        const mimeExt = file.type.split('/').pop();
+        if (mimeExt) {
+            fileExt = mimeExt === 'jpeg' ? 'jpg' : mimeExt;
+        }
+    }
     const fileName = `${staffId}/${Date.now()}.${fileExt}`;
 
     const { data, error } = await (supabase as any).storage
@@ -319,7 +329,7 @@ export interface ClockOutData {
     attendance_id: string;
     latitude: number;
     longitude: number;
-    selfie_file: File;
+    selfie_file: File | Blob;
     staff_id: string; // Needed for photo path
 }
 

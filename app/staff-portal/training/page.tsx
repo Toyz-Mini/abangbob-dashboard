@@ -1,12 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import MainLayout from '@/components/MainLayout';
+import StaffLayout from '@/components/StaffLayout';
 import { useStaff } from '@/lib/store';
 import Link from 'next/link';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import LoadingSpinner from '@/components/LoadingSpinner';
-import StaffPortalNav from '@/components/StaffPortalNav';
 import {
   ArrowLeft,
   GraduationCap,
@@ -133,16 +132,16 @@ export default function TrainingPage() {
 
   if (!isInitialized || !currentStaff) {
     return (
-      <MainLayout>
+      <StaffLayout>
         <div className="loading-container">
           <LoadingSpinner />
         </div>
-      </MainLayout>
+      </StaffLayout>
     );
   }
 
   return (
-    <MainLayout>
+    <StaffLayout>
       <div className="staff-portal animate-fade-in">
         {/* Header */}
         <div style={{ marginBottom: '1.5rem' }}>
@@ -333,9 +332,8 @@ export default function TrainingPage() {
           </div>
         )}
 
-        <StaffPortalNav />
       </div>
-    </MainLayout>
+    </StaffLayout>
   );
 }
 

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo, useCallback } from 'react';
-import MainLayout from '@/components/MainLayout';
+import StaffLayout from '@/components/StaffLayout';
 import { useStaffPortal, useStaff } from '@/lib/store';
 import { useStaffRequestsRealtime } from '@/lib/supabase/realtime-hooks';
 import { getRequestCategoryLabel, getStatusLabel, getStatusColor } from '@/lib/staff-portal-data';
@@ -143,16 +143,16 @@ export default function RequestsPage() {
 
   if (!isInitialized || !currentStaff) {
     return (
-      <MainLayout>
+      <StaffLayout>
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
           <LoadingSpinner />
         </div>
-      </MainLayout>
+      </StaffLayout>
     );
   }
 
   return (
-    <MainLayout>
+    <StaffLayout>
       <div className="animate-fade-in">
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
@@ -371,6 +371,6 @@ export default function RequestsPage() {
           confirmText={confirmModal.confirmText}
         />
       </div>
-    </MainLayout>
+    </StaffLayout>
   );
 }

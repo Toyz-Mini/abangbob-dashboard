@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import MainLayout from '@/components/MainLayout';
+import StaffLayout from '@/components/StaffLayout';
 import { useStaffPortal, useStaff } from '@/lib/store';
 import { getClaimTypeLabel } from '@/lib/staff-portal-data';
 import { ClaimType } from '@/lib/types';
@@ -149,16 +149,16 @@ export default function NewClaimPage() {
 
   if (!isInitialized || !currentStaff) {
     return (
-      <MainLayout>
+      <StaffLayout>
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
           <LoadingSpinner />
         </div>
-      </MainLayout>
+      </StaffLayout>
     );
   }
 
   return (
-    <MainLayout>
+    <StaffLayout>
       <div className="animate-fade-in">
         {/* Header */}
         <div className="page-header">
@@ -408,7 +408,7 @@ export default function NewClaimPage() {
         showCancel={confirmModal.showCancel}
         confirmText={confirmModal.confirmText}
       />
-    </MainLayout>
+    </StaffLayout>
   );
 }
 

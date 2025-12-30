@@ -1586,7 +1586,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           staff_id: staffId, // Note: snake_case for sync layer
           latitude,
           longitude,
-          selfie_file: photo as File
+          selfie_file: photo
         });
 
         if (syncResult.success && syncResult.data) {
@@ -1647,7 +1647,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           staff_id: staffId,
           latitude,
           longitude,
-          selfie_file: photo as File
+          selfie_file: photo
         });
 
         if (syncResult.success) {

@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import MainLayout from '@/components/MainLayout';
+import StaffLayout from '@/components/StaffLayout';
 import { useStaffPortal, useStaff } from '@/lib/store';
 import Link from 'next/link';
 import { useAuth } from '@/lib/contexts/AuthContext';
@@ -50,16 +50,16 @@ export default function ChecklistHistoryPage() {
 
   if (!isInitialized || !currentStaff) {
     return (
-      <MainLayout>
+      <StaffLayout>
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
           <LoadingSpinner />
         </div>
-      </MainLayout>
+      </StaffLayout>
     );
   }
 
   return (
-    <MainLayout>
+    <StaffLayout>
       <div className="animate-fade-in">
         {/* Header */}
         <div style={{ marginBottom: '1.5rem' }}>
@@ -179,7 +179,7 @@ export default function ChecklistHistoryPage() {
           </div>
         )}
       </div>
-    </MainLayout>
+    </StaffLayout>
   );
 }
 
