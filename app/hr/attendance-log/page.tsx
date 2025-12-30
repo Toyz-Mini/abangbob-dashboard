@@ -39,7 +39,9 @@ interface PhotoModalState {
 }
 
 export default function AttendanceLogPage() {
-    const { user, isAdmin, isManager } = useAuth();
+    const { user, currentStaff } = useAuth();
+    const isAdmin = currentStaff?.role === 'Admin';
+    const isManager = currentStaff?.role === 'Manager';
     const { staff } = useStaff();
     const [isLoading, setIsLoading] = useState(true);
     const [records, setRecords] = useState<ExtendedAttendanceRecord[]>([]);

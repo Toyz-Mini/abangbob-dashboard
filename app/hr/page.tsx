@@ -302,7 +302,7 @@ export default function HRDashboardPage() {
                 <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                   👥 Pengurusan Staf
                 </div>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
                   <Link href="/hr/staff">
                     <div className="hover-lift" style={{
                       padding: '1.25rem 1rem',
@@ -381,6 +381,26 @@ export default function HRDashboardPage() {
                         <Trophy size={20} />
                       </div>
                       <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-primary)' }}>KPI</div>
+                    </div>
+                  </Link>
+                  <Link href="/hr/attendance-log">
+                    <div className="hover-lift" style={{
+                      padding: '1.25rem 1rem',
+                      background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.05))',
+                      borderRadius: 'var(--radius-md)',
+                      textAlign: 'center',
+                      cursor: 'pointer',
+                      border: '2px solid rgba(16, 185, 129, 0.3)',
+                      boxShadow: 'var(--shadow-sm)'
+                    }}>
+                      <div style={{
+                        width: '40px', height: '40px', margin: '0 auto 0.75rem',
+                        borderRadius: '10px', background: 'rgba(16, 185, 129, 0.2)', color: 'var(--success)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center'
+                      }}>
+                        <ClipboardList size={20} />
+                      </div>
+                      <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-primary)' }}>Log Kehadiran</div>
                     </div>
                   </Link>
                 </div>
