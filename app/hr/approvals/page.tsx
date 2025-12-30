@@ -23,37 +23,43 @@ import {
   Calendar,
   UserPlus
 } from 'lucide-react';
+import { usePendingUsers, useApproveUser } from '@/lib/hooks/usePendingUsers';
 
 type TabType = 'leave' | 'claims' | 'ot' | 'advance' | 'requests' | 'newstaff';
+
+import { useLeaveRequestsQuery } from '@/lib/hooks/queries/useLeaveQuery';
+import { useClaimsQuery, useOTClaimsQuery } from '@/lib/hooks/queries/useClaimsQuery';
+import { useUpdateLeaveRequestMutation } from '@/lib/hooks/mutations/useLeaveMutations';
+import { useUpdateClaimMutation, useUpdateOTClaimMutation } from '@/lib/hooks/mutations/useClaimsMutations';
+
+// ... other imports ...
 
 export default function ApprovalsPage() {
   const searchParams = useSearchParams();
   const { user } = useAuth();
 
+  // -- Tanstack Query Data Fetching --
+  const { data: leaveRequestsData, isLoading: leaveLoading, refetch: refreshLeaveRequests } = useLeaveRequestsQuery();
+  const { data: claimRequestsData, isLoading: claimsLoading, refetch: refreshClaimRequests } = useClaimsQuery();
+  const { data: otClaimsData, isLoading: otLoading } = useOTClaimsQuery();
+
+  // Mutations
+  const updateLeaveMutation = useUpdateLeaveRequestMutation();
+  const updateClaimMutation = useUpdateClaimMutation();
+  const updateOTClaimMutation = useUpdateOTClaimMutation();
+
+  const leaveRequests = leaveRequestsData || [];
+  const claimRequests = claimRequestsData || [];
+  const otClaims = otClaimsData || [];
+
+  // Legacy Store (for Staff Requests & Salary Advance - not migrated yet)
   const {
-    // Leave
-    leaveRequests,
-    getPendingLeaveRequests,
-    approveLeaveRequest,
-    rejectLeaveRequest,
-    refreshLeaveRequests,
-    // Claims
-    claimRequests,
-    getPendingClaimRequests,
-    approveClaimRequest,
-    rejectClaimRequest,
-    refreshClaimRequests,
     // Requests
     staffRequests,
     getPendingStaffRequests,
     completeStaffRequest,
     rejectStaffRequest,
     refreshStaffRequests,
-    // OT Claims
-    otClaims,
-    getPendingOTClaims,
-    approveOTClaim,
-    rejectOTClaim,
     // Salary Advances
     salaryAdvances,
     getPendingSalaryAdvances,
@@ -62,6 +68,11 @@ export default function ApprovalsPage() {
     // Common
     isInitialized
   } = useStaffPortal();
+
+  // Helper getters for filtered lists (replacing store getters)
+  const getPendingLeaveRequests = () => leaveRequests.filter(r => r.status === 'pending');
+  const getPendingClaimRequests = () => claimRequests.filter(r => r.status === 'pending');
+  const getPendingOTClaims = () => otClaims.filter(c => c.status === 'pending'); // Assuming OTClaim has status field matching 'pending'
 
   // Realtime subscriptions for leave and claims
   const handleLeaveChange = useCallback(() => {
@@ -105,64 +116,28 @@ export default function ApprovalsPage() {
   const [selectedRequest, setSelectedRequest] = useState<StaffRequest | null>(null);
   const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
 
-  // Pending New Staff State
-  const [pendingUsers, setPendingUsers] = useState<any[]>([]);
-  const [isLoadingUsers, setIsLoadingUsers] = useState(false);
-
-  // Fetch pending users on mount and when tab changes
-  useEffect(() => {
-    if (activeTab === 'newstaff') {
-      fetchPendingUsers();
-    }
-  }, [activeTab]);
-
-  const fetchPendingUsers = async () => {
-    setIsLoadingUsers(true);
-    try {
-      const res = await fetch('/api/admin/pending-users');
-      const data = await res.json();
-      setPendingUsers(data.users || []);
-    } catch (error) {
-      console.error('Error fetching pending users:', error);
-    } finally {
-      setIsLoadingUsers(false);
-    }
-  };
+  // React Query Hooks for New Staff
+  const { data: pendingUsersData, isLoading: isLoadingUsers } = usePendingUsers();
+  const pendingUsers = pendingUsersData || [];
+  const approveUserMutation = useApproveUser();
 
   const handleApproveUser = async (userId: string) => {
-    setIsProcessing(true);
     try {
-      const res = await fetch('/api/admin/approve-user', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, action: 'approve' }),
-      });
-      if (res.ok) {
-        setPendingUsers(prev => prev.filter(u => u.id !== userId));
-      }
+      await approveUserMutation.mutateAsync({ userId, action: 'approve' });
     } catch (error) {
       console.error('Error approving user:', error);
-    } finally {
-      setIsProcessing(false);
+      alert('Gagal meluluskan pengguna');
     }
   };
 
   const handleRejectUser = async (userId: string, reason: string) => {
-    setIsProcessing(true);
     try {
-      const res = await fetch('/api/admin/approve-user', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, action: 'reject', reason }),
-      });
-      if (res.ok) {
-        setPendingUsers(prev => prev.filter(u => u.id !== userId));
-      }
+      await approveUserMutation.mutateAsync({ userId, action: 'reject', reason });
+      setShowRejectModal(false);
+      setSelectedItem(null);
     } catch (error) {
       console.error('Error rejecting user:', error);
-    } finally {
-      setIsProcessing(false);
-      setShowRejectModal(false);
+      alert('Gagal menolak pengguna');
     }
   };
 
@@ -197,12 +172,36 @@ export default function ApprovalsPage() {
     await new Promise(resolve => setTimeout(resolve, 300));
 
     if (type === 'leave') {
-      approveLeaveRequest(id, approverId, approverName);
+      updateLeaveMutation.mutate({
+        id,
+        updates: {
+          status: 'approved',
+          approvedBy: approverId,
+          approverName: approverName,
+          approvedAt: new Date().toISOString()
+        }
+      });
     } else if (type === 'claims') {
-      approveClaimRequest(id, approverId, approverName);
+      updateClaimMutation.mutate({
+        id,
+        updates: {
+          status: 'approved',
+          approvedBy: approverId,
+          approverName: approverName,
+          approvedAt: new Date().toISOString()
+        }
+      });
       setIsClaimModalOpen(false); // Close modal if open
     } else if (type === 'ot') {
-      approveOTClaim(id, approverId, approverName);
+      updateOTClaimMutation.mutate({
+        id,
+        updates: {
+          status: 'approved',
+          approvedBy: approverId,
+          approverName: approverName,
+          approvedAt: new Date().toISOString()
+        }
+      });
     } else if (type === 'advance') {
       approveSalaryAdvance(id, approverId, approverName);
     } else {
@@ -210,6 +209,7 @@ export default function ApprovalsPage() {
       setIsRequestModalOpen(false); // Close modal if open
     }
 
+    // Legacy processing simulation removed as mutations are async but handled by React Query state
     setIsProcessing(false);
   };
 
@@ -237,12 +237,39 @@ export default function ApprovalsPage() {
     await new Promise(resolve => setTimeout(resolve, 300));
 
     if (selectedItem.type === 'leave') {
-      rejectLeaveRequest(selectedItem.id, approverId, approverName, rejectReason);
+      updateLeaveMutation.mutate({
+        id: selectedItem.id,
+        updates: {
+          status: 'rejected',
+          approvedBy: approverId,
+          approverName: approverName,
+          approvedAt: new Date().toISOString(),
+          rejectionReason: rejectReason
+        }
+      });
     } else if (selectedItem.type === 'claims') {
-      rejectClaimRequest(selectedItem.id, approverId, approverName, rejectReason);
+      updateClaimMutation.mutate({
+        id: selectedItem.id,
+        updates: {
+          status: 'rejected',
+          approvedBy: approverId,
+          approverName: approverName,
+          approvedAt: new Date().toISOString(),
+          rejectionReason: rejectReason
+        }
+      });
       setIsClaimModalOpen(false);
     } else if (selectedItem.type === 'ot') {
-      rejectOTClaim(selectedItem.id, approverId, approverName, rejectReason);
+      updateOTClaimMutation.mutate({
+        id: selectedItem.id,
+        updates: {
+          status: 'rejected',
+          approvedBy: approverId,
+          approverName: approverName,
+          approvedAt: new Date().toISOString(),
+          rejectionReason: rejectReason
+        }
+      });
     } else if (selectedItem.type === 'advance') {
       rejectSalaryAdvance(selectedItem.id, approverId, approverName, rejectReason);
     } else if (selectedItem.type === 'newstaff') {

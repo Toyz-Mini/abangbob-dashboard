@@ -2,7 +2,9 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import MainLayout from '@/components/MainLayout';
-import { useStaff, useStaffPortal, useStore } from '@/lib/store';
+import { useStaff, useStaffPortal, useStore } from '@/lib/store'; // Kept useStaff for attendance
+import { useStaffQuery } from '@/lib/hooks/queries/useStaffQuery';
+import { useUpdateStaffMutation, useDeleteStaffMutation } from '@/lib/hooks/mutations/useStaffMutations';
 import { useStaffRealtime } from '@/lib/supabase/realtime-hooks';
 import {
   StaffProfile,
@@ -54,7 +56,22 @@ import {
 type EditTab = 'personal' | 'employment' | 'salary' | 'permissions';
 
 export default function StaffListPage() {
-  const { staff, updateStaff, deleteStaff, getStaffAttendanceToday, refreshStaff, isInitialized } = useStaff();
+  const { getStaffAttendanceToday } = useStaff(); // Only keep needed legacy methods
+  const { data: staffData, isLoading: staffLoading, refetch: refreshStaff } = useStaffQuery();
+  const staff = staffData || [];
+  const isInitialized = !staffLoading;
+
+  const updateStaffMutation = useUpdateStaffMutation();
+  const deleteStaffMutation = useDeleteStaffMutation();
+
+  const updateStaff = (id: string, updates: Partial<StaffProfile>) => {
+    updateStaffMutation.mutate({ id, updates });
+  };
+
+  const deleteStaff = (id: string) => {
+    deleteStaffMutation.mutate(id);
+  };
+
   const { getLeaveBalance } = useStaffPortal();
   const { getPositionsForRole, getPositionByName, positions } = usePositionPermissions();
   const { refreshPositions } = useStore();
@@ -69,12 +86,15 @@ export default function StaffListPage() {
   }, [positions.length, refreshPositions]);
 
   // Realtime subscription for staff
-  const handleStaffChange = useCallback(() => {
-    console.log('[Realtime] Staff change detected, refreshing...');
+  // Realtime subscription for staff
+  // useStaffQuery uses React Query's cache invalidation, but we can also listen to realtime events to refetch
+  // For now, we rely on the query's staleTime or manual invalidation from mutations.
+  // If useStaffRealtime is purely for the legacy store, we might not need it here if we trust React Query invalidation from our own actions.
+  // However, for updates from OTHER users, we might want to keep a subscription that calls refreshStaff().
+  useStaffRealtime(() => {
+    console.log('Realtime update, refetching query...');
     refreshStaff();
-  }, [refreshStaff]);
-
-  useStaffRealtime(handleStaffChange);
+  });
 
   const [filter, setFilter] = useState<'all' | 'active' | 'on-leave'>('all');
   const [searchTerm, setSearchTerm] = useState('');

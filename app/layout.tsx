@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/nextjs';
 import type { Metadata, Viewport } from 'next'
 import type { ReactNode } from 'react'
 import './globals.css'
@@ -5,29 +6,34 @@ import Providers from '@/components/Providers'
 import { ServiceWorkerRegistration } from '@/components/ServiceWorkerRegistration'
 import { SpeedInsights } from "@vercel/speed-insights/next"
 
-export const metadata: Metadata = {
-  title: 'AbangBob Dashboard - F&B Management System',
-  description: 'Centralized Dashboard for F&B Business - POS, Inventory, HR & Accounting',
-  manifest: '/manifest.json',
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: 'default',
-    title: 'AbangBob',
-  },
-  formatDetection: {
-    telephone: false,
-  },
-  openGraph: {
-    type: 'website',
-    siteName: 'AbangBob Dashboard',
+export function generateMetadata(): Metadata {
+  return {
     title: 'AbangBob Dashboard - F&B Management System',
     description: 'Centralized Dashboard for F&B Business - POS, Inventory, HR & Accounting',
-  },
-  twitter: {
-    card: 'summary',
-    title: 'AbangBob Dashboard',
-    description: 'F&B Management System',
-  },
+    manifest: '/manifest.json',
+    appleWebApp: {
+      capable: true,
+      statusBarStyle: 'default',
+      title: 'AbangBob',
+    },
+    formatDetection: {
+      telephone: false,
+    },
+    openGraph: {
+      type: 'website',
+      siteName: 'AbangBob Dashboard',
+      title: 'AbangBob Dashboard - F&B Management System',
+      description: 'Centralized Dashboard for F&B Business - POS, Inventory, HR & Accounting',
+    },
+    twitter: {
+      card: 'summary',
+      title: 'AbangBob Dashboard',
+      description: 'F&B Management System',
+    },
+    other: {
+      ...Sentry.getTraceData()
+    }
+  }
 }
 
 export const viewport: Viewport = {

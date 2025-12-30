@@ -5,7 +5,7 @@ import MainLayout from '@/components/MainLayout';
 import { usePromotions } from '@/lib/store';
 import { usePromotionsRealtime } from '@/lib/supabase/realtime-hooks';
 import { Promotion } from '@/lib/types';
-import { MOCK_MENU } from '@/lib/menu-data';
+import { useMenuQuery } from '@/lib/hooks/queries/useMenuQueries';
 import Modal from '@/components/Modal';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import {
@@ -46,6 +46,7 @@ const DAYS_OF_WEEK = [
 
 export default function PromotionsPage() {
   const { promotions, addPromotion, updatePromotion, deletePromotion, refreshPromotions, isInitialized } = usePromotions();
+  const { data: menuItems = [] } = useMenuQuery();
 
   // Realtime subscription for promotions
   const handlePromotionsChange = useCallback(() => {
@@ -616,7 +617,7 @@ export default function PromotionsPage() {
                     onChange={(e) => setFormData(prev => ({ ...prev, getFreeItemId: e.target.value }))}
                   >
                     <option value="">Item Sama</option>
-                    {MOCK_MENU.map(item => (
+                    {menuItems.map(item => (
                       <option key={item.id} value={item.id}>{item.name}</option>
                     ))}
                   </select>
@@ -828,4 +829,3 @@ export default function PromotionsPage() {
     </MainLayout>
   );
 }
-

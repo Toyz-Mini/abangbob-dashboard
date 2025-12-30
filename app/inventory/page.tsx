@@ -4,6 +4,12 @@ import { useState, useMemo, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import MainLayout from '@/components/MainLayout';
 import { useInventory } from '@/lib/store';
+import { useInventoryQuery } from '@/lib/hooks/queries/useInventoryQuery';
+import {
+  useAddInventoryItemMutation,
+  useUpdateInventoryItemMutation,
+  useDeleteInventoryItemMutation
+} from '@/lib/hooks/mutations/useInventoryMutations';
 import { useInventoryRealtime } from '@/lib/supabase/realtime-hooks';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { useTranslation } from '@/lib/contexts/LanguageContext';
@@ -38,15 +44,25 @@ const ADJUSTMENT_REASONS = [
 ];
 
 export default function InventoryPage() {
-  const { inventory, inventoryLogs, addStockItem, updateStockItem, deleteStockItem, adjustStock, refreshInventory, isInitialized, weatherForecast } = useInventory();
+  const { inventoryLogs, adjustStock, refreshInventory, weatherForecast } = useInventory(); // Keep logs and adjustStock legacy for now if complex
+  const { data: inventoryData, isLoading: inventoryLoading, refetch: refetchInventory } = useInventoryQuery();
+
+  // Mutations
+  const addInventoryItemMutation = useAddInventoryItemMutation();
+  const updateInventoryItemMutation = useUpdateInventoryItemMutation();
+  const deleteInventoryItemMutation = useDeleteInventoryItemMutation();
+
+  const inventory = inventoryData || [];
+  const isInitialized = !inventoryLoading;
+
   const { t, language } = useTranslation();
   const { showToast } = useToast();
 
   // Realtime subscription for inventory
   const handleInventoryChange = useCallback(() => {
     console.log('[Realtime] Inventory change detected, refreshing...');
-    refreshInventory();
-  }, [refreshInventory]);
+    refetchInventory();
+  }, [refetchInventory]);
 
   useInventoryRealtime(handleInventoryChange);
 
@@ -189,7 +205,7 @@ export default function InventoryPage() {
     setIsProcessing(true);
     await new Promise(resolve => setTimeout(resolve, 500)); // Simulate network delay
 
-    addStockItem({
+    addInventoryItemMutation.mutate({
       name: formData.name.trim(),
       category: formData.category,
       currentQuantity: formData.currentQuantity,
@@ -212,15 +228,18 @@ export default function InventoryPage() {
     setIsProcessing(true);
     await new Promise(resolve => setTimeout(resolve, 500));
 
-    updateStockItem(selectedItem.id, {
-      name: formData.name.trim(),
-      category: formData.category,
-      currentQuantity: formData.currentQuantity,
-      minQuantity: formData.minQuantity,
-      unit: formData.unit,
-      cost: formData.cost,
-      supplier: formData.supplier.trim() || undefined,
-      countDaily: formData.countDaily,
+    updateInventoryItemMutation.mutate({
+      id: selectedItem.id,
+      updates: {
+        name: formData.name.trim(),
+        category: formData.category,
+        currentQuantity: formData.currentQuantity,
+        minQuantity: formData.minQuantity,
+        unit: formData.unit,
+        cost: formData.cost,
+        supplier: formData.supplier.trim() || undefined,
+        countDaily: formData.countDaily,
+      }
     });
 
     closeModal();
@@ -250,7 +269,7 @@ export default function InventoryPage() {
     setIsProcessing(true);
     await new Promise(resolve => setTimeout(resolve, 500));
 
-    deleteStockItem(selectedItem.id);
+    deleteInventoryItemMutation.mutate(selectedItem.id);
 
     closeModal();
   };
@@ -624,7 +643,7 @@ export default function InventoryPage() {
                                       </button>
                                       <button
                                         className="btn-icon btn-ghost-danger"
-                                        onClick={() => deleteStockItem(item.id)}
+                                        onClick={() => openDeleteModal(item)}
                                         title="Padam Item"
                                       >
                                         <Trash2 size={14} />

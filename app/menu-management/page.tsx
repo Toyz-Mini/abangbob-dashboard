@@ -3,8 +3,7 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import MainLayout from '@/components/MainLayout';
-import { useMenu, useMenuCategories, useInventory } from '@/lib/store';
-import { useMenuRealtime, useModifiersRealtime } from '@/lib/supabase/realtime-hooks';
+// import { useInventory } from '@/lib/store';
 import { MenuItem, ModifierGroup, ModifierOption, MenuCategory, StockItem } from '@/lib/types';
 import Modal from '@/components/Modal';
 import LoadingSpinner from '@/components/LoadingSpinner';
@@ -18,13 +17,34 @@ import {
   ToggleRight,
   Layers,
   Settings,
-  DollarSign,
-  Check,
-  X,
-  AlertCircle,
   FolderOpen,
-  GripVertical
+  AlertCircle,
+  X
 } from 'lucide-react';
+import {
+  useMenuQuery,
+  useMenuCategoriesQuery,
+  useModifierGroupsQuery,
+  useModifierOptionsQuery
+} from '@/lib/hooks/queries/useMenuQueries';
+import { useInventoryQuery } from '@/lib/hooks/queries/useInventoryQuery';
+import {
+  useAddMenuItemMutation,
+  useUpdateMenuItemMutation,
+  useDeleteMenuItemMutation,
+  useAddMenuCategoryMutation,
+  useUpdateMenuCategoryMutation,
+  useDeleteMenuCategoryMutation,
+  useAddModifierGroupMutation,
+  useUpdateModifierGroupMutation,
+  useDeleteModifierGroupMutation,
+  useAddModifierOptionMutation,
+  useUpdateModifierOptionMutation,
+  useDeleteModifierOptionMutation
+} from '@/lib/hooks/mutations/useMenuMutations';
+import { useQueryClient } from '@tanstack/react-query';
+import { menuKeys } from '@/lib/hooks/queries/useMenuQueries';
+import { getSupabaseClient } from '@/lib/supabase/client';
 
 type TabType = 'menu' | 'categories' | 'groups' | 'options';
 type ModalType = 'add-menu' | 'edit-menu' | 'delete-menu' | 'add-group' | 'edit-group' | 'delete-group' | 'add-option' | 'edit-option' | 'delete-option' | 'add-category' | 'edit-category' | 'delete-category' | null;
@@ -33,45 +53,59 @@ export default function MenuManagementPage() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const queryClient = useQueryClient();
 
-  const {
-    menuItems,
-    modifierGroups,
-    modifierOptions,
-    addMenuItem,
-    updateMenuItem,
-    deleteMenuItem,
-    toggleMenuItemAvailability,
-    addModifierGroup,
-    updateModifierGroup,
-    deleteModifierGroup,
-    addModifierOption,
-    updateModifierOption,
-    deleteModifierOption,
-    getOptionsForGroup,
-    refreshMenu,
-    isInitialized
-  } = useMenu();
+  // Queries
+  const { data: menuItems = [], isLoading: isMenuLoading } = useMenuQuery();
+  const { data: menuCategories = [], isLoading: isCategoriesLoading } = useMenuCategoriesQuery();
+  const { data: modifierGroups = [], isLoading: isGroupsLoading } = useModifierGroupsQuery();
+  const { data: modifierOptions = [], isLoading: isOptionsLoading } = useModifierOptionsQuery();
+  const { data: inventory = [] } = useInventoryQuery();
 
-  const {
-    menuCategories,
-    addMenuCategory,
-    updateMenuCategory,
-    deleteMenuCategory,
-    getActiveCategories,
-  } = useMenuCategories();
+  // Mutations
+  const addMenuItemMutation = useAddMenuItemMutation();
+  const updateMenuItemMutation = useUpdateMenuItemMutation();
+  const deleteMenuItemMutation = useDeleteMenuItemMutation();
+
+  const addCategoryMutation = useAddMenuCategoryMutation();
+  const updateCategoryMutation = useUpdateMenuCategoryMutation();
+  const deleteCategoryMutation = useDeleteMenuCategoryMutation();
+
+  const addGroupMutation = useAddModifierGroupMutation();
+  const updateGroupMutation = useUpdateModifierGroupMutation();
+  const deleteGroupMutation = useDeleteModifierGroupMutation();
+
+  const addOptionMutation = useAddModifierOptionMutation();
+  const updateOptionMutation = useUpdateModifierOptionMutation();
+  const deleteOptionMutation = useDeleteModifierOptionMutation();
 
   // Inventory for linking ingredients
-  const { inventory } = useInventory();
+  // Use inventory from query
 
-  // Realtime subscriptions for menu and modifiers
-  const handleMenuChange = useCallback(() => {
-    console.log('[Realtime] Menu change detected, refreshing...');
-    refreshMenu();
-  }, [refreshMenu]);
+  // Realtime Subscriptions (Lightweight version)
+  useEffect(() => {
+    const supabase = getSupabaseClient();
+    if (!supabase) return;
 
-  useMenuRealtime(handleMenuChange);
-  useModifiersRealtime(handleMenuChange);
+    const channel = supabase.channel('menu_changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'menu_items' }, () => {
+        queryClient.invalidateQueries({ queryKey: menuKeys.items() });
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'menu_categories' }, () => {
+        queryClient.invalidateQueries({ queryKey: menuKeys.categories() });
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'modifier_groups' }, () => {
+        queryClient.invalidateQueries({ queryKey: menuKeys.modifierGroups() });
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'modifier_options' }, () => {
+        queryClient.invalidateQueries({ queryKey: menuKeys.modifierOptions() });
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
 
   const [activeTab, setActiveTab] = useState<TabType>('menu');
   const [modalType, setModalType] = useState<ModalType>(null);
@@ -79,7 +113,6 @@ export default function MenuManagementPage() {
   const [selectedGroup, setSelectedGroup] = useState<ModifierGroup | null>(null);
   const [selectedOption, setSelectedOption] = useState<ModifierOption | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<MenuCategory | null>(null);
-  const [isProcessing, setIsProcessing] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('All');
 
@@ -133,6 +166,7 @@ export default function MenuManagementPage() {
     name: '',
     category: 'Nasi Lemak',
     price: 0,
+    cost: 0,
     description: '',
     isAvailable: true,
     modifierGroupIds: [] as string[],
@@ -171,8 +205,8 @@ export default function MenuManagementPage() {
 
   // Get active categories for dropdowns
   const activeCategories = useMemo(() => {
-    return getActiveCategories();
-  }, [menuCategories, getActiveCategories]);
+    return menuCategories.filter((c: MenuCategory) => c.isActive);
+  }, [menuCategories]);
 
   // Filtered menu items
   const filteredMenuItems = useMemo(() => {
@@ -186,7 +220,7 @@ export default function MenuManagementPage() {
   // Get unique categories from menu items
   const categories = useMemo(() => {
     // Combine active categories with any categories from existing menu items
-    const activeCatNames = activeCategories.map(c => c.name);
+    const activeCatNames = activeCategories.map((c: MenuCategory) => c.name);
     const menuCats = new Set(menuItems.map(item => item.category));
     const allCats = new Set([...activeCatNames, ...menuCats]);
     return ['All', ...Array.from(allCats)];
@@ -198,6 +232,7 @@ export default function MenuManagementPage() {
       name: '',
       category: activeCategories[0]?.name || 'Uncategorized',
       price: 0,
+      cost: 0,
       description: '',
       isAvailable: true,
       modifierGroupIds: [],
@@ -211,6 +246,7 @@ export default function MenuManagementPage() {
       name: item.name,
       category: item.category,
       price: item.price,
+      cost: (item as any).cost || 0,
       description: item.description || '',
       isAvailable: item.isAvailable,
       modifierGroupIds: item.modifierGroupIds,
@@ -318,27 +354,18 @@ export default function MenuManagementPage() {
     setSelectedGroup(null);
     setSelectedOption(null);
     setSelectedCategory(null);
-    setIsProcessing(false);
   };
 
   // Menu Item Handlers
   const handleAddMenuItem = async () => {
-    if (!menuForm.name.trim()) {
-      alert('Sila masukkan nama menu');
-      return;
-    }
-    if (menuForm.price <= 0) {
-      alert('Sila masukkan harga yang sah');
-      return;
-    }
+    if (!menuForm.name.trim()) return alert('Sila masukkan nama menu');
+    if (menuForm.price < 0) return alert('Sila masukkan harga yang sah');
 
-    setIsProcessing(true);
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    addMenuItem({
+    await addMenuItemMutation.mutateAsync({
       name: menuForm.name.trim(),
       category: menuForm.category,
       price: menuForm.price,
+      cost: menuForm.cost,
       description: menuForm.description.trim() || undefined,
       isAvailable: menuForm.isAvailable,
       modifierGroupIds: menuForm.modifierGroupIds,
@@ -350,16 +377,17 @@ export default function MenuManagementPage() {
   const handleEditMenuItem = async () => {
     if (!selectedMenuItem || !menuForm.name.trim()) return;
 
-    setIsProcessing(true);
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    updateMenuItem(selectedMenuItem.id, {
-      name: menuForm.name.trim(),
-      category: menuForm.category,
-      price: menuForm.price,
-      description: menuForm.description.trim() || undefined,
-      isAvailable: menuForm.isAvailable,
-      modifierGroupIds: menuForm.modifierGroupIds,
+    await updateMenuItemMutation.mutateAsync({
+      id: selectedMenuItem.id,
+      updates: {
+        name: menuForm.name.trim(),
+        category: menuForm.category,
+        price: menuForm.price,
+        cost: menuForm.cost,
+        description: menuForm.description.trim() || undefined,
+        isAvailable: menuForm.isAvailable,
+        modifierGroupIds: menuForm.modifierGroupIds,
+      }
     });
 
     closeModal();
@@ -367,25 +395,25 @@ export default function MenuManagementPage() {
 
   const handleDeleteMenuItem = async () => {
     if (!selectedMenuItem) return;
-
-    setIsProcessing(true);
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    deleteMenuItem(selectedMenuItem.id);
+    await deleteMenuItemMutation.mutateAsync(selectedMenuItem.id);
     closeModal();
+  };
+
+  const toggleMenuItemAvailability = async (id: string) => {
+    const item = menuItems.find(i => i.id === id);
+    if (item) {
+      await updateMenuItemMutation.mutateAsync({
+        id,
+        updates: { isAvailable: !item.isAvailable }
+      });
+    }
   };
 
   // Modifier Group Handlers
   const handleAddGroup = async () => {
-    if (!groupForm.name.trim()) {
-      alert('Sila masukkan nama group');
-      return;
-    }
+    if (!groupForm.name.trim()) return alert('Sila masukkan nama group');
 
-    setIsProcessing(true);
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    addModifierGroup({
+    await addGroupMutation.mutateAsync({
       name: groupForm.name.trim(),
       isRequired: groupForm.isRequired,
       allowMultiple: groupForm.allowMultiple,
@@ -399,15 +427,15 @@ export default function MenuManagementPage() {
   const handleEditGroup = async () => {
     if (!selectedGroup || !groupForm.name.trim()) return;
 
-    setIsProcessing(true);
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    updateModifierGroup(selectedGroup.id, {
-      name: groupForm.name.trim(),
-      isRequired: groupForm.isRequired,
-      allowMultiple: groupForm.allowMultiple,
-      minSelection: groupForm.minSelection,
-      maxSelection: groupForm.maxSelection,
+    await updateGroupMutation.mutateAsync({
+      id: selectedGroup.id,
+      updates: {
+        name: groupForm.name.trim(),
+        isRequired: groupForm.isRequired,
+        allowMultiple: groupForm.allowMultiple,
+        minSelection: groupForm.minSelection,
+        maxSelection: groupForm.maxSelection,
+      }
     });
 
     closeModal();
@@ -415,25 +443,17 @@ export default function MenuManagementPage() {
 
   const handleDeleteGroup = async () => {
     if (!selectedGroup) return;
-
-    setIsProcessing(true);
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    deleteModifierGroup(selectedGroup.id);
+    await deleteGroupMutation.mutateAsync(selectedGroup.id);
     closeModal();
   };
 
   // Modifier Option Handlers
   const handleAddOption = async () => {
     if (!optionForm.name.trim() || !optionForm.groupId) {
-      alert('Sila masukkan nama option dan pilih group');
-      return;
+      return alert('Sila masukkan nama option dan pilih group');
     }
 
-    setIsProcessing(true);
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    addModifierOption({
+    await addOptionMutation.mutateAsync({
       groupId: optionForm.groupId,
       name: optionForm.name.trim(),
       extraPrice: optionForm.extraPrice,
@@ -447,36 +467,30 @@ export default function MenuManagementPage() {
   const handleEditOption = async () => {
     if (!selectedOption || !optionForm.name.trim()) return;
 
-    setIsProcessing(true);
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    updateModifierOption(selectedOption.id, {
-      groupId: optionForm.groupId,
-      name: optionForm.name.trim(),
-      extraPrice: optionForm.extraPrice,
-      isAvailable: optionForm.isAvailable,
-      ingredients: optionForm.ingredients,
+    await updateOptionMutation.mutateAsync({
+      id: selectedOption.id,
+      updates: {
+        groupId: optionForm.groupId,
+        name: optionForm.name.trim(),
+        extraPrice: optionForm.extraPrice,
+        isAvailable: optionForm.isAvailable,
+        ingredients: optionForm.ingredients,
+      }
     });
 
     closeModal();
   };
 
-  // Ingredient Helpers
   const handleAddIngredient = () => {
     if (!selectedStockId || selectedStockQty <= 0) return;
-
-    // Check if already added
     if (optionForm.ingredients.some(i => i.stockItemId === selectedStockId)) {
       alert('Ingredient already added');
       return;
     }
-
     setOptionForm(prev => ({
       ...prev,
       ingredients: [...prev.ingredients, { stockItemId: selectedStockId, quantity: selectedStockQty }]
     }));
-
-    // Reset selection
     setSelectedStockId('');
     setSelectedStockQty(1);
   };
@@ -490,25 +504,15 @@ export default function MenuManagementPage() {
 
   const handleDeleteOption = async () => {
     if (!selectedOption) return;
-
-    setIsProcessing(true);
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    deleteModifierOption(selectedOption.id);
+    await deleteOptionMutation.mutateAsync(selectedOption.id);
     closeModal();
   };
 
   // Category Handlers
   const handleAddCategory = async () => {
-    if (!categoryForm.name.trim()) {
-      alert('Sila masukkan nama kategori');
-      return;
-    }
+    if (!categoryForm.name.trim()) return alert('Sila masukkan nama kategori');
 
-    setIsProcessing(true);
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    addMenuCategory({
+    await addCategoryMutation.mutateAsync({
       name: categoryForm.name.trim(),
       description: categoryForm.description.trim() || undefined,
       color: categoryForm.color,
@@ -522,15 +526,15 @@ export default function MenuManagementPage() {
   const handleEditCategory = async () => {
     if (!selectedCategory || !categoryForm.name.trim()) return;
 
-    setIsProcessing(true);
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    updateMenuCategory(selectedCategory.id, {
-      name: categoryForm.name.trim(),
-      description: categoryForm.description.trim() || undefined,
-      color: categoryForm.color,
-      sortOrder: categoryForm.sortOrder,
-      isActive: categoryForm.isActive,
+    await updateCategoryMutation.mutateAsync({
+      id: selectedCategory.id,
+      updates: {
+        name: categoryForm.name.trim(),
+        description: categoryForm.description.trim() || undefined,
+        color: categoryForm.color,
+        sortOrder: categoryForm.sortOrder,
+        isActive: categoryForm.isActive,
+      }
     });
 
     closeModal();
@@ -539,19 +543,19 @@ export default function MenuManagementPage() {
   const handleDeleteCategory = async () => {
     if (!selectedCategory) return;
 
-    // Check if any menu items use this category
     const itemsUsingCategory = menuItems.filter(item => item.category === selectedCategory.name);
     if (itemsUsingCategory.length > 0) {
       alert(`Tidak boleh padam kategori ini. ${itemsUsingCategory.length} menu item masih menggunakan kategori ini.`);
-      setIsProcessing(false);
       return;
     }
 
-    setIsProcessing(true);
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    deleteMenuCategory(selectedCategory.id);
+    await deleteCategoryMutation.mutateAsync(selectedCategory.id);
     closeModal();
+  };
+
+  // Helper to get options for a group
+  const getOptionsForGroup = (groupId: string) => {
+    return modifierOptions.filter(o => o.groupId === groupId);
   };
 
   // Toggle modifier group in menu item form
@@ -564,7 +568,9 @@ export default function MenuManagementPage() {
     }));
   };
 
-  if (!isInitialized) {
+  const isAnyLoading = isMenuLoading || isCategoriesLoading || isGroupsLoading || isOptionsLoading;
+
+  if (isAnyLoading) {
     return (
       <MainLayout>
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
@@ -573,6 +579,471 @@ export default function MenuManagementPage() {
       </MainLayout>
     );
   }
+
+  // Common Modal Props
+  const modalProps = {
+    isOpen: !!modalType,
+    onClose: closeModal,
+    title: ''
+  };
+
+  const renderModalContent = () => {
+    switch (modalType) {
+      case 'add-menu':
+      case 'edit-menu':
+        modalProps.title = modalType === 'add-menu' ? 'Tambah Menu' : 'Edit Menu';
+        return (
+          <Modal {...modalProps}>
+            <div className="space-y-4">
+              {/* Form Fields - Reused from previous implementation */}
+              <div className="form-group">
+                <label className="form-label">Nama Menu *</label>
+                <input
+                  type="text"
+                  className="form-input"
+                  value={menuForm.name}
+                  onChange={e => setMenuForm({ ...menuForm, name: e.target.value })}
+                  placeholder="Contoh: Nasi Lemak Ayam"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="form-group">
+                  <label className="form-label">Kategori</label>
+                  <select
+                    className="form-select"
+                    value={menuForm.category}
+                    onChange={e => setMenuForm({ ...menuForm, category: e.target.value })}
+                  >
+                    {activeCategories.map(cat => (
+                      <option key={cat.id} value={cat.name}>{cat.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Harga (BND) *</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    className="form-input"
+                    value={menuForm.price}
+                    onChange={e => setMenuForm({ ...menuForm, price: parseFloat(e.target.value) })}
+                  />
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Cost (BND)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  className="form-input"
+                  value={menuForm.cost}
+                  onChange={e => setMenuForm({ ...menuForm, cost: parseFloat(e.target.value) })}
+                  placeholder="Optional cost price"
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Deskripsi</label>
+                <textarea
+                  className="form-textarea"
+                  value={menuForm.description}
+                  onChange={e => setMenuForm({ ...menuForm, description: e.target.value })}
+                  rows={3}
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Modifier Groups</label>
+                <div className="space-y-2 max-h-40 overflow-y-auto p-2 border rounded">
+                  {modifierGroups.map(group => (
+                    <label key={group.id} className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={menuForm.modifierGroupIds.includes(group.id)}
+                        onChange={() => toggleModifierGroup(group.id)}
+                      />
+                      <span>{group.name}</span>
+                    </label>
+                  ))}
+                  {modifierGroups.length === 0 && (
+                    <div className="text-sm text-gray-500 italic">Tiada modifier groups</div>
+                  )}
+                </div>
+              </div>
+
+              <div className="form-checkbox">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={menuForm.isAvailable}
+                    onChange={e => setMenuForm({ ...menuForm, isAvailable: e.target.checked })}
+                  />
+                  <span>Available untuk dipesan</span>
+                </label>
+              </div>
+
+              <div className="flex justify-end gap-2 mt-6">
+                <button className="btn btn-outline" onClick={closeModal}>Batal</button>
+                <button
+                  className="btn btn-primary"
+                  onClick={modalType === 'add-menu' ? handleAddMenuItem : handleEditMenuItem}
+                  disabled={addMenuItemMutation.isPending || updateMenuItemMutation.isPending}
+                >
+                  {addMenuItemMutation.isPending || updateMenuItemMutation.isPending ? 'Processing...' : 'Simpan'}
+                </button>
+              </div>
+            </div>
+          </Modal>
+        );
+
+      case 'delete-menu':
+        modalProps.title = 'Padam Menu';
+        return (
+          <Modal {...modalProps}>
+            <div className="space-y-4">
+              <p>Adakah anda pasti ingin memadam menu <b>{selectedMenuItem?.name}</b>?</p>
+              <div className="alert alert-warning">
+                <AlertCircle size={16} />
+                <span>Tindakan ini tidak boleh dikembalikan.</span>
+              </div>
+              <div className="flex justify-end gap-2 mt-6">
+                <button className="btn btn-outline" onClick={closeModal}>Batal</button>
+                <button
+                  className="btn btn-danger"
+                  onClick={handleDeleteMenuItem}
+                  disabled={deleteMenuItemMutation.isPending}
+                >
+                  {deleteMenuItemMutation.isPending ? 'Deleting...' : 'Padam'}
+                </button>
+              </div>
+            </div>
+          </Modal>
+        );
+
+      case 'add-group':
+      case 'edit-group':
+        modalProps.title = modalType === 'add-group' ? 'Tambah Modifier Group' : 'Edit Modifier Group';
+        return (
+          <Modal {...modalProps}>
+            <div className="space-y-4">
+              <div className="form-group">
+                <label className="form-label">Nama Group *</label>
+                <input
+                  type="text"
+                  className="form-input"
+                  value={groupForm.name}
+                  onChange={e => setGroupForm({ ...groupForm, name: e.target.value })}
+                  placeholder="Contoh: Pilih Sos"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="form-group">
+                  <label className="form-label">Minimum Selection</label>
+                  <input
+                    type="number"
+                    className="form-input"
+                    value={groupForm.minSelection}
+                    onChange={e => setGroupForm({ ...groupForm, minSelection: parseInt(e.target.value) })}
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Maximum Selection</label>
+                  <input
+                    type="number"
+                    className="form-input"
+                    value={groupForm.maxSelection}
+                    onChange={e => setGroupForm({ ...groupForm, maxSelection: parseInt(e.target.value) })}
+                  />
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={groupForm.isRequired}
+                    onChange={e => setGroupForm({ ...groupForm, isRequired: e.target.checked })}
+                  />
+                  <span>Wajib pilih (Required)</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={groupForm.allowMultiple}
+                    onChange={e => setGroupForm({ ...groupForm, allowMultiple: e.target.checked })}
+                  />
+                  <span>Boleh pilih lebih dari satu (Multiple)</span>
+                </label>
+              </div>
+
+              <div className="flex justify-end gap-2 mt-6">
+                <button className="btn btn-outline" onClick={closeModal}>Batal</button>
+                <button
+                  className="btn btn-primary"
+                  onClick={modalType === 'add-group' ? handleAddGroup : handleEditGroup}
+                  disabled={addGroupMutation.isPending || updateGroupMutation.isPending}
+                >
+                  {addGroupMutation.isPending || updateGroupMutation.isPending ? 'Processing...' : 'Simpan'}
+                </button>
+              </div>
+            </div>
+          </Modal>
+        );
+
+      case 'delete-group':
+        modalProps.title = 'Padam Modifier Group';
+        return (
+          <Modal {...modalProps}>
+            <div className="space-y-4">
+              <p>Adakah anda pasti ingin memadam group <b>{selectedGroup?.name}</b>?</p>
+              <div className="alert alert-warning">
+                <AlertCircle size={16} />
+                <span>Semua options dalam group ini juga akan dipadam.</span>
+              </div>
+              <div className="flex justify-end gap-2 mt-6">
+                <button className="btn btn-outline" onClick={closeModal}>Batal</button>
+                <button
+                  className="btn btn-danger"
+                  onClick={handleDeleteGroup}
+                  disabled={deleteGroupMutation.isPending}
+                >
+                  {deleteGroupMutation.isPending ? 'Deleting...' : 'Padam'}
+                </button>
+              </div>
+            </div>
+          </Modal>
+        );
+
+      case 'add-option':
+      case 'edit-option':
+        modalProps.title = modalType === 'add-option' ? 'Tambah Option' : 'Edit Option';
+        return (
+          <Modal {...modalProps}>
+            <div className="space-y-4 max-h-[70vh] overflow-y-auto p-1">
+              <div className="form-group">
+                <label className="form-label">Modifier Group</label>
+                <select
+                  className="form-select"
+                  value={optionForm.groupId}
+                  onChange={e => setOptionForm({ ...optionForm, groupId: e.target.value })}
+                  disabled={modalType === 'edit-option'}
+                >
+                  {modifierGroups.map(group => (
+                    <option key={group.id} value={group.id}>{group.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Nama Option *</label>
+                <input
+                  type="text"
+                  className="form-input"
+                  value={optionForm.name}
+                  onChange={e => setOptionForm({ ...optionForm, name: e.target.value })}
+                  placeholder="Contoh: Sos Cili"
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Harga Tambahan (BND)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  className="form-input"
+                  value={optionForm.extraPrice}
+                  onChange={e => setOptionForm({ ...optionForm, extraPrice: parseFloat(e.target.value) })}
+                />
+              </div>
+
+              <div className="form-checkbox">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={optionForm.isAvailable}
+                    onChange={e => setOptionForm({ ...optionForm, isAvailable: e.target.checked })}
+                  />
+                  <span>Available</span>
+                </label>
+              </div>
+
+              {/* Ingredient Linking */}
+              <div className="border-t pt-4 mt-4">
+                <h4 className="font-semibold mb-2 text-sm">Link Ingredients (Optional)</h4>
+                <div className="flex gap-2 mb-2">
+                  <select
+                    className="form-select text-sm"
+                    value={selectedStockId}
+                    onChange={e => setSelectedStockId(e.target.value)}
+                  >
+                    <option value="">Pilih Stock Effect</option>
+                    {inventory.map((item: StockItem) => (
+                      <option key={item.id} value={item.id}>{item.name}</option>
+                    ))}
+                  </select>
+                  <input
+                    type="number"
+                    className="form-input w-20 text-sm"
+                    value={selectedStockQty}
+                    onChange={e => setSelectedStockQty(parseFloat(e.target.value))}
+                    min="0.1"
+                    step="0.1"
+                  />
+                  <button type="button" className="btn btn-sm btn-primary" onClick={handleAddIngredient}>
+                    <Plus size={14} />
+                  </button>
+                </div>
+
+                {optionForm.ingredients.length > 0 && (
+                  <div className="bg-gray-50 p-2 rounded text-sm space-y-1">
+                    {optionForm.ingredients.map((ing, idx) => {
+                      const stockItem = inventory.find((i: StockItem) => i.id === ing.stockItemId);
+                      return (
+                        <div key={idx} className="flex justify-between items-center">
+                          <span>{stockItem?.name || 'Unknown'} × {ing.quantity} {stockItem?.unit}</span>
+                          <button type="button" onClick={() => handleRemoveIngredient(idx)} className="text-red-500 hover:text-red-700">
+                            <X size={14} />
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              <div className="flex justify-end gap-2 mt-6">
+                <button className="btn btn-outline" onClick={closeModal}>Batal</button>
+                <button
+                  className="btn btn-primary"
+                  onClick={modalType === 'add-option' ? handleAddOption : handleEditOption}
+                  disabled={addOptionMutation.isPending || updateOptionMutation.isPending}
+                >
+                  {addOptionMutation.isPending || updateOptionMutation.isPending ? 'Processing...' : 'Simpan'}
+                </button>
+              </div>
+            </div>
+          </Modal>
+        );
+
+      case 'delete-option':
+        modalProps.title = 'Padam Option';
+        return (
+          <Modal {...modalProps}>
+            <div className="space-y-4">
+              <p>Adakah anda pasti ingin memadam option <b>{selectedOption?.name}</b>?</p>
+              <div className="flex justify-end gap-2 mt-6">
+                <button className="btn btn-outline" onClick={closeModal}>Batal</button>
+                <button
+                  className="btn btn-danger"
+                  onClick={handleDeleteOption}
+                  disabled={deleteOptionMutation.isPending}
+                >
+                  {deleteOptionMutation.isPending ? 'Deleting...' : 'Padam'}
+                </button>
+              </div>
+            </div>
+          </Modal>
+        );
+
+      case 'add-category':
+      case 'edit-category':
+        modalProps.title = modalType === 'add-category' ? 'Tambah Kategori' : 'Edit Kategori';
+        return (
+          <Modal {...modalProps}>
+            <div className="space-y-4">
+              <div className="form-group">
+                <label className="form-label">Nama Kategori *</label>
+                <input
+                  type="text"
+                  className="form-input"
+                  value={categoryForm.name}
+                  onChange={e => setCategoryForm({ ...categoryForm, name: e.target.value })}
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Deskripsi</label>
+                <input
+                  type="text"
+                  className="form-input"
+                  value={categoryForm.description}
+                  onChange={e => setCategoryForm({ ...categoryForm, description: e.target.value })}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="form-group">
+                  <label className="form-label">Urutan (Sort Order)</label>
+                  <input
+                    type="number"
+                    className="form-input"
+                    value={categoryForm.sortOrder}
+                    onChange={e => setCategoryForm({ ...categoryForm, sortOrder: parseInt(e.target.value) })}
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Warna Label</label>
+                  <input
+                    type="color"
+                    className="form-input h-10 w-full p-1"
+                    value={categoryForm.color}
+                    onChange={e => setCategoryForm({ ...categoryForm, color: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              <div className="form-checkbox">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={categoryForm.isActive}
+                    onChange={e => setCategoryForm({ ...categoryForm, isActive: e.target.checked })}
+                  />
+                  <span>Aktif</span>
+                </label>
+              </div>
+
+              <div className="flex justify-end gap-2 mt-6">
+                <button className="btn btn-outline" onClick={closeModal}>Batal</button>
+                <button
+                  className="btn btn-primary"
+                  onClick={modalType === 'add-category' ? handleAddCategory : handleEditCategory}
+                  disabled={addCategoryMutation.isPending || updateCategoryMutation.isPending}
+                >
+                  {addCategoryMutation.isPending || updateCategoryMutation.isPending ? 'Processing...' : 'Simpan'}
+                </button>
+              </div>
+            </div>
+          </Modal>
+        );
+
+      case 'delete-category':
+        modalProps.title = 'Padam Kategori';
+        return (
+          <Modal {...modalProps}>
+            <div className="space-y-4">
+              <p>Adakah anda pasti ingin memadam kategori <b>{selectedCategory?.name}</b>?</p>
+              <div className="flex justify-end gap-2 mt-6">
+                <button className="btn btn-outline" onClick={closeModal}>Batal</button>
+                <button
+                  className="btn btn-danger"
+                  onClick={handleDeleteCategory}
+                  disabled={deleteCategoryMutation.isPending}
+                >
+                  {deleteCategoryMutation.isPending ? 'Deleting...' : 'Padam'}
+                </button>
+              </div>
+            </div>
+          </Modal>
+        );
+
+      default:
+        return null;
+    }
+  };
 
   return (
     <MainLayout>
@@ -798,22 +1269,22 @@ export default function MenuManagementPage() {
                         >
                           {item.isAvailable ? <ToggleRight size={20} /> : <ToggleLeft size={20} />}
                           <span className="text-sm font-medium">
-                            {item.isAvailable ? 'On Menu' : 'Sold Out'}
+                            {item.isAvailable ? 'Available' : 'Sold Out'}
                           </span>
                         </button>
 
                         <div className="flex gap-2">
                           <button
-                            className="p-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+                            className="p-2 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
                             onClick={() => openEditMenuModal(item)}
                           >
-                            <Edit2 size={20} />
+                            <Edit2 size={18} className="text-gray-600 dark:text-gray-400" />
                           </button>
                           <button
-                            className="p-2 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 dark:border-red-900/50 dark:text-red-400 dark:hover:bg-red-900/20"
+                            className="p-2 rounded-lg border border-red-200 hover:bg-red-50 dark:border-red-900/30 dark:hover:bg-red-900/20"
                             onClick={() => openDeleteMenuModal(item)}
                           >
-                            <Trash2 size={20} />
+                            <Trash2 size={18} className="text-red-500" />
                           </button>
                         </div>
                       </div>
@@ -822,227 +1293,10 @@ export default function MenuManagementPage() {
                 </div>
               </>
             ) : (
-              <div className="card" style={{ textAlign: 'center', padding: '3rem' }}>
-                <UtensilsCrossed size={48} color="var(--gray-400)" style={{ marginBottom: '1rem' }} />
-                <p style={{ color: 'var(--text-secondary)', marginBottom: '1rem' }}>
-                  {searchTerm ? 'Tiada menu dijumpai' : 'Belum ada menu items'}
-                </p>
-                <button className="btn btn-primary" onClick={openAddMenuModal}>
-                  <Plus size={18} />
-                  Tambah Menu Pertama
-                </button>
-              </div>
-            )}
-          </>
-        )}
-
-        {/* Modifier Groups Tab */}
-        {activeTab === 'groups' && (
-          <>
-            <div style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'flex-end' }}>
-              <button className="btn btn-primary" onClick={openAddGroupModal}>
-                <Plus size={18} />
-                Tambah Group
-              </button>
-            </div>
-
-            {modifierGroups.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3" style={{ gap: '1rem' }}>
-                {modifierGroups.map(group => {
-                  const options = getOptionsForGroup(group.id);
-                  return (
-                    <div key={group.id} className="card">
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
-                        <div>
-                          <div style={{ fontWeight: 700, fontSize: '1.1rem', marginBottom: '0.25rem' }}>
-                            {group.name}
-                          </div>
-                          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                            {group.isRequired && (
-                              <span className="badge badge-danger" style={{ fontSize: '0.65rem' }}>Wajib</span>
-                            )}
-                            {group.allowMultiple && (
-                              <span className="badge badge-info" style={{ fontSize: '0.65rem' }}>Multiple</span>
-                            )}
-                          </div>
-                        </div>
-                        <div style={{ display: 'flex', gap: '0.25rem' }}>
-                          <button
-                            className="btn btn-sm btn-outline"
-                            onClick={() => openEditGroupModal(group)}
-                          >
-                            <Edit2 size={14} />
-                          </button>
-                          <button
-                            className="btn btn-sm btn-outline"
-                            onClick={() => openDeleteGroupModal(group)}
-                            style={{ color: 'var(--danger)' }}
-                          >
-                            <Trash2 size={14} />
-                          </button>
-                        </div>
-                      </div>
-
-                      <div style={{ padding: '0.75rem', background: 'var(--gray-100)', borderRadius: 'var(--radius-md)', marginBottom: '1rem' }}>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                          Min: {group.minSelection} | Max: {group.maxSelection}
-                        </div>
-                      </div>
-
-                      <div style={{ marginBottom: '0.5rem', fontWeight: 600, fontSize: '0.875rem' }}>
-                        Options ({options.length})
-                      </div>
-                      {options.length > 0 ? (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                          {options.map(opt => (
-                            <div
-                              key={opt.id}
-                              style={{
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                alignItems: 'center',
-                                padding: '0.5rem 0.75rem',
-                                background: opt.isAvailable ? 'var(--gray-50)' : '#fee2e2',
-                                borderRadius: 'var(--radius-sm)',
-                                fontSize: '0.875rem'
-                              }}
-                            >
-                              <span style={{ opacity: opt.isAvailable ? 1 : 0.6, flex: 1 }}>{opt.name}</span>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                <span style={{ fontWeight: 600, color: opt.extraPrice > 0 ? 'var(--success)' : 'var(--text-secondary)' }}>
-                                  {opt.extraPrice > 0 ? `+BND ${opt.extraPrice.toFixed(2)}` : 'Free'}
-                                </span>
-                                <button
-                                  className="btn btn-sm btn-ghost"
-                                  onClick={() => openEditOptionModal(opt)}
-                                  style={{ padding: '0.25rem', minWidth: 'auto' }}
-                                  title="Edit"
-                                >
-                                  <Edit2 size={14} />
-                                </button>
-                                <button
-                                  className="btn btn-sm btn-ghost"
-                                  onClick={() => openDeleteOptionModal(opt)}
-                                  style={{ padding: '0.25rem', minWidth: 'auto', color: 'var(--danger)' }}
-                                  title="Padam"
-                                >
-                                  <Trash2 size={14} />
-                                </button>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', textAlign: 'center', padding: '0.5rem' }}>
-                          Tiada options
-                        </p>
-                      )}
-
-                      <button
-                        className="btn btn-sm btn-outline"
-                        onClick={() => openAddOptionModal(group.id)}
-                        style={{ width: '100%', marginTop: '1rem' }}
-                      >
-                        <Plus size={14} />
-                        Tambah Option
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="card" style={{ textAlign: 'center', padding: '3rem' }}>
-                <Layers size={48} color="var(--gray-400)" style={{ marginBottom: '1rem' }} />
-                <p style={{ color: 'var(--text-secondary)', marginBottom: '1rem' }}>
-                  Belum ada modifier groups
-                </p>
-                <button className="btn btn-primary" onClick={openAddGroupModal}>
-                  <Plus size={18} />
-                  Tambah Group Pertama
-                </button>
-              </div>
-            )}
-          </>
-        )}
-
-        {/* Modifier Options Tab */}
-        {activeTab === 'options' && (
-          <>
-            <div style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'flex-end' }}>
-              <button className="btn btn-primary" onClick={() => openAddOptionModal()}>
-                <Plus size={18} />
-                Tambah Option
-              </button>
-            </div>
-
-            {modifierOptions.length > 0 ? (
-              <div className="card">
-                <table className="table">
-                  <thead>
-                    <tr>
-                      <th>Option</th>
-                      <th>Group</th>
-                      <th>Harga Tambahan</th>
-                      <th>Status</th>
-                      <th>Tindakan</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {modifierOptions.map(option => {
-                      const group = modifierGroups.find(g => g.id === option.groupId);
-                      return (
-                        <tr key={option.id}>
-                          <td style={{ fontWeight: 600 }}>{option.name}</td>
-                          <td>
-                            <span className="badge badge-info">{group?.name || 'Unknown'}</span>
-                          </td>
-                          <td>
-                            {option.extraPrice > 0 ? (
-                              <span style={{ fontWeight: 600, color: 'var(--success)' }}>
-                                +BND {option.extraPrice.toFixed(2)}
-                              </span>
-                            ) : (
-                              <span style={{ color: 'var(--text-secondary)' }}>Percuma</span>
-                            )}
-                          </td>
-                          <td>
-                            <span className={`badge ${option.isAvailable ? 'badge-success' : 'badge-danger'}`}>
-                              {option.isAvailable ? 'Available' : 'Unavailable'}
-                            </span>
-                          </td>
-                          <td>
-                            <div style={{ display: 'flex', gap: '0.25rem' }}>
-                              <button
-                                className="btn btn-sm btn-outline"
-                                onClick={() => openEditOptionModal(option)}
-                              >
-                                <Edit2 size={14} />
-                              </button>
-                              <button
-                                className="btn btn-sm btn-outline"
-                                onClick={() => openDeleteOptionModal(option)}
-                                style={{ color: 'var(--danger)' }}
-                              >
-                                <Trash2 size={14} />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <div className="card" style={{ textAlign: 'center', padding: '3rem' }}>
-                <Settings size={48} color="var(--gray-400)" style={{ marginBottom: '1rem' }} />
-                <p style={{ color: 'var(--text-secondary)', marginBottom: '1rem' }}>
-                  Belum ada modifier options
-                </p>
-                <button className="btn btn-primary" onClick={() => openAddOptionModal()}>
-                  <Plus size={18} />
-                  Tambah Option Pertama
-                </button>
+              <div className="card text-center p-8">
+                <UtensilsCrossed size={48} className="mx-auto text-gray-300 mb-4" />
+                <h3>Tiada menu dijumpai</h3>
+                <p className="text-gray-500">Cuba ubah filter atau tambah menu baru.</p>
               </div>
             )}
           </>
@@ -1058,685 +1312,156 @@ export default function MenuManagementPage() {
               </button>
             </div>
 
-            {menuCategories.length > 0 ? (
-              <div className="card">
+            <div className="card">
+              <div className="table-responsive">
                 <table className="table">
                   <thead>
                     <tr>
-                      <th style={{ width: '50px' }}>#</th>
+                      <th>Urutan</th>
                       <th>Nama Kategori</th>
-                      <th>Keterangan</th>
-                      <th>Warna</th>
-                      <th>Item</th>
+                      <th>Deskripsi</th>
                       <th>Status</th>
                       <th>Tindakan</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {menuCategories
-                      .sort((a, b) => a.sortOrder - b.sortOrder)
-                      .map((category, index) => {
-                        const itemCount = menuItems.filter(item => item.category === category.name).length;
-                        return (
-                          <tr key={category.id}>
-                            <td style={{ color: 'var(--text-secondary)' }}>{index + 1}</td>
-                            <td>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                <div style={{
-                                  width: '24px',
-                                  height: '24px',
-                                  background: category.color || '#3b82f6',
-                                  borderRadius: 'var(--radius-sm)',
-                                }} />
-                                <span style={{ fontWeight: 600 }}>{category.name}</span>
-                              </div>
-                            </td>
-                            <td style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
-                              {category.description || '-'}
-                            </td>
-                            <td>
-                              <code style={{
-                                background: 'var(--gray-100)',
-                                padding: '0.25rem 0.5rem',
-                                borderRadius: 'var(--radius-sm)',
-                                fontSize: '0.75rem'
-                              }}>
-                                {category.color || '#3b82f6'}
-                              </code>
-                            </td>
-                            <td>
-                              <span className="badge badge-info">{itemCount} item</span>
-                            </td>
-                            <td>
-                              <span className={`badge ${category.isActive ? 'badge-success' : 'badge-warning'}`}>
-                                {category.isActive ? 'Aktif' : 'Tidak Aktif'}
-                              </span>
-                            </td>
-                            <td>
-                              <div style={{ display: 'flex', gap: '0.25rem' }}>
-                                <button
-                                  className="btn btn-sm btn-outline"
-                                  onClick={() => openEditCategoryModal(category)}
-                                >
-                                  <Edit2 size={14} />
-                                </button>
-                                <button
-                                  className="btn btn-sm btn-outline"
-                                  onClick={() => openDeleteCategoryModal(category)}
-                                  style={{ color: 'var(--danger)' }}
-                                  disabled={itemCount > 0}
-                                  title={itemCount > 0 ? 'Tidak boleh padam kategori yang masih digunakan' : 'Padam kategori'}
-                                >
-                                  <Trash2 size={14} />
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        );
-                      })}
+                    {menuCategories.map(cat => (
+                      <tr key={cat.id}>
+                        <td>{cat.sortOrder}</td>
+                        <td>
+                          <div className="flex items-center gap-2">
+                            <div
+                              style={{ width: 12, height: 12, borderRadius: 2, background: cat.color }}
+                            />
+                            <span className="font-semibold">{cat.name}</span>
+                          </div>
+                        </td>
+                        <td>{cat.description || '-'}</td>
+                        <td>
+                          {cat.isActive ? (
+                            <span className="text-green-600 text-xs font-bold border border-green-200 bg-green-50 px-2 py-1 rounded">Aktif</span>
+                          ) : (
+                            <span className="text-gray-500 text-xs font-bold border border-gray-200 bg-gray-50 px-2 py-1 rounded">Tidak Aktif</span>
+                          )}
+                        </td>
+                        <td>
+                          <div className="flex gap-2">
+                            <button onClick={() => openEditCategoryModal(cat)} className="btn btn-sm btn-outline"><Edit2 size={14} /></button>
+                            <button onClick={() => openDeleteCategoryModal(cat)} className="btn btn-sm btn-outline text-red-500"><Trash2 size={14} /></button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
               </div>
-            ) : (
-              <div className="card" style={{ textAlign: 'center', padding: '3rem' }}>
-                <FolderOpen size={48} color="var(--gray-400)" style={{ marginBottom: '1rem' }} />
-                <p style={{ color: 'var(--text-secondary)', marginBottom: '1rem' }}>
-                  Belum ada kategori menu
-                </p>
-                <button className="btn btn-primary" onClick={openAddCategoryModal}>
-                  <Plus size={18} />
-                  Tambah Kategori Pertama
-                </button>
-              </div>
-            )}
+            </div>
           </>
         )}
 
-        {/* Add/Edit Menu Modal */}
-        <Modal
-          isOpen={modalType === 'add-menu' || modalType === 'edit-menu'}
-          onClose={closeModal}
-          title={modalType === 'add-menu' ? 'Tambah Menu Baru' : 'Edit Menu'}
-          maxWidth="500px"
-        >
-          <div className="form-group">
-            <label className="form-label">Nama Menu *</label>
-            <input
-              type="text"
-              className="form-input"
-              value={menuForm.name}
-              onChange={(e) => setMenuForm(prev => ({ ...prev, name: e.target.value }))}
-              placeholder="Contoh: Nasi Lemak Special"
-            />
-          </div>
-
-          <div className="grid grid-cols-2" style={{ gap: '1rem' }}>
-            <div className="form-group">
-              <label className="form-label">Kategori</label>
-              <select
-                className="form-select"
-                value={menuForm.category}
-                onChange={(e) => setMenuForm(prev => ({ ...prev, category: e.target.value }))}
-              >
-                {activeCategories.map(cat => (
-                  <option key={cat.id} value={cat.name}>{cat.name}</option>
-                ))}
-              </select>
-            </div>
-            <div className="form-group">
-              <label className="form-label">Harga (BND) *</label>
-              <input
-                type="number"
-                className="form-input"
-                value={menuForm.price}
-                onChange={(e) => setMenuForm(prev => ({ ...prev, price: Number(e.target.value) }))}
-                min="0"
-                step="0.5"
-              />
-            </div>
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">Keterangan</label>
-            <textarea
-              className="form-input"
-              value={menuForm.description}
-              onChange={(e) => setMenuForm(prev => ({ ...prev, description: e.target.value }))}
-              rows={2}
-              placeholder="Penerangan menu..."
-            />
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">Status</label>
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <button
-                type="button"
-                onClick={() => setMenuForm(prev => ({ ...prev, isAvailable: true }))}
-                className={`btn ${menuForm.isAvailable ? 'btn-success' : 'btn-outline'}`}
-                style={{ flex: 1 }}
-              >
-                <Check size={16} />
-                Available
-              </button>
-              <button
-                type="button"
-                onClick={() => setMenuForm(prev => ({ ...prev, isAvailable: false }))}
-                className={`btn ${!menuForm.isAvailable ? 'btn-danger' : 'btn-outline'}`}
-                style={{ flex: 1 }}
-              >
-                <X size={16} />
-                Sold Out
+        {/* Groups Tab */}
+        {activeTab === 'groups' && (
+          <>
+            <div style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'flex-end' }}>
+              <button className="btn btn-primary" onClick={openAddGroupModal}>
+                <Plus size={18} />
+                Tambah Group
               </button>
             </div>
-          </div>
 
-          {modifierGroups.length > 0 && (
-            <div className="form-group">
-              <label className="form-label">Modifier Groups</label>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-                {modifierGroups.map(group => (
-                  <button
-                    key={group.id}
-                    type="button"
-                    onClick={() => toggleModifierGroup(group.id)}
-                    className={`btn btn-sm ${menuForm.modifierGroupIds.includes(group.id) ? 'btn-primary' : 'btn-outline'}`}
-                  >
-                    {menuForm.modifierGroupIds.includes(group.id) ? <Check size={14} /> : <Plus size={14} />}
-                    {group.name}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1.5rem' }}>
-            <button className="btn btn-outline" onClick={closeModal} disabled={isProcessing} style={{ flex: 1 }}>
-              Batal
-            </button>
-            <button
-              className="btn btn-primary"
-              onClick={modalType === 'add-menu' ? handleAddMenuItem : handleEditMenuItem}
-              disabled={isProcessing}
-              style={{ flex: 1 }}
-            >
-              {isProcessing ? <LoadingSpinner size="sm" /> : modalType === 'add-menu' ? 'Tambah' : 'Simpan'}
-            </button>
-          </div>
-        </Modal>
-
-        {/* Delete Menu Modal */}
-        <Modal
-          isOpen={modalType === 'delete-menu'}
-          onClose={closeModal}
-          title="Padam Menu"
-          maxWidth="400px"
-        >
-          <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-            <div style={{
-              width: '60px', height: '60px',
-              background: '#fee2e2', borderRadius: '50%',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              margin: '0 auto 1rem'
-            }}>
-              <Trash2 size={28} color="var(--danger)" />
-            </div>
-            <p style={{ color: 'var(--text-secondary)' }}>
-              Padam <strong>{selectedMenuItem?.name}</strong>?
-            </p>
-          </div>
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <button className="btn btn-outline" onClick={closeModal} style={{ flex: 1 }}>Batal</button>
-            <button className="btn btn-danger" onClick={handleDeleteMenuItem} disabled={isProcessing} style={{ flex: 1 }}>
-              {isProcessing ? <LoadingSpinner size="sm" /> : 'Padam'}
-            </button>
-          </div>
-        </Modal>
-
-        {/* Add/Edit Group Modal */}
-        <Modal
-          isOpen={modalType === 'add-group' || modalType === 'edit-group'}
-          onClose={closeModal}
-          title={modalType === 'add-group' ? 'Tambah Modifier Group' : 'Edit Modifier Group'}
-          maxWidth="450px"
-        >
-          <div className="form-group">
-            <label className="form-label">Nama Group *</label>
-            <input
-              type="text"
-              className="form-input"
-              value={groupForm.name}
-              onChange={(e) => setGroupForm(prev => ({ ...prev, name: e.target.value }))}
-              placeholder="Contoh: Pilih Sos, Pilih Flavour"
-            />
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">Wajib Pilih?</label>
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <button
-                type="button"
-                onClick={() => setGroupForm(prev => ({ ...prev, isRequired: false }))}
-                className={`btn ${!groupForm.isRequired ? 'btn-primary' : 'btn-outline'}`}
-                style={{ flex: 1 }}
-              >
-                Optional
-              </button>
-              <button
-                type="button"
-                onClick={() => setGroupForm(prev => ({ ...prev, isRequired: true, minSelection: Math.max(1, prev.minSelection) }))}
-                className={`btn ${groupForm.isRequired ? 'btn-danger' : 'btn-outline'}`}
-                style={{ flex: 1 }}
-              >
-                <AlertCircle size={16} />
-                Wajib
-              </button>
-            </div>
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">Boleh Pilih Lebih Dari Satu?</label>
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <button
-                type="button"
-                onClick={() => setGroupForm(prev => ({ ...prev, allowMultiple: false, maxSelection: 1 }))}
-                className={`btn ${!groupForm.allowMultiple ? 'btn-primary' : 'btn-outline'}`}
-                style={{ flex: 1 }}
-              >
-                Single Select
-              </button>
-              <button
-                type="button"
-                onClick={() => setGroupForm(prev => ({ ...prev, allowMultiple: true, maxSelection: 5 }))}
-                className={`btn ${groupForm.allowMultiple ? 'btn-primary' : 'btn-outline'}`}
-                style={{ flex: 1 }}
-              >
-                Multiple Select
-              </button>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2" style={{ gap: '1rem' }}>
-            <div className="form-group">
-              <label className="form-label">Min Selection</label>
-              <input
-                type="number"
-                className="form-input"
-                value={groupForm.minSelection}
-                onChange={(e) => setGroupForm(prev => ({ ...prev, minSelection: Number(e.target.value) }))}
-                min="0"
-              />
-            </div>
-            <div className="form-group">
-              <label className="form-label">Max Selection</label>
-              <input
-                type="number"
-                className="form-input"
-                value={groupForm.maxSelection}
-                onChange={(e) => setGroupForm(prev => ({ ...prev, maxSelection: Number(e.target.value) }))}
-                min="1"
-              />
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1.5rem' }}>
-            <button className="btn btn-outline" onClick={closeModal} disabled={isProcessing} style={{ flex: 1 }}>
-              Batal
-            </button>
-            <button
-              className="btn btn-primary"
-              onClick={modalType === 'add-group' ? handleAddGroup : handleEditGroup}
-              disabled={isProcessing}
-              style={{ flex: 1 }}
-            >
-              {isProcessing ? <LoadingSpinner size="sm" /> : modalType === 'add-group' ? 'Tambah' : 'Simpan'}
-            </button>
-          </div>
-        </Modal>
-
-        {/* Delete Group Modal */}
-        <Modal
-          isOpen={modalType === 'delete-group'}
-          onClose={closeModal}
-          title="Padam Modifier Group"
-          maxWidth="400px"
-        >
-          <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-            <div style={{
-              width: '60px', height: '60px',
-              background: '#fee2e2', borderRadius: '50%',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              margin: '0 auto 1rem'
-            }}>
-              <Trash2 size={28} color="var(--danger)" />
-            </div>
-            <p style={{ color: 'var(--text-secondary)' }}>
-              Padam group <strong>{selectedGroup?.name}</strong>?
-            </p>
-            <p style={{ fontSize: '0.875rem', color: 'var(--warning)', marginTop: '0.5rem' }}>
-              Semua options dalam group ini juga akan dipadam.
-            </p>
-          </div>
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <button className="btn btn-outline" onClick={closeModal} style={{ flex: 1 }}>Batal</button>
-            <button className="btn btn-danger" onClick={handleDeleteGroup} disabled={isProcessing} style={{ flex: 1 }}>
-              {isProcessing ? <LoadingSpinner size="sm" /> : 'Padam'}
-            </button>
-          </div>
-        </Modal>
-
-        {/* Add/Edit Option Modal */}
-        <Modal
-          isOpen={modalType === 'add-option' || modalType === 'edit-option'}
-          onClose={closeModal}
-          title={modalType === 'add-option' ? 'Tambah Option' : 'Edit Option'}
-          maxWidth="400px"
-        >
-          <div className="form-group">
-            <label className="form-label">Group *</label>
-            <select
-              className="form-select"
-              value={optionForm.groupId}
-              onChange={(e) => setOptionForm(prev => ({ ...prev, groupId: e.target.value }))}
-            >
-              <option value="">Pilih Group</option>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {modifierGroups.map(group => (
-                <option key={group.id} value={group.id}>{group.name}</option>
-              ))}
-            </select>
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">Nama Option *</label>
-            <input
-              type="text"
-              className="form-input"
-              value={optionForm.name}
-              onChange={(e) => setOptionForm(prev => ({ ...prev, name: e.target.value }))}
-              placeholder="Contoh: BBQ Sauce, Extra Cheese"
-            />
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">Harga Tambahan (BND)</label>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <DollarSign size={18} color="var(--text-secondary)" />
-              <input
-                type="number"
-                className="form-input"
-                value={optionForm.extraPrice}
-                onChange={(e) => setOptionForm(prev => ({ ...prev, extraPrice: Number(e.target.value) }))}
-                min="0"
-                step="0.5"
-                style={{ flex: 1 }}
-              />
-            </div>
-            <small style={{ color: 'var(--text-secondary)' }}>0 = Percuma</small>
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">Status</label>
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <button
-                type="button"
-                onClick={() => setOptionForm(prev => ({ ...prev, isAvailable: true }))}
-                className={`btn ${optionForm.isAvailable ? 'btn-success' : 'btn-outline'}`}
-                style={{ flex: 1 }}
-              >
-                Available
-              </button>
-              <button
-                type="button"
-                onClick={() => setOptionForm(prev => ({ ...prev, isAvailable: false }))}
-                className={`btn ${!optionForm.isAvailable ? 'btn-danger' : 'btn-outline'}`}
-                style={{ flex: 1 }}
-              >
-                Unavailable
-              </button>
-            </div>
-          </div>
-
-          {/* Ingredient Inventory Deduction */}
-          <div style={{ marginTop: '1.5rem', borderTop: '1px solid var(--gray-200)', paddingTop: '1rem' }}>
-            <label className="form-label" style={{ fontWeight: 600 }}>Deduct Inventory (Recipe)</label>
-            <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
-              Select stock items to deduct when this modifier is selected.
-            </div>
-
-            {/* List of added ingredients */}
-            {optionForm.ingredients.length > 0 && (
-              <div style={{ marginBottom: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                {optionForm.ingredients.map((ing, idx) => {
-                  const stockItem = inventory.find(s => s.id === ing.stockItemId);
-                  return (
-                    <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--gray-50)', padding: '0.5rem', borderRadius: '4px', fontSize: '0.875rem' }}>
-                      <span>{stockItem?.name || 'Unknown Item'} <span style={{ color: 'var(--text-secondary)' }}>x {ing.quantity} {stockItem?.unit}</span></span>
-                      <button type="button" onClick={() => handleRemoveIngredient(idx)} style={{ color: 'var(--danger)', background: 'none', border: 'none', cursor: 'pointer' }}><X size={14} /></button>
+                <div key={group.id} className="card p-4">
+                  <div className="flex justify-between items-start mb-2">
+                    <h3 className="font-bold">{group.name}</h3>
+                    <div className="flex gap-1">
+                      <button onClick={() => openEditGroupModal(group)} className="p-1 hover:bg-gray-100 rounded"><Edit2 size={14} /></button>
+                      <button onClick={() => openDeleteGroupModal(group)} className="p-1 hover:bg-red-50 text-red-500 rounded"><Trash2 size={14} /></button>
                     </div>
-                  );
-                })}
-              </div>
-            )}
+                  </div>
+                  <div className="text-sm text-gray-500 space-y-1 mb-3">
+                    <div className="flex justify-between">
+                      <span>Selection:</span>
+                      <span className="font-mono">{group.minSelection} - {group.maxSelection}</span>
+                    </div>
+                    <div className="flex gap-2 mt-2">
+                      {group.isRequired && <span className="bg-red-50 text-red-600 text-xs px-2 py-0.5 rounded border border-red-100">Required</span>}
+                      {group.allowMultiple && <span className="bg-blue-50 text-blue-600 text-xs px-2 py-0.5 rounded border border-blue-100">Multi-select</span>}
+                    </div>
+                  </div>
+                  <div className="border-t pt-2 mt-2">
+                    <div className="text-xs text-gray-400 mb-1">Options:</div>
+                    <div className="flex flex-wrap gap-1">
+                      {getOptionsForGroup(group.id).map(opt => (
+                        <span key={opt.id} className="text-xs bg-gray-100 px-2 py-1 rounded">{opt.name}</span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
 
-            {/* Add new ingredient */}
-            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end' }}>
-              <div style={{ flex: 1 }}>
-                <select
-                  className="form-select"
-                  value={selectedStockId}
-                  onChange={e => setSelectedStockId(e.target.value)}
-                  style={{ fontSize: '0.875rem' }}
-                >
-                  <option value="">Select Stock Item...</option>
-                  {inventory.map(item => <option key={item.id} value={item.id}>{item.name} ({item.unit})</option>)}
-                </select>
-              </div>
-              <div style={{ width: '80px' }}>
-                <input
-                  type="number"
-                  className="form-input"
-                  placeholder="Qty"
-                  value={selectedStockQty}
-                  onChange={e => setSelectedStockQty(Number(e.target.value))}
-                  min="0.1"
-                  step="0.1"
-                  style={{ fontSize: '0.875rem' }}
-                />
-              </div>
-              <button
-                type="button"
-                className="btn btn-outline"
-                onClick={handleAddIngredient}
-                disabled={!selectedStockId}
-                style={{ height: '38px', padding: '0 10px' }}
-              >
-                <Plus size={16} />
+        {/* Options Tab */}
+        {activeTab === 'options' && (
+          <>
+            <div style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'flex-end' }}>
+              <button className="btn btn-primary" onClick={() => openAddOptionModal()}>
+                <Plus size={18} />
+                Tambah Option
               </button>
             </div>
-          </div>
 
-          <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1.5rem' }}>
-            <button className="btn btn-outline" onClick={closeModal} disabled={isProcessing} style={{ flex: 1 }}>
-              Batal
-            </button>
-            <button
-              className="btn btn-primary"
-              onClick={modalType === 'add-option' ? handleAddOption : handleEditOption}
-              disabled={isProcessing}
-              style={{ flex: 1 }}
-            >
-              {isProcessing ? <LoadingSpinner size="sm" /> : modalType === 'add-option' ? 'Tambah' : 'Simpan'}
-            </button>
-          </div>
-        </Modal>
-
-        {/* Delete Option Modal */}
-        <Modal
-          isOpen={modalType === 'delete-option'}
-          onClose={closeModal}
-          title="Padam Option"
-          maxWidth="400px"
-        >
-          <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-            <div style={{
-              width: '60px', height: '60px',
-              background: '#fee2e2', borderRadius: '50%',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              margin: '0 auto 1rem'
-            }}>
-              <Trash2 size={28} color="var(--danger)" />
-            </div>
-            <p style={{ color: 'var(--text-secondary)' }}>
-              Padam option <strong>{selectedOption?.name}</strong>?
-            </p>
-          </div>
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <button className="btn btn-outline" onClick={closeModal} style={{ flex: 1 }}>Batal</button>
-            <button className="btn btn-danger" onClick={handleDeleteOption} disabled={isProcessing} style={{ flex: 1 }}>
-              {isProcessing ? <LoadingSpinner size="sm" /> : 'Padam'}
-            </button>
-          </div>
-        </Modal>
-
-        {/* Add/Edit Category Modal */}
-        <Modal
-          isOpen={modalType === 'add-category' || modalType === 'edit-category'}
-          onClose={closeModal}
-          title={modalType === 'add-category' ? 'Tambah Kategori Baru' : 'Edit Kategori'}
-          maxWidth="450px"
-        >
-          <div className="form-group">
-            <label className="form-label">Nama Kategori *</label>
-            <input
-              type="text"
-              className="form-input"
-              value={categoryForm.name}
-              onChange={(e) => setCategoryForm(prev => ({ ...prev, name: e.target.value }))}
-              placeholder="Contoh: Nasi Lemak, Burger, Minuman"
-            />
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">Keterangan</label>
-            <textarea
-              className="form-input"
-              value={categoryForm.description}
-              onChange={(e) => setCategoryForm(prev => ({ ...prev, description: e.target.value }))}
-              rows={2}
-              placeholder="Penerangan kategori..."
-            />
-          </div>
-
-          <div className="grid grid-cols-2" style={{ gap: '1rem' }}>
-            <div className="form-group">
-              <label className="form-label">Warna</label>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <input
-                  type="color"
-                  value={categoryForm.color}
-                  onChange={(e) => setCategoryForm(prev => ({ ...prev, color: e.target.value }))}
-                  style={{ width: '50px', height: '36px', border: 'none', borderRadius: 'var(--radius-sm)', cursor: 'pointer' }}
-                />
-                <input
-                  type="text"
-                  className="form-input"
-                  value={categoryForm.color}
-                  onChange={(e) => setCategoryForm(prev => ({ ...prev, color: e.target.value }))}
-                  style={{ flex: 1 }}
-                />
+            <div className="card">
+              <div className="table-responsive">
+                <table className="table">
+                  <thead>
+                    <tr>
+                      <th>Nama Option</th>
+                      <th>Group</th>
+                      <th>Extra Price</th>
+                      <th>Ingredients</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {modifierOptions.map(opt => {
+                      const group = modifierGroups.find(g => g.id === opt.groupId);
+                      return (
+                        <tr key={opt.id}>
+                          <td className="font-medium">{opt.name}</td>
+                          <td><span className="badge badge-info">{group?.name || 'Unknown Group'}</span></td>
+                          <td>{opt.extraPrice > 0 ? `+ BND ${opt.extraPrice.toFixed(2)}` : 'Free'}</td>
+                          <td>
+                            {opt.ingredients && opt.ingredients.length > 0 ? (
+                              <span className="text-xs bg-purple-50 text-purple-700 px-2 py-1 rounded border border-purple-100">
+                                {opt.ingredients.length} items linked
+                              </span>
+                            ) : (
+                              <span className="text-gray-400 text-xs">-</span>
+                            )}
+                          </td>
+                          <td>
+                            <div className="flex gap-2">
+                              <button onClick={() => openEditOptionModal(opt)} className="btn btn-sm btn-outline"><Edit2 size={14} /></button>
+                              <button onClick={() => openDeleteOptionModal(opt)} className="btn btn-sm btn-outline text-red-500"><Trash2 size={14} /></button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
             </div>
-            <div className="form-group">
-              <label className="form-label">Urutan</label>
-              <input
-                type="number"
-                className="form-input"
-                value={categoryForm.sortOrder}
-                onChange={(e) => setCategoryForm(prev => ({ ...prev, sortOrder: Number(e.target.value) }))}
-                min="1"
-              />
-            </div>
-          </div>
+          </>
+        )}
 
-          <div className="form-group">
-            <label className="form-label">Status</label>
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <button
-                type="button"
-                onClick={() => setCategoryForm(prev => ({ ...prev, isActive: true }))}
-                className={`btn ${categoryForm.isActive ? 'btn-success' : 'btn-outline'}`}
-                style={{ flex: 1 }}
-              >
-                <Check size={16} />
-                Aktif
-              </button>
-              <button
-                type="button"
-                onClick={() => setCategoryForm(prev => ({ ...prev, isActive: false }))}
-                className={`btn ${!categoryForm.isActive ? 'btn-warning' : 'btn-outline'}`}
-                style={{ flex: 1 }}
-              >
-                <X size={16} />
-                Tidak Aktif
-              </button>
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1.5rem' }}>
-            <button className="btn btn-outline" onClick={closeModal} disabled={isProcessing} style={{ flex: 1 }}>
-              Batal
-            </button>
-            <button
-              className="btn btn-primary"
-              onClick={modalType === 'add-category' ? handleAddCategory : handleEditCategory}
-              disabled={isProcessing}
-              style={{ flex: 1 }}
-            >
-              {isProcessing ? <LoadingSpinner size="sm" /> : modalType === 'add-category' ? 'Tambah' : 'Simpan'}
-            </button>
-          </div>
-        </Modal>
-
-        {/* Delete Category Modal */}
-        <Modal
-          isOpen={modalType === 'delete-category'}
-          onClose={closeModal}
-          title="Padam Kategori"
-          maxWidth="400px"
-        >
-          <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-            <div style={{
-              width: '60px', height: '60px',
-              background: '#fee2e2', borderRadius: '50%',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              margin: '0 auto 1rem'
-            }}>
-              <Trash2 size={28} color="var(--danger)" />
-            </div>
-            <p style={{ color: 'var(--text-secondary)' }}>
-              Padam kategori <strong>{selectedCategory?.name}</strong>?
-            </p>
-            {selectedCategory && menuItems.filter(item => item.category === selectedCategory.name).length > 0 && (
-              <p style={{ fontSize: '0.875rem', color: 'var(--warning)', marginTop: '0.5rem' }}>
-                <AlertCircle size={14} style={{ display: 'inline', marginRight: '0.25rem' }} />
-                Kategori ini masih digunakan oleh {menuItems.filter(item => item.category === selectedCategory.name).length} menu item.
-              </p>
-            )}
-          </div>
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <button className="btn btn-outline" onClick={closeModal} style={{ flex: 1 }}>Batal</button>
-            <button
-              className="btn btn-danger"
-              onClick={handleDeleteCategory}
-              disabled={isProcessing || !!(selectedCategory && menuItems.filter(item => item.category === selectedCategory.name).length > 0)}
-              style={{ flex: 1 }}
-            >
-              {isProcessing ? <LoadingSpinner size="sm" /> : 'Padam'}
-            </button>
-          </div>
-        </Modal>
       </div>
+
+      {/* Modal Renderer */}
+      {renderModalContent()}
     </MainLayout>
   );
 }
-

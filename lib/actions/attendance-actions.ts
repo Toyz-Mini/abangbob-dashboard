@@ -186,16 +186,32 @@ async function uploadPhotoServer(staffId: string, fileBase64: string, fileName: 
 // CLOCK IN/OUT ACTIONS
 // =====================================================
 
-export async function clockInAction(data: {
+import { clockInSchema } from '@/lib/validators/attendance';
+
+export async function clockInAction(rawData: {
     staff_id: string;
     latitude: number;
     longitude: number;
     selfie_base64: string;
     selfie_filename: string;
-    // New fields for late handling
     late_reason_code?: string;
     late_reason_note?: string;
 }) {
+    // Validate input using Zod
+    const validationResult = clockInSchema.safeParse(rawData);
+
+    if (!validationResult.success) {
+        // Return the first error message
+        return {
+            success: false,
+            error: validationResult.error.issues[0].message,
+            data: null,
+            requiresLateReason: false,
+        };
+    }
+
+    const data = validationResult.data;
+
     try {
         await verifySession();
         const supabaseAdmin = getSupabaseAdmin();
@@ -313,7 +329,9 @@ export async function clockInAction(data: {
     }
 }
 
-export async function clockOutAction(data: {
+import { clockOutSchema } from '@/lib/validators/attendance';
+
+export async function clockOutAction(rawData: {
     attendance_id: string;
     staff_id: string;
     latitude: number;
@@ -321,6 +339,18 @@ export async function clockOutAction(data: {
     selfie_base64: string;
     selfie_filename: string;
 }) {
+    const validationResult = clockOutSchema.safeParse(rawData);
+
+    if (!validationResult.success) {
+        return {
+            success: false,
+            error: validationResult.error.issues[0].message,
+            data: null,
+        };
+    }
+
+    const data = validationResult.data;
+
     try {
         await verifySession();
         const supabaseAdmin = getSupabaseAdmin();

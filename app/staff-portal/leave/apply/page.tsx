@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import StaffLayout from '@/components/StaffLayout';
 import { useStaffPortal, useStaff } from '@/lib/store';
+import { useSubmitLeaveRequestMutation } from '@/lib/hooks/mutations/useLeaveMutations';
 import { getLeaveTypeLabel, calculateLeaveDays } from '@/lib/staff-portal-data';
 import { getReplacementLeaveStats } from '@/lib/supabase/operations';
 import { LeaveType } from '@/lib/types';
@@ -33,7 +34,8 @@ const LEAVE_TYPES: LeaveType[] = [
 export default function ApplyLeavePage() {
   const router = useRouter();
   const { staff, isInitialized } = useStaff();
-  const { addLeaveRequest, getLeaveBalance } = useStaffPortal();
+  const { getLeaveBalance } = useStaffPortal();
+  const submitLeaveMutation = useSubmitLeaveRequestMutation();
 
   /* 
    * FIXED: Use real logged in user from AuthContext
@@ -141,7 +143,7 @@ export default function ApplyLeavePage() {
     setIsSubmitting(true);
     await new Promise(resolve => setTimeout(resolve, 500));
 
-    addLeaveRequest({
+    submitLeaveMutation.mutate({
       staffId: staffId,
       staffName: currentStaff?.name || '',
       type: form.type,

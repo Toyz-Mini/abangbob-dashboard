@@ -1,0 +1,40 @@
+name: System Reliability
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  quality:
+    name: 🛡️ Quality Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          
+      - name: Install Dependencies
+        run: npm ci
+        
+      - name: 🔍 Lint
+        run: npm run lint
+        
+      # - name: ʦ Typecheck
+      #   run: npx tsc --noEmit
+        
+      - name: 🧪 Unit Tests (Vitest)
+        run: npm run test
+        
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps chromium
+        
+      - name: 🎭 E2E Tests (Playwright)
+        run: npx playwright test
+        env:
+          CI: true

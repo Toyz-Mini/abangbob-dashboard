@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import StaffLayout from '@/components/StaffLayout';
 import { useStaffPortal, useStaff } from '@/lib/store';
+import { useSubmitClaimMutation } from '@/lib/hooks/mutations/useClaimsMutations';
 import { getClaimTypeLabel } from '@/lib/staff-portal-data';
 import { ClaimType } from '@/lib/types';
 import { useRouter } from 'next/navigation';
@@ -34,7 +35,7 @@ const CLAIM_TYPES: ClaimType[] = [
 export default function NewClaimPage() {
   const router = useRouter();
   const { staff, isInitialized } = useStaff();
-  const { addClaimRequest } = useStaffPortal();
+  const submitClaimMutation = useSubmitClaimMutation();
 
   /* 
    * FIXED: Use real logged in user from AuthContext
@@ -115,7 +116,7 @@ export default function NewClaimPage() {
     setIsSubmitting(true);
     await new Promise(resolve => setTimeout(resolve, 500));
 
-    addClaimRequest({
+    submitClaimMutation.mutate({
       staffId: staffId,
       staffName: currentStaff?.name || '',
       type: form.type,
