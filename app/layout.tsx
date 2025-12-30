@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 import './globals.css'
 import Providers from '@/components/Providers'
 import { ServiceWorkerRegistration } from '@/components/ServiceWorkerRegistration'
+import { SpeedInsights } from "@vercel/speed-insights/next"
 
 export const metadata: Metadata = {
   title: 'AbangBob Dashboard - F&B Management System',
@@ -56,7 +57,7 @@ export default function RootLayout({
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="msapplication-TileColor" content="#0d9488" />
         <meta name="msapplication-tap-highlight" content="no" />
-        
+
         {/* Preconnect for performance */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -66,6 +67,7 @@ export default function RootLayout({
       <body>
         <Providers>
           {children}
+          <SpeedInsights />
         </Providers>
         <ServiceWorkerRegistration />
       </body>
