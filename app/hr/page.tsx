@@ -4,7 +4,7 @@ import MainLayout from '@/components/MainLayout';
 import { useStaff, useKPI, useOrders } from '@/lib/store';
 import { useTranslation } from '@/lib/contexts/LanguageContext';
 import Link from 'next/link';
-import { Users, Zap, List, Clock, DollarSign, BarChart3, UserPlus, CheckCircle, Trophy, TrendingUp, Award, Crown, Timer, Gauge, Medal, Calendar } from 'lucide-react';
+import { Users, Zap, List, Clock, DollarSign, BarChart3, UserPlus, CheckCircle, Trophy, TrendingUp, Award, Crown, Timer, Gauge, Medal, Calendar, ClipboardList } from 'lucide-react';
 import StatCard from '@/components/StatCard';
 import LivePageHeader from '@/components/LivePageHeader';
 import GlassCard from '@/components/GlassCard';
