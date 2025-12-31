@@ -1,5 +1,6 @@
 -- Allow public (anon) to insert orders
 -- This is necessary for the online ordering system where users are not authenticated via Auth
+drop policy if exists "Allow public to create orders" on "orders";
 create policy "Allow public to create orders"
 on "orders"
 for insert
