@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { getSupabaseClient } from '@/lib/supabase/client';
 import LiveOrderTracker from '@/components/online-ordering/LiveOrderTracker';
-import { ChevronLeft, Home } from 'lucide-react';
+import { ChevronLeft, Home, Share2, Gift, Trophy } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export default function OrderStatusPage({ params }: { params: { orderId: string } }) {
@@ -15,6 +15,7 @@ export default function OrderStatusPage({ params }: { params: { orderId: string 
     const [order, setOrder] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [debugInfo, setDebugInfo] = useState<string>('');
+    const [customerPoints, setCustomerPoints] = useState<number>(0);
     const supabase = getSupabaseClient();
 
     useEffect(() => {
@@ -33,8 +34,6 @@ export default function OrderStatusPage({ params }: { params: { orderId: string 
                 const { data, error } = await supabase
                     .rpc('get_public_order', { order_id: orderId });
 
-                console.log('[OrderStatus] RPC response:', { data, error });
-
                 if (error) {
                     console.error('Error fetching order:', error);
                     setDebugInfo(`RPC Error: ${error.message} (Code: ${error.code})`);
@@ -42,17 +41,32 @@ export default function OrderStatusPage({ params }: { params: { orderId: string 
                 } else if (data && data.length > 0) {
                     console.log('[OrderStatus] Order found:', data[0]);
                     setOrder(data[0]);
+                    if (data[0].customer_id) {
+                        fetchCustomerPoints(data[0].customer_id);
+                    }
                 } else {
-                    console.log('[OrderStatus] No order returned from RPC. Data:', data);
-                    setDebugInfo(`Order ID ${orderId} not found in database. RPC returned empty. Checking local storage...`);
                     attemptLocalFallback(orderId);
                 }
             } catch (err: any) {
                 console.error('[OrderStatus] Unexpected error:', err);
-                setDebugInfo(`Unexpected error: ${err?.message}`);
                 attemptLocalFallback(orderId);
             }
             setLoading(false);
+        };
+
+        const fetchCustomerPoints = async (customerId: string) => {
+            try {
+                const { data, error } = await supabase
+                    .from('customers')
+                    .select('loyalty_points')
+                    .eq('id', customerId)
+                    .single();
+                if (data) {
+                    setCustomerPoints(data.loyalty_points);
+                }
+            } catch (e) {
+                console.error('Failed to fetch points', e);
+            }
         };
 
         const attemptLocalFallback = (id: string) => {
@@ -64,32 +78,32 @@ export default function OrderStatusPage({ params }: { params: { orderId: string 
                     const localOrder = localOrders.find((o: any) => o.id === id);
                     if (localOrder) {
                         console.log('[OrderStatus] Found in local storage:', localOrder);
-                        // Standardize fields if needed (local is camelCase, RPC return is usually snake_case but Supabase client converts?)
-                        // get_public_order is SQL function -> returns snake_case columns.
-                        // But supabase client usually converts if configured? 
-                        // Wait, rpc return type is 'any' usually.
-                        // We need to map camelCase (local) to snake_case (expected by component) OR update component to handle both.
-                        // The component uses: order.order_number, order.subtotal ... (snake_case accessors implies component expects snake_case/RPC result).
-                        // Local storage is camelCase (from store.tsx).
-                        // We need to convert localOrder to snake_case structure.
-
                         const mappedOrder = {
                             id: localOrder.id,
                             order_number: localOrder.orderNumber,
                             status: localOrder.status,
-                            items: localOrder.items, // items is array in both?
+                            items: localOrder.items,
                             subtotal: localOrder.subtotal,
                             discount_amount: localOrder.discountAmount || 0,
                             tax: localOrder.tax || 0,
                             total: localOrder.total,
                             loyalty_points_earned: localOrder.loyaltyPointsEarned || 0,
                             redemption_amount: localOrder.redemptionAmount || 0,
-                            // Add other necessary fields
                             created_at: localOrder.createdAt,
+                            customer_id: localOrder.customerId,
                             is_local_fallback: true
                         };
                         setOrder(mappedOrder);
                         setDebugInfo('Showing local order (Sync Pending)');
+
+                        // Try to get points from session if not in DB sync yet
+                        const customerStr = sessionStorage.getItem('customer');
+                        if (customerStr) {
+                            const c = JSON.parse(customerStr);
+                            if (mappedOrder.customer_id === c.id) {
+                                setCustomerPoints(c.loyaltyPoints || 0);
+                            }
+                        }
                     } else {
                         setDebugInfo((prev) => prev + ' | Not found locally.');
                     }
@@ -101,6 +115,26 @@ export default function OrderStatusPage({ params }: { params: { orderId: string 
 
         fetchOrder();
     }, [resolvedParams.orderId, supabase]);
+
+    const handleShare = async () => {
+        if (!order) return;
+        const shareData = {
+            title: 'AbangBob Order',
+            text: `Just ordered delicious food from AbangBob! Order #${order.order_number}. Status: ${order.status}`,
+            url: window.location.href
+        };
+
+        try {
+            if (navigator.share) {
+                await navigator.share(shareData);
+            } else {
+                await navigator.clipboard.writeText(`${shareData.title}\n${shareData.text}\n${shareData.url}`);
+                alert('Copied to clipboard!');
+            }
+        } catch (err) {
+            console.error('Error sharing', err);
+        }
+    };
 
     if (loading) {
         return (
@@ -130,9 +164,14 @@ export default function OrderStatusPage({ params }: { params: { orderId: string 
                     <ChevronLeft size={24} />
                 </button>
                 <h1 className="font-bold text-lg text-gray-800">Order Status</h1>
-                <button onClick={() => router.push('/order-online')} className="p-2 -mr-2 text-gray-600">
-                    <Home size={24} />
-                </button>
+                <div className="flex gap-2">
+                    <button onClick={handleShare} className="p-2 text-gray-600 hover:text-orange-500 transition-colors">
+                        <Share2 size={24} />
+                    </button>
+                    <button onClick={() => router.push('/order-online')} className="p-2 -mr-2 text-gray-600">
+                        <Home size={24} />
+                    </button>
+                </div>
             </div>
 
             <div className="p-6 space-y-6 flex-1 overflow-y-auto pb-20">
@@ -142,6 +181,54 @@ export default function OrderStatusPage({ params }: { params: { orderId: string 
                 </div>
 
                 <LiveOrderTracker orderId={order.id} initialStatus={order.status} />
+
+                {/* Gamified Loyalty Card */}
+                {order.customer_id && (
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="bg-gradient-to-br from-indigo-900 to-indigo-800 rounded-3xl p-6 text-white shadow-xl relative overflow-hidden"
+                    >
+                        {/* Background Decoration */}
+                        <div className="absolute top-0 right-0 p-4 opacity-10">
+                            <Trophy size={100} />
+                        </div>
+
+                        <div className="relative z-10">
+                            <div className="flex justify-between items-start mb-4">
+                                <div>
+                                    <p className="text-indigo-200 text-sm font-medium">AbangBob Rewards</p>
+                                    <h3 className="text-2xl font-bold">{customerPoints} Points</h3>
+                                </div>
+                                <div className="bg-white/20 p-2 rounded-xl backdrop-blur-sm">
+                                    <Gift size={24} className="text-yellow-400" />
+                                </div>
+                            </div>
+
+                            {order.loyalty_points_earned > 0 && (
+                                <div className="mb-4 bg-white/10 rounded-lg p-2 flex items-center gap-2 text-sm">
+                                    <span className="bg-yellow-400 text-indigo-900 text-xs font-bold px-1.5 py-0.5 rounded-md">NEW</span>
+                                    <span>You earned +{order.loyalty_points_earned} pts!</span>
+                                </div>
+                            )}
+
+                            <div className="space-y-2">
+                                <div className="flex justify-between text-xs text-indigo-200">
+                                    <span>Progress to next BND 5.00</span>
+                                    <span>{100 - (customerPoints % 100)} pts to go</span>
+                                </div>
+                                <div className="h-3 bg-indigo-950/50 rounded-full overflow-hidden">
+                                    <motion.div
+                                        initial={{ width: 0 }}
+                                        animate={{ width: `${(customerPoints % 100)}%` }}
+                                        transition={{ duration: 1.5, ease: "easeOut" }}
+                                        className="h-full bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    </motion.div>
+                )}
 
                 {/* Order Summary Card */}
                 <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
@@ -187,16 +274,7 @@ export default function OrderStatusPage({ params }: { params: { orderId: string 
                     </div>
                 </div>
 
-                {order.loyalty_points_earned > 0 && (
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="bg-gradient-to-r from-yellow-400 to-orange-500 p-4 rounded-2xl text-white shadow-lg text-center"
-                    >
-                        <p className="font-bold text-lg">Congratulations!</p>
-                        <p className="text-white/90 text-sm">You earned {order.loyalty_points_earned} points from this order.</p>
-                    </motion.div>
-                )}
+
             </div>
 
             <div className="p-4 bg-white border-t border-gray-100">

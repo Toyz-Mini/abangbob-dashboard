@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useMenu } from '@/lib/store';
 import { MenuItem, OrderItem, SelectedModifier } from '@/lib/types';
-import { Search, ShoppingBag, X, Plus, Minus, ChevronLeft, Check } from 'lucide-react';
+import { Search, ShoppingBag, X, Plus, Minus, ChevronLeft, Check, Flame } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 
@@ -146,8 +146,21 @@ export default function OnlineMenuPage() {
                     </button>
                 </div>
 
+                {/* High Demand Banner */}
+                <div className="px-4 pt-2">
+                    <div className="bg-gradient-to-r from-orange-100 to-red-50 border border-orange-200 rounded-xl p-3 flex items-start gap-3">
+                        <div className="p-1.5 bg-white rounded-full text-orange-600 shadow-sm animate-pulse-slow">
+                            <Flame size={16} fill="currentColor" />
+                        </div>
+                        <div>
+                            <p className="font-bold text-orange-900 text-sm">Kitchen is Busy! 🔥</p>
+                            <p className="text-xs text-orange-700 leading-tight">High volume of orders right now. Order soon to secure your slot!</p>
+                        </div>
+                    </div>
+                </div>
+
                 {/* Categories Scroller */}
-                <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
+                <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar px-4 pt-2">
                     {categories.map(cat => (
                         <button
                             key={cat}
@@ -166,7 +179,7 @@ export default function OnlineMenuPage() {
             {/* Product Grid */}
             <div className="flex-1 overflow-y-auto p-4">
                 <div className="grid grid-cols-2 gap-4">
-                    {filteredItems.map(item => (
+                    {filteredItems.map((item, idx) => (
                         <motion.div
                             key={item.id}
                             initial={{ opacity: 0, y: 10 }}
@@ -190,6 +203,13 @@ export default function OnlineMenuPage() {
                                         unoptimized
                                     />
                                 </div>
+                                {/* Mock Urgency Badge - Show on every 3rd item or specific IDs */}
+                                {idx % 3 === 0 && (
+                                    <div className="absolute top-2 left-2 bg-red-600 text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-md flex items-center gap-1">
+                                        <Flame size={10} fill="currentColor" />
+                                        LAKU KERAS
+                                    </div>
+                                )}
                             </div>
                             <h3 className="font-bold text-gray-800 text-sm leading-tight mb-1">{item.name}</h3>
                             <p className="text-orange-600 font-bold text-sm">BND {item.price.toFixed(2)}</p>
