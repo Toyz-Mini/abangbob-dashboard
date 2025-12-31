@@ -18,13 +18,12 @@ export default function OrderStatusPage({ params }: { params: { orderId: string 
 
         const fetchOrder = async () => {
             const { data, error } = await supabase
-                .rpc('get_public_order', { order_id: params.orderId })
-                .single();
+                .rpc('get_public_order', { order_id: params.orderId });
 
             if (error) {
                 console.error('Error fetching order:', error);
-            } else {
-                setOrder(data);
+            } else if (data && data.length > 0) {
+                setOrder(data[0]);
             }
             setLoading(false);
         };
