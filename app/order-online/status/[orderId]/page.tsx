@@ -18,9 +18,7 @@ export default function OrderStatusPage({ params }: { params: { orderId: string 
 
         const fetchOrder = async () => {
             const { data, error } = await supabase
-                .from('orders')
-                .select('*')
-                .eq('id', params.orderId)
+                .rpc('get_public_order', { order_id: params.orderId })
                 .single();
 
             if (error) {
