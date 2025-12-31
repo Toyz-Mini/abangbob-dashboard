@@ -11,6 +11,17 @@ const nextConfig = {
     ],
   },
 
+  webpack: (config) => {
+    config.ignoreWarnings = [
+      { module: /node_modules/, message: /could not determine a source map reference/ },
+      { module: /node_modules/, message: /Could not auto-detect referenced sourcemap/ },
+      // Suppress the specific warning about source map references
+      /could not determine a source map reference/,
+      /Could not auto-detect referenced sourcemap/,
+    ];
+    return config;
+  },
+
   // Security Headers
   async headers() {
     return [
@@ -71,7 +82,7 @@ module.exports = withSentryConfig(module.exports, {
   project: "javascript-nextjs",
 
   // An auth token is required for uploading source maps.
-  authToken: process.env.SENTRY_AUTH_TOKEN,
+  authToken: process.env.SENTRY_AUTH_TOKEN?.trim(),
 
   // Only print logs for uploading source maps in CI
   silent: !process.env.CI,
