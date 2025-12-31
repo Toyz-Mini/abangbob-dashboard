@@ -1,15 +1,17 @@
 'use client';
 
-import { useState, useEffect, use } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { getSupabaseClient } from '@/lib/supabase/client';
 import LiveOrderTracker from '@/components/online-ordering/LiveOrderTracker';
 import { ChevronLeft, Home } from 'lucide-react';
 import { motion } from 'framer-motion';
 
-export default function OrderStatusPage({ params }: { params: Promise<{ orderId: string }> }) {
+export default function OrderStatusPage({ params }: { params: { orderId: string } }) {
     const router = useRouter();
-    const resolvedParams = use(params);
+    // In Next.js 14, params is a plain object, not a promise.
+    const { orderId } = params;
+    const resolvedParams = { orderId }; // Keep compatibility with existing code structure if needed, or just use orderId directly.
     const [order, setOrder] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [debugInfo, setDebugInfo] = useState<string>('');
