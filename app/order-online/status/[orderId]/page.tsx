@@ -1,35 +1,104 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { getSupabaseClient } from '@/lib/supabase/client';
 import LiveOrderTracker from '@/components/online-ordering/LiveOrderTracker';
 import { ChevronLeft, Home } from 'lucide-react';
 import { motion } from 'framer-motion';
 
-export default function OrderStatusPage({ params }: { params: { orderId: string } }) {
+export default function OrderStatusPage({ params }: { params: Promise<{ orderId: string }> }) {
     const router = useRouter();
+    const resolvedParams = use(params);
     const [order, setOrder] = useState<any>(null);
     const [loading, setLoading] = useState(true);
+    const [debugInfo, setDebugInfo] = useState<string>('');
     const supabase = getSupabaseClient();
 
     useEffect(() => {
-        if (!supabase) return;
+        if (!supabase) {
+            setDebugInfo('Supabase client not available');
+            setLoading(false);
+            return;
+        }
 
         const fetchOrder = async () => {
-            const { data, error } = await supabase
-                .rpc('get_public_order', { order_id: params.orderId });
+            const orderId = resolvedParams.orderId;
+            console.log('[OrderStatus] Fetching order with ID:', orderId);
+            setDebugInfo(`Attempting to fetch orderID: ${orderId}`);
 
-            if (error) {
-                console.error('Error fetching order:', error);
-            } else if (data && data.length > 0) {
-                setOrder(data[0]);
+            try {
+                const { data, error } = await supabase
+                    .rpc('get_public_order', { order_id: orderId });
+
+                console.log('[OrderStatus] RPC response:', { data, error });
+
+                if (error) {
+                    console.error('Error fetching order:', error);
+                    setDebugInfo(`RPC Error: ${error.message} (Code: ${error.code})`);
+                    attemptLocalFallback(orderId);
+                } else if (data && data.length > 0) {
+                    console.log('[OrderStatus] Order found:', data[0]);
+                    setOrder(data[0]);
+                } else {
+                    console.log('[OrderStatus] No order returned from RPC. Data:', data);
+                    setDebugInfo(`Order ID ${orderId} not found in database. RPC returned empty. Checking local storage...`);
+                    attemptLocalFallback(orderId);
+                }
+            } catch (err: any) {
+                console.error('[OrderStatus] Unexpected error:', err);
+                setDebugInfo(`Unexpected error: ${err?.message}`);
+                attemptLocalFallback(orderId);
             }
             setLoading(false);
         };
 
+        const attemptLocalFallback = (id: string) => {
+            if (typeof window === 'undefined') return;
+            try {
+                const localOrdersStr = localStorage.getItem('abangbob_orders');
+                if (localOrdersStr) {
+                    const localOrders = JSON.parse(localOrdersStr);
+                    const localOrder = localOrders.find((o: any) => o.id === id);
+                    if (localOrder) {
+                        console.log('[OrderStatus] Found in local storage:', localOrder);
+                        // Standardize fields if needed (local is camelCase, RPC return is usually snake_case but Supabase client converts?)
+                        // get_public_order is SQL function -> returns snake_case columns.
+                        // But supabase client usually converts if configured? 
+                        // Wait, rpc return type is 'any' usually.
+                        // We need to map camelCase (local) to snake_case (expected by component) OR update component to handle both.
+                        // The component uses: order.order_number, order.subtotal ... (snake_case accessors implies component expects snake_case/RPC result).
+                        // Local storage is camelCase (from store.tsx).
+                        // We need to convert localOrder to snake_case structure.
+
+                        const mappedOrder = {
+                            id: localOrder.id,
+                            order_number: localOrder.orderNumber,
+                            status: localOrder.status,
+                            items: localOrder.items, // items is array in both?
+                            subtotal: localOrder.subtotal,
+                            discount_amount: localOrder.discountAmount || 0,
+                            tax: localOrder.tax || 0,
+                            total: localOrder.total,
+                            loyalty_points_earned: localOrder.loyaltyPointsEarned || 0,
+                            redemption_amount: localOrder.redemptionAmount || 0,
+                            // Add other necessary fields
+                            created_at: localOrder.createdAt,
+                            is_local_fallback: true
+                        };
+                        setOrder(mappedOrder);
+                        setDebugInfo('Showing local order (Sync Pending)');
+                    } else {
+                        setDebugInfo((prev) => prev + ' | Not found locally.');
+                    }
+                }
+            } catch (e) {
+                console.error('Local fallback failed', e);
+            }
+        };
+
         fetchOrder();
-    }, [params.orderId, supabase]);
+    }, [resolvedParams.orderId, supabase]);
 
     if (loading) {
         return (
@@ -43,6 +112,9 @@ export default function OrderStatusPage({ params }: { params: { orderId: string 
         return (
             <div className="flex flex-col h-screen items-center justify-center bg-gray-50 p-6">
                 <p className="text-gray-500 mb-4">Order not found.</p>
+                {debugInfo && (
+                    <p className="text-xs text-gray-400 mb-4 text-center max-w-xs break-all">{debugInfo}</p>
+                )}
                 <button onClick={() => router.push('/order-online')} className="text-orange-600 font-bold">Back to Home</button>
             </div>
         );

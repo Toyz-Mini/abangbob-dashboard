@@ -174,7 +174,7 @@ interface StoreState {
 
   // Orders
   orders: Order[];
-  addOrder: (order: Omit<Order, 'id' | 'orderNumber'>) => Promise<Order>;
+  addOrder: (order: Omit<Order, 'id' | 'orderNumber'>) => Promise<Order>; // Defined further down
   updateOrderStatus: (orderId: string, status: Order['status'], staffId?: string) => void;
   getTodayOrders: () => Order[];
   refreshOrders: () => Promise<void>;

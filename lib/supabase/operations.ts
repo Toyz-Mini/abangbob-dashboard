@@ -538,6 +538,7 @@ export async function insertOrder(order: any) {
   if (!supabase) throw new Error('Supabase not connected');
 
   const snakeCasedOrder = toSnakeCase(order);
+  console.log('[insertOrder] Attempting to insert order:', { orderId: order.id, orderNumber: order.orderNumber });
 
   // @ts-ignore - Type conversion handled at runtime
   const { data, error } = await supabase
@@ -547,18 +548,44 @@ export async function insertOrder(order: any) {
     .single();
 
   if (error) {
-    // If permission denied (likely anon trying to select), fallback to secure RPC
-    if (error.code === '42501' || error.code === 'PGRST116' || error.code === '23503' || error.message?.includes('permis') || error.message?.includes('0 rows') || error.message?.includes('foreign key')) {
-      console.log('Permission denied for standard insert, trying public RPC...');
-      const { data: rpcData, error: rpcError } = await supabase
-        .rpc('create_public_order', { data: snakeCasedOrder })
-        .single();
+    console.log('[insertOrder] Direct insert failed:', error.code, error.message);
 
-      if (rpcError) throw rpcError;
-      return toCamelCase(rpcData);
+    // Fallback to secure RPC for:
+    // 42501: Permission denied (RLS)
+    // PGRST116: JSON/Singular error?
+    // 23503: Foreign Key Violation (e.g. invalid customer_id)
+    // 23505: Unique Violation (e.g. order_number collision - RPC might handle or we retry?)
+    // 42P01: Undefined table (unlikely)
+    if (error.code === '42501' || error.code === 'PGRST116' || error.code === '23503' || error.code === '23505' ||
+      error.message?.includes('permis') || error.message?.includes('0 rows') || error.message?.includes('foreign key') || error.message?.includes('violates unique constraint')) {
+
+      console.log('[insertOrder] Trying public RPC create_public_order...');
+
+      // Note: create_public_order returns SETOF, so don't use .single()
+      const { data: rpcData, error: rpcError } = await supabase
+        .rpc('create_public_order', { data: snakeCasedOrder });
+
+      console.log('[insertOrder] RPC response:', { rpcData, rpcError });
+
+      if (rpcError) {
+        console.error('[insertOrder] RPC failed:', rpcError);
+        throw rpcError;
+      }
+
+      // Handle setof return - data is an array
+      const resultOrder = Array.isArray(rpcData) && rpcData.length > 0 ? rpcData[0] : rpcData;
+
+      if (!resultOrder) {
+        console.error('[insertOrder] RPC success but returned no data');
+        throw new Error('Order creation failed - no data returned');
+      }
+
+      console.log('[insertOrder] RPC success, returning order:', resultOrder?.id);
+      return toCamelCase(resultOrder);
     }
     throw error;
   }
+  console.log('[insertOrder] Direct insert success:', data?.id);
   return toCamelCase(data);
 }
 
