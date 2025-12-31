@@ -548,7 +548,7 @@ export async function insertOrder(order: any) {
 
   if (error) {
     // If permission denied (likely anon trying to select), fallback to secure RPC
-    if (error.code === '42501' || error.message?.includes('permis')) {
+    if (error.code === '42501' || error.code === 'PGRST116' || error.message?.includes('permis') || error.message?.includes('0 rows')) {
       console.log('Permission denied for standard insert, trying public RPC...');
       const { data: rpcData, error: rpcError } = await supabase
         .rpc('create_public_order', { data: snakeCasedOrder })
@@ -612,7 +612,7 @@ export async function insertCustomer(customer: any) {
 
   if (error) {
     // If permission denied (likely anon trying to select), fallback to secure RPC
-    if (error.code === '42501' || error.message?.includes('permis')) {
+    if (error.code === '42501' || error.code === 'PGRST116' || error.message?.includes('permis') || error.message?.includes('0 rows')) {
       console.log('Permission denied for standard insert, trying public RPC...');
       const { data: rpcData, error: rpcError } = await supabase
         .rpc('create_public_customer', { data: snakeCasedCustomer })
