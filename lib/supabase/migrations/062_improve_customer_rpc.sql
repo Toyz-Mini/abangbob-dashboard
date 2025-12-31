@@ -27,8 +27,19 @@ begin
   end if;
 
   -- 2. If not found, Insert new customer
-  insert into customers
-  select * from jsonb_populate_record(null::customers, data)
+  -- We must handle ID generation if not provided
+  -- jsonb_populate_record returns NULL for missing fields.
+  -- We select specific columns to allow defaults to trigger, OR generate ID manually.
+  
+  -- Create a record from JSON
+  new_customer := jsonb_populate_record(null::customers, data);
+  
+  -- If ID is null, generate one
+  if new_customer.id is null then
+    new_customer.id := gen_random_uuid();
+  end if;
+
+  insert into customers values (new_customer.*)
   returning * into new_customer;
   
   return next new_customer;
