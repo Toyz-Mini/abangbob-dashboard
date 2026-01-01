@@ -92,22 +92,20 @@ GRANT EXECUTE ON FUNCTION public.create_public_order(jsonb) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.create_public_order(jsonb) TO service_role;
 
 -- 3. Ensure RLS policy allows anon to insert orders
-DROP POLICY IF EXISTS "Allow public to create orders" ON "orders";
-CREATE POLICY "Allow public to create orders"
-ON "orders"
-FOR INSERT
-TO anon
-WITH CHECK (true);
+-- 3. [DEPRECATED POLICY]
+-- Policy management has moved to 901_rls_orders.sql
+-- Old: Allow public to create orders (Removed to enforce RPC usage)
+-- DROP POLICY IF EXISTS "Allow public to create orders" ON "orders";
+-- CREATE POLICY "Allow public to create orders" ...
 
 -- 4. Ensure orders table has SELECT policy for service_role (for RPC)
 -- Note: get_public_order uses SECURITY DEFINER so it runs as owner, not anon
 -- But let's also add a policy in case direct access is attempted
-DROP POLICY IF EXISTS "Allow authenticated users to view own orders" ON "orders";
-CREATE POLICY "Allow authenticated users to view own orders"
-ON "orders"
-FOR SELECT
-TO authenticated
-USING (true);
+-- 4. [DEPRECATED POLICY]
+-- Policy management has moved to 901_rls_orders.sql
+-- Old: Allow authenticated users to view own orders (was too permissive)
+-- DROP POLICY IF EXISTS "Allow authenticated users to view own orders" ON "orders";
+-- CREATE POLICY "Allow authenticated users to view own orders" ...
 
 -- 5. Ensure RLS is enabled on orders table
 ALTER TABLE orders ENABLE ROW LEVEL SECURITY;

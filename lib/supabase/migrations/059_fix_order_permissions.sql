@@ -1,11 +1,9 @@
 -- Allow public (anon) to insert orders
 -- This is necessary for the online ordering system where users are not authenticated via Auth
-drop policy if exists "Allow public to create orders" on "orders";
-create policy "Allow public to create orders"
-on "orders"
-for insert
-to anon
-with check (true);
+-- [DEPRECATED POLICY]
+-- Orders must be created via RPC create_public_order (901_rls_orders.sql).
+-- DROP POLICY IF EXISTS "Allow public to create orders" ON "orders";
+-- CREATE POLICY "Allow public to create orders" ...
 
 -- Create a secure function to fetch a specific order by ID
 -- This allows "anon" users to view the order they just created without exposing all orders

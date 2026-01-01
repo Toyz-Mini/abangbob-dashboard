@@ -9,26 +9,19 @@ with check (true);
 
 -- Allow public (anon) to update inventory
 -- Required for automatic stock deduction upon order
-drop policy if exists "Allow public to update inventory" on "inventory";
-create policy "Allow public to update inventory"
-on "inventory"
-for update
-to anon
-using (true)
-with check (true);
+-- [DEPRECATED POLICY]
+-- Inventory management is restricted to Staff only (903_rls_hr.sql).
+-- DROP POLICY IF EXISTS "Allow public to update inventory" ON "inventory";
+-- CREATE POLICY "Allow public to update inventory" ...
 
 -- Allow public (anon) to read inventory is likely needed to check stock before update
-drop policy if exists "Allow public to read inventory" on "inventory";
-create policy "Allow public to read inventory"
-on "inventory"
-for select
-to anon
-using (true);
+-- [DEPRECATED POLICY]
+-- Inventory is private.
+-- DROP POLICY IF EXISTS "Allow public to read inventory" ON "inventory";
+-- CREATE POLICY "Allow public to read inventory" ...
 
 -- Also allow public to insert into inventory_logs (if the app logs deductions)
-drop policy if exists "Allow public to create inventory logs" on "inventory_logs";
-create policy "Allow public to create inventory logs"
-on "inventory_logs"
-for insert
-to anon
-with check (true);
+-- [DEPRECATED POLICY]
+-- Inventory logs are private.
+-- DROP POLICY IF EXISTS "Allow public to create inventory logs" ON "inventory_logs";
+-- CREATE POLICY "Allow public to create inventory logs" ...
