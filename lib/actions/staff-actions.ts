@@ -167,6 +167,7 @@ export async function updateStaffAction(id: string, updates: any) {
 
     const { data, error } = await adminClient
         .from('staff')
+        // @ts-ignore
         .update(finalUpdate as any)
         .eq('id', id)
         .select()
