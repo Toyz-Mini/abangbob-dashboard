@@ -1,4 +1,5 @@
 import { getSupabaseClient } from './client';
+import * as attendanceActions from '../actions/attendance-actions';
 
 // =====================================================
 // TYPES
@@ -69,79 +70,45 @@ export function calculateDistance(
 // =====================================================
 
 export async function getAllowedLocations() {
-    const supabase = getSupabaseClient();
-    if (!supabase) return { success: false, error: 'Supabase not configured', data: null };
-
-    const { data, error } = await (supabase as any)
-        .from('allowed_locations')
-        .select('*')
-        .eq('is_active', true)
-        .order('name');
-
-    if (error) {
+    try {
+        const result = await attendanceActions.getAllowedLocationsAction();
+        return result;
+    } catch (error: any) {
         console.error('Error fetching allowed locations:', error);
-        return { success: false, error: error.message, data: null };
+        return { success: false, data: null, error: error.message };
     }
-
-    return { success: true, data, error: null };
 }
 
 export async function addAllowedLocation(location: Omit<AllowedLocation, 'id' | 'created_at' | 'updated_at'>) {
     console.log('addAllowedLocation called with:', location);
-    const supabase = getSupabaseClient();
-    if (!supabase) return { success: false, error: 'Supabase not configured', data: null };
-
-    console.log('Sending insert request to Supabase...');
-    const { data, error } = await (supabase as any)
-        .from('allowed_locations')
-        .insert([location])
-        .select()
-        .single();
-
-    console.log('Supabase response:', { data, error });
-
-    if (error) {
+    console.log('addAllowedLocation called with:', location);
+    try {
+        const result = await attendanceActions.addAllowedLocationAction(location);
+        return result;
+    } catch (error: any) {
         console.error('Error adding location:', error);
-        return { success: false, error: error.message, data: null };
+        return { success: false, data: null, error: error.message };
     }
-
-    return { success: true, data, error: null };
 }
 
 export async function updateAllowedLocation(id: string, updates: Partial<AllowedLocation>) {
-    const supabase = getSupabaseClient();
-    if (!supabase) return { success: false, error: 'Supabase not configured', data: null };
-
-    const { data, error } = await (supabase as any)
-        .from('allowed_locations')
-        .update(updates)
-        .eq('id', id)
-        .select()
-        .single();
-
-    if (error) {
+    try {
+        const result = await attendanceActions.updateAllowedLocationAction(id, updates);
+        return result;
+    } catch (error: any) {
         console.error('Error updating location:', error);
-        return { success: false, error: error.message, data: null };
+        return { success: false, data: null, error: error.message };
     }
-
-    return { success: true, data, error: null };
 }
 
 export async function deleteAllowedLocation(id: string) {
-    const supabase = getSupabaseClient();
-    if (!supabase) return { success: false, error: 'Supabase not configured' };
-
-    const { error } = await (supabase as any)
-        .from('allowed_locations')
-        .update({ is_active: false })
-        .eq('id', id);
-
-    if (error) {
+    try {
+        const result = await attendanceActions.deleteAllowedLocationAction(id);
+        return result;
+    } catch (error: any) {
         console.error('Error deleting location:', error);
         return { success: false, error: error.message };
     }
-
-    return { success: true, error: null };
 }
 
 // =====================================================

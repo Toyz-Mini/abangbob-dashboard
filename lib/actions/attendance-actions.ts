@@ -76,3 +76,96 @@ export async function updateAttendanceAction(id: string, updates: any) {
     if (error) throw new Error(error.message);
     return toCamelCase(data);
 }
+
+// ============ ALLOWED LOCATIONS ACTIONS ============
+
+export async function getAllowedLocationsAction() {
+    const session = await auth.api.getSession({
+        headers: await headers()
+    });
+    if (!session) return { success: false, error: 'Unauthorized', data: null };
+
+    const adminClient = getSupabaseAdmin();
+    const { data, error } = await adminClient
+        .from('allowed_locations')
+        .select('*')
+        .eq('is_active', true)
+        .order('name');
+
+    if (error) {
+        console.error('Error fetching allowed locations:', error);
+        return { success: false, error: error.message, data: null };
+    }
+
+    return { success: true, data: toCamelCase(data || []), error: null };
+}
+
+export async function addAllowedLocationAction(location: any) {
+    const session = await auth.api.getSession({
+        headers: await headers()
+    });
+    if (!session) return { success: false, error: 'Unauthorized', data: null };
+
+    const adminClient = getSupabaseAdmin();
+    const snakeCasedLocation = toSnakeCase(location);
+
+    const { data, error } = await adminClient
+        .from('allowed_locations')
+        // @ts-ignore
+        .insert(snakeCasedLocation)
+        .select()
+        .single();
+
+    if (error) {
+        console.error('Error adding location:', error);
+        return { success: false, error: error.message, data: null };
+    }
+
+    return { success: true, data: toCamelCase(data), error: null };
+}
+
+export async function updateAllowedLocationAction(id: string, updates: any) {
+    const session = await auth.api.getSession({
+        headers: await headers()
+    });
+    if (!session) return { success: false, error: 'Unauthorized', data: null };
+
+    const adminClient = getSupabaseAdmin();
+    const snakeCasedUpdates = toSnakeCase(updates);
+
+    const { data, error } = await adminClient
+        .from('allowed_locations')
+        // @ts-ignore
+        .update(snakeCasedUpdates)
+        .eq('id', id)
+        .select()
+        .single();
+
+    if (error) {
+        console.error('Error updating location:', error);
+        return { success: false, error: error.message, data: null };
+    }
+
+    return { success: true, data: toCamelCase(data), error: null };
+}
+
+export async function deleteAllowedLocationAction(id: string) {
+    const session = await auth.api.getSession({
+        headers: await headers()
+    });
+    if (!session) return { success: false, error: 'Unauthorized' };
+
+    const adminClient = getSupabaseAdmin();
+    const { error } = await adminClient
+        .from('allowed_locations')
+        // @ts-ignore
+        .update({ is_active: false })
+        .eq('id', id);
+
+    if (error) {
+        console.error('Error deleting location:', error);
+        return { success: false, error: error.message };
+    }
+
+    return { success: true, error: null };
+}
