@@ -38,6 +38,7 @@ export async function insertExpenseAction(expense: any) {
 
     const { data, error } = await adminClient
         .from('expenses')
+        // @ts-ignore
         .insert(snakeCased as any)
         .select()
         .single();
@@ -57,6 +58,7 @@ export async function updateExpenseAction(id: string, updates: any) {
 
     const { data, error } = await adminClient
         .from('expenses')
+        // @ts-ignore
         .update(snakeCased as any)
         .eq('id', id)
         .select()
