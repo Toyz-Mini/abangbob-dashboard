@@ -7,6 +7,11 @@ import * as ops from './supabase/operations';
 import * as attendanceOps from './supabase/attendance-sync';
 import * as PaymentTaxSync from './supabase/payment-tax-sync';
 import { addToSyncQueue } from './sync-queue';
+import * as inventoryActions from './actions/inventory-actions';
+import * as menuActions from './actions/menu-actions';
+import * as staffActions from './actions/staff-actions';
+import * as financeActions from './actions/finance-actions';
+import * as orderActions from './actions/order-actions';
 import {
   logSyncSuccess,
   logSyncError,
@@ -105,7 +110,7 @@ export async function syncAddStockItem(item: any) {
   if (!isSupabaseSyncEnabled()) return null;
 
   try {
-    return await ops.insertInventoryItem(item);
+    return await inventoryActions.addInventoryItemAction(item);
   } catch (error) {
     console.error('Failed to sync inventory item to Supabase:', error);
     addToSyncQueue({ id: item.id, table: 'inventory', action: 'CREATE', payload: item });
@@ -117,7 +122,7 @@ export async function syncUpdateStockItem(id: string, updates: any) {
   if (!isSupabaseSyncEnabled()) return null;
 
   try {
-    return await ops.updateInventoryItem(id, updates);
+    return await inventoryActions.updateInventoryItemAction(id, updates);
   } catch (error) {
     console.error('Failed to update inventory item in Supabase:', error);
     // Offline Queue
@@ -131,7 +136,7 @@ export async function syncDeleteStockItem(id: string) {
   if (!isSupabaseSyncEnabled()) return;
 
   try {
-    await ops.deleteInventoryItem(id);
+    await inventoryActions.deleteInventoryItemAction(id);
   } catch (error) {
     console.error('Failed to delete inventory item from Supabase:', error);
     addToSyncQueue({ id, table: 'inventory', action: 'DELETE', payload: {} });
@@ -145,7 +150,7 @@ export async function loadInventoryFromSupabase() {
   if (!isSupabaseSyncEnabled()) return [];
 
   try {
-    return await ops.fetchInventory();
+    return await inventoryActions.fetchInventoryAction();
   } catch (error) {
     console.error('Failed to load inventory from Supabase:', error);
     return [];
@@ -171,7 +176,7 @@ export async function syncAddStaff(staff: any) {
   if (!isSupabaseSyncEnabled()) return null;
 
   try {
-    return await ops.insertStaff(staff);
+    return await staffActions.insertStaffAction(staff);
   } catch (error) {
     console.error('Failed to sync staff to Supabase:', error);
     addToSyncQueue({ id: staff.id, table: 'staff', action: 'CREATE', payload: staff });
@@ -183,7 +188,7 @@ export async function syncUpdateStaff(id: string, updates: any) {
   if (!isSupabaseSyncEnabled()) return null;
 
   try {
-    return await ops.updateStaff(id, updates);
+    return await staffActions.updateStaffAction(id, updates);
   } catch (error) {
     console.error('Failed to update staff in Supabase:', error);
     addToSyncQueue({ id, table: 'staff', action: 'UPDATE', payload: updates });
@@ -195,7 +200,7 @@ export async function syncDeleteStaff(id: string) {
   if (!isSupabaseSyncEnabled()) return;
 
   try {
-    await ops.deleteStaff(id);
+    await staffActions.deleteStaffAction(id);
   } catch (error) {
     console.error('Failed to delete staff from Supabase:', error);
     addToSyncQueue({ id, table: 'staff', action: 'DELETE', payload: {} });
@@ -206,7 +211,7 @@ export async function loadStaffFromSupabase() {
   if (!isSupabaseSyncEnabled()) return [];
 
   try {
-    return await ops.fetchStaff();
+    return await staffActions.fetchStaffAction();
   } catch (error) {
     console.error('Failed to load staff from Supabase:', error);
     return [];
@@ -217,7 +222,7 @@ export async function loadStaffFromSupabase() {
 
 export async function syncAddMenuItem(item: any): Promise<SyncResult<any>> {
   return syncWithRetry(
-    () => ops.insertMenuItem(item),
+    () => menuActions.insertMenuItemAction(item),
     'menu_items',
     'insert',
     item.id
@@ -226,7 +231,7 @@ export async function syncAddMenuItem(item: any): Promise<SyncResult<any>> {
 
 export async function syncUpdateMenuItem(id: string, updates: any): Promise<SyncResult<any>> {
   return syncWithRetry(
-    () => ops.updateMenuItem(id, updates),
+    () => menuActions.updateMenuItemAction(id, updates),
     'menu_items',
     'update',
     id
@@ -235,7 +240,7 @@ export async function syncUpdateMenuItem(id: string, updates: any): Promise<Sync
 
 export async function syncDeleteMenuItem(id: string): Promise<SyncResult<void>> {
   return syncWithRetry(
-    () => ops.deleteMenuItem(id),
+    () => menuActions.deleteMenuItemAction(id),
     'menu_items',
     'delete',
     id
@@ -244,7 +249,7 @@ export async function syncDeleteMenuItem(id: string): Promise<SyncResult<void>> 
 
 export async function loadMenuItemsFromSupabase(): Promise<{ data: any[]; error: string | null }> {
   const result = await syncWithRetry(
-    () => ops.fetchMenuItems(),
+    () => menuActions.fetchMenuItemsAction(),
     'menu_items',
     'fetch'
   );
@@ -279,7 +284,7 @@ export async function loadMenuItemsFromSupabaseLegacy() {
 
 export async function syncAddModifierGroup(group: any): Promise<SyncResult<any>> {
   return syncWithRetry(
-    () => ops.insertModifierGroup(group),
+    () => menuActions.insertModifierGroupAction(group),
     'modifier_groups',
     'insert',
     group.id
@@ -288,7 +293,7 @@ export async function syncAddModifierGroup(group: any): Promise<SyncResult<any>>
 
 export async function syncUpdateModifierGroup(id: string, updates: any): Promise<SyncResult<any>> {
   return syncWithRetry(
-    () => ops.updateModifierGroup(id, updates),
+    () => menuActions.updateModifierGroupAction(id, updates),
     'modifier_groups',
     'update',
     id
@@ -297,7 +302,7 @@ export async function syncUpdateModifierGroup(id: string, updates: any): Promise
 
 export async function syncDeleteModifierGroup(id: string): Promise<SyncResult<void>> {
   return syncWithRetry(
-    () => ops.deleteModifierGroup(id),
+    () => menuActions.deleteModifierGroupAction(id),
     'modifier_groups',
     'delete',
     id
@@ -306,7 +311,7 @@ export async function syncDeleteModifierGroup(id: string): Promise<SyncResult<vo
 
 export async function loadModifierGroupsFromSupabase(): Promise<{ data: any[]; error: string | null }> {
   const result = await syncWithRetry(
-    () => ops.fetchModifierGroups(),
+    () => menuActions.fetchModifierGroupsAction(),
     'modifier_groups',
     'fetch'
   );
@@ -341,7 +346,7 @@ export async function loadModifierGroupsFromSupabaseLegacy() {
 
 export async function syncAddModifierOption(option: any): Promise<SyncResult<any>> {
   return syncWithRetry(
-    () => ops.insertModifierOption(option),
+    () => menuActions.insertModifierOptionAction(option),
     'modifier_options',
     'insert',
     option.id
@@ -350,7 +355,7 @@ export async function syncAddModifierOption(option: any): Promise<SyncResult<any
 
 export async function syncUpdateModifierOption(id: string, updates: any): Promise<SyncResult<any>> {
   return syncWithRetry(
-    () => ops.updateModifierOption(id, updates),
+    () => menuActions.updateModifierOptionAction(id, updates),
     'modifier_options',
     'update',
     id
@@ -359,7 +364,7 @@ export async function syncUpdateModifierOption(id: string, updates: any): Promis
 
 export async function syncDeleteModifierOption(id: string): Promise<SyncResult<void>> {
   return syncWithRetry(
-    () => ops.deleteModifierOption(id),
+    () => menuActions.deleteModifierOptionAction(id),
     'modifier_options',
     'delete',
     id
@@ -368,7 +373,7 @@ export async function syncDeleteModifierOption(id: string): Promise<SyncResult<v
 
 export async function loadModifierOptionsFromSupabase(): Promise<{ data: any[]; error: string | null }> {
   const result = await syncWithRetry(
-    () => ops.fetchModifierOptions(),
+    () => menuActions.fetchModifierOptionsAction(),
     'modifier_options',
     'fetch'
   );
@@ -405,7 +410,19 @@ export async function syncAddOrder(order: any) {
   if (!isSupabaseSyncEnabled()) return null;
 
   try {
-    const savedOrder = await ops.insertOrder(order);
+    let savedOrder = null;
+    try {
+      // 1. Try Server Action (Authenticated)
+      savedOrder = await orderActions.insertOrderAction(order);
+    } catch (err: any) {
+      // 2. If Unauthorized, fallback to client-side Public RPC (Legacy)
+      if (err.message && (err.message.includes('Unauthorized') || err.message.includes('No active session'))) {
+        // This is likely a public/unauthenticated order
+        savedOrder = await ops.insertOrder(order);
+      } else {
+        throw err;
+      }
+    }
 
     // If order saved successfully, handle side effects (Loyalty & Promo)
     if (savedOrder && savedOrder.id) {
@@ -464,7 +481,7 @@ export async function syncUpdateOrder(id: string, updates: any) {
   if (!isSupabaseSyncEnabled()) return null;
 
   try {
-    return await ops.updateOrder(id, updates);
+    return await orderActions.updateOrderAction(id, updates);
   } catch (error) {
     console.error('Failed to update order in Supabase:', error);
     return null;
@@ -475,7 +492,7 @@ export async function loadOrdersFromSupabase(limit?: number) {
   if (!isSupabaseSyncEnabled()) return [];
 
   try {
-    return await ops.fetchOrders(limit);
+    return await orderActions.fetchOrdersAction(limit);
   } catch (error) {
     console.error('Failed to load orders from Supabase:', error);
     return [];
@@ -530,7 +547,7 @@ export async function syncAddExpense(expense: any) {
   if (!isSupabaseSyncEnabled()) return null;
 
   try {
-    return await ops.insertExpense(expense);
+    return await financeActions.insertExpenseAction(expense);
   } catch (error) {
     console.error('Failed to sync expense to Supabase:', error);
     addToSyncQueue({ id: expense.id, table: 'expenses', action: 'CREATE', payload: expense });
@@ -542,7 +559,7 @@ export async function syncUpdateExpense(id: string, updates: any) {
   if (!isSupabaseSyncEnabled()) return null;
 
   try {
-    return await ops.updateExpense(id, updates);
+    return await financeActions.updateExpenseAction(id, updates);
   } catch (error) {
     console.error('Failed to update expense in Supabase:', error);
     addToSyncQueue({ id, table: 'expenses', action: 'UPDATE', payload: updates });
@@ -554,7 +571,7 @@ export async function syncDeleteExpense(id: string) {
   if (!isSupabaseSyncEnabled()) return;
 
   try {
-    await ops.deleteExpense(id);
+    await financeActions.deleteExpenseAction(id);
   } catch (error) {
     console.error('Failed to delete expense from Supabase:', error);
     addToSyncQueue({ id, table: 'expenses', action: 'DELETE', payload: {} });
@@ -565,7 +582,7 @@ export async function loadExpensesFromSupabase() {
   if (!isSupabaseSyncEnabled()) return [];
 
   try {
-    return await ops.fetchExpenses();
+    return await financeActions.fetchExpensesAction();
   } catch (error) {
     console.error('Failed to load expenses from Supabase:', error);
     return [];
@@ -2056,52 +2073,13 @@ export async function syncAddLoyaltyTransaction(transaction: any) {
 // ============ STAFF POSITIONS SYNC ============
 
 export async function syncAddPosition(position: any) {
-  console.log('[PositionSync] Attempting to add position:', position.name);
-
-  if (!isSupabaseSyncEnabled()) {
-    console.warn('[PositionSync] Supabase sync is disabled');
-    return null;
-  }
+  if (!isSupabaseSyncEnabled()) return null;
 
   try {
-    const supabase = getSupabaseClient();
-    if (!supabase) {
-      console.warn('[PositionSync] No Supabase client available');
-      return null;
-    }
-
-    console.log('[PositionSync] Inserting to staff_positions table...');
-    const { data, error } = await supabase
-      .from('staff_positions')
-      .insert({
-        id: position.id,
-        name: position.name,
-        description: position.description,
-        role: position.role,
-        is_active: position.isActive,
-        display_order: position.displayOrder,
-        permissions: position.permissions,
-      })
-      .select()
-      .single();
-
-    if (error) {
-      console.error('[PositionSync] Database error:', error.message, error.code, error.details);
-      // Check if table doesn't exist
-      if (error.code === '42P01' || error.message?.includes('does not exist')) {
-        console.error('[PositionSync] ⚠️ Table staff_positions does not exist! Please run the migration.');
-      } else if (error.code === '23505') {
-        console.error('[PositionSync] ⚠️ Duplicate position name - position already exists');
-      }
-      throw error;
-    }
-
-    console.log('[PositionSync] ✅ Position added successfully:', data);
-    return data;
-  } catch (error: any) {
-    console.error('[PositionSync] Failed to sync position to Supabase:', error);
+    return await staffActions.insertStaffPositionAction(position);
+  } catch (error) {
+    console.error('Failed to sync position to Supabase:', error);
     addToSyncQueue({ id: position.id, table: 'staff_positions', action: 'CREATE', payload: position });
-    console.log('[PositionSync] Added to offline sync queue');
     return null;
   }
 }
@@ -2110,26 +2088,7 @@ export async function syncUpdatePosition(id: string, updates: any) {
   if (!isSupabaseSyncEnabled()) return null;
 
   try {
-    const supabase = getSupabaseClient();
-    if (!supabase) return null;
-
-    const dbUpdates: any = {};
-    if (updates.name !== undefined) dbUpdates.name = updates.name;
-    if (updates.description !== undefined) dbUpdates.description = updates.description;
-    if (updates.role !== undefined) dbUpdates.role = updates.role;
-    if (updates.isActive !== undefined) dbUpdates.is_active = updates.isActive;
-    if (updates.displayOrder !== undefined) dbUpdates.display_order = updates.displayOrder;
-    if (updates.permissions !== undefined) dbUpdates.permissions = updates.permissions;
-
-    const { data, error } = await supabase
-      .from('staff_positions')
-      .update(dbUpdates)
-      .eq('id', id)
-      .select()
-      .single();
-
-    if (error) throw error;
-    return data;
+    return await staffActions.updateStaffPositionAction(id, updates);
   } catch (error) {
     console.error('Failed to update position in Supabase:', error);
     addToSyncQueue({ id, table: 'staff_positions', action: 'UPDATE', payload: updates });
@@ -2141,15 +2100,7 @@ export async function syncDeletePosition(id: string) {
   if (!isSupabaseSyncEnabled()) return;
 
   try {
-    const supabase = getSupabaseClient();
-    if (!supabase) return;
-
-    const { error } = await supabase
-      .from('staff_positions')
-      .delete()
-      .eq('id', id);
-
-    if (error) throw error;
+    await staffActions.deleteStaffPositionAction(id);
   } catch (error) {
     console.error('Failed to delete position from Supabase:', error);
     addToSyncQueue({ id, table: 'staff_positions', action: 'DELETE', payload: {} });
@@ -2157,52 +2108,12 @@ export async function syncDeletePosition(id: string) {
 }
 
 export async function loadPositionsFromSupabase() {
-  console.log('[PositionSync] Loading positions from Supabase...');
-
-  if (!isSupabaseSyncEnabled()) {
-    console.warn('[PositionSync] Supabase sync is disabled, returning empty array');
-    return [];
-  }
+  if (!isSupabaseSyncEnabled()) return [];
 
   try {
-    const supabase = getSupabaseClient();
-    if (!supabase) {
-      console.warn('[PositionSync] No Supabase client available');
-      return [];
-    }
-
-    const { data, error } = await supabase
-      .from('staff_positions')
-      .select('*')
-      .order('display_order', { ascending: true });
-
-    if (error) {
-      console.error('[PositionSync] Load error:', error.message, error.code);
-      if (error.code === '42P01' || error.message?.includes('does not exist')) {
-        console.error('[PositionSync] ⚠️ Table staff_positions does not exist! Please run the migration.');
-      }
-      throw error;
-    }
-
-    console.log('[PositionSync] Fetched', data?.length || 0, 'positions from database');
-
-    // Transform from snake_case to camelCase
-    const transformed = (data || []).map((p: any) => ({
-      id: p.id,
-      name: p.name,
-      description: p.description,
-      role: p.role,
-      isActive: p.is_active,
-      displayOrder: p.display_order,
-      permissions: p.permissions || {},
-      createdAt: p.created_at,
-      updatedAt: p.updated_at,
-    }));
-
-    console.log('[PositionSync] ✅ Positions loaded:', transformed.map((p: { name: string }) => p.name));
-    return transformed;
-  } catch (error: any) {
-    console.error('[PositionSync] Failed to load positions from Supabase:', error);
+    return await staffActions.fetchStaffPositionsAction();
+  } catch (error) {
+    console.error('Failed to load positions from Supabase:', error);
     return [];
   }
 }

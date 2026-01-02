@@ -1,18 +1,21 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Modal from '@/components/Modal';
 import { OrderHistoryItem, CartItem } from '@/lib/types';
 import { getOrderTypeLabel, getPaymentMethodLabel, getOrderStatusLabel } from '@/lib/order-history-data';
 import { canApproveVoidRefund, canViewInventoryImpact } from '@/lib/permissions';
+import { thermalPrinter, loadReceiptSettings } from '@/lib/services';
+import { ReceiptSettings } from '@/lib/types';
 import OrderStatusBadge from './OrderStatusBadge';
-import { 
-  Printer, 
-  RefreshCw, 
-  XCircle, 
-  Flag, 
-  User, 
-  Calendar, 
-  CreditCard, 
+import {
+  Printer,
+  RefreshCw,
+  XCircle,
+  Flag,
+  User,
+  Calendar,
+  CreditCard,
   MapPin,
   Package,
   AlertTriangle,
@@ -47,10 +50,30 @@ export default function OrderDetailModal({
   const isCompleted = order.status === 'completed';
   const canRequestVoidRefund = isCompleted && hasNoPendingRequest;
 
+  // Receipt Settings State
+  const [receiptSettings, setReceiptSettings] = useState<ReceiptSettings | null>(null);
+
+  // Load receipt settings
+  useEffect(() => {
+    const settings = loadReceiptSettings();
+    setReceiptSettings(settings);
+  }, []);
+
   // Handle reprint
-  const handleReprint = () => {
-    // In a real app, this would call the thermal printer service
-    window.print();
+  const handleReprint = async () => {
+    if (!receiptSettings) return;
+
+    // cast OrderHistoryItem to Order (they are compatible for printing purposes)
+    // We might need to map it if types are strictly different, but usually they overlap enough for the printer
+    const orderForPrint = order as any;
+
+    try {
+      await thermalPrinter.print(orderForPrint, receiptSettings);
+    } catch (error) {
+      console.error('Print failed:', error);
+      // Fallback
+      window.print();
+    }
   };
 
   // Handle repeat order
@@ -68,9 +91,9 @@ export default function OrderDetailModal({
     >
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
         {/* Order Info Header */}
-        <div style={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
           alignItems: 'flex-start',
           padding: '1rem',
           background: 'var(--gray-100)',
@@ -158,9 +181,9 @@ export default function OrderDetailModal({
         </div>
 
         {/* Payment Summary */}
-        <div style={{ 
-          padding: '1rem', 
-          background: 'var(--gray-100)', 
+        <div style={{
+          padding: '1rem',
+          background: 'var(--gray-100)',
           borderRadius: 'var(--radius-md)',
         }}>
           <h4 style={{ fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.75rem', color: 'var(--text-secondary)' }}>
@@ -192,8 +215,8 @@ export default function OrderDetailModal({
 
         {/* Void/Refund Status (if applicable) */}
         {order.voidRefundStatus !== 'none' && (
-          <div style={{ 
-            padding: '1rem', 
+          <div style={{
+            padding: '1rem',
             background: order.voidRefundStatus.includes('pending') ? '#fef3c7' : '#fee2e2',
             borderRadius: 'var(--radius-md)',
             border: `1px solid ${order.voidRefundStatus.includes('pending') ? '#f59e0b' : '#ef4444'}`,
@@ -244,9 +267,9 @@ export default function OrderDetailModal({
             <h4 style={{ fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>
               KESAN INVENTORI
             </h4>
-            <div style={{ 
-              padding: '0.75rem', 
-              background: 'var(--gray-100)', 
+            <div style={{
+              padding: '0.75rem',
+              background: 'var(--gray-100)',
               borderRadius: 'var(--radius-md)',
               fontSize: '0.75rem',
               color: 'var(--text-secondary)',
@@ -274,7 +297,7 @@ export default function OrderDetailModal({
             <Printer size={16} />
             Cetak Semula Resit
           </button>
-          
+
           {order.voidRefundStatus === 'none' && order.status === 'completed' && (
             <button className="btn btn-outline" onClick={handleRepeatOrder}>
               <RefreshCw size={16} />
@@ -284,15 +307,15 @@ export default function OrderDetailModal({
 
           {canRequestVoidRefund && (
             <>
-              <button 
-                className="btn btn-outline" 
+              <button
+                className="btn btn-outline"
                 style={{ borderColor: 'var(--danger)', color: 'var(--danger)' }}
                 onClick={onVoidRequest}
               >
                 <XCircle size={16} />
                 Request Void
               </button>
-              <button 
+              <button
                 className="btn btn-outline"
                 style={{ borderColor: 'var(--warning)', color: 'var(--warning)' }}
                 onClick={onRefundRequest}
