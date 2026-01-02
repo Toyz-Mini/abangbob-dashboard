@@ -9,19 +9,24 @@ import { StockItem } from '@/lib/types';
 import { INVENTORY_QUERY_KEY } from '../queries/useInventoryQuery';
 import { useToast } from '@/lib/contexts/ToastContext';
 
+import { addInventoryItemAction } from '@/lib/actions/inventory-actions';
+
 export function useAddInventoryItemMutation() {
     const queryClient = useQueryClient();
     const { showToast } = useToast();
 
     return useMutation({
         mutationFn: async (item: Omit<StockItem, 'id'>) => {
-            return await insertInventoryItem(item);
+            // Use Server Action instead of client-side Supabase call
+            return await addInventoryItemAction(item);
         },
         onSuccess: (data) => {
+            // Optimistically update or invalidate
             queryClient.invalidateQueries({ queryKey: INVENTORY_QUERY_KEY });
             showToast(`Item ditambah: ${data.name}`, 'success');
         },
         onError: (error: any) => {
+            console.error('Add Item Failed:', error);
             showToast(`Gagal menambah item: ${error.message}`, 'error');
         }
     });
