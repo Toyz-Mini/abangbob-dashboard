@@ -45,7 +45,7 @@ const ADJUSTMENT_REASONS = [
 
 export default function InventoryPage() {
   const { inventoryLogs, adjustStock, refreshInventory, weatherForecast } = useInventory(); // Keep logs and adjustStock legacy for now if complex
-  const { data: inventoryData, isLoading: inventoryLoading, refetch: refetchInventory } = useInventoryQuery();
+  const { data: inventoryData, isLoading: inventoryLoading, refetch: refetchInventory, isError, error } = useInventoryQuery();
 
   // Mutations
   const addInventoryItemMutation = useAddInventoryItemMutation();
@@ -283,6 +283,23 @@ export default function InventoryPage() {
       <MainLayout>
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
           <LoadingSpinner />
+        </div>
+      </MainLayout>
+    );
+  }
+
+  if (isError) {
+    return (
+      <MainLayout>
+        <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', minHeight: '50vh', gap: '1rem', color: 'var(--danger)' }}>
+          <AlertCircle size={48} />
+          <h2 className="text-xl font-bold">Gagal Memuatkan Inventori</h2>
+          <p className="text-gray-500 max-w-md text-center">
+            {error instanceof Error ? error.message : 'Unknown error occurred'}
+          </p>
+          <button onClick={() => refetchInventory()} className="btn btn-primary">
+            Cuba Lagi
+          </button>
         </div>
       </MainLayout>
     );
