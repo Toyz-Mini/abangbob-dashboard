@@ -5,9 +5,9 @@ import { getSupabaseAdmin } from '@/lib/supabase/admin';
 import { headers } from 'next/headers';
 import { toSnakeCase, toCamelCase } from '@/lib/supabase/operations';
 
-// ============ ATTENDANCE ACTIONS ============
+// ============ CASH FLOWS ACTIONS ============
 
-export async function fetchAttendanceAction(startDate?: string, endDate?: string) {
+export async function fetchCashFlowsAction(startDate?: string, endDate?: string) {
     const session = await auth.api.getSession({
         headers: await headers()
     });
@@ -15,8 +15,11 @@ export async function fetchAttendanceAction(startDate?: string, endDate?: string
 
     const adminClient = getSupabaseAdmin();
     let query = adminClient
-        .from('attendance')
-        .select('*')
+        .from('cash_flows')
+        .select(`
+            *,
+            category:cash_flow_categories(name, type)
+        `)
         .order('date', { ascending: false });
 
     if (startDate) {
@@ -29,26 +32,26 @@ export async function fetchAttendanceAction(startDate?: string, endDate?: string
     const { data, error } = await query;
 
     if (error) {
-        console.error('Error fetching attendance:', error);
+        console.error('Error fetching cash flows:', error);
         throw new Error(error.message);
     }
 
     return toCamelCase(data || []);
 }
 
-export async function insertAttendanceAction(attendance: any) {
+export async function upsertCashFlowAction(cashFlow: any) {
     const session = await auth.api.getSession({
         headers: await headers()
     });
     if (!session) throw new Error('Unauthorized');
 
     const adminClient = getSupabaseAdmin();
-    const snakeCasedAttendance = toSnakeCase(attendance);
+    const snakeCasedCashFlow = toSnakeCase(cashFlow);
 
     const { data, error } = await adminClient
-        .from('attendance')
+        .from('cash_flows')
         // @ts-ignore
-        .insert(snakeCasedAttendance)
+        .upsert(snakeCasedCashFlow)
         .select()
         .single();
 
@@ -56,23 +59,24 @@ export async function insertAttendanceAction(attendance: any) {
     return toCamelCase(data);
 }
 
-export async function updateAttendanceAction(id: string, updates: any) {
+// ============ CASH REGISTERS ACTIONS ============
+
+export async function fetchCashRegistersAction() {
     const session = await auth.api.getSession({
         headers: await headers()
     });
-    if (!session) throw new Error('Unauthorized');
+    if (!session) return [];
 
     const adminClient = getSupabaseAdmin();
-    const snakeCasedUpdates = toSnakeCase(updates);
-
     const { data, error } = await adminClient
-        .from('attendance')
-        // @ts-ignore
-        .update(snakeCasedUpdates)
-        .eq('id', id)
-        .select()
-        .single();
+        .from('cash_registers')
+        .select('*')
+        .order('opened_at', { ascending: false });
 
-    if (error) throw new Error(error.message);
-    return toCamelCase(data);
+    if (error) {
+        console.error('Error fetching cash registers:', error);
+        throw new Error(error.message);
+    }
+
+    return toCamelCase(data || []);
 }

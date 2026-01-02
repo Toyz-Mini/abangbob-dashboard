@@ -12,6 +12,12 @@ import * as menuActions from './actions/menu-actions';
 import * as staffActions from './actions/staff-actions';
 import * as financeActions from './actions/finance-actions';
 import * as orderActions from './actions/order-actions';
+import * as attendanceActions from './actions/attendance-actions';
+import * as supplierActions from './actions/supplier-actions';
+import * as cashActions from './actions/cash-actions';
+import * as recipeActions from './actions/recipe-actions';
+import * as inventoryLogActions from './actions/inventory-log-actions';
+import * as customerActions from './actions/customer-actions';
 import {
   logSyncSuccess,
   logSyncError,
@@ -163,7 +169,7 @@ export async function loadCashRegistersFromSupabase() {
   if (!isSupabaseSyncEnabled()) return [];
 
   try {
-    return await ops.fetchCashRegisters();
+    return await cashActions.fetchCashRegistersAction();
   } catch (error) {
     console.error('Failed to load cash registers from Supabase:', error);
     return [];
@@ -505,7 +511,7 @@ export async function syncAddCustomer(customer: any) {
   if (!isSupabaseSyncEnabled()) return null;
 
   try {
-    return await ops.insertCustomer(customer);
+    return await customerActions.insertCustomerAction(customer);
   } catch (error) {
     console.error('Failed to sync customer to Supabase:', error);
     // Offline Queue - Generate ID if missing or use existing? 
@@ -522,7 +528,7 @@ export async function syncUpdateCustomer(id: string, updates: any) {
   if (!isSupabaseSyncEnabled()) return null;
 
   try {
-    return await ops.updateCustomer(id, updates);
+    return await customerActions.updateCustomerAction(id, updates);
   } catch (error) {
     console.error('Failed to update customer in Supabase:', error);
     addToSyncQueue({ id, table: 'customers', action: 'UPDATE', payload: updates });
@@ -534,7 +540,7 @@ export async function loadCustomersFromSupabase() {
   if (!isSupabaseSyncEnabled()) return [];
 
   try {
-    return await ops.fetchCustomers();
+    return await customerActions.fetchCustomersAction();
   } catch (error) {
     console.error('Failed to load customers from Supabase:', error);
     return [];
@@ -595,7 +601,7 @@ export async function syncAddAttendance(attendance: any) {
   if (!isSupabaseSyncEnabled()) return null;
 
   try {
-    return await ops.insertAttendance(attendance);
+    return await attendanceActions.insertAttendanceAction(attendance);
   } catch (error) {
     console.error('Failed to sync attendance to Supabase:', error);
     return null;
@@ -606,7 +612,7 @@ export async function syncUpdateAttendance(id: string, updates: any) {
   if (!isSupabaseSyncEnabled()) return null;
 
   try {
-    return await ops.updateAttendance(id, updates);
+    return await attendanceActions.updateAttendanceAction(id, updates);
   } catch (error) {
     console.error('Failed to update attendance in Supabase:', error);
     return null;
@@ -617,7 +623,7 @@ export async function loadAttendanceFromSupabase(startDate?: string, endDate?: s
   if (!isSupabaseSyncEnabled()) return [];
 
   try {
-    return await ops.fetchAttendance(startDate, endDate);
+    return await attendanceActions.fetchAttendanceAction(startDate, endDate);
   } catch (error) {
     console.error('Failed to load attendance from Supabase:', error);
     return [];
@@ -630,7 +636,7 @@ export async function syncAddSupplier(supplier: any) {
   if (!isSupabaseSyncEnabled()) return null;
 
   try {
-    return await ops.insertSupplier(supplier);
+    return await supplierActions.insertSupplierAction(supplier);
   } catch (error) {
     console.error('Failed to sync supplier to Supabase:', error);
     addToSyncQueue({ id: supplier.id, table: 'suppliers', action: 'CREATE', payload: supplier });
@@ -642,7 +648,7 @@ export async function syncUpdateSupplier(id: string, updates: any) {
   if (!isSupabaseSyncEnabled()) return null;
 
   try {
-    return await ops.updateSupplier(id, updates);
+    return await supplierActions.updateSupplierAction(id, updates);
   } catch (error) {
     console.error('Failed to update supplier in Supabase:', error);
     addToSyncQueue({ id, table: 'suppliers', action: 'UPDATE', payload: updates });
@@ -654,7 +660,7 @@ export async function syncDeleteSupplier(id: string) {
   if (!isSupabaseSyncEnabled()) return;
 
   try {
-    await ops.deleteSupplier(id);
+    await supplierActions.deleteSupplierAction(id);
   } catch (error) {
     console.error('Failed to delete supplier from Supabase:', error);
     addToSyncQueue({ id, table: 'suppliers', action: 'DELETE', payload: {} });
@@ -665,7 +671,7 @@ export async function loadSuppliersFromSupabase() {
   if (!isSupabaseSyncEnabled()) return [];
 
   try {
-    return await ops.fetchSuppliers();
+    return await supplierActions.fetchSuppliersAction();
   } catch (error) {
     console.error('Failed to load suppliers from Supabase:', error);
     return [];
@@ -678,7 +684,7 @@ export async function syncAddPurchaseOrder(po: any) {
   if (!isSupabaseSyncEnabled()) return null;
 
   try {
-    return await ops.insertPurchaseOrder(po);
+    return await supplierActions.insertPurchaseOrderAction(po);
   } catch (error) {
     console.error('Failed to sync purchase order to Supabase:', error);
     addToSyncQueue({ id: po.id, table: 'purchase_orders', action: 'CREATE', payload: po });
@@ -690,7 +696,7 @@ export async function syncUpdatePurchaseOrder(id: string, updates: any) {
   if (!isSupabaseSyncEnabled()) return null;
 
   try {
-    return await ops.updatePurchaseOrder(id, updates);
+    return await supplierActions.updatePurchaseOrderAction(id, updates);
   } catch (error) {
     console.error('Failed to update purchase order in Supabase:', error);
     addToSyncQueue({ id, table: 'purchase_orders', action: 'UPDATE', payload: updates });
@@ -702,7 +708,15 @@ export async function syncMarkPurchaseOrderAsPaid(id: string, amount?: number) {
   if (!isSupabaseSyncEnabled()) return null;
 
   try {
-    return await ops.markPurchaseOrderAsPaid(id, amount);
+    // Construct updates object manually to mirror legacy logic
+    const updates: any = {
+      payment_status: 'paid',
+      paid_at: new Date().toISOString(),
+    };
+    if (amount !== undefined) {
+      updates.paid_amount = amount;
+    }
+    return await supplierActions.updatePurchaseOrderAction(id, updates);
   } catch (error) {
     console.error('Failed to mark purchase order as paid in Supabase:', error);
     return null;
@@ -713,7 +727,7 @@ export async function loadPurchaseOrdersFromSupabase() {
   if (!isSupabaseSyncEnabled()) return [];
 
   try {
-    return await ops.fetchPurchaseOrders();
+    return await supplierActions.fetchPurchaseOrdersAction();
   } catch (error) {
     console.error('Failed to load purchase orders from Supabase:', error);
     return [];
@@ -726,7 +740,7 @@ export async function syncUpsertCashFlow(cashFlow: any) {
   if (!isSupabaseSyncEnabled()) return null;
 
   try {
-    return await ops.upsertCashFlow(cashFlow);
+    return await cashActions.upsertCashFlowAction(cashFlow);
   } catch (error) {
     console.error('Failed to sync cash flow to Supabase:', error);
     addToSyncQueue({ id: cashFlow.id, table: 'cash_flows', action: 'CREATE', payload: cashFlow });
@@ -738,7 +752,7 @@ export async function loadCashFlowsFromSupabase(startDate?: string, endDate?: st
   if (!isSupabaseSyncEnabled()) return [];
 
   try {
-    return await ops.fetchCashFlows(startDate, endDate);
+    return await cashActions.fetchCashFlowsAction(startDate, endDate);
   } catch (error) {
     console.error('Failed to load cash flows from Supabase:', error);
     return [];
@@ -751,7 +765,7 @@ export async function syncAddInventoryLog(log: any) {
   if (!isSupabaseSyncEnabled()) return null;
 
   try {
-    return await ops.insertInventoryLog(log);
+    return await inventoryLogActions.insertInventoryLogAction(log);
   } catch (error) {
     console.error('Failed to sync inventory log to Supabase:', error);
     // Offline Queue
@@ -765,7 +779,7 @@ export async function loadInventoryLogsFromSupabase(stockItemId?: string) {
   if (!isSupabaseSyncEnabled()) return [];
 
   try {
-    return await ops.fetchInventoryLogs(stockItemId);
+    return await inventoryLogActions.fetchInventoryLogsAction(stockItemId);
   } catch (error) {
     console.error('Failed to load inventory logs from Supabase:', error);
     return [];
@@ -779,7 +793,7 @@ export async function syncAddRecipe(recipe: any) {
 
   try {
     console.log('[syncAddRecipe] Syncing recipe:', recipe);
-    const result = await ops.insertRecipe(recipe);
+    const result = await recipeActions.insertRecipeAction(recipe);
     console.log('[syncAddRecipe] Success:', result);
     return result;
   } catch (error: any) {
@@ -793,7 +807,7 @@ export async function syncUpdateRecipe(id: string, updates: any) {
   if (!isSupabaseSyncEnabled()) return null;
 
   try {
-    return await ops.updateRecipe(id, updates);
+    return await recipeActions.updateRecipeAction(id, updates);
   } catch (error) {
     console.error('Failed to update recipe in Supabase:', error);
     return null;

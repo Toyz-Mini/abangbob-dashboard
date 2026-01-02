@@ -5,50 +5,21 @@ import { getSupabaseAdmin } from '@/lib/supabase/admin';
 import { headers } from 'next/headers';
 import { toSnakeCase, toCamelCase } from '@/lib/supabase/operations';
 
-// ============ ATTENDANCE ACTIONS ============
+// ============ RECIPE ACTIONS ============
 
-export async function fetchAttendanceAction(startDate?: string, endDate?: string) {
-    const session = await auth.api.getSession({
-        headers: await headers()
-    });
-    if (!session) return [];
-
-    const adminClient = getSupabaseAdmin();
-    let query = adminClient
-        .from('attendance')
-        .select('*')
-        .order('date', { ascending: false });
-
-    if (startDate) {
-        query = query.gte('date', startDate);
-    }
-    if (endDate) {
-        query = query.lte('date', endDate);
-    }
-
-    const { data, error } = await query;
-
-    if (error) {
-        console.error('Error fetching attendance:', error);
-        throw new Error(error.message);
-    }
-
-    return toCamelCase(data || []);
-}
-
-export async function insertAttendanceAction(attendance: any) {
+export async function insertRecipeAction(recipe: any) {
     const session = await auth.api.getSession({
         headers: await headers()
     });
     if (!session) throw new Error('Unauthorized');
 
     const adminClient = getSupabaseAdmin();
-    const snakeCasedAttendance = toSnakeCase(attendance);
+    const snakeCasedRecipe = toSnakeCase(recipe);
 
     const { data, error } = await adminClient
-        .from('attendance')
+        .from('recipes')
         // @ts-ignore
-        .insert(snakeCasedAttendance)
+        .insert(snakeCasedRecipe)
         .select()
         .single();
 
@@ -56,7 +27,7 @@ export async function insertAttendanceAction(attendance: any) {
     return toCamelCase(data);
 }
 
-export async function updateAttendanceAction(id: string, updates: any) {
+export async function updateRecipeAction(id: string, updates: any) {
     const session = await auth.api.getSession({
         headers: await headers()
     });
@@ -66,7 +37,7 @@ export async function updateAttendanceAction(id: string, updates: any) {
     const snakeCasedUpdates = toSnakeCase(updates);
 
     const { data, error } = await adminClient
-        .from('attendance')
+        .from('recipes')
         // @ts-ignore
         .update(snakeCasedUpdates)
         .eq('id', id)
