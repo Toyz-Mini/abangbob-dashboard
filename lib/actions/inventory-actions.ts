@@ -35,6 +35,6 @@ export async function addInventoryItemAction(item: any) {
         throw new Error(`Database Error: ${error.message}`);
     }
 
-    console.log('[addInventoryItemAction] Success:', data.id);
+    console.log('[addInventoryItemAction] Success:', (data as any)?.id);
     return toCamelCase(data);
 }
