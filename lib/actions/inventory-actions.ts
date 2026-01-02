@@ -67,3 +67,59 @@ export async function fetchInventoryAction() {
     console.log('[fetchInventoryAction] Success, count:', data?.length);
     return toCamelCase(data || []);
 }
+
+export async function updateInventoryItemAction(id: string, updates: any) {
+    console.log('[updateInventoryItemAction] Starting...', id);
+
+    const session = await auth.api.getSession({
+        headers: await headers()
+    });
+
+    if (!session) {
+        throw new Error('Unauthorized');
+    }
+
+    const adminClient = getSupabaseAdmin();
+    const snakeCasedUpdates = toSnakeCase(updates);
+
+    const { data, error } = await adminClient
+        .from('inventory')
+        // @ts-ignore
+        .update(snakeCasedUpdates as any)
+        .eq('id', id)
+        .select()
+        .single();
+
+    if (error) {
+        console.error('[updateInventoryItemAction] Error:', error);
+        throw new Error(`Database Error: ${error.message}`);
+    }
+
+    return toCamelCase(data);
+}
+
+export async function deleteInventoryItemAction(id: string) {
+    console.log('[deleteInventoryItemAction] Starting...', id);
+
+    const session = await auth.api.getSession({
+        headers: await headers()
+    });
+
+    if (!session) {
+        throw new Error('Unauthorized');
+    }
+
+    const adminClient = getSupabaseAdmin();
+
+    const { error } = await adminClient
+        .from('inventory')
+        .delete()
+        .eq('id', id);
+
+    if (error) {
+        console.error('[deleteInventoryItemAction] Error:', error);
+        throw new Error(`Database Error: ${error.message}`);
+    }
+
+    return id;
+}

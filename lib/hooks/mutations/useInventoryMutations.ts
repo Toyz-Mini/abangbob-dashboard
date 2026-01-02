@@ -9,7 +9,11 @@ import { StockItem } from '@/lib/types';
 import { INVENTORY_QUERY_KEY } from '../queries/useInventoryQuery';
 import { useToast } from '@/lib/contexts/ToastContext';
 
-import { addInventoryItemAction } from '@/lib/actions/inventory-actions';
+import {
+    addInventoryItemAction,
+    updateInventoryItemAction,
+    deleteInventoryItemAction
+} from '@/lib/actions/inventory-actions';
 
 export function useAddInventoryItemMutation() {
     const queryClient = useQueryClient();
@@ -38,7 +42,7 @@ export function useUpdateInventoryItemMutation() {
 
     return useMutation({
         mutationFn: async ({ id, updates }: { id: string; updates: Partial<StockItem> }) => {
-            return await updateInventoryItem(id, updates);
+            return await updateInventoryItemAction(id, updates);
         },
         onSuccess: (data) => {
             queryClient.invalidateQueries({ queryKey: INVENTORY_QUERY_KEY });
@@ -56,7 +60,7 @@ export function useDeleteInventoryItemMutation() {
 
     return useMutation({
         mutationFn: async (id: string) => {
-            await deleteInventoryItem(id);
+            await deleteInventoryItemAction(id);
             return id;
         },
         onSuccess: () => {
