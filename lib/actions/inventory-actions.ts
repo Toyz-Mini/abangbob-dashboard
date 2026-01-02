@@ -38,3 +38,32 @@ export async function addInventoryItemAction(item: any) {
     console.log('[addInventoryItemAction] Success:', (data as any)?.id);
     return toCamelCase(data);
 }
+
+export async function fetchInventoryAction() {
+    console.log('[fetchInventoryAction] Starting...');
+
+    // 1. Verify User Session
+    const session = await auth.api.getSession({
+        headers: await headers()
+    });
+
+    if (!session) {
+        throw new Error('Unauthorized');
+    }
+
+    // 2. Fetch from Supabase (Bypassing RLS with Admin Client)
+    const adminClient = getSupabaseAdmin();
+
+    const { data, error } = await adminClient
+        .from('inventory')
+        .select('*')
+        .order('name');
+
+    if (error) {
+        console.error('[fetchInventoryAction] Fetch Error:', error);
+        throw new Error(`Database Error: ${error.message}`);
+    }
+
+    console.log('[fetchInventoryAction] Success, count:', data?.length);
+    return toCamelCase(data || []);
+}
