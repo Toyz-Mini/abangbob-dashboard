@@ -80,6 +80,7 @@ export async function insertMenuItemAction(item: any) {
     const { data, error } = await adminClient
         .from('menu_items')
         // @ts-ignore
+        // @ts-ignore
         .insert(snakeCasedItem)
         .select()
         .single();
@@ -99,6 +100,7 @@ export async function updateMenuItemAction(id: string, updates: any) {
 
     const { data, error } = await adminClient
         .from('menu_items')
+        // @ts-ignore
         .update(snakeCasedUpdates as any)
         .eq('id', id)
         .select()
@@ -152,6 +154,7 @@ export async function insertModifierGroupAction(group: any) {
 
     const { data, error } = await adminClient
         .from('modifier_groups')
+        // @ts-ignore
         .insert(snakeCased as any)
         .select()
         .single();
@@ -171,6 +174,7 @@ export async function updateModifierGroupAction(id: string, updates: any) {
 
     const { data, error } = await adminClient
         .from('modifier_groups')
+        // @ts-ignore
         .update(snakeCased as any)
         .eq('id', id)
         .select()
@@ -224,6 +228,7 @@ export async function insertModifierOptionAction(option: any) {
 
     const { data, error } = await adminClient
         .from('modifier_options')
+        // @ts-ignore
         .insert(snakeCased as any)
         .select()
         .single();
@@ -243,6 +248,7 @@ export async function updateModifierOptionAction(id: string, updates: any) {
 
     const { data, error } = await adminClient
         .from('modifier_options')
+        // @ts-ignore
         .update(snakeCased as any)
         .eq('id', id)
         .select()

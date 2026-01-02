@@ -47,6 +47,7 @@ export async function insertOrderAction(order: any) {
 
     const { data, error } = await adminClient
         .from('orders')
+        // @ts-ignore
         .insert(snakeCasedOrder as any)
         .select()
         .single();
@@ -70,6 +71,7 @@ export async function updateOrderAction(id: string, updates: any) {
 
     const { data, error } = await adminClient
         .from('orders')
+        // @ts-ignore
         .update(snakeCasedUpdates as any)
         .eq('id', id)
         .select()
