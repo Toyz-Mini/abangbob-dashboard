@@ -5,6 +5,7 @@ import { Upload, X, FileText, CheckCircle, AlertCircle, Loader2 } from 'lucide-r
 import Papa from 'papaparse';
 import { useStore } from '@/lib/store';
 import { StockItem } from '@/lib/types';
+import { useTranslation } from '@/lib/contexts/LanguageContext';
 
 interface StockImporterProps {
     onClose: () => void;
@@ -13,6 +14,7 @@ interface StockImporterProps {
 
 export default function StockImporter({ onClose, onSuccess }: StockImporterProps) {
     const { bulkUpsertStock } = useStore();
+    const { t } = useTranslation();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [file, setFile] = useState<File | null>(null);
     const [previewData, setPreviewData] = useState<Partial<StockItem>[]>([]);
@@ -24,7 +26,7 @@ export default function StockImporter({ onClose, onSuccess }: StockImporterProps
         const selectedFile = e.target.files?.[0];
         if (selectedFile) {
             if (selectedFile.type !== 'text/csv' && !selectedFile.name.endsWith('.csv')) {
-                setError('Sila muat naik fail CSV.');
+                setError(t('inventory.importer.error.fileType'));
                 return;
             }
             setFile(selectedFile);
@@ -41,7 +43,7 @@ export default function StockImporter({ onClose, onSuccess }: StockImporterProps
             complete: (results) => {
                 setIsProcessing(false);
                 if (results.errors.length > 0) {
-                    setError('Gagal membaca CSV. Sila pastikan format betul.');
+                    setError(t('inventory.importer.error.read'));
                     console.error(results.errors);
                     return;
                 }
@@ -58,7 +60,7 @@ export default function StockImporter({ onClose, onSuccess }: StockImporterProps
                 })).filter(item => item.name); // Filter empty names
 
                 if (mappedData.length === 0) {
-                    setError('Tiada data item yang sah ditemui.');
+                    setError(t('inventory.importer.error.noData'));
                     return;
                 }
 
@@ -67,7 +69,7 @@ export default function StockImporter({ onClose, onSuccess }: StockImporterProps
             },
             error: (error) => {
                 setIsProcessing(false);
-                setError('Ralat membaca fail: ' + error.message);
+                setError(t('inventory.importer.error.read') + ': ' + error.message);
             }
         });
     };
@@ -81,7 +83,7 @@ export default function StockImporter({ onClose, onSuccess }: StockImporterProps
             onSuccess();
         } catch (err) {
             console.error(err);
-            setError('Gagal import data. Sila cuba lagi.');
+            setError(t('inventory.importer.error.import'));
         } finally {
             setIsProcessing(false);
         }
@@ -103,7 +105,7 @@ export default function StockImporter({ onClose, onSuccess }: StockImporterProps
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
                 {/* Header */}
                 <div className="p-4 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-900/50">
-                    <h3 className="font-bold text-lg">Import Stok (CSV)</h3>
+                    <h3 className="font-bold text-lg">{t('inventory.importer.title')}</h3>
                     <button onClick={onClose} className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full transition-colors">
                         <X size={20} />
                     </button>
@@ -131,7 +133,7 @@ export default function StockImporter({ onClose, onSuccess }: StockImporterProps
                                 {isProcessing ? (
                                     <div className="flex flex-col items-center gap-3">
                                         <Loader2 size={32} className="animate-spin text-primary" />
-                                        <p className="text-sm text-gray-500">Memproses fail...</p>
+                                        <p className="text-sm text-gray-500">{t('inventory.importer.dropzone.processing')}</p>
                                     </div>
                                 ) : (
                                     <div className="flex flex-col items-center gap-3">
@@ -139,8 +141,8 @@ export default function StockImporter({ onClose, onSuccess }: StockImporterProps
                                             <Upload size={24} />
                                         </div>
                                         <div>
-                                            <p className="font-medium">Klik untuk upload CSV</p>
-                                            <p className="text-xs text-gray-500 mt-1">atau drag & drop file ke sini</p>
+                                            <p className="font-medium">{t('inventory.importer.dropzone.click')}</p>
+                                            <p className="text-xs text-gray-500 mt-1">{t('inventory.importer.dropzone.drag')}</p>
                                         </div>
                                     </div>
                                 )}
@@ -155,16 +157,16 @@ export default function StockImporter({ onClose, onSuccess }: StockImporterProps
 
                             <div className="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-lg">
                                 <div className="flex justify-between items-center mb-2">
-                                    <span className="text-sm font-semibold">Gunakan Template</span>
+                                    <span className="text-sm font-semibold">{t('inventory.importer.template.use')}</span>
                                     <button
                                         onClick={downloadTemplate}
                                         className="text-primary text-xs hover:underline flex items-center gap-1"
                                     >
-                                        <FileText size={12} /> Download CSV Template
+                                        <FileText size={12} /> {t('inventory.importer.template.download')}
                                     </button>
                                 </div>
                                 <p className="text-xs text-gray-500 leading-relaxed">
-                                    Pastikan column header mengikut format: <br />
+                                    {t('inventory.importer.template.instruction')} <br />
                                     <code className="bg-gray-200 dark:bg-gray-700 px-1 py-0.5 rounded">name</code>,
                                     <code className="bg-gray-200 dark:bg-gray-700 px-1 py-0.5 rounded ml-1">category</code>,
                                     <code className="bg-gray-200 dark:bg-gray-700 px-1 py-0.5 rounded ml-1">currentQuantity</code>,
@@ -176,16 +178,18 @@ export default function StockImporter({ onClose, onSuccess }: StockImporterProps
                         <div className="space-y-4">
                             <div className="flex items-center gap-2 text-green-600 bg-green-50 p-3 rounded-lg">
                                 <CheckCircle size={20} />
-                                <span className="text-sm font-medium">{previewData.length} item berjaya dibaca.</span>
+                                <span className="text-sm font-medium">
+                                    {t('inventory.importer.success', { count: previewData.length })}
+                                </span>
                             </div>
 
                             <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden max-h-60 overflow-y-auto text-sm">
                                 <table className="w-full text-left">
                                     <thead className="bg-gray-50 dark:bg-gray-800 text-xs text-gray-500 uppercase">
                                         <tr>
-                                            <th className="px-3 py-2">Item</th>
-                                            <th className="px-3 py-2">Qty</th>
-                                            <th className="px-3 py-2">Cost</th>
+                                            <th className="px-3 py-2">{t('inventory.table.item')}</th>
+                                            <th className="px-3 py-2">{t('inventory.table.quantity')}</th>
+                                            <th className="px-3 py-2">{t('inventory.table.cost')}</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
@@ -211,19 +215,19 @@ export default function StockImporter({ onClose, onSuccess }: StockImporterProps
                                 onClick={() => { setStep('upload'); setFile(null); }}
                                 className="btn btn-ghost btn-sm"
                             >
-                                Back
+                                {t('inventory.importer.buttons.back')}
                             </button>
                             <button
                                 onClick={handleImport}
                                 disabled={isProcessing}
                                 className="btn btn-primary btn-sm min-w-[100px]"
                             >
-                                {isProcessing ? <Loader2 size={16} className="animate-spin mx-auto" /> : 'Confirm Import'}
+                                {isProcessing ? <Loader2 size={16} className="animate-spin mx-auto" /> : t('inventory.importer.buttons.confirm')}
                             </button>
                         </>
                     ) : (
                         <button onClick={onClose} className="btn btn-ghost btn-sm">
-                            Batal
+                            {t('inventory.importer.buttons.cancel')}
                         </button>
                     )}
                 </div>

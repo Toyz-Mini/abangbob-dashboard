@@ -21,6 +21,7 @@ import { deductReplacementLeaveBalance } from './supabase/operations';
 import { useCashRegistersRealtime } from './supabase/realtime-hooks';
 import { getNextDayForecast, WeatherForecast } from './services/weather';
 import { notifyLeaveRequest, notifyOTClaim, notifyClaimRequest, notifySalaryAdvance, notifyStaffRequest, notifyLeaveResult, notifyOTClaimResult, notifyClaimResult, notifySalaryAdvanceResult, notifyStaffRequestResult } from './approval-notifications';
+import { offlineQueue } from './services'; // Offline Queue Service
 
 
 // Helper function to generate UUID for Supabase compatibility
@@ -38,6 +39,22 @@ function generateUUID(): string {
 
 // Data source tracking for debugging
 export type DataSource = 'supabase' | 'localStorage' | 'mock' | 'unknown';
+
+// Helper to convert Blob to Base64
+const blobToBase64 = (blob: Blob): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+};
+
+// Helper to convert Base64 to Blob
+const base64ToBlob = async (base64: string): Promise<Blob> => {
+  const res = await fetch(base64);
+  return res.blob();
+};
 
 interface DataSourceInfo {
   menuItems: DataSource;
@@ -232,12 +249,12 @@ interface StoreState {
   // Shifts & Schedules
   shifts: Shift[];
   schedules: ScheduleEntry[];
-  addShift: (shift: Omit<Shift, 'id'>) => void;
-  updateShift: (id: string, updates: Partial<Shift>) => void;
-  deleteShift: (id: string) => void;
-  addScheduleEntry: (entry: Omit<ScheduleEntry, 'id'>) => void;
-  updateScheduleEntry: (id: string, updates: Partial<ScheduleEntry>) => void;
-  deleteScheduleEntry: (id: string) => void;
+  addShift: (shift: Omit<Shift, 'id'>) => Promise<{ success: boolean; error?: string }>;
+  updateShift: (id: string, updates: Partial<Shift>) => Promise<{ success: boolean; error?: string }>;
+  deleteShift: (id: string) => Promise<{ success: boolean; error?: string }>;
+  addScheduleEntry: (entry: Omit<ScheduleEntry, 'id'>) => Promise<{ success: boolean; error?: string }>;
+  updateScheduleEntry: (id: string, updates: Partial<ScheduleEntry>) => Promise<{ success: boolean; error?: string }>;
+  deleteScheduleEntry: (id: string) => Promise<{ success: boolean; error?: string }>;
   getWeekSchedule: (startDate: string) => ScheduleEntry[];
   refreshSchedules: () => Promise<void>;
 
@@ -522,6 +539,7 @@ interface StoreState {
 
   // Utility
   isInitialized: boolean;
+  isSecondaryInitialized: boolean;
 }
 
 const StoreContext = createContext<StoreState | null>(null);
@@ -548,6 +566,7 @@ const setToStorage = <T,>(key: string, value: T): void => {
 
 export function StoreProvider({ children }: { children: ReactNode }) {
   const [isInitialized, setIsInitialized] = useState(false);
+  const [isSecondaryInitialized, setIsSecondaryInitialized] = useState(false);
 
   // Inventory state
   const [inventory, setInventory] = useState<StockItem[]>([]);
@@ -651,6 +670,97 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   // Staff Positions state
   const [positions, setPositions] = useState<StaffPosition[]>([]);
 
+  // Offline Queue Background Sync
+  useEffect(() => {
+    const processQueue = async () => {
+      if (typeof navigator !== 'undefined' && !navigator.onLine) return;
+
+      const queue = offlineQueue.getQueue();
+      if (queue.length === 0) return;
+
+      console.log(`[OfflineQueue] Processing ${queue.length} queued items...`);
+
+      for (const item of queue) {
+        try {
+          if (item.type === 'clock_in') {
+            // Handle Clock In Sync
+            const payload = item.payload as any; // Cast to bypass strict type check for now or import type
+            const photoBlob = payload.photoBase64 ? await base64ToBlob(payload.photoBase64) : undefined;
+
+            console.log(`[OfflineQueue] Syncing clock-in for ${payload.staffId}...`);
+
+            const result = await SupabaseSync.clockIn({
+              staff_id: payload.staffId,
+              latitude: payload.latitude,
+              longitude: payload.longitude,
+              selfie_file: photoBlob
+            });
+
+            if (result.success) {
+              console.log(`[OfflineQueue] Successfully synced clock-in for ${payload.staffId}`);
+              offlineQueue.remove(item.id);
+            } else {
+              console.error(`[OfflineQueue] Failed to sync clock-in: ${result.error}`);
+              offlineQueue.incrementRetry(item.id);
+            }
+
+          } else if (item.type === 'clock_out') {
+            // Handle Clock Out Sync
+            const payload = item.payload as any;
+            const photoBlob = payload.photoBase64 ? await base64ToBlob(payload.photoBase64) : undefined;
+
+            console.log(`[OfflineQueue] Syncing clock-out for ${payload.staffId}...`);
+
+            const result = await SupabaseSync.clockOut({
+              attendance_id: payload.attendanceId,
+              staff_id: payload.staffId,
+              latitude: payload.latitude,
+              longitude: payload.longitude,
+              selfie_file: photoBlob
+            });
+
+            if (result.success) {
+              console.log(`[OfflineQueue] Successfully synced clock-out for ${payload.staffId}`);
+              offlineQueue.remove(item.id);
+            } else {
+              console.error(`[OfflineQueue] Failed to sync clock-out: ${result.error}`);
+              offlineQueue.incrementRetry(item.id);
+            }
+
+          } else {
+            // Default: Handle Order Sync
+            const order = item.payload as Order;
+            // Re-attempt sync
+            const result = await SupabaseSync.syncAddOrder(order);
+            if (result && result.id) {
+              console.log(`[OfflineQueue] Successfully synced order ${order.orderNumber}`);
+              offlineQueue.remove(item.id);
+            } else {
+              offlineQueue.incrementRetry(item.id);
+            }
+          }
+        } catch (err) {
+          console.error(`[OfflineQueue] Failed to sync item ${item.id}`, err);
+          offlineQueue.incrementRetry(item.id);
+        }
+      }
+    };
+
+    // Run on mount and when online status changes
+    if (typeof window !== 'undefined') {
+      processQueue();
+      window.addEventListener('online', processQueue);
+
+      // Also poll every 1 minute if online
+      const interval = setInterval(processQueue, 60000);
+
+      return () => {
+        window.removeEventListener('online', processQueue);
+        clearInterval(interval);
+      };
+    }
+  }, []);
+
   // Fetch weather on mount
   useEffect(() => {
     getNextDayForecast().then(forecast => {
@@ -684,287 +794,200 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       }
 
       // Try to load from Supabase first
-      const supabaseData = await SupabaseSync.loadAllDataFromSupabase();
+      // Try to load Critical Data from Supabase first
+      console.log('[Data Init] Starting Critical Data Fetch...');
+      const criticalData = await SupabaseSync.loadCriticalDataFromSupabase();
 
-      // IMPORTANT: Improved fallback logic
-      // - If Supabase is connected and returns data (even empty), use it (trust the source)
-      // - If Supabase is NOT connected, prefer localStorage over mock data
-      // - Only use mock data for first-time installations (no localStorage data exists)
-
-      // Helper function to determine data source
+      // Use helper to track data sources for debugging
       const getDataWithSource = <T,>(
         supabaseArr: T[] | undefined,
         storageKey: string,
         mockData: T[],
         entityName: string
       ): { data: T[]; source: DataSource } => {
-        // If Supabase is connected and returns data (even empty), trust the source
         if (supabaseConnected && supabaseArr !== undefined) {
           if (supabaseArr.length > 0) {
             console.log(`[Data Init] ${entityName}: Loaded ${supabaseArr.length} items from Supabase`);
             return { data: supabaseArr, source: 'supabase' };
           }
-          // Supabase connected but empty - check if localStorage has data
           const localData = getFromStorage<T[]>(storageKey, []);
           if (localData.length > 0) {
-            // User has local data but Supabase is empty - this might be a migration scenario
             console.log(`[Data Init] ${entityName}: Supabase empty, using ${localData.length} items from localStorage`);
             return { data: localData, source: 'localStorage' };
           }
-          // Both empty - return empty (not mock data!)
-          console.log(`[Data Init] ${entityName}: No data in Supabase or localStorage`);
+          // console.log(`[Data Init] ${entityName}: No data in Supabase or localStorage`);
           return { data: [], source: 'supabase' };
         }
 
-        // Supabase not connected - try localStorage first
         const localData = getFromStorage<T[]>(storageKey, []);
         if (localData.length > 0) {
           console.log(`[Data Init] ${entityName}: Loaded ${localData.length} items from localStorage (Supabase offline)`);
           return { data: localData, source: 'localStorage' };
         }
 
-        // No localStorage data - check if this is first install (use mock) or data loss
-        // Only use mock data if localStorage is completely empty (first install scenario)
         const hasAnyLocalData = typeof window !== 'undefined' && localStorage.getItem(storageKey) !== null;
         if (!hasAnyLocalData && mockData.length > 0) {
           console.log(`[Data Init] ${entityName}: First install - using ${mockData.length} mock items`);
           return { data: mockData, source: 'mock' };
         }
 
-        console.log(`[Data Init] ${entityName}: No data available`);
         return { data: [], source: 'localStorage' };
       };
 
-      // Update data source tracking
-      dataSourceInfo.supabaseConnected = supabaseConnected;
-      dataSourceInfo.lastLoadTime = new Date();
+      // PHASE 1: Critical Data (Blocks UI)
 
-      // Core data with proper source tracking
-      const inventoryResult = getDataWithSource(supabaseData.inventory, STORAGE_KEYS.INVENTORY, MOCK_STOCK, 'Inventory');
-      setInventory(inventoryResult.data);
-      dataSourceInfo.inventory = inventoryResult.source;
-
-      const staffResult = getDataWithSource(supabaseData.staff, STORAGE_KEYS.STAFF, MOCK_STAFF, 'Staff');
+      const staffResult = getDataWithSource(criticalData.staff, STORAGE_KEYS.STAFF, MOCK_STAFF, 'Staff');
       setStaff(staffResult.data);
       dataSourceInfo.staff = staffResult.source;
 
-      const menuResult = getDataWithSource(supabaseData.menuItems, STORAGE_KEYS.MENU_ITEMS, MOCK_MENU, 'Menu Items');
+      const menuResult = getDataWithSource(criticalData.menuItems, STORAGE_KEYS.MENU_ITEMS, MOCK_MENU, 'Menu Items');
       setMenuItems(menuResult.data);
       dataSourceInfo.menuItems = menuResult.source;
 
-      const modGroupResult = getDataWithSource(supabaseData.modifierGroups, STORAGE_KEYS.MODIFIER_GROUPS, MOCK_MODIFIER_GROUPS, 'Modifier Groups');
+      const modGroupResult = getDataWithSource(criticalData.modifierGroups, STORAGE_KEYS.MODIFIER_GROUPS, MOCK_MODIFIER_GROUPS, 'Modifier Groups');
       setModifierGroups(modGroupResult.data);
       dataSourceInfo.modifierGroups = modGroupResult.source;
 
-      const modOptResult = getDataWithSource(supabaseData.modifierOptions, STORAGE_KEYS.MODIFIER_OPTIONS, MOCK_MODIFIER_OPTIONS, 'Modifier Options');
+      const modOptResult = getDataWithSource(criticalData.modifierOptions, STORAGE_KEYS.MODIFIER_OPTIONS, MOCK_MODIFIER_OPTIONS, 'Modifier Options');
       setModifierOptions(modOptResult.data);
       dataSourceInfo.modifierOptions = modOptResult.source;
 
-      const ordersResult = getDataWithSource(supabaseData.orders, STORAGE_KEYS.ORDERS, [], 'Orders');
-      setOrders(ordersResult.data);
-      dataSourceInfo.orders = ordersResult.source;
+      const announcementsResult = getDataWithSource(criticalData.announcements, STORAGE_KEYS.ANNOUNCEMENTS, MOCK_ANNOUNCEMENTS, 'Announcements');
+      setAnnouncements(announcementsResult.data);
 
-      // Other core data
-      const customersResult = getDataWithSource(supabaseData.customers, STORAGE_KEYS.CUSTOMERS, [], 'Customers');
-      setCustomers(customersResult.data);
+      const notificationsResult = getDataWithSource(criticalData.notifications, STORAGE_KEYS.NOTIFICATIONS, [], 'Notifications');
+      setNotifications(notificationsResult.data);
 
-      const expensesResult = getDataWithSource(supabaseData.expenses, STORAGE_KEYS.EXPENSES, MOCK_EXPENSES, 'Expenses');
-      setExpenses(expensesResult.data);
-
-      const attendanceResult = getDataWithSource(supabaseData.attendance, STORAGE_KEYS.ATTENDANCE, MOCK_ATTENDANCE, 'Attendance');
-      setAttendance(attendanceResult.data);
-
-      const suppliersResult = getDataWithSource(supabaseData.suppliers, STORAGE_KEYS.SUPPLIERS, [], 'Suppliers');
-      setSuppliers(suppliersResult.data);
-
-      const purchaseOrdersResult = getDataWithSource(supabaseData.purchaseOrders, STORAGE_KEYS.PURCHASE_ORDERS, [], 'Purchase Orders');
-      setPurchaseOrders(purchaseOrdersResult.data);
-
-      // Extended data - now also from Supabase (using supabaseConnected flag for consistency)
-      setInventoryLogs(getFromStorage(STORAGE_KEYS.INVENTORY_LOGS, [])); // TODO: Add to Supabase later
-
-      // Load Cash Registers
-      const registersResult = getDataWithSource(supabaseData.cashRegisters as CashRegister[], STORAGE_KEYS.CASH_REGISTERS, [], 'Cash Registers');
+      const registersResult = getDataWithSource(criticalData.cashRegisters as CashRegister[], STORAGE_KEYS.CASH_REGISTERS, [], 'Cash Registers');
       setCashRegisters(registersResult.data);
-
-      // Check for open register
       const openReg = registersResult.data.find((r: CashRegister) => r.status === 'open');
       if (openReg) {
         console.log('[Data Init] Found open register session:', openReg.id);
         setCurrentRegister(openReg);
       }
 
-      setProductionLogs(supabaseConnected && supabaseData.productionLogs?.length > 0 ? supabaseData.productionLogs : getFromStorage(STORAGE_KEYS.PRODUCTION_LOGS, MOCK_PRODUCTION_LOGS));
-      setDeliveryOrders(supabaseConnected && supabaseData.deliveryOrders?.length > 0 ? supabaseData.deliveryOrders : getFromStorage(STORAGE_KEYS.DELIVERY_ORDERS, MOCK_DELIVERY_ORDERS));
-      setCashFlows(supabaseConnected && supabaseData.cashFlows?.length > 0 ? supabaseData.cashFlows : getFromStorage(STORAGE_KEYS.CASH_FLOWS, MOCK_CASH_FLOWS));
-      setRecipes(supabaseConnected && supabaseData.recipes?.length > 0 ? supabaseData.recipes : getFromStorage(STORAGE_KEYS.RECIPES, []));
-      setShifts(supabaseConnected && supabaseData.shifts?.length > 0 ? supabaseData.shifts : getFromStorage(STORAGE_KEYS.SHIFTS, MOCK_SHIFTS));
+      setMenuCategories(supabaseConnected && criticalData.menuCategories.length > 0 ? criticalData.menuCategories : getFromStorage(STORAGE_KEYS.MENU_CATEGORIES, DEFAULT_MENU_CATEGORIES));
+      setPaymentMethods(supabaseConnected && criticalData.paymentMethods.length > 0 ? criticalData.paymentMethods : getFromStorage(STORAGE_KEYS.PAYMENT_METHODS, DEFAULT_PAYMENT_METHODS));
+      setTaxRates(supabaseConnected && criticalData.taxRates.length > 0 ? criticalData.taxRates : getFromStorage(STORAGE_KEYS.TAX_RATES, DEFAULT_TAX_RATES));
 
-      // Load schedules from Supabase or check if local needs refreshing
-      const supabaseSchedules = supabaseData.schedules || [];
-      if (supabaseConnected && supabaseSchedules.length > 0) {
-        setSchedules(supabaseSchedules);
-      } else {
-        const loadedSchedules = getFromStorage(STORAGE_KEYS.SCHEDULES, MOCK_SCHEDULES);
-        const today = new Date().toISOString().split('T')[0];
-        const hasToday = loadedSchedules.some((s: ScheduleEntry) => s.date === today);
-
-        if (!hasToday && loadedSchedules.length > 0) {
-          console.log('[Schedule Refresh] Stale schedules detected, regenerating...');
-          const freshSchedules = generateMockSchedules();
-          setSchedules(freshSchedules);
-          setToStorage(STORAGE_KEYS.SCHEDULES, freshSchedules);
-        } else {
-          setSchedules(loadedSchedules);
-        }
-      }
-
-      const promotionsResult = getDataWithSource(supabaseData.promotions, STORAGE_KEYS.PROMOTIONS, [], 'Promotions');
-      setPromotions(promotionsResult.data);
-
-      const notificationsResult = getDataWithSource(supabaseData.notifications, STORAGE_KEYS.NOTIFICATIONS, [], 'Notifications');
-      setNotifications(notificationsResult.data);
-
-      // KPI & Gamification
-      const staffKPIResult = getDataWithSource(supabaseData.staffKPI, STORAGE_KEYS.STAFF_KPI, MOCK_STAFF_KPI, 'Staff KPI');
-      setStaffKPI(staffKPIResult.data);
-
-      const leaveRecordsResult = getDataWithSource(supabaseData.leaveRecords, STORAGE_KEYS.LEAVE_RECORDS, MOCK_LEAVE_RECORDS, 'Leave Records');
-      setLeaveRecords(leaveRecordsResult.data);
-
-      const trainingRecordsResult = getDataWithSource(supabaseData.trainingRecords, STORAGE_KEYS.TRAINING_RECORDS, MOCK_TRAINING_RECORDS, 'Training Records');
-      setTrainingRecords(trainingRecordsResult.data);
-
-      const otRecordsResult = getDataWithSource(supabaseData.otRecords, STORAGE_KEYS.OT_RECORDS, MOCK_OT_RECORDS, 'OT Records');
-      setOTRecords(otRecordsResult.data);
-
-      const customerReviewsResult = getDataWithSource(supabaseData.customerReviews, STORAGE_KEYS.CUSTOMER_REVIEWS, MOCK_CUSTOMER_REVIEWS, 'Customer Reviews');
-      setCustomerReviews(customerReviewsResult.data);
-
-      // Staff Portal
-      const checklistTemplatesResult = getDataWithSource(supabaseData.checklistTemplates, STORAGE_KEYS.CHECKLIST_TEMPLATES, MOCK_CHECKLIST_TEMPLATES, 'Checklist Templates');
-      setChecklistTemplates(checklistTemplatesResult.data);
-
-      const checklistCompletionsResult = getDataWithSource(supabaseData.checklistCompletions, STORAGE_KEYS.CHECKLIST_COMPLETIONS, MOCK_CHECKLIST_COMPLETIONS, 'Checklist Completions');
-      setChecklistCompletions(checklistCompletionsResult.data);
-
-      const leaveBalancesResult = getDataWithSource(supabaseData.leaveBalances, STORAGE_KEYS.LEAVE_BALANCES, MOCK_LEAVE_BALANCES, 'Leave Balances');
-      setLeaveBalances(leaveBalancesResult.data);
-
-      const leaveRequestsResult = getDataWithSource(supabaseData.leaveRequests, STORAGE_KEYS.LEAVE_REQUESTS, MOCK_LEAVE_REQUESTS, 'Leave Requests');
-      setLeaveRequests(leaveRequestsResult.data);
-
-      const claimRequestsResult = getDataWithSource(supabaseData.claimRequests, STORAGE_KEYS.CLAIM_REQUESTS, MOCK_CLAIM_REQUESTS, 'Claim Requests');
-      setClaimRequests(claimRequestsResult.data);
-
-      const otClaimsResult = getDataWithSource(supabaseData.otClaims, STORAGE_KEYS.OT_CLAIMS, [], 'OT Claims');
-      setOTClaims(otClaimsResult.data);
-
-      const salaryAdvancesResult = getDataWithSource(supabaseData.salaryAdvances, STORAGE_KEYS.SALARY_ADVANCES, [], 'Salary Advances');
-      setSalaryAdvances(salaryAdvancesResult.data);
-
-      const disciplinaryActionsResult = getDataWithSource(supabaseData.disciplinaryActions, STORAGE_KEYS.DISCIPLINARY_ACTIONS, [], 'Disciplinary Actions');
-      setDisciplinaryActions(disciplinaryActionsResult.data);
-
-      const staffTrainingResult = getDataWithSource(supabaseData.staffTraining, STORAGE_KEYS.STAFF_TRAINING, [], 'Staff Training');
-      setStaffTraining(staffTrainingResult.data);
-
-      const staffDocumentsResult = getDataWithSource(supabaseData.staffDocuments, STORAGE_KEYS.STAFF_DOCUMENTS, [], 'Staff Documents');
-      setStaffDocuments(staffDocumentsResult.data);
-
-      const performanceReviewsResult = getDataWithSource(supabaseData.performanceReviews, STORAGE_KEYS.PERFORMANCE_REVIEWS, [], 'Performance Reviews');
-      setPerformanceReviews(performanceReviewsResult.data);
-
-      const onboardingChecklistsResult = getDataWithSource(supabaseData.onboardingChecklists, STORAGE_KEYS.ONBOARDING_CHECKLISTS, [], 'Onboarding Checklists');
-      setOnboardingChecklists(onboardingChecklistsResult.data);
-
-      const exitInterviewsResult = getDataWithSource(supabaseData.exitInterviews, STORAGE_KEYS.EXIT_INTERVIEWS, [], 'Exit Interviews');
-      setExitInterviews(exitInterviewsResult.data);
-
-      const staffComplaintsResult = getDataWithSource(supabaseData.staffComplaints, STORAGE_KEYS.STAFF_COMPLAINTS, [], 'Staff Complaints');
-      setStaffComplaints(staffComplaintsResult.data);
-
-      const staffRequestsResult = getDataWithSource(supabaseData.staffRequests, STORAGE_KEYS.STAFF_REQUESTS, MOCK_STAFF_REQUESTS, 'Staff Requests');
-      setStaffRequests(staffRequestsResult.data);
-
-      const announcementsResult = getDataWithSource(supabaseData.announcements, STORAGE_KEYS.ANNOUNCEMENTS, MOCK_ANNOUNCEMENTS, 'Announcements');
-      setAnnouncements(announcementsResult.data);
-
-      // Order History (void refund uses orders table)
-      setOrderHistory(getFromStorage(STORAGE_KEYS.ORDER_HISTORY, MOCK_ORDER_HISTORY));
-
-      setVoidRefundRequests(getDataWithSource(supabaseData.voidRefundRequests, STORAGE_KEYS.VOID_REFUND_REQUESTS, MOCK_VOID_REFUND_REQUESTS, 'Void Refund Requests').data);
-
-      // Oil Trackers / Equipment
-      const oilTrackersResult = getDataWithSource(supabaseData.oilTrackers, STORAGE_KEYS.OIL_TRACKERS, MOCK_OIL_TRACKERS, 'Oil Trackers');
-      setOilTrackers(oilTrackersResult.data);
-
-      const equipmentResult = getDataWithSource(supabaseData.equipment, STORAGE_KEYS.EQUIPMENT, [], 'Equipment');
-      setEquipment(equipmentResult.data);
-
-      const maintenanceSchedulesResult = getDataWithSource(supabaseData.maintenanceSchedules, STORAGE_KEYS.MAINTENANCE_SCHEDULE, [], 'Maintenance Schedules');
-      setMaintenanceSchedules(maintenanceSchedulesResult.data);
-
-      const maintenanceLogsResult = getDataWithSource(supabaseData.maintenanceLogs, STORAGE_KEYS.MAINTENANCE_LOGS, [], 'Maintenance Logs');
-      setMaintenanceLogs(maintenanceLogsResult.data);
-
-      const oilChangeRequestsResult = getDataWithSource(supabaseData.oilChangeRequests, STORAGE_KEYS.OIL_CHANGE_REQUESTS, [], 'Oil Change Requests');
-      setOilChangeRequests(oilChangeRequestsResult.data);
-
-      const oilActionHistoryResult = getDataWithSource(supabaseData.oilActionHistory, STORAGE_KEYS.OIL_ACTION_HISTORY, [], 'Oil Action History');
-      setOilActionHistory(oilActionHistoryResult.data);
-
-      // Menu Categories, Payment Methods, Tax Rates
-      // Load Menu Categories from Supabase
-      if (supabaseConnected) {
-        const menuCategoriesResult = await PaymentTaxSync.getAllMenuCategories();
-        if (menuCategoriesResult.success && menuCategoriesResult.data && menuCategoriesResult.data.length > 0) {
-          setMenuCategories(menuCategoriesResult.data);
-        } else {
-          setMenuCategories(getFromStorage(STORAGE_KEYS.MENU_CATEGORIES, DEFAULT_MENU_CATEGORIES));
-        }
-      } else {
-        setMenuCategories(getFromStorage(STORAGE_KEYS.MENU_CATEGORIES, DEFAULT_MENU_CATEGORIES));
-      }
-
-      // Load Payment Methods from Supabase
-      if (supabaseConnected) {
-        const paymentMethodsResult = await PaymentTaxSync.getAllPaymentMethods();
-        if (paymentMethodsResult.success && paymentMethodsResult.data && paymentMethodsResult.data.length > 0) {
-          setPaymentMethods(paymentMethodsResult.data);
-        } else {
-          setPaymentMethods(getFromStorage(STORAGE_KEYS.PAYMENT_METHODS, DEFAULT_PAYMENT_METHODS));
-        }
-      } else {
-        setPaymentMethods(getFromStorage(STORAGE_KEYS.PAYMENT_METHODS, DEFAULT_PAYMENT_METHODS));
-      }
-
-      // Load Tax Rates from Supabase
-      if (supabaseConnected) {
-        const taxRatesResult = await PaymentTaxSync.getAllTaxRates();
-        if (taxRatesResult.success && taxRatesResult.data && taxRatesResult.data.length > 0) {
-          setTaxRates(taxRatesResult.data);
-        } else {
-          setTaxRates(getFromStorage(STORAGE_KEYS.TAX_RATES, DEFAULT_TAX_RATES));
-        }
-      } else {
-        setTaxRates(getFromStorage(STORAGE_KEYS.TAX_RATES, DEFAULT_TAX_RATES));
-      }
-
-      // Load Staff Positions
-      const positionsResult = getDataWithSource(supabaseData.positions, STORAGE_KEYS.STAFF_POSITIONS, [], 'Staff Positions');
+      const positionsResult = getDataWithSource(criticalData.positions, STORAGE_KEYS.STAFF_POSITIONS, [], 'Staff Positions');
       setPositions(positionsResult.data);
 
-      // Log initialization summary
-      const sourceInfo = supabaseConnected ? 'Supabase (primary)' : 'localStorage (offline mode)';
-      console.log(`[Data Init] Complete - Source: ${sourceInfo}`);
-      console.log('[Data Init] Data sources:', dataSourceInfo);
-
-      if (supabaseConnected) {
-        logSyncSuccess('initial_load', 'unknown');
-      }
-
+      // UNBLOCK UI NOW
+      console.log('[Data Init] Critical data loaded, unblocking UI...');
       setIsInitialized(true);
+
+      // PHASE 2: Secondary Data (Background)
+      // This loads lazily while the user can already interact with the app
+      console.log('[Data Init] Starting Secondary Data Background Fetch...');
+
+      try {
+        const secondaryData = await SupabaseSync.loadSecondaryDataFromSupabase(criticalData.menuItems);
+
+        // Core data
+        const inventoryResult = getDataWithSource(secondaryData.inventory, STORAGE_KEYS.INVENTORY, MOCK_STOCK, 'Inventory');
+        setInventory(inventoryResult.data);
+        dataSourceInfo.inventory = inventoryResult.source;
+
+        const ordersResult = getDataWithSource(secondaryData.orders, STORAGE_KEYS.ORDERS, [], 'Orders');
+        setOrders(ordersResult.data);
+        dataSourceInfo.orders = ordersResult.source;
+
+        const customersResult = getDataWithSource(secondaryData.customers, STORAGE_KEYS.CUSTOMERS, [], 'Customers');
+        setCustomers(customersResult.data);
+
+        const expensesResult = getDataWithSource(secondaryData.expenses, STORAGE_KEYS.EXPENSES, MOCK_EXPENSES, 'Expenses');
+        setExpenses(expensesResult.data);
+
+        const attendanceResult = getDataWithSource(secondaryData.attendance, STORAGE_KEYS.ATTENDANCE, MOCK_ATTENDANCE, 'Attendance');
+        setAttendance(attendanceResult.data);
+
+        const suppliersResult = getDataWithSource(secondaryData.suppliers, STORAGE_KEYS.SUPPLIERS, [], 'Suppliers');
+        setSuppliers(suppliersResult.data);
+
+        const purchaseOrdersResult = getDataWithSource(secondaryData.purchaseOrders, STORAGE_KEYS.PURCHASE_ORDERS, [], 'Purchase Orders');
+        setPurchaseOrders(purchaseOrdersResult.data);
+
+        // Extended data
+        setInventoryLogs(getFromStorage(STORAGE_KEYS.INVENTORY_LOGS, []));
+
+        setProductionLogs(supabaseConnected && secondaryData.productionLogs?.length > 0 ? secondaryData.productionLogs : getFromStorage(STORAGE_KEYS.PRODUCTION_LOGS, MOCK_PRODUCTION_LOGS));
+        setDeliveryOrders(supabaseConnected && secondaryData.deliveryOrders?.length > 0 ? secondaryData.deliveryOrders : getFromStorage(STORAGE_KEYS.DELIVERY_ORDERS, MOCK_DELIVERY_ORDERS));
+        setCashFlows(supabaseConnected && secondaryData.cashFlows?.length > 0 ? secondaryData.cashFlows : getFromStorage(STORAGE_KEYS.CASH_FLOWS, MOCK_CASH_FLOWS));
+        setRecipes(supabaseConnected && secondaryData.recipes?.length > 0 ? secondaryData.recipes : getFromStorage(STORAGE_KEYS.RECIPES, []));
+        setShifts(supabaseConnected && secondaryData.shifts?.length > 0 ? secondaryData.shifts : getFromStorage(STORAGE_KEYS.SHIFTS, MOCK_SHIFTS));
+
+        // Schedules logic
+        const supabaseSchedules = secondaryData.schedules || [];
+        if (supabaseConnected && supabaseSchedules.length > 0) {
+          setSchedules(supabaseSchedules);
+        } else {
+          const loadedSchedules = getFromStorage(STORAGE_KEYS.SCHEDULES, MOCK_SCHEDULES);
+          const today = new Date().toISOString().split('T')[0];
+          const hasToday = loadedSchedules.some((s: ScheduleEntry) => s.date === today);
+          if (!hasToday && loadedSchedules.length > 0) {
+            // console.log('[Schedule Refresh] Stale schedules detected, regenerating...');
+            const freshSchedules = generateMockSchedules();
+            setSchedules(freshSchedules);
+            setToStorage(STORAGE_KEYS.SCHEDULES, freshSchedules);
+          } else {
+            setSchedules(loadedSchedules);
+          }
+        }
+
+        const promotionsResult = getDataWithSource(secondaryData.promotions, STORAGE_KEYS.PROMOTIONS, [], 'Promotions');
+        setPromotions(promotionsResult.data);
+
+        // KPI & Gamification
+        setStaffKPI(getDataWithSource(secondaryData.staffKPI, STORAGE_KEYS.STAFF_KPI, MOCK_STAFF_KPI, 'Staff KPI').data);
+        setLeaveRecords(getDataWithSource(secondaryData.leaveRecords, STORAGE_KEYS.LEAVE_RECORDS, MOCK_LEAVE_RECORDS, 'Leave Records').data);
+        setTrainingRecords(getDataWithSource(secondaryData.trainingRecords, STORAGE_KEYS.TRAINING_RECORDS, MOCK_TRAINING_RECORDS, 'Training Records').data);
+        setOTRecords(getDataWithSource(secondaryData.otRecords, STORAGE_KEYS.OT_RECORDS, MOCK_OT_RECORDS, 'OT Records').data);
+        setCustomerReviews(getDataWithSource(secondaryData.customerReviews, STORAGE_KEYS.CUSTOMER_REVIEWS, MOCK_CUSTOMER_REVIEWS, 'Customer Reviews').data);
+
+        // Staff Portal
+        setChecklistTemplates(getDataWithSource(secondaryData.checklistTemplates, STORAGE_KEYS.CHECKLIST_TEMPLATES, MOCK_CHECKLIST_TEMPLATES, 'Checklist Templates').data);
+        setChecklistCompletions(getDataWithSource(secondaryData.checklistCompletions, STORAGE_KEYS.CHECKLIST_COMPLETIONS, MOCK_CHECKLIST_COMPLETIONS, 'Checklist Completions').data);
+        setLeaveBalances(getDataWithSource(secondaryData.leaveBalances, STORAGE_KEYS.LEAVE_BALANCES, MOCK_LEAVE_BALANCES, 'Leave Balances').data);
+        setLeaveRequests(getDataWithSource(secondaryData.leaveRequests, STORAGE_KEYS.LEAVE_REQUESTS, MOCK_LEAVE_REQUESTS, 'Leave Requests').data);
+        setClaimRequests(getDataWithSource(secondaryData.claimRequests, STORAGE_KEYS.CLAIM_REQUESTS, MOCK_CLAIM_REQUESTS, 'Claim Requests').data);
+        setOTClaims(getDataWithSource(secondaryData.otClaims, STORAGE_KEYS.OT_CLAIMS, [], 'OT Claims').data);
+        setSalaryAdvances(getDataWithSource(secondaryData.salaryAdvances, STORAGE_KEYS.SALARY_ADVANCES, [], 'Salary Advances').data);
+        setDisciplinaryActions(getDataWithSource(secondaryData.disciplinaryActions, STORAGE_KEYS.DISCIPLINARY_ACTIONS, [], 'Disciplinary Actions').data);
+        setStaffTraining(getDataWithSource(secondaryData.staffTraining, STORAGE_KEYS.STAFF_TRAINING, [], 'Staff Training').data);
+        setStaffDocuments(getDataWithSource(secondaryData.staffDocuments, STORAGE_KEYS.STAFF_DOCUMENTS, [], 'Staff Documents').data);
+        setPerformanceReviews(getDataWithSource(secondaryData.performanceReviews, STORAGE_KEYS.PERFORMANCE_REVIEWS, [], 'Performance Reviews').data);
+        setOnboardingChecklists(getDataWithSource(secondaryData.onboardingChecklists, STORAGE_KEYS.ONBOARDING_CHECKLISTS, [], 'Onboarding Checklists').data);
+        setExitInterviews(getDataWithSource(secondaryData.exitInterviews, STORAGE_KEYS.EXIT_INTERVIEWS, [], 'Exit Interviews').data);
+        setStaffComplaints(getDataWithSource(secondaryData.staffComplaints, STORAGE_KEYS.STAFF_COMPLAINTS, [], 'Staff Complaints').data);
+        setStaffRequests(getDataWithSource(secondaryData.staffRequests, STORAGE_KEYS.STAFF_REQUESTS, MOCK_STAFF_REQUESTS, 'Staff Requests').data);
+
+        // Order History
+        setOrderHistory(getFromStorage(STORAGE_KEYS.ORDER_HISTORY, MOCK_ORDER_HISTORY));
+        setVoidRefundRequests(getDataWithSource(secondaryData.voidRefundRequests, STORAGE_KEYS.VOID_REFUND_REQUESTS, MOCK_VOID_REFUND_REQUESTS, 'Void Refund Requests').data);
+
+        // Oil / Equipment
+        setOilTrackers(getDataWithSource(secondaryData.oilTrackers, STORAGE_KEYS.OIL_TRACKERS, MOCK_OIL_TRACKERS, 'Oil Trackers').data);
+        setEquipment(getDataWithSource(secondaryData.equipment, STORAGE_KEYS.EQUIPMENT, [], 'Equipment').data);
+        setMaintenanceSchedules(getDataWithSource(secondaryData.maintenanceSchedules, STORAGE_KEYS.MAINTENANCE_SCHEDULE, [], 'Maintenance Schedules').data);
+        setMaintenanceLogs(getDataWithSource(secondaryData.maintenanceLogs, STORAGE_KEYS.MAINTENANCE_LOGS, [], 'Maintenance Logs').data);
+        setOilChangeRequests(getDataWithSource(secondaryData.oilChangeRequests, STORAGE_KEYS.OIL_CHANGE_REQUESTS, [], 'Oil Change Requests').data);
+        setOilActionHistory(getDataWithSource(secondaryData.oilActionHistory, STORAGE_KEYS.OIL_ACTION_HISTORY, [], 'Oil Action History').data);
+
+        // Log completion
+        const sourceInfo = supabaseConnected ? 'Supabase (primary)' : 'localStorage (offline mode)';
+        console.log(`[Data Init] Secondary Load Complete - Source: ${sourceInfo}`);
+        if (supabaseConnected) {
+          logSyncSuccess('initial_load_secondary', 'unknown');
+        }
+
+        setIsSecondaryInitialized(true);
+
+      } catch (err) {
+        console.error('[Data Init] Background load failed:', err);
+        // Even if failed, we mark as initialized so UI can stop showing spinners if it wants to
+        setIsSecondaryInitialized(true);
+      }
     };
 
     initializeData();
@@ -980,39 +1003,39 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
     console.log('[Realtime] Setting up subscriptions...');
 
-    const channels: RealtimeChannel[] = [];
+    console.log('[Realtime] Setting up subscriptions...');
 
-    // Generic subscription helper
+    // Consolidate to a single channel for better performance
+    const channel = supabase.channel('global_sync');
+
+    // Generic subscription helper that adds a listener to the SHARED channel
     const subscribeToTable = <T extends { id: string }>(
       tableName: string,
       setter: React.Dispatch<React.SetStateAction<T[]>>
     ) => {
-      const channel = supabase.channel(`${tableName}_global_sync`)
-        .on('postgres_changes', { event: '*', schema: 'public', table: tableName }, (payload: any) => {
-          // console.log(`[Realtime] ${tableName} event:`, payload.eventType);
+      channel.on('postgres_changes', { event: '*', schema: 'public', table: tableName }, (payload: any) => {
+        // console.log(`[Realtime] ${tableName} event:`, payload.eventType);
 
-          if (payload.eventType === 'INSERT') {
-            const newItem = VoidRefundOps.toCamelCase(payload.new) as T;
-            setter(prev => {
-              // Check if item already exists in local state to avoid duplicates
-              if (prev.some(item => item.id === newItem.id)) {
-                return prev;
-              }
-              return [...prev, newItem];
-            });
-          } else if (payload.eventType === 'UPDATE') {
-            const updatedItem = VoidRefundOps.toCamelCase(payload.new) as T;
-            setter(prev => prev.map(item => item.id === updatedItem.id ? updatedItem : item));
-          } else if (payload.eventType === 'DELETE') {
-            const deletedId = (payload.old as any).id;
-            setter(prev => prev.filter(item => item.id !== deletedId));
-          }
-        })
-        .subscribe();
-      channels.push(channel);
+        if (payload.eventType === 'INSERT') {
+          const newItem = VoidRefundOps.toCamelCase(payload.new) as T;
+          setter(prev => {
+            // Check if item already exists in local state to avoid duplicates
+            if (prev.some(item => item.id === newItem.id)) {
+              return prev;
+            }
+            return [...prev, newItem];
+          });
+        } else if (payload.eventType === 'UPDATE') {
+          const updatedItem = VoidRefundOps.toCamelCase(payload.new) as T;
+          setter(prev => prev.map(item => item.id === updatedItem.id ? updatedItem : item));
+        } else if (payload.eventType === 'DELETE') {
+          const deletedId = (payload.old as any).id;
+          setter(prev => prev.filter(item => item.id !== deletedId));
+        }
+      });
     };
 
-    // Subscriptions
+    // Subscriptions (Listeners are added to the same channel)
     subscribeToTable('orders', setOrders);
     subscribeToTable('inventory', setInventory);
     subscribeToTable('staff', setStaff);
@@ -1029,10 +1052,17 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     subscribeToTable('staff_kpi', setStaffKPI);
     subscribeToTable('announcements', setAnnouncements);
 
+    // Subscribe once
+    channel.subscribe((status: 'SUBSCRIBED' | 'TIMED_OUT' | 'POSTGRES_CHANGES_ERROR' | 'CHANNEL_ERROR' | 'CLOSED') => {
+      if (status === 'SUBSCRIBED') {
+        console.log('[Realtime] Connected to global_sync channel');
+      }
+    });
+
     // Cleanup
     return () => {
       console.log('[Realtime] Cleaning up subscriptions...');
-      channels.forEach(channel => supabase.removeChannel(channel));
+      supabase.removeChannel(channel);
     };
   }, []);
 
@@ -1609,8 +1639,21 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         }
       } catch (err) {
         console.error('Supabase clock-in failed', err);
-        // Fallback to local logic below if sync fails (optional, maybe strict mode shouldn't fallback?)
-        // For now, let's allow fallback but warn
+        // Queue for offline sync
+        try {
+          const photoBase64 = photo ? await blobToBase64(photo) : '';
+          offlineQueue.enqueue({
+            staffId,
+            pin,
+            photoBase64,
+            latitude: latitude || 0,
+            longitude: longitude || 0,
+            timestamp: new Date().toISOString()
+          }, 'clock_in');
+          console.log('[Offline] Clock-in queued for background sync');
+        } catch (queueErr) {
+          console.error('Failed to queue clock-in', queueErr);
+        }
       }
     }
 
@@ -2268,6 +2311,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       }
     } catch (error) {
       console.error('Failed to sync order to Supabase:', error);
+      // Offline fallback: Queue the order
+      offlineQueue.enqueue(newOrder, 'order');
+      console.log('[Offline] Order queued for later sync:', newOrder.orderNumber);
     }
 
     setOrders(prev => [newOrder, ...prev]);
@@ -2538,43 +2584,143 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // Shift & Schedule actions
-  const addShift = useCallback((shiftData: Omit<Shift, 'id'>) => {
+  const addShift = useCallback(async (shiftData: Omit<Shift, 'id'>): Promise<{ success: boolean; error?: string }> => {
     const newShift: Shift = { ...shiftData, id: generateUUID() };
+
+    // Optimistic update
     setShifts(prev => [...prev, newShift]);
+
     // Sync to Supabase
-    SupabaseSync.syncAddShift(newShift);
+    try {
+      console.log('[Store] Adding shift:', newShift.id, newShift.name);
+      const result = await SupabaseSync.syncAddShift(newShift);
+      if (!result) {
+        console.error('[Store] Failed to save shift - rolling back');
+        setShifts(prev => prev.filter(s => s.id !== newShift.id));
+        return { success: false, error: 'Gagal menyimpan shift ke database' };
+      }
+      console.log('[Store] Shift saved successfully:', newShift.id);
+      return { success: true };
+    } catch (error) {
+      console.error('[Store] Error saving shift:', error);
+      setShifts(prev => prev.filter(s => s.id !== newShift.id));
+      return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+    }
   }, []);
 
-  const updateShift = useCallback((id: string, updates: Partial<Shift>) => {
+  const updateShift = useCallback(async (id: string, updates: Partial<Shift>): Promise<{ success: boolean; error?: string }> => {
+    // Store original for rollback
+    const originalShifts = shifts;
+
+    // Optimistic update
     setShifts(prev => prev.map(s => s.id === id ? { ...s, ...updates } : s));
-    // Sync to Supabase
-    SupabaseSync.syncUpdateShift(id, updates);
-  }, []);
 
-  const deleteShift = useCallback((id: string) => {
+    // Sync to Supabase
+    try {
+      console.log('[Store] Updating shift:', id);
+      const result = await SupabaseSync.syncUpdateShift(id, updates);
+      if (!result) {
+        console.error('[Store] Failed to update shift - rolling back');
+        setShifts(originalShifts);
+        return { success: false, error: 'Gagal mengemas kini shift' };
+      }
+      return { success: true };
+    } catch (error) {
+      console.error('[Store] Error updating shift:', error);
+      setShifts(originalShifts);
+      return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+    }
+  }, [shifts]);
+
+  const deleteShift = useCallback(async (id: string): Promise<{ success: boolean; error?: string }> => {
+    // Store original for rollback
+    const deletedShift = shifts.find(s => s.id === id);
+
+    // Optimistic update
     setShifts(prev => prev.filter(s => s.id !== id));
-    // Sync to Supabase
-    SupabaseSync.syncDeleteShift(id);
-  }, []);
 
-  const addScheduleEntry = useCallback((entryData: Omit<ScheduleEntry, 'id'>) => {
+    // Sync to Supabase
+    try {
+      console.log('[Store] Deleting shift:', id);
+      await SupabaseSync.syncDeleteShift(id);
+      return { success: true };
+    } catch (error) {
+      console.error('[Store] Error deleting shift:', error);
+      if (deletedShift) {
+        setShifts(prev => [...prev, deletedShift]);
+      }
+      return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+    }
+  }, [shifts]);
+
+  const addScheduleEntry = useCallback(async (entryData: Omit<ScheduleEntry, 'id'>): Promise<{ success: boolean; error?: string }> => {
     const newEntry: ScheduleEntry = { ...entryData, id: generateUUID() };
+
+    // Optimistic update
     setSchedules(prev => [...prev, newEntry]);
+
     // Sync to Supabase
-    SupabaseSync.syncAddScheduleEntry(newEntry);
+    try {
+      console.log('[Store] Adding schedule entry:', newEntry.id, newEntry.date, newEntry.staffName);
+      const result = await SupabaseSync.syncAddScheduleEntry(newEntry);
+      if (!result) {
+        console.error('[Store] Failed to save schedule entry - rolling back');
+        setSchedules(prev => prev.filter(s => s.id !== newEntry.id));
+        return { success: false, error: 'Gagal menyimpan jadual ke database' };
+      }
+      console.log('[Store] Schedule entry saved successfully:', newEntry.id);
+      return { success: true };
+    } catch (error) {
+      console.error('[Store] Error saving schedule entry:', error);
+      setSchedules(prev => prev.filter(s => s.id !== newEntry.id));
+      return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+    }
   }, []);
 
-  const updateScheduleEntry = useCallback((id: string, updates: Partial<ScheduleEntry>) => {
+  const updateScheduleEntry = useCallback(async (id: string, updates: Partial<ScheduleEntry>): Promise<{ success: boolean; error?: string }> => {
+    // Store original for rollback
+    const originalSchedules = schedules;
+
+    // Optimistic update
     setSchedules(prev => prev.map(s => s.id === id ? { ...s, ...updates } : s));
-    // Sync to Supabase
-    SupabaseSync.syncUpdateScheduleEntry(id, updates);
-  }, []);
 
-  const deleteScheduleEntry = useCallback((id: string) => {
-    setSchedules(prev => prev.filter(s => s.id !== id));
     // Sync to Supabase
-    SupabaseSync.syncDeleteScheduleEntry(id);
-  }, []);
+    try {
+      console.log('[Store] Updating schedule entry:', id);
+      const result = await SupabaseSync.syncUpdateScheduleEntry(id, updates);
+      if (!result) {
+        console.error('[Store] Failed to update schedule entry - rolling back');
+        setSchedules(originalSchedules);
+        return { success: false, error: 'Gagal mengemas kini jadual' };
+      }
+      return { success: true };
+    } catch (error) {
+      console.error('[Store] Error updating schedule entry:', error);
+      setSchedules(originalSchedules);
+      return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+    }
+  }, [schedules]);
+
+  const deleteScheduleEntry = useCallback(async (id: string): Promise<{ success: boolean; error?: string }> => {
+    // Store original for rollback
+    const deletedEntry = schedules.find(s => s.id === id);
+
+    // Optimistic update
+    setSchedules(prev => prev.filter(s => s.id !== id));
+
+    // Sync to Supabase
+    try {
+      console.log('[Store] Deleting schedule entry:', id);
+      await SupabaseSync.syncDeleteScheduleEntry(id);
+      return { success: true };
+    } catch (error) {
+      console.error('[Store] Error deleting schedule entry:', error);
+      if (deletedEntry) {
+        setSchedules(prev => [...prev, deletedEntry]);
+      }
+      return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+    }
+  }, [schedules]);
 
   const getWeekSchedule = useCallback((startDate: string): ScheduleEntry[] => {
     const start = new Date(startDate);
@@ -5898,6 +6044,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
     // Utility
     isInitialized,
+    isSecondaryInitialized,
   };
 
   return (
@@ -5931,6 +6078,7 @@ export function useInventory() {
     refreshInventory: store.refreshInventory,
     getRestockSuggestions: store.getRestockSuggestions,
     isInitialized: store.isInitialized,
+    isSecondaryInitialized: store.isSecondaryInitialized,
 
   };
 }
@@ -5980,6 +6128,7 @@ export function useFinance() {
     refreshCashFlows: store.refreshCashFlows,
     orders: store.orders,
     isInitialized: store.isInitialized,
+    isSecondaryInitialized: store.isSecondaryInitialized,
   };
 }
 
@@ -6198,11 +6347,13 @@ export function useStaffPortal() {
     updateAnnouncement: store.updateAnnouncement,
     deleteAnnouncement: store.deleteAnnouncement,
     getActiveAnnouncements: store.getActiveAnnouncements,
+    refreshAnnouncements: store.refreshAnnouncements,
     // Staff & Schedule (for reference)
     staff: store.staff,
     schedules: store.schedules,
     shifts: store.shifts,
     getWeekSchedule: store.getWeekSchedule,
+    refreshSchedules: store.refreshSchedules,
     // Utility
     isInitialized: store.isInitialized,
   };

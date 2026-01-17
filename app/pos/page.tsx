@@ -330,7 +330,7 @@ export default function POSPage() {
     if (!selectedItemForModifiers) return;
 
     if (!validateModifiers()) {
-      alert('Sila pilih semua modifier yang wajib');
+      alert(t('pos.alert.modifiersRequired'));
       return;
     }
 
@@ -375,7 +375,7 @@ export default function POSPage() {
     const phoneDigits = customerPhone.replace(selectedCountry.dialCode, '').trim();
 
     if (!phoneDigits || phoneDigits.length < 3) {
-      showToast('⚠️ Sila masukkan nombor telefon pelanggan dahulu.', 'error');
+      showToast(t('pos.toast.enterPhone'), 'error');
       // Look for the input to focus it? 
       // simple return is enough as toast explains it.
       return;
@@ -386,7 +386,7 @@ export default function POSPage() {
       // Validate cash payment
       if (paymentMethod === 'cash') {
         if (!cashReceived || cashReceived < finalPayable) {
-          showToast('Sila masukkan jumlah bayaran yang mencukupi', 'error');
+          showToast(t('pos.toast.insufficientCash'), 'error');
           return;
         }
       }
@@ -394,7 +394,7 @@ export default function POSPage() {
 
     // Check network connectivity
     if (!isOnline()) {
-      setNetworkError('Tiada sambungan internet. Sila semak rangkaian anda.');
+      setNetworkError(t('pos.toast.noInternet'));
       setModalType('network-error');
       return;
     }
@@ -406,7 +406,7 @@ export default function POSPage() {
 
     // Check for duplicate submission
     if (isTransactionSubmitted(transactionId)) {
-      showToast('Pesanan ini sudah diproses. Sila tunggu atau buat pesanan baru.', 'warning');
+      showToast(t('pos.toast.duplicateOrder'), 'warning');
       return;
     }
 
@@ -439,7 +439,7 @@ export default function POSPage() {
         baseDelay: 1000,
         onRetry: (attempt) => {
           setRetryCount(attempt);
-          showToast(`Cuba semula... (${attempt}/2)`, 'info');
+          showToast(t('pos.toast.retrying', { attempt }), 'info');
         },
       });
 
@@ -478,7 +478,7 @@ export default function POSPage() {
             inv.name.toLowerCase().includes(invName.toLowerCase())
           );
           if (invItem) {
-            adjustStock(invItem.id, item.quantity, 'out', `Jualan: ${item.name}`);
+            adjustStock(invItem.id, item.quantity, 'out', `${t('pos.inventory.sale')}: ${item.name}`);
           }
         });
       });
@@ -486,7 +486,7 @@ export default function POSPage() {
       setLastOrder(newOrder);
 
       // Show success toast
-      showToast(`Pesanan ${newOrder.orderNumber} berjaya!`, 'success');
+      showToast(t('pos.toast.orderSuccess', { orderNumber: newOrder.orderNumber }), 'success');
 
       // Play "Ka-ching" sound
       playSound(paymentMethod === 'cash' ? 'payment' : 'success');
@@ -602,11 +602,11 @@ export default function POSPage() {
                 className="btn btn-outline"
                 onClick={() => setMoneyOutModalOpen(true)}
                 disabled={!currentRegister}
-                title={!currentRegister ? 'Buka register dahulu' : 'Rekod pengeluaran tunai'}
+                title={!currentRegister ? t('pos.moneyOut.openRegisterFirst') : t('pos.moneyOut.tooltip')}
                 style={{ gap: '0.25rem' }}
               >
                 <Banknote size={18} />
-                Money Out
+                {t('pos.moneyOut.title')}
               </button>
               <button className="btn btn-outline" onClick={() => setModalType('queue')}>
                 <ChefHat size={18} />
@@ -686,7 +686,7 @@ export default function POSPage() {
             {filteredMenu.length === 0 && (
               <div className="card" style={{ textAlign: 'center', padding: '3rem' }}>
                 <p style={{ color: 'var(--text-secondary)' }}>
-                  Tiada menu dalam kategori ini
+                  {t('pos.menu.emptyCategory')}
                 </p>
               </div>
             )}
@@ -714,7 +714,7 @@ export default function POSPage() {
               }}
             >
               <ShoppingBag size={24} />
-              <span>{cart.reduce((a, c) => a + c.quantity, 0)} Items • BND {cartTotal.toFixed(2)}</span>
+              <span>{cart.reduce((a, c) => a + c.quantity, 0)} {t('pos.cart.items')} • BND {cartTotal.toFixed(2)}</span>
             </button>
 
             {/* Drawer Overlay */}
@@ -746,18 +746,18 @@ export default function POSPage() {
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
                     <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                       <ShoppingBag size={20} />
-                      Keranjang
+                      {t('pos.cart.title')}
                     </div>
                     <button onClick={() => setIsCartOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)' }}>
                       <X size={24} />
                     </button>
                   </div>
-                  <div className="card-subtitle">{cart.length} item(s)</div>
+                  <div className="card-subtitle">{cart.length} {t('pos.cart.items')}</div>
                 </div>
 
                 {cart.length === 0 ? (
                   <p style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: '2rem' }}>
-                    Tiada item dalam keranjang
+                    {t('pos.cart.empty')}
                   </p>
                 ) : (
                   <>
@@ -786,7 +786,7 @@ export default function POSPage() {
                                 </div>
                               )}
                               <div style={{ fontSize: '0.75rem', color: 'var(--primary)', fontWeight: 600, marginTop: '0.25rem' }}>
-                                BND {item.itemTotal.toFixed(2)} each
+                                {t('pos.cart.bndEach', { price: item.itemTotal.toFixed(2) })}
                               </div>
                             </div>
                             <button
@@ -832,7 +832,7 @@ export default function POSPage() {
                     <div style={{ padding: '1.5rem', borderTop: '1px solid #e2e8f0', background: '#f8fafc' }}>
                       {/* Summary Section */}
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', fontSize: '0.875rem' }}>
-                        <span>Subtotal:</span>
+                        <span>{t('pos.cart.subtotal')}:</span>
                         <span>BND {cartSubtotal.toFixed(2)}</span>
                       </div>
                       <div style={{
@@ -845,7 +845,7 @@ export default function POSPage() {
                         paddingTop: '0.5rem',
                         borderTop: '1px dashed #cbd5e1'
                       }}>
-                        <span>Jumlah:</span>
+                        <span>{t('pos.cart.total')}:</span>
                         <span>BND {cartTotal.toFixed(2)}</span>
                       </div>
                       <button
@@ -853,7 +853,7 @@ export default function POSPage() {
                         className="btn btn-primary"
                         style={{ width: '100%', padding: '1rem', fontSize: '1rem' }}
                       >
-                        Checkout
+                        {t('pos.cart.checkout')}
                       </button>
                     </div>
                   </>
@@ -871,7 +871,7 @@ export default function POSPage() {
             setSelectedItemForModifiers(null);
             setTempSelectedModifiers([]);
           }}
-          title={`Pilih Options - ${selectedItemForModifiers?.name}`}
+          title={`${t('pos.modal.modifiers.title')} - ${selectedItemForModifiers?.name}`}
           maxWidth="450px"
         >
           {selectedItemForModifiers && (
@@ -900,7 +900,7 @@ export default function POSPage() {
                         <span style={{ fontWeight: 600 }}>{group.name}</span>
                         {group.isRequired && (
                           <span style={{ color: 'var(--danger)', marginLeft: '0.5rem', fontSize: '0.75rem' }}>
-                            * Wajib
+                            {t('pos.modal.modifiers.required')}
                           </span>
                         )}
                       </div>
@@ -945,13 +945,11 @@ export default function POSPage() {
 
               {/* Total Preview */}
               <div style={{
-                padding: '1rem',
-                background: 'var(--gray-100)',
                 borderRadius: 'var(--radius-md)',
                 marginBottom: '1rem'
               }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                  <span>Harga Asas:</span>
+                  <span>{t('pos.modal.modifiers.basePrice')}:</span>
                   <span>BND {selectedItemForModifiers.price.toFixed(2)}</span>
                 </div>
                 {tempSelectedModifiers.filter(m => m.extraPrice > 0).map((mod, i) => (
@@ -969,7 +967,7 @@ export default function POSPage() {
                   borderTop: '1px dashed var(--gray-300)',
                   marginTop: '0.5rem'
                 }}>
-                  <span>Jumlah:</span>
+                  <span>{t('pos.cart.total')}:</span>
                   <span>BND {(selectedItemForModifiers.price + tempSelectedModifiers.reduce((sum, m) => sum + m.extraPrice, 0)).toFixed(2)}</span>
                 </div>
               </div>
@@ -993,7 +991,7 @@ export default function POSPage() {
                     padding: '0.5rem 1rem'
                   }}
                 >
-                  Batal
+                  {t('pos.modal.modifiers.cancel')}
                 </button>
                 <button
                   className="btn btn-primary"
@@ -1005,7 +1003,7 @@ export default function POSPage() {
                     fontWeight: 600
                   }}
                 >
-                  Tambah ke Keranjang
+                  {t('pos.modal.modifiers.addToCart')}
                 </button>
               </div>
             </>
@@ -1016,7 +1014,7 @@ export default function POSPage() {
         <Modal
           isOpen={modalType === 'upsell'}
           onClose={() => setModalType(null)}
-          title="Tambah Lagi?"
+          title={t('pos.modal.upsell.title')}
           maxWidth="550px"
         >
           <div style={{
@@ -1030,7 +1028,7 @@ export default function POSPage() {
             color: '#92400e'
           }}>
             <Sparkles size={20} />
-            <span style={{ fontWeight: 500 }}>Jangan lupa minuman! Pilih di bawah:</span>
+            <span style={{ fontWeight: 500 }}>{t('pos.modal.upsell.description')}</span>
           </div>
 
           {/* Product Grid */}
@@ -1112,7 +1110,7 @@ export default function POSPage() {
                   }}
                 >
                   <Plus size={16} />
-                  Tambah
+                  {t('pos.modal.upsell.add')}
                 </button>
               </div>
             ))}
@@ -1132,7 +1130,7 @@ export default function POSPage() {
             }}>
               <CheckCircle size={18} />
               <span style={{ fontWeight: 500 }}>
-                {cart.filter(c => upsellSuggestions.some(u => u.id === c.id)).reduce((sum, c) => sum + c.quantity, 0)} minuman ditambah
+                {t('pos.modal.upsell.added', { count: cart.filter(c => upsellSuggestions.some(u => u.id === c.id)).reduce((sum, c) => sum + c.quantity, 0) })}
               </span>
             </div>
           )}
@@ -1154,7 +1152,7 @@ export default function POSPage() {
                 padding: '0.5rem 1rem'
               }}
             >
-              Kembali
+              {t('pos.modal.upsell.back')}
             </button>
             <button
               onClick={() => setModalType('checkout')}
@@ -1165,7 +1163,7 @@ export default function POSPage() {
                 fontWeight: 600
               }}
             >
-              Teruskan Checkout
+              {t('pos.modal.upsell.continue')}
             </button>
           </div>
         </Modal>
@@ -1185,8 +1183,9 @@ export default function POSPage() {
         <Modal
           isOpen={modalType === 'checkout'}
           onClose={() => !isProcessing && setModalType(null)}
-          title="Checkout"
-          subtitle={`Total Payable: BND ${finalPayable.toFixed(2)}`}
+
+          title={t('pos.modal.checkout.title')}
+          subtitle={`${t('pos.modal.checkout.step3.totalPayable')}: BND ${finalPayable.toFixed(2)}`}
           maxWidth="500px"
         >
           <div className="flex flex-col gap-4 no-scrollbar" style={{ maxHeight: '70vh', overflowY: 'auto', padding: '0.25rem' }}>
@@ -1204,8 +1203,8 @@ export default function POSPage() {
             {checkoutStep === 1 && (
               <div className="animate-fade-in space-y-4">
                 <div className="text-center mb-4">
-                  <h3 className="text-lg font-bold text-gray-800">Bagaimana pesanan ini?</h3>
-                  <p className="text-sm text-gray-500">Pilih jenis pesanan untuk teruskan</p>
+                  <h3 className="text-lg font-bold text-gray-800">{t('pos.modal.checkout.step1.title')}</h3>
+                  <p className="text-sm text-gray-500">{t('pos.modal.checkout.step1.subtitle')}</p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
@@ -1216,8 +1215,8 @@ export default function POSPage() {
                     <div className={`w-14 h-14 rounded-full flex items-center justify-center mb-3 ${orderType === 'takeaway' ? 'bg-white shadow-sm' : 'bg-gray-50'}`}>
                       <ShoppingBag size={28} className={orderType === 'takeaway' ? 'text-primary' : 'text-gray-400'} />
                     </div>
-                    <span className="font-bold text-lg">Bungkus</span>
-                    <span className="text-xs text-center mt-1 opacity-70">Takeaway</span>
+                    <span className="font-bold text-lg">{t('pos.modal.checkout.step1.takeaway')}</span>
+                    <span className="text-xs text-center mt-1 opacity-70">{t('pos.modal.checkout.step1.takeawayDesc')}</span>
                   </button>
 
                   <button
@@ -1227,8 +1226,8 @@ export default function POSPage() {
                     <div className={`w-14 h-14 rounded-full flex items-center justify-center mb-3 ${orderType === 'gomamam' ? 'bg-white shadow-sm' : 'bg-gray-50'}`}>
                       <Globe size={28} className={orderType === 'gomamam' ? 'text-primary' : 'text-gray-400'} />
                     </div>
-                    <span className="font-bold text-lg">GoMamam</span>
-                    <span className="text-xs text-center mt-1 opacity-70">Delivery</span>
+                    <span className="font-bold text-lg">{t('pos.modal.checkout.step1.delivery')}</span>
+                    <span className="text-xs text-center mt-1 opacity-70">{t('pos.modal.checkout.step1.deliveryDesc')}</span>
                   </button>
                 </div>
               </div>
@@ -1238,14 +1237,14 @@ export default function POSPage() {
             {checkoutStep === 2 && (
               <div className="animate-fade-in space-y-6">
                 <div className="text-center">
-                  <h3 className="text-lg font-bold text-gray-800">Maklumat Pelanggan</h3>
-                  <p className="text-sm text-gray-500">Cari ahli atau masukkan maklumat baru</p>
+                  <h3 className="text-lg font-bold text-gray-800">{t('pos.modal.checkout.step2.title')}</h3>
+                  <p className="text-sm text-gray-500">{t('pos.modal.checkout.step2.subtitle')}</p>
                 </div>
 
                 {/* Search / Phone Input */}
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Nombor Telefon</label>
+                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">{t('pos.modal.checkout.step2.phoneLabel')}</label>
                     <div className="flex rounded-xl border-2 border-gray-100 overflow-hidden focus-within:border-primary focus-within:ring-4 focus-within:ring-primary/10 transition-all bg-white relative">
                       <div className="flex items-center px-4 bg-gray-50 border-r border-gray-100">
                         <span className="text-gray-600 font-bold">🇧🇳 +673</span>
@@ -1281,7 +1280,7 @@ export default function POSPage() {
                         </div>
                         <div>
                           <div className="font-bold text-blue-900">{selectedCustomer.name}</div>
-                          <div className="text-xs text-blue-600 font-medium">{selectedCustomer.loyaltyPoints} Points Available</div>
+                          <div className="text-xs text-blue-600 font-medium">{t('pos.modal.checkout.step2.pointsAvailable', { points: selectedCustomer.loyaltyPoints })}</div>
                         </div>
                       </div>
                       <span className="px-3 py-1 bg-blue-200 text-blue-800 rounded-lg text-xs font-bold uppercase">{selectedCustomer.segment}</span>
@@ -1289,11 +1288,11 @@ export default function POSPage() {
                   )}
 
                   <div>
-                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Nama Pelanggan (Optional)</label>
+                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">{t('pos.modal.checkout.step2.nameLabel')}</label>
                     <input
                       type="text"
                       className="block w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all"
-                      placeholder="Nama Pelanggan"
+                      placeholder={t('pos.modal.checkout.step2.nameLabel')}
                       value={customerName}
                       onChange={(e) => setCustomerName(e.target.value)}
                     />
@@ -1308,8 +1307,8 @@ export default function POSPage() {
                         <MessageCircle size={20} />
                       </div>
                       <div>
-                        <div className={`font-semibold ${sendToWhatsapp ? 'text-green-900' : 'text-gray-700'}`}>Hantar Resit WhatsApp</div>
-                        <div className="text-xs text-gray-500">Resit digital terus ke pelanggan</div>
+                        <div className={`font-semibold ${sendToWhatsapp ? 'text-green-900' : 'text-gray-700'}`}>{t('pos.modal.checkout.step2.whatsappLabel')}</div>
+                        <div className="text-xs text-gray-500">{t('pos.modal.checkout.step2.whatsappDesc')}</div>
                       </div>
                     </div>
                     <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${sendToWhatsapp ? 'bg-green-500 border-green-500' : 'border-gray-300'}`}>
@@ -1324,7 +1323,7 @@ export default function POSPage() {
             {checkoutStep === 3 && (
               <div className="animate-fade-in space-y-6">
                 <div className="text-center py-2">
-                  <div className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Jumlah Perlu Dibayar</div>
+                  <div className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">{t('pos.modal.checkout.step3.totalPayable')}</div>
                   <div className="text-4xl font-extrabold text-gray-900 flex items-center justify-center font-mono">
                     <span className="text-lg text-gray-400 mr-1 mt-2">BND</span>
                     {finalPayable.toFixed(2)}
@@ -1342,7 +1341,7 @@ export default function POSPage() {
                         <Sparkles size={20} />
                       </div>
                       <div>
-                        <div className="font-bold text-gray-800">Redeem Points</div>
+                        <div className="font-bold text-gray-800">{t('pos.modal.checkout.step3.redeemPoints')}</div>
                         <div className="text-xs text-gray-500">Available: {selectedCustomer.loyaltyPoints} ($ {(selectedCustomer.loyaltyPoints * 0.01).toFixed(2)})</div>
                       </div>
                     </div>
@@ -1351,7 +1350,7 @@ export default function POSPage() {
                 )}
 
                 <div>
-                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-3">Cara Pembayaran</label>
+                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-3">{t('pos.modal.checkout.step3.paymentMethod')}</label>
                   <div className="grid grid-cols-2 gap-3">
                     {enabledPaymentMethods.map((pm) => (
                       <button
@@ -1374,7 +1373,7 @@ export default function POSPage() {
                 {paymentMethod === 'cash' && (
                   <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 animate-slide-up">
                     <div className="flex justify-between items-center mb-3">
-                      <span className="text-xs font-bold text-gray-500 uppercase">Tunai Diterima</span>
+                      <span className="text-xs font-bold text-gray-500 uppercase">{t('pos.modal.checkout.step3.cashReceived')}</span>
                     </div>
 
                     {/* CHANGE Display - Large and Prominent */}
@@ -1388,7 +1387,7 @@ export default function POSPage() {
                         textAlign: 'center'
                       }}>
                         <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', opacity: 0.9, marginBottom: '0.25rem' }}>
-                          Baki / Change
+                          {t('pos.modal.checkout.step3.change')}
                         </div>
                         <div style={{ fontSize: '2.5rem', fontWeight: 800, letterSpacing: '-1px' }}>
                           BND {(cashReceived - finalPayable).toFixed(2)}
@@ -1414,7 +1413,7 @@ export default function POSPage() {
                       {[1, 5, 10, 20, 50, 100].map(amt => (
                         <button key={amt} onClick={() => setCashReceived(amt)} className="min-w-[50px] flex-1 py-2 bg-white border border-gray-200 rounded-lg text-sm font-bold text-gray-600 hover:border-primary hover:text-primary transition-colors">${amt}</button>
                       ))}
-                      <button onClick={() => setCashReceived(Math.ceil(finalPayable))} className="px-3 py-2 bg-primary/10 text-primary rounded-lg text-xs font-bold whitespace-nowrap">Exact</button>
+                      <button onClick={() => setCashReceived(Math.ceil(finalPayable))} className="px-3 py-2 bg-primary/10 text-primary rounded-lg text-xs font-bold whitespace-nowrap">{t('pos.modal.checkout.step3.exact')}</button>
                     </div>
                   </div>
                 )}
@@ -1435,7 +1434,7 @@ export default function POSPage() {
                   onClick={() => !isProcessing && setModalType(null)}
                   className="px-5 py-3 rounded-xl border border-gray-200 font-bold text-gray-600 hover:bg-gray-50 transition-colors"
                 >
-                  Batal
+                  {t('pos.modal.checkout.cancel')}
                 </button>
               )}
 
@@ -1447,7 +1446,7 @@ export default function POSPage() {
                     // Validate phone number (at least 7 digits after +673)
                     const phoneDigits = customerPhone.replace(/\D/g, '');
                     if (phoneDigits.length < 10) { // +673 = 3 digits + at least 7 local digits
-                      showToast('Sila masukkan nombor telefon yang sah', 'error');
+                      showToast(t('pos.toast.enterValidPhone'), 'error');
                       return;
                     }
                     setCheckoutStep(3);
@@ -1476,18 +1475,18 @@ export default function POSPage() {
                 {isProcessing ? (
                   <>
                     <LoadingSpinner size="sm" />
-                    <span>Memproses...</span>
+                    <span>{t('pos.modal.checkout.step3.processing')}</span>
                   </>
                 ) : checkoutStep === 3 ? (
                   <>
-                    <span>Bayar</span>
+                    <span>{t('pos.modal.checkout.step3.pay')}</span>
                     <span style={{ backgroundColor: 'rgba(255,255,255,0.2)', padding: '0.25rem 0.5rem', borderRadius: '0.25rem', fontSize: '0.875rem' }}>
                       BND {finalPayable.toFixed(2)}
                     </span>
                   </>
                 ) : (
                   <>
-                    <span>Seterusnya</span>
+                    <span>{t('pos.modal.checkout.next')}</span>
                     <ChevronRight size={20} />
                   </>
                 )}
@@ -1501,7 +1500,8 @@ export default function POSPage() {
         <Modal
           isOpen={modalType === 'receipt'}
           onClose={() => setModalType(null)}
-          title="Pesanan Berjaya!"
+
+          title={t('pos.modal.receipt.title')}
           maxWidth="450px"
         >
           {lastOrder && (
@@ -1522,7 +1522,7 @@ export default function POSPage() {
                 <div style={{ fontSize: '1.5rem', fontWeight: 700 }}>{lastOrder.orderNumber}</div>
                 {lastOrder.customerName && (
                   <div style={{ fontSize: '1rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
-                    Pelanggan: {lastOrder.customerName}
+                    {t('pos.modal.receipt.customer')}: {lastOrder.customerName}
                   </div>
                 )}
               </div>
@@ -1553,7 +1553,7 @@ export default function POSPage() {
                   style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', padding: '0.875rem' }}
                 >
                   <Printer size={18} />
-                  Cetak Resit
+                  {t('pos.modal.receipt.print')}
                 </button>
                 <button
                   onClick={() => {
@@ -1566,14 +1566,14 @@ export default function POSPage() {
                   style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', padding: '0.875rem', background: '#25D366', borderColor: '#25D366', color: 'white' }}
                 >
                   <MessageCircle size={18} />
-                  Hantar Resit (WhatsApp)
+                  {t('pos.modal.receipt.whatsapp')}
                 </button>
                 <button
                   onClick={() => setModalType(null)}
                   className="btn btn-outline"
                   style={{ width: '100%', padding: '0.875rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                 >
-                  Tutup
+                  {t('pos.modal.receipt.close')}
                 </button>
               </div>
 
@@ -1588,8 +1588,8 @@ export default function POSPage() {
                 color: thermalPrinter.isConnected() ? '#059669' : 'var(--text-secondary)',
               }}>
                 {thermalPrinter.isConnected()
-                  ? '✓ Thermal printer disambung - cetak terus ke printer'
-                  : 'Tiada thermal printer - akan cetak melalui browser'}
+                  ? t('pos.modal.receipt.printerConnected')
+                  : t('pos.modal.receipt.printerDisconnected')}
               </div>
             </div>
           )}
@@ -1599,8 +1599,8 @@ export default function POSPage() {
         <Modal
           isOpen={modalType === 'queue'}
           onClose={() => setModalType(null)}
-          title="Order Queue"
-          subtitle="Kitchen Display"
+          title={t('pos.modal.queue.title')}
+          subtitle={t('pos.modal.queue.subtitle')}
           maxWidth="800px"
         >
           <div className="grid grid-cols-1 md:grid-cols-3" style={{ gap: '1rem' }}>
@@ -1616,7 +1616,7 @@ export default function POSPage() {
                 color: 'var(--warning)'
               }}>
                 <Clock size={18} />
-                Pending ({pendingOrders.length})
+                {t('pos.modal.queue.pending')} ({pendingOrders.length})
               </h4>
               <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
                 {pendingOrders.map(order => (
@@ -1645,12 +1645,12 @@ export default function POSPage() {
                       className="btn btn-sm btn-primary"
                       style={{ width: '100%', marginTop: '0.5rem' }}
                     >
-                      Start Preparing
+                      {t('pos.modal.queue.startPreparing')}
                     </button>
                   </div>
                 ))}
                 {pendingOrders.length === 0 && (
-                  <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', textAlign: 'center' }}>Tiada pesanan</p>
+                  <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', textAlign: 'center' }}>{t('pos.modal.queue.noOrders')}</p>
                 )}
               </div>
             </div>
@@ -1667,7 +1667,7 @@ export default function POSPage() {
                 color: '#1e40af'
               }}>
                 <ChefHat size={18} />
-                Preparing ({preparingOrders.length})
+                {t('pos.modal.queue.preparing')} ({preparingOrders.length})
               </h4>
               <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
                 {preparingOrders.map(order => (
@@ -1691,12 +1691,12 @@ export default function POSPage() {
                       className="btn btn-sm btn-secondary"
                       style={{ width: '100%', marginTop: '0.5rem' }}
                     >
-                      Mark Ready
+                      {t('pos.modal.queue.markReady')}
                     </button>
                   </div>
                 ))}
                 {preparingOrders.length === 0 && (
-                  <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', textAlign: 'center' }}>Tiada pesanan</p>
+                  <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', textAlign: 'center' }}>{t('pos.modal.queue.noOrders')}</p>
                 )}
               </div>
             </div>
@@ -1713,7 +1713,7 @@ export default function POSPage() {
                 color: 'var(--success)'
               }}>
                 <CheckCircle size={18} />
-                Ready ({readyOrders.length})
+                {t('pos.modal.queue.ready')} ({readyOrders.length})
               </h4>
               <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
                 {readyOrders.map(order => (
@@ -1737,12 +1737,12 @@ export default function POSPage() {
                       className="btn btn-sm btn-outline"
                       style={{ width: '100%', marginTop: '0.5rem' }}
                     >
-                      Complete
+                      {t('pos.modal.queue.complete')}
                     </button>
                   </div>
                 ))}
                 {readyOrders.length === 0 && (
-                  <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', textAlign: 'center' }}>Tiada pesanan</p>
+                  <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', textAlign: 'center' }}>{t('pos.modal.queue.noOrders')}</p>
                 )}
               </div>
             </div>
@@ -1750,7 +1750,7 @@ export default function POSPage() {
 
           <div style={{ marginTop: '1.5rem' }}>
             <button className="btn btn-outline" onClick={() => setModalType(null)} style={{ width: '100%' }}>
-              Tutup
+              {t('pos.modal.receipt.close')}
             </button>
           </div>
         </Modal>
@@ -1759,8 +1759,8 @@ export default function POSPage() {
         <Modal
           isOpen={modalType === 'history'}
           onClose={() => setModalType(null)}
-          title="Sejarah Pesanan Hari Ini"
-          subtitle={`${todayOrders.length} pesanan`}
+          title={t('pos.modal.history.title')}
+          subtitle={t('pos.modal.history.subtitle', { count: todayOrders.length })}
           maxWidth="700px"
         >
           <div style={{ maxHeight: '500px', overflowY: 'auto' }}>
@@ -1768,13 +1768,13 @@ export default function POSPage() {
               <table className="table">
                 <thead>
                   <tr>
-                    <th>No. Pesanan</th>
-                    <th>Items</th>
-                    <th>Total</th>
-                    <th>Jenis</th>
-                    <th>Status</th>
-                    <th>Masa</th>
-                    <th>Tindakan</th>
+                    <th>{t('pos.modal.history.table.orderNo')}</th>
+                    <th>{t('pos.modal.history.table.items')}</th>
+                    <th>{t('pos.modal.history.table.total')}</th>
+                    <th>{t('pos.modal.history.table.type')}</th>
+                    <th>{t('pos.modal.history.table.status')}</th>
+                    <th>{t('pos.modal.history.table.time')}</th>
+                    <th>{t('pos.modal.history.table.action')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1806,7 +1806,7 @@ export default function POSPage() {
                           onClick={() => handlePrintReceipt(order)}
                           className="btn btn-sm btn-outline"
                           style={{ padding: '0.25rem 0.5rem', minWidth: 'auto' }}
-                          title="Cetak Semula Resit"
+                          title={t('pos.modal.history.reprint')}
                         >
                           <Printer size={14} />
                         </button>
@@ -1817,7 +1817,7 @@ export default function POSPage() {
               </table>
             ) : (
               <p style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '2rem' }}>
-                Tiada pesanan hari ini
+                {t('pos.modal.history.noOrders')}
               </p>
             )}
           </div>
@@ -1831,13 +1831,13 @@ export default function POSPage() {
             alignItems: 'center'
           }}>
             <div>
-              <strong>Jumlah Jualan Hari Ini:</strong>
+              <strong>{t('pos.modal.history.totalSales')}:</strong>
               <span style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--primary)', marginLeft: '0.5rem' }}>
                 BND {todayOrders.reduce((sum, o) => sum + o.total, 0).toFixed(2)}
               </span>
             </div>
             <button className="btn btn-outline" onClick={() => setModalType(null)}>
-              Tutup
+              {t('pos.modal.receipt.close')}
             </button>
           </div>
         </Modal>
@@ -1846,7 +1846,7 @@ export default function POSPage() {
         <Modal
           isOpen={modalType === 'network-error'}
           onClose={handleCancelPayment}
-          title="Ralat Rangkaian"
+          title={t('pos.modal.networkError.title')}
           maxWidth="400px"
         >
           <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
@@ -1863,10 +1863,10 @@ export default function POSPage() {
               <WifiOff size={35} color="#d97706" />
             </div>
             <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.5rem', color: 'var(--warning)' }}>
-              Masalah Sambungan
+              {t('pos.modal.networkError.messageConnection')}
             </h3>
             <p style={{ color: 'var(--text-secondary)', marginBottom: '1rem' }}>
-              {networkError || 'Ralat rangkaian berlaku semasa memproses pembayaran.'}
+              {networkError || t('pos.modal.networkError.messageError')}
             </p>
 
             {retryCount > 0 && (
@@ -1878,7 +1878,7 @@ export default function POSPage() {
                 fontSize: '0.875rem'
               }}>
                 <AlertTriangle size={16} color="var(--warning)" style={{ marginRight: '0.5rem' }} />
-                Percubaan semula: {retryCount}/2
+                {t('pos.modal.networkError.attempt', { count: retryCount })}
               </div>
             )}
 
@@ -1891,11 +1891,11 @@ export default function POSPage() {
               fontSize: '0.875rem',
               color: '#92400e'
             }}>
-              <strong>Apa yang boleh anda lakukan:</strong>
+              <strong>{t('pos.modal.networkError.tipsTitle')}</strong>
               <ul style={{ marginTop: '0.5rem', paddingLeft: '1.25rem' }}>
-                <li>Semak sambungan internet anda</li>
-                <li>Cuba semula dalam beberapa saat</li>
-                <li>Jika masalah berterusan, hubungi sokongan</li>
+                <li>{t('pos.modal.networkError.tip1')}</li>
+                <li>{t('pos.modal.networkError.tip2')}</li>
+                <li>{t('pos.modal.networkError.tip3')}</li>
               </ul>
             </div>
           </div>
@@ -1906,7 +1906,7 @@ export default function POSPage() {
               className="btn btn-outline"
               style={{ flex: 1 }}
             >
-              Batal
+              {t('pos.modal.networkError.cancel')}
             </button>
             <button
               onClick={handleRetryPayment}
@@ -1917,12 +1917,12 @@ export default function POSPage() {
               {isProcessing ? (
                 <>
                   <LoadingSpinner size="sm" />
-                  Cuba Semula...
+                  {t('pos.modal.networkError.retrying')}
                 </>
               ) : (
                 <>
                   <RefreshCw size={18} />
-                  Cuba Semula
+                  {t('pos.modal.networkError.retry')}
                 </>
               )}
             </button>

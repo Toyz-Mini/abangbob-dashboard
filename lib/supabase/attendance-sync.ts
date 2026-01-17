@@ -11,10 +11,10 @@ export interface AllowedLocation {
     address: string | null;
     latitude: number;
     longitude: number;
-    radius_meters: number;
-    is_active: boolean;
-    created_at: string;
-    updated_at: string;
+    radiusMeters: number;
+    isActive: boolean;
+    createdAt: string;
+    updatedAt: string;
 }
 
 export interface AttendanceRecord {
@@ -157,7 +157,7 @@ export async function verifyLocation(latitude: number, longitude: number) {
         }
     }
 
-    const verified = nearest_location ? min_distance <= nearest_location.radius_meters : false;
+    const verified = nearest_location ? min_distance <= nearest_location.radiusMeters : false;
 
     return {
         verified,

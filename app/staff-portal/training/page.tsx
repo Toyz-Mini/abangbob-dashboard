@@ -6,6 +6,7 @@ import { useStaff } from '@/lib/store';
 import Link from 'next/link';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import LoadingSpinner from '@/components/LoadingSpinner';
+import { useTranslation } from '@/lib/contexts/LanguageContext';
 import {
   ArrowLeft,
   GraduationCap,
@@ -120,6 +121,7 @@ const mockCertificates: Certificate[] = [
 ];
 
 export default function TrainingPage() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const { staff, isInitialized } = useStaff();
   const [activeTab, setActiveTab] = useState<'training' | 'certificates'>('training');
@@ -147,10 +149,10 @@ export default function TrainingPage() {
         <div style={{ marginBottom: '1.5rem' }}>
 
           <h1 style={{ fontSize: '1.75rem', fontWeight: 700, marginTop: '0.5rem' }}>
-            Latihan & Sijil
+            {t('staffPortal.training.title')}
           </h1>
           <p style={{ color: 'var(--text-secondary)' }}>
-            Track progress latihan dan sijil anda
+            {t('staffPortal.training.subtitle')}
           </p>
         </div>
 
@@ -161,7 +163,7 @@ export default function TrainingPage() {
               <CheckCircle size={24} />
             </div>
             <div className="staff-stat-value">{completedCount}</div>
-            <div className="staff-stat-label">Selesai</div>
+            <div className="staff-stat-label">{t('staffPortal.training.stats.completed')}</div>
           </div>
 
           <div className="staff-stat-card primary">
@@ -169,7 +171,7 @@ export default function TrainingPage() {
               <PlayCircle size={24} />
             </div>
             <div className="staff-stat-value">{inProgressCount}</div>
-            <div className="staff-stat-label">Sedang Berjalan</div>
+            <div className="staff-stat-label">{t('staffPortal.training.stats.inProgress')}</div>
           </div>
 
           {mandatoryPending > 0 && (
@@ -178,7 +180,7 @@ export default function TrainingPage() {
                 <AlertTriangle size={24} />
               </div>
               <div className="staff-stat-value">{mandatoryPending}</div>
-              <div className="staff-stat-label">Wajib Belum Selesai</div>
+              <div className="staff-stat-label">{t('staffPortal.training.stats.mandatoryPending')}</div>
             </div>
           )}
         </div>
@@ -191,7 +193,7 @@ export default function TrainingPage() {
             style={{ flex: 1 }}
           >
             <GraduationCap size={18} />
-            Latihan
+            {t('staffPortal.training.tabs.training')}
           </button>
           <button
             className={`btn ${activeTab === 'certificates' ? 'btn-primary' : 'btn-outline'}`}
@@ -199,7 +201,7 @@ export default function TrainingPage() {
             style={{ flex: 1 }}
           >
             <Award size={18} />
-            Sijil
+            {t('staffPortal.training.tabs.certificates')}
           </button>
         </div>
 
@@ -209,7 +211,7 @@ export default function TrainingPage() {
             <div className="card-header">
               <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <BookOpen size={20} />
-                Senarai Latihan
+                {t('staffPortal.training.list.title')}
               </div>
             </div>
 
@@ -221,12 +223,12 @@ export default function TrainingPage() {
                       <div className="training-title">
                         {training.title}
                         {training.mandatory && (
-                          <span className="badge badge-danger" style={{ marginLeft: '0.5rem', fontSize: '0.6rem' }}>WAJIB</span>
+                          <span className="badge badge-danger" style={{ marginLeft: '0.5rem', fontSize: '0.6rem' }}>{t('staffPortal.training.list.mandatory')}</span>
                         )}
                       </div>
                       <div className="training-description">{training.description}</div>
                       <div className="training-meta">
-                        <span><Clock size={12} /> {training.duration} minit</span>
+                        <span><Clock size={12} /> {t('staffPortal.training.list.duration', { minutes: training.duration })}</span>
                         <span className="training-category">{training.category}</span>
                       </div>
                     </div>
@@ -235,7 +237,7 @@ export default function TrainingPage() {
                       {training.status === 'completed' ? (
                         <div className="status-completed">
                           <CheckCircle size={24} />
-                          <span>Selesai</span>
+                          <span>{t('staffPortal.training.list.completed')}</span>
                           <span className="status-date">{training.completedDate}</span>
                         </div>
                       ) : training.status === 'in_progress' ? (
@@ -258,12 +260,12 @@ export default function TrainingPage() {
                             </svg>
                             <span>{training.progress}%</span>
                           </div>
-                          <span>Sedang Berjalan</span>
+                          <span>{t('staffPortal.training.list.inProgress')}</span>
                         </div>
                       ) : (
                         <button className="btn btn-primary btn-sm">
                           <PlayCircle size={16} />
-                          Mula
+                          {t('staffPortal.training.list.start')}
                         </button>
                       )}
                     </div>
@@ -291,7 +293,7 @@ export default function TrainingPage() {
             <div className="card-header">
               <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <FileText size={20} />
-                Sijil Saya
+                {t('staffPortal.training.certificates.title')}
               </div>
             </div>
 
@@ -308,15 +310,17 @@ export default function TrainingPage() {
                     <div className="certificate-name">{cert.name}</div>
                     <div className="certificate-issuer">{cert.issuer}</div>
                     <div className="certificate-dates">
-                      <span>Dikeluarkan: {new Date(cert.issuedDate).toLocaleDateString('ms-MY')}</span>
+                      <span>{t('staffPortal.training.certificates.issued')} {new Date(cert.issuedDate).toLocaleDateString('ms-MY')}</span>
                       {cert.expiryDate && (
-                        <span>Tamat: {new Date(cert.expiryDate).toLocaleDateString('ms-MY')}</span>
+                        <span>{t('staffPortal.training.certificates.expiry')} {new Date(cert.expiryDate).toLocaleDateString('ms-MY')}</span>
                       )}
                     </div>
                   </div>
                   <div className="certificate-status">
                     <span className={`badge badge-${cert.status === 'valid' ? 'success' : cert.status === 'expiring_soon' ? 'warning' : 'danger'}`}>
-                      {cert.status === 'valid' ? 'Sah' : cert.status === 'expiring_soon' ? 'Hampir Tamat' : 'Tamat Tempoh'}
+                      {cert.status === 'valid' ? t('staffPortal.training.certificates.status.valid') :
+                        cert.status === 'expiring_soon' ? t('staffPortal.training.certificates.status.expiring_soon') :
+                          t('staffPortal.training.certificates.status.expired')}
                     </span>
                   </div>
                 </div>
@@ -325,7 +329,7 @@ export default function TrainingPage() {
               {mockCertificates.length === 0 && (
                 <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>
                   <Award size={40} color="var(--gray-300)" style={{ marginBottom: '0.75rem' }} />
-                  <div>Tiada sijil</div>
+                  <div>{t('staffPortal.training.certificates.empty')}</div>
                 </div>
               )}
             </div>
@@ -336,7 +340,3 @@ export default function TrainingPage() {
     </StaffLayout>
   );
 }
-
-
-
-

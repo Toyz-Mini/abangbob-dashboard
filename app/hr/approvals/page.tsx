@@ -12,6 +12,7 @@ import ClaimDetailModal from '@/components/staff-portal/ClaimDetailModal';
 import RequestDetailModal from '@/components/staff-portal/RequestDetailModal';
 import { ClaimRequest, StaffRequest, OTClaim, SalaryAdvance } from '@/lib/types';
 import { useAuth } from '@/lib/contexts/AuthContext';
+import { useToast } from '@/lib/contexts/ToastContext';
 import {
   CheckCircle,
   XCircle,
@@ -37,6 +38,7 @@ import { useUpdateClaimMutation, useUpdateOTClaimMutation } from '@/lib/hooks/mu
 export default function ApprovalsPage() {
   const searchParams = useSearchParams();
   const { user } = useAuth();
+  const { showToast } = useToast();
 
   // -- Tanstack Query Data Fetching --
   const { data: leaveRequestsData, isLoading: leaveLoading, refetch: refreshLeaveRequests } = useLeaveRequestsQuery();
@@ -126,7 +128,7 @@ export default function ApprovalsPage() {
       await approveUserMutation.mutateAsync({ userId, action: 'approve' });
     } catch (error) {
       console.error('Error approving user:', error);
-      alert('Gagal meluluskan pengguna');
+      showToast('Gagal meluluskan pengguna', 'error');
     }
   };
 
@@ -137,7 +139,7 @@ export default function ApprovalsPage() {
       setSelectedItem(null);
     } catch (error) {
       console.error('Error rejecting user:', error);
-      alert('Gagal menolak pengguna');
+      showToast('Gagal menolak pengguna', 'error');
     }
   };
 
@@ -161,7 +163,7 @@ export default function ApprovalsPage() {
 
   const handleApprove = async (type: TabType, id: string) => {
     if (!user) {
-      alert('Sila log masuk untuk membuat kelulusan');
+      showToast('Sila log masuk untuk membuat kelulusan', 'error');
       return;
     }
 
@@ -221,12 +223,12 @@ export default function ApprovalsPage() {
 
   const handleReject = async () => {
     if (!selectedItem || !rejectReason.trim()) {
-      alert('Sila masukkan sebab penolakan');
+      showToast('Sila masukkan sebab penolakan', 'error');
       return;
     }
 
     if (!user) {
-      alert('Sila log masuk untuk membuat kelulusan');
+      showToast('Sila log masuk untuk membuat kelulusan', 'error');
       return;
     }
 
@@ -866,3 +868,4 @@ export default function ApprovalsPage() {
     </MainLayout>
   );
 }
+

@@ -8,6 +8,7 @@ import { useCallback } from 'react';
 import { Recipe, RecipeIngredient } from '@/lib/types';
 import Modal from '@/components/Modal';
 import LoadingSpinner from '@/components/LoadingSpinner';
+import { useToast } from '@/lib/contexts/ToastContext';
 import {
   ChefHat,
   Plus,
@@ -31,6 +32,7 @@ type ModalType = 'add' | 'edit' | 'delete' | null;
 export default function RecipesPage() {
   const { recipes, inventory, addRecipe, updateRecipe, deleteRecipe, refreshRecipes, isInitialized } = useRecipes();
   const { menuItems } = useMenu();
+  const { showToast } = useToast();
 
   const handleRecipesChange = useCallback(() => {
     refreshRecipes();
@@ -54,6 +56,10 @@ export default function RecipesPage() {
     prepTime: 10,
     yieldQuantity: 1,
     yieldUnit: 'pcs',
+    recipeType: 'menu' as 'menu' | 'production',
+    outputInventoryId: '' as string,
+    outputQuantity: 1,
+    outputUnit: 'pcs',
   });
 
   // Calculate recipe metrics
@@ -104,6 +110,10 @@ export default function RecipesPage() {
       prepTime: 10,
       yieldQuantity: 1,
       yieldUnit: 'pcs',
+      recipeType: 'menu',
+      outputInventoryId: '',
+      outputQuantity: 1,
+      outputUnit: 'pcs',
     });
     setModalType('add');
   };
@@ -111,7 +121,7 @@ export default function RecipesPage() {
   const openEditModal = (recipe: Recipe) => {
     setSelectedRecipe(recipe);
     setFormData({
-      menuItemId: recipe.menuItemId,
+      menuItemId: recipe.menuItemId || '',
       menuItemName: recipe.menuItemName,
       sellingPrice: recipe.sellingPrice,
       ingredients: recipe.ingredients.map(i => ({
@@ -121,10 +131,14 @@ export default function RecipesPage() {
         unit: i.unit,
         costPerUnit: i.costPerUnit,
       })),
-      instructions: recipe.instructions || '',
+      instructions: Array.isArray(recipe.instructions) ? recipe.instructions.join('\n') : (recipe.instructions || ''),
       prepTime: recipe.prepTime,
       yieldQuantity: recipe.yieldQuantity,
       yieldUnit: recipe.yieldUnit,
+      recipeType: (recipe as any).recipeType || 'menu',
+      outputInventoryId: (recipe as any).outputInventoryId || '',
+      outputQuantity: (recipe as any).outputQuantity || 1,
+      outputUnit: (recipe as any).outputUnit || 'pcs',
     });
     setModalType('edit');
   };
@@ -188,8 +202,17 @@ export default function RecipesPage() {
   };
 
   const handleAddRecipe = async () => {
-    if (!formData.menuItemId || formData.ingredients.length === 0) {
-      alert('Sila pilih menu item dan tambah sekurang-kurangnya satu bahan');
+    // For production recipes, check ingredients; for menu recipes, need menuItemId
+    if (formData.recipeType === 'menu' && !formData.menuItemId) {
+      showToast('Sila pilih menu item', 'warning');
+      return;
+    }
+    if (formData.ingredients.length === 0) {
+      showToast('Sila tambah sekurang-kurangnya satu bahan', 'warning');
+      return;
+    }
+    if (formData.recipeType === 'production' && !formData.outputInventoryId) {
+      showToast('Sila pilih output inventory untuk production recipe', 'warning');
       return;
     }
 
@@ -207,20 +230,24 @@ export default function RecipesPage() {
 
     try {
       await addRecipe({
-        menuItemId: formData.menuItemId,
-        menuItemName: formData.menuItemName,
+        menuItemId: formData.recipeType === 'menu' ? formData.menuItemId : undefined,
+        menuItemName: formData.recipeType === 'menu' ? formData.menuItemName : `Production: ${inventory.find(i => i.id === formData.outputInventoryId)?.name || 'Unknown'}`,
         sellingPrice: formData.sellingPrice,
         ingredients,
-        instructions: formData.instructions.trim() || undefined,
+        instructions: (typeof formData.instructions === 'string' ? formData.instructions.trim() : '') || undefined,
         prepTime: formData.prepTime,
         yieldQuantity: formData.yieldQuantity,
         yieldUnit: formData.yieldUnit,
-      });
+        recipeType: formData.recipeType,
+        outputInventoryId: formData.recipeType === 'production' ? formData.outputInventoryId : undefined,
+        outputQuantity: formData.recipeType === 'production' ? formData.outputQuantity : undefined,
+        outputUnit: formData.recipeType === 'production' ? formData.outputUnit : undefined,
+      } as any);
 
       closeModal();
       window.location.reload(); // Force reload to show new data immediately
     } catch (e: any) {
-      alert(`Gagal menambah resepi: ${e.message || 'Error tidak diketahui'}. Sila semak console.`);
+      showToast(`Gagal menambah resepi: ${e.message}`, 'error');
       console.error(e);
       setIsProcessing(false);
     }
@@ -251,11 +278,15 @@ export default function RecipesPage() {
       ingredients,
       totalCost,
       profitMargin,
-      instructions: formData.instructions.trim() || undefined,
+      instructions: (typeof formData.instructions === 'string' ? formData.instructions.trim() : '') || undefined,
       prepTime: formData.prepTime,
       yieldQuantity: formData.yieldQuantity,
       yieldUnit: formData.yieldUnit,
-    });
+      recipeType: formData.recipeType,
+      outputInventoryId: formData.recipeType === 'production' ? formData.outputInventoryId : null,
+      outputQuantity: formData.recipeType === 'production' ? formData.outputQuantity : null,
+      outputUnit: formData.recipeType === 'production' ? formData.outputUnit : null,
+    } as any);
 
     closeModal();
   };
@@ -534,6 +565,10 @@ export default function RecipesPage() {
                             prepTime: 10,
                             yieldQuantity: 1,
                             yieldUnit: 'pcs',
+                            recipeType: 'menu',
+                            outputInventoryId: '',
+                            outputQuantity: 1,
+                            outputUnit: 'pcs',
                           });
                           setModalType('add');
                         }}
@@ -555,46 +590,119 @@ export default function RecipesPage() {
           title={modalType === 'add' ? 'Tambah Resepi' : 'Edit Resepi'}
           maxWidth="600px"
         >
+          {/* Recipe Type Selector */}
+          <div className="form-group" style={{ marginBottom: '1rem' }}>
+            <label className="form-label">Jenis Resepi *</label>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <button
+                type="button"
+                className={`btn ${formData.recipeType === 'menu' ? 'btn-primary' : 'btn-outline'}`}
+                onClick={() => setFormData(prev => ({ ...prev, recipeType: 'menu' }))}
+                style={{ flex: 1 }}
+              >
+                🍽️ Menu (Jual Terus)
+              </button>
+              <button
+                type="button"
+                className={`btn ${formData.recipeType === 'production' ? 'btn-primary' : 'btn-outline'}`}
+                onClick={() => setFormData(prev => ({ ...prev, recipeType: 'production' }))}
+                style={{ flex: 1 }}
+              >
+                🏭 Production (Semi-Finished)
+              </button>
+            </div>
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '0.5rem' }}>
+              {formData.recipeType === 'menu'
+                ? 'Resepi untuk makanan yang dijual terus kepada pelanggan'
+                : 'Resepi untuk menghasilkan barang semi-siap (cth: marinated chicken, prepared sauce)'}
+            </p>
+          </div>
+
           <div className="grid grid-cols-2" style={{ gap: '1rem' }}>
-            <div className="form-group">
-              <label className="form-label">Menu Item *</label>
-              {modalType === 'add' ? (
+            {formData.recipeType === 'menu' ? (
+              <div className="form-group">
+                <label className="form-label">Menu Item *</label>
+                {modalType === 'add' ? (
+                  <select
+                    className="form-select"
+                    value={formData.menuItemId}
+                    onChange={(e) => {
+                      const item = menuItems.find(m => m.id === e.target.value);
+                      setFormData(prev => ({
+                        ...prev,
+                        menuItemId: e.target.value,
+                        menuItemName: item?.name || '',
+                        sellingPrice: item?.price || 0,
+                      }));
+                    }}
+                  >
+                    {menuItems.map(item => (
+                      <option key={item.id} value={item.id}>{item.name}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    type="text"
+                    className="form-input"
+                    value={formData.menuItemName}
+                    disabled
+                  />
+                )}
+              </div>
+            ) : (
+              <div className="form-group">
+                <label className="form-label">Output ke Inventori *</label>
                 <select
                   className="form-select"
-                  value={formData.menuItemId}
+                  value={formData.outputInventoryId}
                   onChange={(e) => {
-                    const item = menuItems.find(m => m.id === e.target.value);
+                    const item = inventory.find(i => i.id === e.target.value);
                     setFormData(prev => ({
                       ...prev,
-                      menuItemId: e.target.value,
-                      menuItemName: item?.name || '',
-                      sellingPrice: item?.price || 0,
+                      outputInventoryId: e.target.value,
+                      outputUnit: item?.unit || 'pcs',
                     }));
                   }}
                 >
-                  {menuItems.map(item => (
-                    <option key={item.id} value={item.id}>{item.name}</option>
+                  <option value="">-- Pilih Inventori --</option>
+                  {inventory.map(item => (
+                    <option key={item.id} value={item.id}>{item.name} ({item.unit})</option>
                   ))}
                 </select>
-              ) : (
-                <input
-                  type="text"
-                  className="form-input"
-                  value={formData.menuItemName}
-                  disabled
-                />
-              )}
-            </div>
+              </div>
+            )}
             <div className="form-group">
-              <label className="form-label">Harga Jual (BND)</label>
-              <input
-                type="number"
-                className="form-input"
-                value={formData.sellingPrice}
-                onChange={(e) => setFormData(prev => ({ ...prev, sellingPrice: Number(e.target.value) }))}
-                min="0"
-                step="0.1"
-              />
+              <label className="form-label">{formData.recipeType === 'menu' ? 'Harga Jual (BND)' : 'Output Quantity'}</label>
+              {formData.recipeType === 'menu' ? (
+                <input
+                  type="number"
+                  className="form-input"
+                  value={formData.sellingPrice}
+                  onChange={(e) => setFormData(prev => ({ ...prev, sellingPrice: Number(e.target.value) }))}
+                  min="0"
+                  step="0.1"
+                />
+              ) : (
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <input
+                    type="number"
+                    className="form-input"
+                    value={formData.outputQuantity}
+                    onChange={(e) => setFormData(prev => ({ ...prev, outputQuantity: Number(e.target.value) }))}
+                    min="1"
+                    step="1"
+                    style={{ flex: 1 }}
+                  />
+                  <input
+                    type="text"
+                    className="form-input"
+                    value={formData.outputUnit}
+                    onChange={(e) => setFormData(prev => ({ ...prev, outputUnit: e.target.value }))}
+                    style={{ width: '80px' }}
+                    placeholder="unit"
+                  />
+                </div>
+              )}
             </div>
           </div>
 

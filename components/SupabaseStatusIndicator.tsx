@@ -302,3 +302,4 @@ export default function SupabaseStatusIndicator({
 export function SupabaseStatusBadge() {
   return <SupabaseStatusIndicator compact />;
 }
+

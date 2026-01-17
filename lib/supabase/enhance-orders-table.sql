@@ -72,3 +72,4 @@ CREATE INDEX IF NOT EXISTS idx_orders_voided_by ON public.orders(voided_by);
 COMMENT ON COLUMN public.orders.cashier_id IS 'Staff who created the order';
 COMMENT ON COLUMN public.orders.void_refund_status IS 'Tracks void/refund status for order history';
 
+

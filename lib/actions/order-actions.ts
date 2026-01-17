@@ -1,17 +1,16 @@
 'use server';
 
-import { auth } from '@/lib/auth';
+import { getServerSession } from '@/lib/supabase/server-auth';
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
-import { headers } from 'next/headers';
+
 import { toSnakeCase, toCamelCase } from '@/lib/supabase/operations';
 
 // ============ ORDERS ============
 
 export async function fetchOrdersAction(limit?: number) {
-    const session = await auth.api.getSession({
-        headers: await headers()
-    });
-    if (!session) throw new Error('Unauthorized');
+    // 1. Verify Role
+    const { requireRole } = await import('@/lib/supabase/server-auth');
+    await requireRole(['admin', 'manager', 'staff']);
 
     const adminClient = getSupabaseAdmin();
 
@@ -35,10 +34,9 @@ export async function fetchOrdersAction(limit?: number) {
 }
 
 export async function insertOrderAction(order: any) {
-    const session = await auth.api.getSession({
-        headers: await headers()
-    });
-    if (!session) throw new Error('Unauthorized');
+    // 1. Verify Role
+    const { requireRole } = await import('@/lib/supabase/server-auth');
+    const { session } = await requireRole(['admin', 'manager', 'staff']);
 
     console.log('[insertOrderAction] Authenticated user inserting order:', session.user.email);
 
@@ -61,10 +59,9 @@ export async function insertOrderAction(order: any) {
 }
 
 export async function updateOrderAction(id: string, updates: any) {
-    const session = await auth.api.getSession({
-        headers: await headers()
-    });
-    if (!session) throw new Error('Unauthorized');
+    // 1. Verify Role
+    const { requireRole } = await import('@/lib/supabase/server-auth');
+    await requireRole(['admin', 'manager', 'staff']);
 
     const adminClient = getSupabaseAdmin();
     const snakeCasedUpdates = toSnakeCase(updates);

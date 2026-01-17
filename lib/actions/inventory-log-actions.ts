@@ -1,16 +1,14 @@
 'use server';
 
-import { auth } from '@/lib/auth';
+import { getServerSession } from '@/lib/supabase/server-auth';
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
-import { headers } from 'next/headers';
+
 import { toSnakeCase, toCamelCase } from '@/lib/supabase/operations';
 
 // ============ INVENTORY LOGS ACTIONS ============
 
 export async function fetchInventoryLogsAction(stockItemId?: string) {
-    const session = await auth.api.getSession({
-        headers: await headers()
-    });
+    const session = await getServerSession();
     if (!session) return [];
 
     const adminClient = getSupabaseAdmin();
@@ -38,9 +36,7 @@ export async function fetchInventoryLogsAction(stockItemId?: string) {
 }
 
 export async function insertInventoryLogAction(log: any) {
-    const session = await auth.api.getSession({
-        headers: await headers()
-    });
+    const session = await getServerSession();
     if (!session) throw new Error('Unauthorized');
 
     const adminClient = getSupabaseAdmin();

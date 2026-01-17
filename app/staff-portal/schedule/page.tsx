@@ -4,6 +4,7 @@ import { useState, useMemo, useEffect } from 'react';
 import StaffLayout from '@/components/StaffLayout';
 import { useStaffPortal, useStaff, useKPI } from '@/lib/store';
 import { useAuth } from '@/lib/contexts/AuthContext';
+import { useTranslation } from '@/lib/contexts/LanguageContext';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import ConfirmModal from '@/components/ConfirmModal';
 import {
@@ -26,19 +27,28 @@ import {
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ScheduleEntry, Shift } from '@/lib/types'; // Import for types
+import { useSchedulesRealtime } from '@/lib/supabase/realtime-hooks';
 
 export default function SchedulePage() {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const { staff, isInitialized } = useStaff();
   const {
     schedules,
     shifts,
     getLeaveBalance,
     addStaffRequest,
+    refreshSchedules,
     isInitialized: staffPortalInitialized
   } = useStaffPortal();
 
   const { getStaffKPI, isInitialized: kpiInitialized } = useKPI();
+
+  // Realtime Updates
+  useSchedulesRealtime(() => {
+    console.log('[Realtime] Schedule update detected, refreshing...');
+    refreshSchedules();
+  });
 
   const [swapModalOpen, setSwapModalOpen] = useState(false);
   const [selectedShiftForSwap, setSelectedShiftForSwap] = useState<{ schedule: ScheduleEntry, shift: Shift, date: Date } | null>(null);
@@ -142,7 +152,7 @@ export default function SchedulePage() {
       const diff = nextShift.dateTime.getTime() - now.getTime();
 
       if (diff <= 0) {
-        setTimeToNextShift('Sekarang');
+        setTimeToNextShift(t('staffPortal.schedule.timer.now'));
         return;
       }
 
@@ -151,16 +161,16 @@ export default function SchedulePage() {
 
       if (hours > 24) {
         const days = Math.floor(hours / 24);
-        setTimeToNextShift(`${days} Hari lagi`);
+        setTimeToNextShift(t('staffPortal.schedule.timer.daysLeft', { count: days }));
       } else {
-        setTimeToNextShift(`${hours}j ${minutes}m lagi`);
+        setTimeToNextShift(t('staffPortal.schedule.timer.hoursLeft', { hours, minutes }));
       }
     };
 
     updateTimer();
     const interval = setInterval(updateTimer, 60000); // Update every minute
     return () => clearInterval(interval);
-  }, [nextShift]);
+  }, [nextShift, t]); // Add t to dependency
 
   // Get colleagues on the same shift
   const getColleaguesOnShift = (date: string, shiftId: string) => {
@@ -177,11 +187,11 @@ export default function SchedulePage() {
     if (new Date(schedule.date + 'T' + shift.startTime) < new Date()) {
       setConfirmModal({
         isOpen: true,
-        title: 'Tindakan Tidak Sah',
-        message: 'Anda tidak boleh menukar shift yang telah berlalu.',
+        title: t('staffPortal.swap.modals.invalidTitle'),
+        message: t('staffPortal.swap.modals.invalidMessage'),
         type: 'warning',
         showCancel: false,
-        confirmText: 'Faham'
+        confirmText: t('common.confirm') || 'Faham'
       });
       return;
     }
@@ -195,11 +205,11 @@ export default function SchedulePage() {
     if (!swapReason.trim()) {
       setConfirmModal({
         isOpen: true,
-        title: 'Maklumat Diperlukan',
-        message: 'Sila berikan sebab penukaran shift.',
+        title: t('staffPortal.swap.modals.requiredTitle'),
+        message: t('staffPortal.swap.modals.requiredMessage'),
         type: 'warning',
         showCancel: false,
-        confirmText: 'Faham'
+        confirmText: t('common.confirm') || 'Faham'
       });
       return;
     }
@@ -207,12 +217,17 @@ export default function SchedulePage() {
     setIsSubmittingSwap(true);
 
     try {
+      const dateStr = selectedShiftForSwap.date.toLocaleDateString('ms-MY');
       addStaffRequest({
         staffId: user.id,
         staffName: currentStaff.name,
         category: 'shift_swap',
-        title: `Tukar Shift: ${selectedShiftForSwap.date.toLocaleDateString('ms-MY')}`,
-        description: `Request to swap shift on ${selectedShiftForSwap.date.toLocaleDateString('ms-MY')} (${selectedShiftForSwap.shift.name}). Reason: ${swapReason}`,
+        title: t('staffPortal.swap.request.title', { date: dateStr }),
+        description: t('staffPortal.swap.request.desc', {
+          date: dateStr,
+          shift: selectedShiftForSwap.shift.name,
+          reason: swapReason
+        }),
         priority: 'medium',
         status: 'pending'
       });
@@ -223,21 +238,21 @@ export default function SchedulePage() {
 
       setConfirmModal({
         isOpen: true,
-        title: 'Permohonan Dihantar',
-        message: 'Permohonan tukar shift berjaya dihantar dan sedang menunggu kelulusan pengurus.',
+        title: t('staffPortal.swap.modals.successTitle'),
+        message: t('staffPortal.swap.modals.successMessage'),
         type: 'success',
         showCancel: false,
-        confirmText: 'Selesai'
+        confirmText: t('common.success') || 'Selesai'
       });
     } catch (error) {
       console.error("Swap request failed", error);
       setConfirmModal({
         isOpen: true,
-        title: 'Ralat Penghantaran',
-        message: 'Gagal menghantar permohonan. Sila cuba lagi sebentar.',
+        title: t('staffPortal.swap.modals.errorTitle'),
+        message: t('staffPortal.swap.modals.errorMessage'),
         type: 'danger',
         showCancel: false,
-        confirmText: 'Kembali'
+        confirmText: t('common.back') || 'Kembali'
       });
     } finally {
       setIsSubmittingSwap(false);
@@ -300,9 +315,9 @@ export default function SchedulePage() {
       <StaffLayout>
         <div className="p-8 flex flex-col items-center justify-center min-h-[60vh] text-center">
           <div className="bg-red-50 text-red-600 p-8 rounded-2xl max-w-md shadow-sm border border-red-100">
-            <h3 className="font-bold text-xl mb-3">Akses Gagal</h3>
+            <h3 className="font-bold text-xl mb-3">{t('staffPortal.schedule.accessError.title')}</h3>
             <p className="mb-6 text-red-700/80 leading-relaxed">
-              Rekod staff anda tidak dapat dijumpai. Sila hubungi Admin untuk bantuan.
+              {t('staffPortal.schedule.accessError.message')}
             </p>
           </div>
         </div>
@@ -318,8 +333,8 @@ export default function SchedulePage() {
         <header className="mb-6">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Jadual Kerja</h1>
-              <p className="text-sm text-gray-500 font-medium">Mingguan anda</p>
+              <h1 className="text-2xl font-bold text-gray-900 tracking-tight">{t('staffPortal.schedule.title')}</h1>
+              <p className="text-sm text-gray-500 font-medium">{t('staffPortal.schedule.subtitle')}</p>
             </div>
 
             <button
@@ -327,7 +342,7 @@ export default function SchedulePage() {
               className="px-4 py-2 bg-white border border-gray-200 shadow-sm rounded-xl text-xs font-semibold text-gray-700 active:scale-95 transition-all hover:bg-gray-50 flex items-center gap-2"
             >
               <Calendar className="w-3.5 h-3.5" />
-              Minggu Ini
+              {t('staffPortal.schedule.thisWeek')}
             </button>
           </div>
 
@@ -341,7 +356,7 @@ export default function SchedulePage() {
               <div className="relative z-10">
                 <div className="flex items-center gap-2 mb-1 opacity-90">
                   <Timer size={14} />
-                  <span className="text-xs font-semibold uppercase tracking-wider">Shift Seterusnya</span>
+                  <span className="text-xs font-semibold uppercase tracking-wider">{t('staffPortal.schedule.nextShift')}</span>
                 </div>
                 {nextShift ? (
                   <div>
@@ -353,7 +368,7 @@ export default function SchedulePage() {
                     </div>
                   </div>
                 ) : (
-                  <div className="text-sm opacity-90 font-medium mt-1">Tiada shift akan datang</div>
+                  <div className="text-sm opacity-90 font-medium mt-1">{t('staffPortal.schedule.noUpcomingShift')}</div>
                 )}
               </div>
             </div>
@@ -367,14 +382,14 @@ export default function SchedulePage() {
                 </div>
                 <div className="flex items-center gap-1.5 mb-1 text-gray-500">
                   <Award size={14} />
-                  <span className="text-[10px] font-bold uppercase">Prestasi</span>
+                  <span className="text-[10px] font-bold uppercase">{t('staffPortal.schedule.performance')}</span>
                 </div>
                 <div className="flex items-baseline gap-1">
                   <span className="text-xl font-bold text-gray-900">{staffKPI?.overallScore || '-'}</span>
                   <span className="text-[10px] text-gray-400">/100</span>
                 </div>
                 <div className="text-[10px] font-medium text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full w-fit mt-1">
-                  Rank #{staffKPI?.rank || '-'}
+                  {t('staffPortal.schedule.rank', { rank: staffKPI?.rank || '-' })}
                 </div>
               </div>
 
@@ -385,14 +400,14 @@ export default function SchedulePage() {
                 </div>
                 <div className="flex items-center gap-1.5 mb-1 text-gray-500">
                   <Palmtree size={14} />
-                  <span className="text-[10px] font-bold uppercase">Baki Cuti</span>
+                  <span className="text-[10px] font-bold uppercase">{t('staffPortal.schedule.leaveBalance')}</span>
                 </div>
                 <div className="flex items-baseline gap-1">
                   <span className="text-xl font-bold text-gray-900">{leaveBalance}</span>
-                  <span className="text-[10px] text-gray-400">Hari</span>
+                  <span className="text-[10px] text-gray-400">{t('staffPortal.schedule.days')}</span>
                 </div>
                 <div className="text-[10px] font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full w-fit mt-1">
-                  Available
+                  {t('staffPortal.schedule.available')}
                 </div>
               </div>
             </div>
@@ -432,7 +447,7 @@ export default function SchedulePage() {
               <Briefcase size={16} />
             </div>
             <span className="text-xl font-bold text-gray-900 leading-none">{myWeekSchedule.length}</span>
-            <span className="text-[9px] uppercase tracking-wider font-semibold text-gray-400 truncate">Kerja</span>
+            <span className="text-[9px] uppercase tracking-wider font-semibold text-gray-400 truncate">{t('staffPortal.schedule.work')}</span>
           </div>
 
           <div className="flex-1 bg-white py-3 px-2 rounded-2xl border border-emerald-50 shadow-sm flex flex-col items-center justify-center gap-1 group min-w-0">
@@ -440,7 +455,7 @@ export default function SchedulePage() {
               <Clock size={16} />
             </div>
             <span className="text-xl font-bold text-gray-900 leading-none">{weeklyHours}h</span>
-            <span className="text-[9px] uppercase tracking-wider font-semibold text-gray-400 truncate">Jam</span>
+            <span className="text-[9px] uppercase tracking-wider font-semibold text-gray-400 truncate">{t('staffPortal.schedule.hours')}</span>
           </div>
 
           <div className="flex-1 bg-white py-3 px-2 rounded-2xl border border-amber-50 shadow-sm flex flex-col items-center justify-center gap-1 group min-w-0">
@@ -448,7 +463,7 @@ export default function SchedulePage() {
               <Coffee size={16} />
             </div>
             <span className="text-xl font-bold text-gray-900 leading-none">{7 - myWeekSchedule.length}</span>
-            <span className="text-[9px] uppercase tracking-wider font-semibold text-gray-400 truncate">Cuti</span>
+            <span className="text-[9px] uppercase tracking-wider font-semibold text-gray-400 truncate">{t('staffPortal.schedule.off')}</span>
           </div>
         </div>
 
@@ -489,9 +504,9 @@ export default function SchedulePage() {
                         <span className="ml-1 opacity-60 text-xs font-normal">{date.getDate()}</span>
                       </div>
                       <div className="h-8 w-[1px] bg-gray-200/60 mx-1"></div>
-                      <span className="text-sm font-medium text-gray-400 italic">Cuti / Off Day</span>
+                      <span className="text-sm font-medium text-gray-400 italic">{t('staffPortal.schedule.offDay')}</span>
                     </div>
-                    {today && <span className="text-[10px] font-bold bg-primary/10 text-primary px-2 py-1 rounded-full">HARI INI</span>}
+                    {today && <span className="text-[10px] font-bold bg-primary/10 text-primary px-2 py-1 rounded-full">{t('staffPortal.schedule.today')}</span>}
                   </div>
                 ) : (
                   // WORKING DAY VIEW
@@ -541,7 +556,7 @@ export default function SchedulePage() {
 
                         {today && (
                           <span className="text-[10px] font-bold bg-primary/10 text-primary px-2.5 py-1 rounded-full shadow-sm">
-                            HARI INI
+                            {t('staffPortal.schedule.today')}
                           </span>
                         )}
                       </div>
@@ -553,14 +568,14 @@ export default function SchedulePage() {
                           <span>
                             {shift && Math.round(((parseInt(shift.endTime.split(':')[0]) * 60 + parseInt(shift.endTime.split(':')[1])) -
                               (parseInt(shift.startTime.split(':')[0]) * 60 + parseInt(shift.startTime.split(':')[1])) -
-                              shift.breakDuration) / 60)} Jam
+                              shift.breakDuration) / 60)} {t('staffPortal.schedule.hours')}
                           </span>
                         </div>
 
                         {colleagues.length > 0 && (
                           <div className="flex items-center gap-1.5">
                             <Users size={14} className="text-gray-400" />
-                            <span>{colleagues.length} Rakan</span>
+                            <span>{t('staffPortal.schedule.colleagues', { count: colleagues.length })}</span>
                           </div>
                         )}
                       </div>
@@ -598,7 +613,7 @@ export default function SchedulePage() {
               className="fixed bottom-0 sm:bottom-auto sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 w-full sm:w-[400px] bg-white rounded-t-2xl sm:rounded-2xl z-[70] p-6 shadow-xl"
             >
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-bold text-gray-900">Tukar Shift?</h3>
+                <h3 className="text-lg font-bold text-gray-900">{t('staffPortal.swap.title')}</h3>
                 <button onClick={() => setSwapModalOpen(false)} className="p-2 bg-gray-100 rounded-full hover:bg-gray-200">
                   <X size={18} />
                 </button>
@@ -624,16 +639,16 @@ export default function SchedulePage() {
               </div>
 
               <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Sebab Penukaran</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t('staffPortal.swap.form.reason')}</label>
                 <textarea
                   className="w-full p-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm"
-                  placeholder="Contoh: Ada urusan kecemasan / keluarga..."
+                  placeholder={t('staffPortal.swap.form.reasonPlaceholder')}
                   rows={3}
                   value={swapReason}
                   onChange={(e) => setSwapReason(e.target.value)}
                 />
                 <p className="text-xs text-gray-400 mt-2">
-                  Permohonan anda akan dihantar kepada Manager untuk kelulusan.
+                  {t('staffPortal.swap.form.note')}
                 </p>
               </div>
 
@@ -647,7 +662,7 @@ export default function SchedulePage() {
                 ) : (
                   <>
                     <Send size={18} />
-                    Hantar Permohonan
+                    {t('staffPortal.swap.form.submit')}
                   </>
                 )}
               </button>

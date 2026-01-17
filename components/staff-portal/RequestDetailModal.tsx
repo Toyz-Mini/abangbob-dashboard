@@ -1,7 +1,8 @@
 import React from 'react';
 import Modal from '@/components/Modal';
 import { StaffRequest } from '@/lib/types';
-import { getRequestCategoryLabel, getStatusLabel, getStatusColor } from '@/lib/staff-portal-data';
+import { getStatusColor } from '@/lib/staff-portal-data';
+import { useTranslation } from '@/lib/contexts/LanguageContext';
 import {
     FileText,
     Calendar,
@@ -33,13 +34,27 @@ export default function RequestDetailModal({
     isApprover = false,
     isProcessing = false
 }: RequestDetailModalProps) {
+    const { t } = useTranslation();
+
     if (!request) return null;
+
+    const getStatusLabelText = (status: string) => {
+        return t(`staffPortal.requests.status.${status}`);
+    };
+
+    const getCategoryLabelText = (category: string) => {
+        return t(`staffPortal.requests.categories.${category}`);
+    };
+
+    const getPriorityLabelText = (priority: string) => {
+        return t(`staffPortal.requests.priority.${priority}`);
+    };
 
     return (
         <Modal
             isOpen={isOpen}
             onClose={onClose}
-            title="Butiran Permohonan"
+            title={t('staffPortal.requests.detail.title')}
             maxWidth="600px"
         >
             <div className="space-y-6">
@@ -54,15 +69,19 @@ export default function RequestDetailModal({
                     border: '1px solid var(--gray-200)'
                 }}>
                     <div>
-                        <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>Status</div>
+                        <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>
+                            {t('staffPortal.requests.detail.status')}
+                        </div>
                         <span className={`badge badge-${getStatusColor(request.status)}`} style={{ fontSize: '1rem' }}>
-                            {getStatusLabel(request.status)}
+                            {getStatusLabelText(request.status)}
                         </span>
                     </div>
                     <div style={{ textAlign: 'right' }}>
-                        <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>Prioriti</div>
+                        <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>
+                            {t('staffPortal.requests.detail.priority')}
+                        </div>
                         <span className={`badge badge-${request.priority === 'high' ? 'danger' : request.priority === 'medium' ? 'warning' : 'info'}`}>
-                            {request.priority === 'high' ? 'Urgent' : request.priority === 'medium' ? 'Sederhana' : 'Rendah'}
+                            {getPriorityLabelText(request.priority)}
                         </span>
                     </div>
                 </div>
@@ -70,12 +89,16 @@ export default function RequestDetailModal({
                 {/* Main Details */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="form-group">
-                        <label className="text-sm font-medium text-gray-500 mb-1 block">Tajuk</label>
+                        <label className="text-sm font-medium text-gray-500 mb-1 block">
+                            {t('staffPortal.requests.detail.subject')}
+                        </label>
                         <div style={{ fontSize: '1.1rem', fontWeight: 600 }}>{request.title}</div>
                     </div>
 
                     <div className="form-group">
-                        <label className="text-sm font-medium text-gray-500 mb-1 block">Kategori</label>
+                        <label className="text-sm font-medium text-gray-500 mb-1 block">
+                            {t('staffPortal.requests.detail.category')}
+                        </label>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                             <div style={{
                                 width: '24px',
@@ -89,12 +112,14 @@ export default function RequestDetailModal({
                             }}>
                                 <Hash size={14} />
                             </div>
-                            {getRequestCategoryLabel(request.category)}
+                            {getCategoryLabelText(request.category)}
                         </div>
                     </div>
 
                     <div className="form-group">
-                        <label className="text-sm font-medium text-gray-500 mb-1 block">Pemohon</label>
+                        <label className="text-sm font-medium text-gray-500 mb-1 block">
+                            {t('staffPortal.requests.detail.applicant')}
+                        </label>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                             <User size={16} className="text-gray-400" />
                             {request.staffName}
@@ -102,7 +127,9 @@ export default function RequestDetailModal({
                     </div>
 
                     <div className="form-group">
-                        <label className="text-sm font-medium text-gray-500 mb-1 block">Dihantar Pada</label>
+                        <label className="text-sm font-medium text-gray-500 mb-1 block">
+                            {t('staffPortal.requests.detail.date')}
+                        </label>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                             <Clock size={16} className="text-gray-400" />
                             {new Date(request.createdAt).toLocaleDateString('ms-MY', {
@@ -118,7 +145,9 @@ export default function RequestDetailModal({
 
                 {/* Description */}
                 <div className="form-group">
-                    <label className="text-sm font-medium text-gray-500 mb-1 block">Keterangan</label>
+                    <label className="text-sm font-medium text-gray-500 mb-1 block">
+                        {t('staffPortal.requests.detail.description')}
+                    </label>
                     <div style={{
                         padding: '1rem',
                         background: 'var(--background)',
@@ -135,7 +164,7 @@ export default function RequestDetailModal({
                     <div className="form-group">
                         <label className="text-sm font-medium text-gray-500 mb-1 block flex items-center gap-2">
                             <MessageSquare size={16} />
-                            Maklum Balas / Nota
+                            {t('staffPortal.requests.detail.feedback')}
                         </label>
                         <div style={{
                             padding: '1rem',
@@ -147,7 +176,7 @@ export default function RequestDetailModal({
                             {request.responseNote}
                             {request.assignedTo && request.status !== 'rejected' && (
                                 <div style={{ marginTop: '0.5rem', fontSize: '0.8rem', opacity: 0.8 }}>
-                                    Dikendalikan oleh: {request.assigneeName}
+                                    {t('staffPortal.requests.detail.handledBy', { name: request.assigneeName ?? '' })}
                                 </div>
                             )}
                         </div>
@@ -164,7 +193,7 @@ export default function RequestDetailModal({
                             style={{ flex: 1 }}
                         >
                             <XCircle size={18} />
-                            Tolak
+                            {t('staffPortal.requests.detail.reject')}
                         </button>
                         <button
                             className="btn btn-success"
@@ -173,7 +202,7 @@ export default function RequestDetailModal({
                             style={{ flex: 1 }}
                         >
                             <CheckCircle size={18} />
-                            Selesai / Lulus
+                            {t('staffPortal.requests.detail.approve')}
                         </button>
                     </div>
                 )}
@@ -182,7 +211,7 @@ export default function RequestDetailModal({
                 {(!isApprover || request.status !== 'pending') && (
                     <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1.5rem' }}>
                         <button className="btn btn-outline" onClick={onClose}>
-                            Tutup
+                            {t('staffPortal.requests.detail.close')}
                         </button>
                     </div>
                 )}

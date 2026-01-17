@@ -178,8 +178,19 @@ const Sidebar = forwardRef<HTMLElement, SidebarProps>(({ isOpen, onMouseEnter, o
         ...group,
         items: group.items.filter(item => canViewNavItem(userRole, item.href)),
       }))
-      .filter(group => group.items.length > 0);
   }, [userRole]);
+
+  // precise active state: find the longest matching href
+  const activeHref = useMemo(() => {
+    if (!pathname) return '';
+    const allItems = filteredNavGroups.flatMap(group => group.items);
+    const sortedItems = [...allItems].sort((a, b) => b.href.length - a.href.length);
+    const match = sortedItems.find(item => {
+      if (item.href === '/') return pathname === '/';
+      return pathname.startsWith(item.href);
+    });
+    return match ? match.href : '';
+  }, [pathname, filteredNavGroups]);
 
   return (
     <aside
@@ -211,8 +222,7 @@ const Sidebar = forwardRef<HTMLElement, SidebarProps>(({ isOpen, onMouseEnter, o
             )}
             <ul className="nav-menu">
               {group.items.map((item) => {
-                const isActive = pathname === item.href ||
-                  (item.href !== '/' && pathname?.startsWith(item.href));
+                const isActive = item.href === activeHref;
 
                 const Icon = item.icon;
                 const label = t(item.labelKey);

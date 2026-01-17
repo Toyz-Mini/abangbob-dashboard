@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { LogOut, User } from 'lucide-react';
 import StaffPortalNav from '@/components/StaffPortalNav';
 import BrandHeader from '@/components/BrandHeader';
+import '@/app/staff-portal/styles/portal.css';
 
 interface StaffLayoutProps {
   children: ReactNode;

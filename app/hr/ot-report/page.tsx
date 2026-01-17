@@ -6,19 +6,9 @@ import { useStore } from '@/lib/store';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import StatCard from '@/components/StatCard';
-import {
-    BarChart,
-    Bar,
-    XAxis,
-    YAxis,
-    CartesianGrid,
-    Tooltip,
-    Legend,
-    ResponsiveContainer,
-    PieChart,
-    Pie,
-    Cell,
-} from 'recharts';
+
+import OTCharts from '@/components/hr/OTCharts';
+import OTClaimsTable from '@/components/hr/OTClaimsTable';
 import {
     DollarSign,
     Clock,
@@ -26,22 +16,15 @@ import {
     AlertCircle,
     Calendar,
     Download,
-    Filter,
 } from 'lucide-react';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
+
 
 const MONTHS = [
     'January', 'February', 'March', 'April', 'May', 'June',
     'July', 'August', 'September', 'October', 'November', 'December'
 ];
 
-const STATUS_COLORS = {
-    pending: '#f59e0b',    // warning
-    approved: '#3b82f6',   // info
-    rejected: '#ef4444',   // danger
-    paid: '#22c55e',       // success
-};
+
 
 export default function OTReportPage() {
     const { otClaims, isInitialized } = useStore();
@@ -96,7 +79,9 @@ export default function OTReportPage() {
         return Object.entries(counts).map(([name, value]) => ({ name, value }));
     }, [filteredClaims]);
 
-    const handleExportPDF = () => {
+    const handleExportPDF = async () => {
+        const jsPDF = (await import('jspdf')).default;
+        const autoTable = (await import('jspdf-autotable')).default;
         const doc = new jsPDF();
 
         // Header
@@ -109,7 +94,7 @@ export default function OTReportPage() {
         doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 33);
 
         // Stats Summary
-        (doc as any).autoTable({
+        autoTable(doc, {
             startY: 40,
             head: [['Total Cost', 'Total Hours', 'Pending Claims', 'Approval Rate']],
             body: [[
@@ -123,7 +108,7 @@ export default function OTReportPage() {
         });
 
         // Detailed Table
-        (doc as any).autoTable({
+        autoTable(doc, {
             startY: 70,
             head: [['Date', 'Staff', 'Time', 'Hours', 'Rate', 'Total', 'Status']],
             body: filteredClaims.map(c => [
@@ -221,125 +206,19 @@ export default function OTReportPage() {
                 </div>
 
                 {/* Charts Area */}
-                <div className="content-grid cols-2" style={{ marginBottom: '2rem' }}>
-                    {/* Bar Chart: Cost by Staff */}
-                    <div className="card">
-                        <div className="card-header">
-                            <h3 className="card-title">Kos OT Mengikut Staf</h3>
-                        </div>
-                        <div style={{ height: '300px', width: '100%' }}>
-                            <ResponsiveContainer>
-                                <BarChart data={staffCostData} layout="vertical" margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-                                    <CartesianGrid strokeDasharray="3 3" horizontal={false} opacity={0.3} />
-                                    <XAxis type="number" tickFormatter={(val) => `$${val}`} />
-                                    <YAxis dataKey="name" type="category" width={100} style={{ fontSize: '0.8rem' }} />
-                                    <Tooltip
-                                        formatter={(val: number) => [`$${val.toFixed(2)}`, 'Kos OT']}
-                                        contentStyle={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}
-                                    />
-                                    <Bar dataKey="amount" fill="var(--primary)" radius={[0, 4, 4, 0]} barSize={20} />
-                                </BarChart>
-                            </ResponsiveContainer>
-                        </div>
-                    </div>
-
-                    {/* Pie Chart: Status Distribution */}
-                    <div className="card">
-                        <div className="card-header">
-                            <h3 className="card-title">Status Tuntutan</h3>
-                        </div>
-                        <div style={{ height: '300px', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <ResponsiveContainer>
-                                <PieChart>
-                                    <Pie
-                                        data={statusData}
-                                        cx="50%"
-                                        cy="50%"
-                                        innerRadius={60}
-                                        outerRadius={80}
-                                        paddingAngle={5}
-                                        dataKey="value"
-                                    >
-                                        {statusData.map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={STATUS_COLORS[entry.name as keyof typeof STATUS_COLORS] || '#8884d8'} />
-                                        ))}
-                                    </Pie>
-                                    <Tooltip contentStyle={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border)', color: 'var(--text-primary)' }} />
-                                    <Legend />
-                                </PieChart>
-                            </ResponsiveContainer>
-                        </div>
-                    </div>
-                </div>
+                <OTCharts
+                    staffCostData={staffCostData}
+                    statusData={statusData}
+                />
 
                 {/* Detailed Table */}
-                <div className="card">
-                    <div className="card-header">
-                        <h3 className="card-title">Rekod Tuntutan Terperinci ({MONTHS[selectedMonth]} {selectedYear})</h3>
-                    </div>
-                    {filteredClaims.length === 0 ? (
-                        <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-secondary)' }}>
-                            <p>Tiada rekod tuntutan untuk bulan ini</p>
-                        </div>
-                    ) : (
-                        <div style={{ overflowX: 'auto' }}>
-                            <table className="table">
-                                <thead>
-                                    <tr>
-                                        <th>Tarikh</th>
-                                        <th>Staf</th>
-                                        <th>Masa</th>
-                                        <th>Pengiraan</th>
-                                        <th>Jumlah (BND)</th>
-                                        <th>Sebab</th>
-                                        <th>Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {filteredClaims.map(claim => (
-                                        <tr key={claim.id}>
-                                            <td style={{ fontSize: '0.9rem' }}>
-                                                {new Date(claim.date).toLocaleDateString('ms-MY')}
-                                            </td>
-                                            <td style={{ fontWeight: 500 }}>{claim.staffName}</td>
-                                            <td style={{ fontSize: '0.85rem' }}>
-                                                {claim.startTime} - {claim.endTime}
-                                                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                                                    ({claim.hoursWorked.toFixed(1)} jam)
-                                                </div>
-                                            </td>
-                                            <td style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                                                ${claim.hourlyRate.toFixed(2)} x {claim.multiplier}
-                                            </td>
-                                            <td style={{ fontWeight: 600, color: 'var(--primary)' }}>
-                                                ${claim.totalAmount.toFixed(2)}
-                                            </td>
-                                            <td style={{ fontSize: '0.85rem', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                                {claim.reason}
-                                            </td>
-                                            <td>
-                                                <span
-                                                    className="badge"
-                                                    style={{
-                                                        backgroundColor: `color-mix(in srgb, ${STATUS_COLORS[claim.status]} 15%, transparent)`,
-                                                        color: STATUS_COLORS[claim.status],
-                                                        border: `1px solid ${STATUS_COLORS[claim.status]}`
-                                                    }}
-                                                >
-                                                    {claim.status === 'pending' && 'Baru'}
-                                                    {claim.status === 'approved' && 'Diluluskan'}
-                                                    {claim.status === 'rejected' && 'Ditolak'}
-                                                    {claim.status === 'paid' && 'Dibayar'}
-                                                </span>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    )}
-                </div>
-            </div>
-        </MainLayout>
+                <OTClaimsTable
+                    claims={filteredClaims}
+                    monthName={MONTHS[selectedMonth]}
+                    year={selectedYear}
+                />
+
+            </div >
+        </MainLayout >
     );
 }

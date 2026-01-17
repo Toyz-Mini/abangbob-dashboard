@@ -1,16 +1,14 @@
 'use server';
 
-import { auth } from '@/lib/auth';
+import { getServerSession } from '@/lib/supabase/server-auth';
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
-import { headers } from 'next/headers';
+
 import { toSnakeCase, toCamelCase } from '@/lib/supabase/operations';
 
 // ============ ATTENDANCE ACTIONS ============
 
 export async function fetchAttendanceAction(startDate?: string, endDate?: string) {
-    const session = await auth.api.getSession({
-        headers: await headers()
-    });
+    const session = await getServerSession();
     if (!session) return [];
 
     const adminClient = getSupabaseAdmin();
@@ -37,9 +35,7 @@ export async function fetchAttendanceAction(startDate?: string, endDate?: string
 }
 
 export async function insertAttendanceAction(attendance: any) {
-    const session = await auth.api.getSession({
-        headers: await headers()
-    });
+    const session = await getServerSession();
     if (!session) throw new Error('Unauthorized');
 
     const adminClient = getSupabaseAdmin();
@@ -57,9 +53,7 @@ export async function insertAttendanceAction(attendance: any) {
 }
 
 export async function updateAttendanceAction(id: string, updates: any) {
-    const session = await auth.api.getSession({
-        headers: await headers()
-    });
+    const session = await getServerSession();
     if (!session) throw new Error('Unauthorized');
 
     const adminClient = getSupabaseAdmin();
@@ -80,9 +74,7 @@ export async function updateAttendanceAction(id: string, updates: any) {
 // ============ ALLOWED LOCATIONS ACTIONS ============
 
 export async function getAllowedLocationsAction() {
-    const session = await auth.api.getSession({
-        headers: await headers()
-    });
+    const session = await getServerSession();
     if (!session) return { success: false, error: 'Unauthorized', data: null };
 
     const adminClient = getSupabaseAdmin();
@@ -101,9 +93,7 @@ export async function getAllowedLocationsAction() {
 }
 
 export async function addAllowedLocationAction(location: any) {
-    const session = await auth.api.getSession({
-        headers: await headers()
-    });
+    const session = await getServerSession();
     if (!session) return { success: false, error: 'Unauthorized', data: null };
 
     const adminClient = getSupabaseAdmin();
@@ -125,9 +115,7 @@ export async function addAllowedLocationAction(location: any) {
 }
 
 export async function updateAllowedLocationAction(id: string, updates: any) {
-    const session = await auth.api.getSession({
-        headers: await headers()
-    });
+    const session = await getServerSession();
     if (!session) return { success: false, error: 'Unauthorized', data: null };
 
     const adminClient = getSupabaseAdmin();
@@ -150,9 +138,7 @@ export async function updateAllowedLocationAction(id: string, updates: any) {
 }
 
 export async function deleteAllowedLocationAction(id: string) {
-    const session = await auth.api.getSession({
-        headers: await headers()
-    });
+    const session = await getServerSession();
     if (!session) return { success: false, error: 'Unauthorized' };
 
     const adminClient = getSupabaseAdmin();

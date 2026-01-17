@@ -52,3 +52,4 @@ ORDER BY tablename;
 
 COMMENT ON PUBLICATION supabase_realtime IS 'Realtime subscriptions enabled for all AbangBob tables';
 
+

@@ -2,7 +2,7 @@ import React from 'react';
 
 interface GlassCardProps extends React.HTMLAttributes<HTMLDivElement> {
     children: React.ReactNode;
-    gradient?: 'none' | 'primary' | 'accent' | 'subtle';
+    gradient?: 'none' | 'primary' | 'accent' | 'subtle' | 'primary-rich' | 'accent-rich';
     hoverEffect?: boolean;
 }
 
@@ -20,9 +20,18 @@ export default function GlassCard({
             case 'primary': return 'linear-gradient(135deg, rgba(204, 21, 18, 0.05) 0%, rgba(255, 75, 31, 0.02) 100%)';
             case 'accent': return 'linear-gradient(135deg, rgba(249, 115, 34, 0.05) 0%, rgba(251, 191, 36, 0.02) 100%)';
             case 'subtle': return 'linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.01) 100%)';
+            case 'primary-rich': return 'var(--gradient-living)';
+            case 'accent-rich': return 'var(--gradient-accent)';
             default: return 'none';
         }
     };
+
+    const isRich = gradient.endsWith('-rich');
+    const background = isRich
+        ? getGradientOverlay()
+        : gradient !== 'none'
+            ? `var(--glass-bg), ${getGradientOverlay()}`
+            : 'var(--glass-bg)';
 
     return (
         <div
@@ -32,7 +41,9 @@ export default function GlassCard({
                 borderRadius: 'var(--radius-xl)',
                 position: 'relative',
                 overflow: 'hidden',
-                background: gradient !== 'none' ? `var(--glass-bg), ${getGradientOverlay()}` : 'var(--glass-bg)',
+                background,
+                color: isRich ? 'white' : undefined,
+                border: isRich ? 'none' : undefined,
                 ...style
             }}
             {...props}

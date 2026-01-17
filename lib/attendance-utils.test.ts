@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach, type Mock } from 'vitest';
 import { validateClockIn } from './attendance-utils';
 import * as timezoneUtils from './timezone-utils';
 import * as supabaseOperations from './supabase/operations';
@@ -57,14 +57,14 @@ describe('Attendance Utils', () => {
             ]);
 
             // Mock time to Monday Morning 08:50 (On time)
-            (timezoneUtils.getBruneiToday as unknown as vi.Mock).mockReturnValue('2024-01-01'); // Monday
-            (timezoneUtils.getBruneiDayOfWeek as unknown as vi.Mock).mockReturnValue(1); // Monday
+            (timezoneUtils.getBruneiToday as unknown as Mock).mockReturnValue('2024-01-01'); // Monday
+            (timezoneUtils.getBruneiDayOfWeek as unknown as Mock).mockReturnValue(1); // Monday
 
             const mockNow = new Date('2024-01-01T08:50:00');
-            (timezoneUtils.getBruneiNow as unknown as vi.Mock).mockReturnValue(mockNow);
+            (timezoneUtils.getBruneiNow as unknown as Mock).mockReturnValue(mockNow);
 
             // Mock getClockInStatus to return safe default (on time)
-            (timezoneUtils.getClockInStatus as unknown as vi.Mock).mockReturnValue({
+            (timezoneUtils.getClockInStatus as unknown as Mock).mockReturnValue({
                 allowed: true,
                 isEarly: false,
                 isLate: false,
@@ -84,8 +84,8 @@ describe('Attendance Utils', () => {
             // 09:16 (16 mins late, grace is 15)
             // 09:16 (16 mins late, grace is 15)
             const mockNow = new Date('2024-01-01T09:16:00');
-            (timezoneUtils.getBruneiNow as unknown as vi.Mock).mockReturnValue(mockNow);
-            (timezoneUtils.getClockInStatus as unknown as vi.Mock).mockReturnValue({
+            (timezoneUtils.getBruneiNow as unknown as Mock).mockReturnValue(mockNow);
+            (timezoneUtils.getClockInStatus as unknown as Mock).mockReturnValue({
                 allowed: true,
                 isEarly: false,
                 isLate: true,
@@ -104,8 +104,8 @@ describe('Attendance Utils', () => {
             // 08:29 (31 mins early, limit is 30)
             // 08:29 (31 mins early, limit is 30)
             const mockNow = new Date('2024-01-01T08:29:00');
-            (timezoneUtils.getBruneiNow as unknown as vi.Mock).mockReturnValue(mockNow);
-            (timezoneUtils.getClockInStatus as unknown as vi.Mock).mockReturnValue({
+            (timezoneUtils.getBruneiNow as unknown as Mock).mockReturnValue(mockNow);
+            (timezoneUtils.getClockInStatus as unknown as Mock).mockReturnValue({
                 allowed: false,
                 isEarly: true,
                 isLate: false,

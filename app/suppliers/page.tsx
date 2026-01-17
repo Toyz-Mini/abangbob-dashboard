@@ -26,6 +26,7 @@ import {
   X,
   Printer,
 } from 'lucide-react';
+import { useToast } from '@/lib/contexts/ToastContext';
 
 type ModalType = 'add-supplier' | 'edit-supplier' | 'delete-supplier' | 'create-po' | 'view-po' | null;
 type ViewMode = 'suppliers' | 'orders' | 'reorder';
@@ -54,6 +55,7 @@ export default function SuppliersPage() {
   } = useSuppliers();
 
   const [isMounted, setIsMounted] = useState(false);
+  const { showToast } = useToast();
 
   useEffect(() => {
     setIsMounted(true);
@@ -299,7 +301,7 @@ Please confirm. Thank you!`;
   const handleEmailPO = (po: PurchaseOrder) => {
     const supplier = (suppliers || []).find(s => s.id === po.supplierId);
     if (!supplier?.email) {
-      alert('Tiada email untuk supplier ini');
+      showToast('Tiada email untuk supplier ini', 'warning');
       return;
     }
 
@@ -321,7 +323,7 @@ Thank you.`;
 
   const handleAddSupplier = async () => {
     if (!supplierForm.name.trim() || !supplierForm.phone.trim()) {
-      alert('Sila masukkan nama dan nombor telefon');
+      showToast('Sila masukkan nama dan nombor telefon', 'warning');
       return;
     }
 
@@ -435,7 +437,7 @@ Thank you.`;
 
   const handleAutoFill = () => {
     if (!poForm.supplierId) {
-      alert('Sila pilih supplier dahulu');
+      showToast('Sila pilih supplier dahulu', 'warning');
       return;
     }
 
@@ -458,7 +460,7 @@ Thank you.`;
       }));
 
     if (itemsToOrder.length === 0) {
-      alert('Tiada item dari supplier ini yang perlu di-restock.');
+      showToast('Tiada item dari supplier ini yang perlu di-restock.', 'warning');
       return;
     }
 
@@ -470,7 +472,7 @@ Thank you.`;
 
   const handleCreatePO = async () => {
     if (!poForm.supplierId || poForm.items.length === 0) {
-      alert('Sila pilih supplier dan tambah sekurang-kurangnya satu item');
+      showToast('Sila pilih supplier dan tambah sekurang-kurangnya satu item', 'warning');
       return;
     }
 
@@ -1492,6 +1494,7 @@ Thank you.`;
     </MainLayout>
   );
 }
+
 
 
 

@@ -4,7 +4,6 @@ import { useState, useMemo, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import MainLayout from '@/components/MainLayout';
 import { useInventory } from '@/lib/store';
-import { useInventoryQuery } from '@/lib/hooks/queries/useInventoryQuery';
 import {
   useAddInventoryItemMutation,
   useUpdateInventoryItemMutation,
@@ -15,7 +14,7 @@ import { useAuth } from '@/lib/contexts/AuthContext';
 import { useTranslation } from '@/lib/contexts/LanguageContext';
 import { StockItem } from '@/lib/types';
 import Modal from '@/components/Modal';
-import { AlertTriangle, Plus, Edit2, Trash2, ArrowUp, ArrowDown, History, Package, LayoutGrid, List as ListIcon, Search, Filter, ClipboardList, Upload, TrendingUp, AlertCircle } from 'lucide-react';
+import { AlertTriangle, Plus, Edit2, Trash2, ArrowUp, ArrowDown, History, Package, LayoutGrid, List as ListIcon, Search, Filter, ClipboardList, Upload, TrendingUp, AlertCircle, BarChart3 } from 'lucide-react';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import LivePageHeader from '@/components/LivePageHeader';
 import GlassCard from '@/components/GlassCard';
@@ -28,32 +27,64 @@ const StockImporter = dynamic(() => import('@/components/StockImporter'), { ssr:
 const WasteModal = dynamic(() => import('@/components/inventory/WasteModal'), { ssr: false });
 const WasteHistoryView = dynamic(() => import('@/components/inventory/WasteHistoryView'), { ssr: false });
 const SmartReorderView = dynamic(() => import('@/components/inventory/SmartReorderView'), { ssr: false });
+const StockDashboard = dynamic(() => import('@/components/inventory/StockDashboard'), { ssr: false });
 
 type ModalType = 'add' | 'edit' | 'adjust' | 'delete' | 'history' | 'waste' | null;
 
 const STOCK_CATEGORIES = ['Protein', 'Staple', 'Condiment', 'Bread', 'Dairy', 'Beverage', 'Packaging', 'Other'];
 const STOCK_UNITS = ['kg', 'pcs', 'litre', 'gram', 'slices', 'boxes', 'packets'];
 const ADJUSTMENT_REASONS = [
-  'Pembelian baru',
-  'Penambahan stok',
-  'Penggunaan harian',
-  'Rosak/Expired',
-  'Pembaziran',
-  'Stock take adjustment',
-  'Lain-lain'
+  'new_purchase',
+  'restock',
+  'daily_use',
+  'damaged',
+  'waste',
+  'stock_take',
+  'other'
 ];
 
+const StockLevelRing = ({ percentage, color }: { percentage: number, color: string }) => {
+  const radius = 18;
+  const circumference = 2 * Math.PI * radius;
+  const offset = circumference - (Math.min(percentage, 100) / 100) * circumference;
+
+  // Map tailwind/css variable colors to hex for SVG
+  const getColor = (c: string) => {
+    if (c.includes('success')) return '#10b981';
+    if (c.includes('warning')) return '#f59e0b';
+    if (c.includes('danger')) return '#ef4444';
+    return '#3b82f6';
+  };
+
+  return (
+    <div style={{ position: 'relative', width: '44px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <svg width="44" height="44" style={{ transform: 'rotate(-90deg)' }}>
+        <circle cx="22" cy="22" r={radius} fill="none" stroke="rgba(0,0,0,0.1)" strokeWidth="4" />
+        <circle
+          cx="22"
+          cy="22"
+          r={radius}
+          fill="none"
+          stroke={getColor(color)}
+          strokeWidth="4"
+          strokeDasharray={circumference}
+          strokeDashoffset={offset}
+          strokeLinecap="round"
+        />
+      </svg>
+    </div>
+  );
+};
+
 export default function InventoryPage() {
-  const { inventoryLogs, adjustStock, refreshInventory, weatherForecast } = useInventory(); // Keep logs and adjustStock legacy for now if complex
-  const { data: inventoryData, isLoading: inventoryLoading, refetch: refetchInventory, isError, error } = useInventoryQuery();
+  const { inventory, inventoryLogs, adjustStock, refreshInventory, weatherForecast, isSecondaryInitialized } = useInventory();
 
   // Mutations
   const addInventoryItemMutation = useAddInventoryItemMutation();
   const updateInventoryItemMutation = useUpdateInventoryItemMutation();
   const deleteInventoryItemMutation = useDeleteInventoryItemMutation();
 
-  const inventory = useMemo(() => inventoryData || [], [inventoryData]);
-  const isInitialized = !inventoryLoading;
+  const isInitialized = isSecondaryInitialized;
 
   const { t, language } = useTranslation();
   const { showToast } = useToast();
@@ -61,8 +92,8 @@ export default function InventoryPage() {
   // Realtime subscription for inventory
   const handleInventoryChange = useCallback(() => {
     console.log('[Realtime] Inventory change detected, refreshing...');
-    refetchInventory();
-  }, [refetchInventory]);
+    refreshInventory();
+  }, [refreshInventory]);
 
   useInventoryRealtime(handleInventoryChange);
 
@@ -79,7 +110,7 @@ export default function InventoryPage() {
   const [selectedItem, setSelectedItem] = useState<StockItem | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('grid');
-  const [activeTab, setActiveTab] = useState<'inventory' | 'waste' | 'smart-reorder'>('inventory');
+  const [activeTab, setActiveTab] = useState<'inventory' | 'dashboard' | 'waste' | 'smart-reorder'>('inventory');
 
   // Security check: If staff somehow lands on smart-reorder, switch back to inventory
   if (!canDeleteItems && activeTab === 'smart-reorder') {
@@ -198,7 +229,7 @@ export default function InventoryPage() {
 
   const handleAddStock = async () => {
     if (!formData.name.trim()) {
-      alert('Sila masukkan nama item');
+      alert(t('inventory.alert.enterName'));
       return;
     }
 
@@ -221,7 +252,7 @@ export default function InventoryPage() {
 
   const handleEditStock = async () => {
     if (!selectedItem || !formData.name.trim()) {
-      alert('Sila masukkan nama item');
+      alert(t('inventory.alert.enterName'));
       return;
     }
 
@@ -247,16 +278,27 @@ export default function InventoryPage() {
 
   const handleAdjustStock = async () => {
     if (!selectedItem || adjustmentData.quantity <= 0) {
-      alert('Sila masukkan kuantiti yang sah');
+      alert(t('inventory.alert.enterValidQty'));
       return;
     }
 
     setIsProcessing(true);
     await new Promise(resolve => setTimeout(resolve, 500));
 
-    const reason = adjustmentData.reason === 'Lain-lain'
+    const reason = adjustmentData.reason === 'other'
       ? adjustmentData.customReason
-      : adjustmentData.reason;
+      : t(`inventory.reasons.${adjustmentData.reason}`); // Log the translated reason or key? Ideally key but for history readability usage text. Actually let's use key if we handle translation in history. Or use T here to save "New Purchase" (English) or "Pembelian Baru" (Malay) permanently? 
+    // To support switching languages later, we should save KEY internally.
+    // BUT the history view expects a string reason.
+    // If I save "new_purchase", the history view needs to translate it.
+    // Let's safe the KEY "new_purchase" to DB if possible.
+    // However, existing data is "Pembelian baru".
+    // So history view must handle both.
+    // logic: adjustStock(..., adjustmentData.reason === 'other' ? ... : adjustmentData.reason) -- save KEY.
+
+    // WAIT! If I save KEY, then line 261 should be:
+    // adjustStock(..., adjustmentData.type, adjustmentData.reason === 'other' ? adjustmentData.customReason : adjustmentData.reason);
+    // Code below:
 
     adjustStock(selectedItem.id, adjustmentData.quantity, adjustmentData.type, reason);
 
@@ -293,51 +335,19 @@ export default function InventoryPage() {
       <MainLayout>
         <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', minHeight: '50vh', gap: '1rem', color: 'var(--danger)' }}>
           <AlertCircle size={48} />
-          <h2 className="text-xl font-bold">Gagal Memuatkan Inventori</h2>
+          <h2 className="text-xl font-bold">{t('inventory.alert.loadError')}</h2>
           <p className="text-gray-500 max-w-md text-center">
             {error instanceof Error ? error.message : 'Unknown error occurred'}
           </p>
           <button onClick={() => refetchInventory()} className="btn btn-primary">
-            Cuba Lagi
+            {t('pos.modal.networkError.retry')}
           </button>
         </div>
       </MainLayout>
     );
   }
 
-  // Helper for Stock Level Ring
-  const StockLevelRing = ({ percentage, color }: { percentage: number, color: string }) => {
-    const radius = 18;
-    const circumference = 2 * Math.PI * radius;
-    const offset = circumference - (Math.min(percentage, 100) / 100) * circumference;
 
-    // Map tailwind/css variable colors to hex for SVG
-    const getColor = (c: string) => {
-      if (c.includes('success')) return '#10b981';
-      if (c.includes('warning')) return '#f59e0b';
-      if (c.includes('danger')) return '#ef4444';
-      return '#3b82f6';
-    };
-
-    return (
-      <div style={{ position: 'relative', width: '44px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <svg width="44" height="44" style={{ transform: 'rotate(-90deg)' }}>
-          <circle cx="22" cy="22" r={radius} fill="none" stroke="rgba(0,0,0,0.1)" strokeWidth="4" />
-          <circle
-            cx="22"
-            cy="22"
-            r={radius}
-            fill="none"
-            stroke={getColor(color)}
-            strokeWidth="4"
-            strokeDasharray={circumference}
-            strokeDashoffset={offset}
-            strokeLinecap="round"
-          />
-        </svg>
-      </div>
-    );
-  };
 
   return (
     <MainLayout>
@@ -353,14 +363,14 @@ export default function InventoryPage() {
                   variant="secondary"
                   icon={Upload}
                 >
-                  Import Stock
+                  {t('inventory.buttons.importStock')}
                 </PremiumButton>
                 <PremiumButton
                   onClick={openAddModal}
                   variant="primary"
                   icon={Plus}
                 >
-                  {t('inventory.addItem')}
+                  {t('inventory.buttons.addItem')}
                 </PremiumButton>
               </div>
             )
@@ -375,16 +385,20 @@ export default function InventoryPage() {
                 <div className="text-4xl">{weatherForecast.code <= 3 ? '☀️' : weatherForecast.code >= 60 ? '🌧️' : '☁️'}</div>
                 <div>
                   <h3 className="text-lg font-bold flex items-center gap-2">
-                    Ramalan Cuaca Esok
+                    {t('inventory.weather.forecastTitle')}
                     <span className="text-xs font-normal opacity-70 border border-gray-400 rounded px-1.5">{weatherForecast.date}</span>
                   </h3>
                   <div className="text-sm text-secondary">{weatherForecast.description} • Chance: {weatherForecast.precipitationProbability}%</div>
                 </div>
               </div>
               <div className="text-right">
-                <div className="text-sm text-secondary">Inventory Logic</div>
+                <div className="text-sm text-secondary">{t('inventory.weather.logic')}</div>
                 <div className={`text-lg font-bold ${weatherForecast.impactFactor < 1 ? 'text-red-500' : weatherForecast.impactFactor > 1 ? 'text-green-500' : 'text-gray-700'}`}>
-                  {weatherForecast.impactFactor === 1 ? 'Normal Order' : weatherForecast.impactFactor < 1 ? `Kurangkan ${(1 - (weatherForecast.impactFactor || 1)) * 100}%` : `Lebihkan ${((weatherForecast.impactFactor || 1) - 1) * 100}%`}
+                  {weatherForecast.impactFactor === 1
+                    ? t('inventory.weather.impact.normal')
+                    : weatherForecast.impactFactor < 1
+                      ? t('inventory.weather.impact.reduce', { percent: Math.round((1 - (weatherForecast.impactFactor || 1)) * 100) })
+                      : t('inventory.weather.impact.increase', { percent: Math.round(((weatherForecast.impactFactor || 1) - 1) * 100) })}
                 </div>
               </div>
             </div>
@@ -402,7 +416,20 @@ export default function InventoryPage() {
               : 'text-gray-500 hover:text-gray-700'
               }`}
           >
-            Inventory Stock
+            {t('inventory.tabs.stock')}
+          </button>
+          <button
+            onClick={() => setActiveTab('dashboard')}
+            className={`pb-2 px-4 font-medium transition-colors relative ${activeTab === 'dashboard'
+              ? 'text-green-600 border-b-2 border-green-600'
+              : 'text-gray-500 hover:text-green-600'
+              }`}
+          >
+            <div className="flex items-center gap-2">
+              <BarChart3 size={16} />
+              Dashboard
+              <span className="bg-green-100 text-green-700 text-[10px] px-1.5 py-0.5 rounded-full font-bold ml-1">NEW</span>
+            </div>
           </button>
           <button
             onClick={() => setActiveTab('waste')}
@@ -413,7 +440,7 @@ export default function InventoryPage() {
           >
             <div className="flex items-center gap-2">
               <AlertTriangle size={16} />
-              Waste Logs
+              {t('inventory.tabs.waste')}
             </div>
           </button>
           {canDeleteItems && (
@@ -426,15 +453,17 @@ export default function InventoryPage() {
             >
               <div className="flex items-center gap-2">
                 <TrendingUp size={16} />
-                Smart Reorder
-                <span className="bg-blue-100 text-blue-700 text-[10px] px-1.5 py-0.5 rounded-full font-bold ml-1">New</span>
+                {t('inventory.tabs.smartReorder')}
+                <span className="bg-blue-100 text-blue-700 text-[10px] px-1.5 py-0.5 rounded-full font-bold ml-1">{t('inventory.tabs.new')}</span>
               </div>
             </button>
           )}
         </div>
 
         {
-          activeTab === 'waste' ? (
+          activeTab === 'dashboard' ? (
+            <StockDashboard onRefresh={() => refetchInventory()} />
+          ) : activeTab === 'waste' ? (
             <WasteHistoryView />
           ) : activeTab === 'smart-reorder' ? (
             <SmartReorderView />
@@ -464,7 +493,7 @@ export default function InventoryPage() {
                     >
                       <option value="All">{t('inventory.allCategories')}</option>
                       {STOCK_CATEGORIES.map(cat => (
-                        <option key={cat} value={cat}>{cat}</option>
+                        <option key={cat} value={cat}>{t(`inventory.categories.${cat}`)}</option>
                       ))}
                     </select>
                   </div>
@@ -518,10 +547,11 @@ export default function InventoryPage() {
                 <div className="content-grid cols-3 animate-slide-up-stagger">
                   {filteredStock.map((item) => {
                     const status = getStockStatus(item);
-                    const percentage = (item.currentQuantity / item.minQuantity) * 100; // >100 is good
-                    // Invert logic for visual ring: 100% means full/good. 
-                    // Actually for stock: if qty > min, it's >100%. We just want to show health.
-                    // Let's cap at 100 for the ring visual if it's full.
+                    // Handle division by zero: if minQuantity is 0, consider it 100% healthy
+                    const percentage = item.minQuantity > 0
+                      ? (item.currentQuantity / item.minQuantity) * 100
+                      : (item.currentQuantity > 0 ? 100 : 0);
+                    // Cap at 100 for the ring visual
                     const ringPercentage = Math.min(percentage, 100);
 
                     return (
@@ -594,15 +624,15 @@ export default function InventoryPage() {
                     <table className="table">
                       <thead>
                         <tr>
-                          <th>Item</th>
-                          <th className="hidden-mobile">Kategori</th>
-                          <th>Kuantiti Semasa</th>
-                          <th className="hidden-mobile">Minimum</th>
-                          <th className="hidden-mobile">Unit</th>
-                          <th className="hidden-mobile">Kos</th>
-                          <th className="hidden-mobile">Supplier</th>
-                          <th>Status</th>
-                          <th>Tindakan</th>
+                          <th>{t('inventory.table.item')}</th>
+                          <th className="hidden-mobile">{t('inventory.table.category')}</th>
+                          <th>{t('inventory.table.quantity')}</th>
+                          <th className="hidden-mobile">{t('inventory.table.min')}</th>
+                          <th className="hidden-mobile">{t('inventory.table.unit')}</th>
+                          <th className="hidden-mobile">{t('inventory.table.cost')}</th>
+                          <th className="hidden-mobile">{t('inventory.table.supplier')}</th>
+                          <th>{t('inventory.table.status')}</th>
+                          <th>{t('inventory.table.action')}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -687,18 +717,18 @@ export default function InventoryPage() {
         <Modal
           isOpen={modalType === 'add' || modalType === 'edit'}
           onClose={closeModal}
-          title={modalType === 'add' ? 'Tambah Item Stok Baru' : 'Edit Item Stok'}
+          title={modalType === 'add' ? t('inventory.modal.addTitle') : t('inventory.modal.editTitle')}
           maxWidth="500px"
         >
           <div className="form-group">
-            <label className="form-label">Nama Item *</label>
+            <label className="form-label">{t('inventory.modal.form.name')}</label>
             <div className="relative">
               <input
                 type="text"
                 className={`form-input ${duplicateItem ? 'border-red-500 focus:border-red-500 focus:ring-red-200 pr-10' : ''}`}
                 value={formData.name}
                 onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                placeholder="Contoh: Ayam, Nasi, dll"
+                placeholder={t('inventory.modal.form.namePlaceholder')}
               />
               {duplicateItem && modalType === 'add' && (
                 <div className="absolute right-3 top-1/2 -translate-y-1/2">
@@ -715,7 +745,7 @@ export default function InventoryPage() {
                 <div className="flex items-center gap-2 text-sm">
                   <span className="text-red-500 text-base">⚠️</span>
                   <span className="text-red-700">
-                    <strong>&quot;{duplicateItem.name}&quot;</strong> sudah wujud
+                    <strong>&quot;{duplicateItem.name}&quot;</strong> {t('inventory.alert.duplicate.found', { name: duplicateItem.name }).replace(/"[^"]*"\s*/, '')}
                     <span className="text-red-500 ml-1">• {duplicateItem.currentQuantity} {duplicateItem.unit}</span>
                   </span>
                 </div>
@@ -727,7 +757,7 @@ export default function InventoryPage() {
                     openAdjustModal(duplicateItem);
                   }}
                 >
-                  Laras stok →
+                  {t('inventory.alert.duplicate.resolve')}
                 </button>
               </div>
             )}
@@ -735,27 +765,27 @@ export default function InventoryPage() {
 
           <div className="grid grid-cols-2" style={{ gap: '1rem' }}>
             <div className="form-group">
-              <label className="form-label">Kategori</label>
+              <label className="form-label">{t('inventory.modal.form.category')}</label>
               <select
                 className="form-select"
                 value={formData.category}
                 onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
               >
                 {STOCK_CATEGORIES.map(cat => (
-                  <option key={cat} value={cat}>{cat}</option>
+                  <option key={cat} value={cat}>{t(`inventory.categories.${cat}`)}</option>
                 ))}
               </select>
             </div>
 
             <div className="form-group">
-              <label className="form-label">Unit</label>
+              <label className="form-label">{t('inventory.modal.form.unit')}</label>
               <select
                 className="form-select"
                 value={formData.unit}
                 onChange={(e) => setFormData(prev => ({ ...prev, unit: e.target.value }))}
               >
                 {STOCK_UNITS.map(unit => (
-                  <option key={unit} value={unit}>{unit}</option>
+                  <option key={unit} value={unit}>{t(`inventory.units.${unit}`) || unit}</option>
                 ))}
               </select>
             </div>
@@ -763,7 +793,7 @@ export default function InventoryPage() {
 
           <div className="grid grid-cols-2" style={{ gap: '1rem' }}>
             <div className="form-group">
-              <label className="form-label">Kuantiti Semasa</label>
+              <label className="form-label">{t('inventory.modal.form.currentQty')}</label>
               <input
                 type="number"
                 className="form-input"
@@ -774,7 +804,7 @@ export default function InventoryPage() {
             </div>
 
             <div className="form-group">
-              <label className="form-label">Kuantiti Minimum</label>
+              <label className="form-label">{t('inventory.modal.form.minQty')}</label>
               <input
                 type="number"
                 className="form-input"
@@ -787,7 +817,7 @@ export default function InventoryPage() {
 
           <div className="grid grid-cols-2 gap-4">
             <div className="form-group">
-              <label className="form-label">Kos per Unit</label>
+              <label className="form-label">{t('inventory.table.cost')}</label>
               <div className="relative">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm font-medium">BND</span>
                 <input
@@ -804,13 +834,13 @@ export default function InventoryPage() {
             </div>
 
             <div className="form-group">
-              <label className="form-label">Supplier</label>
+              <label className="form-label">{t('inventory.modal.form.supplier')}</label>
               <input
                 type="text"
                 className="form-input"
                 value={formData.supplier}
                 onChange={(e) => setFormData(prev => ({ ...prev, supplier: e.target.value }))}
-                placeholder="Nama supplier"
+                placeholder={t('inventory.modal.form.supplierPlaceholder')}
               />
             </div>
           </div>
@@ -825,10 +855,10 @@ export default function InventoryPage() {
               </div>
               <div>
                 <span className={`font-medium block ${formData.countDaily ? 'text-purple-900' : 'text-gray-700'}`}>
-                  Audit Setiap Hari (Daily Count)
+                  {t('inventory.modal.dailyCount.label')}
                 </span>
                 <p className={`text-xs mt-0.5 ${formData.countDaily ? 'text-purple-700' : 'text-gray-500'}`}>
-                  Wajib dikira semasa Opening/Closing kedai
+                  {t('inventory.modal.dailyCount.desc')}
                 </p>
               </div>
             </div>
@@ -840,7 +870,7 @@ export default function InventoryPage() {
               onClick={closeModal}
               disabled={isProcessing}
             >
-              Batal
+              {t('inventory.buttons.cancel')}
             </button>
             <button
               className="btn btn-primary"
@@ -854,7 +884,7 @@ export default function InventoryPage() {
                   Memproses...
                 </>
               ) : (
-                modalType === 'add' ? 'Tambah Item' : 'Simpan Perubahan'
+                modalType === 'add' ? t('inventory.buttons.addStock') : t('inventory.buttons.save')
               )}
             </button>
           </div>
@@ -864,7 +894,7 @@ export default function InventoryPage() {
         <Modal
           isOpen={modalType === 'adjust'}
           onClose={closeModal}
-          title="Adjust Stok"
+          title={t('inventory.modal.adjustTitle')}
           subtitle={selectedItem?.name}
           maxWidth="450px"
         >
@@ -875,14 +905,14 @@ export default function InventoryPage() {
             marginBottom: '1.5rem',
             textAlign: 'center'
           }}>
-            <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>Kuantiti Semasa</div>
+            <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>{t('inventory.modal.form.currentQty')}</div>
             <div style={{ fontSize: '2rem', fontWeight: 700 }}>
               {selectedItem?.currentQuantity} {selectedItem?.unit}
             </div>
           </div>
 
           <div className="form-group">
-            <label className="form-label">Jenis Pelarasan</label>
+            <label className="form-label">{t('inventory.modal.adjust.type')}</label>
             <div className="flex flex-col sm:flex-row gap-2">
               <button
                 onClick={() => setAdjustmentData(prev => ({ ...prev, type: 'in' }))}
@@ -890,7 +920,7 @@ export default function InventoryPage() {
                 style={{ flex: 1 }}
               >
                 <ArrowUp size={18} />
-                Stok Masuk
+                {t('inventory.modal.adjust.stockIn')}
               </button>
               {(role === 'Admin' || role === 'Manager') && (
                 <button
@@ -899,53 +929,53 @@ export default function InventoryPage() {
                   style={{ flex: 1 }}
                 >
                   <ArrowDown size={18} />
-                  Stok Keluar
+                  {t('inventory.modal.adjust.stockOut')}
                 </button>
               )}
             </div>
           </div>
 
           <div className="form-group">
-            <label className="form-label">Kuantiti</label>
+            <label className="form-label">{t('inventory.modal.adjust.quantity')}</label>
             <input
               type="number"
               className="form-input"
               value={adjustmentData.quantity}
               onChange={(e) => setAdjustmentData(prev => ({ ...prev, quantity: Number(e.target.value) }))}
               min="0"
-              placeholder="Masukkan kuantiti"
+              placeholder={t('inventory.modal.adjust.quantityPlaceholder')}
             />
           </div>
 
           <div className="form-group">
-            <label className="form-label">Sebab</label>
+            <label className="form-label">{t('inventory.modal.adjust.reason')}</label>
             <select
               className="form-select"
               value={adjustmentData.reason}
               onChange={(e) => setAdjustmentData(prev => ({ ...prev, reason: e.target.value }))}
             >
               {ADJUSTMENT_REASONS.map(reason => (
-                <option key={reason} value={reason}>{reason}</option>
+                <option key={reason} value={reason}>{t(`inventory.reasons.${reason}`)}</option>
               ))}
             </select>
           </div>
 
-          {adjustmentData.reason === 'Lain-lain' && (
+          {adjustmentData.reason === 'other' && (
             <div className="form-group">
-              <label className="form-label">Sebab Lain</label>
+              <label className="form-label">{t('inventory.modal.adjust.otherReason')}</label>
               <input
                 type="text"
                 className="form-input"
                 value={adjustmentData.customReason}
                 onChange={(e) => setAdjustmentData(prev => ({ ...prev, customReason: e.target.value }))}
-                placeholder="Nyatakan sebab"
+                placeholder={t('inventory.modal.adjust.otherReason')}
               />
             </div>
           )}
 
           {adjustmentData.quantity > 0 && (
             <div className="alert alert-success" style={{ marginTop: '1rem' }}>
-              Kuantiti baru: <strong>
+              {t('inventory.modal.adjust.newQty')} <strong>
                 {adjustmentData.type === 'in'
                   ? (selectedItem?.currentQuantity || 0) + adjustmentData.quantity
                   : Math.max(0, (selectedItem?.currentQuantity || 0) - adjustmentData.quantity)
@@ -961,7 +991,7 @@ export default function InventoryPage() {
               disabled={isProcessing}
               style={{ flex: 1 }}
             >
-              Batal
+              {t('inventory.buttons.cancel')}
             </button>
             <button
               className={`btn ${adjustmentData.type === 'in' ? 'btn-primary' : 'btn-danger'} order-1 sm:order-2`}
@@ -972,10 +1002,10 @@ export default function InventoryPage() {
               {isProcessing ? (
                 <>
                   <LoadingSpinner size="sm" />
-                  Memproses...
+                  {t('inventory.buttons.processing')}
                 </>
               ) : (
-                adjustmentData.type === 'in' ? 'Tambah Stok' : 'Kurangkan Stok'
+                adjustmentData.type === 'in' ? t('inventory.modal.adjust.stockIn') : t('inventory.modal.adjust.stockOut')
               )}
             </button>
           </div>
@@ -985,7 +1015,7 @@ export default function InventoryPage() {
         <Modal
           isOpen={modalType === 'delete'}
           onClose={closeModal}
-          title="Padam Item Stok"
+          title={t('inventory.modal.deleteTitle')}
           maxWidth="400px"
         >
           <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
@@ -1002,10 +1032,11 @@ export default function InventoryPage() {
               <Trash2 size={28} color="var(--danger)" />
             </div>
             <p style={{ color: 'var(--text-secondary)' }}>
-              Anda pasti mahu padam <strong>{selectedItem?.name}</strong>?
+              {/* Note: React HTML replacement needed for <strong> */}
+              <span dangerouslySetInnerHTML={{ __html: t('inventory.modal.delete.confirm', { name: selectedItem?.name || '' }) }} />
             </p>
             <p style={{ fontSize: '0.875rem', color: 'var(--text-light)', marginTop: '0.5rem' }}>
-              Tindakan ini tidak boleh dibatalkan.
+              {t('inventory.modal.delete.warning')}
             </p>
           </div>
 
@@ -1016,7 +1047,7 @@ export default function InventoryPage() {
               disabled={isProcessing}
               style={{ flex: 1 }}
             >
-              Batal
+              {t('inventory.buttons.cancel')}
             </button>
             <button
               className="btn btn-danger"
@@ -1027,10 +1058,10 @@ export default function InventoryPage() {
               {isProcessing ? (
                 <>
                   <LoadingSpinner size="sm" />
-                  Memproses...
+                  {t('inventory.buttons.processing')}
                 </>
               ) : (
-                'Padam'
+                t('inventory.buttons.delete')
               )}
             </button>
           </div>
@@ -1046,7 +1077,7 @@ export default function InventoryPage() {
         <Modal
           isOpen={modalType === 'history'}
           onClose={closeModal}
-          title="Sejarah Stok"
+          title={t('inventory.modal.historyTitle')}
           subtitle={selectedItem?.name}
           maxWidth="600px"
         >
@@ -1062,7 +1093,7 @@ export default function InventoryPage() {
                 alignItems: 'center'
               }}>
                 <div>
-                  <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>Kuantiti Semasa</div>
+                  <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>{t('inventory.modal.form.currentQty')}</div>
                   <div style={{ fontSize: '1.5rem', fontWeight: 700 }}>
                     {selectedItem.currentQuantity} {selectedItem.unit}
                   </div>
@@ -1077,10 +1108,10 @@ export default function InventoryPage() {
                   <table className="table">
                     <thead>
                       <tr>
-                        <th>Tarikh</th>
-                        <th>Jenis</th>
-                        <th>Kuantiti</th>
-                        <th>Sebab</th>
+                        <th>{t('inventory.table.date')}</th>
+                        <th>{t('inventory.table.type')}</th>
+                        <th>{t('inventory.table.quantity')}</th>
+                        <th>{t('inventory.table.reason')}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1095,7 +1126,7 @@ export default function InventoryPage() {
                           </td>
                           <td>
                             <span className={`badge ${log.type === 'in' || log.type === 'initial' ? 'badge-success' : 'badge-danger'}`}>
-                              {log.type === 'in' ? 'Masuk' : log.type === 'out' ? 'Keluar' : log.type === 'initial' ? 'Baru' : 'Adjust'}
+                              {log.type === 'in' ? t('inventory.modal.adjust.stockIn') : log.type === 'out' ? t('inventory.modal.adjust.stockOut') : log.type === 'initial' ? t('inventory.tabs.new') : t('inventory.buttons.adjust')}
                             </span>
                           </td>
                           <td>
@@ -1116,14 +1147,14 @@ export default function InventoryPage() {
                   </table>
                 ) : (
                   <p style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '2rem' }}>
-                    Tiada sejarah perubahan untuk item ini
+                    {t('inventory.modal.history.empty')}
                   </p>
                 )}
               </div>
 
               <div style={{ marginTop: '1.5rem' }}>
                 <button className="btn btn-outline" onClick={closeModal} style={{ width: '100%' }}>
-                  Tutup
+                  {t('inventory.buttons.close')}
                 </button>
               </div>
             </>
@@ -1135,7 +1166,7 @@ export default function InventoryPage() {
               onClose={() => setShowImportModal(false)}
               onSuccess={() => {
                 setShowImportModal(false);
-                showToast('Import berjaya!', 'success');
+                showToast(t('inventory.alert.importSuccess'), 'success');
               }}
             />
           )

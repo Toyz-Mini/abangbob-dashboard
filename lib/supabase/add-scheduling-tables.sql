@@ -66,3 +66,4 @@ CREATE TRIGGER update_schedule_entries_updated_at BEFORE UPDATE ON public.schedu
 COMMENT ON TABLE public.shifts IS 'Shift definitions (morning, evening, night, etc)';
 COMMENT ON TABLE public.schedule_entries IS 'Staff roster and schedule assignments';
 
+

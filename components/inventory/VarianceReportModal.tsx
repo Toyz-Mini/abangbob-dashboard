@@ -4,6 +4,7 @@ import Modal from '../../components/Modal';
 import { useInventory } from '../../lib/store';
 import { formatCurrency } from '../../lib/utils';
 import { AlertTriangle, Calendar, TrendingDown, TrendingUp } from 'lucide-react';
+import { useTranslation } from '../../lib/contexts/LanguageContext';
 
 interface VarianceReportModalProps {
     isOpen: boolean;
@@ -12,11 +13,13 @@ interface VarianceReportModalProps {
 
 export default function VarianceReportModal({ isOpen, onClose }: VarianceReportModalProps) {
     const { inventoryLogs, inventory } = useInventory();
+    const { t } = useTranslation();
 
     const varianceLogs = useMemo(() => {
         // Filter for logs that represent a discrepancy correction
         // - type: 'adjust' (Manual adjustments)
         // - reason: "Shift Opening Count" or "Shift Closing Count"
+        // Also assuming translation of reasons might be needed later, but log.reason is stored string.
         return inventoryLogs.filter(log =>
             log.type === 'adjustment' ||
             log.reason.toLowerCase().includes('shift')
@@ -56,8 +59,7 @@ export default function VarianceReportModal({ isOpen, onClose }: VarianceReportM
         <Modal
             isOpen={isOpen}
             onClose={onClose}
-            title="Stock Variance Report"
-            subtitle="Laporan Ketidaksamaan Stok (Audit)"
+            title={t('inventory.variance.title')}
             maxWidth="800px"
         >
             <div className="space-y-6">
@@ -69,7 +71,7 @@ export default function VarianceReportModal({ isOpen, onClose }: VarianceReportM
                             <TrendingDown size={24} />
                         </div>
                         <div>
-                            <div className="text-sm text-gray-500 font-medium">Total Nilai Hilang (Loss)</div>
+                            <div className="text-sm text-gray-500 font-medium">{t('inventory.variance.loss')}</div>
                             <div className="text-2xl font-bold text-red-600">{formatCurrency(Math.abs(totalLoss))}</div>
                         </div>
                     </div>
@@ -78,8 +80,8 @@ export default function VarianceReportModal({ isOpen, onClose }: VarianceReportM
                             <AlertTriangle size={24} />
                         </div>
                         <div>
-                            <div className="text-sm text-gray-500 font-medium">Jumlah Insiden</div>
-                            <div className="text-2xl font-bold text-gray-800">{totalCount} Record{totalCount !== 1 ? 's' : ''}</div>
+                            <div className="text-sm text-gray-500 font-medium">{t('inventory.variance.incidents')}</div>
+                            <div className="text-2xl font-bold text-gray-800">{totalCount} {t('inventory.variance.records')}</div>
                         </div>
                     </div>
                 </div>
@@ -90,11 +92,11 @@ export default function VarianceReportModal({ isOpen, onClose }: VarianceReportM
                         <table className="w-full text-sm text-left">
                             <thead className="bg-gray-50 text-gray-500 font-medium border-b border-gray-200">
                                 <tr>
-                                    <th className="px-4 py-3">Tarikh</th>
-                                    <th className="px-4 py-3">Item</th>
-                                    <th className="px-4 py-3 text-right">Variance</th>
-                                    <th className="px-4 py-3 text-right">Nilai</th>
-                                    <th className="px-4 py-3">Sebab</th>
+                                    <th className="px-4 py-3">{t('inventory.table.date')}</th>
+                                    <th className="px-4 py-3">{t('inventory.table.item')}</th>
+                                    <th className="px-4 py-3 text-right">{t('inventory.table.variance')}</th>
+                                    <th className="px-4 py-3 text-right">{t('inventory.table.value')}</th>
+                                    <th className="px-4 py-3">{t('inventory.table.reason')}</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100">
@@ -132,7 +134,7 @@ export default function VarianceReportModal({ isOpen, onClose }: VarianceReportM
                                 ) : (
                                     <tr>
                                         <td colSpan={5} className="px-4 py-8 text-center text-gray-400">
-                                            Tiada rekod variance ditemui.
+                                            {t('inventory.variance.empty')}
                                         </td>
                                     </tr>
                                 )}
@@ -144,7 +146,7 @@ export default function VarianceReportModal({ isOpen, onClose }: VarianceReportM
                 <div className="bg-blue-50 p-4 rounded-lg flex gap-3 text-sm text-blue-800 border border-blue-100">
                     <div className="shrink-0 mt-0.5"><Calendar size={16} /></div>
                     <div>
-                        Laporan ini menunjukkan perbezaan stok yang dikesan semasa <strong>Shift Count (Blind)</strong> atau pelarasan manual. Jika nilai negatif, bermaksud stok fizikal kurang daripada sistem (Potensi Kehilangan).
+                        {t('inventory.variance.info')}
                     </div>
                 </div>
 

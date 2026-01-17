@@ -4,13 +4,14 @@ import { useState, useMemo, useCallback } from 'react';
 import StaffLayout from '@/components/StaffLayout';
 import { useStaffPortal, useStaff } from '@/lib/store';
 import { useStaffRequestsRealtime } from '@/lib/supabase/realtime-hooks';
-import { getRequestCategoryLabel, getStatusLabel, getStatusColor } from '@/lib/staff-portal-data';
+import { getStatusColor } from '@/lib/staff-portal-data';
 import { RequestCategory, StaffRequest } from '@/lib/types';
 import Modal from '@/components/Modal';
 import Link from 'next/link';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import ConfirmModal from '@/components/ConfirmModal';
 import RequestDetailModal from '@/components/staff-portal/RequestDetailModal';
+import { useTranslation } from '@/lib/contexts/LanguageContext';
 import {
   FileText,
   Plus,
@@ -37,6 +38,7 @@ const REQUEST_CATEGORIES: RequestCategory[] = [
 ];
 
 export default function RequestsPage() {
+  const { t } = useTranslation();
   const { staff, isInitialized } = useStaff();
   const { getStaffRequestsByStaff, addStaffRequest, refreshStaffRequests } = useStaffPortal();
 
@@ -100,11 +102,11 @@ export default function RequestsPage() {
     if (!form.title.trim() || !form.description.trim()) {
       setConfirmModal({
         isOpen: true,
-        title: 'Maklumat Tidak Lengkap',
-        message: 'Sila isi tajuk dan penerangan permohonan anda.',
+        title: t('staffPortal.requests.alerts.incompleteTitle'),
+        message: t('staffPortal.requests.alerts.incompleteMsg'),
         type: 'warning',
         showCancel: false,
-        confirmText: 'Faham'
+        confirmText: t('common.confirm') || 'Faham'
       });
       return;
     }
@@ -133,12 +135,24 @@ export default function RequestsPage() {
 
     setConfirmModal({
       isOpen: true,
-      title: 'Berjaya Dihantar',
-      message: 'Permohonan anda telah berjaya dihantar dan akan diproses secepat mungkin.',
+      title: t('staffPortal.requests.alerts.successTitle'),
+      message: t('staffPortal.requests.alerts.successMsg'),
       type: 'success',
       showCancel: false,
-      confirmText: 'Selesai'
+      confirmText: t('common.done') || 'Selesai'
     });
+  };
+
+  const getPriorityLabel = (priority: string) => {
+    return t(`staffPortal.requests.priority.${priority}`);
+  };
+
+  const getStatusLabelText = (status: string) => {
+    return t(`staffPortal.requests.status.${status}`);
+  };
+
+  const getCategoryLabelText = (category: string) => {
+    return t(`staffPortal.requests.categories.${category}`);
   };
 
   if (!isInitialized || !currentStaff) {
@@ -159,18 +173,18 @@ export default function RequestsPage() {
           <div>
             <Link href="/staff-portal" className="btn btn-outline btn-sm" style={{ marginBottom: '0.5rem' }}>
               <ArrowLeft size={16} />
-              Kembali
+              {t('staffPortal.requests.back')}
             </Link>
             <h1 style={{ fontSize: '1.75rem', fontWeight: 700, marginTop: '0.5rem' }}>
-              Permohonan Lain
+              {t('staffPortal.requests.title')}
             </h1>
             <p style={{ color: 'var(--text-secondary)' }}>
-              Submit pelbagai jenis permohonan
+              {t('staffPortal.requests.subtitle')}
             </p>
           </div>
           <button className="btn btn-primary" onClick={() => setShowModal(true)}>
             <Plus size={18} />
-            Permohonan Baru
+            {t('staffPortal.requests.new')}
           </button>
         </div>
 
@@ -179,9 +193,9 @@ export default function RequestsPage() {
           <div className="card-header">
             <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <FileText size={20} />
-              Senarai Permohonan
+              {t('staffPortal.requests.list.title')}
             </div>
-            <div className="card-subtitle">{requests.length} permohonan</div>
+            <div className="card-subtitle">{t('staffPortal.requests.list.count', { count: requests.length })}</div>
           </div>
 
           {sortedRequests.length > 0 ? (
@@ -211,10 +225,10 @@ export default function RequestsPage() {
                     <div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
                         <span className="badge badge-secondary" style={{ fontSize: '0.65rem' }}>
-                          {getRequestCategoryLabel(request.category)}
+                          {getCategoryLabelText(request.category)}
                         </span>
                         <span className={`badge badge-${request.priority === 'high' ? 'danger' : request.priority === 'medium' ? 'warning' : 'info'}`} style={{ fontSize: '0.65rem' }}>
-                          {request.priority === 'high' ? 'Urgent' : request.priority === 'medium' ? 'Sederhana' : 'Rendah'}
+                          {getPriorityLabel(request.priority)}
                         </span>
                       </div>
                       <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>
@@ -230,7 +244,7 @@ export default function RequestsPage() {
                         {request.status === 'completed' && <CheckCircle size={12} style={{ marginRight: '0.25rem' }} />}
                         {request.status === 'rejected' && <XCircle size={12} style={{ marginRight: '0.25rem' }} />}
                         {request.status === 'pending' && <AlertCircle size={12} style={{ marginRight: '0.25rem' }} />}
-                        {getStatusLabel(request.status)}
+                        {getStatusLabelText(request.status)}
                       </span>
 
                       <div style={{ fontSize: '0.7rem', color: 'var(--text-light)', marginTop: '0.5rem' }}>
@@ -239,7 +253,7 @@ export default function RequestsPage() {
                       </div>
 
                       <div style={{ fontSize: '0.7rem', color: 'var(--primary)', marginTop: '0.25rem', fontWeight: 500 }}>
-                        Lihat Butiran
+                        {t('staffPortal.requests.list.viewDetail')}
                       </div>
                     </div>
                   </div>
@@ -253,7 +267,7 @@ export default function RequestsPage() {
                       fontSize: '0.75rem',
                       color: request.status === 'completed' ? '#166534' : '#991b1b'
                     }}>
-                      Maklum balas: {request.responseNote}
+                      {t('staffPortal.requests.list.feedback')} {request.responseNote}
                     </div>
                   )}
                 </div>
@@ -261,7 +275,7 @@ export default function RequestsPage() {
             </div>
           ) : (
             <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>
-              Tiada rekod permohonan
+              {t('staffPortal.requests.list.empty')}
             </div>
           )}
         </div>
@@ -277,11 +291,11 @@ export default function RequestsPage() {
         <Modal
           isOpen={showModal}
           onClose={() => !isSubmitting && setShowModal(false)}
-          title="Permohonan Baru"
+          title={t('staffPortal.requests.form.title')}
           maxWidth="500px"
         >
           <div className="form-group">
-            <label className="form-label">Kategori *</label>
+            <label className="form-label">{t('staffPortal.requests.form.category')}</label>
             <select
               className="form-select"
               value={form.category}
@@ -289,44 +303,44 @@ export default function RequestsPage() {
             >
               {REQUEST_CATEGORIES.map(cat => (
                 <option key={cat} value={cat}>
-                  {getRequestCategoryLabel(cat)}
+                  {getCategoryLabelText(cat)}
                 </option>
               ))}
             </select>
           </div>
 
           <div className="form-group">
-            <label className="form-label">Tajuk *</label>
+            <label className="form-label">{t('staffPortal.requests.form.subject')}</label>
             <input
               type="text"
               className="form-input"
               value={form.title}
               onChange={(e) => setForm(prev => ({ ...prev, title: e.target.value }))}
-              placeholder="Contoh: Surat Pengesahan Kerja"
+              placeholder={t('staffPortal.requests.form.subjectPlaceholder')}
             />
           </div>
 
           <div className="form-group">
-            <label className="form-label">Penerangan *</label>
+            <label className="form-label">{t('staffPortal.requests.form.description')}</label>
             <textarea
               className="form-input"
               value={form.description}
               onChange={(e) => setForm(prev => ({ ...prev, description: e.target.value }))}
               rows={3}
-              placeholder="Terangkan permohonan anda..."
+              placeholder={t('staffPortal.requests.form.descPlaceholder')}
             />
           </div>
 
           <div className="form-group">
-            <label className="form-label">Prioriti</label>
+            <label className="form-label">{t('staffPortal.requests.form.priority')}</label>
             <select
               className="form-select"
               value={form.priority}
               onChange={(e) => setForm(prev => ({ ...prev, priority: e.target.value as 'low' | 'medium' | 'high' }))}
             >
-              <option value="low">Rendah</option>
-              <option value="medium">Sederhana</option>
-              <option value="high">Urgent</option>
+              <option value="low">{t('staffPortal.requests.priority.low')}</option>
+              <option value="medium">{t('staffPortal.requests.priority.medium')}</option>
+              <option value="high">{t('staffPortal.requests.priority.high')}</option>
             </select>
           </div>
 
@@ -337,7 +351,7 @@ export default function RequestsPage() {
               disabled={isSubmitting}
               style={{ flex: 1 }}
             >
-              Batal
+              {t('staffPortal.requests.form.cancel')}
             </button>
             <button
               className="btn btn-primary"
@@ -350,7 +364,7 @@ export default function RequestsPage() {
               ) : (
                 <>
                   <Send size={18} />
-                  Hantar
+                  {t('staffPortal.requests.form.submit')}
                 </>
               )}
             </button>

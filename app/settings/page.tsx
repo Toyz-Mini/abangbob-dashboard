@@ -351,6 +351,9 @@ export default function SettingsPage() {
     ? ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
     : ['Ahad', 'Isnin', 'Selasa', 'Rabu', 'Khamis', 'Jumaat', 'Sabtu'], [language]);
 
+  // Stable English keys for database persistence
+  const STABLE_DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
   // Outlet settings
   const [outletSettings, setOutletSettings] = useState({
     name: 'AbangBob Nasi Lemak & Burger',
@@ -432,6 +435,7 @@ export default function SettingsPage() {
     DAYS_OF_WEEK.map((day, idx) => ({
       dayOfWeek: idx,
       dayName: day,
+      stableId: STABLE_DAYS[idx],
       isOpen: idx !== 0, // Closed on Sunday
       openTime: '08:00',
       closeTime: '22:00',
@@ -485,7 +489,9 @@ export default function SettingsPage() {
           console.log('[Settings Page] Loaded settings from Supabase');
           setOutletSettings(supabaseSettings.outlet);
           setOperatingHours(DAYS_OF_WEEK.map((day, idx) => {
-            const dayData = supabaseSettings.operatingHours[day];
+            const stableDay = STABLE_DAYS[idx];
+            // Try to find by stable ID first, fallback to localized name (legacy support)
+            const dayData = supabaseSettings.operatingHours[stableDay] || supabaseSettings.operatingHours[day];
             let isOpen = idx !== 0; // Default: closed on Sunday
             if (dayData) {
               isOpen = dayData.isOpen !== undefined ? dayData.isOpen : !dayData.closed;
@@ -493,6 +499,7 @@ export default function SettingsPage() {
             return {
               dayOfWeek: idx,
               dayName: day,
+              stableId: stableDay,
               isOpen,
               openTime: dayData?.open ?? '08:00',
               closeTime: dayData?.close ?? '22:00',
@@ -566,7 +573,9 @@ export default function SettingsPage() {
       // Prepare operating hours in the format for Supabase
       const operatingHoursMap: Record<string, { open: string; close: string; isOpen: boolean }> = {};
       operatingHours.forEach(day => {
-        operatingHoursMap[day.dayName] = {
+        // Use stableId (English) as the key for database
+        const key = day.stableId || STABLE_DAYS[day.dayOfWeek];
+        operatingHoursMap[key] = {
           open: day.openTime,
           close: day.closeTime,
           isOpen: day.isOpen,
@@ -1110,7 +1119,7 @@ export default function SettingsPage() {
                   <thead>
                     <tr>
                       <th>{t('settings.day')}</th>
-                      <th>{t('common.status')}</th>
+                      <th>{t('settings.status')}</th>
                       <th>{t('settings.open')}</th>
                       <th>{t('settings.close')}</th>
                     </tr>
@@ -1252,7 +1261,7 @@ export default function SettingsPage() {
                       <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
                         {printerSettings.isConnected
                           ? 'Thermal printer sedia untuk digunakan'
-                          : 'Klik &quot;Sambung Printer&quot; untuk mula'}
+                          : 'Klik "Sambung Printer" untuk mula'}
                       </div>
                     </div>
                   </div>
@@ -1356,7 +1365,7 @@ export default function SettingsPage() {
                   >
                     <option value="browser">🌐 Browser Print Dialog (Universal)</option>
                     <option value="nokoprint">📱 NokoPrint (Android)</option>
-                    <option value="posprinter">🖨️ POS Printer (Android - ESC/POS)</option>
+                    <option value="posprinter">🖨️ POS Printer (Android)</option>
                     <option value="bluetooth">🔵 Bluetooth Direct (Experimental)</option>
                     <option value="rawbt">📲 RawBT (Android - Legacy)</option>
                     <option value="webserial">🔌 Web Serial USB (Chrome Desktop Only)</option>
@@ -1418,7 +1427,7 @@ export default function SettingsPage() {
                         <ol style={{ paddingLeft: '1.25rem', margin: '0.5rem 0' }}>
                           <li>Gunakan Chrome/Edge pada laptop/PC</li>
                           <li>Connect printer via USB</li>
-                          <li>Klik &quot;Connect Printer&quot; di atas</li>
+                          <li>Klik "Connect Printer" di atas</li>
                         </ol>
                         <div style={{ color: 'var(--warning)', marginTop: '0.5rem' }}>
                           ⚠️ Tidak support Android!
@@ -1538,9 +1547,9 @@ export default function SettingsPage() {
                   </div>
                   <ol style={{ fontSize: '0.875rem', color: '#1e40af', paddingLeft: '1.25rem', margin: 0 }}>
                     <li>Pastikan thermal printer disambung ke komputer via USB</li>
-                    <li>Klik &quot;Sambung Printer&quot; dan pilih printer dari senarai</li>
+                    <li>Klik "Sambung Printer" dan pilih printer dari senarai</li>
                     <li>Untuk cash drawer, sambung kabel RJ12 dari drawer ke port DK pada printer</li>
-                    <li>Gunakan &quot;Test Print&quot; dan &quot;Test Cash Drawer&quot; untuk memastikan semua berfungsi</li>
+                    <li>Gunakan "Test Print" dan "Test Cash Drawer" untuk memastikan semua berfungsi</li>
                   </ol>
                 </div>
               </div>

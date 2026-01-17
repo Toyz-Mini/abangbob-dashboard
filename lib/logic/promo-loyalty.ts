@@ -37,13 +37,13 @@ export async function verifyPromoCode(code: string, subtotal: number): Promise<P
         }
 
         // Check Usage Limit (Global)
-        if (promo.usage_limit && promo.usage_limit > 0 && promo.usage_count >= promo.usage_limit) {
+        if (promo.usage_limit && promo.usage_limit > 0 && (promo.usage_count ?? 0) >= promo.usage_limit) {
             return { isValid: false, discountAmount: 0, error: 'Kod promo telah habis ditebus.' };
         }
 
         // Check Min Spend
-        if (subtotal < promo.min_spend) {
-            return { isValid: false, discountAmount: 0, error: `Belanja minimum BND ${promo.min_spend.toFixed(2)} diperlukan.` };
+        if (subtotal < (promo.min_spend ?? 0)) {
+            return { isValid: false, discountAmount: 0, error: `Belanja minimum BND ${(promo.min_spend ?? 0).toFixed(2)} diperlukan.` };
         }
 
         // Calculate Discount

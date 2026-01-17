@@ -6,9 +6,9 @@ import Link from 'next/link';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import ConfirmModal from '@/components/ConfirmModal';
 import { useAuth } from '@/lib/contexts/AuthContext';
+import { useTranslation } from '@/lib/contexts/LanguageContext';
 import Image from 'next/image';
 import {
-  ArrowLeft,
   Phone,
   DollarSign,
   Calendar,
@@ -19,34 +19,37 @@ import {
   Shield,
   AlertCircle,
   Star,
-  Users,
   Briefcase,
   Mail,
   MapPin,
-  Heart,
   FileText,
   User,
   Cake,
   BadgeCheck,
   Building,
-  Banknote,
   Camera,
-  LogOut,
-  Upload
 } from 'lucide-react';
-import { uploadFile } from '@/lib/supabase/storage-utils';
+import { uploadFile, compressImage } from '@/lib/supabase/storage-utils';
 import { useState, useRef } from 'react';
+import { useStaffRealtime, useAttendanceRealtime } from '@/lib/supabase/realtime-hooks';
 
-
-// Demo: Using staff ID 2 as the logged-in user
-// Demo: Using dynamic user ID
-// const CURRENT_STAFF_ID = '2';
 
 export default function ProfilePage() {
+  const { t } = useTranslation();
   const { user } = useAuth();
-  const { staff, updateStaff, attendance, isInitialized } = useStaff();
+  const { staff, updateStaff, attendance, isInitialized, refreshStaff, refreshAttendance } = useStaff();
   const { getLeaveBalance } = useStaffPortal();
   const { getStaffKPI } = useKPI();
+
+  useStaffRealtime(() => {
+    console.log('[Realtime] Staff profile update detected');
+    refreshStaff();
+  });
+
+  useAttendanceRealtime(() => {
+    console.log('[Realtime] Attendance update detected');
+    refreshAttendance();
+  });
 
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -91,6 +94,7 @@ export default function ProfilePage() {
 
   const formatDate = (dateStr: string | undefined): string => {
     if (!dateStr) return '-';
+    // Use ms-MY as default for now, could be dynamic based on current language
     return new Date(dateStr).toLocaleDateString('ms-MY', {
       day: 'numeric',
       month: 'long',
@@ -108,7 +112,20 @@ export default function ProfilePage() {
 
     setIsUploading(true);
     try {
-      const result = await uploadFile(file, {
+      let fileToUpload = file;
+
+      // Compress image before upload
+      try {
+        const compressedBlob = await compressImage(file);
+        fileToUpload = new File([compressedBlob], file.name, {
+          type: compressedBlob.type,
+          lastModified: Date.now(),
+        });
+      } catch (e) {
+        console.warn('Image compression failed', e);
+      }
+
+      const result = await uploadFile(fileToUpload, {
         bucket: 'staff-photos',
         folder: 'avatars',
         allowedTypes: ['image/jpeg', 'image/png', 'image/webp']
@@ -119,22 +136,22 @@ export default function ProfilePage() {
       } else {
         setConfirmModal({
           isOpen: true,
-          title: 'Gagal Muat Naik',
-          message: 'Gambar tidak dapat dimuat naik: ' + (result.error || 'Ralat sistem.'),
+          title: t('staffPortal.profile.upload.errorTitle'),
+          message: t('staffPortal.profile.upload.errorMsg', { error: result.error || 'Unknown error' }),
           type: 'danger',
           showCancel: false,
-          confirmText: 'Kembali'
+          confirmText: t('common.back') || 'Kembali'
         });
       }
     } catch (error) {
       console.error('Upload error:', error);
       setConfirmModal({
         isOpen: true,
-        title: 'Ralat Teknikal',
-        message: 'Berlaku ralat semasa memuat naik gambar. Sila cuba lagi nanti.',
+        title: t('staffPortal.profile.upload.techErrorTitle'),
+        message: t('staffPortal.profile.upload.techErrorMsg'),
         type: 'danger',
         showCancel: false,
-        confirmText: 'Faham'
+        confirmText: t('common.confirm') || 'Faham'
       });
     } finally {
       setIsUploading(false);
@@ -162,7 +179,7 @@ export default function ProfilePage() {
       <div className="staff-portal animate-fade-in">
         {/* Header */}
         <div style={{ marginBottom: '1.5rem' }}>
-          <h1 style={{ fontSize: '1.5rem', fontWeight: 700 }}>Profil Saya</h1>
+          <h1 style={{ fontSize: '1.5rem', fontWeight: 700 }}>{t('staffPortal.profile.title')}</h1>
         </div>
 
         {/* Profile Header Card */}
@@ -203,7 +220,7 @@ export default function ProfilePage() {
 
           <div className="staff-profile-badges">
             <span className={`staff-profile-badge ${currentStaff.status === 'active' ? '' : 'warning'}`}>
-              {currentStaff.status === 'active' ? '✓ Aktif' : '⏸ Cuti'}
+              {currentStaff.status === 'active' ? `✓ ${t('staffPortal.profile.active')}` : `⏸ ${t('staffPortal.profile.onLeave')}`}
             </span>
             {currentStaff.performanceBadges?.map(badge => (
               <span key={badge} className="staff-profile-badge">
@@ -222,7 +239,7 @@ export default function ProfilePage() {
                 <Clock size={24} />
               </div>
               <div className="staff-stat-value">{daysWorked}</div>
-              <div className="staff-stat-label">Hari Bekerja</div>
+              <div className="staff-stat-label">{t('staffPortal.profile.stats.workedDays')}</div>
             </div>
 
             <div className="staff-stat-card success">
@@ -230,7 +247,7 @@ export default function ProfilePage() {
                 <Calendar size={24} />
               </div>
               <div className="staff-stat-value">{leaveBalance?.annual.balance || 0}</div>
-              <div className="staff-stat-label">Baki Cuti</div>
+              <div className="staff-stat-label">{t('staffPortal.profile.stats.leaveBalance')}</div>
             </div>
 
             <div className="staff-stat-card cool">
@@ -238,7 +255,7 @@ export default function ProfilePage() {
                 <TrendingUp size={24} />
               </div>
               <div className="staff-stat-value">{kpi?.overallScore || 0}%</div>
-              <div className="staff-stat-label">Skor KPI</div>
+              <div className="staff-stat-label">{t('staffPortal.profile.stats.kpiScore')}</div>
             </div>
 
             <div className="staff-stat-card warm">
@@ -246,7 +263,7 @@ export default function ProfilePage() {
                 <Star size={24} />
               </div>
               <div className="staff-stat-value">#{kpi?.rank || '-'}</div>
-              <div className="staff-stat-label">Ranking</div>
+              <div className="staff-stat-label">{t('staffPortal.profile.stats.ranking')}</div>
             </div>
           </div>
         </div>
@@ -256,7 +273,7 @@ export default function ProfilePage() {
           <div className="card-header">
             <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <User size={20} />
-              Maklumat Peribadi
+              {t('staffPortal.profile.personal.title')}
             </div>
           </div>
 
@@ -266,8 +283,8 @@ export default function ProfilePage() {
                 <FileText size={16} />
               </div>
               <div className="profile-info-content">
-                <span className="profile-info-label">No. Kad Pengenalan</span>
-                <span className="profile-info-value">{currentStaff.icNumber || 'Tidak ditetapkan'}</span>
+                <span className="profile-info-label">{t('staffPortal.profile.personal.ic')}</span>
+                <span className="profile-info-value">{currentStaff.icNumber || t('staffPortal.profile.personal.notSet')}</span>
               </div>
             </div>
 
@@ -276,10 +293,12 @@ export default function ProfilePage() {
                 <Cake size={16} />
               </div>
               <div className="profile-info-content">
-                <span className="profile-info-label">Tarikh Lahir</span>
+                <span className="profile-info-label">{t('staffPortal.profile.personal.dob')}</span>
                 <span className="profile-info-value">
                   {formatDate(currentStaff.dateOfBirth)}
-                  {age && <span style={{ color: 'var(--text-secondary)', marginLeft: '0.5rem' }}>({age} tahun)</span>}
+                  {age && <span style={{ color: 'var(--text-secondary)', marginLeft: '0.5rem' }}>
+                    {t('staffPortal.profile.personal.age', { age })}
+                  </span>}
                 </span>
               </div>
             </div>
@@ -289,7 +308,7 @@ export default function ProfilePage() {
                 <Phone size={16} />
               </div>
               <div className="profile-info-content">
-                <span className="profile-info-label">Nombor Telefon</span>
+                <span className="profile-info-label">{t('staffPortal.profile.personal.phone')}</span>
                 <span className="profile-info-value">{currentStaff.phone}</span>
               </div>
             </div>
@@ -299,8 +318,8 @@ export default function ProfilePage() {
                 <Mail size={16} />
               </div>
               <div className="profile-info-content">
-                <span className="profile-info-label">Email</span>
-                <span className="profile-info-value">{currentStaff.email || 'Tidak ditetapkan'}</span>
+                <span className="profile-info-label">{t('staffPortal.profile.personal.email')}</span>
+                <span className="profile-info-value">{currentStaff.email || t('staffPortal.profile.personal.notSet')}</span>
               </div>
             </div>
 
@@ -309,8 +328,8 @@ export default function ProfilePage() {
                 <MapPin size={16} />
               </div>
               <div className="profile-info-content">
-                <span className="profile-info-label">Alamat</span>
-                <span className="profile-info-value">{currentStaff.address || 'Tidak ditetapkan'}</span>
+                <span className="profile-info-label">{t('staffPortal.profile.personal.address')}</span>
+                <span className="profile-info-value">{currentStaff.address || t('staffPortal.profile.personal.notSet')}</span>
               </div>
             </div>
           </div>
@@ -321,21 +340,21 @@ export default function ProfilePage() {
           <div className="card-header">
             <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <AlertCircle size={20} />
-              Kenalan Kecemasan
+              {t('staffPortal.profile.emergency.title')}
             </div>
           </div>
 
           <div className="profile-info-grid">
             <div className="profile-info-item">
               <div className="profile-info-content">
-                <span className="profile-info-label">Nama</span>
-                <span className="profile-info-value">{currentStaff.emergencyContact?.name || 'Tidak ditetapkan'}</span>
+                <span className="profile-info-label">{t('staffPortal.profile.emergency.name')}</span>
+                <span className="profile-info-value">{currentStaff.emergencyContact?.name || t('staffPortal.profile.personal.notSet')}</span>
               </div>
             </div>
 
             <div className="profile-info-item">
               <div className="profile-info-content">
-                <span className="profile-info-label">Hubungan</span>
+                <span className="profile-info-label">{t('staffPortal.profile.emergency.relation')}</span>
                 <span className="profile-info-value">{currentStaff.emergencyContact?.relation || '-'}</span>
               </div>
             </div>
@@ -345,8 +364,8 @@ export default function ProfilePage() {
                 <Phone size={16} />
               </div>
               <div className="profile-info-content">
-                <span className="profile-info-label">Nombor Telefon</span>
-                <span className="profile-info-value">{currentStaff.emergencyContact?.phone || 'Tidak ditetapkan'}</span>
+                <span className="profile-info-label">{t('staffPortal.profile.emergency.phone')}</span>
+                <span className="profile-info-value">{currentStaff.emergencyContact?.phone || t('staffPortal.profile.personal.notSet')}</span>
               </div>
             </div>
           </div>
@@ -357,33 +376,33 @@ export default function ProfilePage() {
           <div className="card-header">
             <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <Briefcase size={20} />
-              Maklumat Pekerjaan
+              {t('staffPortal.profile.employment.title')}
             </div>
           </div>
 
           <div className="profile-info-grid">
             <div className="profile-info-item">
               <div className="profile-info-content">
-                <span className="profile-info-label">Jawatan</span>
+                <span className="profile-info-label">{t('staffPortal.profile.employment.position')}</span>
                 <span className="profile-info-value">{currentStaff.position || currentStaff.role}</span>
               </div>
             </div>
 
             <div className="profile-info-item">
               <div className="profile-info-content">
-                <span className="profile-info-label">Jabatan</span>
+                <span className="profile-info-label">{t('staffPortal.profile.employment.department')}</span>
                 <span className="profile-info-value">{currentStaff.department || '-'}</span>
               </div>
             </div>
 
             <div className="profile-info-item">
               <div className="profile-info-content">
-                <span className="profile-info-label">Jenis Pekerjaan</span>
+                <span className="profile-info-label">{t('staffPortal.profile.employment.type')}</span>
                 <span className="profile-info-value">
-                  {currentStaff.employmentType === 'permanent' ? 'Tetap' :
-                    currentStaff.employmentType === 'contract' ? 'Kontrak' :
-                      currentStaff.employmentType === 'part-time' ? 'Separuh Masa' :
-                        currentStaff.employmentType === 'probation' ? 'Percubaan' : '-'}
+                  {currentStaff.employmentType === 'permanent' ? t('staffPortal.profile.employment.types.permanent') :
+                    currentStaff.employmentType === 'contract' ? t('staffPortal.profile.employment.types.contract') :
+                      currentStaff.employmentType === 'part-time' ? t('staffPortal.profile.employment.types.part_time') :
+                        currentStaff.employmentType === 'probation' ? t('staffPortal.profile.employment.types.probation') : '-'}
                 </span>
               </div>
             </div>
@@ -393,7 +412,7 @@ export default function ProfilePage() {
                 <Building size={16} />
               </div>
               <div className="profile-info-content">
-                <span className="profile-info-label">Lokasi Kerja</span>
+                <span className="profile-info-label">{t('staffPortal.profile.employment.location')}</span>
                 <span className="profile-info-value">{currentStaff.workLocation || '-'}</span>
               </div>
             </div>
@@ -403,7 +422,7 @@ export default function ProfilePage() {
                 <Calendar size={16} />
               </div>
               <div className="profile-info-content">
-                <span className="profile-info-label">Tarikh Mula Bekerja</span>
+                <span className="profile-info-label">{t('staffPortal.profile.employment.startDate')}</span>
                 <span className="profile-info-value">{formatDate(currentStaff.joinDate)}</span>
               </div>
             </div>
@@ -416,27 +435,27 @@ export default function ProfilePage() {
             <div className="card-header">
               <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <DollarSign size={20} />
-                Maklumat Gaji
+                {t('staffPortal.profile.salary.title')}
               </div>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
               <div className="staff-info-row">
-                <span className="staff-info-label">Gaji Asas</span>
+                <span className="staff-info-label">{t('staffPortal.profile.salary.base')}</span>
                 <strong className="staff-info-value">BND {currentStaff.baseSalary?.toLocaleString()}</strong>
               </div>
               <div className="staff-info-row">
-                <span className="staff-info-label">Kadar Jam</span>
-                <strong className="staff-info-value">BND {currentStaff.hourlyRate}/jam</strong>
+                <span className="staff-info-label">{t('staffPortal.profile.salary.hourly')}</span>
+                <strong className="staff-info-value">BND {currentStaff.hourlyRate}{t('staffPortal.profile.salary.perHour')}</strong>
               </div>
               <div className="staff-info-row">
-                <span className="staff-info-label">Kadar OT</span>
+                <span className="staff-info-label">{t('staffPortal.profile.salary.otRate')}</span>
                 <strong className="staff-info-value">{currentStaff.overtimeRate || 1.5}x</strong>
               </div>
               {currentStaff.bankDetails?.bankName && (
                 <div className="staff-info-row">
                   <span className="staff-info-label">
                     <CreditCard size={14} style={{ marginRight: '0.25rem' }} />
-                    Bank
+                    {t('staffPortal.profile.salary.bank')}
                   </span>
                   <div className="staff-info-value" style={{ display: 'flex', flexDirection: 'column' }}>
                     <strong>{currentStaff.bankDetails.bankName}</strong>
@@ -463,28 +482,28 @@ export default function ProfilePage() {
             <div className="card-header">
               <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <Shield size={20} />
-                Caruman TAP/SCP
+                {t('staffPortal.profile.salary.tapScp')}
               </div>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
               <div className="staff-info-row">
-                <span className="staff-info-label">No. TAP</span>
-                <strong className="staff-info-value">{currentStaff.statutoryContributions?.tapNumber || 'Tidak ditetapkan'}</strong>
+                <span className="staff-info-label">{t('staffPortal.profile.salary.tapNo')}</span>
+                <strong className="staff-info-value">{currentStaff.statutoryContributions?.tapNumber || t('staffPortal.profile.personal.notSet')}</strong>
               </div>
               <div className="staff-info-row">
-                <span className="staff-info-label">Kadar TAP</span>
+                <span className="staff-info-label">{t('staffPortal.profile.salary.tapRate')}</span>
                 <strong className="staff-info-value">
-                  {currentStaff.statutoryContributions?.tapEmployeeRate || 5}% (Pekerja)
+                  {currentStaff.statutoryContributions?.tapEmployeeRate || 5}% {t('staffPortal.profile.salary.employeeShare')}
                 </strong>
               </div>
               <div className="staff-info-row">
-                <span className="staff-info-label">No. SCP</span>
-                <strong className="staff-info-value">{currentStaff.statutoryContributions?.scpNumber || 'Tidak ditetapkan'}</strong>
+                <span className="staff-info-label">{t('staffPortal.profile.salary.scpNo')}</span>
+                <strong className="staff-info-value">{currentStaff.statutoryContributions?.scpNumber || t('staffPortal.profile.personal.notSet')}</strong>
               </div>
               <div className="staff-info-row">
-                <span className="staff-info-label">Kadar SCP</span>
+                <span className="staff-info-label">{t('staffPortal.profile.salary.scpRate')}</span>
                 <strong className="staff-info-value">
-                  {currentStaff.statutoryContributions?.scpEmployeeRate || 3.5}% (Pekerja)
+                  {currentStaff.statutoryContributions?.scpEmployeeRate || 3.5}% {t('staffPortal.profile.salary.employeeShare')}
                 </strong>
               </div>
             </div>
@@ -496,16 +515,16 @@ export default function ProfilePage() {
           <div className="card-header">
             <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <Calendar size={20} />
-              Baki Cuti Tahun Ini
+              {t('staffPortal.profile.leave.title')}
             </div>
           </div>
 
           <div className="leave-balance-grid">
             <div className="leave-balance-item">
-              <div className="leave-balance-label">Cuti Tahunan</div>
+              <div className="leave-balance-label">{t('staffPortal.profile.leave.annual')}</div>
               <div className="leave-balance-value">
                 <span className="leave-balance-current">{leaveBalance?.annual.balance ?? currentStaff.leaveEntitlement?.annual ?? 14}</span>
-                <span className="leave-balance-total">/ {leaveBalance?.annual.entitled ?? currentStaff.leaveEntitlement?.annual ?? 14} hari</span>
+                <span className="leave-balance-total">/ {leaveBalance?.annual.entitled ?? currentStaff.leaveEntitlement?.annual ?? 14} {t('staffPortal.profile.leave.daysSuffix')}</span>
               </div>
               <div className="leave-balance-bar">
                 <div
@@ -519,10 +538,10 @@ export default function ProfilePage() {
             </div>
 
             <div className="leave-balance-item">
-              <div className="leave-balance-label">Cuti Sakit (MC)</div>
+              <div className="leave-balance-label">{t('staffPortal.profile.leave.medical')}</div>
               <div className="leave-balance-value">
                 <span className="leave-balance-current">{leaveBalance?.medical.balance ?? currentStaff.leaveEntitlement?.medical ?? 14}</span>
-                <span className="leave-balance-total">/ {leaveBalance?.medical.entitled ?? currentStaff.leaveEntitlement?.medical ?? 14} hari</span>
+                <span className="leave-balance-total">/ {leaveBalance?.medical.entitled ?? currentStaff.leaveEntitlement?.medical ?? 14} {t('staffPortal.profile.leave.daysSuffix')}</span>
               </div>
               <div className="leave-balance-bar">
                 <div
@@ -536,10 +555,10 @@ export default function ProfilePage() {
             </div>
 
             <div className="leave-balance-item">
-              <div className="leave-balance-label">Cuti Kecemasan</div>
+              <div className="leave-balance-label">{t('staffPortal.profile.leave.emergency')}</div>
               <div className="leave-balance-value">
                 <span className="leave-balance-current">{leaveBalance?.emergency.balance ?? currentStaff.leaveEntitlement?.emergency ?? 3}</span>
-                <span className="leave-balance-total">/ {leaveBalance?.emergency.entitled ?? currentStaff.leaveEntitlement?.emergency ?? 3} hari</span>
+                <span className="leave-balance-total">/ {leaveBalance?.emergency.entitled ?? currentStaff.leaveEntitlement?.emergency ?? 3} {t('staffPortal.profile.leave.daysSuffix')}</span>
               </div>
               <div className="leave-balance-bar">
                 <div
@@ -553,10 +572,10 @@ export default function ProfilePage() {
             </div>
 
             <div className="leave-balance-item">
-              <div className="leave-balance-label">Cuti Ehsan</div>
+              <div className="leave-balance-label">{t('staffPortal.profile.leave.compassionate')}</div>
               <div className="leave-balance-value">
                 <span className="leave-balance-current">{leaveBalance?.compassionate.balance ?? currentStaff.leaveEntitlement?.compassionate ?? 3}</span>
-                <span className="leave-balance-total">/ {leaveBalance?.compassionate.entitled ?? currentStaff.leaveEntitlement?.compassionate ?? 3} hari</span>
+                <span className="leave-balance-total">/ {leaveBalance?.compassionate.entitled ?? currentStaff.leaveEntitlement?.compassionate ?? 3} {t('staffPortal.profile.leave.daysSuffix')}</span>
               </div>
               <div className="leave-balance-bar">
                 <div
@@ -575,7 +594,7 @@ export default function ProfilePage() {
             className="btn btn-outline btn-sm"
             style={{ marginTop: '1rem', width: '100%' }}
           >
-            Lihat Semua Cuti
+            {t('staffPortal.profile.leave.viewAll')}
           </Link>
         </div>
 
@@ -585,13 +604,13 @@ export default function ProfilePage() {
             <div className="card-header">
               <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <BadgeCheck size={20} />
-                Kemahiran & Sijil
+                {t('staffPortal.profile.skills.title')}
               </div>
             </div>
 
             {currentStaff.skills?.length ? (
               <div style={{ marginBottom: '1rem' }}>
-                <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.5rem' }}>Kemahiran:</span>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.5rem' }}>{t('staffPortal.profile.skills.skills')}</span>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
                   {currentStaff.skills.map(skill => (
                     <span key={skill} className="badge badge-info">{skill}</span>
@@ -602,7 +621,7 @@ export default function ProfilePage() {
 
             {currentStaff.certifications?.length ? (
               <div>
-                <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.5rem' }}>Sijil:</span>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.5rem' }}>{t('staffPortal.profile.skills.certs')}</span>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
                   {currentStaff.certifications.map(cert => (
                     <span key={cert} className="badge badge-success">{cert}</span>
@@ -619,16 +638,16 @@ export default function ProfilePage() {
             <div className="card-header">
               <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <TrendingUp size={20} />
-                Prestasi Semasa
+                {t('staffPortal.profile.kpi.title')}
               </div>
-              <div className="card-subtitle">Bulan {new Date().toLocaleDateString('ms-MY', { month: 'long' })}</div>
+              <div className="card-subtitle">{t('staffPortal.profile.kpi.month')} {new Date().toLocaleDateString('ms-MY', { month: 'long' })}</div>
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               {/* Attendance */}
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                  <span style={{ fontSize: '0.875rem', fontWeight: 500 }}>Kehadiran</span>
+                  <span style={{ fontSize: '0.875rem', fontWeight: 500 }}>{t('staffPortal.profile.kpi.attendance')}</span>
                   <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--primary)' }}>
                     {kpi.metrics?.attendance || 0}%
                   </span>
@@ -644,7 +663,7 @@ export default function ProfilePage() {
               {/* Customer Rating */}
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                  <span style={{ fontSize: '0.875rem', fontWeight: 500 }}>Rating Pelanggan</span>
+                  <span style={{ fontSize: '0.875rem', fontWeight: 500 }}>{t('staffPortal.profile.kpi.customerRating')}</span>
                   <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--primary)' }}>
                     {kpi.metrics?.customerRating || 0}%
                   </span>
@@ -660,7 +679,7 @@ export default function ProfilePage() {
               {/* Upselling */}
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                  <span style={{ fontSize: '0.875rem', fontWeight: 500 }}>Upselling</span>
+                  <span style={{ fontSize: '0.875rem', fontWeight: 500 }}>{t('staffPortal.profile.kpi.upselling')}</span>
                   <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--primary)' }}>
                     {kpi.metrics?.upselling || 0}%
                   </span>
@@ -679,7 +698,7 @@ export default function ProfilePage() {
               className="btn btn-outline btn-sm"
               style={{ marginTop: '1.5rem', width: '100%' }}
             >
-              Lihat Laporan Penuh
+              {t('staffPortal.profile.kpi.viewReport')}
             </Link>
           </div>
         )}
@@ -774,67 +793,68 @@ export default function ProfilePage() {
         .profile-info-icon {
           width: 32px;
           height: 32px;
+          background: white;
+          border-radius: 50%;
           display: flex;
           align-items: center;
           justify-content: center;
-          background: rgba(220, 38, 38, 0.08); /* brand-red-50/100 equivalent */
-          color: #dc2626; /* brand-red-600 */
-          border-radius: 50%;
+          color: var(--primary);
+          box-shadow: 0 2px 4px rgba(0,0,0,0.05);
           flex-shrink: 0;
         }
 
         .profile-info-content {
           display: flex;
           flex-direction: column;
-          min-width: 0;
+          overflow: hidden;
         }
 
         .profile-info-label {
           font-size: 0.75rem;
           color: var(--text-secondary);
-          margin-bottom: 0.25rem;
+          margin-bottom: 0.125rem;
         }
 
         .profile-info-value {
           font-weight: 500;
-          font-size: 0.9rem;
-          word-break: break-word;
+          font-size: 0.95rem;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
         }
 
         .leave-balance-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+          grid-template-columns: 1fr 1fr;
           gap: 1rem;
         }
 
         .leave-balance-item {
-          padding: 1rem;
           background: var(--gray-50);
+          padding: 0.75rem;
           border-radius: var(--radius-md);
         }
 
         .leave-balance-label {
-          font-size: 0.875rem;
+          font-size: 0.75rem;
           color: var(--text-secondary);
-          margin-bottom: 0.5rem;
+          margin-bottom: 0.25rem;
         }
 
         .leave-balance-value {
-          display: flex;
-          align-items: baseline;
-          gap: 0.25rem;
+          font-size: 0.875rem;
           margin-bottom: 0.5rem;
         }
 
         .leave-balance-current {
-          font-size: 1.5rem;
           font-weight: 700;
-          color: var(--text-primary);
+          font-size: 1.1rem;
         }
 
         .leave-balance-total {
-          font-size: 0.875rem;
           color: var(--text-secondary);
+          font-size: 0.8rem;
+          margin-left: 0.25rem;
         }
 
         .leave-balance-bar {
@@ -847,7 +867,6 @@ export default function ProfilePage() {
         .leave-balance-fill {
           height: 100%;
           border-radius: 3px;
-          transition: width 0.3s ease;
         }
       `}</style>
     </StaffLayout>

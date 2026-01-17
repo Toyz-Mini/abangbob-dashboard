@@ -1,16 +1,14 @@
 'use server';
 
-import { auth } from '@/lib/auth';
+import { getServerSession } from '@/lib/supabase/server-auth';
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
-import { headers } from 'next/headers';
+
 import { toSnakeCase, toCamelCase } from '@/lib/supabase/operations';
 
 // ============ RECIPE ACTIONS ============
 
 export async function insertRecipeAction(recipe: any) {
-    const session = await auth.api.getSession({
-        headers: await headers()
-    });
+    const session = await getServerSession();
     if (!session) throw new Error('Unauthorized');
 
     const adminClient = getSupabaseAdmin();
@@ -28,9 +26,7 @@ export async function insertRecipeAction(recipe: any) {
 }
 
 export async function updateRecipeAction(id: string, updates: any) {
-    const session = await auth.api.getSession({
-        headers: await headers()
-    });
+    const session = await getServerSession();
     if (!session) throw new Error('Unauthorized');
 
     const adminClient = getSupabaseAdmin();

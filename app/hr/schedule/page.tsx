@@ -34,6 +34,7 @@ import {
   AlertTriangle,
   Settings
 } from 'lucide-react';
+import { useToast } from '@/lib/contexts/ToastContext';
 
 type ModalType = 'add-shift' | 'edit-shift' | 'add-schedule' | 'edit-schedule' | null;
 
@@ -58,6 +59,8 @@ export default function SchedulePage() {
     refreshSchedules,
     isInitialized
   } = useSchedules();
+
+  const { showToast } = useToast();
 
   // Realtime subscription for schedules
   const handleScheduleChange = useCallback(() => {
@@ -284,14 +287,13 @@ export default function SchedulePage() {
 
   const handleAddShift = async () => {
     if (!shiftForm.name.trim()) {
-      alert('Sila masukkan nama shift');
+      showToast('Sila masukkan nama shift', 'error');
       return;
     }
 
     setIsProcessing(true);
-    await new Promise(resolve => setTimeout(resolve, 300));
 
-    addShift({
+    const result = await addShift({
       name: shiftForm.name.trim(),
       startTime: shiftForm.startTime,
       endTime: shiftForm.endTime,
@@ -299,6 +301,13 @@ export default function SchedulePage() {
       color: shiftForm.color,
     });
 
+    if (!result.success) {
+      showToast(result.error || 'Gagal menyimpan shift', 'error');
+      setIsProcessing(false);
+      return;
+    }
+
+    showToast('Shift berjaya disimpan', 'success');
     closeModal();
   };
 
@@ -306,9 +315,8 @@ export default function SchedulePage() {
     if (!selectedShift) return;
 
     setIsProcessing(true);
-    await new Promise(resolve => setTimeout(resolve, 300));
 
-    updateShift(selectedShift.id, {
+    const result = await updateShift(selectedShift.id, {
       name: shiftForm.name.trim(),
       startTime: shiftForm.startTime,
       endTime: shiftForm.endTime,
@@ -316,22 +324,34 @@ export default function SchedulePage() {
       color: shiftForm.color,
     });
 
+    if (!result.success) {
+      showToast(result.error || 'Gagal mengemas kini shift', 'error');
+      setIsProcessing(false);
+      return;
+    }
+
+    showToast('Shift berjaya dikemas kini', 'success');
     closeModal();
   };
 
   const handleDeleteShift = async (shiftId: string) => {
     if (!confirm('Padam shift ini?')) return;
-    deleteShift(shiftId);
+    const result = await deleteShift(shiftId);
+    if (!result.success) {
+      showToast(result.error || 'Gagal memadam shift', 'error');
+    } else {
+      showToast('Shift berjaya dipadam', 'success');
+    }
   };
 
   const handleAddSchedule = async () => {
     if (!scheduleForm.staffId || !scheduleForm.shiftId) {
-      alert('Sila pilih staf dan shift');
+      showToast('Sila pilih staf dan shift', 'error');
       return;
     }
 
     if (hasConflict(scheduleForm.staffId, scheduleForm.date)) {
-      alert('Staf sudah ada jadual pada tarikh ini!');
+      showToast('Staf sudah ada jadual pada tarikh ini!', 'error');
       return;
     }
 
@@ -352,12 +372,11 @@ export default function SchedulePage() {
     }
 
     setIsProcessing(true);
-    await new Promise(resolve => setTimeout(resolve, 300));
 
     const staffMember = staff.find(s => s.id === scheduleForm.staffId);
     const shift = shifts.find(s => s.id === scheduleForm.shiftId);
 
-    addScheduleEntry({
+    const result = await addScheduleEntry({
       staffId: scheduleForm.staffId,
       staffName: staffMember?.name || '',
       shiftId: scheduleForm.shiftId,
@@ -369,6 +388,13 @@ export default function SchedulePage() {
       notes: scheduleForm.notes.trim() || undefined,
     });
 
+    if (!result.success) {
+      showToast(result.error || 'Gagal menyimpan jadual', 'error');
+      setIsProcessing(false);
+      return;
+    }
+
+    showToast('Jadual berjaya disimpan', 'success');
     closeModal();
   };
 
@@ -376,7 +402,7 @@ export default function SchedulePage() {
     if (!selectedSchedule) return;
 
     if (hasConflict(scheduleForm.staffId, scheduleForm.date, selectedSchedule.id)) {
-      alert('Staf sudah ada jadual pada tarikh ini!');
+      showToast('Staf sudah ada jadual pada tarikh ini!', 'error');
       return;
     }
 
@@ -393,11 +419,10 @@ export default function SchedulePage() {
     }
 
     setIsProcessing(true);
-    await new Promise(resolve => setTimeout(resolve, 300));
 
     const shift = shifts.find(s => s.id === scheduleForm.shiftId);
 
-    updateScheduleEntry(selectedSchedule.id, {
+    const result = await updateScheduleEntry(selectedSchedule.id, {
       shiftId: scheduleForm.shiftId,
       shiftName: shift?.name || '',
       startTime: shift?.startTime || '',
@@ -405,12 +430,24 @@ export default function SchedulePage() {
       notes: scheduleForm.notes.trim() || undefined,
     });
 
+    if (!result.success) {
+      showToast(result.error || 'Gagal mengemas kini jadual', 'error');
+      setIsProcessing(false);
+      return;
+    }
+
+    showToast('Jadual berjaya dikemas kini', 'success');
     closeModal();
   };
 
   const handleDeleteSchedule = async () => {
     if (!selectedSchedule) return;
-    deleteScheduleEntry(selectedSchedule.id);
+    const result = await deleteScheduleEntry(selectedSchedule.id);
+    if (!result.success) {
+      showToast(result.error || 'Gagal memadam jadual', 'error');
+    } else {
+      showToast('Jadual berjaya dipadam', 'success');
+    }
     closeModal();
   };
 
@@ -829,6 +866,7 @@ export default function SchedulePage() {
     </MainLayout>
   );
 }
+
 
 
 

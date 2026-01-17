@@ -322,7 +322,7 @@ export function useInventoryWithAlerts(options?: { outlet_id?: string }) {
 
       const items = (data || []) as unknown as Tables<'inventory'>[];
       setInventory(items);
-      setLowStockItems(items.filter(item => item.current_quantity <= item.min_quantity));
+      setLowStockItems(items.filter(item => (item.current_quantity ?? 0) <= (item.min_quantity ?? 0)));
     } catch (err) {
       console.error('Error fetching inventory:', err);
     } finally {

@@ -268,3 +268,4 @@ export function syncSuccess<T>(data: T): SyncResult<T> {
 export function syncError<T>(error: string): SyncResult<T> {
   return { success: false, data: null, error };
 }
+

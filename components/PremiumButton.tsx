@@ -2,7 +2,7 @@ import React from 'react';
 import { Loader2 } from 'lucide-react';
 
 interface PremiumButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-    variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'glass';
+    variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'glass' | 'glass-white' | 'white' | 'white-outline';
     size?: 'sm' | 'md' | 'lg';
     icon?: React.ElementType;
     loading?: boolean;
@@ -59,6 +59,29 @@ export default function PremiumButton({
                     backdropFilter: 'blur(8px)',
                     color: isActive ? 'var(--primary)' : 'var(--text-primary)',
                     border: isActive ? '1px solid var(--primary)' : '1px solid rgba(255, 255, 255, 0.2)',
+                };
+            case 'glass-white':
+                return {
+                    background: isActive ? 'rgba(255, 255, 255, 0.3)' : 'rgba(255, 255, 255, 0.15)',
+                    backdropFilter: 'blur(8px)',
+                    color: 'white',
+                    border: isActive ? '1px solid white' : '1px solid rgba(255, 255, 255, 0.3)',
+                    boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
+                };
+            case 'white':
+                return {
+                    background: 'white',
+                    color: 'var(--primary)',
+                    border: 'none',
+                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+                    ...(isActive ? { background: 'var(--gray-50)' } : {})
+                };
+            case 'white-outline':
+                return {
+                    background: 'transparent',
+                    color: 'white',
+                    border: '1.5px solid rgba(255, 255, 255, 0.8)',
+                    ...(isActive ? { background: 'rgba(255, 255, 255, 0.1)' } : {})
                 };
             default:
                 return {};

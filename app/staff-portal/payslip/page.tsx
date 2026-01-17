@@ -6,6 +6,7 @@ import { useStaff, useStore } from '@/lib/store';
 import Link from 'next/link';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import LoadingSpinner from '@/components/LoadingSpinner';
+import { useTranslation } from '@/lib/contexts/LanguageContext';
 import {
   ArrowLeft,
   FileText,
@@ -110,6 +111,7 @@ const mockPayslips: PayslipData[] = [
 ];
 
 export default function PayslipPage() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const { staff, isInitialized } = useStaff();
   const [selectedPayslip, setSelectedPayslip] = useState<PayslipData | null>(mockPayslips[0]);
@@ -154,10 +156,10 @@ export default function PayslipPage() {
           <div>
 
             <h1 style={{ fontSize: '1.75rem', fontWeight: 700, marginTop: '0.5rem' }}>
-              Slip Gaji
+              {t('staffPortal.payslip.title')}
             </h1>
             <p style={{ color: 'var(--text-secondary)' }}>
-              Lihat dan muat turun slip gaji anda
+              {t('staffPortal.payslip.subtitle')}
             </p>
           </div>
         </div>
@@ -168,7 +170,7 @@ export default function PayslipPage() {
             <div className="card-header">
               <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <Calendar size={20} />
-                Pilih Bulan
+                {t('staffPortal.payslip.selectMonth')}
               </div>
             </div>
 
@@ -187,7 +189,7 @@ export default function PayslipPage() {
                     <span className="payslip-month-amount">BND {payslip.netPay.toFixed(2)}</span>
                   </div>
                   <span className={`badge ${payslip.status === 'paid' ? 'badge-success' : 'badge-warning'}`}>
-                    {payslip.status === 'paid' ? 'Dibayar' : 'Pending'}
+                    {payslip.status === 'paid' ? t('staffPortal.payslip.status.paid') : t('staffPortal.payslip.status.pending')}
                   </span>
                 </button>
               ))}
@@ -253,32 +255,32 @@ export default function PayslipPage() {
 
                 <div className="payslip-header">
                   <div>
-                    <h2>Slip Gaji</h2>
+                    <h2>{t('staffPortal.payslip.title')}</h2>
                     <p>{selectedPayslip.month} {selectedPayslip.year}</p>
                   </div>
                   <div className="payslip-actions">
                     <button className="btn btn-outline btn-sm">
                       <Printer size={16} />
-                      Cetak
+                      {t('staffPortal.payslip.actions.print')}
                     </button>
                     <button className="btn btn-primary btn-sm">
                       <Download size={16} />
-                      Muat Turun
+                      {t('staffPortal.payslip.actions.download')}
                     </button>
                   </div>
                 </div>
 
                 <div className="payslip-employee-info">
                   <div className="info-row">
-                    <span>Nama:</span>
+                    <span>{t('staffPortal.payslip.employee.name')}</span>
                     <strong>{currentStaff.name}</strong>
                   </div>
                   <div className="info-row">
-                    <span>Jawatan:</span>
+                    <span>{t('staffPortal.payslip.employee.role')}</span>
                     <strong>{currentStaff.role}</strong>
                   </div>
                   <div className="info-row">
-                    <span>Nombor Staff:</span>
+                    <span>{t('staffPortal.payslip.employee.id')}</span>
                     <strong>EMP-{(user?.id || '').slice(-4).padStart(4, '0')}</strong>
                   </div>
                 </div>
@@ -288,23 +290,23 @@ export default function PayslipPage() {
                   <div className="payslip-section earnings">
                     <div className="section-header">
                       <TrendingUp size={18} />
-                      <h3>Pendapatan</h3>
+                      <h3>{t('staffPortal.payslip.earnings.title')}</h3>
                     </div>
                     <div className="section-items">
                       <div className="payslip-item">
-                        <span>Gaji Pokok</span>
+                        <span>{t('staffPortal.payslip.earnings.basic')}</span>
                         <span>BND {selectedPayslip.basicSalary.toFixed(2)}</span>
                       </div>
                       <div className="payslip-item">
-                        <span>Elaun Kerja Lebih Masa</span>
+                        <span>{t('staffPortal.payslip.earnings.ot')}</span>
                         <span>BND {selectedPayslip.overtime.toFixed(2)}</span>
                       </div>
                       <div className="payslip-item">
-                        <span>Elaun Lain</span>
+                        <span>{t('staffPortal.payslip.earnings.allowance')}</span>
                         <span>BND {selectedPayslip.allowances.toFixed(2)}</span>
                       </div>
                       <div className="payslip-item total">
-                        <span>Jumlah Pendapatan</span>
+                        <span>{t('staffPortal.payslip.earnings.total')}</span>
                         <span>BND {totalEarnings.toFixed(2)}</span>
                       </div>
                     </div>
@@ -314,25 +316,25 @@ export default function PayslipPage() {
                   <div className="payslip-section deductions">
                     <div className="section-header">
                       <TrendingDown size={18} />
-                      <h3>Potongan</h3>
+                      <h3>{t('staffPortal.payslip.deductions.title')}</h3>
                     </div>
                     <div className="section-items">
                       <div className="payslip-item">
-                        <span>TAP (Pekerja)</span>
+                        <span>{t('staffPortal.payslip.deductions.tap')}</span>
                         <span>BND {selectedPayslip.epfEmployee.toFixed(2)}</span>
                       </div>
                       <div className="payslip-item">
-                        <span>SCP</span>
+                        <span>{t('staffPortal.payslip.deductions.scp')}</span>
                         <span>BND {selectedPayslip.socso.toFixed(2)}</span>
                       </div>
                       {selectedPayslip.otherDeductions > 0 && (
                         <div className="payslip-item">
-                          <span>Potongan Lain</span>
+                          <span>{t('staffPortal.payslip.deductions.other')}</span>
                           <span>BND {selectedPayslip.otherDeductions.toFixed(2)}</span>
                         </div>
                       )}
                       <div className="payslip-item total">
-                        <span>Jumlah Potongan</span>
+                        <span>{t('staffPortal.payslip.deductions.total')}</span>
                         <span>BND {totalDeductions.toFixed(2)}</span>
                       </div>
                     </div>
@@ -341,11 +343,11 @@ export default function PayslipPage() {
 
                 {/* Net Pay */}
                 <div className="payslip-net-pay">
-                  <div className="net-pay-label">Gaji Bersih</div>
+                  <div className="net-pay-label">{t('staffPortal.payslip.net.label')}</div>
                   <div className="net-pay-amount">BND {selectedPayslip.netPay.toFixed(2)}</div>
                   {selectedPayslip.paidDate && (
                     <div className="net-pay-date">
-                      Dibayar pada {new Date(selectedPayslip.paidDate).toLocaleDateString('ms-MY')}
+                      {t('staffPortal.payslip.net.paidOn', { date: new Date(selectedPayslip.paidDate).toLocaleDateString('ms-MY') })}
                     </div>
                   )}
                 </div>
@@ -353,7 +355,7 @@ export default function PayslipPage() {
                 {/* Employer Contribution Note */}
                 <div className="payslip-note">
                   <FileText size={14} />
-                  <span>Caruman Majikan TAP: BND {selectedPayslip.epfEmployer.toFixed(2)}</span>
+                  <span>{t('staffPortal.payslip.employer', { amount: selectedPayslip.epfEmployer.toFixed(2) })}</span>
                 </div>
 
                 {/* Footer Note */}
@@ -368,7 +370,7 @@ export default function PayslipPage() {
                     textAlign: 'center',
                     fontStyle: 'italic'
                   }}>
-                    {branding.footerNote}
+                    {t('staffPortal.payslip.footer')}
                   </div>
                 )}
               </div>
@@ -380,7 +382,3 @@ export default function PayslipPage() {
     </StaffLayout>
   );
 }
-
-
-
-

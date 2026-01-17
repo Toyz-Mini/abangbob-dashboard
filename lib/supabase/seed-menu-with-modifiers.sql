@@ -213,3 +213,4 @@ ON CONFLICT (name) DO UPDATE SET
 -- 2. Restart your app to load the new data
 -- 3. Test modifier selection in POS
 --
+

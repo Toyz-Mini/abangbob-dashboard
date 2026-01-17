@@ -253,3 +253,4 @@ COMMENT ON TABLE public.claim_requests IS 'Staff expense claim requests';
 COMMENT ON TABLE public.staff_requests IS 'General staff requests and queries';
 COMMENT ON TABLE public.announcements IS 'Company-wide announcements for staff';
 
+

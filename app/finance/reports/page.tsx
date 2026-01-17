@@ -20,8 +20,7 @@ import {
     ArrowUpRight,
     ArrowDownRight,
 } from 'lucide-react';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
+
 
 type ReportType = 'pnl' | 'sales' | 'expenses';
 
@@ -164,6 +163,8 @@ export default function ReportsPage() {
     const handleExportPDF = useCallback(async () => {
         setIsExporting(true);
         try {
+            const jsPDF = (await import('jspdf')).default;
+            const autoTable = (await import('jspdf-autotable')).default;
             const doc = new jsPDF();
 
             // Title

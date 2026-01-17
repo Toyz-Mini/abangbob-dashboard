@@ -66,3 +66,4 @@ ALTER PUBLICATION supabase_realtime ADD TABLE public.delivery_orders;
 COMMENT ON TABLE public.production_logs IS 'Daily production tracking with waste management';
 COMMENT ON TABLE public.delivery_orders IS 'Orders from delivery platforms (Grab, Panda, Shopee)';
 
+

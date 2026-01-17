@@ -7,6 +7,7 @@ import { useClaimRequestsRealtime } from '@/lib/supabase/realtime-hooks';
 import { getClaimTypeLabel, getStatusLabel, getStatusColor } from '@/lib/staff-portal-data';
 import Link from 'next/link';
 import LoadingSpinner from '@/components/LoadingSpinner';
+import { useTranslation } from '@/lib/contexts/LanguageContext';
 import {
   DollarSign,
   Plus,
@@ -26,6 +27,7 @@ import { ClaimRequest } from '@/lib/types';
 
 
 export default function ClaimsPage() {
+  const { t } = useTranslation();
   const { staff, isInitialized } = useStaff();
   const { getStaffClaimRequests, refreshClaimRequests } = useStaffPortal();
 
@@ -87,15 +89,15 @@ export default function ClaimsPage() {
             <div>
 
               <h1 className="page-title" style={{ marginTop: '0.5rem' }}>
-                Tuntutan Saya
+                {t('staffPortal.claims.title')}
               </h1>
               <p className="page-subtitle">
-                Submit dan track tuntutan
+                {t('staffPortal.claims.subtitle')}
               </p>
             </div>
             <Link href="/staff-portal/claims/new" className="btn btn-primary">
               <Plus size={18} />
-              Tuntutan Baru
+              {t('staffPortal.claims.new')}
             </Link>
           </div>
         </div>
@@ -107,7 +109,7 @@ export default function ClaimsPage() {
               <AlertCircle size={24} />
             </div>
             <div className="staff-stat-value">BND {pendingTotal.toFixed(2)}</div>
-            <div className="staff-stat-label">Menunggu Kelulusan</div>
+            <div className="staff-stat-label">{t('staffPortal.claims.stats.pending')}</div>
           </div>
 
           <div className="staff-stat-card success">
@@ -115,7 +117,7 @@ export default function ClaimsPage() {
               <CheckCircle size={24} />
             </div>
             <div className="staff-stat-value">BND {approvedTotal.toFixed(2)}</div>
-            <div className="staff-stat-label">Diluluskan</div>
+            <div className="staff-stat-label">{t('staffPortal.claims.stats.approved')}</div>
           </div>
 
           <div className="staff-stat-card cool">
@@ -123,7 +125,7 @@ export default function ClaimsPage() {
               <Wallet size={24} />
             </div>
             <div className="staff-stat-value">BND {paidTotal.toFixed(2)}</div>
-            <div className="staff-stat-label">Telah Dibayar</div>
+            <div className="staff-stat-label">{t('staffPortal.claims.stats.paid')}</div>
           </div>
         </div>
 
@@ -132,9 +134,9 @@ export default function ClaimsPage() {
           <div className="card-header">
             <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <Receipt size={20} />
-              Senarai Tuntutan
+              {t('staffPortal.claims.listTitle')}
             </div>
-            <div className="card-subtitle">{claimRequests.length} tuntutan</div>
+            <div className="card-subtitle">{t('staffPortal.claims.listCount', { count: claimRequests.length })}</div>
           </div>
 
           {sortedRequests.length > 0 ? (
@@ -172,7 +174,7 @@ export default function ClaimsPage() {
                         {claim.description}
                       </div>
                       <div style={{ fontSize: '0.75rem', color: 'var(--text-light)', marginTop: '0.25rem' }}>
-                        Tarikh claim: {claim.claimDate}
+                        {t('staffPortal.claims.item.date', { date: claim.claimDate })}
                       </div>
                     </div>
 
@@ -202,7 +204,7 @@ export default function ClaimsPage() {
                       </div>
 
                       <div style={{ fontSize: '0.7rem', color: 'var(--primary)', marginTop: '0.25rem', fontWeight: 500 }}>
-                        Lihat Butiran
+                        {t('staffPortal.claims.item.viewDetail')}
                       </div>
                     </div>
                   </div>
@@ -210,7 +212,7 @@ export default function ClaimsPage() {
                   {claim.rejectionReason && (
                     <div className="staff-message error" style={{ padding: '0.5rem 0.75rem', textAlign: 'left', fontSize: '0.75rem' }}>
                       <XCircle size={14} />
-                      Sebab ditolak: {claim.rejectionReason}
+                      {t('staffPortal.claims.item.rejectionReason', { reason: claim.rejectionReason })}
                     </div>
                   )}
                 </div>
@@ -219,7 +221,7 @@ export default function ClaimsPage() {
           ) : (
             <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>
               <Receipt size={40} color="var(--gray-300)" style={{ marginBottom: '0.75rem' }} />
-              <div>Tiada rekod tuntutan</div>
+              <div>{t('staffPortal.claims.noHistory')}</div>
             </div>
           )}
         </div>

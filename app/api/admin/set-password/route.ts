@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { query } from '@/lib/db';
-import { auth } from '@/lib/auth/server';
-
+import { getSupabaseAdmin } from '@/lib/supabase/admin';
 
 export async function POST(request: NextRequest) {
     try {
@@ -22,27 +20,32 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // Check if user exists
-        const userResult = await query(
-            `SELECT id FROM "user" WHERE email = $1`,
-            [email]
-        );
+        const adminClient = getSupabaseAdmin();
 
-        if (!userResult.rowCount || userResult.rowCount === 0) {
+        // Find user by email in auth.users
+        const { data: { users }, error: listError } = await adminClient.auth.admin.listUsers();
+        const authUser = users?.find(u => u.email?.toLowerCase() === email.toLowerCase());
+
+        if (!authUser) {
             return NextResponse.json(
-                { error: 'User dengan email ini tidak wujud' },
+                { error: 'User dengan email ini tidak wujud dalam sistem baru' },
                 { status: 404 }
             );
         }
 
-        const userId = userResult.rows[0].id;
+        // Update password using Supabase Admin API
+        const { error: updateError } = await adminClient.auth.admin.updateUserById(
+            authUser.id,
+            { password }
+        );
 
-        // Update password using Better Auth's internal adapter
-        // This ensures the hash is in the correct format (bcrypt)
-        await (auth as any).internalAdapter.updatePassword({
-            userId: userId,
-            newPassword: password
-        });
+        if (updateError) {
+            console.error('Set password error:', updateError);
+            return NextResponse.json(
+                { error: 'Ralat berlaku semasa menetapkan password' },
+                { status: 500 }
+            );
+        }
 
         return NextResponse.json({
             success: true,

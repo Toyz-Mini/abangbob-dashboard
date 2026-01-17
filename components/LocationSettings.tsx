@@ -136,7 +136,7 @@ export default function LocationSettings() {
             address: location.address || '',
             latitude: Number(location.latitude),
             longitude: Number(location.longitude),
-            radius_meters: location.radius_meters,
+            radius_meters: Number(location.radiusMeters) || 100,
         });
         setShowModal(true);
     };
@@ -244,12 +244,12 @@ export default function LocationSettings() {
                             className="group relative bg-white dark:bg-gray-800 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border border-gray-200 dark:border-gray-700"
                         >
                             {/* Card Header with Gradient */}
-                            <div className={`h-2 bg-gradient-to-r ${getRadiusColor(location.radius_meters)}`}></div>
+                            <div className={`h-2 bg-gradient-to-r ${getRadiusColor(location.radiusMeters)}`}></div>
 
                             <div className="p-6">
                                 {/* Location Icon & Name */}
                                 <div className="flex items-start gap-4 mb-4">
-                                    <div className={`p-3 bg-gradient-to-br ${getRadiusColor(location.radius_meters)} rounded-xl shadow-lg`}>
+                                    <div className={`p-3 bg-gradient-to-br ${getRadiusColor(location.radiusMeters)} rounded-xl shadow-lg`}>
                                         <MapPin className="text-white" size={24} />
                                     </div>
                                     <div className="flex-1">
@@ -283,8 +283,8 @@ export default function LocationSettings() {
                                         <Target size={16} className="text-gray-400" />
                                         <span className="text-sm text-gray-600 dark:text-gray-400">Radius</span>
                                     </div>
-                                    <div className={`px-4 py-1.5 bg-gradient-to-r ${getRadiusColor(location.radius_meters)} rounded-full`}>
-                                        <span className="text-sm font-bold text-white">{location.radius_meters}m</span>
+                                    <div className={`px-4 py-1.5 bg-gradient-to-r ${getRadiusColor(location.radiusMeters)} rounded-full`}>
+                                        <span className="text-sm font-bold text-white">{location.radiusMeters}m</span>
                                     </div>
                                 </div>
 
@@ -426,7 +426,10 @@ export default function LocationSettings() {
                                             max="1000"
                                             step="50"
                                             value={formData.radius_meters}
-                                            onChange={(e) => setFormData({ ...formData, radius_meters: parseInt(e.target.value) })}
+                                            onChange={(e) => {
+                                                const val = parseInt(e.target.value);
+                                                setFormData({ ...formData, radius_meters: isNaN(val) ? 100 : val });
+                                            }}
                                             className="w-full h-3 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer"
                                             style={{
                                                 background: `linear-gradient(to right, #ef4444 0%, #ec4899 ${((formData.radius_meters - 50) / 950) * 100}%, rgb(229, 231, 235) ${((formData.radius_meters - 50) / 950) * 100}%, rgb(229, 231, 235) 100%)`

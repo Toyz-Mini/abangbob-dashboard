@@ -82,3 +82,4 @@ COMMENT ON TABLE public.promotions IS 'Promotional campaigns and discount codes'
 COMMENT ON TABLE public.notifications IS 'System-wide notifications for staff';
 COMMENT ON COLUMN public.notifications.target_user_id IS 'NULL = broadcast to all, UUID = specific user';
 
+

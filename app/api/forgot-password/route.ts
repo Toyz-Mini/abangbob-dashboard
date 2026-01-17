@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
     );
 
     // Create reset URL
-    const baseUrl = process.env.BETTER_AUTH_URL || 'http://localhost:3000';
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
     const resetUrl = `${baseUrl}/reset-password?token=${token}&email=${encodeURIComponent(email)}`;
 
     // Send reset email (don't fail if email service is unavailable)

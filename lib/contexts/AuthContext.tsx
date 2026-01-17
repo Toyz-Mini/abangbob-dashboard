@@ -1,7 +1,8 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { authClient, useSession as useBetterAuthSession } from '@/lib/auth-client';
+import { getSupabaseClient } from '@/lib/supabase/client';
+import type { User as SupabaseUser, Session } from '@supabase/supabase-js';
 
 // Legacy StaffProfile interface for backwards compatibility
 interface StaffProfile {
@@ -20,23 +21,22 @@ interface User {
   role?: string;
   outletId?: string;
   status?: string;
-  dbRole?: string | null; // Raw DB role for debugging
+  dbRole?: string | null;
   user_metadata?: {
     name?: string;
   };
 }
 
 interface AuthContextType {
-  // New Better Auth properties
   user: User | null;
   loading: boolean;
   isAuthenticated: boolean;
-  userStatus: string | null; // User approval status
+  userStatus: string | null;
 
   // Legacy properties for backwards compatibility
   currentStaff: StaffProfile | null;
   isStaffLoggedIn: boolean;
-  session: any;
+  session: Session | null;
   isSupabaseConnected: boolean;
 
   // Auth methods
@@ -52,77 +52,96 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const { data: session, isPending, error } = useBetterAuthSession();
+  const [session, setSession] = useState<Session | null>(null);
+  const [supabaseUser, setSupabaseUser] = useState<SupabaseUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [userStatus, setUserStatus] = useState<string | null>(null);
   const [userRole, setUserRole] = useState<string>('Staff');
-  const [dbRole, setDbRole] = useState<string | null>(null); // Raw DB value for debugging
+  const [dbRole, setDbRole] = useState<string | null>(null);
 
-  // Handle loading state and status fetching
+  // Initialize auth state and listen for changes
   useEffect(() => {
-    let isMounted = true;
+    const supabase = getSupabaseClient();
 
-    const initAuth = async () => {
-      // If BetterAuth is still loading, keep loading true
-      if (isPending) {
-        return;
-      }
+    if (!supabase) {
+      console.warn('[AuthContext] Supabase not configured');
+      setLoading(false);
+      return;
+    }
 
-      // If no session, we are done loading (not authenticated)
-      if (!session?.user?.id) {
-        if (isMounted) {
-          setUserStatus(null);
-          setLoading(false);
-        }
-        return;
-      }
-
-      // If we have a session, fetch extended user status from DB
+    // Get initial session
+    const initSession = async () => {
       try {
-        const res = await fetch(`/api/user/status?userId=${session.user.id}`, { cache: 'no-store' });
-        console.log('[AuthContext] Status API Response:', res.status);
-        if (isMounted && res.ok) {
-          const data = await res.json();
-          console.log('[AuthContext] Status Data:', data);
-          setUserStatus(data.status || 'approved');
-          setUserRole(data.role || 'Staff');
-          setDbRole(data.db_role ?? 'NOT_IN_RESPONSE'); // Capture raw DB value
-        } else if (isMounted) {
-          // Fallback if API fails - FAIL SAFE (Do NOT default to approved)
-          console.error('Failed to fetch user status - falling back to strict mode');
-          setUserStatus('incomplete_profile');
+        const { data: { session: initialSession } } = await supabase.auth.getSession();
+        setSession(initialSession);
+        setSupabaseUser(initialSession?.user || null);
+
+        if (initialSession?.user) {
+          await fetchUserStatus(initialSession.user.id);
         }
       } catch (error) {
-        if (isMounted) {
-          console.error('Error fetching user status:', error);
-          // Fail Safe
-          setUserStatus('incomplete_profile');
-        }
+        console.error('[AuthContext] Error getting initial session:', error);
       } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
+        setLoading(false);
       }
     };
 
-    initAuth();
+    initSession();
+
+    // Listen for auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event: string, newSession: Session | null) => {
+        console.log('[AuthContext] Auth state changed:', event);
+        setSession(newSession);
+        setSupabaseUser(newSession?.user || null);
+
+        if (newSession?.user) {
+          await fetchUserStatus(newSession.user.id);
+        } else {
+          setUserStatus(null);
+          setUserRole('Staff');
+          setDbRole(null);
+        }
+
+        setLoading(false);
+      }
+    );
 
     return () => {
-      isMounted = false;
+      subscription.unsubscribe();
     };
-  }, [isPending, session?.user?.id]);
+  }, []);
 
-  // Create user object from Better Auth session
-  const user: User | null = session?.user ? {
-    id: session.user.id,
-    name: session.user.name || '',
-    email: session.user.email || '',
+  // Fetch user status from API
+  const fetchUserStatus = async (userId: string) => {
+    try {
+      const res = await fetch(`/api/user/status?userId=${userId}`, { cache: 'no-store' });
+      if (res.ok) {
+        const data = await res.json();
+        setUserStatus(data.status || 'approved');
+        setUserRole(data.role || 'Staff');
+        setDbRole(data.db_role ?? null);
+      } else {
+        console.error('[AuthContext] Failed to fetch user status');
+        setUserStatus('incomplete_profile');
+      }
+    } catch (error) {
+      console.error('[AuthContext] Error fetching user status:', error);
+      setUserStatus('incomplete_profile');
+    }
+  };
+
+  // Create user object from Supabase session
+  const user: User | null = supabaseUser ? {
+    id: supabaseUser.id,
+    name: supabaseUser.user_metadata?.name || supabaseUser.email || '',
+    email: supabaseUser.email || '',
     role: userRole,
-    outletId: (session.user as any).outletId || null,
+    outletId: supabaseUser.user_metadata?.outletId || null,
     status: userStatus || 'pending_approval',
-    dbRole: dbRole, // Expose raw DB role for debugging
+    dbRole: dbRole,
     user_metadata: {
-      name: session.user.name || '',
+      name: supabaseUser.user_metadata?.name || '',
     },
   } : null;
 
@@ -139,19 +158,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = async () => {
     try {
       console.log('[AuthContext] Starting signOut...');
-      // Race condition: If signOut takes longer than 2000ms, force proceed
-      // Increased from 500ms to 2000ms for better mobile reliability
-      await Promise.race([
-        authClient.signOut(),
-        new Promise(resolve => setTimeout(resolve, 2000))
-      ]);
-      console.log('[AuthContext] BetterAuth signOut completed or timed out');
+      const supabase = getSupabaseClient();
+      if (supabase) {
+        await supabase.auth.signOut();
+      }
+      console.log('[AuthContext] Supabase signOut completed');
     } catch (error) {
-      console.error('Sign out error:', error);
+      console.error('[AuthContext] Sign out error:', error);
     } finally {
-      // Always redirect to login page even if server logout fails/hangs
       if (typeof window !== 'undefined') {
-        console.log('[AuthContext] Redirecting to /login');
         window.location.href = '/login';
       }
     }
@@ -159,10 +174,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signInWithEmail = async (email: string, password: string) => {
     try {
-      const result = await authClient.signIn.email({ email, password });
-      if (result.error) {
-        return { success: false, error: result.error.message };
+      const supabase = getSupabaseClient();
+      if (!supabase) {
+        return { success: false, error: 'Supabase not configured' };
       }
+
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        return { success: false, error: error.message };
+      }
+
       return { success: true };
     } catch (error: any) {
       return { success: false, error: error.message || 'Login failed' };
@@ -171,10 +196,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signUp = async (email: string, password: string, name: string) => {
     try {
-      const result = await authClient.signUp.email({ email, password, name });
-      if (result.error) {
-        return { success: false, error: result.error.message };
+      const supabase = getSupabaseClient();
+      if (!supabase) {
+        return { success: false, error: 'Supabase not configured' };
       }
+
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: { name },
+        },
+      });
+
+      if (error) {
+        return { success: false, error: error.message };
+      }
+
       return { success: true };
     } catch (error: any) {
       return { success: false, error: error.message || 'Registration failed' };
@@ -201,7 +239,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         currentStaff,
         isStaffLoggedIn: !!currentStaff,
         session,
-        isSupabaseConnected: true, // Always true for backwards compatibility
+        isSupabaseConnected: true,
         signOut,
         signInWithEmail,
         signUp,
@@ -225,4 +263,3 @@ export function useAuth() {
 // Export context and types
 export { AuthContext };
 export type { AuthContextType, StaffProfile };
-

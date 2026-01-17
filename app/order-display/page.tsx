@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useOrders } from '@/lib/store';
+import { useOrdersRealtime } from '@/lib/supabase/realtime-hooks'; // Realtime
 import { useSound } from '@/lib/contexts/SoundContext';
 import { Order } from '@/lib/types';
 import {
@@ -22,7 +23,14 @@ import {
 const AVG_PREP_TIME_MINUTES = 5;
 
 export default function OrderDisplayPage() {
-  const { orders, getTodayOrders, isInitialized } = useOrders();
+  const { orders, getTodayOrders, isInitialized, refreshOrders } = useOrders();
+
+  // Realtime
+  useOrdersRealtime(useCallback(() => {
+    console.log('[OrderDisplay] Realtime update received');
+    refreshOrders();
+  }, [refreshOrders]));
+
   const { playSound, settings: soundSettings, toggleSound } = useSound();
 
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -581,3 +589,4 @@ function EmptyState({ icon, message }: any) {
     </div>
   )
 }
+

@@ -838,12 +838,24 @@ export async function loadRecipesFromSupabase() {
 // ============ SHIFTS SYNC ============
 
 export async function syncAddShift(shift: any) {
-  if (!isSupabaseSyncEnabled()) return null;
+  if (!isSupabaseSyncEnabled()) {
+    console.log('[Sync] Supabase sync disabled, skipping shift save');
+    return null;
+  }
 
   try {
-    return await ops.insertShift(shift);
-  } catch (error) {
-    console.error('Failed to sync shift to Supabase:', error);
+    console.log('[Sync] Inserting shift:', { id: shift.id, name: shift.name });
+    const result = await ops.insertShift(shift);
+    console.log('[Sync] Shift inserted successfully:', result?.id || shift.id);
+    return result;
+  } catch (error: any) {
+    console.error('[Sync] Failed to insert shift:', {
+      shiftId: shift.id,
+      shiftName: shift.name,
+      error: error?.message || error,
+      code: error?.code,
+      details: error?.details,
+    });
     addToSyncQueue({ id: shift.id, table: 'shifts', action: 'CREATE', payload: shift });
     return null;
   }
@@ -886,12 +898,33 @@ export async function loadShiftsFromSupabase() {
 // ============ SCHEDULES SYNC ============
 
 export async function syncAddScheduleEntry(entry: any) {
-  if (!isSupabaseSyncEnabled()) return null;
+  if (!isSupabaseSyncEnabled()) {
+    console.log('[Sync] Supabase sync disabled, skipping schedule entry save');
+    return null;
+  }
 
   try {
-    return await ops.insertScheduleEntry(entry);
-  } catch (error) {
-    console.error('Failed to sync schedule entry to Supabase:', error);
+    console.log('[Sync] Inserting schedule entry:', {
+      id: entry.id,
+      date: entry.date,
+      staffId: entry.staffId,
+      staffName: entry.staffName,
+      shiftId: entry.shiftId,
+    });
+    const result = await ops.insertScheduleEntry(entry);
+    console.log('[Sync] Schedule entry inserted successfully:', result?.id || entry.id);
+    return result;
+  } catch (error: any) {
+    console.error('[Sync] Failed to insert schedule entry:', {
+      entryId: entry.id,
+      staffId: entry.staffId,
+      shiftId: entry.shiftId,
+      date: entry.date,
+      error: error?.message || error,
+      code: error?.code,
+      details: error?.details,
+      hint: error?.hint,
+    });
     addToSyncQueue({ id: entry.id, table: 'schedule_entries', action: 'CREATE', payload: entry });
     return null;
   }
@@ -1714,187 +1747,77 @@ export async function loadOilActionHistoryFromSupabase(fryerId?: string) {
 
 // ============ INITIAL LOAD ALL DATA ============
 
-export async function loadAllDataFromSupabase() {
+// ============ INITIAL LOAD ALL DATA ============
+
+export async function loadCriticalDataFromSupabase() {
   if (!isSupabaseSyncEnabled()) {
     return {
-      inventory: [],
-      inventoryLogs: [],
       staff: [],
       menuItems: [],
       modifierGroups: [],
       modifierOptions: [],
-      orders: [],
-      customers: [],
-      expenses: [],
-      attendance: [],
-      suppliers: [],
-      purchaseOrders: [],
-      recipes: [],
-      shifts: [],
-      schedules: [],
-      promotions: [],
-      notifications: [],
-      productionLogs: [],
-      deliveryOrders: [],
-      cashFlows: [],
-      staffKPI: [],
-      leaveRecords: [],
-      trainingRecords: [],
-      otRecords: [],
-      customerReviews: [],
-      checklistTemplates: [],
-      checklistCompletions: [],
-      leaveBalances: [],
-      leaveRequests: [],
-      claimRequests: [],
-      staffRequests: [],
-      announcements: [],
-      oilTrackers: [],
-      oilChangeRequests: [],
-      oilActionHistory: [],
-      positions: [],
-      equipment: [],
-      maintenanceSchedules: [],
-      maintenanceLogs: [],
-      voidRefundRequests: [],
       menuCategories: [],
       paymentMethods: [],
       taxRates: [],
+      positions: [],
+      announcements: [],
+      cashRegisters: [],
+      notifications: [],
     };
   }
 
   try {
     const results = await Promise.allSettled([
-      ops.fetchInventory(),
-      ops.fetchStaff(),
-      ops.fetchMenuItems(),
-      ops.fetchModifierGroups(),
-      ops.fetchModifierOptions(),
-      ops.fetchOrders(100),
-      ops.fetchCustomers(),
-      ops.fetchExpenses(),
-      ops.fetchAttendance(),
-      ops.fetchSuppliers(),
-      ops.fetchPurchaseOrders(),
-      ops.fetchRecipes(),
-      ops.fetchShifts(),
-      ops.fetchScheduleEntries(),
-      ops.fetchPromotions(),
-      ops.fetchNotifications(),
-      ops.fetchProductionLogs(),
-      ops.fetchDeliveryOrders(),
-      ops.fetchCashFlows(),
-      ops.fetchStaffKPI(),
-      ops.fetchLeaveRecords(),
-      ops.fetchTrainingRecords(),
-      ops.fetchOTRecords(),
-      ops.fetchCustomerReviews(),
-      ops.fetchChecklistTemplates(),
-      ops.fetchChecklistCompletions(),
-      ops.fetchLeaveBalances(),
-      ops.fetchLeaveRequests(),
-      ops.fetchClaimRequests(),
-      ops.fetchStaffRequests(),
-      ops.fetchAnnouncements(),
-      ops.fetchOilTrackers(),
-      ops.fetchOilChangeRequests(),
-      ops.fetchOilActionHistory(),
-      ops.fetchCashRegisters(), // Index 34
-      loadPositionsFromSupabase(), // Index 35
-      ops.fetchEquipment(), // Index 36
-      ops.fetchMaintenanceSchedules(), // Index 37
-      ops.fetchMaintenanceLogs(), // Index 38
-      ops.fetchOTClaims(), // Index 39
-      ops.fetchSalaryAdvances(), // Index 40
-      ops.fetchDisciplinaryActions(), // Index 41
-      ops.fetchStaffTraining(), // Index 42
-      ops.fetchStaffDocuments(), // Index 43
-      ops.fetchPerformanceReviews(), // Index 44
-      ops.fetchOnboardingChecklists(), // Index 45
-      ops.fetchExitInterviews(), // Index 46
-      ops.fetchStaffComplaints(), // Index 47
-      ops.fetchVoidRefundRequests(), // Index 48
-      PaymentTaxSync.getAllMenuCategories(), // Index 49
-      PaymentTaxSync.getAllPaymentMethods(), // Index 50
-      PaymentTaxSync.getAllTaxRates(), // Index 51
+      ops.fetchStaff(),               // 0
+      ops.fetchMenuItems(),           // 1
+      ops.fetchModifierGroups(),      // 2
+      ops.fetchModifierOptions(),     // 3
+      PaymentTaxSync.getAllMenuCategories(), // 4
+      PaymentTaxSync.getAllPaymentMethods(), // 5
+      PaymentTaxSync.getAllTaxRates(),       // 6
+      loadPositionsFromSupabase(),           // 7
+      ops.fetchAnnouncements(),              // 8
+      ops.fetchCashRegisters(),              // 9
+      ops.fetchNotifications(),              // 10
     ]);
 
-    // Helper to get value or default
-    const getResult = <T>(index: number, defaultValue: T): T => {
+    const getResult = <T,>(index: number, defaultValue: T): T => {
       const result = results[index];
       if (result.status === 'fulfilled') {
         return result.value as T;
       } else {
-        console.error(`Failed to load data at index ${index}: `, result.reason);
+        console.error(`Failed to load critical data at index ${index}: `, result.reason);
         return defaultValue;
       }
     };
 
     return {
-      inventory: getResult(0, []),
-      staff: getResult(1, []),
-      menuItems: getResult(2, []),
-      modifierGroups: getResult(3, []),
-      modifierOptions: getResult(4, []),
-      orders: getResult(5, []),
-      customers: getResult(6, []),
-      expenses: getResult(7, []),
-      attendance: getResult(8, []),
-      suppliers: getResult(9, []),
-      purchaseOrders: getResult(10, []),
-      recipes: getResult<any[]>(11, []).map(r => ({
-        ...r,
-        menuItemName: getResult<any[]>(2, []).find(m => m.id === r.menuItemId)?.name || 'Unknown'
-      })),
-      shifts: getResult(12, []),
-      schedules: getResult(13, []),
-      promotions: getResult(14, []),
-      notifications: getResult(15, []),
-      productionLogs: getResult(16, []),
-      deliveryOrders: getResult(17, []),
-      cashFlows: getResult(18, []),
-      staffKPI: getResult(19, []),
-      leaveRecords: getResult(20, []),
-      trainingRecords: getResult(21, []),
-      otRecords: getResult(22, []),
-      customerReviews: getResult(23, []),
-      checklistTemplates: getResult(24, []),
-      checklistCompletions: getResult(25, []),
-      leaveBalances: getResult(26, []),
-      leaveRequests: getResult(27, []),
-      claimRequests: getResult(28, []),
-      staffRequests: getResult(29, []),
-      announcements: getResult(30, []),
-      oilTrackers: getResult(31, []),
-      oilChangeRequests: getResult(32, []),
-      oilActionHistory: getResult(33, []),
-      cashRegisters: getResult(34, []),
-      positions: getResult(35, []),
-      equipment: getResult(36, []),
-      maintenanceSchedules: getResult(37, []),
-      maintenanceLogs: getResult(38, []),
-      otClaims: getResult(39, []),
-      salaryAdvances: getResult(40, []),
-      disciplinaryActions: getResult(41, []),
-      staffTraining: getResult(42, []),
-      staffDocuments: getResult(43, []),
-      performanceReviews: getResult(44, []),
-      onboardingChecklists: getResult(45, []),
-      exitInterviews: getResult(46, []),
-      staffComplaints: getResult(47, []),
-      voidRefundRequests: getResult(48, []),
-      menuCategories: getResult<any>(49, { data: [] }).data || [],
-      paymentMethods: getResult<any>(50, { data: [] }).data || [],
-      taxRates: getResult<any>(51, { data: [] }).data || [],
+      staff: getResult(0, []),
+      menuItems: getResult(1, []),
+      modifierGroups: getResult(2, []),
+      modifierOptions: getResult(3, []),
+      menuCategories: getResult<any>(4, { data: [] }).data || [],
+      paymentMethods: getResult<any>(5, { data: [] }).data || [],
+      taxRates: getResult<any>(6, { data: [] }).data || [],
+      positions: getResult(7, []),
+      announcements: getResult(8, []),
+      cashRegisters: getResult(9, []),
+      notifications: getResult(10, []),
     };
   } catch (error) {
-    console.error('Critical failure in loadAllDataFromSupabase:', error);
+    console.error('Critical failure in loadCriticalDataFromSupabase:', error);
+    return {
+      staff: [], menuItems: [], modifierGroups: [], modifierOptions: [],
+      menuCategories: [], paymentMethods: [], taxRates: [], positions: [],
+      announcements: [], cashRegisters: [], notifications: []
+    };
+  }
+}
+
+export async function loadSecondaryDataFromSupabase(menuItems: any[] = []) {
+  if (!isSupabaseSyncEnabled()) {
     return {
       inventory: [],
-      staff: [],
-      menuItems: [],
-      modifierGroups: [],
-      modifierOptions: [],
       orders: [],
       customers: [],
       expenses: [],
@@ -1905,7 +1828,6 @@ export async function loadAllDataFromSupabase() {
       shifts: [],
       schedules: [],
       promotions: [],
-      notifications: [],
       productionLogs: [],
       deliveryOrders: [],
       cashFlows: [],
@@ -1920,13 +1842,9 @@ export async function loadAllDataFromSupabase() {
       leaveRequests: [],
       claimRequests: [],
       staffRequests: [],
-      announcements: [],
       oilTrackers: [],
       oilChangeRequests: [],
       oilActionHistory: [],
-      // missing inventoryLogs in original catch return, adding it
-      inventoryLogs: [],
-      positions: [],
       equipment: [],
       maintenanceSchedules: [],
       maintenanceLogs: [],
@@ -1940,11 +1858,138 @@ export async function loadAllDataFromSupabase() {
       exitInterviews: [],
       staffComplaints: [],
       voidRefundRequests: [],
-      menuCategories: [],
-      paymentMethods: [],
-      taxRates: [],
+      inventoryLogs: [],
     };
   }
+
+  try {
+    const results = await Promise.allSettled([
+      ops.fetchInventory(),           // 0
+      ops.fetchOrders(100),           // 1
+      ops.fetchCustomers(),           // 2
+      ops.fetchExpenses(),            // 3
+      ops.fetchAttendance(),          // 4
+      ops.fetchSuppliers(),           // 5
+      ops.fetchPurchaseOrders(),      // 6
+      ops.fetchRecipes(),             // 7
+      ops.fetchShifts(),              // 8
+      ops.fetchScheduleEntries(),     // 9
+      ops.fetchPromotions(),          // 10
+      ops.fetchProductionLogs(),      // 11
+      ops.fetchDeliveryOrders(),      // 12
+      ops.fetchCashFlows(),           // 13
+      ops.fetchStaffKPI(),            // 14
+      ops.fetchLeaveRecords(),        // 15
+      ops.fetchTrainingRecords(),     // 16
+      ops.fetchOTRecords(),           // 17
+      ops.fetchCustomerReviews(),     // 18
+      ops.fetchChecklistTemplates(),  // 19
+      ops.fetchChecklistCompletions(),// 20
+      ops.fetchLeaveBalances(),       // 21
+      ops.fetchLeaveRequests(),       // 22
+      ops.fetchClaimRequests(),       // 23
+      ops.fetchStaffRequests(),       // 24
+      ops.fetchOilTrackers(),         // 25
+      ops.fetchOilChangeRequests(),   // 26
+      ops.fetchOilActionHistory(),    // 27
+      ops.fetchEquipment(),           // 28
+      ops.fetchMaintenanceSchedules(),// 29
+      ops.fetchMaintenanceLogs(),     // 30
+      ops.fetchOTClaims(),            // 31
+      ops.fetchSalaryAdvances(),      // 32
+      ops.fetchDisciplinaryActions(), // 33
+      ops.fetchStaffTraining(),       // 34
+      ops.fetchStaffDocuments(),      // 35
+      ops.fetchPerformanceReviews(),  // 36
+      ops.fetchOnboardingChecklists(),// 37
+      ops.fetchExitInterviews(),      // 38
+      ops.fetchStaffComplaints(),     // 39
+      ops.fetchVoidRefundRequests(),  // 40
+    ]);
+
+    const getResult = <T,>(index: number, defaultValue: T): T => {
+      const result = results[index];
+      if (result.status === 'fulfilled') {
+        return result.value as T;
+      } else {
+        console.error(`Failed to load secondary data at index ${index}: `, result.reason);
+        return defaultValue;
+      }
+    };
+
+    return {
+      inventory: getResult(0, []),
+      orders: getResult(1, []),
+      customers: getResult(2, []),
+      expenses: getResult(3, []),
+      attendance: getResult(4, []),
+      suppliers: getResult(5, []),
+      purchaseOrders: getResult(6, []),
+      recipes: getResult<any[]>(7, []).map(r => ({
+        ...r,
+        menuItemName: menuItems.find(m => m.id === r.menuItemId)?.name || 'Unknown'
+      })),
+      shifts: getResult(8, []),
+      schedules: getResult(9, []),
+      promotions: getResult(10, []),
+      productionLogs: getResult(11, []),
+      deliveryOrders: getResult(12, []),
+      cashFlows: getResult(13, []),
+      staffKPI: getResult(14, []),
+      leaveRecords: getResult(15, []),
+      trainingRecords: getResult(16, []),
+      otRecords: getResult(17, []),
+      customerReviews: getResult(18, []),
+      checklistTemplates: getResult(19, []),
+      checklistCompletions: getResult(20, []),
+      leaveBalances: getResult(21, []),
+      leaveRequests: getResult(22, []),
+      claimRequests: getResult(23, []),
+      staffRequests: getResult(24, []),
+      oilTrackers: getResult(25, []),
+      oilChangeRequests: getResult(26, []),
+      oilActionHistory: getResult(27, []),
+      equipment: getResult(28, []),
+      maintenanceSchedules: getResult(29, []),
+      maintenanceLogs: getResult(30, []),
+      otClaims: getResult(31, []),
+      salaryAdvances: getResult(32, []),
+      disciplinaryActions: getResult(33, []),
+      staffTraining: getResult(34, []),
+      staffDocuments: getResult(35, []),
+      performanceReviews: getResult(36, []),
+      onboardingChecklists: getResult(37, []),
+      exitInterviews: getResult(38, []),
+      staffComplaints: getResult(39, []),
+      voidRefundRequests: getResult(40, []),
+      inventoryLogs: [], // Explicitly empty as per original behavior
+    };
+  } catch (error) {
+    console.error('Failure in loadSecondaryDataFromSupabase:', error);
+    return {
+      inventory: [], orders: [], customers: [], expenses: [], attendance: [],
+      suppliers: [], purchaseOrders: [], recipes: [], shifts: [], schedules: [],
+      promotions: [], productionLogs: [], deliveryOrders: [], cashFlows: [],
+      staffKPI: [], leaveRecords: [], trainingRecords: [], otRecords: [],
+      customerReviews: [], checklistTemplates: [], checklistCompletions: [],
+      leaveBalances: [], leaveRequests: [], claimRequests: [], staffRequests: [],
+      oilTrackers: [], oilChangeRequests: [], oilActionHistory: [], equipment: [],
+      maintenanceSchedules: [], maintenanceLogs: [], otClaims: [], salaryAdvances: [],
+      disciplinaryActions: [], staffTraining: [], staffDocuments: [],
+      performanceReviews: [], onboardingChecklists: [], exitInterviews: [],
+      staffComplaints: [], voidRefundRequests: [], inventoryLogs: [],
+    };
+  }
+}
+
+export async function loadAllDataFromSupabase() {
+  const critical = await loadCriticalDataFromSupabase();
+  const secondary = await loadSecondaryDataFromSupabase(critical.menuItems);
+
+  return {
+    ...critical,
+    ...secondary,
+  };
 }
 
 // ============ ATTENDANCE OPERATIONS WRAPPER ============
@@ -2131,3 +2176,4 @@ export async function loadPositionsFromSupabase() {
     return [];
   }
 }
+

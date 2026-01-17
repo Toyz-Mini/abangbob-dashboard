@@ -12,3 +12,4 @@ CREATE INDEX IF NOT EXISTS idx_staff_extended_data ON public.staff USING gin(ext
 COMMENT ON COLUMN public.staff.extended_data IS 'Stores extended staff profile data including bank details, statutory contributions, emergency contact, leave entitlement, permissions, schedule preferences, documents, skills, certifications, and other additional fields';
 
 
+

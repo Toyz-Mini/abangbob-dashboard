@@ -133,3 +133,4 @@ COMMENT ON TABLE public.ot_records IS 'Overtime requests and acceptance tracking
 COMMENT ON TABLE public.customer_reviews IS 'Customer feedback for staff performance';
 COMMENT ON TABLE public.leave_records IS 'Leave records for KPI calculation';
 
+

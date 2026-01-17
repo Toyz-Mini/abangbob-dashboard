@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query } from '@/lib/db';
-import { auth } from '@/lib/auth';
+import { createServerClient } from '@supabase/ssr';
+import { cookies } from 'next/headers';
 
 export async function POST(request: NextRequest) {
     console.log('[approve-user] API called');
@@ -19,9 +20,13 @@ export async function POST(request: NextRequest) {
 
         // Verify session and admin role
         console.log('[approve-user] Verifying session...');
-        const session = await auth.api.getSession({
-            headers: request.headers
-        });
+        const cookieStore = await cookies();
+        const supabaseAuth = createServerClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+            { cookies: { get(name: string) { return cookieStore.get(name)?.value; } } }
+        );
+        const { data: { session } } = await supabaseAuth.auth.getSession();
         console.log('[approve-user] Session:', session ? { userId: session.user?.id, role: (session.user as any)?.role } : 'null');
 
         if (!session || (session.user as any).role !== 'Admin') {

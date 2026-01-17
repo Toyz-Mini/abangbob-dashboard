@@ -1,16 +1,14 @@
 'use server';
 
-import { auth } from '@/lib/auth';
+import { getServerSession } from '@/lib/supabase/server-auth';
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
-import { headers } from 'next/headers';
+
 import { toSnakeCase, toCamelCase } from '@/lib/supabase/operations';
 
 // ============ EXPENSES ============
 
 export async function fetchExpensesAction() {
-    const session = await auth.api.getSession({
-        headers: await headers()
-    });
+    const session = await getServerSession();
     if (!session) throw new Error('Unauthorized');
 
     const adminClient = getSupabaseAdmin();
@@ -28,9 +26,7 @@ export async function fetchExpensesAction() {
 }
 
 export async function insertExpenseAction(expense: any) {
-    const session = await auth.api.getSession({
-        headers: await headers()
-    });
+    const session = await getServerSession();
     if (!session) throw new Error('Unauthorized');
 
     const adminClient = getSupabaseAdmin();
@@ -48,9 +44,7 @@ export async function insertExpenseAction(expense: any) {
 }
 
 export async function updateExpenseAction(id: string, updates: any) {
-    const session = await auth.api.getSession({
-        headers: await headers()
-    });
+    const session = await getServerSession();
     if (!session) throw new Error('Unauthorized');
 
     const adminClient = getSupabaseAdmin();
@@ -69,9 +63,7 @@ export async function updateExpenseAction(id: string, updates: any) {
 }
 
 export async function deleteExpenseAction(id: string) {
-    const session = await auth.api.getSession({
-        headers: await headers()
-    });
+    const session = await getServerSession();
     if (!session) throw new Error('Unauthorized');
 
     const adminClient = getSupabaseAdmin();

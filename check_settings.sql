@@ -1,0 +1,1 @@
+SELECT * FROM outlet_settings WHERE outlet_id = 'b1000000-0000-0000-0000-000000000001';

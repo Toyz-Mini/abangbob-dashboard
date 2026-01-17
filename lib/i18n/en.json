@@ -75,7 +75,30 @@
     "staffOnDuty": "Staff On Duty",
     "lowStock": "Low Stock",
     "salesTrend": "Sales Trend",
-    "recentOrders": "Recent Orders"
+    "recentOrders": "Recent Orders",
+    "welcome": "Welcome back, manager.",
+    "newOrder": "New Order",
+    "viewReport": "View Report",
+    "kitchen": "Kitchen",
+    "prep": "PREP",
+    "queued": "QUEUED",
+    "kitchenDisplay": "Kitchen Display",
+    "manageTeam": "Manage Team",
+    "open": "Open",
+    "closed": "Closed",
+    "restockNeeded": "Restock Needed",
+    "inventoryTypes": "Inventory Types",
+    "moreItems": "more items",
+    "allStockHealthy": "All Stock Healthy",
+    "monthlyRevenue": "Monthly Revenue",
+    "ordersThisMonth": "orders this month",
+    "viewPerformance": "View Performance",
+    "avgOrderValue": "Avg. Order Value",
+    "customerSpend": "Customer spend average",
+    "seeAll": "See All",
+    "order": "Order",
+    "amount": "Amount",
+    "noOrdersYet": "No orders yet"
   },
   "hr": {
     "title": "HR & Staff",
@@ -88,33 +111,378 @@
     "title": "Inventory Management",
     "subtitle": "Monitor and manage raw material stock",
     "addItem": "Add Item",
-    "searchPlaceholder": "Search item...",
+    "searchPlaceholder": "Search items...",
     "allCategories": "All Categories",
-    "lowStockAlert": "Low Stock Alert",
-    "pleaseRestock": "Please restock"
+    "lowStockAlert": "Low Stock Items",
+    "pleaseRestock": "Please restock",
+    "weather": {
+      "forecastTitle": "Tomorrow's Forecast",
+      "logic": "Inventory Logic",
+      "impact": {
+        "normal": "Normal Order",
+        "reduce": "Reduce {{percent}}%",
+        "increase": "Increase {{percent}}%"
+      }
+    },
+    "tabs": {
+      "stock": "Inventory Stock",
+      "waste": "Waste Logs",
+      "smartReorder": "Smart Reorder",
+      "new": "New"
+    },
+    "table": {
+      "item": "Item",
+      "category": "Category",
+      "quantity": "Current Qty",
+      "min": "Minimum",
+      "unit": "Unit",
+      "cost": "Cost",
+      "supplier": "Supplier",
+      "status": "Status",
+      "action": "Action",
+      "date": "Date",
+      "type": "Type",
+      "reason": "Reason",
+      "variance": "Variance",
+      "value": "Value"
+    },
+    "buttons": {
+      "addItem": "Add Item",
+      "importStock": "Import Stock",
+      "adjust": "Adjust",
+      "history": "History",
+      "edit": "Edit",
+      "delete": "Delete",
+      "save": "Save Changes",
+      "cancel": "Cancel",
+      "processing": "Processing...",
+      "close": "Close",
+      "addStock": "Add Stock Item"
+    },
+    "modal": {
+      "addTitle": "Add New Stock Item",
+      "editTitle": "Edit Stock Item",
+      "adjustTitle": "Adjust Stock",
+      "deleteTitle": "Delete Stock Item",
+      "historyTitle": "Stock History",
+      "form": {
+        "name": "Item Name *",
+        "category": "Category",
+        "unit": "Unit",
+        "currentQty": "Current Quantity",
+        "minQty": "Minimum Quantity",
+        "cost": "Cost per Unit",
+        "supplier": "Supplier",
+        "supplierPlaceholder": "Supplier name",
+        "namePlaceholder": "Ex: Chicken, Rice, etc"
+      },
+      "dailyCount": {
+        "label": "Daily Count Audit",
+        "desc": "Must count during Store Opening/Closing"
+      },
+      "adjust": {
+        "quantity": "Quantity",
+        "quantityPlaceholder": "Enter quantity",
+        "type": "Adjustment Type",
+        "stockIn": "Stock In",
+        "stockOut": "Stock Out",
+        "reason": "Reason",
+        "otherReason": "Other Reason",
+        "newQty": "New Quantity:"
+      },
+      "delete": {
+        "confirm": "Are you sure you want to delete <strong>{{name}}</strong>?",
+        "warning": "This action cannot be undone."
+      },
+      "history": {
+        "empty": "No history for this item"
+      }
+    },
+    "alert": {
+      "enterName": "Please enter item name",
+      "enterValidQty": "Please enter a valid quantity",
+      "importSuccess": "Import successful!",
+      "duplicate": {
+        "found": "\"{{name}}\" already exists",
+        "resolve": "Adjust stock →"
+      },
+      "loadError": "Failed to Load Inventory"
+    },
+    "categories": {
+      "Protein": "Protein",
+      "Staple": "Staple",
+      "Condiment": "Condiment",
+      "Bread": "Bread",
+      "Dairy": "Dairy",
+      "Beverage": "Beverage",
+      "Packaging": "Packaging",
+      "Other": "Other"
+    },
+    "reasons": {
+      "new_purchase": "New Purchase",
+      "restock": "Restock",
+      "daily_use": "Daily Use",
+      "damaged": "Damaged/Expired",
+      "waste": "Waste",
+      "stock_take": "Stock Take Adjustment",
+      "other": "Other"
+    },
+    "status": {
+      "low": "Low",
+      "warning": "Warning",
+      "good": "Good"
+    },
+    "importer": {
+      "title": "Import Stock (CSV)",
+      "error": {
+        "fileType": "Please upload a CSV file.",
+        "read": "Failed to read CSV. Please ensure correct format.",
+        "noData": "No valid item data found.",
+        "import": "Failed to import data. Please try again."
+      },
+      "dropzone": {
+        "processing": "Processing file...",
+        "click": "Click to upload CSV",
+        "drag": "or drag & drop file here"
+      },
+      "template": {
+        "use": "Use Template",
+        "download": "Download CSV Template",
+        "instruction": "Ensure column headers follow format:"
+      },
+      "success": "{{count}} items successfully read.",
+      "buttons": {
+        "back": "Back",
+        "confirm": "Confirm Import",
+        "cancel": "Cancel"
+      }
+    },
+    "waste": {
+      "title": "Report Waste: {{name}}",
+      "quantity": "Quantity Wasted ({{unit}})",
+      "currentStock": "Current Stock: {{qty}} {{unit}}",
+      "loss": "Estimated Loss",
+      "basedOnCost": "Based on cost: {{cost}} / {{unit}}",
+      "reason": "Reason",
+      "notes": "Notes (Optional)",
+      "notesPlaceholder": "Additional details...",
+      "confirm": "Confirm Waste",
+      "reasons": {
+        "expired": "Expired / Spoiled",
+        "burned": "Burned / Cooked Wrong",
+        "customer_return": "Customer Return",
+        "staff_meal": "Staff Meal",
+        "other": "Other"
+      }
+    },
+    "variance": {
+      "title": "Stock Variance Report",
+      "loss": "Total Loss Value",
+      "incidents": "Total Incidents",
+      "records": "Records",
+      "empty": "No variance records found.",
+      "info": "This report shows stock discrepancies detected during Shift Count (Blind) or manual adjustments. A negative value means physical stock is less than system stock (Potential Loss)."
+    },
+    "smartReorder": {
+      "title": "Restock Suggestions (Smart Reorder)",
+      "empty": {
+        "title": "Stock in Good Condition",
+        "desc": "No items need restocking based on 30-day usage analysis."
+      },
+      "cards": {
+        "restock": "Items to Restock",
+        "cost": "Estimated Cost",
+        "suppliers": "Suppliers Involved"
+      },
+      "button": {
+        "generate": "Generate Purchase Order (PO)",
+        "generating": "Generating...",
+        "success": "Successfully generated {{count}} Purchase Orders",
+        "error": "Failed to generate Purchase Order"
+      },
+      "table": {
+        "usage": "Usage / Day",
+        "reorderPoint": "Reorder Point",
+        "suggestion": "Suggested Order",
+        "estCost": "Cost (Est)"
+      },
+      "info": {
+        "title": "How is this calculated?",
+        "desc": "Formula: (Avg Daily Usage × 3 Days Lead Time) + 20% Safety Stock. System suggests ordering when stock falls below this level to cover 7 days of usage."
+      }
+    },
+    "wasteHistory": {
+      "stats": {
+        "value": "Total Waste Value",
+        "incidents": "Total Incidents",
+        "reason": "Most Frequent Reason"
+      },
+      "search": "Search item, note, or staff...",
+      "export": "Export CSV",
+      "exportSoon": "Feature coming soon!",
+      "empty": "No waste records found."
+    }
   },
   "finance": {
     "title": "Finance",
     "subtitle": "Record expenses, cash flow and profit & loss",
     "cashFlowToday": "Cash Flow Today",
-    "addExpense": "Add Expense"
-  },
-  "pos": {
-    "title": "Point of Sale",
-    "orderQueue": "Order Queue",
-    "orderHistory": "Order History",
-    "totalOrders": "Total Orders",
-    "ordersToday": "Orders Today",
-    "noOrders": "No Orders",
-    "pending": "Pending",
-    "waiting": "Waiting",
-    "allProcessed": "All Processed",
-    "preparing": "Preparing",
-    "beingPrepared": "Being Prepared",
-    "noneInKitchen": "None in Kitchen",
-    "ready": "Ready",
-    "readyForPickup": "Ready for Pickup",
-    "noneReady": "None Ready"
+    "addExpense": "Add Expense",
+    "actions": {
+      "csv": "CSV",
+      "pdf": "PDF",
+      "refresh": "Refresh",
+      "save": "Save",
+      "cancel": "Cancel",
+      "add": "Add",
+      "delete": "Delete",
+      "processing": "Processing..."
+    },
+    "tabs": {
+      "expenses": "Expenses",
+      "cashflow": "Cash Flow",
+      "pnl": "Profit & Loss",
+      "moneyOut": "Money Out"
+    },
+    "stats": {
+      "sales": "Monthly Sales",
+      "expenses": "Monthly Expenses",
+      "netProfit": "Net Profit/Loss",
+      "margin": "Profit Margin",
+      "change": {
+        "revenue": "total revenue",
+        "costs": "operating costs",
+        "profit": "profit",
+        "loss": "loss",
+        "healthy": "healthy",
+        "moderate": "moderate",
+        "low": "low"
+      }
+    },
+    "expenses": {
+      "title": "Expense List",
+      "byCategory": "By Category",
+      "filterMonth": "Month",
+      "allCategories": "All Categories",
+      "table": {
+        "date": "Date",
+        "category": "Category",
+        "description": "Description",
+        "amount": "Amount",
+        "payment": "Payment",
+        "actions": "Actions",
+        "vendor": "Vendor"
+      },
+      "empty": "No expenses for this month",
+      "total": "Total:",
+      "today": {
+        "title": "Today",
+        "expenses": "Expenses",
+        "cashBalance": "Cash Balance"
+      }
+    },
+    "cashflow": {
+      "title": "Daily Cash Flow",
+      "subtitle": "Last 7 days",
+      "table": {
+        "date": "Date",
+        "opening": "Opening",
+        "salesCash": "Sales Cash",
+        "salesCard": "Sales Card",
+        "expenses": "Expenses",
+        "closing": "Closing"
+      },
+      "summary": {
+        "title": "Cash Flow Summary",
+        "salesCash": "Total Sales (Cash)",
+        "salesCard": "Total Sales (Card/E-Wallet)",
+        "expensesCash": "Total Expenses (Cash)"
+      }
+    },
+    "pnl": {
+      "title": "Profit & Loss Statement",
+      "revenue": "Revenue",
+      "cogs": "Cost of Goods Sold (COGS)",
+      "grossProfit": "Gross Profit",
+      "operatingExpenses": "Operating Expenses:",
+      "totalExpenses": "Total Expenses",
+      "netProfit": "Net Profit/Loss",
+      "margin": "Margin",
+      "analysis": {
+        "title": "Analysis",
+        "profitAlert": "Congratulations! Your store made a profit of {{amount}} this month.",
+        "lossAlert": "Attention! Your store lost {{amount}} this month.",
+        "recommendations": "Recommendations:",
+        "lowMargin": "Low profit margin. Consider raising prices or reducing costs.",
+        "highCogs": "High COGS ({{percentage}}% of sales). Look for cheaper suppliers.",
+        "trackExpenses": "Track all expenses carefully for accurate analysis."
+      }
+    },
+    "moneyOut": {
+      "title": "Cash Out Record (Money Out)",
+      "table": {
+        "dateTime": "Date & Time",
+        "amount": "Amount",
+        "category": "Category",
+        "reason": "Reason",
+        "issuedBy": "Issued By",
+        "approvedBy": "Approved By"
+      },
+      "empty": "No cash out records for this month",
+      "total": "Total Cash Out:"
+    },
+    "modals": {
+      "addExpense": "Add Expense",
+      "editExpense": "Edit Expense",
+      "deleteExpense": "Delete Expense",
+      "cashFlow": "Daily Cash Flow Report",
+      "labels": {
+        "date": "Date *",
+        "category": "Category *",
+        "amount": "Amount (BND) *",
+        "amountOnly": "Amount",
+        "paymentMethod": "Payment Method *",
+        "description": "Description *",
+        "vendor": "Vendor/Supplier (Optional)",
+        "openingCash": "Opening Cash",
+        "salesCash": "System Sales (Cash)",
+        "salesCard": "Card/QR Sales",
+        "salesEwallet": "E-Wallet Sales (BND)",
+        "expensesCash": "Cash Expenses (Petty Cash)",
+        "closingCash": "Closing Cash:",
+        "closingNote": "Ensure cash in drawer matches this amount.",
+        "pettyCashNote": "Cash taken from drawer for purchases."
+      },
+      "placeholders": {
+        "amount": "0.00",
+        "description": "Example: Chicken 10kg",
+        "vendor": "Store / Company Name"
+      },
+      "deleteConfirm": "Are you sure you want to delete expense <strong>{{description}}</strong>?"
+    },
+    "toast": {
+      "invalidForm": "Please enter a valid description and amount",
+      "addSuccess": "Expense added successfully",
+      "editSuccess": "Expense updated successfully",
+      "deleteSuccess": "Expense deleted successfully",
+      "cashFlowSaved": "Cash flow report saved successfully",
+      "exportCsvSuccess": "CSV exported successfully",
+      "exportCsvError": "Failed to export CSV",
+      "exportPdfSuccess": "PDF exported successfully",
+      "exportPdfError": "Failed to export PDF",
+      "claimPaid": "Claim paid successfully & recorded in Expenses"
+    },
+    "expenseCategories": {
+      "rent": "Rent",
+      "utilities": "Utilities (Water/Electric)",
+      "supplies": "Store Supplies",
+      "wages": "Staff Wages",
+      "marketing": "Marketing",
+      "maintenance": "Maintenance",
+      "ingredients": "Ingredients",
+      "equipment": "Equipment",
+      "other": "Other"
+    }
   },
   "kds": {
     "title": "Kitchen Display System",
@@ -145,6 +513,12 @@
     "settingsMenu": "Settings Menu",
     "outletProfile": "Outlet Profile",
     "operatingHours": "Operating Hours",
+    "operatingHoursDesc": "Set your store opening and closing times",
+    "day": "Day",
+    "status": "Status",
+    "open": "Open",
+    "close": "Close Time",
+    "closed": "Closed",
     "receiptSettings": "Receipt & Kitchen",
     "paymentMethods": "Payment Methods",
     "appearance": "Appearance",
@@ -158,6 +532,950 @@
     "email": "Email",
     "currency": "Currency",
     "timezone": "Timezone",
-    "taxRate": "Tax Rate (%)"
+    "taxRate": "Tax Rate (%)",
+    "notificationSettings": "Notification Settings",
+    "notificationSettingsDesc": "Configure how you receive alerts and reminders",
+    "lowStockAlert": "Low Stock Alert",
+    "lowStockAlertDesc": "Get notified when inventory items are running low",
+    "newOrderSound": "New Order Sound",
+    "newOrderSoundDesc": "Play sound when new orders come in",
+    "dailySummary": "Daily Summary",
+    "dailySummaryDesc": "Receive daily sales and performance summary",
+    "equipmentReminder": "Equipment Reminder",
+    "equipmentReminderDesc": "Get reminders for equipment maintenance"
+  },
+  "promotions": {
+    "title": "Promotions Management",
+    "subtitle": "Manage discounts, promo codes, and special offers",
+    "create": "Create Promotion",
+    "metrics": {
+      "total": "Total Promotions",
+      "active": "Active",
+      "usage": "Usage",
+      "expiringSoon": "Expiring Soon",
+      "available": "available promotions",
+      "running": "currently running",
+      "timesUsed": "times used",
+      "needsAttention": "needs attention",
+      "noExpiring": "none expiring"
+    },
+    "filter": {
+      "all": "All",
+      "active": "Active",
+      "inactive": "Inactive",
+      "expired": "Expired"
+    },
+    "card": {
+      "active": "Active",
+      "inactive": "Inactive",
+      "expired": "Expired",
+      "minPurchase": "Min. purchase",
+      "expiresIn": "Expires in {{days}} days",
+      "used": "Used",
+      "activate": "Activate",
+      "deactivate": "Deactivate",
+      "copy": "Copy"
+    },
+    "empty": {
+      "noPromotionsFilter": "No promotions for this filter",
+      "noPromotions": "No promotions yet",
+      "createFirst": "Create First Promotion"
+    },
+    "modal": {
+      "createTitle": "Create New Promotion",
+      "editTitle": "Edit Promotion",
+      "nameLabel": "Promotion Name *",
+      "namePlaceholder": "Ex: Raya 2024 Discount",
+      "typeLabel": "Promotion Type",
+      "valueLabel": "Value",
+      "maxDiscountLabel": "Max Discount (BND)",
+      "maxDiscountPlaceholder": "0 = no limit",
+      "buyXGetYTitle": "Setup Buy X Get Y",
+      "buyQuantityLabel": "Buy Quantity",
+      "getQuantityLabel": "Get Quantity",
+      "freeItemLabel": "Free Item",
+      "sameItem": "Same Item",
+      "discountPercentLabel": "Discount %",
+      "discountPercentPlaceholder": "100 = Free",
+      "discountPercentHelp": "100% = Free, 50% = Half Price",
+      "preview": "Preview",
+      "previewText": "Buy {{buy}}, Get {{get}} {{discount}}",
+      "free": "FREE",
+      "withDiscount": "with {{percent}}% discount",
+      "promoCodeLabel": "Promo Code (Optional)",
+      "promoCodePlaceholder": "Ex: RAYA2024",
+      "generate": "Generate",
+      "startDateLabel": "Start Date",
+      "endDateLabel": "End Date",
+      "minPurchaseLabel": "Min. Purchase (BND)",
+      "minPurchasePlaceholder": "0 = no minimum",
+      "usageLimitLabel": "Usage Limit",
+      "usageLimitPlaceholder": "0 = no limit",
+      "daysValidLabel": "Valid Days (Empty = Every Day)",
+      "timeValidLabel": "Valid Time (Empty = All Day)",
+      "startTimePlaceholder": "Start",
+      "endTimePlaceholder": "End",
+      "happyHour": "Happy Hour",
+      "descriptionLabel": "Description",
+      "descriptionPlaceholder": "Promotion description...",
+      "cancel": "Cancel",
+      "save": "Save",
+      "enterNameWarning": "Please enter promotion name"
+    },
+    "types": {
+      "percentage": "Discount %",
+      "fixed_amount": "Fixed Amount",
+      "bogo": "Buy 1 Get 1",
+      "buy_x_get_y": "Buy X Get Y",
+      "free_item": "Free Item"
+    },
+    "days": {
+      "sun": "Sunday",
+      "mon": "Monday",
+      "tue": "Tuesday",
+      "wed": "Wednesday",
+      "thu": "Thursday",
+      "fri": "Friday",
+      "sat": "Saturday",
+      "short": {
+        "sun": "Sun",
+        "mon": "Mon",
+        "tue": "Tue",
+        "wed": "Wed",
+        "thu": "Thu",
+        "fri": "Fri",
+        "sat": "Sat"
+      }
+    }
+  },
+  "pos": {
+    "title": "Point of Sale",
+    "orderQueue": "Order Queue",
+    "orderHistory": "Order History",
+    "totalOrders": "Total Orders",
+    "ordersToday": "Orders Today",
+    "noOrders": "No orders yet",
+    "pending": "Pending",
+    "waiting": "Waiting",
+    "allProcessed": "All Processed",
+    "preparing": "Preparing",
+    "beingPrepared": "Being Prepared",
+    "noneInKitchen": "None in kitchen",
+    "ready": "Ready",
+    "readyForPickup": "Ready for pickup",
+    "noneReady": "None ready",
+    "moneyOut": {
+      "title": "Money Out",
+      "tooltip": "Record cash withdrawal",
+      "openRegisterFirst": "Open register first",
+      "amountLabel": "Amount (BND) *",
+      "categoryLabel": "Category",
+      "reasonLabel": "Reason *",
+      "reasonPlaceholder": "Ex: Buy cleaning supplies",
+      "approvedByLabel": "Approved By *",
+      "selectManager": "-- Select Manager --",
+      "notesLabel": "Additional Notes (Optional)",
+      "notesPlaceholder": "Additional notes...",
+      "info": "Withdrawal will be recorded in daily report and deducted from cash balance.",
+      "submit": "Record Withdrawal",
+      "submitting": "Recording...",
+      "cancel": "Cancel",
+      "categories": {
+        "petty_cash": "Petty Cash",
+        "refund": "Refund",
+        "change": "Change",
+        "supplier": "Pay Supplier",
+        "other": "Other"
+      },
+      "toast": {
+        "invalidAmount": "Please enter a valid amount",
+        "invalidReason": "Please enter a reason",
+        "invalidApprover": "Please select an approver",
+        "success": "Withdrawal of BND {{amount}} recorded",
+        "error": "Failed to record withdrawal. Please try again."
+      }
+    },
+    "menu": {
+      "emptyCategory": "No menu items in this category"
+    },
+    "alert": {
+      "modifiersRequired": "Please select all required modifiers"
+    },
+    "inventory": {
+      "sale": "Sale"
+    },
+    "cart": {
+      "title": "Basket",
+      "empty": "No items in basket",
+      "subtotal": "Subtotal",
+      "total": "Total",
+      "checkout": "Checkout",
+      "items": "items",
+      "bndEach": "BND {{price}} each",
+      "validation": {
+        "modifiersRequired": "Please select all required modifiers"
+      }
+    },
+    "modal": {
+      "modifiers": {
+        "title": "Select Options",
+        "required": "* Required",
+        "basePrice": "Base Price",
+        "addToCart": "Add to Basket",
+        "cancel": "Cancel"
+      },
+      "upsell": {
+        "title": "Add More?",
+        "description": "Don't forget drinks! Choose below:",
+        "add": "Add",
+        "added": "{{count}} drinks added",
+        "back": "Back",
+        "continue": "Continue Checkout"
+      },
+      "checkout": {
+        "title": "Checkout",
+        "step1": {
+          "title": "How is this order?",
+          "subtitle": "Select order type to proceed",
+          "takeaway": "Takeaway",
+          "takeawayDesc": "Pack to go",
+          "delivery": "GoMamam",
+          "deliveryDesc": "Delivery"
+        },
+        "step2": {
+          "title": "Customer Details",
+          "subtitle": "Search member or enter new details",
+          "phoneLabel": "Phone Number",
+          "nameLabel": "Customer Name (Optional)",
+          "whatsappLabel": "Send WhatsApp Receipt",
+          "whatsappDesc": "Digital receipt directly to customer",
+          "pointsAvailable": "{{points}} Points Available"
+        },
+        "step3": {
+          "totalPayable": "Total Payable",
+          "redeemPoints": "Redeem Points",
+          "paymentMethod": "Payment Method",
+          "cashReceived": "Cash Received",
+          "change": "Change",
+          "exact": "Exact",
+          "pay": "Pay",
+          "processing": "Processing..."
+        },
+        "next": "Next",
+        "cancel": "Cancel"
+      },
+      "receipt": {
+        "title": "Order Successful!",
+        "customer": "Customer",
+        "print": "Print Receipt",
+        "whatsapp": "Send Receipt (WhatsApp)",
+        "close": "Close",
+        "printerConnected": "✓ Thermal printer connected",
+        "printerDisconnected": "No thermal printer - using browser print"
+      },
+      "networkError": {
+        "title": "Network Error",
+        "messageConnection": "Connection Issue",
+        "messageError": "Connection issue while processing payment.",
+        "retry": "Retry",
+        "retrying": "Retrying...",
+        "cancel": "Cancel",
+        "tipsTitle": "What you can do:",
+        "tip1": "Check your internet connection",
+        "tip2": "Retry in a few seconds",
+        "tip3": "If problem persists, contact support",
+        "attempt": "Retry attempt: {{count}}/2"
+      },
+      "queue": {
+        "title": "Order Queue",
+        "subtitle": "Kitchen Display",
+        "pending": "Pending",
+        "preparing": "Preparing",
+        "ready": "Ready",
+        "startPreparing": "Start Preparing",
+        "markReady": "Mark Ready",
+        "complete": "Complete",
+        "noOrders": "No orders"
+      },
+      "history": {
+        "title": "Today's Order History",
+        "subtitle": "{{count}} orders",
+        "table": {
+          "orderNo": "Order No.",
+          "items": "Items",
+          "total": "Total",
+          "type": "Type",
+          "status": "Status",
+          "time": "Time",
+          "action": "Action"
+        },
+        "noOrders": "No orders today",
+        "totalSales": "Total Sales Today",
+        "reprint": "Reprint Receipt"
+      }
+    },
+    "toast": {
+      "enterPhone": "⚠️ Please enter customer phone number first.",
+      "enterValidPhone": "Please enter a valid phone number",
+      "insufficientCash": "Please enter sufficient cash amount",
+      "noInternet": "No internet connection. Please check your network.",
+      "duplicateOrder": "This order is already processed. Please wait or create a new order.",
+      "orderSuccess": "Order {{orderNumber}} successful!",
+      "retrying": "Retrying... ({{attempt}}/2)"
+    }
+  },
+  "staffPortal": {
+    "title": "Staff Portal",
+    "welcome": "Welcome, {{name}}!",
+    "greeting": {
+      "morning": "Good Morning, {{name}}!",
+      "afternoon": "Good Afternoon, {{name}}!",
+      "evening": "Good Evening, {{name}}!"
+    },
+    "header": {
+      "today": "Today"
+    },
+    "clock": {
+      "in": "Clock In",
+      "out": "Clock Out",
+      "done": "Done ✓",
+      "shift": "Shift: {{shift}}",
+      "noShift": "No Shift",
+      "timeIn": "In",
+      "timeOut": "Out",
+      "status": {
+        "present": "✓ PRESENT",
+        "absent": "—"
+      },
+      "message": {
+        "success": "Attendance recorded successfully!",
+        "error": "Error recording attendance."
+      }
+    },
+    "stats": {
+      "today": "Today",
+      "level": "Level",
+      "xp": "XP"
+    },
+    "checklist": {
+      "title": "Shift Checklist",
+      "pending": "Pending",
+      "completed": "All tasks completed!",
+      "progress": "{{completed}}/{{total}} completed",
+      "shift": {
+        "opening": "☀️ Opening",
+        "closing": "🌙 Closing",
+        "daily": "📋 Daily"
+      },
+      "tasks": {
+        "cleanTable": "Clean tables",
+        "checkFridge": "Check fridge temp",
+        "arrangeDisplay": "Arrange display"
+      }
+    },
+    "quickActions": {
+      "schedule": "Schedule",
+      "leave": "Leave",
+      "claims": "Claims",
+      "ot": "OT",
+      "payslip": "Payslip",
+      "swap": "Swap",
+      "advance": "Advance",
+      "issue": "Issue",
+      "stock": "Stock"
+    },
+    "widgets": {
+      "leaveBalance": {
+        "title": "Leave Balance",
+        "annual": "Annual",
+        "mc": "MC",
+        "el": "EL",
+        "compassionate": "Compassionate",
+        "unpaid": "Unpaid"
+      },
+      "requests": {
+        "title": "My Requests",
+        "pendingCount": "{{count}} Pending",
+        "leave": "Leave",
+        "descLeave": "{{count}} requests pending approval",
+        "claims": "Claims",
+        "descClaims": "{{count}} claims pending approval",
+        "advance": "Salary Advance",
+        "descAdvance": "{{count}} requests pending approval",
+        "ot": "OT Claim",
+        "descOt": "{{count}} OT claims pending approval",
+        "other": "Other Requests",
+        "descOther": "{{count}} requests (swap shift, etc)",
+        "pendingBadge": "PENDING",
+        "allDone": "All Done! ✨",
+        "noPending": "No pending requests"
+      },
+      "nextShift": {
+        "title": "Next Shift",
+        "tomorrow": "Tomorrow",
+        "noShift": "No shift scheduled for tomorrow."
+      }
+    },
+    "schedule": {
+      "title": "Work Schedule",
+      "subtitle": "Your weekly schedule",
+      "thisWeek": "This Week",
+      "nextShift": "Next Shift",
+      "noUpcomingShift": "No upcoming shift",
+      "performance": "Performance",
+      "rank": "Rank #{{rank}}",
+      "leaveBalance": "Leave Balance",
+      "days": "Days",
+      "available": "Available",
+      "work": "Work",
+      "hours": "Hours",
+      "off": "Off",
+      "offDay": "Off Day",
+      "today": "TODAY",
+      "colleagues": "{{count}} Colleagues",
+      "accessError": {
+        "title": "Access Denied",
+        "message": "Your staff record could not be found. Please contact Admin for assistance."
+      },
+      "timer": {
+        "now": "Now",
+        "daysLeft": "{{count}} Days left",
+        "hoursLeft": "{{hours}}h {{minutes}}m left"
+      }
+    },
+    "leave": {
+      "title": "Leave Management",
+      "subtitle": "View balance and apply for leave",
+      "apply": "Apply Leave",
+      "balanceTitle": "Leave Balance {{year}}",
+      "historyTitle": "Application History",
+      "historyCount": "{{count}} applications",
+      "noHistory": "No leave application records",
+      "types": {
+        "annual": "Annual Leave",
+        "replacement": "Replacement Leave",
+        "medical": "Medical Leave",
+        "emergency": "Emergency Leave",
+        "compassionate": "Compassionate Leave",
+        "unpaid": "Unpaid Leave"
+      },
+      "details": {
+        "taken": "Taken: {{count}}",
+        "pending": "Pending: {{count}}",
+        "available": "Available: {{count}}",
+        "used": "Used: {{count}}",
+        "takenThisYear": "Taken this year",
+        "days": "({{count}} days)",
+        "reason": "Reason: {{reason}}",
+        "approvedBy": "Approved by: {{name}}",
+        "rejectedBy": "Rejected by: {{name}}",
+        "rejectionReason": "Rejection reason: {{reason}}"
+      }
+    },
+    "claims": {
+      "title": "My Claims",
+      "subtitle": "Submit and track claims",
+      "new": "New Claim",
+      "listTitle": "Claims List",
+      "listCount": "{{count}} claims",
+      "noHistory": "No claim records",
+      "stats": {
+        "pending": "Pending Approval",
+        "approved": "Approved",
+        "paid": "Paid"
+      },
+      "item": {
+        "date": "Claim date: {{date}}",
+        "viewDetail": "View Details",
+        "rejectionReason": "Rejection reason: {{reason}}"
+      }
+    },
+    "ot": {
+      "title": "OT Claims",
+      "subtitle": "Overtime records",
+      "new": "New OT Claim",
+      "stats": {
+        "pending": "Pending",
+        "approved": "Approved",
+        "total": "Total",
+        "hours": "OT Hours"
+      },
+      "filter": {
+        "all": "All",
+        "pending": "Pending",
+        "approved": "Approved",
+        "rejected": "Rejected",
+        "paid": "Paid"
+      },
+      "list": {
+        "title": "OT: {{start}} - {{end}}",
+        "hours": "{{count}} Hours",
+        "rejected": "Rejected: {{reason}}",
+        "emptyTitle": "No Records",
+        "emptyDesc": "No OT claims found for this status."
+      },
+      "form": {
+        "date": "OT Date",
+        "startTime": "Start Time",
+        "endTime": "End Time",
+        "reason": "OT Reason",
+        "reasonPlaceholder": "Example: Rushing order for event...",
+        "summaryTitle": "Claim Summary",
+        "hoursWorked": "Hours Worked",
+        "multiplier": "Multiplier Rate",
+        "estimatedPay": "Estimated Pay",
+        "cancel": "Cancel",
+        "submit": "Submit Claim"
+      },
+      "alerts": {
+        "loginTitle": "Please Login",
+        "loginDesc": "You need to login as staff to access this page.",
+        "incompleteTitle": "Incomplete Information",
+        "incompleteDesc": "Please enter a reason for this OT claim.",
+        "invalidTimeTitle": "Invalid Time",
+        "invalidTimeDesc": "Please ensure start and end times are correct.",
+        "successTitle": "Successfully Submitted",
+        "successDesc": "Your OT claim has been successfully submitted for review.",
+        "understand": "Understand",
+        "done": "Done"
+      }
+    },
+    "payslip": {
+      "title": "Payslip",
+      "subtitle": "View and download your payslips",
+      "selectMonth": "Select Month",
+      "status": {
+        "paid": "Paid",
+        "pending": "Pending"
+      },
+      "actions": {
+        "print": "Print",
+        "download": "Download"
+      },
+      "employee": {
+        "name": "Name:",
+        "role": "Role:",
+        "id": "Staff ID:"
+      },
+      "earnings": {
+        "title": "Earnings",
+        "basic": "Basic Salary",
+        "ot": "Overtime Allowance",
+        "allowance": "Other Allowances",
+        "total": "Total Earnings"
+      },
+      "deductions": {
+        "title": "Deductions",
+        "tap": "TAP (Employee)",
+        "scp": "SCP",
+        "other": "Other Deductions",
+        "total": "Total Deductions"
+      },
+      "net": {
+        "label": "Net Pay",
+        "paidOn": "Paid on {{date}}"
+      },
+      "employer": "Employer TAP Contribution: BND {{amount}}",
+      "footer": "This is a computer-generated payslip. Please keep for your records."
+    },
+    "swap": {
+      "title": "Swap Shift",
+      "subtitle": "Request shift swap with colleagues",
+      "apply": "Request Swap",
+      "myShiftsTitle": "My Shifts (Next 7 Days)",
+      "noShifts": "No shifts scheduled for the next 7 days",
+      "contactAdmin": "Please contact admin for your schedule",
+      "requestsTitle": "Swap Requests",
+      "count": "{{count}} requests",
+      "noRequests": "No swap requests",
+      "with": "With: {{name}}",
+      "from": "From: {{name}}",
+      "feedback": "Feedback: {{note}}",
+      "status": {
+        "completed": "Approved",
+        "rejected": "Rejected",
+        "in_progress": "In Progress",
+        "pending": "Pending"
+      },
+      "actions": {
+        "cancel": "Cancel Request",
+        "decline": "Decline",
+        "accept": "Accept",
+        "back": "Back"
+      },
+      "form": {
+        "title": "Request Shift Swap",
+        "selectMyShift": "Select Your Shift",
+        "selectDatePlaceholder": "-- Select date --",
+        "noShiftHint": "No shifts scheduled. Please contact admin.",
+        "swapWith": "Swap With",
+        "selectColleaguePlaceholder": "-- Select colleague --",
+        "noColleagueHint": "No colleagues available for this date",
+        "selectTheirShift": "Select Their Shift",
+        "selectShiftPlaceholder": "-- Select shift --",
+        "noShiftAvailable": "No shift available",
+        "reason": "Swap Reason",
+        "reasonPlaceholder": "State reason (optional)",
+        "note": "Your request will be sent to Manager for approval.",
+        "cancel": "Cancel",
+        "submit": "Submit",
+        "submitting": "Sending...",
+        "successTitle": "Request Sent!",
+        "successDesc": "Your request will be reviewed by the manager."
+      },
+      "request": {
+        "title": "Swap Shift: {{date}}",
+        "desc": "Request to swap shift on {{date}} ({{shift}}). Reason: {{reason}}"
+      },
+      "modals": {
+        "invalidTitle": "Invalid Action",
+        "invalidMessage": "You cannot swap a past shift.",
+        "requiredTitle": "Information Required",
+        "requiredMessage": "Please provide a reason for the swap.",
+        "cancelTitle": "Cancel Request",
+        "cancelMsg": "Are you sure you want to cancel this swap request?",
+        "cancelConfirm": "Yes, Cancel",
+        "cancelDecline": "No",
+        "acceptTitle": "Accept Swap",
+        "acceptMsg": "Do you agree to swap shift with your colleague?",
+        "acceptConfirm": "Yes, Agree",
+        "acceptSuccessTitle": "Success",
+        "acceptSuccessMsg": "Thank you! Your agreement has been recorded. Awaiting manager approval.",
+        "acceptNote": "Agreed to swap. Awaiting manager feedback.",
+        "declineTitle": "Decline Swap",
+        "declineMsg": "Do you want to decline this swap request?",
+        "declineConfirm": "Yes, Decline",
+        "declineNote": "Declined by colleague.",
+        "errorTitle": "Submission Error",
+        "errorMsg": "Failed to submit swap request. Please try again later.",
+        "successTitle": "Request Sent",
+        "successMessage": "Swap request sent successfully and is pending manager approval."
+      },
+      "salaryAdvance": {
+        "title": "Salary Advance",
+        "subtitle": "Request salary advance - based on working days this month",
+        "apply": "Request Advance",
+        "loginReq": {
+          "title": "Please Login",
+          "desc": "You need to login as staff to request salary advance."
+        },
+        "eligibility": {
+          "workedDays": "Working Days:",
+          "currentEarnings": "Earnings So Far:",
+          "advanced": "Advanced:",
+          "monthlyLimit": "Monthly Limit (50%):",
+          "canApply": "Available: BND {{amount}}",
+          "daysSuffix": "days"
+        },
+        "stats": {
+          "pending": "Pending Approval",
+          "approved": "Approved",
+          "dailyRate": "Daily Rate",
+          "totalApproved": "total approved",
+          "rateDesc": "salary / {{days}} days"
+        },
+        "filters": {
+          "all": "All",
+          "pending": "Pending",
+          "approved": "Approved",
+          "rejected": "Rejected",
+          "deducted": "Deducted"
+        },
+        "list": {
+          "title": "Request History",
+          "empty": "No salary advance requests",
+          "table": {
+            "date": "Date",
+            "amount": "Amount",
+            "reason": "Reason",
+            "status": "Status",
+            "note": "Note"
+          },
+          "approvedBy": "Approved by {{name}}",
+          "deductedMonth": "Deducted in {{month}}"
+        },
+        "modal": {
+          "title": "Request Salary Advance",
+          "cannotApplyTitle": "Cannot Request",
+          "cannotApplyDesc": "You have already reached the maximum advance limit for this month.",
+          "form": {
+            "amount": "Amount (BND) *",
+            "amountHint": "Max BND {{amount}} (50% salary limit or working days)",
+            "reason": "Reason *",
+            "reasonPlaceholder": "State your reason...",
+            "cancel": "Cancel",
+            "submit": "Submit Request"
+          },
+          "warning": {
+            "title": "Notice:",
+            "desc": "Salary advance will be automatically deducted from this month's salary upon approval."
+          }
+        },
+        "alerts": {
+          "incompleteTitle": "Incomplete Information",
+          "incompleteMsg": "Please provide amount and reason.",
+          "invalidAmountTitle": "Invalid Amount",
+          "invalidAmountMsg": "Please enter a valid amount.",
+          "limitExceededTitle": "Limit Exceeded",
+          "limitExceededMsg": "Maximum amount you can request based on working days is BND {{amount}}.",
+          "successTitle": "Successfully Submitted",
+          "successMsg": "Your salary advance request has been submitted for review."
+        }
+      },
+      "requests": {
+        "title": "Other Requests",
+        "subtitle": "Submit various types of requests",
+        "new": "New Request",
+        "back": "Back",
+        "list": {
+          "title": "Request List",
+          "count": "{{count}} requests",
+          "empty": "No request records",
+          "viewDetail": "View Details",
+          "feedback": "Feedback:"
+        },
+        "priority": {
+          "high": "Urgent",
+          "medium": "Medium",
+          "low": "Low"
+        },
+        "status": {
+          "pending": "Pending",
+          "approved": "Approved",
+          "rejected": "Rejected",
+          "cancelled": "Cancelled",
+          "in_progress": "In Progress",
+          "completed": "Completed",
+          "paid": "Paid"
+        },
+        "categories": {
+          "shift_swap": "Shift Swap",
+          "off_day": "Leave Request",
+          "ot_request": "OT Request",
+          "schedule_change": "Schedule Change",
+          "salary_advance": "Salary Advance",
+          "payslip": "Payslip Copy",
+          "letter": "Official Letter",
+          "training": "Training Request",
+          "equipment": "Equipment Request",
+          "complaint": "Complaint",
+          "resignation": "Resignation Notice",
+          "bank_change": "Change Bank Account",
+          "other": "Others"
+        },
+        "form": {
+          "title": "New Request",
+          "category": "Category *",
+          "subject": "Subject *",
+          "subjectPlaceholder": "Example: Employment Confirmation Letter",
+          "description": "Description *",
+          "descPlaceholder": "Explain your request...",
+          "priority": "Priority",
+          "cancel": "Cancel",
+          "submit": "Submit"
+        },
+        "alerts": {
+          "incompleteTitle": "Incomplete Information",
+          "incompleteMsg": "Please fill in the title and description of your request.",
+          "successTitle": "Successfully Submitted",
+          "successMsg": "Your request has been successfully submitted and will be processed as soon as possible."
+        },
+        "detail": {
+          "title": "Request Details",
+          "status": "Status",
+          "priority": "Priority",
+          "subject": "Subject",
+          "category": "Category",
+          "applicant": "Applicant",
+          "date": "Submitted On",
+          "description": "Description",
+          "feedback": "Feedback / Notes",
+          "handledBy": "Handled by: {{name}}",
+          "reject": "Reject",
+          "approve": "Complete / Approve",
+          "close": "Close"
+        }
+      },
+      "profile": {
+        "title": "My Profile",
+        "active": "Active",
+        "onLeave": "On Leave",
+        "upload": {
+          "loading": "Uploading...",
+          "errorTitle": "Upload Failed",
+          "errorMsg": "Image could not be uploaded: {{error}}",
+          "techErrorTitle": "Technical Error",
+          "techErrorMsg": "An error occurred while uploading. Please try again later.",
+          "success": "Profile photo updated successfully"
+        },
+        "stats": {
+          "workedDays": "Working Days",
+          "leaveBalance": "Leave Balance",
+          "kpiScore": "KPI Score",
+          "ranking": "Ranking"
+        },
+        "personal": {
+          "title": "Personal Information",
+          "ic": "IC Number",
+          "dob": "Date of Birth",
+          "phone": "Phone Number",
+          "email": "Email",
+          "address": "Address",
+          "notSet": "Not set"
+        },
+        "emergency": {
+          "title": "Emergency Contact",
+          "name": "Name",
+          "relation": "Relation",
+          "phone": "Phone Number"
+        },
+        "employment": {
+          "title": "Employment Details",
+          "position": "Position",
+          "department": "Department",
+          "type": "Employment Type",
+          "location": "Work Location",
+          "startDate": "Start Date",
+          "types": {
+            "permanent": "Permanent",
+            "contract": "Contract",
+            "part_time": "Part Time",
+            "probation": "Probation"
+          }
+        },
+        "salary": {
+          "title": "Salary Information",
+          "base": "Base Salary",
+          "hourly": "Hourly Rate",
+          "perHour": "/hour",
+          "otRate": "OT Rate",
+          "bank": "Bank",
+          "tapScp": "TAP/SCP Contribution",
+          "tapNo": "TAP No.",
+          "tapRate": "TAP Rate",
+          "scpNo": "SCP No.",
+          "scpRate": "SCP Rate",
+          "employeeShare": "(Employee)"
+        },
+        "leave": {
+          "title": "Leave Balance This Year",
+          "annual": "Annual Leave",
+          "medical": "Sick Leave (MC)",
+          "emergency": "Emergency Leave",
+          "compassionate": "Compassionate Leave",
+          "daysSuffix": "days",
+          "viewAll": "View All Leave"
+        },
+        "skills": {
+          "title": "Skills & Certifications",
+          "skills": "Skills:",
+          "certs": "Certificates:"
+        },
+        "kpi": {
+          "title": "Current Performance",
+          "month": "Month",
+          "attendance": "Attendance",
+          "customerRating": "Customer Rating",
+          "upselling": "Upselling",
+          "viewReport": "View Full Report"
+        }
+      },
+      "attendance": {
+        "title": "Attendance",
+        "todayStatus": "Today's Status",
+        "pendingSync": "Pending Sync",
+        "in": "In",
+        "out": "Out",
+        "verifiedLocation": "Location Verified",
+        "noRecord": "No attendance record for today.",
+        "clockIn": "Clock In",
+        "clockOut": "Clock Out",
+        "shiftComplete": "Shift Completed!",
+        "thankYou": "Thank you for your hard work.",
+        "offlineQueued": "Saved offline.",
+        "offlineInMsg": "No internet. Attendance saved offline and will sync when online.",
+        "offlineOutMsg": "No internet. Clock-out saved offline.",
+        "successIn": "Successfully Clocked In!",
+        "successOut": "Successfully Clocked Out!",
+        "errorGeneric": "An error occurred.",
+        "errorUnexpected": "Unexpected error.",
+        "errorNoRecord": "No attendance record for clock out."
+      },
+      "checklist": {
+        "title": "Daily Checklist",
+        "history": "History",
+        "shift": {
+          "title": "Shift {{name}}",
+          "noSchedule": "No Schedule",
+          "noScheduleDesc": "You have no scheduled shift for today"
+        },
+        "tabs": {
+          "opening": "Opening",
+          "closing": "Closing"
+        },
+        "list": {
+          "openingTitle": "Opening Checklist",
+          "closingTitle": "Closing Checklist",
+          "completedCount": "{{completed}}/{{total}} completed",
+          "notStarted": "{{type}} Checklist not started",
+          "start": "Start Checklist",
+          "empty": "No checklist items configured",
+          "photoOk": "Photo OK",
+          "needPhoto": "Need Photo",
+          "notesOk": "Has Notes",
+          "needNotes": "Need Notes",
+          "completedAt": "Completed at",
+          "noteLabel": "Note:"
+        },
+        "actions": {
+          "submitting": "Submitting...",
+          "remaining": "Complete {{count}} more items",
+          "submit": "Submit Checklist",
+          "completed": "Checklist Completed!"
+        },
+        "modal": {
+          "photoTitle": "Upload Photo",
+          "photoDesc": "Take a photo as proof",
+          "clickPhoto": "Click to take photo",
+          "notesTitle": "Add Notes",
+          "notesLabel": "Notes",
+          "notesPlaceholder": "Enter notes...",
+          "cancel": "Cancel",
+          "save": "Save"
+        }
+      },
+      "training": {
+        "title": "Training & Certificates",
+        "subtitle": "Track your training progress and certificates",
+        "stats": {
+          "completed": "Completed",
+          "inProgress": "In Progress",
+          "mandatoryPending": "Mandatory Pending"
+        },
+        "tabs": {
+          "training": "Training",
+          "certificates": "Certificates"
+        },
+        "list": {
+          "title": "Training List",
+          "mandatory": "MANDATORY",
+          "start": "Start",
+          "completed": "Completed",
+          "inProgress": "In Progress",
+          "duration": "{{minutes}} mins"
+        },
+        "certificates": {
+          "title": "My Certificates",
+          "issued": "Issued:",
+          "expiry": "Expires:",
+          "empty": "No certificates found",
+          "status": {
+            "valid": "Valid",
+            "expiring_soon": "Expiring Soon",
+            "expired": "Expired"
+          }
+        }
+      }
+    }
   }
 }

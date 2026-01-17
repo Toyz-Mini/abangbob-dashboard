@@ -8,6 +8,8 @@ import { Promotion } from '@/lib/types';
 import { useMenuQuery } from '@/lib/hooks/queries/useMenuQueries';
 import Modal from '@/components/Modal';
 import LoadingSpinner from '@/components/LoadingSpinner';
+import { useToast } from '@/lib/contexts/ToastContext';
+import { useTranslation } from '@/lib/contexts/LanguageContext';
 import {
   Tag,
   Plus,
@@ -55,6 +57,8 @@ export default function PromotionsPage() {
   }, [refreshPromotions]);
 
   usePromotionsRealtime(handlePromotionsChange);
+  const { t } = useTranslation();
+  const { showToast } = useToast();
   const [modalType, setModalType] = useState<ModalType>(null);
   const [selectedPromo, setSelectedPromo] = useState<Promotion | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -183,7 +187,7 @@ export default function PromotionsPage() {
 
   const handleAddPromotion = async () => {
     if (!formData.name.trim()) {
-      alert('Sila masukkan nama promosi');
+      showToast(t('promotions.modal.enterNameWarning'), 'warning');
       return;
     }
 
@@ -255,7 +259,7 @@ export default function PromotionsPage() {
   };
 
   const getTypeLabel = (type: string) => {
-    return PROMO_TYPES.find(t => t.value === type)?.label || type;
+    return t(`promotions.types.${type}`) || type;
   };
 
   const getPromoValue = (promo: Promotion) => {
@@ -296,15 +300,15 @@ export default function PromotionsPage() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
             <div>
               <h1 className="page-title" style={{ marginBottom: '0.5rem' }}>
-                Pengurusan Promosi
+                {t('promotions.title')}
               </h1>
               <p className="page-subtitle">
-                Urus diskaun, promo codes dan tawaran istimewa
+                {t('promotions.subtitle')}
               </p>
             </div>
             <button className="btn btn-primary" onClick={openAddModal}>
               <Plus size={18} />
-              Buat Promosi
+              {t('promotions.create')}
             </button>
           </div>
         </div>
@@ -312,33 +316,33 @@ export default function PromotionsPage() {
         {/* Metrics Cards */}
         <div className="content-grid cols-4 mb-lg">
           <StatCard
-            label="Jumlah Promosi"
+            label={t('promotions.metrics.total')}
             value={metrics.total}
-            change="promosi tersedia"
+            change={t('promotions.metrics.available')}
             changeType="neutral"
             icon={Tag}
             gradient="subtle"
           />
           <StatCard
-            label="Aktif"
+            label={t('promotions.metrics.active')}
             value={metrics.active}
-            change="sedang berjalan"
+            change={t('promotions.metrics.running')}
             changeType="positive"
             icon={CheckCircle}
             gradient="peach"
           />
           <StatCard
-            label="Penggunaan"
+            label={t('promotions.metrics.usage')}
             value={metrics.totalUsage}
-            change="kali digunakan"
+            change={t('promotions.metrics.timesUsed')}
             changeType="neutral"
             icon={Zap}
             gradient="primary"
           />
           <StatCard
-            label="Tamat Tidak Lama"
+            label={t('promotions.metrics.expiringSoon')}
             value={metrics.expiringSoon}
-            change={metrics.expiringSoon > 0 ? "perlu perhatian" : "tiada yang tamat"}
+            change={metrics.expiringSoon > 0 ? t('promotions.metrics.needsAttention') : t('promotions.metrics.noExpiring')}
             changeType={metrics.expiringSoon > 0 ? "negative" : "positive"}
             icon={Clock}
             gradient="warning"
@@ -353,7 +357,7 @@ export default function PromotionsPage() {
               onClick={() => setFilterStatus(status as 'all' | 'active' | 'inactive' | 'expired')}
               className={`btn btn-sm ${filterStatus === status ? 'btn-primary' : 'btn-outline'}`}
             >
-              {status === 'all' ? 'Semua' : status === 'active' ? 'Aktif' : status === 'inactive' ? 'Tidak Aktif' : 'Tamat'}
+              {t(`promotions.filter.${status}`)}
             </button>
           ))}
         </div>
@@ -378,7 +382,7 @@ export default function PromotionsPage() {
                     <span className={`badge ${isExpired(promo) ? 'badge-danger' :
                       promo.status === 'active' ? 'badge-success' : 'badge-warning'
                       }`}>
-                      {isExpired(promo) ? 'Tamat' : promo.status === 'active' ? 'Aktif' : 'Tidak Aktif'}
+                      {isExpired(promo) ? t('promotions.card.expired') : promo.status === 'active' ? t('promotions.card.active') : t('promotions.card.inactive')}
                     </span>
                   </div>
                   <div style={{
@@ -440,20 +444,23 @@ export default function PromotionsPage() {
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
                       <span>📅</span>
                       <span>
-                        {promo.daysOfWeek.map(d => ['Ahd', 'Isn', 'Sel', 'Rab', 'Kha', 'Jum', 'Sab'][d]).join(', ')}
+                        {promo.daysOfWeek.map(d => {
+                          const days = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+                          return t(`promotions.days.short.${days[d]}`);
+                        }).join(', ')}
                       </span>
                     </div>
                   )}
                   {promo.minPurchase && promo.minPurchase > 0 && (
                     <div style={{ color: 'var(--text-secondary)' }}>
-                      Min. pembelian: BND {promo.minPurchase}
+                      {t('promotions.card.minPurchase')}: BND {promo.minPurchase}
                     </div>
                   )}
                 </div>
 
                 {isExpiringSoon(promo) && !isExpired(promo) && (
                   <div className="alert alert-warning" style={{ marginBottom: '1rem', padding: '0.5rem 0.75rem', fontSize: '0.75rem' }}>
-                    Tamat dalam {Math.ceil((new Date(promo.endDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))} hari
+                    {t('promotions.card.expiresIn', { days: Math.ceil((new Date(promo.endDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) })}
                   </div>
                 )}
 
@@ -465,7 +472,7 @@ export default function PromotionsPage() {
                   borderTop: '1px solid var(--gray-200)'
                 }}>
                   <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                    Digunakan: <strong>{promo.usageCount}</strong>
+                    {t('promotions.card.used')}: <strong>{promo.usageCount}</strong>
                     {promo.usageLimit && ` / ${promo.usageLimit}`}
                   </div>
                   <div style={{ display: 'flex', gap: '0.25rem' }}>
@@ -473,7 +480,7 @@ export default function PromotionsPage() {
                       <button
                         className="btn btn-sm btn-outline"
                         onClick={() => toggleStatus(promo)}
-                        title={promo.status === 'active' ? 'Nyahaktif' : 'Aktifkan'}
+                        title={promo.status === 'active' ? t('promotions.card.deactivate') : t('promotions.card.activate')}
                       >
                         {promo.status === 'active' ? <XCircle size={14} /> : <CheckCircle size={14} />}
                       </button>
@@ -500,11 +507,11 @@ export default function PromotionsPage() {
           <div className="card" style={{ textAlign: 'center', padding: '3rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
             <Tag size={48} color="var(--gray-400)" style={{ marginBottom: '1rem' }} />
             <p style={{ color: 'var(--text-secondary)', marginBottom: '1rem' }}>
-              {filterStatus !== 'all' ? 'Tiada promosi untuk filter ini' : 'Belum ada promosi'}
+              {filterStatus !== 'all' ? t('promotions.empty.noPromotionsFilter') : t('promotions.empty.noPromotions')}
             </p>
             <button className="btn btn-primary" onClick={openAddModal}>
               <Plus size={18} />
-              Buat Promosi Pertama
+              {t('promotions.empty.createFirst')}
             </button>
           </div>
         )}
@@ -513,22 +520,22 @@ export default function PromotionsPage() {
         <Modal
           isOpen={modalType === 'add' || modalType === 'edit'}
           onClose={closeModal}
-          title={modalType === 'add' ? 'Buat Promosi Baru' : 'Edit Promosi'}
+          title={modalType === 'add' ? t('promotions.modal.createTitle') : t('promotions.modal.editTitle')}
           maxWidth="550px"
         >
           <div className="form-group">
-            <label className="form-label">Nama Promosi *</label>
+            <label className="form-label">{t('promotions.modal.nameLabel')}</label>
             <input
               type="text"
               className="form-input"
               value={formData.name}
               onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-              placeholder="Contoh: Diskaun Raya 2024"
+              placeholder={t('promotions.modal.namePlaceholder')}
             />
           </div>
 
           <div className="form-group">
-            <label className="form-label">Jenis Promosi</label>
+            <label className="form-label">{t('promotions.modal.typeLabel')}</label>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem' }}>
               {PROMO_TYPES.map(type => {
                 const Icon = type.icon;
@@ -540,7 +547,7 @@ export default function PromotionsPage() {
                     style={{ justifyContent: 'flex-start' }}
                   >
                     <Icon size={16} />
-                    {type.label}
+                    {t(`promotions.types.${type.value}`)}
                   </button>
                 );
               })}
@@ -551,7 +558,7 @@ export default function PromotionsPage() {
             <div className="grid grid-cols-2" style={{ gap: '1rem' }}>
               <div className="form-group">
                 <label className="form-label">
-                  Nilai {formData.type === 'percentage' ? '(%)' : '(BND)'}
+                  {t('promotions.modal.valueLabel')} {formData.type === 'percentage' ? '(%)' : '(BND)'}
                 </label>
                 <input
                   type="number"
@@ -563,14 +570,14 @@ export default function PromotionsPage() {
               </div>
               {formData.type === 'percentage' && (
                 <div className="form-group">
-                  <label className="form-label">Max Diskaun (BND)</label>
+                  <label className="form-label">{t('promotions.modal.maxDiscountLabel')}</label>
                   <input
                     type="number"
                     className="form-input"
                     value={formData.maxDiscount}
                     onChange={(e) => setFormData(prev => ({ ...prev, maxDiscount: Number(e.target.value) }))}
                     min="0"
-                    placeholder="0 = tiada had"
+                    placeholder={t('promotions.modal.maxDiscountPlaceholder')}
                   />
                 </div>
               )}
@@ -582,11 +589,11 @@ export default function PromotionsPage() {
             <div className="card" style={{ padding: '1rem', marginBottom: '1rem', background: 'var(--primary-light)', border: '1px solid var(--primary)' }}>
               <div style={{ fontWeight: 600, marginBottom: '1rem', color: 'var(--primary)' }}>
                 <Gift size={16} style={{ display: 'inline', marginRight: '0.5rem' }} />
-                Setup Buy X Get Y
+                {t('promotions.modal.buyXGetYTitle')}
               </div>
               <div className="grid grid-cols-2" style={{ gap: '1rem' }}>
                 <div className="form-group">
-                  <label className="form-label">Beli Berapa?</label>
+                  <label className="form-label">{t('promotions.modal.buyQuantityLabel')}</label>
                   <input
                     type="number"
                     className="form-input"
@@ -597,7 +604,7 @@ export default function PromotionsPage() {
                   />
                 </div>
                 <div className="form-group">
-                  <label className="form-label">Dapat Berapa?</label>
+                  <label className="form-label">{t('promotions.modal.getQuantityLabel')}</label>
                   <input
                     type="number"
                     className="form-input"
@@ -610,20 +617,20 @@ export default function PromotionsPage() {
               </div>
               <div className="grid grid-cols-2" style={{ gap: '1rem', marginTop: '1rem' }}>
                 <div className="form-group">
-                  <label className="form-label">Item Percuma</label>
+                  <label className="form-label">{t('promotions.modal.freeItemLabel')}</label>
                   <select
                     className="form-input"
                     value={formData.getFreeItemId}
                     onChange={(e) => setFormData(prev => ({ ...prev, getFreeItemId: e.target.value }))}
                   >
-                    <option value="">Item Sama</option>
+                    <option value="">{t('promotions.modal.sameItem')}</option>
                     {menuItems.map(item => (
                       <option key={item.id} value={item.id}>{item.name}</option>
                     ))}
                   </select>
                 </div>
                 <div className="form-group">
-                  <label className="form-label">Diskaun %</label>
+                  <label className="form-label">{t('promotions.modal.discountPercentLabel')}</label>
                   <input
                     type="number"
                     className="form-input"
@@ -631,39 +638,43 @@ export default function PromotionsPage() {
                     onChange={(e) => setFormData(prev => ({ ...prev, getDiscountPercent: Number(e.target.value) }))}
                     min="0"
                     max="100"
-                    placeholder="100 = Percuma"
+                    placeholder={t('promotions.modal.discountPercentPlaceholder')}
                   />
                   <small style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>
-                    100% = Percuma, 50% = Separuh Harga
+                    {t('promotions.modal.discountPercentHelp')}
                   </small>
                 </div>
               </div>
               <div style={{ marginTop: '1rem', padding: '0.75rem', background: 'var(--gray-100)', borderRadius: '8px', fontSize: '0.875rem' }}>
-                <strong>Preview:</strong> Beli {formData.buyQuantity}, Dapat {formData.getQuantity} {formData.getDiscountPercent === 100 ? 'PERCUMA' : `dengan diskaun ${formData.getDiscountPercent}%`}
+                <strong>{t('promotions.modal.preview')}:</strong> {t('promotions.modal.previewText', {
+                  buy: formData.buyQuantity,
+                  get: formData.getQuantity,
+                  discount: formData.getDiscountPercent === 100 ? t('promotions.modal.free') : t('promotions.modal.withDiscount', { percent: formData.getDiscountPercent })
+                })}
               </div>
             </div>
           )}
 
           <div className="form-group">
-            <label className="form-label">Kod Promo (Optional)</label>
+            <label className="form-label">{t('promotions.modal.promoCodeLabel')}</label>
             <div style={{ display: 'flex', gap: '0.5rem' }}>
               <input
                 type="text"
                 className="form-input"
                 value={formData.promoCode}
                 onChange={(e) => setFormData(prev => ({ ...prev, promoCode: e.target.value.toUpperCase() }))}
-                placeholder="Contoh: RAYA2024"
+                placeholder={t('promotions.modal.promoCodePlaceholder')}
                 style={{ flex: 1 }}
               />
               <button className="btn btn-outline" onClick={generatePromoCode} type="button">
-                Generate
+                {t('promotions.modal.generate')}
               </button>
             </div>
           </div>
 
           <div className="grid grid-cols-2" style={{ gap: '1rem' }}>
             <div className="form-group">
-              <label className="form-label">Tarikh Mula</label>
+              <label className="form-label">{t('promotions.modal.startDateLabel')}</label>
               <input
                 type="date"
                 className="form-input"
@@ -672,7 +683,7 @@ export default function PromotionsPage() {
               />
             </div>
             <div className="form-group">
-              <label className="form-label">Tarikh Tamat</label>
+              <label className="form-label">{t('promotions.modal.endDateLabel')}</label>
               <input
                 type="date"
                 className="form-input"
@@ -684,31 +695,31 @@ export default function PromotionsPage() {
 
           <div className="grid grid-cols-2" style={{ gap: '1rem' }}>
             <div className="form-group">
-              <label className="form-label">Min. Pembelian (BND)</label>
+              <label className="form-label">{t('promotions.modal.minPurchaseLabel')}</label>
               <input
                 type="number"
                 className="form-input"
                 value={formData.minPurchase}
                 onChange={(e) => setFormData(prev => ({ ...prev, minPurchase: Number(e.target.value) }))}
                 min="0"
-                placeholder="0 = tiada minimum"
+                placeholder={t('promotions.modal.minPurchasePlaceholder')}
               />
             </div>
             <div className="form-group">
-              <label className="form-label">Had Penggunaan</label>
+              <label className="form-label">{t('promotions.modal.usageLimitLabel')}</label>
               <input
                 type="number"
                 className="form-input"
                 value={formData.usageLimit}
                 onChange={(e) => setFormData(prev => ({ ...prev, usageLimit: Number(e.target.value) }))}
                 min="0"
-                placeholder="0 = tiada had"
+                placeholder={t('promotions.modal.usageLimitPlaceholder')}
               />
             </div>
           </div>
 
           <div className="form-group">
-            <label className="form-label">Hari Sah (Kosong = Setiap Hari)</label>
+            <label className="form-label">{t('promotions.modal.daysValidLabel')}</label>
             <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
               {DAYS_OF_WEEK.map(day => (
                 <button
@@ -723,7 +734,10 @@ export default function PromotionsPage() {
                   }}
                   className={`btn btn-sm ${formData.daysOfWeek.includes(day.value) ? 'btn-primary' : 'btn-outline'}`}
                 >
-                  {day.label.slice(0, 3)}
+                  {(() => {
+                    const days = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+                    return t(`promotions.days.short.${days[day.value]}`);
+                  })()}
                 </button>
               ))}
             </div>
@@ -733,7 +747,7 @@ export default function PromotionsPage() {
           <div className="form-group">
             <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <Clock size={14} />
-              Masa Sah (Kosong = Sepanjang Hari)
+              {t('promotions.modal.timeValidLabel')}
             </label>
             <div className="grid grid-cols-2" style={{ gap: '0.5rem' }}>
               <div>
@@ -742,9 +756,9 @@ export default function PromotionsPage() {
                   className="form-input"
                   value={formData.startTime}
                   onChange={(e) => setFormData(prev => ({ ...prev, startTime: e.target.value }))}
-                  placeholder="Mula"
+                  placeholder={t('promotions.modal.startTimePlaceholder')}
                 />
-                <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Mula</span>
+                <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>{t('promotions.modal.startTimePlaceholder')}</span>
               </div>
               <div>
                 <input
@@ -752,9 +766,9 @@ export default function PromotionsPage() {
                   className="form-input"
                   value={formData.endTime}
                   onChange={(e) => setFormData(prev => ({ ...prev, endTime: e.target.value }))}
-                  placeholder="Tamat"
+                  placeholder={t('promotions.modal.endTimePlaceholder')}
                 />
-                <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Tamat</span>
+                <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>{t('promotions.modal.endTimePlaceholder')}</span>
               </div>
             </div>
             {formData.startTime && formData.endTime && (
@@ -769,31 +783,31 @@ export default function PromotionsPage() {
                 gap: '0.5rem'
               }}>
                 <Zap size={14} color="var(--primary)" />
-                <span>Happy Hour: {formData.startTime} - {formData.endTime}</span>
+                <span>{t('promotions.modal.happyHour')}: {formData.startTime} - {formData.endTime}</span>
               </div>
             )}
           </div>
 
           <div className="form-group">
-            <label className="form-label">Keterangan</label>
+            <label className="form-label">{t('promotions.modal.descriptionLabel')}</label>
             <textarea
               className="form-input"
               value={formData.description}
               onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
               rows={2}
-              placeholder="Penerangan promosi..."
+              placeholder={t('promotions.modal.descriptionPlaceholder')}
             />
           </div>
 
           <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1.5rem' }}>
-            <button className="btn btn-outline" onClick={closeModal} style={{ flex: 1 }}>Batal</button>
+            <button className="btn btn-outline" onClick={closeModal} style={{ flex: 1 }}>{t('promotions.modal.cancel')}</button>
             <button
               className="btn btn-primary"
               onClick={modalType === 'add' ? handleAddPromotion : handleEditPromotion}
               disabled={isProcessing}
               style={{ flex: 1 }}
             >
-              {isProcessing ? <LoadingSpinner size="sm" /> : 'Simpan'}
+              {isProcessing ? <LoadingSpinner size="sm" /> : t('promotions.modal.save')}
             </button>
           </div>
         </Modal>

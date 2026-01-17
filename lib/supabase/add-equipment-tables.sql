@@ -119,3 +119,4 @@ COMMENT ON TABLE public.oil_trackers IS 'Fryer oil tracking with cycle managemen
 COMMENT ON TABLE public.oil_change_requests IS 'Oil change/topup approval workflow';
 COMMENT ON TABLE public.oil_action_history IS 'Historical record of all oil changes and topups';
 
+

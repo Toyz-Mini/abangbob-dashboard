@@ -4,6 +4,7 @@ import { useState, useMemo } from 'react';
 import StaffLayout from '@/components/StaffLayout';
 import { useStaffPortal } from '@/lib/store';
 import { useAuth } from '@/lib/contexts/AuthContext';
+import { useTranslation } from '@/lib/contexts/LanguageContext';
 import Modal from '@/components/Modal';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import ConfirmModal from '@/components/ConfirmModal';
@@ -25,6 +26,7 @@ import {
 const WORKING_DAYS_PER_MONTH = 26;
 
 export default function SalaryAdvancePage() {
+    const { t } = useTranslation();
     const { currentStaff, isStaffLoggedIn } = useAuth();
     const {
         salaryAdvances,
@@ -144,11 +146,11 @@ export default function SalaryAdvancePage() {
         if (!currentStaff || !amount || !reason.trim()) {
             setConfirmModal({
                 isOpen: true,
-                title: 'Maklumat Tidak Lengkap',
-                message: 'Sila isi jumlah dan sebab permohonan.',
+                title: t('staffPortal.salaryAdvance.alerts.incompleteTitle'),
+                message: t('staffPortal.salaryAdvance.alerts.incompleteMsg'),
                 type: 'warning',
                 showCancel: false,
-                confirmText: 'Faham'
+                confirmText: t('common.confirm') || 'Faham'
             });
             return;
         }
@@ -157,11 +159,11 @@ export default function SalaryAdvancePage() {
         if (isNaN(amountNum) || amountNum <= 0) {
             setConfirmModal({
                 isOpen: true,
-                title: 'Jumlah Tidak Sah',
-                message: 'Sila masukkan jumlah permohonan yang sah.',
+                title: t('staffPortal.salaryAdvance.alerts.invalidAmountTitle'),
+                message: t('staffPortal.salaryAdvance.alerts.invalidAmountMsg'),
                 type: 'warning',
                 showCancel: false,
-                confirmText: 'Faham'
+                confirmText: t('common.confirm') || 'Faham'
             });
             return;
         }
@@ -169,11 +171,11 @@ export default function SalaryAdvancePage() {
         if (amountNum > maxAdvance) {
             setConfirmModal({
                 isOpen: true,
-                title: 'Melebihi Had',
-                message: `Maksimum yang boleh dipohon berdasarkan hari bekerja anda adalah BND ${maxAdvance.toFixed(2)}.`,
+                title: t('staffPortal.salaryAdvance.alerts.limitExceededTitle'),
+                message: t('staffPortal.salaryAdvance.alerts.limitExceededMsg', { amount: maxAdvance.toFixed(2) }),
                 type: 'danger',
                 showCancel: false,
-                confirmText: 'Kembali'
+                confirmText: t('common.back') || 'Kembali'
             });
             return;
         }
@@ -196,8 +198,8 @@ export default function SalaryAdvancePage() {
 
         setConfirmModal({
             isOpen: true,
-            title: 'Berjaya Dihantar',
-            message: 'Permohonan pendahuluan gaji anda telah dihantar dan akan disemak oleh pihak pengurusan.',
+            title: t('staffPortal.salaryAdvance.alerts.successTitle'),
+            message: t('staffPortal.salaryAdvance.alerts.successMsg'),
             type: 'success',
             showCancel: false,
             confirmText: 'Selesai'
@@ -207,13 +209,15 @@ export default function SalaryAdvancePage() {
     const getStatusBadge = (status: SalaryAdvance['status']) => {
         switch (status) {
             case 'pending':
-                return <span className="badge badge-warning">Menunggu</span>;
+                return <span className="badge badge-warning">{t('staffPortal.salaryAdvance.filters.pending')}</span>;
             case 'approved':
-                return <span className="badge badge-success">Diluluskan</span>;
+                return <span className="badge badge-success">{t('staffPortal.salaryAdvance.filters.approved')}</span>;
             case 'rejected':
-                return <span className="badge badge-danger">Ditolak</span>;
+                return <span className="badge badge-danger">{t('staffPortal.salaryAdvance.filters.rejected')}</span>;
             case 'deducted':
-                return <span className="badge badge-info">Dipotong</span>;
+                return <span className="badge badge-info">{t('staffPortal.salaryAdvance.filters.deducted')}</span>;
+            default:
+                return null;
         }
     };
 
@@ -232,9 +236,9 @@ export default function SalaryAdvancePage() {
             <StaffLayout>
                 <div className="card" style={{ textAlign: 'center', padding: '3rem' }}>
                     <AlertCircle size={48} color="var(--warning)" style={{ marginBottom: '1rem' }} />
-                    <h2>Sila Log Masuk</h2>
+                    <h2>{t('staffPortal.salaryAdvance.loginReq.title')}</h2>
                     <p style={{ color: 'var(--text-secondary)' }}>
-                        Anda perlu log masuk sebagai staf untuk memohon pendahuluan gaji.
+                        {t('staffPortal.salaryAdvance.loginReq.desc')}
                     </p>
                 </div>
             </StaffLayout>
@@ -248,10 +252,10 @@ export default function SalaryAdvancePage() {
                 <div style={{ marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '1rem' }}>
                     <div>
                         <h1 style={{ fontSize: '2rem', fontWeight: 700, marginBottom: '0.5rem' }}>
-                            Pendahuluan Gaji
+                            {t('staffPortal.salaryAdvance.title')}
                         </h1>
                         <p style={{ color: 'var(--text-secondary)' }}>
-                            Mohon pendahuluan gaji - berdasarkan hari bekerja bulan ini
+                            {t('staffPortal.salaryAdvance.subtitle')}
                         </p>
                     </div>
                     <button
@@ -260,7 +264,7 @@ export default function SalaryAdvancePage() {
                         disabled={maxAdvance <= 0}
                     >
                         <Plus size={18} />
-                        Mohon Pendahuluan
+                        {t('staffPortal.salaryAdvance.apply')}
                     </button>
                 </div>
 
@@ -269,23 +273,23 @@ export default function SalaryAdvancePage() {
                     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                             <Briefcase size={18} color="var(--info)" />
-                            <span><strong>Hari Bekerja:</strong> {daysWorkedThisMonth} hari</span>
+                            <span><strong>{t('staffPortal.salaryAdvance.eligibility.workedDays')}</strong> {daysWorkedThisMonth} {t('staffPortal.salaryAdvance.eligibility.daysSuffix')}</span>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                             <DollarSign size={18} color="var(--info)" />
-                            <span><strong>Pendapatan Setakat Ini:</strong> BND {earnedSoFar.toFixed(2)}</span>
+                            <span><strong>{t('staffPortal.salaryAdvance.eligibility.currentEarnings')}</strong> BND {earnedSoFar.toFixed(2)}</span>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                             <Clock size={18} color="var(--info)" />
-                            <span><strong>Dah Advance:</strong> BND {alreadyAdvanced.toFixed(2)}</span>
+                            <span><strong>{t('staffPortal.salaryAdvance.eligibility.advanced')}</strong> BND {alreadyAdvanced.toFixed(2)}</span>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                             <AlertCircle size={18} color="var(--warning)" />
-                            <span><strong>Had Bulanan (50%):</strong> BND {monthlyLimit.toFixed(2)}</span>
+                            <span><strong>{t('staffPortal.salaryAdvance.eligibility.monthlyLimit')}</strong> BND {monthlyLimit.toFixed(2)}</span>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 700, color: maxAdvance > 0 ? 'var(--success)' : 'var(--danger)' }}>
                             <CheckCircle size={18} />
-                            <span>Boleh Mohon: BND {maxAdvance.toFixed(2)}</span>
+                            <span>{t('staffPortal.salaryAdvance.eligibility.canApply', { amount: maxAdvance.toFixed(2) })}</span>
                         </div>
                     </div>
                 </div>
@@ -293,7 +297,7 @@ export default function SalaryAdvancePage() {
                 {/* Stats */}
                 <div className="content-grid cols-3" style={{ marginBottom: '2rem' }}>
                     <StatCard
-                        label="Menunggu Kelulusan"
+                        label={t('staffPortal.salaryAdvance.stats.pending')}
                         value={pendingCount}
                         change={`BND ${pendingAmount.toFixed(2)}`}
                         changeType="neutral"
@@ -301,17 +305,17 @@ export default function SalaryAdvancePage() {
                         gradient="subtle"
                     />
                     <StatCard
-                        label="Diluluskan"
+                        label={t('staffPortal.salaryAdvance.stats.approved')}
                         value={`BND ${approvedAmount.toFixed(2)}`}
-                        change="jumlah diluluskan"
+                        change={t('staffPortal.salaryAdvance.stats.totalApproved')}
                         changeType="positive"
                         icon={CheckCircle}
                         gradient="subtle"
                     />
                     <StatCard
-                        label="Kadar Harian"
+                        label={t('staffPortal.salaryAdvance.stats.dailyRate')}
                         value={`BND ${dailyRate.toFixed(2)}`}
-                        change={`gaji / ${WORKING_DAYS_PER_MONTH} hari`}
+                        change={t('staffPortal.salaryAdvance.stats.rateDesc', { days: WORKING_DAYS_PER_MONTH })}
                         changeType="neutral"
                         icon={DollarSign}
                         gradient="subtle"
@@ -326,10 +330,11 @@ export default function SalaryAdvancePage() {
                             className={`btn btn-sm ${statusFilter === status ? 'btn-primary' : 'btn-outline'}`}
                             onClick={() => setStatusFilter(status)}
                         >
-                            {status === 'all' ? 'Semua' :
-                                status === 'pending' ? 'Menunggu' :
-                                    status === 'approved' ? 'Diluluskan' :
-                                        status === 'rejected' ? 'Ditolak' : 'Dipotong'}
+                            {status === 'all' ? t('staffPortal.salaryAdvance.filters.all') :
+                                status === 'pending' ? t('staffPortal.salaryAdvance.filters.pending') :
+                                    status === 'approved' ? t('staffPortal.salaryAdvance.filters.approved') :
+                                        status === 'rejected' ? t('staffPortal.salaryAdvance.filters.rejected') :
+                                            t('staffPortal.salaryAdvance.filters.deducted')}
                         </button>
                     ))}
                 </div>
@@ -339,25 +344,25 @@ export default function SalaryAdvancePage() {
                     <div className="card-header">
                         <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                             <FileText size={20} />
-                            Senarai Permohonan
+                            {t('staffPortal.salaryAdvance.list.title')}
                         </div>
                     </div>
 
                     {filteredAdvances.length === 0 ? (
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '3rem', color: 'var(--text-secondary)' }}>
                             <DollarSign size={48} color="var(--gray-300)" style={{ marginBottom: '1rem' }} />
-                            <p>Tiada permohonan pendahuluan gaji</p>
+                            <p>{t('staffPortal.salaryAdvance.list.empty')}</p>
                         </div>
                     ) : (
                         <div style={{ overflowX: 'auto' }}>
                             <table className="table">
                                 <thead>
                                     <tr>
-                                        <th>Tarikh</th>
-                                        <th>Jumlah</th>
-                                        <th>Sebab</th>
-                                        <th>Status</th>
-                                        <th>Catatan</th>
+                                        <th>{t('staffPortal.salaryAdvance.list.table.date')}</th>
+                                        <th>{t('staffPortal.salaryAdvance.list.table.amount')}</th>
+                                        <th>{t('staffPortal.salaryAdvance.list.table.reason')}</th>
+                                        <th>{t('staffPortal.salaryAdvance.list.table.status')}</th>
+                                        <th>{t('staffPortal.salaryAdvance.list.table.note')}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -380,7 +385,7 @@ export default function SalaryAdvancePage() {
                                             <td>{getStatusBadge(advance.status)}</td>
                                             <td style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
                                                 {advance.status === 'approved' && advance.approverName && (
-                                                    <span>Diluluskan oleh {advance.approverName}</span>
+                                                    <span>{t('staffPortal.salaryAdvance.list.approvedBy', { name: advance.approverName })}</span>
                                                 )}
                                                 {advance.status === 'rejected' && advance.rejectionReason && (
                                                     <span style={{ color: 'var(--danger)' }}>
@@ -388,7 +393,7 @@ export default function SalaryAdvancePage() {
                                                     </span>
                                                 )}
                                                 {advance.status === 'deducted' && advance.deductedMonth && (
-                                                    <span>Dipotong bulan {advance.deductedMonth}</span>
+                                                    <span>{t('staffPortal.salaryAdvance.list.deductedMonth', { month: advance.deductedMonth })}</span>
                                                 )}
                                             </td>
                                         </tr>
@@ -403,15 +408,15 @@ export default function SalaryAdvancePage() {
                 <Modal
                     isOpen={showAddModal}
                     onClose={() => !isSubmitting && setShowAddModal(false)}
-                    title="Mohon Pendahuluan Gaji"
+                    title={t('staffPortal.salaryAdvance.modal.title')}
                     maxWidth="450px"
                 >
                     {maxAdvance <= 0 ? (
                         <div style={{ textAlign: 'center', padding: '2rem' }}>
                             <AlertCircle size={48} color="var(--danger)" style={{ marginBottom: '1rem' }} />
-                            <h3 style={{ marginBottom: '0.5rem' }}>Tidak Boleh Mohon</h3>
+                            <h3 style={{ marginBottom: '0.5rem' }}>{t('staffPortal.salaryAdvance.modal.cannotApplyTitle')}</h3>
                             <p style={{ color: 'var(--text-secondary)' }}>
-                                Anda sudah advance maksimum berdasarkan hari bekerja bulan ini.
+                                {t('staffPortal.salaryAdvance.modal.cannotApplyDesc')}
                             </p>
                         </div>
                     ) : (
@@ -425,29 +430,28 @@ export default function SalaryAdvancePage() {
                                 fontSize: '0.875rem'
                             }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
-                                    <span>Hari Bekerja Bulan Ini:</span>
-                                    <strong>{daysWorkedThisMonth} hari</strong>
+                                    <span>{t('staffPortal.salaryAdvance.eligibility.workedDays')}</span>
+                                    <strong>{daysWorkedThisMonth} {t('staffPortal.salaryAdvance.eligibility.daysSuffix')}</strong>
                                 </div>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
-                                    <span>Pendapatan Setakat Ini:</span>
+                                    <span>{t('staffPortal.salaryAdvance.eligibility.currentEarnings')}</span>
                                     <strong>BND {earnedSoFar.toFixed(2)}</strong>
                                 </div>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
-                                    <span>Had Bulanan (50% gaji):</span>
+                                    <span>{t('staffPortal.salaryAdvance.eligibility.monthlyLimit')}</span>
                                     <span>BND {monthlyLimit.toFixed(2)}</span>
                                 </div>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
-                                    <span>Dah Advance:</span>
+                                    <span>{t('staffPortal.salaryAdvance.eligibility.advanced')}</span>
                                     <span>BND {alreadyAdvanced.toFixed(2)}</span>
                                 </div>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, color: 'var(--success)', paddingTop: '0.5rem', borderTop: '1px solid var(--gray-200)' }}>
-                                    <span>Boleh Mohon Maksimum:</span>
-                                    <span>BND {maxAdvance.toFixed(2)}</span>
+                                    <span>{t('staffPortal.salaryAdvance.eligibility.canApply', { amount: maxAdvance.toFixed(2) })}</span>
                                 </div>
                             </div>
 
                             <div className="form-group">
-                                <label className="form-label">Jumlah (BND) *</label>
+                                <label className="form-label">{t('staffPortal.salaryAdvance.modal.form.amount')}</label>
                                 <input
                                     type="number"
                                     className="form-input"
@@ -458,18 +462,18 @@ export default function SalaryAdvancePage() {
                                     max={maxAdvance}
                                 />
                                 <small style={{ color: 'var(--text-secondary)', marginTop: '0.25rem', display: 'block' }}>
-                                    Maksimum BND {maxAdvance.toFixed(2)} (had 50% gaji atau hari bekerja)
+                                    {t('staffPortal.salaryAdvance.modal.form.amountHint', { amount: maxAdvance.toFixed(2) })}
                                 </small>
                             </div>
 
                             <div className="form-group">
-                                <label className="form-label">Sebab Permohonan *</label>
+                                <label className="form-label">{t('staffPortal.salaryAdvance.modal.form.reason')}</label>
                                 <textarea
                                     className="form-input"
                                     value={reason}
                                     onChange={(e) => setReason(e.target.value)}
                                     rows={3}
-                                    placeholder="Nyatakan sebab permohonan..."
+                                    placeholder={t('staffPortal.salaryAdvance.modal.form.reasonPlaceholder')}
                                 />
                             </div>
 
@@ -483,7 +487,7 @@ export default function SalaryAdvancePage() {
                                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem' }}>
                                     <AlertCircle size={18} color="var(--warning)" style={{ marginTop: '2px' }} />
                                     <div style={{ fontSize: '0.875rem', color: 'var(--warning-dark)' }}>
-                                        <strong>Perhatian:</strong> Pendahuluan gaji akan dipotong secara automatik dari gaji bulan ini selepas diluluskan.
+                                        <strong>{t('staffPortal.salaryAdvance.modal.warning.title')}</strong> {t('staffPortal.salaryAdvance.modal.warning.desc')}
                                     </div>
                                 </div>
                             </div>
@@ -495,7 +499,7 @@ export default function SalaryAdvancePage() {
                                     disabled={isSubmitting}
                                     style={{ flex: 1 }}
                                 >
-                                    Batal
+                                    {t('staffPortal.salaryAdvance.modal.form.cancel')}
                                 </button>
                                 <button
                                     className="btn btn-primary"
@@ -503,7 +507,7 @@ export default function SalaryAdvancePage() {
                                     disabled={isSubmitting || !amount || !reason.trim() || parseFloat(amount) > maxAdvance}
                                     style={{ flex: 1 }}
                                 >
-                                    {isSubmitting ? <LoadingSpinner size="sm" /> : 'Hantar Permohonan'}
+                                    {isSubmitting ? <LoadingSpinner size="sm" /> : t('staffPortal.salaryAdvance.modal.form.submit')}
                                 </button>
                             </div>
                         </>

@@ -7,6 +7,7 @@ import { useDeliveryOrdersRealtime } from '@/lib/supabase/realtime-hooks';
 import { DeliveryOrder } from '@/lib/types';
 import Modal from '@/components/Modal';
 import LoadingSpinner from '@/components/LoadingSpinner';
+import { useToast } from '@/lib/contexts/ToastContext';
 import { Volume2, VolumeX, Printer, Bell, RefreshCw, ShoppingBag, ChefHat, CheckCircle, Truck, UserPlus } from 'lucide-react';
 import StatCard from '@/components/StatCard';
 
@@ -36,6 +37,7 @@ const AVAILABLE_DRIVERS = [
 
 export default function DeliveryHubPage() {
   const { deliveryOrders, updateDeliveryStatus, refreshDeliveryOrders, isInitialized } = useStore();
+  const { showToast } = useToast();
 
   // Load platform settings from localStorage
   const [platforms, setPlatforms] = useState<PlatformConfig[]>(DEFAULT_PLATFORMS);
@@ -588,7 +590,7 @@ export default function DeliveryHubPage() {
                         // For now, we just close the modal - in production this would update the order
                         setShowDriverModal(false);
                         // Show success feedback
-                        alert(`Driver ${driver.name} telah di-assign untuk order #${selectedOrder.id.slice(-6)}`);
+                        showToast(`Driver ${driver.name} telah di-assign untuk order #${selectedOrder.id.slice(-6)}`, 'success');
                       }
                     }
                   }}

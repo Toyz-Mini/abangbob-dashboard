@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import { StaffDocument } from '@/lib/types';
 import Modal from './Modal';
-import { uploadFile } from '@/lib/supabase/storage-utils';
+import { uploadFile, compressImage } from '@/lib/supabase/storage-utils';
 
 type DocumentType = StaffDocument['type'];
 
@@ -337,8 +337,24 @@ export default function DocumentUpload({ documents, onUpload, onDelete, readonly
     setUploadError(null);
 
     try {
+      let fileToUpload = selectedFile;
+
+      // Compress if image
+      if (fileToUpload.type.startsWith('image/')) {
+        try {
+          const compressedBlob = await compressImage(fileToUpload);
+          // Re-create File object from Blob to preserve name
+          fileToUpload = new File([compressedBlob], fileToUpload.name, {
+            type: compressedBlob.type,
+            lastModified: Date.now(),
+          });
+        } catch (e) {
+          console.warn('Image compression failed', e);
+        }
+      }
+
       // Upload file using storage utils
-      const result = await uploadFile(selectedFile, {
+      const result = await uploadFile(fileToUpload, {
         bucket: 'staff-documents',
         folder: 'documents',
         maxSize: 5 * 1024 * 1024, // 5MB
@@ -870,6 +886,7 @@ export default function DocumentUpload({ documents, onUpload, onDelete, readonly
     </div>
   );
 }
+
 
 
 

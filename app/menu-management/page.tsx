@@ -7,6 +7,7 @@ import MainLayout from '@/components/MainLayout';
 import { MenuItem, ModifierGroup, ModifierOption, MenuCategory, StockItem } from '@/lib/types';
 import Modal from '@/components/Modal';
 import LoadingSpinner from '@/components/LoadingSpinner';
+import { useToast } from '@/lib/contexts/ToastContext';
 import {
   UtensilsCrossed,
   Plus,
@@ -54,6 +55,7 @@ export default function MenuManagementPage() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
+  const { showToast } = useToast();
 
   // Queries
   const { data: menuItems = [], isLoading: isMenuLoading } = useMenuQuery();
@@ -358,8 +360,8 @@ export default function MenuManagementPage() {
 
   // Menu Item Handlers
   const handleAddMenuItem = async () => {
-    if (!menuForm.name.trim()) return alert('Sila masukkan nama menu');
-    if (menuForm.price < 0) return alert('Sila masukkan harga yang sah');
+    if (!menuForm.name.trim()) return showToast('Sila masukkan nama menu', 'warning');
+    if (menuForm.price < 0) return showToast('Sila masukkan harga yang sah', 'warning');
 
     await addMenuItemMutation.mutateAsync({
       name: menuForm.name.trim(),
@@ -411,7 +413,7 @@ export default function MenuManagementPage() {
 
   // Modifier Group Handlers
   const handleAddGroup = async () => {
-    if (!groupForm.name.trim()) return alert('Sila masukkan nama group');
+    if (!groupForm.name.trim()) return showToast('Sila masukkan nama group', 'warning');
 
     await addGroupMutation.mutateAsync({
       name: groupForm.name.trim(),
@@ -450,7 +452,7 @@ export default function MenuManagementPage() {
   // Modifier Option Handlers
   const handleAddOption = async () => {
     if (!optionForm.name.trim() || !optionForm.groupId) {
-      return alert('Sila masukkan nama option dan pilih group');
+      return showToast('Sila masukkan nama option dan pilih group', 'warning');
     }
 
     await addOptionMutation.mutateAsync({
@@ -484,7 +486,7 @@ export default function MenuManagementPage() {
   const handleAddIngredient = () => {
     if (!selectedStockId || selectedStockQty <= 0) return;
     if (optionForm.ingredients.some(i => i.stockItemId === selectedStockId)) {
-      alert('Ingredient already added');
+      showToast('Ingredient already added', 'warning');
       return;
     }
     setOptionForm(prev => ({
@@ -510,7 +512,7 @@ export default function MenuManagementPage() {
 
   // Category Handlers
   const handleAddCategory = async () => {
-    if (!categoryForm.name.trim()) return alert('Sila masukkan nama kategori');
+    if (!categoryForm.name.trim()) return showToast('Sila masukkan nama kategori', 'warning');
 
     await addCategoryMutation.mutateAsync({
       name: categoryForm.name.trim(),
@@ -545,7 +547,7 @@ export default function MenuManagementPage() {
 
     const itemsUsingCategory = menuItems.filter(item => item.category === selectedCategory.name);
     if (itemsUsingCategory.length > 0) {
-      alert(`Tidak boleh padam kategori ini. ${itemsUsingCategory.length} menu item masih menggunakan kategori ini.`);
+      showToast(`Tidak boleh padam kategori ini. ${itemsUsingCategory.length} menu item masih menggunakan kategori ini.`, 'error');
       return;
     }
 

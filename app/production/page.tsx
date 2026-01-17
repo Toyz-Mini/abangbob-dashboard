@@ -2,17 +2,25 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import MainLayout from '@/components/MainLayout';
 import { useStore } from '@/lib/store';
 import { useProductionLogsRealtime } from '@/lib/supabase/realtime-hooks';
 import { useCallback } from 'react';
-import { Plus, Trash2, Package, CheckCircle, Wrench, ArrowRight, ClipboardList, AlertOctagon } from 'lucide-react';
+import { Plus, Trash2, Package, CheckCircle, Wrench, ArrowRight, ClipboardList, AlertOctagon, ChefHat, Factory } from 'lucide-react';
 import Modal from '@/components/Modal';
 import LoadingSpinner from '@/components/LoadingSpinner';
+import { useToast } from '@/lib/contexts/ToastContext';
 import StatCard from '@/components/StatCard';
 import LivePageHeader from '@/components/LivePageHeader';
 import GlassCard from '@/components/GlassCard';
 import PremiumButton from '@/components/PremiumButton';
+
+// Dynamic import for heavy modal
+const ProductionWorkflowModal = dynamic(
+  () => import('@/components/production/ProductionWorkflowModal'),
+  { ssr: false }
+);
 
 const PRODUCTION_ITEMS = [
   'Nasi Lemak Ayam',
@@ -48,9 +56,11 @@ export default function ProductionPage() {
   }, [refreshProductionLogs]);
 
   useProductionLogsRealtime(handleProductionLogsChange);
+  const { showToast } = useToast();
 
   const [showAddLogModal, setShowAddLogModal] = useState(false);
   const [showWasteModal, setShowWasteModal] = useState(false);
+  const [showProductionWorkflow, setShowProductionWorkflow] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
 
   // Production log form
@@ -72,7 +82,7 @@ export default function ProductionPage() {
 
   const handleAddProductionLog = async () => {
     if (logForm.quantityProduced <= 0) {
-      alert('Sila masukkan kuantiti yang dihasilkan');
+      showToast('Sila masukkan kuantiti yang dihasilkan', 'warning');
       return;
     }
 
@@ -101,7 +111,7 @@ export default function ProductionPage() {
 
   const handleAddWasteLog = async () => {
     if (wasteForm.wasteAmount <= 0) {
-      alert('Sila masukkan kuantiti pembaziran');
+      showToast('Sila masukkan kuantiti pembaziran', 'warning');
       return;
     }
 
@@ -151,9 +161,12 @@ export default function ProductionPage() {
           title="Production & Kitchen Ops"
           subtitle="Pantau peralatan dan log production harian"
           rightContent={
-            <div style={{ display: 'flex', gap: '0.75rem' }}>
-              <PremiumButton onClick={() => setShowAddLogModal(true)} icon={Plus}>
-                Log Production
+            <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+              <PremiumButton onClick={() => setShowProductionWorkflow(true)} icon={Factory}>
+                Production (Recipe)
+              </PremiumButton>
+              <PremiumButton variant="glass" onClick={() => setShowAddLogModal(true)} icon={Plus}>
+                Log Manual
               </PremiumButton>
               <PremiumButton variant="glass" onClick={() => setShowWasteModal(true)} style={{ color: 'var(--danger)', borderColor: 'rgba(239, 68, 68, 0.3)' }} icon={Trash2}>
                 Log Sisa
@@ -231,9 +244,9 @@ export default function ProductionPage() {
               </div>
             ) : (
               <div style={{ textAlign: 'center', padding: '3rem 1rem', color: 'var(--text-secondary)' }}>
-                <Package size={32} style={{ opacity: 0.3, marginBottom: '0.5rem' }} />
+                <Package size={32} className="mx-auto block" style={{ opacity: 0.3, marginBottom: '0.5rem' }} />
                 <p>Tiada rekod production hari ini.</p>
-                <button className="btn btn-link btn-sm" onClick={() => setShowAddLogModal(true)}>+ Tambah Rekod</button>
+                <button className="btn btn-outline btn-sm mt-2" onClick={() => setShowAddLogModal(true)}>+ Tambah Rekod</button>
               </div>
             )}
           </GlassCard>
@@ -277,7 +290,7 @@ export default function ProductionPage() {
               </div>
             ) : (
               <div style={{ textAlign: 'center', padding: '3rem 1rem', color: 'var(--text-secondary)' }}>
-                <CheckCircle size={32} style={{ opacity: 0.3, marginBottom: '0.5rem', color: 'var(--success)' }} />
+                <CheckCircle size={32} className="mx-auto block" style={{ opacity: 0.3, marginBottom: '0.5rem', color: 'var(--success)' }} />
                 <p>Tiada pembaziran direkodkan.</p>
                 <div style={{ fontSize: '0.8rem', opacity: 0.7 }}>Kerja yang bagus!</div>
               </div>
@@ -466,6 +479,16 @@ export default function ProductionPage() {
             </button>
           </div>
         </Modal>
+
+        {/* Recipe-based Production Workflow */}
+        <ProductionWorkflowModal
+          isOpen={showProductionWorkflow}
+          onClose={() => setShowProductionWorkflow(false)}
+          onProductionComplete={() => {
+            refreshProductionLogs();
+            showToast('Production berjaya direkodkan!', 'success');
+          }}
+        />
       </div>
     </MainLayout >
   );

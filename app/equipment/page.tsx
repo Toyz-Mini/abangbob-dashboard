@@ -646,3 +646,4 @@ export default function EquipmentPage() {
     </MainLayout>
   );
 }
+

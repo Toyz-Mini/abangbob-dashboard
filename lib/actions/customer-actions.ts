@@ -1,16 +1,14 @@
 'use server';
 
-import { auth } from '@/lib/auth';
+import { getServerSession } from '@/lib/supabase/server-auth';
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
-import { headers } from 'next/headers';
+
 import { toSnakeCase, toCamelCase } from '@/lib/supabase/operations';
 
 // ============ CUSTOMERS ACTIONS ============
 
 export async function fetchCustomersAction() {
-    const session = await auth.api.getSession({
-        headers: await headers()
-    });
+    const session = await getServerSession();
     if (!session) return [];
 
     const adminClient = getSupabaseAdmin();
@@ -28,9 +26,7 @@ export async function fetchCustomersAction() {
 }
 
 export async function insertCustomerAction(customer: any) {
-    const session = await auth.api.getSession({
-        headers: await headers()
-    });
+    const session = await getServerSession();
     // Customers can potentially be created by public (e.g. self-registration during order)?
     // But this action is likely for staff managing customers. 
     // If public needs it, we use `create_public_order` RPC usually.
@@ -52,9 +48,7 @@ export async function insertCustomerAction(customer: any) {
 }
 
 export async function updateCustomerAction(id: string, updates: any) {
-    const session = await auth.api.getSession({
-        headers: await headers()
-    });
+    const session = await getServerSession();
     if (!session) throw new Error('Unauthorized');
 
     const adminClient = getSupabaseAdmin();

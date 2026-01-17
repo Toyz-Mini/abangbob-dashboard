@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { MapPin, Camera, CheckCircle, AlertTriangle, X, RefreshCw, ScanFace, MapPinOff } from 'lucide-react';
 import PremiumButton from './PremiumButton';
 import { getAllowedLocations, calculateDistance, type AllowedLocation } from '@/lib/supabase/attendance-sync';
+import { compressImage } from '@/lib/supabase/storage-utils';
 
 interface VerificationWizardProps {
     isOpen: boolean;
@@ -26,6 +27,7 @@ export default function VerificationWizard({ isOpen, onClose, onSuccess, staffNa
     const [isFlashing, setIsFlashing] = useState(false);
     const [nearestOutlet, setNearestOutlet] = useState<AllowedLocation | null>(null);
     const [isLocating, setIsLocating] = useState(false);
+    const [cameraKey, setCameraKey] = useState(0);
 
     const webcamRef = useRef<Webcam>(null);
 
@@ -80,7 +82,7 @@ export default function VerificationWizard({ isOpen, onClose, onSuccess, staffNa
                         }
                     }
 
-                    if (nearest && minDistance <= nearest.radius_meters) {
+                    if (nearest && minDistance <= nearest.radiusMeters) {
                         setNearestOutlet(nearest);
                         setIsLocating(false);
                         // Auto-advance to camera after brief success visual
@@ -88,7 +90,8 @@ export default function VerificationWizard({ isOpen, onClose, onSuccess, staffNa
                     } else {
                         setIsLocating(false);
                         const distText = nearest ? `${Math.round(minDistance)}m dari ${nearest.name}` : 'Tiada outlet berhampiran';
-                        setLocationError(`Anda berada di luar radius yang dibenarkan (${distText}).`);
+                        const radiusText = nearest ? ` (Radius max: ${nearest.radiusMeters}m)` : '';
+                        setLocationError(`Anda berada di luar radius yang dibenarkan. ${distText}${radiusText}`);
                     }
                 },
                 (err) => {
@@ -130,7 +133,14 @@ export default function VerificationWizard({ isOpen, onClose, onSuccess, staffNa
         try {
             // Convert dataURL to Blob
             const res = await fetch(capturedImage);
-            const blob = await res.blob();
+            let blob = await res.blob();
+
+            // Compress to reduce size (max 800px width, 0.7 quality)
+            try {
+                blob = await compressImage(blob, 800, 0.7);
+            } catch (e) {
+                console.warn('Compression failed, using original size', e);
+            }
 
             await onSuccess(blob, location);
             setStep('success');
@@ -229,12 +239,25 @@ export default function VerificationWizard({ isOpen, onClose, onSuccess, staffNa
                                     ) : (
                                         <>
                                             <Webcam
+                                                key={cameraKey}
                                                 audio={false}
                                                 ref={webcamRef}
                                                 screenshotFormat="image/jpeg"
                                                 videoConstraints={{ facingMode: "user" }}
                                                 className="w-full h-full object-cover"
-                                                onUserMediaError={() => setError('Akses kamera ditolak. Sila benarkan akses kamera untuk proceed.')}
+                                                onUserMediaError={(err) => {
+                                                    console.error('Webcam Error:', err);
+                                                    let msg = 'Akses kamera ditolak.';
+                                                    if (typeof err === 'string') {
+                                                        msg = err;
+                                                    } else if (err instanceof Error) {
+                                                        if (err.name === 'NotAllowedError') msg = 'Akses kamera ditolak oleh browser.';
+                                                        else if (err.name === 'NotFoundError') msg = 'Tiada kamera dikesan pada peranti ini.';
+                                                        else if (err.name === 'NotReadableError') msg = 'Kamera sedang digunakan oleh aplikasi lain.';
+                                                        else msg = `Ralat Kamera: ${err.message}`;
+                                                    }
+                                                    setError(msg);
+                                                }}
                                             />
                                             {/* Face Scanning Overlay */}
                                             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
@@ -257,17 +280,42 @@ export default function VerificationWizard({ isOpen, onClose, onSuccess, staffNa
                                 </div>
 
                                 {error && (
-                                    <div className="p-3 bg-red-50 text-red-600 rounded-lg text-xs font-medium border border-red-100 flex items-center gap-2">
-                                        <AlertTriangle size={14} />
-                                        {error}
+                                    <div className="w-full">
+                                        <div className="p-3 bg-red-50 text-red-600 rounded-lg text-xs font-medium border border-red-100 flex flex-col gap-2">
+                                            <div className="flex items-center gap-2">
+                                                <AlertTriangle size={14} />
+                                                <span className="flex-1">{error}</span>
+                                            </div>
+
+                                            {error.includes('ditolak') && (
+                                                <div className="ml-6 text-[10px] text-red-500/80 leading-tight">
+                                                    1. Check ada icon <Camera size={10} className="inline mx-1" /> di address bar<br />
+                                                    2. Tekan & pilih "Allow"<br />
+                                                    3. Tekan butang "Cuba Lagi"
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                 )}
 
                                 <div className="w-full flex gap-3 mt-2">
                                     {!capturedImage ? (
-                                        <PremiumButton onClick={capturePhoto} className="w-full shadow-lg" icon={Camera}>
-                                            Tangkap Gambar
-                                        </PremiumButton>
+                                        error ? (
+                                            <PremiumButton
+                                                onClick={() => {
+                                                    setError('');
+                                                    setCameraKey(prev => prev + 1);
+                                                }}
+                                                className="w-full bg-gray-800 text-white"
+                                                icon={RefreshCw}
+                                            >
+                                                Cuba Lagi (Reset Kamera)
+                                            </PremiumButton>
+                                        ) : (
+                                            <PremiumButton onClick={capturePhoto} className="w-full shadow-lg" icon={Camera}>
+                                                Tangkap Gambar
+                                            </PremiumButton>
+                                        )
                                     ) : (
                                         <div className="grid grid-cols-2 gap-3 w-full">
                                             <PremiumButton onClick={retakePhoto} variant="outline" icon={RefreshCw}>

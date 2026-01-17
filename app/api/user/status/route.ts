@@ -1,13 +1,32 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-
-import { auth } from '@/lib/auth';
+import { createServerClient } from '@supabase/ssr';
+import { cookies } from 'next/headers';
 
 export const dynamic = 'force-dynamic';
 
 // Initialize Supabase admin client
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+
+async function getSession(request: NextRequest) {
+    const cookieStore = await cookies();
+
+    const supabase = createServerClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+            cookies: {
+                get(name: string) {
+                    return cookieStore.get(name)?.value;
+                },
+            },
+        }
+    );
+
+    const { data: { session } } = await supabase.auth.getSession();
+    return session;
+}
 
 export async function GET(request: NextRequest) {
     let userId: string | null = null;
@@ -23,9 +42,7 @@ export async function GET(request: NextRequest) {
         }
 
         // Verify session
-        const session = await auth.api.getSession({
-            headers: request.headers
-        });
+        const session = await getSession(request);
 
         if (!session) {
             return NextResponse.json(
@@ -35,11 +52,22 @@ export async function GET(request: NextRequest) {
         }
 
         // Security Check: Only allow if own ID or Admin
-        if (session.user.id !== userId && (session.user as any).role !== 'Admin') {
-            return NextResponse.json(
-                { error: 'Forbidden' },
-                { status: 403 }
-            );
+        // Note: We'll need to check role from user table since Supabase doesn't have it
+        if (session.user.id !== userId) {
+            // Check if user is admin from user table
+            const adminClient = createClient(supabaseUrl, supabaseServiceKey);
+            const { data: currentUserData } = await adminClient
+                .from('user')
+                .select('role')
+                .eq('id', session.user.id)
+                .single();
+
+            if (currentUserData?.role !== 'Admin') {
+                return NextResponse.json(
+                    { error: 'Forbidden' },
+                    { status: 403 }
+                );
+            }
         }
 
         const supabase = createClient(supabaseUrl, supabaseServiceKey);
@@ -58,8 +86,6 @@ export async function GET(request: NextRequest) {
 
         if (error || !data) {
             console.log('[API] User not found or error, defaulting to Staff');
-            // If user not found in 'user' table, treat as new/incomplete user
-            // DO NOT default to Admin/Approved as that bypasses security
             console.error('Error fetching user status or user not found:', error);
             return NextResponse.json({
                 status: 'incomplete_profile',
@@ -74,7 +100,6 @@ export async function GET(request: NextRequest) {
         let userStatus = data.status;
 
         // PRIORITY 1: Check email verification first
-        // If email is not verified, block access regardless of other status
         if (!emailVerified) {
             console.log('[API] Email not verified, returning email_not_verified status');
             return NextResponse.json({
@@ -88,7 +113,6 @@ export async function GET(request: NextRequest) {
         if (!userStatus && (!data.phone || !(data as any).icNumber)) {
             userStatus = 'incomplete_profile';
         } else if (!userStatus) {
-            // If status null but has details, maybe pending?
             userStatus = 'pending_approval';
         }
 
@@ -109,4 +133,3 @@ export async function GET(request: NextRequest) {
         });
     }
 }
-

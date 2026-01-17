@@ -27,17 +27,22 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     setToasts(prev => prev.filter(t => t.id !== id));
   }, []);
 
-  const showToast = useCallback((message: string, type: ToastType = 'info', duration: number = 4000) => {
+  const showToast = useCallback((message: string, type: ToastType = 'info', duration?: number) => {
     const id = `toast-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    const newToast: Toast = { id, message, type, duration };
-    
+
+    // Use longer duration for warnings and errors so users have time to read
+    const defaultDuration = type === 'error' || type === 'warning' ? 8000 : 6000;
+    const actualDuration = duration ?? defaultDuration;
+
+    const newToast: Toast = { id, message, type, duration: actualDuration };
+
     setToasts(prev => [...prev, newToast]);
 
     // Auto remove after duration
-    if (duration > 0) {
+    if (actualDuration > 0) {
       setTimeout(() => {
         removeToast(id);
-      }, duration);
+      }, actualDuration);
     }
   }, [removeToast]);
 
@@ -87,8 +92,8 @@ function ToastItem({ toast, onRemove }: { toast: Toast; onRemove: (id: string) =
         <Icon size={20} />
       </div>
       <div className="toast-message">{toast.message}</div>
-      <button 
-        className="toast-close" 
+      <button
+        className="toast-close"
         onClick={() => onRemove(toast.id)}
         aria-label="Dismiss"
       >
@@ -98,6 +103,7 @@ function ToastItem({ toast, onRemove }: { toast: Toast; onRemove: (id: string) =
     </div>
   );
 }
+
 
 
 

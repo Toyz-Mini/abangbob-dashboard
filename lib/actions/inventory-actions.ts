@@ -1,21 +1,16 @@
 'use server';
 
-import { auth } from '@/lib/auth';
+import { getServerSession } from '@/lib/supabase/server-auth';
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
-import { headers } from 'next/headers';
+
 import { toSnakeCase, toCamelCase } from '@/lib/supabase/operations';
 
 export async function addInventoryItemAction(item: any) {
     console.log('[addInventoryItemAction] Starting...', item.name);
 
-    // 1. Verify User Session
-    const session = await auth.api.getSession({
-        headers: await headers()
-    });
-
-    if (!session) {
-        throw new Error('Unauthorized');
-    }
+    // 1. Verify Role
+    const { requireRole } = await import('@/lib/supabase/server-auth');
+    const { session } = await requireRole(['admin', 'manager', 'staff']);
 
     const user = session.user;
     console.log('[addInventoryItemAction] User verified:', user.email);
@@ -43,13 +38,9 @@ export async function fetchInventoryAction() {
     console.log('[fetchInventoryAction] Starting...');
 
     // 1. Verify User Session
-    const session = await auth.api.getSession({
-        headers: await headers()
-    });
-
-    if (!session) {
-        throw new Error('Unauthorized');
-    }
+    // Any authenticated user requires at least staff role
+    const { requireRole } = await import('@/lib/supabase/server-auth');
+    await requireRole(['admin', 'manager', 'staff']);
 
     // 2. Fetch from Supabase (Bypassing RLS with Admin Client)
     const adminClient = getSupabaseAdmin();
@@ -71,13 +62,8 @@ export async function fetchInventoryAction() {
 export async function updateInventoryItemAction(id: string, updates: any) {
     console.log('[updateInventoryItemAction] Starting...', id);
 
-    const session = await auth.api.getSession({
-        headers: await headers()
-    });
-
-    if (!session) {
-        throw new Error('Unauthorized');
-    }
+    const { requireRole } = await import('@/lib/supabase/server-auth');
+    await requireRole(['admin', 'manager', 'staff']);
 
     const adminClient = getSupabaseAdmin();
     const snakeCasedUpdates = toSnakeCase(updates);
@@ -101,13 +87,8 @@ export async function updateInventoryItemAction(id: string, updates: any) {
 export async function deleteInventoryItemAction(id: string) {
     console.log('[deleteInventoryItemAction] Starting...', id);
 
-    const session = await auth.api.getSession({
-        headers: await headers()
-    });
-
-    if (!session) {
-        throw new Error('Unauthorized');
-    }
+    const { requireRole } = await import('@/lib/supabase/server-auth');
+    await requireRole(['admin', 'manager']); // Only Manager/Admin can delete
 
     const adminClient = getSupabaseAdmin();
 

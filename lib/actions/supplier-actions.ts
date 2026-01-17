@@ -1,16 +1,14 @@
 'use server';
 
-import { auth } from '@/lib/auth';
+import { getServerSession } from '@/lib/supabase/server-auth';
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
-import { headers } from 'next/headers';
+
 import { toSnakeCase, toCamelCase } from '@/lib/supabase/operations';
 
 // ============ SUPPLIERS ACTIONS ============
 
 export async function fetchSuppliersAction() {
-    const session = await auth.api.getSession({
-        headers: await headers()
-    });
+    const session = await getServerSession();
     if (!session) return [];
 
     const adminClient = getSupabaseAdmin();
@@ -28,9 +26,7 @@ export async function fetchSuppliersAction() {
 }
 
 export async function insertSupplierAction(supplier: any) {
-    const session = await auth.api.getSession({
-        headers: await headers()
-    });
+    const session = await getServerSession();
     if (!session) throw new Error('Unauthorized');
 
     const adminClient = getSupabaseAdmin();
@@ -48,9 +44,7 @@ export async function insertSupplierAction(supplier: any) {
 }
 
 export async function updateSupplierAction(id: string, updates: any) {
-    const session = await auth.api.getSession({
-        headers: await headers()
-    });
+    const session = await getServerSession();
     if (!session) throw new Error('Unauthorized');
 
     const adminClient = getSupabaseAdmin();
@@ -69,9 +63,7 @@ export async function updateSupplierAction(id: string, updates: any) {
 }
 
 export async function deleteSupplierAction(id: string) {
-    const session = await auth.api.getSession({
-        headers: await headers()
-    });
+    const session = await getServerSession();
     if (!session) throw new Error('Unauthorized');
 
     const adminClient = getSupabaseAdmin();
@@ -86,9 +78,7 @@ export async function deleteSupplierAction(id: string) {
 // ============ PURCHASE ORDERS ACTIONS ============
 
 export async function fetchPurchaseOrdersAction() {
-    const session = await auth.api.getSession({
-        headers: await headers()
-    });
+    const session = await getServerSession();
     if (!session) return [];
 
     const adminClient = getSupabaseAdmin();
@@ -106,9 +96,7 @@ export async function fetchPurchaseOrdersAction() {
 }
 
 export async function insertPurchaseOrderAction(po: any) {
-    const session = await auth.api.getSession({
-        headers: await headers()
-    });
+    const session = await getServerSession();
     if (!session) throw new Error('Unauthorized');
 
     const adminClient = getSupabaseAdmin();
@@ -126,9 +114,7 @@ export async function insertPurchaseOrderAction(po: any) {
 }
 
 export async function updatePurchaseOrderAction(id: string, updates: any) {
-    const session = await auth.api.getSession({
-        headers: await headers()
-    });
+    const session = await getServerSession();
     if (!session) throw new Error('Unauthorized');
 
     const adminClient = getSupabaseAdmin();

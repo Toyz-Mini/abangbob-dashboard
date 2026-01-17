@@ -188,7 +188,7 @@ export default function LocationMapPicker({
                 {/* Radius circle with glow effect */}
                 <Circle
                     center={position}
-                    radius={radius}
+                    radius={(typeof radius === 'number' && !isNaN(radius) && radius > 0) ? radius : 100}
                     pathOptions={{
                         color: '#ef4444',
                         fillColor: '#ef4444',

@@ -5,9 +5,9 @@ import MainLayout from '@/components/MainLayout';
 import { useStore } from '@/lib/store';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { AuditLog, AuditAction, AuditModule, generateMockAuditLogs, ACTION_LABELS, MODULE_LABELS, ACTION_COLORS } from '@/lib/audit-data';
-import { 
-  FileText, 
-  Filter, 
+import {
+  FileText,
+  Filter,
   Search,
   Calendar,
   User,
@@ -22,9 +22,12 @@ import {
 } from 'lucide-react';
 import StatCard from '@/components/StatCard';
 import { exportToCSV } from '@/lib/services/excel-export';
+import { fetchAuditLogsAction } from '@/lib/actions/audit-actions';
+import { useToast } from '@/lib/contexts/ToastContext';
 
 export default function AuditLogPage() {
   const { isInitialized } = useStore();
+  const { showToast } = useToast();
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterAction, setFilterAction] = useState<AuditAction | 'all'>('all');
@@ -34,31 +37,39 @@ export default function AuditLogPage() {
 
   // Load audit logs
   useEffect(() => {
-    // Simulate loading
-    setTimeout(() => {
-      const storedLogs = localStorage.getItem('abangbob_audit_logs');
-      if (storedLogs) {
-        setLogs(JSON.parse(storedLogs));
-      } else {
-        const mockLogs = generateMockAuditLogs();
-        setLogs(mockLogs);
-        localStorage.setItem('abangbob_audit_logs', JSON.stringify(mockLogs));
-      }
+    loadLogs();
+  }, [filterDate]); // Reload if date changes server-side filter
+
+  const loadLogs = async () => {
+    setIsLoading(true);
+    try {
+      // Use server action - pass date filter if present
+      const { logs: fetchedLogs } = await fetchAuditLogsAction({
+        date: filterDate || undefined,
+        limit: 100 // Fetch last 100 for now
+      });
+      setLogs(fetchedLogs);
+    } catch (error) {
+      console.error('Failed to load audit logs:', error);
+      showToast('Gagal memuat log audit', 'error');
+      // Fallback to mock if desired, or just empty
+      // setLogs(generateMockAuditLogs()); 
+    } finally {
       setIsLoading(false);
-    }, 500);
-  }, []);
+    }
+  };
 
   // Filter logs
   const filteredLogs = useMemo(() => {
     return logs.filter(log => {
-      const matchesSearch = searchQuery === '' || 
+      const matchesSearch = searchQuery === '' ||
         log.details.toLowerCase().includes(searchQuery.toLowerCase()) ||
         log.userName.toLowerCase().includes(searchQuery.toLowerCase());
-      
+
       const matchesAction = filterAction === 'all' || log.action === filterAction;
       const matchesModule = filterModule === 'all' || log.module === filterModule;
       const matchesDate = filterDate === '' || log.timestamp.startsWith(filterDate);
-      
+
       return matchesSearch && matchesAction && matchesModule && matchesDate;
     });
   }, [logs, searchQuery, filterAction, filterModule, filterDate]);
@@ -93,13 +104,7 @@ export default function AuditLogPage() {
   };
 
   const handleRefresh = () => {
-    setIsLoading(true);
-    setTimeout(() => {
-      const mockLogs = generateMockAuditLogs();
-      setLogs(mockLogs);
-      localStorage.setItem('abangbob_audit_logs', JSON.stringify(mockLogs));
-      setIsLoading(false);
-    }, 500);
+    loadLogs();
   };
 
   const formatTimestamp = (timestamp: string) => {
@@ -107,16 +112,16 @@ export default function AuditLogPage() {
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
     const diffMins = Math.floor(diffMs / 60000);
-    
+
     if (diffMins < 1) return 'Baru saja';
     if (diffMins < 60) return `${diffMins} minit lepas`;
     if (diffMins < 1440) return `${Math.floor(diffMins / 60)} jam lepas`;
-    
-    return date.toLocaleString('ms-MY', { 
-      day: 'numeric', 
-      month: 'short', 
-      hour: '2-digit', 
-      minute: '2-digit' 
+
+    return date.toLocaleString('ms-MY', {
+      day: 'numeric',
+      month: 'short',
+      hour: '2-digit',
+      minute: '2-digit'
     });
   };
 
@@ -208,7 +213,7 @@ export default function AuditLogPage() {
                 />
               </div>
             </div>
-            
+
             <div style={{ flex: 1, minWidth: '150px' }}>
               <label className="form-label">Tindakan</label>
               <select
@@ -222,7 +227,7 @@ export default function AuditLogPage() {
                 ))}
               </select>
             </div>
-            
+
             <div style={{ flex: 1, minWidth: '150px' }}>
               <label className="form-label">Modul</label>
               <select
@@ -236,7 +241,7 @@ export default function AuditLogPage() {
                 ))}
               </select>
             </div>
-            
+
             <div style={{ flex: 1, minWidth: '150px' }}>
               <label className="form-label">Tarikh</label>
               <input
@@ -320,9 +325,9 @@ export default function AuditLogPage() {
                         {MODULE_LABELS[log.module]}
                       </span>
                     </div>
-                    
+
                     <p style={{ fontWeight: 500, marginBottom: '0.25rem' }}>{log.details}</p>
-                    
+
                     <div style={{ display: 'flex', gap: '1rem', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
                       <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                         <User size={12} />

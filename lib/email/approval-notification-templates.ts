@@ -1,7 +1,7 @@
 import { LeaveType, ClaimType, RequestCategory } from '../types';
 
 // Base URL for approval actions
-const getBaseUrl = () => process.env.BETTER_AUTH_URL || process.env.NEXT_PUBLIC_BETTER_AUTH_URL || 'https://www.abangbob.store';
+const getBaseUrl = () => process.env.NEXT_PUBLIC_APP_URL || 'https://www.abangbob.store';
 
 // Common email wrapper with AbangBob branding
 function emailWrapper(content: string): string {

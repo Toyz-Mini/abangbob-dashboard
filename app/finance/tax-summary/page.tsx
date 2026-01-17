@@ -26,8 +26,7 @@ import {
     XCircle,
     TrendingUp,
 } from 'lucide-react';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
+
 
 export default function TaxSummaryPage() {
     const { showToast } = useToast();
@@ -93,6 +92,8 @@ export default function TaxSummaryPage() {
     const handleExportPDF = async () => {
         setIsExporting(true);
         try {
+            const jsPDF = (await import('jspdf')).default;
+            const autoTable = (await import('jspdf-autotable')).default;
             const doc = new jsPDF();
 
             // Title

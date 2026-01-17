@@ -98,10 +98,12 @@ export default function SmartReorderView() {
                 });
             }
 
-            showToast(`Berjaya menjana ${Object.keys(bySupplier).length + (noSupplierItems.length ? 1 : 0)} Purchase Orders`, 'success');
+            // Use translation for toast
+            const count = Object.keys(bySupplier).length + (noSupplierItems.length ? 1 : 0);
+            showToast(t('inventory.smartReorder.button.success', { count }), 'success');
         } catch (error) {
             console.error('Failed to generate PO:', error);
-            showToast('Gagal menjana Purchase Order', 'error');
+            showToast(t('inventory.smartReorder.button.error'), 'error');
         } finally {
             setIsGenerating(false);
         }
@@ -119,9 +121,9 @@ export default function SmartReorderView() {
         return (
             <div className="flex flex-col items-center justify-center p-12 text-center bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
                 <CheckCircle size={48} className="text-green-500 mb-4" />
-                <h3 className="text-lg font-bold text-gray-800 mb-1">Stok Dalam Keadaan Baik</h3>
+                <h3 className="text-lg font-bold text-gray-800 mb-1">{t('inventory.smartReorder.empty.title')}</h3>
                 <p className="text-gray-500 max-w-sm">
-                    Tiada item yang perlu di-restock berdasarkan analisis penggunaan 30 hari lepas.
+                    {t('inventory.smartReorder.empty.desc')}
                 </p>
             </div>
         );
@@ -134,19 +136,19 @@ export default function SmartReorderView() {
                 <div className="bg-blue-50 border border-blue-100 p-4 rounded-xl flex flex-col items-center text-center">
                     <ShoppingCart className="text-blue-600 mb-2" size={24} />
                     <div className="text-2xl font-bold text-blue-800">{suggestions.length}</div>
-                    <div className="text-xs font-medium text-blue-600 uppercase tracking-wide">Item Perlu Restock</div>
+                    <div className="text-xs font-medium text-blue-600 uppercase tracking-wide">{t('inventory.smartReorder.cards.restock')}</div>
                 </div>
 
                 <div className="bg-emerald-50 border border-emerald-100 p-4 rounded-xl flex flex-col items-center text-center">
                     <FileText className="text-emerald-600 mb-2" size={24} />
                     <div className="text-2xl font-bold text-emerald-800">BND {totalEstimatedCost.toFixed(2)}</div>
-                    <div className="text-xs font-medium text-emerald-600 uppercase tracking-wide">Anggaran Kos</div>
+                    <div className="text-xs font-medium text-emerald-600 uppercase tracking-wide">{t('inventory.smartReorder.cards.cost')}</div>
                 </div>
 
                 <div className="bg-purple-50 border border-purple-100 p-4 rounded-xl flex flex-col items-center text-center">
                     <TrendingDown className="text-purple-600 mb-2" size={24} />
                     <div className="text-2xl font-bold text-purple-800">{uniqueSuppliers.length}</div>
-                    <div className="text-xs font-medium text-purple-600 uppercase tracking-wide">Supplier Terlibat</div>
+                    <div className="text-xs font-medium text-purple-600 uppercase tracking-wide">{t('inventory.smartReorder.cards.suppliers')}</div>
                 </div>
             </div>
 
@@ -155,17 +157,17 @@ export default function SmartReorderView() {
                 <div className="p-4 border-b border-gray-100 flex justify-between items-center">
                     <h3 className="font-bold text-lg flex items-center gap-2">
                         <RefreshCw size={20} className="text-primary" />
-                        Cadangan Restock (Smart Reorder)
+                        {t('inventory.smartReorder.title')}
                     </h3>
                     <button
                         onClick={handleGeneratePO}
                         disabled={isGenerating}
                         className="btn btn-primary flex items-center gap-2"
                     >
-                        {isGenerating ? 'Generating...' : (
+                        {isGenerating ? t('inventory.smartReorder.button.generating') : (
                             <>
                                 <FileText size={18} />
-                                Jana Purchase Order (PO)
+                                {t('inventory.smartReorder.button.generate')}
                             </>
                         )}
                     </button>
@@ -175,13 +177,13 @@ export default function SmartReorderView() {
                     <table className="w-full text-left text-sm">
                         <thead className="bg-gray-50 text-gray-500 uppercase text-xs">
                             <tr>
-                                <th className="px-4 py-3 font-semibold">Item</th>
-                                <th className="px-4 py-3 font-semibold text-center">Stok Semasa</th>
-                                <th className="px-4 py-3 font-semibold text-center">Usage / Hari</th>
-                                <th className="px-4 py-3 font-semibold text-center">Reorder Point</th>
-                                <th className="px-4 py-3 font-semibold text-right">Cadangan Order</th>
-                                <th className="px-4 py-3 font-semibold text-right">Kos (Est)</th>
-                                <th className="px-4 py-3 font-semibold text-center">Tindakan</th>
+                                <th className="px-4 py-3 font-semibold">{t('inventory.table.item')}</th>
+                                <th className="px-4 py-3 font-semibold text-center">{t('inventory.table.quantity')}</th>
+                                <th className="px-4 py-3 font-semibold text-center">{t('inventory.smartReorder.table.usage')}</th>
+                                <th className="px-4 py-3 font-semibold text-center">{t('inventory.smartReorder.table.reorderPoint')}</th>
+                                <th className="px-4 py-3 font-semibold text-right">{t('inventory.smartReorder.table.suggestion')}</th>
+                                <th className="px-4 py-3 font-semibold text-right">{t('inventory.smartReorder.table.estCost')}</th>
+                                <th className="px-4 py-3 font-semibold text-center">{t('inventory.table.action')}</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
@@ -230,10 +232,9 @@ export default function SmartReorderView() {
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-sm text-yellow-800 flex items-start gap-3">
                 <AlertTriangle className="shrink-0 mt-0.5" size={18} />
                 <div>
-                    <p className="font-bold mb-1">Bagaimana ini dikira?</p>
+                    <p className="font-bold mb-1">{t('inventory.smartReorder.info.title')}</p>
                     <p>
-                        Formula: <b>(Purata Guna Harian × 3 Hari Lead Time) + 20% Safety Stock</b>.
-                        System mencadangkan order apabila stok jatuh bawah paras ini, untuk menampung penggunaan selama 7 hari.
+                        {t('inventory.smartReorder.info.desc')}
                     </p>
                 </div>
             </div>

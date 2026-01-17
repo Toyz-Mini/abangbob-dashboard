@@ -136,7 +136,7 @@ export function getApprovalEmailTemplate(name: string, approved: boolean, reason
               ${name}, ${message}
             </p>
             ${approved ? `
-              <a href="${process.env.BETTER_AUTH_URL || 'http://localhost:3000'}/login" 
+              <a href="${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/login" 
                  style="display: inline-block; padding: 15px 40px; background: linear-gradient(135deg, #CC1512 0%, #8B0000 100%); color: #ffffff; text-decoration: none; font-weight: 600; border-radius: 10px;">
                 Log Masuk Sekarang
               </a>

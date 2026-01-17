@@ -1,16 +1,14 @@
 'use server';
 
-import { auth } from '@/lib/auth';
+import { getServerSession } from '@/lib/supabase/server-auth';
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
-import { headers } from 'next/headers';
+
 import { toSnakeCase, toCamelCase } from '@/lib/supabase/operations';
 
 // ============ CASH FLOWS ACTIONS ============
 
 export async function fetchCashFlowsAction(startDate?: string, endDate?: string) {
-    const session = await auth.api.getSession({
-        headers: await headers()
-    });
+    const session = await getServerSession();
     if (!session) return [];
 
     const adminClient = getSupabaseAdmin();
@@ -40,9 +38,7 @@ export async function fetchCashFlowsAction(startDate?: string, endDate?: string)
 }
 
 export async function upsertCashFlowAction(cashFlow: any) {
-    const session = await auth.api.getSession({
-        headers: await headers()
-    });
+    const session = await getServerSession();
     if (!session) throw new Error('Unauthorized');
 
     const adminClient = getSupabaseAdmin();
@@ -62,9 +58,7 @@ export async function upsertCashFlowAction(cashFlow: any) {
 // ============ CASH REGISTERS ACTIONS ============
 
 export async function fetchCashRegistersAction() {
-    const session = await auth.api.getSession({
-        headers: await headers()
-    });
+    const session = await getServerSession();
     if (!session) return [];
 
     const adminClient = getSupabaseAdmin();

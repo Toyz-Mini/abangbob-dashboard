@@ -5,9 +5,14 @@ import { useAuth } from '@/lib/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { getTodayAttendance, clockIn, clockOut, type AttendanceRecord } from '@/lib/supabase/attendance-sync';
 import VerificationWizard from '@/components/VerificationWizard';
-import { CheckCircle, Clock, MapPin, Loader2 } from 'lucide-react';
+import { CheckCircle, Clock, MapPin, Loader2, WifiOff } from 'lucide-react';
+import { offlineQueue, type ClockInPayload, type ClockOutPayload } from '@/lib/services/offline-queue';
+import { fileToBase64 } from '@/lib/supabase/storage-utils';
+import { useAttendanceRealtime } from '@/lib/supabase/realtime-hooks';
+import { useTranslation } from '@/lib/contexts/LanguageContext';
 
 export default function AttendancePage() {
+    const { t } = useTranslation();
     const router = useRouter();
     const { currentStaff, isStaffLoggedIn } = useAuth();
 
@@ -15,11 +20,11 @@ export default function AttendancePage() {
     const [isLoading, setIsLoading] = useState(true);
     const [isWizardOpen, setIsWizardOpen] = useState(false);
     const [wizardMode, setWizardMode] = useState<'IN' | 'OUT'>('IN');
-    const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+    const [message, setMessage] = useState<{ type: 'success' | 'error' | 'warning', text: string } | null>(null);
 
     const loadTodayAttendance = useCallback(async () => {
         if (!currentStaff) return;
-        setIsLoading(true);
+        // Don't set loading on background refresh
         try {
             const result = await getTodayAttendance(currentStaff.id);
             if (result.success && result.data) {
@@ -42,7 +47,13 @@ export default function AttendancePage() {
         loadTodayAttendance();
     }, [isStaffLoggedIn, currentStaff, router, loadTodayAttendance]);
 
-
+    // Realtime subscription for auto-refresh
+    useAttendanceRealtime((payload) => {
+        if (currentStaff && (payload.new.staff_id === currentStaff.id || payload.old.staff_id === currentStaff.id)) {
+            console.log('[AttendancePage] Realtime update detected, refreshing...');
+            loadTodayAttendance();
+        }
+    });
 
     const handleClockInClick = () => {
         setWizardMode('IN');
@@ -60,39 +71,118 @@ export default function AttendancePage() {
         try {
             let result;
             const file = new File([photoBlob], `selfie-${Date.now()}.jpg`, { type: 'image/jpeg' });
+            const isOffline = typeof navigator !== 'undefined' && !navigator.onLine;
 
             if (wizardMode === 'IN') {
-                result = await clockIn({
-                    staff_id: currentStaff.id,
-                    latitude: location.lat,
-                    longitude: location.lng,
-                    selfie_file: file
-                });
+                try {
+                    if (isOffline) throw new Error('SimulatedOffline');
+
+                    result = await clockIn({
+                        staff_id: currentStaff.id,
+                        latitude: location.lat,
+                        longitude: location.lng,
+                        selfie_file: file
+                    });
+                } catch (err: any) {
+                    if (isOffline || err.message === 'SimulatedOffline' || err.message?.includes('network') || err.message?.includes('fetch')) {
+                        // Offline Fallback
+                        console.log('Network error, queueing offline clock-in...');
+                        const base64 = await fileToBase64(file);
+                        const payload: ClockInPayload = {
+                            staffId: currentStaff.id,
+                            pin: '',
+                            photoBase64: base64,
+                            latitude: location.lat,
+                            longitude: location.lng,
+                            timestamp: new Date().toISOString()
+                        };
+                        offlineQueue.enqueue(payload, 'clock_in');
+
+                        // Fake result for UI
+                        result = { success: true, data: {}, error: null, message: t('staffPortal.attendance.offlineQueued') };
+
+                        // Optimistic UI Update
+                        setTodayAttendance({
+                            id: 'temp-offline',
+                            staff_id: currentStaff.id,
+                            clock_in: new Date().toISOString(),
+                            clock_out: null,
+                            date: new Date().toISOString().split('T')[0],
+                            location_verified: true,
+                            location_id: null,
+                            actual_latitude: location.lat,
+                            actual_longitude: location.lng,
+                            distance_meters: 0,
+                            selfie_url: null,
+                            notes: '[Offline Queued]',
+                            created_at: new Date().toISOString(),
+                            updated_at: new Date().toISOString()
+                        });
+
+                        setMessage({ type: 'warning', text: t('staffPortal.attendance.offlineInMsg') });
+                        return; // Exit early
+                    }
+                    throw err;
+                }
             } else {
                 if (!todayAttendance) {
-                    throw new Error('Tiada rekod kehadiran untuk clock out.');
+                    throw new Error(t('staffPortal.attendance.errorNoRecord'));
                 }
-                result = await clockOut({
-                    attendance_id: todayAttendance.id,
-                    staff_id: currentStaff.id,
-                    latitude: location.lat,
-                    longitude: location.lng,
-                    selfie_file: file
-                });
+
+                try {
+                    if (isOffline) throw new Error('SimulatedOffline');
+
+                    result = await clockOut({
+                        attendance_id: todayAttendance.id,
+                        staff_id: currentStaff.id,
+                        latitude: location.lat,
+                        longitude: location.lng,
+                        selfie_file: file
+                    });
+                } catch (err: any) {
+                    if (isOffline || err.message === 'SimulatedOffline' || err.message?.includes('network') || err.message?.includes('fetch')) {
+                        // Offline Fallback for Clock Out
+                        console.log('Network error, queueing offline clock-out...');
+                        const base64 = await fileToBase64(file);
+                        const payload: ClockOutPayload = {
+                            attendanceId: todayAttendance.id,
+                            staffId: currentStaff.id,
+                            pin: '',
+                            photoBase64: base64,
+                            latitude: location.lat,
+                            longitude: location.lng,
+                            timestamp: new Date().toISOString()
+                        };
+                        offlineQueue.enqueue(payload, 'clock_out');
+
+                        result = { success: true, data: {}, error: null, message: t('staffPortal.attendance.offlineQueued') };
+
+                        // Optimistic UI Update
+                        setTodayAttendance(prev => prev ? ({
+                            ...prev,
+                            clock_out: new Date().toISOString(),
+                            notes: (prev.notes || '') + ' [Offline Clock Out]'
+                        }) : null);
+
+                        setMessage({ type: 'warning', text: t('staffPortal.attendance.offlineOutMsg') });
+                        return;
+                    }
+                    throw err;
+                }
             }
 
             if (result.success) {
-                setMessage({ type: 'success', text: `Berjaya ${wizardMode === 'IN' ? 'Clock In' : 'Clock Out'}!` });
+                setMessage({ type: 'success', text: wizardMode === 'IN' ? t('staffPortal.attendance.successIn') : t('staffPortal.attendance.successOut') });
                 await loadTodayAttendance();
             } else {
-                const errorMsg = result.error || 'Ralat berlaku.';
+                const errorMsg = result.error || t('staffPortal.attendance.errorGeneric');
                 setMessage({ type: 'error', text: errorMsg });
                 throw new Error(errorMsg);
             }
         } catch (err: any) {
             console.error(err);
-            setMessage({ type: 'error', text: err.message || 'Ralat tidak dijangka.' });
-            throw err;
+            setMessage({ type: 'error', text: err.message || t('staffPortal.attendance.errorUnexpected') });
+            // throw err; // Don't throw, just show error
         } finally {
             setTimeout(() => setMessage(null), 5000);
         }
@@ -108,6 +198,7 @@ export default function AttendancePage() {
 
     const isClockedIn = todayAttendance && !todayAttendance.clock_out;
     const isCompleted = todayAttendance && todayAttendance.clock_out;
+    const isOfflineData = todayAttendance?.notes?.includes('[Offline');
 
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4 flex flex-col items-center">
@@ -115,7 +206,7 @@ export default function AttendancePage() {
 
                 {/* Header */}
                 <div className="text-center">
-                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Kehadiran</h1>
+                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{t('staffPortal.attendance.title')}</h1>
                     <p className="text-gray-500 mt-2">
                         {new Date().toLocaleDateString('ms-MY', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
                     </p>
@@ -123,14 +214,21 @@ export default function AttendancePage() {
 
                 {/* Status Card */}
                 <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700">
-                    <h2 className="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-200">Status Hari Ini</h2>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                        <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200">{t('staffPortal.attendance.todayStatus')}</h2>
+                        {isOfflineData && (
+                            <span className="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full font-bold flex items-center gap-1">
+                                <WifiOff size={12} /> {t('staffPortal.attendance.pendingSync')}
+                            </span>
+                        )}
+                    </div>
 
                     {todayAttendance ? (
                         <div className="space-y-4">
                             <div className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
                                 <div className="flex items-center gap-3">
                                     <Clock size={20} className="text-green-500" />
-                                    <span className="text-sm font-medium">Masuk</span>
+                                    <span className="text-sm font-medium">{t('staffPortal.attendance.in')}</span>
                                 </div>
                                 <span className="font-bold font-mono">
                                     {new Date(todayAttendance.clock_in).toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit' })}
@@ -141,7 +239,7 @@ export default function AttendancePage() {
                                 <div className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
                                     <div className="flex items-center gap-3">
                                         <Clock size={20} className="text-red-500" />
-                                        <span className="text-sm font-medium">Keluar</span>
+                                        <span className="text-sm font-medium">{t('staffPortal.attendance.out')}</span>
                                     </div>
                                     <span className="font-bold font-mono">
                                         {new Date(todayAttendance.clock_out).toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit' })}
@@ -151,13 +249,13 @@ export default function AttendancePage() {
 
                             <div className="flex items-center gap-2 text-sm text-gray-500 justify-center mt-2">
                                 <MapPin size={14} />
-                                <span>{(todayAttendance as any).location?.name || 'Lokasi Disahkan'}</span>
+                                <span>{(todayAttendance as any).location?.name || t('staffPortal.attendance.verifiedLocation')}</span>
                                 {todayAttendance.location_verified && <CheckCircle size={14} className="text-green-500" />}
                             </div>
                         </div>
                     ) : (
                         <div className="text-center py-6 text-gray-500">
-                            Belum ada rekod kehadiran hari ini.
+                            {t('staffPortal.attendance.noRecord')}
                         </div>
                     )}
                 </div>
@@ -169,7 +267,7 @@ export default function AttendancePage() {
                             onClick={handleClockInClick}
                             className="w-full py-4 rounded-xl bg-primary text-white font-bold text-lg shadow-lg shadow-primary/30 hover:bg-primary/90 transition-all transform hover:scale-[1.02]"
                         >
-                            Clock In
+                            {t('staffPortal.attendance.clockIn')}
                         </button>
                     )}
 
@@ -178,20 +276,23 @@ export default function AttendancePage() {
                             onClick={handleClockOutClick}
                             className="w-full py-4 rounded-xl bg-white border-2 border-red-500 text-red-500 font-bold text-lg hover:bg-red-50 transition-all"
                         >
-                            Clock Out
+                            {t('staffPortal.attendance.clockOut')}
                         </button>
                     )}
 
                     {isCompleted && (
                         <div className="text-center p-4 bg-green-50 text-green-700 rounded-xl border border-green-200">
-                            <span className="font-bold">Shift Selesai!</span> Terima kasih atas kerja keras anda.
+                            <span className="font-bold">{t('staffPortal.attendance.shiftComplete')}</span> {t('staffPortal.attendance.thankYou')}
                         </div>
                     )}
                 </div>
 
                 {/* Message Toast */}
                 {message && (
-                    <div className={`p-4 rounded-xl text-center font-medium ${message.type === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'} animate-fade-in`}>
+                    <div className={`p-4 rounded-xl text-center font-medium ${message.type === 'success' ? 'bg-green-100 text-green-700' :
+                        message.type === 'warning' ? 'bg-yellow-100 text-yellow-800' :
+                            'bg-red-100 text-red-700'} animate-fade-in`}
+                    >
                         {message.text}
                     </div>
                 )}

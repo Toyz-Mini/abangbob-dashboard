@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Create verification URL
-        const baseUrl = process.env.BETTER_AUTH_URL || process.env.NEXT_PUBLIC_BETTER_AUTH_URL || 'http://localhost:3000';
+        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
         const verificationUrl = `${baseUrl}/api/verify-email?token=${token}&email=${encodeURIComponent(email)}`;
 
         console.log('[SendVerification] Verification URL created:', verificationUrl.slice(0, 60) + '...');

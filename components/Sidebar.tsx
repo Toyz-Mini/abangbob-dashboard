@@ -162,10 +162,23 @@ const Sidebar = forwardRef<HTMLElement, SidebarProps>(({ isOpen, onToggle, onNav
     }).filter(Boolean) as typeof NAV_ITEMS;
   }, [user, currentStaff, isStaffLoggedIn]);
 
-  const isActive = (href: string) => {
-    if (href === '/') return pathname === '/';
-    return pathname?.startsWith(href);
-  };
+  // precise active state: find the longest matching href
+  const activeHref = useMemo(() => {
+    if (!pathname) return '';
+    // Flatten all items to find the best match
+    const allItems = filteredNavItems.flatMap(g => g.items);
+    // Sort by length descending so that specific (longer) paths match before their parents
+    const sortedItems = [...allItems].sort((a, b) => b.href.length - a.href.length);
+
+    const match = sortedItems.find(item => {
+      if (item.href === '/') return pathname === '/';
+      return pathname.startsWith(item.href);
+    });
+
+    return match ? match.href : '';
+  }, [pathname, filteredNavItems]);
+
+  const isActive = (href: string) => href === activeHref;
 
   return (
     <aside

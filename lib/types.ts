@@ -91,16 +91,22 @@ export interface Order {
   loyaltyPointsEarned?: number; // Points earned from this order (for void/refund reversal)
 }
 
+export type InventoryItemType = 'raw' | 'semi-finished' | 'finished';
+
 export interface StockItem {
   id: string;
   name: string;
   category: string;
   currentQuantity: number;
   minQuantity: number;
+  maxQuantity?: number; // Maximum stock level
   unit: string;
   cost: number;
   supplier?: string;
   countDaily?: boolean; // Critical item to be counted during opening/closing
+  // New: Item type classification
+  itemType?: InventoryItemType; // raw, semi-finished, finished
+  productionRecipeId?: string; // For semi-finished items, the recipe used to produce them
   // Tracking
   updatedAt?: string;
   lastRestockDate?: string;
@@ -746,10 +752,13 @@ export interface PurchaseOrderItem {
 
 // ==================== RECIPE TYPES ====================
 
+export type RecipeType = 'menu' | 'production';
+
 export interface Recipe {
   id: string;
-  menuItemId: string;
+  menuItemId?: string; // Optional - only for menu recipes
   menuItemName: string;
+  recipeType: RecipeType; // 'menu' for sales, 'production' for making semi-finished goods
   ingredients: RecipeIngredient[];
   totalCost: number;
   sellingPrice: number;
@@ -758,6 +767,11 @@ export interface Recipe {
   prepTime: number; // minutes
   yieldQuantity: number;
   yieldUnit: string;
+  // For production recipes
+  outputInventoryId?: string; // The inventory item this recipe produces
+  outputQuantity?: number; // How much is produced per batch
+  outputUnit?: string; // Unit of output (kg, litre, pcs)
+  isActive?: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -769,6 +783,50 @@ export interface RecipeIngredient {
   unit: string;
   costPerUnit: number;
   totalCost: number;
+  // Stock availability (populated at runtime)
+  currentStock?: number;
+  isAvailable?: boolean;
+}
+
+// ==================== PRODUCTION TYPES ====================
+
+export type ProductionStatus = 'pending' | 'in_progress' | 'completed' | 'cancelled';
+
+export interface ProductionLog {
+  id: string;
+  date: string;
+  item: string; // Legacy field
+  recipeId?: string;
+  recipeName?: string;
+  quantityProduced: number;
+  wasteAmount: number;
+  ingredientsDeducted?: RecipeIngredient[]; // What was used
+  outputInventoryId?: string;
+  outputQuantity?: number;
+  batchCost?: number;
+  staffId?: string;
+  staffName?: string;
+  status?: ProductionStatus;
+  notes?: string;
+  createdAt?: string;
+}
+
+// ==================== STOCK ALERT TYPES ====================
+
+export type StockAlertType = 'low_stock' | 'out_of_stock' | 'negative_stock' | 'expiring_soon';
+
+export interface StockAlert {
+  id: string;
+  inventoryId: string;
+  inventoryName: string;
+  alertType: StockAlertType;
+  currentQuantity: number;
+  thresholdQuantity: number;
+  isAcknowledged: boolean;
+  acknowledgedBy?: string;
+  acknowledgedAt?: string;
+  notes?: string;
+  createdAt: string;
 }
 
 // ==================== SHIFT & SCHEDULE TYPES ====================

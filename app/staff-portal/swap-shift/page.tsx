@@ -8,6 +8,7 @@ import Modal from '@/components/Modal';
 import ConfirmModal from '@/components/ConfirmModal';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { StaffRequest } from '@/lib/types';
+import { useTranslation } from '@/lib/contexts/LanguageContext';
 import {
   ArrowLeftRight,
   CheckCircle,
@@ -25,6 +26,7 @@ import {
 } from 'lucide-react';
 
 export default function SwapShiftPage() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const { staff, isInitialized } = useStaff();
   const {
@@ -143,8 +145,20 @@ export default function SwapShiftPage() {
         staffId: user.id,
         staffName: currentStaff.name,
         category: 'shift_swap',
-        title: `Tukar Shift: ${formattedDate}`,
-        description: `Permohonan tukar shift pada ${formattedDate} (${mySchedule?.shift?.name || 'Unknown'}) dengan ${colleague?.name || 'Unknown'} pada ${formattedColleagueDate} (${colleagueShift?.name || 'Unknown'}). Sebab: ${reason || 'Tiada sebab dinyatakan'}`,
+        // Use translation key format if backend supports it, but for now stick to dynamic string as it persists to DB
+        // Or construct it here. The prompt implies we are refactoring UI strings.
+        // The title/desc are saved to DB, so maybe we should keep them readable or use a format.
+        // For now I will keep the descriptive text but use the keys for UI elements.
+        // ACTUALLY, if I change title/desc to keys, the admin panel might not show them correctly unless admin panel also translates.
+        // Let's stick to generating the string as before BUT using the new translatable format if possible, or just keep string generation for DB contents as is (in Malay/English mixed default).
+        // Since I'm replacing hardcoded strings, I should probably use `t` here to generate the string that goes into the DB, 
+        // so it's at least localized to the user's current language when created.
+        title: t('staffPortal.swap.request.title', { date: formattedDate }),
+        description: t('staffPortal.swap.request.desc', {
+          date: formattedDate,
+          shift: mySchedule?.shift?.name || 'Unknown',
+          reason: reason || 'N/A'
+        }) + ` (${colleague?.name} @ ${formattedColleagueDate})`, // Append extra info not in simple key
         targetStaffId: selectedColleague,
         priority: 'medium',
         status: 'pending'
@@ -164,11 +178,11 @@ export default function SwapShiftPage() {
       console.error('Failed to submit swap request:', error);
       setConfirmModal({
         isOpen: true,
-        title: 'Ralat Penghantaran',
-        message: 'Gagal menghantar permohonan pertukaran. Sila cuba lagi sebentar.',
+        title: t('staffPortal.swap.modals.errorTitle'),
+        message: t('staffPortal.swap.modals.errorMsg'),
         type: 'danger',
         showCancel: false,
-        confirmText: 'Kembali'
+        confirmText: t('staffPortal.swap.actions.back')
       });
     } finally {
       setIsSubmitting(false);
@@ -184,20 +198,21 @@ export default function SwapShiftPage() {
     return {
       colleagueName,
       date: request.title?.replace('Tukar Shift: ', '') || 'Unknown'
+      // Note: we can't easily translate existing DB titles, so we handle UI display separately or accept mixed content
     };
   };
 
   const handleCancelRequest = (id: string) => {
     setConfirmModal({
       isOpen: true,
-      title: 'Batal Permohonan',
-      message: 'Adakah anda benar-benar mahukan membatalkan permohonan pertukaran ini?',
+      title: t('staffPortal.swap.modals.cancelTitle'),
+      message: t('staffPortal.swap.modals.cancelMsg'),
       onConfirm: () => {
         deleteStaffRequest(id);
         setConfirmModal(prev => ({ ...prev, isOpen: false }));
       },
-      confirmText: 'Ya, Batal',
-      cancelText: 'Tidak',
+      confirmText: t('staffPortal.swap.modals.cancelConfirm'),
+      cancelText: t('staffPortal.swap.modals.cancelDecline'),
       type: 'danger'
     });
   };
@@ -205,24 +220,24 @@ export default function SwapShiftPage() {
   const handleAcceptSwap = (id: string) => {
     setConfirmModal({
       isOpen: true,
-      title: 'Terima Pertukaran',
-      message: 'Adakah anda bersetuju untuk menukar shift dengan rakan sekerja anda?',
+      title: t('staffPortal.swap.modals.acceptTitle'),
+      message: t('staffPortal.swap.modals.acceptMsg'),
       onConfirm: () => {
         updateStaffRequest(id, {
           status: 'in_progress',
-          responseNote: 'Bersetuju dengan pertukaran. Menunggu maklum balas pengurus.'
+          responseNote: t('staffPortal.swap.modals.acceptNote')
         });
         setConfirmModal({
           isOpen: true,
-          title: 'Berjaya',
-          message: 'Terima kasih! Persetujuan anda telah direkodkan. Kini menunggu kelulusan pengurus.',
+          title: t('staffPortal.swap.modals.acceptSuccessTitle'),
+          message: t('staffPortal.swap.modals.acceptSuccessMsg'),
           type: 'success',
           showCancel: false,
-          confirmText: 'Tutup'
+          confirmText: t('common.close') || 'Tutup'
         });
       },
-      confirmText: 'Ya, Setuju',
-      cancelText: 'Kembali',
+      confirmText: t('staffPortal.swap.modals.acceptConfirm'),
+      cancelText: t('staffPortal.swap.actions.back'),
       type: 'success'
     });
   };
@@ -230,14 +245,14 @@ export default function SwapShiftPage() {
   const handleDeclineSwap = (id: string) => {
     setConfirmModal({
       isOpen: true,
-      title: 'Tolak Pertukaran',
-      message: 'Adakah anda mahu menolak permohonan pertukaran ini?',
+      title: t('staffPortal.swap.modals.declineTitle'),
+      message: t('staffPortal.swap.modals.declineMsg'),
       onConfirm: () => {
-        rejectStaffRequest(id, 'Ditolak oleh rakan sekerja.', currentStaff?.name || 'Rakan Sekerja');
+        rejectStaffRequest(id, t('staffPortal.swap.modals.declineNote'), currentStaff?.name || 'Rakan Sekerja');
         setConfirmModal(prev => ({ ...prev, isOpen: false }));
       },
-      confirmText: 'Ya, Tolak',
-      cancelText: 'Kembali',
+      confirmText: t('staffPortal.swap.modals.declineConfirm'),
+      cancelText: t('staffPortal.swap.actions.back'),
       type: 'danger'
     });
   };
@@ -259,15 +274,15 @@ export default function SwapShiftPage() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
           <div>
             <h1 style={{ fontSize: '1.75rem', fontWeight: 700, marginTop: '0.5rem' }}>
-              Tukar Shift
+              {t('staffPortal.swap.title')}
             </h1>
             <p style={{ color: 'var(--text-secondary)' }}>
-              Mohon pertukaran shift dengan rakan sekerja
+              {t('staffPortal.swap.subtitle')}
             </p>
           </div>
           <button className="btn btn-primary" onClick={() => setShowRequestModal(true)}>
             <ArrowLeftRight size={18} />
-            Mohon Tukar
+            {t('staffPortal.swap.apply')}
           </button>
         </div>
 
@@ -276,7 +291,7 @@ export default function SwapShiftPage() {
           <div className="card-header">
             <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <Calendar size={20} />
-              Shift Saya (7 Hari Akan Datang)
+              {t('staffPortal.swap.myShiftsTitle')}
             </div>
           </div>
 
@@ -313,9 +328,9 @@ export default function SwapShiftPage() {
           ) : (
             <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>
               <Calendar size={40} color="var(--gray-300)" style={{ marginBottom: '0.75rem' }} />
-              <div>Tiada shift dijadualkan dalam 7 hari akan datang</div>
+              <div>{t('staffPortal.swap.noShifts')}</div>
               <div style={{ fontSize: '0.875rem', marginTop: '0.5rem' }}>
-                Sila hubungi admin untuk maklumat jadual kerja anda
+                {t('staffPortal.swap.contactAdmin')}
               </div>
             </div>
           )}
@@ -326,9 +341,9 @@ export default function SwapShiftPage() {
           <div className="card-header">
             <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <ArrowLeftRight size={20} />
-              Permohonan Pertukaran
+              {t('staffPortal.swap.requestsTitle')}
             </div>
-            <div className="card-subtitle">{mySwapRequests.length} permohonan</div>
+            <div className="card-subtitle">{t('staffPortal.swap.count', { count: mySwapRequests.length })}</div>
           </div>
 
           {mySwapRequests.length > 0 ? (
@@ -346,9 +361,13 @@ export default function SwapShiftPage() {
                         <div className="swap-with" style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                           <User size={14} />
                           {request.staffId === user?.id ? (
-                            <span>Dengan: <strong>{details.colleagueName}</strong></span>
+                            <span>
+                              {t('staffPortal.swap.with', { name: '' })} <strong>{details.colleagueName}</strong>
+                            </span>
                           ) : (
-                            <span>Dari: <strong>{request.staffName}</strong></span>
+                            <span>
+                              {t('staffPortal.swap.from', { name: '' })} <strong>{request.staffName}</strong>
+                            </span>
                           )}
                         </div>
                       </div>
@@ -357,9 +376,7 @@ export default function SwapShiftPage() {
                         {request.status === 'rejected' && <XCircle size={12} />}
                         {request.status === 'pending' && <AlertCircle size={12} />}
                         {request.status === 'in_progress' && <Clock size={12} />}
-                        {request.status === 'completed' ? 'Diluluskan' :
-                          request.status === 'rejected' ? 'Ditolak' :
-                            request.status === 'in_progress' ? 'Dalam Proses' : 'Menunggu'}
+                        {t(`staffPortal.swap.status.${request.status}`)}
                       </span>
                     </div>
                     {request.description && (
@@ -385,7 +402,7 @@ export default function SwapShiftPage() {
                             }}
                           >
                             <Trash2 size={12} />
-                            Batal Permohonan
+                            {t('staffPortal.swap.actions.cancel')}
                           </button>
                         ) : (
                           <>
@@ -401,7 +418,7 @@ export default function SwapShiftPage() {
                               }}
                             >
                               <X size={12} />
-                              Tolak
+                              {t('staffPortal.swap.actions.decline')}
                             </button>
                             <button
                               className="btn btn-sm btn-success"
@@ -418,7 +435,7 @@ export default function SwapShiftPage() {
                               }}
                             >
                               <Check size={12} />
-                              Terima
+                              {t('staffPortal.swap.actions.accept')}
                             </button>
                           </>
                         )}
@@ -436,7 +453,7 @@ export default function SwapShiftPage() {
           ) : (
             <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>
               <ArrowLeftRight size={40} color="var(--gray-300)" style={{ marginBottom: '0.75rem' }} />
-              <div>Tiada permohonan pertukaran</div>
+              <div>{t('staffPortal.swap.noRequests')}</div>
             </div>
           )}
         </div>
@@ -445,20 +462,20 @@ export default function SwapShiftPage() {
         <Modal
           isOpen={showRequestModal}
           onClose={() => !isSubmitting && setShowRequestModal(false)}
-          title="Mohon Pertukaran Shift"
+          title={t('staffPortal.swap.form.title')}
           maxWidth="500px"
         >
           {submitSuccess ? (
             <div className="swap-success" style={{ textAlign: 'center', padding: '2rem' }}>
               <CheckCircle size={48} color="var(--success)" style={{ marginBottom: '1rem' }} />
-              <h3>Permohonan Dihantar!</h3>
-              <p>Permohonan anda akan disemak oleh pengurus.</p>
+              <h3>{t('staffPortal.swap.form.successTitle')}</h3>
+              <p>{t('staffPortal.swap.form.successDesc')}</p>
             </div>
           ) : (
             <div className="swap-form">
               {/* Select My Shift */}
               <div className="form-group">
-                <label className="form-label">Pilih Shift Anda</label>
+                <label className="form-label">{t('staffPortal.swap.form.selectMyShift')}</label>
                 {myUpcomingSchedules.length > 0 ? (
                   <select
                     className="form-select"
@@ -469,7 +486,7 @@ export default function SwapShiftPage() {
                       setSelectedColleagueDate('');
                     }}
                   >
-                    <option value="">-- Pilih tarikh --</option>
+                    <option value="">{t('staffPortal.swap.form.selectDatePlaceholder')}</option>
                     {myUpcomingSchedules.map(s => (
                       <option key={s.date} value={s.date}>
                         {new Date(s.date).toLocaleDateString('ms-MY', { weekday: 'long', day: 'numeric', month: 'short' })} - {s.shift?.name}
@@ -479,7 +496,7 @@ export default function SwapShiftPage() {
                 ) : (
                   <div className="form-hint" style={{ color: 'var(--warning)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <AlertCircle size={14} />
-                    Tiada shift dijadualkan. Sila hubungi admin.
+                    {t('staffPortal.swap.form.noShiftHint')}
                   </div>
                 )}
               </div>
@@ -487,7 +504,7 @@ export default function SwapShiftPage() {
               {/* Select Colleague */}
               {selectedDate && (
                 <div className="form-group" style={{ marginTop: '1rem' }}>
-                  <label className="form-label">Tukar Dengan</label>
+                  <label className="form-label">{t('staffPortal.swap.form.swapWith')}</label>
                   {availableColleagues.length > 0 ? (
                     <select
                       className="form-select"
@@ -497,7 +514,7 @@ export default function SwapShiftPage() {
                         setSelectedColleagueDate('');
                       }}
                     >
-                      <option value="">-- Pilih rakan sekerja --</option>
+                      <option value="">{t('staffPortal.swap.form.selectColleaguePlaceholder')}</option>
                       {availableColleagues.map(c => (
                         <option key={c.id} value={c.id}>{c.name}</option>
                       ))}
@@ -505,7 +522,7 @@ export default function SwapShiftPage() {
                   ) : (
                     <div className="form-hint" style={{ color: 'var(--warning)' }}>
                       <AlertCircle size={14} />
-                      Tiada rakan sekerja yang available untuk tarikh ini
+                      {t('staffPortal.swap.form.noColleagueHint')}
                     </div>
                   )}
                 </div>
@@ -514,7 +531,7 @@ export default function SwapShiftPage() {
               {/* Select Colleague's Shift */}
               {selectedColleague && (
                 <div className="form-group" style={{ marginTop: '1rem' }}>
-                  <label className="form-label">Pilih Shift Mereka</label>
+                  <label className="form-label">{t('staffPortal.swap.form.selectTheirShift')}</label>
                   {(() => {
                     const colleague = availableColleagues.find(c => c.id === selectedColleague);
                     return colleague && colleague.schedules.length > 0 ? (
@@ -523,7 +540,7 @@ export default function SwapShiftPage() {
                         value={selectedColleagueDate}
                         onChange={(e) => setSelectedColleagueDate(e.target.value)}
                       >
-                        <option value="">-- Pilih shift --</option>
+                        <option value="">{t('staffPortal.swap.form.selectShiftPlaceholder')}</option>
                         {colleague.schedules.map(s => (
                           <option key={s.date} value={s.date}>
                             {new Date(s.date).toLocaleDateString('ms-MY', { weekday: 'short', day: 'numeric', month: 'short' })} - {s.shift?.name}
@@ -531,7 +548,7 @@ export default function SwapShiftPage() {
                         ))}
                       </select>
                     ) : (
-                      <div className="form-hint">Tiada shift tersedia</div>
+                      <div className="form-hint">{t('staffPortal.swap.form.noShiftAvailable')}</div>
                     );
                   })()}
                 </div>
@@ -539,12 +556,12 @@ export default function SwapShiftPage() {
 
               {/* Reason */}
               <div className="form-group" style={{ marginTop: '1rem' }}>
-                <label className="form-label">Sebab Pertukaran</label>
+                <label className="form-label">{t('staffPortal.swap.form.reason')}</label>
                 <textarea
                   className="form-input"
                   value={reason}
                   onChange={(e) => setReason(e.target.value)}
-                  placeholder="Nyatakan sebab pertukaran (optional)"
+                  placeholder={t('staffPortal.swap.form.reasonPlaceholder')}
                   rows={2}
                   style={{ width: '100%', padding: '0.50rem', borderRadius: '0.5rem', border: '1px solid var(--border-color)', background: 'var(--bg-secondary)' }}
                 />
@@ -558,7 +575,7 @@ export default function SwapShiftPage() {
                   onClick={() => setShowRequestModal(false)}
                   disabled={isSubmitting}
                 >
-                  Batal
+                  {t('staffPortal.swap.form.cancel')}
                 </button>
                 <button
                   className="btn btn-primary"
@@ -566,10 +583,10 @@ export default function SwapShiftPage() {
                   onClick={handleSubmitRequest}
                   disabled={!selectedDate || !selectedColleague || !selectedColleagueDate || isSubmitting}
                 >
-                  {isSubmitting ? 'Menghantar...' : (
+                  {isSubmitting ? t('staffPortal.swap.form.submitting') : (
                     <>
                       <Send size={16} />
-                      Hantar
+                      {t('staffPortal.swap.form.submit')}
                     </>
                   )}
                 </button>

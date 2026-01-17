@@ -24,6 +24,7 @@ export default function ShiftWizardModal({ isOpen, onClose, mode }: ShiftWizardM
     const [amount, setAmount] = useState<string>('');
     const [notes, setNotes] = useState('');
     const [stockCounts, setStockCounts] = useState<{ [itemId: string]: string }>({});
+    const [currentStockIndex, setCurrentStockIndex] = useState(0);
 
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState('');
@@ -50,6 +51,7 @@ export default function ShiftWizardModal({ isOpen, onClose, mode }: ShiftWizardM
             setNotes('');
             setError('');
             setStockCounts({});
+            setCurrentStockIndex(0);
         }
     }, [isOpen]);
 
@@ -81,19 +83,30 @@ export default function ShiftWizardModal({ isOpen, onClose, mode }: ShiftWizardM
             }
             if (criticalItems.length > 0) {
                 setStep(1);
+                setCurrentStockIndex(0);
             } else {
                 setStep(2); // Skip stock if no items to count
             }
         } else if (step === 1) {
-            // Validate Stock (Optional: force all filled?)
-            // For now, allow partial, blank = unchanged/skipped
-            setStep(2);
+            if (currentStockIndex < criticalItems.length - 1) {
+                setCurrentStockIndex(prev => prev + 1);
+            } else {
+                setStep(2);
+            }
         }
     };
 
     const handleBack = () => {
         setError('');
-        setStep(Math.max(0, step - 1));
+        if (step === 1) {
+            if (currentStockIndex > 0) {
+                setCurrentStockIndex(prev => prev - 1);
+            } else {
+                setStep(0);
+            }
+        } else {
+            setStep(Math.max(0, step - 1));
+        }
     };
 
     const handleSubmit = async () => {
@@ -207,34 +220,55 @@ export default function ShiftWizardModal({ isOpen, onClose, mode }: ShiftWizardM
         </div>
     );
 
-    const renderStep1_Stock = () => (
-        <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
-            <div className="bg-amber-50 p-3 rounded-lg border border-amber-100 text-amber-800 text-sm mb-2">
-                Sila kira stok fizikal untuk barang kritikal ini. (Blind Count - Sistem tidak menunjuk kuantiti sebenar).
-            </div>
+    const renderStep1_Stock = () => {
+        const item = criticalItems[currentStockIndex];
+        if (!item) return null;
 
-            <div className="max-h-[300px] overflow-y-auto pr-2 space-y-3">
-                {criticalItems.map(item => (
-                    <div key={item.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100">
-                        <div>
-                            <div className="font-bold text-gray-800">{item.name}</div>
-                            <div className="text-xs text-gray-500">Unit: {item.unit}</div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <input
-                                type="number"
-                                value={stockCounts[item.id] || ''}
-                                onChange={e => setStockCounts(prev => ({ ...prev, [item.id]: e.target.value }))}
-                                className="form-input w-24 text-center font-bold !bg-white !text-gray-900 !border-gray-300"
-                                placeholder="?"
-                            />
-                            <span className="text-xs font-bold text-gray-500 w-8">{item.unit}</span>
-                        </div>
+        return (
+            <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+                <div className="bg-amber-50 p-4 rounded-xl border border-amber-100 text-amber-800 text-sm mb-2 flex gap-3">
+                    <div className="shrink-0 pt-0.5"><Package size={20} /></div>
+                    <div>
+                        <strong>Blind Audit Step {currentStockIndex + 1}/{criticalItems.length}</strong>
+                        <p className="mt-1">Kira fizikal di rak/kitchen. Jangan teka.</p>
                     </div>
-                ))}
+                </div>
+
+                <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm flex flex-col items-center text-center space-y-6">
+                    <div>
+                        <h3 className="text-2xl font-bold text-gray-900 mb-2">{item.name}</h3>
+                        <p className="text-gray-500 font-medium bg-gray-100 px-3 py-1 rounded-full w-fit mx-auto">
+                            Unit: {item.unit}
+                        </p>
+                    </div>
+
+                    <div className="w-full max-w-[200px]">
+                        <label className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2 block">
+                            Fizikal Quantity
+                        </label>
+                        <input
+                            type="number"
+                            autoFocus
+                            value={stockCounts[item.id] || ''}
+                            onChange={e => setStockCounts(prev => ({ ...prev, [item.id]: e.target.value }))}
+                            className="form-input text-4xl text-center font-bold !bg-gray-50 !text-gray-900 !border-gray-300 h-20 w-full rounded-2xl focus:!border-primary focus:ring-4 focus:ring-primary/10 transition-all"
+                            placeholder="0"
+                        />
+                    </div>
+
+                    {/* Visual Progress Dots */}
+                    <div className="flex gap-2 justify-center pt-2">
+                        {criticalItems.map((_, idx) => (
+                            <div
+                                key={idx}
+                                className={`h-2 rounded-full transition-all ${idx === currentStockIndex ? 'w-8 bg-primary' : (idx < currentStockIndex ? 'w-2 bg-green-500' : 'w-2 bg-gray-200')}`}
+                            />
+                        ))}
+                    </div>
+                </div>
             </div>
-        </div>
-    );
+        );
+    };
 
     const renderStep2_Review = () => (
         <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300 text-center py-4">

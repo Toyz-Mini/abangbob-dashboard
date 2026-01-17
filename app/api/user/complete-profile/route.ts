@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query } from '@/lib/db';
-import { auth } from '@/lib/auth';
+import { createServerClient } from '@supabase/ssr';
+import { cookies } from 'next/headers';
 
 export const dynamic = 'force-dynamic';
 
@@ -34,9 +35,14 @@ export async function POST(request: NextRequest) {
         }
 
         // Verify session
-        const session = await auth.api.getSession({
-            headers: request.headers
-        });
+        const cookieStore = await cookies();
+        const supabaseAuth = createServerClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+            { cookies: { get(name: string) { return cookieStore.get(name)?.value; } } }
+        );
+        const { data: { session } } = await supabaseAuth.auth.getSession();
+
 
         if (!session || session.user.id !== userId) {
             console.error('[CompleteProfile] Unauthorized - session mismatch');

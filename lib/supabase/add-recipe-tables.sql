@@ -45,3 +45,4 @@ COMMENT ON TABLE public.recipes IS 'Recipe management with ingredient costing an
 COMMENT ON COLUMN public.recipes.ingredients IS 'JSONB array of recipe ingredients with costs';
 COMMENT ON COLUMN public.recipes.profit_margin IS 'Calculated profit margin percentage';
 
+

@@ -6,6 +6,7 @@ import { useInventory } from '@/lib/store';
 import { StockItem, WasteLog } from '@/lib/types';
 import { X, Save, AlertTriangle, Camera } from 'lucide-react';
 import { useAuth as useAuthContext } from '@/lib/contexts/AuthContext';
+import { useTranslation } from '@/lib/contexts/LanguageContext';
 
 interface WasteModalProps {
     isOpen: boolean;
@@ -16,6 +17,7 @@ interface WasteModalProps {
 export default function WasteModal({ isOpen, onClose, stockItem }: WasteModalProps) {
     const { addWasteLog } = useInventory();
     const { currentStaff, user } = useAuthContext();
+    const { t } = useTranslation();
 
     const [quantity, setQuantity] = useState<number>(0);
     const [reason, setReason] = useState<WasteLog['reason']>('expired');
@@ -65,13 +67,13 @@ export default function WasteModal({ isOpen, onClose, stockItem }: WasteModalPro
     };
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} title={`Report Waste: ${stockItem.name}`}>
+        <Modal isOpen={isOpen} onClose={onClose} title={t('inventory.waste.title', { name: stockItem.name })}>
             <form onSubmit={handleSubmit} className="space-y-4">
 
                 {/* Quantity Input */}
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Quantity Wasted ({stockItem.unit})
+                        {t('inventory.waste.quantity', { unit: stockItem.unit })}
                     </label>
                     <div className="flex items-center gap-2">
                         <input
@@ -87,15 +89,15 @@ export default function WasteModal({ isOpen, onClose, stockItem }: WasteModalPro
                         <span className="text-gray-500 font-medium">{stockItem.unit}</span>
                     </div>
                     <p className="text-xs text-gray-500 mt-1">
-                        Current Stock: {stockItem.currentQuantity} {stockItem.unit}
+                        {t('inventory.waste.currentStock', { qty: stockItem.currentQuantity, unit: stockItem.unit })}
                     </p>
                 </div>
 
                 {/* Cost Analysis (Auto-calculated) */}
                 <div className="bg-red-50 p-4 rounded-lg border border-red-100 flex justify-between items-center">
                     <div>
-                        <p className="text-sm text-red-600 font-bold">Total Loss (Estimate)</p>
-                        <p className="text-xs text-red-500">Based on cost: BND {costPerUnit.toFixed(2)} / {stockItem.unit}</p>
+                        <p className="text-sm text-red-600 font-bold">{t('inventory.waste.loss')}</p>
+                        <p className="text-xs text-red-500">{t('inventory.waste.basedOnCost', { cost: costPerUnit.toFixed(2), unit: stockItem.unit })}</p>
                     </div>
                     <p className="text-xl font-bold text-red-700">
                         BND {totalLoss.toFixed(2)}
@@ -104,35 +106,35 @@ export default function WasteModal({ isOpen, onClose, stockItem }: WasteModalPro
 
                 {/* Reason Selection */}
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Reason</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('inventory.waste.reason')}</label>
                     <select
                         value={reason}
                         onChange={(e) => setReason(e.target.value as any)}
                         className="select select-bordered w-full"
                     >
-                        <option value="expired">Expired / Spilled</option>
-                        <option value="burned">Burnedt / Cooked Wrong</option>
-                        <option value="customer_return">Customer Return</option>
-                        <option value="staff_meal">Staff Meal</option>
-                        <option value="other">Other</option>
+                        <option value="expired">{t('inventory.waste.reasons.expired')}</option>
+                        <option value="burned">{t('inventory.waste.reasons.burned')}</option>
+                        <option value="customer_return">{t('inventory.waste.reasons.customer_return')}</option>
+                        <option value="staff_meal">{t('inventory.waste.reasons.staff_meal')}</option>
+                        <option value="other">{t('inventory.waste.reasons.other')}</option>
                     </select>
                 </div>
 
                 {/* Notes */}
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Notes (Optional)</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('inventory.waste.notes')}</label>
                     <textarea
                         value={notes}
                         onChange={(e) => setNotes(e.target.value)}
                         className="textarea textarea-bordered w-full"
-                        placeholder="Additional details..."
+                        placeholder={t('inventory.waste.notesPlaceholder')}
                         rows={2}
                     />
                 </div>
 
                 <div className="modal-action">
                     <button type="button" className="btn btn-ghost" onClick={onClose} disabled={isSubmitting}>
-                        Cancel
+                        {t('inventory.buttons.cancel')}
                     </button>
                     <button
                         type="submit"
@@ -140,7 +142,7 @@ export default function WasteModal({ isOpen, onClose, stockItem }: WasteModalPro
                         disabled={isSubmitting || quantity <= 0}
                     >
                         {isSubmitting ? <span className="loading loading-spinner loading-sm"></span> : <AlertTriangle size={18} className="mr-2" />}
-                        Confirm Waste
+                        {t('inventory.waste.confirm')}
                     </button>
                 </div>
             </form>

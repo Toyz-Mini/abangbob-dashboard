@@ -3,7 +3,7 @@
 import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { signIn } from '@/lib/auth-client';
+import { useAuth } from '@/lib/contexts/AuthContext';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import Turnstile from '@/components/Turnstile';
 import {
@@ -18,6 +18,7 @@ import {
 
 export default function LoginPage() {
   const router = useRouter();
+  const { signInWithEmail } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -46,22 +47,18 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const result = await signIn.email({
-        email,
-        password,
-      });
+      const result = await signInWithEmail(email, password);
 
       console.log('Sign in result:', result);
 
-      if (result.error) {
-        setError(result.error.message || 'Login gagal');
+      if (!result.success) {
+        setError(result.error || 'Login gagal');
       } else {
-        // Force full page reload to ensure auth state is fresh and cookies are sent
+        // Force full page reload to ensure auth state is fresh
         window.location.href = '/';
       }
     } catch (err: any) {
       console.error('Sign in error details:', err);
-      // specific check for fetch failures
       if (err.message === 'Load failed' || err.message === 'Failed to fetch') {
         setError('Gagal menyambung ke server. Sila periksa sambungan internet anda.');
       } else {
@@ -177,7 +174,7 @@ export default function LoginPage() {
           <div className="auth-footer">
             <p>Belum ada akaun?</p>
             <Link href="/register" className="register-link">
-              <UserPlus size={18} />
+              <UserPlus size={20} />
               <span>Daftar Sekarang</span>
             </Link>
           </div>
@@ -411,13 +408,37 @@ export default function LoginPage() {
           font-size: 1rem;
           font-weight: 600;
           cursor: pointer;
-          transition: all 0.2s;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
           box-shadow: 0 4px 15px rgba(204, 21, 18, 0.3);
+          position: relative;
+          overflow: hidden;
+        }
+
+        .auth-submit::after {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: -100%;
+          width: 200%;
+          height: 100%;
+          background: linear-gradient(to right, transparent 0%, rgba(255, 255, 255, 0.2) 50%, transparent 100%);
+          transform: skewX(-20deg);
+          transition: left 0.5s;
+        }
+
+        .auth-submit:hover:not(:disabled)::after {
+          left: 100%;
+          transition: left 0.7s ease-in-out;
         }
 
         .auth-submit:hover:not(:disabled) {
           transform: translateY(-2px);
           box-shadow: 0 8px 25px rgba(204, 21, 18, 0.4);
+        }
+        
+        .auth-submit:active:not(:disabled) {
+          transform: translateY(1px);
+          box-shadow: 0 2px 10px rgba(204, 21, 18, 0.3);
         }
 
         .auth-submit:disabled {
@@ -466,8 +487,13 @@ export default function LoginPage() {
           color: #333;
           text-decoration: none;
           border-radius: 10px;
-          font-weight: 500;
+          font-weight: 600;
           transition: all 0.2s;
+        }
+
+        /* Verify user icon alignment */
+        .register-link :global(svg) {
+          transform: translateY(-1px); /* Nudge icon up slightly to fix optical alignment */
         }
 
         .register-link:hover {
@@ -485,3 +511,4 @@ export default function LoginPage() {
     </div>
   );
 }
+

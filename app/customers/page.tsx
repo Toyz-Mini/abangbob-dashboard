@@ -75,8 +75,8 @@ export default function CustomersPage() {
     const vip = customers.filter(c => c.segment === 'vip').length;
     const regular = customers.filter(c => c.segment === 'regular').length;
     const newCustomers = customers.filter(c => c.segment === 'new').length;
-    const totalPoints = customers.reduce((sum, c) => sum + c.loyaltyPoints, 0);
-    const totalSpent = customers.reduce((sum, c) => sum + c.totalSpent, 0);
+    const totalPoints = customers.reduce((sum, c) => sum + (c.loyaltyPoints || 0), 0);
+    const totalSpent = customers.reduce((sum, c) => sum + (c.totalSpent || 0), 0);
 
     return { total, vip, regular, newCustomers, totalPoints, totalSpent };
   }, [customers]);
@@ -273,7 +273,7 @@ export default function CustomersPage() {
           />
           <StatCard
             label="Jumlah Perbelanjaan"
-            value={`BND ${metrics.totalSpent.toFixed(0)}`}
+            value={`BND ${(metrics.totalSpent || 0).toFixed(0)}`}
             change="total spent"
             changeType="positive"
             icon={TrendingUp}
@@ -363,7 +363,7 @@ export default function CustomersPage() {
                               </div>
                             </td>
                             <td>{customer.totalOrders}</td>
-                            <td style={{ fontWeight: 600 }}>BND {customer.totalSpent.toFixed(2)}</td>
+                            <td style={{ fontWeight: 600 }}>BND {(customer.totalSpent || 0).toFixed(2)}</td>
                             <td>
                               <div style={{ display: 'flex', gap: '0.25rem' }}>
                                 <button
@@ -595,7 +595,7 @@ export default function CustomersPage() {
                 </div>
                 <div style={{ textAlign: 'center', padding: '1rem', background: 'var(--gray-100)', borderRadius: 'var(--radius-md)' }}>
                   <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--success)' }}>
-                    {selectedCustomer.totalSpent.toFixed(0)}
+                    {(selectedCustomer.totalSpent || 0).toFixed(0)}
                   </div>
                   <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Spent</div>
                 </div>
@@ -624,7 +624,7 @@ export default function CustomersPage() {
                           </div>
                         </div>
                         <div style={{ textAlign: 'right' }}>
-                          <div style={{ fontWeight: 600 }}>BND {order.total.toFixed(2)}</div>
+                          <div style={{ fontWeight: 600 }}>BND {(order.total || 0).toFixed(2)}</div>
                           <span className={`badge badge-${order.status === 'completed' ? 'success' : 'warning'}`} style={{ fontSize: '0.6rem' }}>
                             {order.status}
                           </span>

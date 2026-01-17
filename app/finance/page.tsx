@@ -8,6 +8,7 @@ import { useTranslation } from '@/lib/contexts/LanguageContext';
 import { Expense, ExpenseCategory, PaymentMethod, ClaimRequest, CashPayout } from '@/lib/types';
 import { EXPENSE_CATEGORIES, PAYMENT_METHODS, getCategoryLabel, getCategoryColor } from '@/lib/finance-data';
 import Modal from '@/components/Modal';
+import ConfirmModal from '@/components/ConfirmModal';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import {
   DollarSign,
@@ -33,8 +34,9 @@ import StatCard from '@/components/StatCard';
 import { exportToCSV, type ExportColumn } from '@/lib/services';
 import { useToast } from '@/lib/contexts/ToastContext';
 import { fetchCashPayouts } from '@/lib/supabase/operations';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
+import ExpensesTable from '@/components/finance/ExpensesTable';
+import MoneyOutTable from '@/components/finance/MoneyOutTable';
+
 
 type ModalType = 'add' | 'edit' | 'delete' | 'cashflow' | null;
 type ViewMode = 'expenses' | 'cashflow' | 'pnl' | 'claims' | 'moneyout';
@@ -53,8 +55,11 @@ export default function FinancePage() {
     getMonthlyRevenue,
     refreshExpenses,
     refreshCashFlows,
-    isInitialized
+    isInitialized: storeInitialized,
+    isSecondaryInitialized
   } = useFinance();
+
+  const isInitialized = isSecondaryInitialized;
   const { wasteLogs } = useInventory();
   const {
     claimRequests,
@@ -269,6 +274,18 @@ export default function FinancePage() {
     setModalType('cashflow');
   };
 
+  const [confirmationData, setConfirmationData] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: () => { },
+  });
+
   const closeModal = () => {
     setModalType(null);
     setSelectedExpense(null);
@@ -277,7 +294,7 @@ export default function FinancePage() {
 
   const handleAddExpense = async () => {
     if (!formData.description.trim() || formData.amount <= 0) {
-      alert('Sila masukkan keterangan dan jumlah yang sah');
+      showToast('Sila masukkan keterangan dan jumlah yang sah', 'error');
       return;
     }
 
@@ -294,11 +311,12 @@ export default function FinancePage() {
     });
 
     closeModal();
+    showToast('Perbelanjaan berjaya ditambah', 'success');
   };
 
   const handleEditExpense = async () => {
     if (!selectedExpense || !formData.description.trim() || formData.amount <= 0) {
-      alert('Sila masukkan keterangan dan jumlah yang sah');
+      showToast('Sila masukkan keterangan dan jumlah yang sah', 'error');
       return;
     }
 
@@ -315,16 +333,25 @@ export default function FinancePage() {
     });
 
     closeModal();
+    showToast('Perbelanjaan berjaya dikemaskini', 'success');
   };
 
   const handleDeleteExpense = async () => {
     if (!selectedExpense) return;
 
-    setIsProcessing(true);
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    deleteExpense(selectedExpense.id);
-    closeModal();
+    // Use confirmation modal instead of direct delete
+    setConfirmationData({
+      isOpen: true,
+      title: 'Hapus Perbelanjaan',
+      message: 'Adakah anda pasti ingin menghapus perbelanjaan ini? Tindakan ini tidak boleh dibatalkan.',
+      onConfirm: async () => {
+        setIsProcessing(true);
+        deleteExpense(selectedExpense.id);
+        closeModal();
+        showToast('Perbelanjaan berjaya dihapus', 'success');
+        setConfirmationData(prev => ({ ...prev, isOpen: false }));
+      }
+    });
   };
 
   const handleSaveCashFlow = async () => {
@@ -341,27 +368,34 @@ export default function FinancePage() {
     });
 
     closeModal();
+    showToast('Laporan Cash Flow berjaya disimpan', 'success');
   };
 
   const handlePayClaim = async (claim: ClaimRequest) => {
-    if (confirm(`Sahkan pembayaran tuntutan RM${claim.amount} kepada ${claim.staffName}?`)) {
-      setIsProcessing(true);
+    setConfirmationData({
+      isOpen: true,
+      title: 'Sahkan Pembayaran',
+      message: `Sahkan pembayaran tuntutan RM${claim.amount} kepada ${claim.staffName}?`,
+      onConfirm: async () => {
+        setIsProcessing(true);
 
-      // 1. Mark as Paid
-      await markClaimAsPaid(claim.id);
+        // 1. Mark as Paid
+        await markClaimAsPaid(claim.id);
 
-      // 2. Add to Expenses automatically
-      await addExpense({
-        date: new Date().toISOString().split('T')[0],
-        category: 'wages', // Corrected from 'salary' to matches ExpenseCategory
-        amount: claim.amount,
-        description: `Tuntutan: ${claim.description} (${claim.staffName})`,
-        paymentMethod: 'cash', // Default to cash payout
-      });
+        // 2. Add to Expenses automatically
+        await addExpense({
+          date: new Date().toISOString().split('T')[0],
+          category: 'wages', // Corrected from 'salary' to matches ExpenseCategory
+          amount: claim.amount,
+          description: `Tuntutan: ${claim.description} (${claim.staffName})`,
+          paymentMethod: 'cash', // Default to cash payout
+        });
 
-      showToast('Tuntutan berjaya dibayar & direkod dalam Perbelanjaan', 'success');
-      setIsProcessing(false);
-    }
+        showToast('Tuntutan berjaya dibayar & direkod dalam Perbelanjaan', 'success');
+        setIsProcessing(false);
+        setConfirmationData(prev => ({ ...prev, isOpen: false }));
+      }
+    });
   };
 
   // Export Handlers
@@ -375,19 +409,19 @@ export default function FinancePage() {
       if (viewMode === 'expenses') {
         data = filteredExpenses.map(e => ({
           date: e.date,
-          category: getCategoryLabel(e.category),
+          category: t(`finance.expenseCategories.${e.category}`),
           description: e.description,
           amount: e.amount,
           vendor: e.vendor || '-',
           paymentMethod: e.paymentMethod
         }));
         columns = [
-          { key: 'date', label: 'Tarikh' },
-          { key: 'category', label: 'Kategori' },
-          { key: 'description', label: 'Keterangan' },
-          { key: 'amount', label: 'Jumlah (BND)', format: 'currency' },
-          { key: 'vendor', label: 'Vendor' },
-          { key: 'paymentMethod', label: 'Bayaran' }
+          { key: 'date', label: t('finance.expenses.table.date') },
+          { key: 'category', label: t('finance.expenses.table.category') },
+          { key: 'description', label: t('finance.expenses.table.description') },
+          { key: 'amount', label: t('finance.expenses.table.amount'), format: 'currency' },
+          { key: 'vendor', label: t('finance.expenses.table.vendor') },
+          { key: 'paymentMethod', label: t('finance.expenses.table.payment') }
         ];
         filename = `expenses_${filterMonth}`;
       } else if (viewMode === 'cashflow') {
@@ -400,74 +434,93 @@ export default function FinancePage() {
           closing: c.closingCash
         }));
         columns = [
-          { key: 'date', label: 'Tarikh' },
-          { key: 'opening', label: 'Buka (BND)', format: 'currency' },
-          { key: 'salesCash', label: 'Jualan Tunai (BND)', format: 'currency' },
-          { key: 'salesCard', label: 'Jualan Kad (BND)', format: 'currency' },
-          { key: 'expenses', label: 'Belanja (BND)', format: 'currency' },
-          { key: 'closing', label: 'Tutup (BND)', format: 'currency' }
+          { key: 'date', label: t('finance.cashflow.table.date') },
+          { key: 'opening', label: t('finance.cashflow.table.opening'), format: 'currency' },
+          { key: 'salesCash', label: t('finance.cashflow.table.salesCash'), format: 'currency' },
+          { key: 'salesCard', label: t('finance.cashflow.table.salesCard'), format: 'currency' },
+          { key: 'expenses', label: t('finance.cashflow.table.expenses'), format: 'currency' },
+          { key: 'closing', label: t('finance.cashflow.table.closing'), format: 'currency' }
         ];
         filename = `cashflow_${filterMonth}`;
       } else if (viewMode === 'pnl') {
         const pnl = calculatePnL;
         data = [
-          { item: 'Hasil Jualan', amount: pnl.revenue },
-          { item: 'Kos Bahan Mentah (COGS)', amount: -pnl.estimatedCOGS },
-          { item: 'Untung Kasar', amount: pnl.grossProfit },
+          { item: t('finance.pnl.statement.revenue'), amount: pnl.revenue },
+          { item: t('finance.pnl.statement.cogs'), amount: -pnl.estimatedCOGS },
+          { item: t('finance.pnl.statement.grossProfit'), amount: pnl.grossProfit },
           ...Object.entries(pnl.expenses).filter(([k]) => k !== 'ingredients').map(([k, v]) => ({
-            item: `Belanja: ${getCategoryLabel(k as ExpenseCategory)}`, amount: -(v as number)
+            item: `${t('finance.pnl.statement.operatingExpenses')}: ${t(`finance.expenseCategories.${k}`)}`, amount: -(v as number)
           })),
-          { item: 'Jumlah Perbelanjaan', amount: -pnl.totalExpenses },
-          { item: 'Untung/Rugi Bersih', amount: pnl.netProfit },
-          { item: 'Margin Keuntungan (%)', amount: pnl.profitMargin }
+          { item: t('finance.pnl.statement.totalExpenses'), amount: -pnl.totalExpenses },
+          { item: t('finance.pnl.statement.netProfit'), amount: pnl.netProfit },
+          { item: t('finance.pnl.statement.margin'), amount: pnl.profitMargin }
         ];
         columns = [
-          { key: 'item', label: 'Perkara' },
-          { key: 'amount', label: 'Jumlah (BND)', format: 'currency' }
+          { key: 'item', label: t('finance.pnl.statement.item') || 'Item' }, // Assuming 'Item' key exists or fallback
+          { key: 'amount', label: t('finance.pnl.statement.amount') || 'Amount', format: 'currency' }
         ];
         filename = `pnl_${filterMonth}`;
       }
 
       if (data.length > 0) {
         exportToCSV({ filename, columns, data, includeTimestamp: true });
-        showToast('Berjaya export CSV', 'success');
+        showToast(t('finance.toast.exportSuccess'), 'success');
       }
     } catch (e) {
       console.error(e);
-      showToast('Gagal export CSV', 'error');
+      showToast(t('finance.toast.exportError'), 'error');
     } finally {
       setIsExporting(false);
     }
   };
 
-  const handleExportPDF = () => {
+  const handleExportPDF = async () => {
     setIsExporting(true);
     try {
+      const jsPDF = (await import('jspdf')).default;
+      const autoTable = (await import('jspdf-autotable')).default;
       const doc = new jsPDF();
 
       doc.setFontSize(18);
-      doc.text(viewMode === 'pnl' ? 'Penyata Untung & Rugi' : viewMode === 'cashflow' ? 'Laporan Aliran Tunai' : 'Laporan Perbelanjaan', 14, 20);
+      const title = viewMode === 'pnl' ? t('finance.pnl.title')
+        : viewMode === 'cashflow' ? t('finance.cashflow.title')
+          : t('finance.expenses.title');
+      doc.text(title, 14, 20);
+
       doc.setFontSize(12);
-      doc.text(`Bulan: ${filterMonth}`, 14, 30);
-      doc.text(`Dicetak: ${new Date().toLocaleString()}`, 14, 36);
+      doc.text(`${t('common.month') || 'Month'}: ${filterMonth}`, 14, 30);
+      doc.text(`${t('common.printed') || 'Printed'}: ${new Date().toLocaleString()}`, 14, 36);
 
       if (viewMode === 'expenses') {
         autoTable(doc, {
           startY: 45,
-          head: [['Tarikh', 'Kategori', 'Keterangan', 'Jumlah', 'Vendor']],
+          head: [[
+            t('finance.expenses.table.date'),
+            t('finance.expenses.table.category'),
+            t('finance.expenses.table.description'),
+            t('finance.expenses.table.amount'),
+            t('finance.expenses.table.vendor')
+          ]],
           body: filteredExpenses.map(e => [
             e.date,
-            getCategoryLabel(e.category),
+            t(`finance.expenseCategories.${e.category}`),
             e.description,
             `BND ${e.amount.toFixed(2)}`,
             e.vendor || '-'
           ]),
-          foot: [['', '', 'JUMLAH', `BND ${monthlyExpenseTotal.toFixed(2)}`, '']],
+          foot: [['', '', t('finance.expenses.summary.total'), `BND ${monthlyExpenseTotal.toFixed(2)}`, '']],
         });
       } else if (viewMode === 'cashflow') {
         autoTable(doc, {
           startY: 45,
-          head: [['Tarikh', 'Buka', 'Jualan Tunai', 'Jualan Kad', 'Belanja', 'Tutup']],
+          head: [[
+            t('finance.cashflow.table.date'),
+            t('finance.cashflow.table.opening'),
+            t('finance.cashflow.table.salesCash'),
+            t('finance.cashflow.table.salesCard'),
+            t('finance.cashflow.table.expenses'),
+            t('finance.cashflow.table.closing')
+          ]],
           body: cashFlows.slice(0, 14).map(c => [
             c.date.split('T')[0],
             c.openingCash.toFixed(2),
@@ -481,28 +534,28 @@ export default function FinancePage() {
         const pnl = calculatePnL;
         autoTable(doc, {
           startY: 45,
-          head: [['Perkara', 'Jumlah (BND)']],
+          head: [[t('finance.pnl.statement.item') || 'Item', t('finance.pnl.statement.amount') || 'Amount (BND)']],
           body: [
-            ['Hasil Jualan', pnl.revenue.toFixed(2)],
-            ['(-) Kos Bahan Mentah', pnl.estimatedCOGS.toFixed(2)],
-            ['= Untung Kasar', pnl.grossProfit.toFixed(2)],
-            [{ content: 'Perbelanjaan Operasi:', colSpan: 2, styles: { fillColor: [240, 240, 240], fontStyle: 'bold' } }],
+            [t('finance.pnl.statement.revenue'), pnl.revenue.toFixed(2)],
+            [`(-) ${t('finance.pnl.statement.cogs')}`, pnl.estimatedCOGS.toFixed(2)],
+            [`= ${t('finance.pnl.statement.grossProfit')}`, pnl.grossProfit.toFixed(2)],
+            [{ content: `${t('finance.pnl.statement.operatingExpenses')}:`, colSpan: 2, styles: { fillColor: [240, 240, 240], fontStyle: 'bold' } }],
             ...Object.entries(pnl.expenses).filter(([k]) => k !== 'ingredients').map(([k, v]) => [
-              `   ${getCategoryLabel(k as ExpenseCategory)}`, (v as number).toFixed(2)
+              `   ${t(`finance.expenseCategories.${k}`)}`, (v as number).toFixed(2)
             ]),
-            ['(-) Jumlah Perbelanjaan', pnl.totalExpenses.toFixed(2)],
-            ['= Untung/Rugi Bersih', { content: pnl.netProfit.toFixed(2), styles: { fontStyle: 'bold', textColor: pnl.netProfit >= 0 ? [0, 128, 0] : [255, 0, 0] } }],
-            ['Margin Keuntungan', `${pnl.profitMargin.toFixed(1)}%`]
+            [`(-) ${t('finance.pnl.statement.totalExpenses')}`, pnl.totalExpenses.toFixed(2)],
+            [`= ${t('finance.pnl.statement.netProfit')}`, { content: pnl.netProfit.toFixed(2), styles: { fontStyle: 'bold', textColor: pnl.netProfit >= 0 ? [0, 128, 0] : [255, 0, 0] } }],
+            [t('finance.pnl.statement.margin'), `${pnl.profitMargin.toFixed(1)}%`]
           ]
         });
       }
 
       doc.save(`finance_report_${viewMode}_${filterMonth}.pdf`);
-      showToast('Berjaya export PDF', 'success');
+      showToast(t('finance.toast.exportSuccess'), 'success');
 
     } catch (e) {
       console.error(e);
-      showToast('Gagal export PDF', 'error');
+      showToast(t('finance.toast.exportError'), 'error');
     } finally {
       setIsExporting(false);
     }
@@ -538,14 +591,14 @@ export default function FinancePage() {
                   onClick={handleExportCSV}
                   disabled={isExporting}
                 >
-                  <Download size={16} /> CSV
+                  <Download size={16} /> {t('finance.actions.csv')}
                 </button>
                 <button
                   className="btn btn-sm btn-outline"
                   onClick={handleExportPDF}
                   disabled={isExporting}
                 >
-                  <FileText size={16} /> PDF
+                  <FileText size={16} /> {t('finance.actions.pdf')}
                 </button>
               </div>
               <button className="btn btn-outline" onClick={openCashFlowModal}>
@@ -567,61 +620,61 @@ export default function FinancePage() {
             className={`btn btn-sm ${viewMode === 'expenses' ? 'btn-primary' : 'btn-outline'}`}
           >
             <TrendingDown size={16} />
-            Perbelanjaan
+            {t('finance.tabs.expenses')}
           </button>
           <button
             onClick={() => setViewMode('cashflow')}
             className={`btn btn-sm ${viewMode === 'cashflow' ? 'btn-primary' : 'btn-outline'}`}
           >
             <Wallet size={16} />
-            Cash Flow
+            {t('finance.tabs.cashflow')}
           </button>
           <button
             onClick={() => setViewMode('pnl')}
             className={`btn btn-sm ${viewMode === 'pnl' ? 'btn-primary' : 'btn-outline'}`}
           >
             <FileText size={16} />
-            P&L Statement
+            {t('finance.tabs.pnl')}
           </button>
           <button
             onClick={() => { setViewMode('moneyout'); loadPayouts(); }}
             className={`btn btn-sm ${viewMode === 'moneyout' ? 'btn-primary' : 'btn-outline'}`}
           >
             <Banknote size={16} />
-            Money Out
+            {t('finance.tabs.moneyOut')}
           </button>
         </div>
 
         {/* Stats Cards */}
         <div className="content-grid cols-4 mb-lg">
           <StatCard
-            label="Jualan Bulan Ini"
+            label={t('finance.stats.sales')}
             value={`BND ${monthlyRevenue.toFixed(2)}`}
-            change="pendapatan keseluruhan"
+            change={t('finance.stats.change.revenue')}
             changeType="positive"
             icon={TrendingUp}
             gradient="sunset"
           />
           <StatCard
-            label="Perbelanjaan Bulan Ini"
+            label={t('finance.stats.expenses')}
             value={`BND ${monthlyExpenseTotal.toFixed(2)}`}
-            change="kos operasi"
+            change={t('finance.stats.change.costs')}
             changeType="neutral"
             icon={Receipt}
             gradient="warning"
           />
           <StatCard
-            label="Untung/Rugi Bersih"
+            label={t('finance.stats.netProfit')}
             value={`BND ${calculatePnL.netProfit.toFixed(2)}`}
-            change={calculatePnL.netProfit >= 0 ? "keuntungan" : "kerugian"}
+            change={calculatePnL.netProfit >= 0 ? t('finance.stats.change.profit') : t('finance.stats.change.loss')}
             changeType={calculatePnL.netProfit >= 0 ? "positive" : "negative"}
             icon={calculatePnL.netProfit >= 0 ? TrendingUp : TrendingDown}
             gradient="primary"
           />
           <StatCard
-            label="Margin Keuntungan"
+            label={t('finance.stats.margin')}
             value={`${calculatePnL.profitMargin.toFixed(1)}%`}
-            change={calculatePnL.profitMargin >= 20 ? "sihat" : calculatePnL.profitMargin >= 10 ? "sederhana" : "rendah"}
+            change={calculatePnL.profitMargin >= 20 ? t('finance.stats.change.healthy') : calculatePnL.profitMargin >= 10 ? t('finance.stats.change.moderate') : t('finance.stats.change.low')}
             changeType={calculatePnL.profitMargin >= 20 ? "positive" : calculatePnL.profitMargin >= 10 ? "neutral" : "negative"}
             icon={PiggyBank}
           />
@@ -636,7 +689,7 @@ export default function FinancePage() {
                 <div className="card-header">
                   <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <DollarSign size={20} />
-                    Senarai Perbelanjaan
+                    {t('finance.expenses.title')}
                   </div>
                   <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                     <input
@@ -652,105 +705,20 @@ export default function FinancePage() {
                       onChange={(e) => setFilterCategory(e.target.value as ExpenseCategory | 'all')}
                       style={{ width: 'auto' }}
                     >
-                      <option value="all">Semua Kategori</option>
+                      <option value="all">{t('finance.expenses.allCategories')}</option>
                       {EXPENSE_CATEGORIES.map(cat => (
-                        <option key={cat.value} value={cat.value}>{cat.label}</option>
+                        <option key={cat.value} value={cat.value}>{t(`finance.expenseCategories.${cat.value}`)}</option>
                       ))}
                     </select>
                   </div>
                 </div>
 
-                {filteredExpenses.length > 0 ? (
-                  <div style={{ overflowX: 'auto', maxWidth: '100%' }}>
-                    <table className="table" style={{ minWidth: '600px' }}>
-                      <thead>
-                        <tr>
-                          <th>Tarikh</th>
-                          <th>Kategori</th>
-                          <th>Keterangan</th>
-                          <th>Jumlah</th>
-                          <th>Bayaran</th>
-                          <th>Tindakan</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {filteredExpenses.map(expense => (
-                          <tr key={expense.id}>
-                            <td style={{ fontSize: '0.875rem' }}>
-                              {new Date(expense.date).toLocaleDateString('ms-MY')}
-                            </td>
-                            <td>
-                              <span
-                                style={{
-                                  padding: '0.25rem 0.5rem',
-                                  borderRadius: 'var(--radius-sm)',
-                                  fontSize: '0.75rem',
-                                  fontWeight: 600,
-                                  background: `${getCategoryColor(expense.category)}20`,
-                                  color: getCategoryColor(expense.category),
-                                }}
-                              >
-                                {getCategoryLabel(expense.category)}
-                              </span>
-                            </td>
-                            <td>
-                              <div style={{ fontWeight: 600 }}>{expense.description}</div>
-                              {expense.vendor && (
-                                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                                  {expense.vendor}
-                                </div>
-                              )}
-                            </td>
-                            <td style={{ fontWeight: 700, color: 'var(--danger)' }}>
-                              BND {expense.amount.toFixed(2)}
-                            </td>
-                            <td style={{ fontSize: '0.875rem', textTransform: 'capitalize' }}>
-                              {PAYMENT_METHODS.find(p => p.value === expense.paymentMethod)?.label}
-                            </td>
-                            <td>
-                              <div style={{ display: 'flex', gap: '0.25rem' }}>
-                                <button
-                                  className="btn btn-sm btn-outline"
-                                  onClick={() => openEditModal(expense)}
-                                  style={{ padding: '0.25rem 0.5rem' }}
-                                >
-                                  <Edit2 size={14} />
-                                </button>
-                                <button
-                                  className="btn btn-sm btn-outline"
-                                  onClick={() => openDeleteModal(expense)}
-                                  style={{ padding: '0.25rem 0.5rem', color: 'var(--danger)' }}
-                                >
-                                  <Trash2 size={14} />
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                ) : (
-                  <p style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '2rem' }}>
-                    Tiada perbelanjaan untuk bulan ini
-                  </p>
-                )}
-
-                {filteredExpenses.length > 0 && (
-                  <div style={{
-                    marginTop: '1rem',
-                    paddingTop: '1rem',
-                    borderTop: '2px solid var(--gray-200)',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center'
-                  }}>
-                    <span style={{ fontWeight: 600 }}>Jumlah:</span>
-                    <span style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--danger)' }}>
-                      BND {monthlyExpenseTotal.toFixed(2)}
-                    </span>
-                  </div>
-                )}
+                <ExpensesTable
+                  expenses={filteredExpenses}
+                  onEdit={openEditModal}
+                  onDelete={openDeleteModal}
+                  totalAmount={monthlyExpenseTotal}
+                />
               </div>
             </div>
 
@@ -758,7 +726,7 @@ export default function FinancePage() {
             <div>
               <div className="card">
                 <div className="card-header">
-                  <div className="card-title">Mengikut Kategori</div>
+                  <div className="card-title">{t('finance.expenses.byCategory')}</div>
                   <div className="card-subtitle">{filterMonth}</div>
                 </div>
                 {expenseByCategory.length > 0 ? (
@@ -769,7 +737,7 @@ export default function FinancePage() {
                         <div key={category}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
                             <span style={{ fontSize: '0.875rem', fontWeight: 600 }}>
-                              {getCategoryLabel(category as ExpenseCategory)}
+                              {t(`finance.expenseCategories.${category}`)}
                             </span>
                             <span style={{ fontSize: '0.875rem', fontWeight: 600 }}>
                               BND {amount.toFixed(2)}
@@ -791,7 +759,7 @@ export default function FinancePage() {
                             }} />
                           </div>
                           <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
-                            {percentage.toFixed(1)}% daripada jumlah
+                            {percentage.toFixed(1)}%
                           </div>
                         </div>
                       );
@@ -799,7 +767,7 @@ export default function FinancePage() {
                   </div>
                 ) : (
                   <p style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '1rem' }}>
-                    Tiada data
+                    {t('finance.expenses.empty')}
                   </p>
                 )}
               </div>
@@ -807,18 +775,18 @@ export default function FinancePage() {
               {/* Today's Summary */}
               <div className="card" style={{ marginTop: '1.5rem' }}>
                 <div className="card-header">
-                  <div className="card-title">Hari Ini</div>
+                  <div className="card-title">{t('finance.expenses.today.title')}</div>
                   <div className="card-subtitle">{new Date().toLocaleDateString('ms-MY')}</div>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span>Perbelanjaan</span>
+                    <span>{t('finance.expenses.today.expenses')}</span>
                     <span style={{ fontWeight: 600, color: 'var(--danger)' }}>
                       BND {todayExpenseTotal.toFixed(2)}
                     </span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span>Baki Tunai</span>
+                    <span>{t('finance.expenses.today.cashBalance')}</span>
                     <span style={{ fontWeight: 600, color: 'var(--success)' }}>
                       BND {(todayCashFlow?.closingCash || 0).toFixed(2)}
                     </span>
@@ -834,19 +802,19 @@ export default function FinancePage() {
           <div className="grid grid-cols-1 lg:grid-cols-2" style={{ gap: '1.5rem' }}>
             <div className="card">
               <div className="card-header">
-                <div className="card-title">Cash Flow Harian</div>
-                <div className="card-subtitle">7 hari terakhir</div>
+                <div className="card-title">{t('finance.cashflow.title')}</div>
+                <div className="card-subtitle">{t('finance.cashflow.subtitle')}</div>
               </div>
               <div className="table-responsive">
                 <table className="table">
                   <thead>
                     <tr>
-                      <th>Tarikh</th>
-                      <th>Pembukaan</th>
-                      <th>Jualan Tunai</th>
-                      <th>Jualan Kad</th>
-                      <th>Perbelanjaan</th>
-                      <th>Penutup</th>
+                      <th>{t('finance.cashflow.table.date')}</th>
+                      <th>{t('finance.cashflow.table.opening')}</th>
+                      <th>{t('finance.cashflow.table.salesCash')}</th>
+                      <th>{t('finance.cashflow.table.salesCard')}</th>
+                      <th>{t('finance.cashflow.table.expenses')}</th>
+                      <th>{t('finance.cashflow.table.closing')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -868,12 +836,12 @@ export default function FinancePage() {
             </div>
             <div className="card">
               <div className="card-header">
-                <div className="card-title">Ringkasan Aliran Tunai</div>
+                <div className="card-title">{t('finance.cashflow.summary.title')}</div>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 <div style={{ padding: '1rem', background: 'var(--gray-100)', borderRadius: 'var(--radius-md)' }}>
                   <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
-                    Jumlah Jualan Tunai (7 hari)
+                    {t('finance.cashflow.summary.salesCash')}
                   </div>
                   <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--success)' }}>
                     BND {cashFlows.slice(0, 7).reduce((sum, cf) => sum + cf.salesCash, 0).toFixed(2)}
@@ -881,7 +849,7 @@ export default function FinancePage() {
                 </div>
                 <div style={{ padding: '1rem', background: 'var(--gray-100)', borderRadius: 'var(--radius-md)' }}>
                   <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
-                    Jumlah Jualan Kad/E-Wallet (7 hari)
+                    {t('finance.cashflow.summary.salesCard')}
                   </div>
                   <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--primary)' }}>
                     BND {cashFlows.slice(0, 7).reduce((sum, cf) => sum + cf.salesCard + cf.salesEwallet, 0).toFixed(2)}
@@ -889,7 +857,7 @@ export default function FinancePage() {
                 </div>
                 <div style={{ padding: '1rem', background: 'var(--gray-100)', borderRadius: 'var(--radius-md)' }}>
                   <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
-                    Jumlah Perbelanjaan Tunai (7 hari)
+                    {t('finance.cashflow.summary.expensesCash')}
                   </div>
                   <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--danger)' }}>
                     BND {cashFlows.slice(0, 7).reduce((sum, cf) => sum + cf.expensesCash, 0).toFixed(2)}
@@ -905,7 +873,7 @@ export default function FinancePage() {
           <div className="grid grid-cols-1 lg:grid-cols-2" style={{ gap: '1.5rem' }}>
             <div className="card">
               <div className="card-header">
-                <div className="card-title">Penyata Untung Rugi</div>
+                <div className="card-title">{t('finance.pnl.title')}</div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <Calendar size={16} />
                   <input
@@ -922,7 +890,7 @@ export default function FinancePage() {
                 {/* Revenue */}
                 <div style={{ padding: '1rem', background: '#d1fae5', borderRadius: 'var(--radius-md)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontWeight: 600, color: '#065f46' }}>Hasil Jualan</span>
+                    <span style={{ fontWeight: 600, color: '#065f46' }}>{t('finance.pnl.revenue')}</span>
                     <span style={{ fontSize: '1.25rem', fontWeight: 700, color: '#065f46' }}>
                       BND {calculatePnL.revenue.toFixed(2)}
                     </span>
@@ -932,7 +900,7 @@ export default function FinancePage() {
                 {/* COGS */}
                 <div style={{ padding: '0.75rem 1rem', borderBottom: '1px solid var(--gray-200)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ color: 'var(--text-secondary)' }}>Kos Bahan Mentah (COGS)</span>
+                    <span style={{ color: 'var(--text-secondary)' }}>{t('finance.pnl.cogs')}</span>
                     <span style={{ color: 'var(--danger)' }}>- BND {calculatePnL.estimatedCOGS.toFixed(2)}</span>
                   </div>
                 </div>
@@ -940,7 +908,7 @@ export default function FinancePage() {
                 {/* Gross Profit */}
                 <div style={{ padding: '0.75rem 1rem', background: 'var(--gray-100)', borderRadius: 'var(--radius-md)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ fontWeight: 600 }}>Untung Kasar</span>
+                    <span style={{ fontWeight: 600 }}>{t('finance.pnl.grossProfit')}</span>
                     <span style={{ fontWeight: 700 }}>BND {calculatePnL.grossProfit.toFixed(2)}</span>
                   </div>
                 </div>
@@ -948,13 +916,13 @@ export default function FinancePage() {
                 {/* Operating Expenses */}
                 <div style={{ marginTop: '0.5rem' }}>
                   <div style={{ fontWeight: 600, marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>
-                    Perbelanjaan Operasi:
+                    {t('finance.pnl.operatingExpenses')}
                   </div>
                   {Object.entries(calculatePnL.expenses)
                     .filter(([cat]) => cat !== 'ingredients')
                     .map(([category, amount]) => (
                       <div key={category} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem 1rem' }}>
-                        <span style={{ color: 'var(--text-secondary)' }}>{getCategoryLabel(category as ExpenseCategory)}</span>
+                        <span style={{ color: 'var(--text-secondary)' }}>{t(`finance.expenseCategories.${category}`)}</span>
                         <span style={{ color: 'var(--danger)' }}>- BND {amount.toFixed(2)}</span>
                       </div>
                     ))}
@@ -963,7 +931,7 @@ export default function FinancePage() {
                 {/* Total Expenses */}
                 <div style={{ padding: '0.75rem 1rem', borderTop: '1px solid var(--gray-200)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ fontWeight: 600 }}>Jumlah Perbelanjaan</span>
+                    <span style={{ fontWeight: 600 }}>{t('finance.pnl.totalExpenses')}</span>
                     <span style={{ fontWeight: 600, color: 'var(--danger)' }}>
                       BND {calculatePnL.totalExpenses.toFixed(2)}
                     </span>
@@ -979,14 +947,14 @@ export default function FinancePage() {
                 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span style={{ fontWeight: 700, color: calculatePnL.netProfit >= 0 ? '#1e40af' : '#991b1b' }}>
-                      Untung/Rugi Bersih
+                      {t('finance.pnl.netProfit')}
                     </span>
                     <span style={{ fontSize: '1.5rem', fontWeight: 700, color: calculatePnL.netProfit >= 0 ? '#1e40af' : '#991b1b' }}>
                       BND {calculatePnL.netProfit.toFixed(2)}
                     </span>
                   </div>
                   <div style={{ fontSize: '0.875rem', marginTop: '0.5rem', color: 'var(--text-secondary)' }}>
-                    Margin: {calculatePnL.profitMargin.toFixed(1)}%
+                    {t('finance.pnl.margin')}: {calculatePnL.profitMargin.toFixed(1)}%
                   </div>
                 </div>
               </div>
@@ -994,34 +962,34 @@ export default function FinancePage() {
 
             <div className="card">
               <div className="card-header">
-                <div className="card-title">Analisis</div>
+                <div className="card-title">{t('finance.pnl.analysis.title')}</div>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 {calculatePnL.netProfit >= 0 ? (
                   <div className="alert alert-success">
-                    Tahniah! Kedai anda untung BND {calculatePnL.netProfit.toFixed(2)} bulan ini.
+                    {t('finance.pnl.analysis.profitAlert', { amount: calculatePnL.netProfit.toFixed(2) })}
                   </div>
                 ) : (
                   <div className="alert alert-danger">
-                    Perhatian! Kedai anda rugi BND {Math.abs(calculatePnL.netProfit).toFixed(2)} bulan ini.
+                    {t('finance.pnl.analysis.lossAlert', { amount: Math.abs(calculatePnL.netProfit).toFixed(2) })}
                   </div>
                 )}
 
                 <div style={{ padding: '1rem', background: 'var(--gray-100)', borderRadius: 'var(--radius-md)' }}>
-                  <div style={{ fontWeight: 600, marginBottom: '0.75rem' }}>Cadangan:</div>
+                  <div style={{ fontWeight: 600, marginBottom: '0.75rem' }}>{t('finance.pnl.analysis.recommendations')}</div>
                   <ul style={{ paddingLeft: '1.25rem', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
                     {calculatePnL.profitMargin < 20 && (
                       <li style={{ marginBottom: '0.5rem' }}>
-                        Margin keuntungan rendah. Pertimbangkan untuk naikkan harga atau kurangkan kos.
+                        {t('finance.pnl.analysis.lowMargin')}
                       </li>
                     )}
                     {calculatePnL.estimatedCOGS / calculatePnL.revenue > 0.4 && (
                       <li style={{ marginBottom: '0.5rem' }}>
-                        Kos bahan mentah tinggi ({((calculatePnL.estimatedCOGS / calculatePnL.revenue) * 100).toFixed(0)}% daripada jualan). Cari supplier lebih murah.
+                        {t('finance.pnl.analysis.highCogs', { percentage: ((calculatePnL.estimatedCOGS / calculatePnL.revenue) * 100).toFixed(0) })}
                       </li>
                     )}
                     <li>
-                      Track semua perbelanjaan dengan teliti untuk analisis yang lebih tepat.
+                      {t('finance.pnl.analysis.trackExpenses')}
                     </li>
                   </ul>
                 </div>
@@ -1056,314 +1024,235 @@ export default function FinancePage() {
               </div>
             </div>
 
-            {payoutsLoading ? (
-              <div style={{ textAlign: 'center', padding: '2rem' }}>
-                <LoadingSpinner />
-              </div>
-            ) : filteredPayouts.length > 0 ? (
-              <div style={{ overflowX: 'auto' }}>
-                <table className="table" style={{ minWidth: '700px' }}>
-                  <thead>
-                    <tr>
-                      <th>Tarikh & Masa</th>
-                      <th>Jumlah</th>
-                      <th>Kategori</th>
-                      <th>Sebab</th>
-                      <th>Dikeluarkan oleh</th>
-                      <th>Diluluskan oleh</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredPayouts.map((payout) => (
-                      <tr key={payout.id}>
-                        <td style={{ fontSize: '0.875rem' }}>
-                          {new Date(payout.createdAt).toLocaleDateString('ms-MY')}
-                          <br />
-                          <span style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>
-                            {new Date(payout.createdAt).toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit' })}
-                          </span>
-                        </td>
-                        <td style={{ fontWeight: 700, color: 'var(--danger)' }}>
-                          BND {payout.amount.toFixed(2)}
-                        </td>
-                        <td>
-                          <span style={{
-                            padding: '0.25rem 0.5rem',
-                            borderRadius: 'var(--radius-sm)',
-                            fontSize: '0.75rem',
-                            fontWeight: 600,
-                            background: 'var(--gray-200)',
-                            textTransform: 'capitalize'
-                          }}>
-                            {payout.category.replace('_', ' ')}
-                          </span>
-                        </td>
-                        <td>
-                          <div style={{ fontWeight: 600 }}>{payout.reason}</div>
-                          {payout.notes && (
-                            <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                              {payout.notes}
-                            </div>
-                          )}
-                        </td>
-                        <td style={{ fontSize: '0.875rem' }}>{payout.performedByName}</td>
-                        <td style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--primary)' }}>
-                          {payout.approvedByName || '-'}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <p style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '2rem' }}>
-                Tiada rekod pengeluaran untuk bulan ini
-              </p>
-            )}
-
-            {filteredPayouts.length > 0 && (
-              <div style={{
-                marginTop: '1rem',
-                paddingTop: '1rem',
-                borderTop: '2px solid var(--gray-200)',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center'
-              }}>
-                <span style={{ fontWeight: 600 }}>Jumlah Pengeluaran:</span>
-                <span style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--danger)' }}>
-                  BND {filteredPayouts.reduce((sum, p) => sum + p.amount, 0).toFixed(2)}
-                </span>
-              </div>
-            )}
+            <MoneyOutTable
+              payouts={filteredPayouts}
+              loading={payoutsLoading}
+            />
           </div>
         )}
+      </div>
 
-        {/* Add/Edit Expense Modal */}
-        <Modal
-          isOpen={modalType === 'add' || modalType === 'edit'}
-          onClose={closeModal}
-          title={modalType === 'add' ? 'Tambah Perbelanjaan' : 'Edit Perbelanjaan'}
-          maxWidth="500px"
-        >
-          <div className="form-group">
-            <label className="form-label">Tarikh *</label>
+      {/* Add/Edit Expense Modal */}
+      <Modal
+        isOpen={modalType === 'add' || modalType === 'edit'}
+        onClose={closeModal}
+        title={modalType === 'add' ? t('finance.modals.addExpense') : t('finance.modals.editExpense')}
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <div>
+            <label className="form-label">{t('finance.modals.labels.date')}</label>
             <input
               type="date"
               className="form-input"
               value={formData.date}
-              onChange={(e) => setFormData(prev => ({ ...prev, date: e.target.value }))}
+              onChange={(e) => setFormData({ ...formData, date: e.target.value })}
             />
           </div>
-
-          <div className="grid grid-cols-2" style={{ gap: '1rem' }}>
-            <div className="form-group">
-              <label className="form-label">Kategori *</label>
-              <select
-                className="form-select"
-                value={formData.category}
-                onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value as ExpenseCategory }))}
-              >
-                {EXPENSE_CATEGORIES.map(cat => (
-                  <option key={cat.value} value={cat.value}>{cat.label}</option>
-                ))}
-              </select>
-            </div>
-
-            <div className="form-group">
-              <label className="form-label">Cara Bayaran *</label>
-              <select
-                className="form-select"
-                value={formData.paymentMethod}
-                onChange={(e) => setFormData(prev => ({ ...prev, paymentMethod: e.target.value as PaymentMethod }))}
-              >
-                {PAYMENT_METHODS.map(pm => (
-                  <option key={pm.value} value={pm.value}>{pm.label}</option>
-                ))}
-              </select>
-            </div>
+          <div>
+            <label className="form-label">{t('finance.modals.labels.category')}</label>
+            <select
+              className="form-select"
+              value={formData.category}
+              onChange={(e) => setFormData({ ...formData, category: e.target.value as ExpenseCategory })}
+            >
+              {EXPENSE_CATEGORIES.map(cat => (
+                <option key={cat.value} value={cat.value}>{t(`finance.expenseCategories.${cat.value}`)}</option>
+              ))}
+            </select>
           </div>
-
-          <div className="form-group">
-            <label className="form-label">Jumlah (BND) *</label>
+          <div>
+            <label className="form-label">{t('finance.modals.labels.amount')}</label>
             <input
               type="number"
               className="form-input"
               value={formData.amount}
-              onChange={(e) => setFormData(prev => ({ ...prev, amount: Number(e.target.value) }))}
-              min="0"
+              onChange={(e) => setFormData({ ...formData, amount: parseFloat(e.target.value) || 0 })}
+              placeholder={t('finance.modals.placeholders.amount')}
               step="0.01"
-              placeholder="0.00"
             />
           </div>
-
-          <div className="form-group">
-            <label className="form-label">Keterangan *</label>
+          <div>
+            <label className="form-label">{t('finance.modals.labels.paymentMethod')}</label>
+            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+              {PAYMENT_METHODS.map(method => (
+                <button
+                  key={method.value}
+                  type="button"
+                  onClick={() => setFormData({ ...formData, paymentMethod: method.value as PaymentMethod })}
+                  style={{
+                    padding: '0.5rem 1rem',
+                    borderRadius: 'var(--radius-sm)',
+                    border: '1px solid var(--gray-300)',
+                    background: formData.paymentMethod === method.value ? 'var(--primary)' : 'white',
+                    color: formData.paymentMethod === method.value ? 'white' : 'var(--text-primary)',
+                    cursor: 'pointer',
+                    fontSize: '0.875rem'
+                  }}
+                >
+                  {method.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div>
+            <label className="form-label">{t('finance.modals.labels.description')}</label>
             <input
               type="text"
               className="form-input"
               value={formData.description}
-              onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-              placeholder="Contoh: Ayam 10kg"
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              placeholder={t('finance.modals.placeholders.description')}
             />
           </div>
-
-          <div className="form-group">
-            <label className="form-label">Vendor/Supplier (Optional)</label>
+          <div>
+            <label className="form-label">{t('finance.modals.labels.vendor')}</label>
             <input
               type="text"
               className="form-input"
               value={formData.vendor}
-              onChange={(e) => setFormData(prev => ({ ...prev, vendor: e.target.value }))}
-              placeholder="Contoh: Supplier Ali"
+              onChange={(e) => setFormData({ ...formData, vendor: e.target.value })}
+              placeholder={t('finance.modals.placeholders.vendor')}
             />
           </div>
-
-          <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1.5rem' }}>
-            <button className="btn btn-outline" onClick={closeModal} disabled={isProcessing} style={{ flex: 1 }}>
-              Batal
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginTop: '1rem' }}>
+            <button
+              className="btn btn-outline"
+              onClick={closeModal}
+              disabled={isProcessing}
+            >
+              {t('finance.actions.cancel')}
             </button>
             <button
               className="btn btn-primary"
               onClick={modalType === 'add' ? handleAddExpense : handleEditExpense}
               disabled={isProcessing}
-              style={{ flex: 1 }}
             >
-              {isProcessing ? <><LoadingSpinner size="sm" /> Memproses...</> : modalType === 'add' ? 'Tambah' : 'Simpan'}
+              {isProcessing ? t('finance.actions.processing') : (modalType === 'add' ? t('finance.actions.add') : t('finance.actions.save'))}
             </button>
           </div>
-        </Modal>
+        </div>
+      </Modal>
 
-        {/* Delete Confirmation Modal */}
-        <Modal
-          isOpen={modalType === 'delete'}
-          onClose={closeModal}
-          title="Padam Perbelanjaan"
-          maxWidth="400px"
-        >
-          <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-            <div style={{
-              width: '60px',
-              height: '60px',
-              background: '#fee2e2',
-              borderRadius: '50%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              margin: '0 auto 1rem'
-            }}>
-              <Trash2 size={28} color="var(--danger)" />
-            </div>
-            <p style={{ color: 'var(--text-secondary)' }}>
-              Anda pasti mahu padam perbelanjaan <strong>{selectedExpense?.description}</strong>?
-            </p>
-          </div>
+      {/* Delete Confirmation Modal */}
+      <ConfirmModal
+        isOpen={modalType === 'delete'}
+        onClose={closeModal}
+        onConfirm={handleDeleteExpense}
+        title={t('finance.modals.deleteExpense')}
+        message={
+          <span dangerouslySetInnerHTML={{ __html: t('finance.modals.deleteConfirm', { description: selectedExpense?.description || '' }) }} />
+        }
+        confirmText={t('finance.actions.delete')}
+        cancelText={t('finance.actions.cancel')}
+        type="danger"
+      />
 
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <button className="btn btn-outline" onClick={closeModal} disabled={isProcessing} style={{ flex: 1 }}>
-              Batal
-            </button>
-            <button className="btn btn-danger" onClick={handleDeleteExpense} disabled={isProcessing} style={{ flex: 1 }}>
-              {isProcessing ? <><LoadingSpinner size="sm" /> Memproses...</> : 'Padam'}
-            </button>
-          </div>
-        </Modal>
-
-        {/* Cash Flow Modal */}
-        <Modal
-          isOpen={modalType === 'cashflow'}
-          onClose={closeModal}
-          title="Cash Flow Hari Ini"
-          subtitle={new Date().toLocaleDateString('ms-MY')}
-          maxWidth="450px"
-        >
-          <div className="form-group">
-            <label className="form-label">Tunai Pembukaan (BND)</label>
-            <input
-              type="number"
-              className="form-input"
-              value={cashFlowData.openingCash}
-              onChange={(e) => setCashFlowData(prev => ({ ...prev, openingCash: Number(e.target.value) }))}
-              min="0"
-              step="0.01"
-            />
-          </div>
-
-          <div className="grid grid-cols-2" style={{ gap: '1rem' }}>
-            <div className="form-group">
-              <label className="form-label">Jualan Tunai (BND)</label>
+      {/* Cash Flow Modal */}
+      <Modal
+        isOpen={modalType === 'cashflow'}
+        onClose={closeModal}
+        title={t('finance.modals.cashFlow')}
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <div className="form-group mb-4">
+            <label className="form-label">{t('finance.modals.labels.openingCash')}</label>
+            <div className="input-group">
+              <span className="input-group-text">BND</span>
               <input
                 type="number"
                 className="form-input"
-                value={cashFlowData.salesCash}
-                onChange={(e) => setCashFlowData(prev => ({ ...prev, salesCash: Number(e.target.value) }))}
-                min="0"
-                step="0.01"
-              />
-            </div>
-            <div className="form-group">
-              <label className="form-label">Jualan Kad (BND)</label>
-              <input
-                type="number"
-                className="form-input"
-                value={cashFlowData.salesCard}
-                onChange={(e) => setCashFlowData(prev => ({ ...prev, salesCard: Number(e.target.value) }))}
-                min="0"
-                step="0.01"
+                value={cashFlowData.openingCash}
+                onChange={(e) => setCashFlowData({ ...cashFlowData, openingCash: parseFloat(e.target.value) || 0 })}
               />
             </div>
           </div>
 
-          <div className="grid grid-cols-2" style={{ gap: '1rem' }}>
+          <div className="grid grid-cols-2 gap-4 mb-4">
             <div className="form-group">
-              <label className="form-label">Jualan E-Wallet (BND)</label>
-              <input
-                type="number"
-                className="form-input"
-                value={cashFlowData.salesEwallet}
-                onChange={(e) => setCashFlowData(prev => ({ ...prev, salesEwallet: Number(e.target.value) }))}
-                min="0"
-                step="0.01"
-              />
+              <label className="form-label">{t('finance.modals.labels.salesCash')}</label>
+              <div className="input-group">
+                <span className="input-group-text">BND</span>
+                <input
+                  type="number"
+                  className="form-input"
+                  value={cashFlowData.salesCash}
+                  onChange={(e) => setCashFlowData({ ...cashFlowData, salesCash: parseFloat(e.target.value) || 0 })}
+                />
+              </div>
             </div>
             <div className="form-group">
-              <label className="form-label">Perbelanjaan Tunai (BND)</label>
-              <input
-                type="number"
-                className="form-input"
-                value={cashFlowData.expensesCash}
-                onChange={(e) => setCashFlowData(prev => ({ ...prev, expensesCash: Number(e.target.value) }))}
-                min="0"
-                step="0.01"
-              />
+              <label className="form-label">{t('finance.modals.labels.salesCard')}</label>
+              <div className="input-group">
+                <span className="input-group-text">BND</span>
+                <input
+                  type="number"
+                  className="form-input"
+                  value={cashFlowData.salesCard}
+                  onChange={(e) => setCashFlowData({ ...cashFlowData, salesCard: parseFloat(e.target.value) || 0 })}
+                />
+              </div>
             </div>
           </div>
 
-          <div style={{
-            padding: '1rem',
-            background: 'var(--gray-100)',
-            borderRadius: 'var(--radius-md)',
-            marginTop: '1rem'
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontWeight: 600 }}>Tunai Penutup:</span>
-              <span style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--success)' }}>
+          <div className="grid grid-cols-2 gap-4 mb-4">
+            <div className="form-group">
+              <label className="form-label">{t('finance.modals.labels.salesEwallet')}</label>
+              <div className="input-group">
+                <span className="input-group-text">BND</span>
+                <input
+                  type="number"
+                  className="form-input"
+                  value={cashFlowData.salesEwallet}
+                  onChange={(e) => setCashFlowData({ ...cashFlowData, salesEwallet: parseFloat(e.target.value) || 0 })}
+                />
+              </div>
+            </div>
+            <div className="form-group">
+              <label className="form-label">{t('finance.modals.labels.expensesCash')}</label>
+              <div className="input-group">
+                <span className="input-group-text">BND</span>
+                <input
+                  type="number"
+                  className="form-input"
+                  value={cashFlowData.expensesCash}
+                  onChange={(e) => setCashFlowData({ ...cashFlowData, expensesCash: parseFloat(e.target.value) || 0 })}
+                />
+              </div>
+              <small className="text-secondary">{t('finance.modals.labels.pettyCashNote')}</small>
+            </div>
+          </div>
+
+          <div className="p-4 bg-gray-50 rounded-lg mb-6">
+            <div className="flex justify-between items-center mb-2">
+              <span>{t('finance.modals.labels.closingCash')}</span>
+              <span className="text-xl font-bold text-success">
                 BND {(cashFlowData.openingCash + cashFlowData.salesCash - cashFlowData.expensesCash).toFixed(2)}
               </span>
             </div>
+            <small className="text-secondary">{t('finance.modals.labels.closingNote')}</small>
           </div>
 
-          <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1.5rem' }}>
-            <button className="btn btn-outline" onClick={closeModal} disabled={isProcessing} style={{ flex: 1 }}>
-              Batal
+          <div className="flex justify-end gap-2">
+            <button className="btn btn-ghost" onClick={closeModal} disabled={isProcessing}>
+              {t('finance.actions.cancel')}
             </button>
-            <button className="btn btn-primary" onClick={handleSaveCashFlow} disabled={isProcessing} style={{ flex: 1 }}>
-              {isProcessing ? <><LoadingSpinner size="sm" /> Menyimpan...</> : 'Simpan'}
+            <button className="btn btn-primary" onClick={handleSaveCashFlow} disabled={isProcessing}>
+              {isProcessing ? <LoadingSpinner size="sm" color="white" /> : t('finance.actions.save')}
             </button>
           </div>
-        </Modal>
-      </div>
+        </div>
+      </Modal>
+
+      {/* Generic Confirmation Modal */}
+      <ConfirmModal
+        isOpen={confirmationData.isOpen}
+        onClose={() => setConfirmationData(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={confirmationData.onConfirm}
+        title={confirmationData.title}
+        message={confirmationData.message}
+        type="danger"
+      />
+
     </MainLayout>
   );
 }
-

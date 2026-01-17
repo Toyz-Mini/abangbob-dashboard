@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Modal from '@/components/Modal';
 import { useStore, useStaff } from '@/lib/store';
 import { useAuth } from '@/lib/contexts/AuthContext';
+import { useTranslation } from '@/lib/contexts/LanguageContext';
 import { useToast } from '@/lib/contexts/ToastContext';
 import { CashPayout, CashPayoutCategory, StaffProfile } from '@/lib/types';
 import { insertCashPayout } from '@/lib/supabase/operations';
@@ -24,12 +25,12 @@ interface MoneyOutModalProps {
     outletId?: string;
 }
 
-const CATEGORY_OPTIONS: { value: CashPayoutCategory; label: string }[] = [
-    { value: 'petty_cash', label: 'Petty Cash' },
-    { value: 'refund', label: 'Refund' },
-    { value: 'change', label: 'Tukar Duit' },
-    { value: 'supplier', label: 'Bayar Supplier' },
-    { value: 'other', label: 'Lain-lain' },
+const CATEGORY_KEYS: CashPayoutCategory[] = [
+    'petty_cash',
+    'refund',
+    'change',
+    'supplier',
+    'other',
 ];
 
 export default function MoneyOutModal({
@@ -39,6 +40,7 @@ export default function MoneyOutModal({
     registerId,
     outletId
 }: MoneyOutModalProps) {
+    const { t } = useTranslation();
     const { showToast } = useToast();
     const { staff } = useStaff();
     const { currentStaff } = useAuth();
@@ -65,15 +67,15 @@ export default function MoneyOutModal({
     const handleSubmit = async () => {
         // Validation
         if (!amount || parseFloat(amount) <= 0) {
-            showToast('Sila masukkan jumlah yang sah', 'error');
+            showToast(t('pos.moneyOut.toast.invalidAmount'), 'error');
             return;
         }
         if (!reason.trim()) {
-            showToast('Sila masukkan sebab pengeluaran', 'error');
+            showToast(t('pos.moneyOut.toast.invalidReason'), 'error');
             return;
         }
         if (!approvedBy) {
-            showToast('Sila pilih siapa yang approve', 'error');
+            showToast(t('pos.moneyOut.toast.invalidApprover'), 'error');
             return;
         }
 
@@ -109,27 +111,27 @@ export default function MoneyOutModal({
                 });
             }
 
-            showToast(`Pengeluaran BND ${amountNum.toFixed(2)} telah direkodkan`, 'success');
+            showToast(t('pos.moneyOut.toast.success', { amount: amountNum.toFixed(2) }), 'success');
             resetForm();
             onClose();
             onSuccess?.();
 
         } catch (error) {
             console.error('Failed to record cash payout:', error);
-            showToast('Gagal merekod pengeluaran. Sila cuba lagi.', 'error');
+            showToast(t('pos.moneyOut.toast.error'), 'error');
         } finally {
             setIsSubmitting(false);
         }
     };
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} title="Money Out">
+        <Modal isOpen={isOpen} onClose={onClose} title={t('pos.moneyOut.title')}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 {/* Amount */}
                 <div className="form-group">
                     <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                         <Banknote size={16} />
-                        Jumlah (BND) *
+                        {t('pos.moneyOut.amountLabel')}
                     </label>
                     <input
                         type="number"
@@ -148,15 +150,15 @@ export default function MoneyOutModal({
                 <div className="form-group">
                     <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                         <Tag size={16} />
-                        Kategori
+                        {t('pos.moneyOut.categoryLabel')}
                     </label>
                     <select
                         className="form-select"
                         value={category}
                         onChange={(e) => setCategory(e.target.value as CashPayoutCategory)}
                     >
-                        {CATEGORY_OPTIONS.map(opt => (
-                            <option key={opt.value} value={opt.value}>{opt.label}</option>
+                        {CATEGORY_KEYS.map(key => (
+                            <option key={key} value={key}>{t(`pos.moneyOut.categories.${key}`)}</option>
                         ))}
                     </select>
                 </div>
@@ -165,12 +167,12 @@ export default function MoneyOutModal({
                 <div className="form-group">
                     <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                         <FileText size={16} />
-                        Sebab Pengeluaran *
+                        {t('pos.moneyOut.reasonLabel')}
                     </label>
                     <input
                         type="text"
                         className="form-input"
-                        placeholder="Cth: Beli bekalan pembersihan"
+                        placeholder={t('pos.moneyOut.reasonPlaceholder')}
                         value={reason}
                         onChange={(e) => setReason(e.target.value)}
                     />
@@ -180,14 +182,14 @@ export default function MoneyOutModal({
                 <div className="form-group">
                     <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                         <User size={16} />
-                        Diluluskan oleh *
+                        {t('pos.moneyOut.approvedByLabel')}
                     </label>
                     <select
                         className="form-select"
                         value={approvedBy}
                         onChange={(e) => setApprovedBy(e.target.value)}
                     >
-                        <option value="">-- Pilih Manager --</option>
+                        <option value="">{t('pos.moneyOut.selectManager')}</option>
                         {managers.map((m: StaffProfile) => (
                             <option key={m.id} value={m.id}>{m.name}</option>
                         ))}
@@ -196,11 +198,11 @@ export default function MoneyOutModal({
 
                 {/* Notes (optional) */}
                 <div className="form-group">
-                    <label className="form-label">Nota Tambahan (Optional)</label>
+                    <label className="form-label">{t('pos.moneyOut.notesLabel')}</label>
                     <textarea
                         className="form-input"
                         rows={2}
-                        placeholder="Nota tambahan..."
+                        placeholder={t('pos.moneyOut.notesPlaceholder')}
                         value={notes}
                         onChange={(e) => setNotes(e.target.value)}
                     />
@@ -217,7 +219,7 @@ export default function MoneyOutModal({
                     gap: '0.5rem'
                 }}>
                     <AlertCircle size={16} style={{ color: 'var(--warning, #f59e0b)', flexShrink: 0, marginTop: 2 }} />
-                    <span>Pengeluaran akan dicatat dalam laporan harian dan tolak dari baki tunai.</span>
+                    <span>{t('pos.moneyOut.info')}</span>
                 </div>
 
                 {/* Actions */}
@@ -228,7 +230,7 @@ export default function MoneyOutModal({
                         style={{ flex: 1 }}
                         disabled={isSubmitting}
                     >
-                        Batal
+                        {t('pos.moneyOut.cancel')}
                     </button>
                     <button
                         className="btn btn-danger"
@@ -237,11 +239,11 @@ export default function MoneyOutModal({
                         style={{ flex: 2, gap: '0.5rem' }}
                     >
                         {isSubmitting ? (
-                            <>Merekod...</>
+                            <>{t('pos.moneyOut.submitting')}</>
                         ) : (
                             <>
                                 <CheckCircle size={18} />
-                                Rekod Pengeluaran
+                                {t('pos.moneyOut.submit')}
                             </>
                         )}
                     </button>

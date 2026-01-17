@@ -7,9 +7,11 @@ import { format } from 'date-fns'; // Assume date-fns is available or use native
 import { Search, Filter, Download, Trash2 } from 'lucide-react';
 import GlassCard from '@/components/GlassCard';
 import PremiumButton from '@/components/PremiumButton';
+import { useTranslation } from '@/lib/contexts/LanguageContext';
 
 export default function WasteHistoryView() {
     const { wasteLogs, inventory } = useInventory(); // wasteLogs populated from store
+    const { t } = useTranslation();
     const [searchTerm, setSearchTerm] = useState('');
     const [filterReason, setFilterReason] = useState<string>('All');
 
@@ -34,17 +36,17 @@ export default function WasteHistoryView() {
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <GlassCard className="p-4 bg-red-50/50 border-red-100">
-                    <p className="text-sm text-gray-500 font-medium uppercase">Total Waste Value</p>
+                    <p className="text-sm text-gray-500 font-medium uppercase">{t('inventory.wasteHistory.stats.value')}</p>
                     <h3 className="text-2xl font-bold text-red-600 mt-1">BND {totalLoss.toFixed(2)}</h3>
                 </GlassCard>
 
                 <GlassCard className="p-4">
-                    <p className="text-sm text-gray-500 font-medium uppercase">Total Incidents</p>
+                    <p className="text-sm text-gray-500 font-medium uppercase">{t('inventory.wasteHistory.stats.incidents')}</p>
                     <h3 className="text-2xl font-bold text-gray-800 mt-1">{filteredLogs.length}</h3>
                 </GlassCard>
 
                 <GlassCard className="p-4">
-                    <p className="text-sm text-gray-500 font-medium uppercase">Most Frequent Reason</p>
+                    <p className="text-sm text-gray-500 font-medium uppercase">{t('inventory.wasteHistory.stats.reason')}</p>
                     <h3 className="text-2xl font-bold text-gray-800 mt-1">
                         {/* Simple mode calculation */}
                         {filteredLogs.length > 0 ?
@@ -65,7 +67,7 @@ export default function WasteHistoryView() {
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                         <input
                             type="text"
-                            placeholder="Search item, note, or staff..."
+                            placeholder={t('inventory.wasteHistory.search')}
                             className="input input-bordered w-full pl-10"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
@@ -77,18 +79,18 @@ export default function WasteHistoryView() {
                         value={filterReason}
                         onChange={(e) => setFilterReason(e.target.value)}
                     >
-                        <option value="All">All Reasons</option>
-                        <option value="expired">Expired</option>
+                        <option value="All">{t('inventory.allCategories') || 'All Reasons'}</option>
+                        <option value="expired">{t('inventory.waste.reasons.expired')}</option>
                         <option value="spilled">Spilled</option>
-                        <option value="burned">Burned</option>
-                        <option value="customer_return">Customer Return</option>
-                        <option value="staff_meal">Staff Meal</option>
-                        <option value="other">Other</option>
+                        <option value="burned">{t('inventory.waste.reasons.burned')}</option>
+                        <option value="customer_return">{t('inventory.waste.reasons.customer_return')}</option>
+                        <option value="staff_meal">{t('inventory.waste.reasons.staff_meal')}</option>
+                        <option value="other">{t('inventory.waste.reasons.other')}</option>
                     </select>
                 </div>
 
-                <PremiumButton variant="secondary" icon={Download} onClick={() => alert('Export feature coming soon!')}>
-                    Export CSV
+                <PremiumButton variant="secondary" icon={Download} onClick={() => alert(t('inventory.wasteHistory.exportSoon'))}>
+                    {t('inventory.wasteHistory.export')}
                 </PremiumButton>
             </div>
 
@@ -98,20 +100,20 @@ export default function WasteHistoryView() {
                     <table className="table w-full">
                         <thead>
                             <tr>
-                                <th>Date</th>
-                                <th>Item</th>
-                                <th>Quantity</th>
-                                <th>Loss (BND)</th>
-                                <th>Reason</th>
+                                <th>{t('inventory.table.date')}</th>
+                                <th>{t('inventory.table.item')}</th>
+                                <th>{t('inventory.table.quantity')}</th>
+                                <th>{t('inventory.table.value')}</th>
+                                <th>{t('inventory.table.reason')}</th>
                                 <th>Reported By</th>
-                                <th>Notes</th>
+                                <th>{t('inventory.waste.notes')}</th>
                             </tr>
                         </thead>
                         <tbody>
                             {filteredLogs.length === 0 ? (
                                 <tr>
                                     <td colSpan={7} className="text-center py-8 text-gray-500">
-                                        No waste records found.
+                                        {t('inventory.wasteHistory.empty')}
                                     </td>
                                 </tr>
                             ) : (
@@ -133,8 +135,8 @@ export default function WasteHistoryView() {
                                         </td>
                                         <td>
                                             <span className={`badge ${log.reason === 'expired' ? 'badge-error' :
-                                                    log.reason === 'burned' ? 'badge-warning' :
-                                                        'badge-ghost'
+                                                log.reason === 'burned' ? 'badge-warning' :
+                                                    'badge-ghost'
                                                 }`}>
                                                 {log.reason.replace('_', ' ')}
                                             </span>

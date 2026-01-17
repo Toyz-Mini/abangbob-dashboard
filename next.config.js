@@ -1,6 +1,15 @@
+const withBundleAnalyzer = require('@next/bundle-analyzer')({
+  enabled: process.env.ANALYZE === 'true',
+});
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  // NOTE: Supabase types have been regenerated - keeping ignoreBuildErrors
+  // temporarily while we verify the types are properly integrated
+  typescript: {
+    ignoreBuildErrors: false,
+  },
   // output: 'export' - disabled for Better Auth API routes
   images: {
     remotePatterns: [
@@ -66,7 +75,8 @@ const nextConfig = {
   },
 }
 
-module.exports = nextConfig
+// Apply bundle analyzer
+module.exports = withBundleAnalyzer(nextConfig)
 
 
 

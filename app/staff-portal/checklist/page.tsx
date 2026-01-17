@@ -8,6 +8,7 @@ import Link from 'next/link';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import Modal from '@/components/Modal';
 import StaffPortalNav from '@/components/StaffPortalNav';
+import { useTranslation } from '@/lib/contexts/LanguageContext';
 import {
   CheckSquare,
   Square,
@@ -26,6 +27,7 @@ import {
 
 
 export default function ChecklistPage() {
+  const { t } = useTranslation();
   const { isInitialized } = useStaff();
   const { currentStaff } = useAuth();
   const {
@@ -82,6 +84,9 @@ export default function ChecklistPage() {
   // Toggle item completion
   const handleToggleItem = (templateId: string, currentlyCompleted: boolean) => {
     if (!currentChecklist) return;
+
+    // Check if checklist is already completed
+    if (currentChecklist.status === 'completed') return;
 
     const template = currentTemplates.find(t => t.id === templateId);
 
@@ -180,9 +185,8 @@ export default function ChecklistPage() {
         <div className="page-header">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
             <div>
-
               <h1 className="page-title" style={{ marginTop: '0.5rem' }}>
-                Checklist Harian
+                {t('staffPortal.checklist.title')}
               </h1>
               <p className="page-subtitle">
                 {new Date().toLocaleDateString('ms-MY', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
@@ -190,7 +194,7 @@ export default function ChecklistPage() {
             </div>
             <Link href="/staff-portal/checklist/history" className="btn btn-outline">
               <History size={18} />
-              Sejarah
+              {t('staffPortal.checklist.history')}
             </Link>
           </div>
         </div>
@@ -214,7 +218,7 @@ export default function ChecklistPage() {
             {isOpeningShift ? <Sun size={24} color={currentShift.color} /> : <Moon size={24} color={currentShift.color} />}
             <div>
               <div style={{ fontWeight: 600, color: currentShift.color }}>
-                Shift {currentShift.name}
+                {t('staffPortal.checklist.shift.title', { name: currentShift.name })}
               </div>
               <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
                 {currentShift.startTime} - {currentShift.endTime}
@@ -238,10 +242,10 @@ export default function ChecklistPage() {
             <CalendarX size={24} color="var(--gray-500)" />
             <div>
               <div style={{ fontWeight: 600, color: 'var(--gray-700)' }}>
-                Tiada Jadual
+                {t('staffPortal.checklist.shift.noSchedule')}
               </div>
               <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
-                Anda tiada shift berjadual hari ini
+                {t('staffPortal.checklist.shift.noScheduleDesc')}
               </div>
             </div>
           </div>
@@ -255,7 +259,7 @@ export default function ChecklistPage() {
             style={{ flex: 1 }}
           >
             <Sun size={18} />
-            Opening
+            {t('staffPortal.checklist.tabs.opening')}
             {openingChecklist?.status === 'completed' && <CheckCircle size={16} />}
           </button>
           <button
@@ -264,7 +268,7 @@ export default function ChecklistPage() {
             style={{ flex: 1 }}
           >
             <Moon size={18} />
-            Closing
+            {t('staffPortal.checklist.tabs.closing')}
             {closingChecklist?.status === 'completed' && <CheckCircle size={16} />}
           </button>
         </div>
@@ -274,11 +278,11 @@ export default function ChecklistPage() {
           <div className="card-header">
             <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <CheckSquare size={20} />
-              {activeTab === 'opening' ? 'Opening' : 'Closing'} Checklist
+              {activeTab === 'opening' ? t('staffPortal.checklist.list.openingTitle') : t('staffPortal.checklist.list.closingTitle')}
             </div>
             {currentChecklist && (
               <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
-                {completedCount}/{totalCount} selesai
+                {t('staffPortal.checklist.list.completedCount', { completed: completedCount, total: totalCount })}
               </div>
             )}
           </div>
@@ -319,10 +323,10 @@ export default function ChecklistPage() {
                 <CheckSquare size={40} color="#6366f1" />
               </div>
               <p style={{ color: 'var(--text-secondary)', marginBottom: '1rem' }}>
-                Checklist {activeTab} belum dimulakan
+                {t('staffPortal.checklist.list.notStarted', { type: activeTab === 'opening' ? t('staffPortal.checklist.tabs.opening') : t('staffPortal.checklist.tabs.closing') })}
               </p>
               <button className="btn btn-primary" onClick={handleStartChecklist}>
-                Mula Checklist
+                {t('staffPortal.checklist.list.start')}
               </button>
             </div>
           )}
@@ -332,7 +336,7 @@ export default function ChecklistPage() {
             <div style={{ textAlign: 'center', padding: '2rem' }}>
               <AlertCircle size={48} color="var(--gray-400)" style={{ marginBottom: '1rem' }} />
               <p style={{ color: 'var(--text-secondary)' }}>
-                Tiada checklist items dikonfigurasi
+                {t('staffPortal.checklist.list.empty')}
               </p>
             </div>
           )}
@@ -385,13 +389,13 @@ export default function ChecklistPage() {
                           {template?.requirePhoto && (
                             <span className={`badge ${item.photoUrl ? 'badge-success' : 'badge-warning'}`} style={{ fontSize: '0.65rem' }}>
                               <Camera size={10} style={{ marginRight: '0.25rem' }} />
-                              {item.photoUrl ? 'Gambar OK' : 'Perlu gambar'}
+                              {item.photoUrl ? t('staffPortal.checklist.list.photoOk') : t('staffPortal.checklist.list.needPhoto')}
                             </span>
                           )}
                           {template?.requireNotes && (
                             <span className={`badge ${item.notes ? 'badge-success' : 'badge-info'}`} style={{ fontSize: '0.65rem' }}>
                               <FileText size={10} style={{ marginRight: '0.25rem' }} />
-                              {item.notes ? 'Ada nota' : 'Perlu nota'}
+                              {item.notes ? t('staffPortal.checklist.list.notesOk') : t('staffPortal.checklist.list.needNotes')}
                             </span>
                           )}
                         </div>
@@ -400,7 +404,7 @@ export default function ChecklistPage() {
                         {item.isCompleted && item.completedAt && (
                           <div style={{ fontSize: '0.7rem', color: 'var(--text-light)', marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                             <Clock size={10} />
-                            Selesai pada {new Date(item.completedAt).toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit' })}
+                            {t('staffPortal.checklist.list.completedAt')} {new Date(item.completedAt).toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit' })}
                           </div>
                         )}
 
@@ -413,7 +417,7 @@ export default function ChecklistPage() {
                             background: 'var(--gray-100)',
                             borderRadius: 'var(--radius-sm)'
                           }}>
-                            Catatan: {item.notes}
+                            {t('staffPortal.checklist.list.noteLabel')} {item.notes}
                           </div>
                         )}
                       </div>
@@ -436,14 +440,14 @@ export default function ChecklistPage() {
                 {isSubmitting ? (
                   <>
                     <LoadingSpinner size="sm" />
-                    Menghantar...
+                    {t('staffPortal.checklist.actions.submitting')}
                   </>
                 ) : completedCount < totalCount ? (
-                  `Selesaikan ${totalCount - completedCount} item lagi`
+                  t('staffPortal.checklist.actions.remaining', { count: totalCount - completedCount })
                 ) : (
                   <>
                     <CheckCircle size={18} />
-                    Hantar Checklist
+                    {t('staffPortal.checklist.actions.submit')}
                   </>
                 )}
               </button>
@@ -455,9 +459,9 @@ export default function ChecklistPage() {
             <div className="staff-message success" style={{ marginTop: '1.5rem' }}>
               <CheckCircle size={24} />
               <div>
-                <div style={{ fontWeight: 600 }}>Checklist Selesai!</div>
+                <div style={{ fontWeight: 600 }}>{t('staffPortal.checklist.actions.completed')}</div>
                 <div style={{ fontSize: '0.85rem', opacity: 0.9 }}>
-                  Selesai pada {currentChecklist.completedAt && new Date(currentChecklist.completedAt).toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit' })}
+                  {t('staffPortal.checklist.list.completedAt')} {currentChecklist.completedAt && new Date(currentChecklist.completedAt).toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit' })}
                 </div>
               </div>
             </div>
@@ -468,7 +472,7 @@ export default function ChecklistPage() {
         <Modal
           isOpen={showPhotoModal}
           onClose={() => setShowPhotoModal(false)}
-          title="Upload Gambar"
+          title={t('staffPortal.checklist.modal.photoTitle')}
           maxWidth="400px"
         >
           <div style={{ textAlign: 'center', padding: '1.5rem' }}>
@@ -487,7 +491,7 @@ export default function ChecklistPage() {
               <Camera size={36} color="#6366f1" />
             </div>
             <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
-              Ambil gambar sebagai bukti
+              {t('staffPortal.checklist.modal.photoDesc')}
             </p>
 
             {/* In a real app, this would be a file upload */}
@@ -501,16 +505,16 @@ export default function ChecklistPage() {
             }}>
               <Camera size={24} color="var(--gray-400)" />
               <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginTop: '0.5rem' }}>
-                Klik untuk ambil gambar
+                {t('staffPortal.checklist.modal.clickPhoto')}
               </div>
             </div>
 
             <div style={{ display: 'flex', gap: '0.5rem' }}>
               <button className="btn btn-outline" onClick={() => setShowPhotoModal(false)} style={{ flex: 1 }}>
-                Batal
+                {t('staffPortal.checklist.modal.cancel')}
               </button>
               <button className="btn btn-primary" onClick={handlePhotoSubmit} style={{ flex: 1 }}>
-                Simpan
+                {t('staffPortal.checklist.modal.save')}
               </button>
             </div>
           </div>
@@ -520,26 +524,26 @@ export default function ChecklistPage() {
         <Modal
           isOpen={showNotesModal}
           onClose={() => setShowNotesModal(false)}
-          title="Tambah Catatan"
+          title={t('staffPortal.checklist.modal.notesTitle')}
           maxWidth="400px"
         >
           <div className="form-group">
-            <label className="form-label">Catatan</label>
+            <label className="form-label">{t('staffPortal.checklist.modal.notesLabel')}</label>
             <textarea
               className="form-input"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               rows={4}
-              placeholder="Masukkan catatan..."
+              placeholder={t('staffPortal.checklist.modal.notesPlaceholder')}
             />
           </div>
 
           <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
             <button className="btn btn-outline" onClick={() => setShowNotesModal(false)} style={{ flex: 1 }}>
-              Batal
+              {t('staffPortal.checklist.modal.cancel')}
             </button>
             <button className="btn btn-primary" onClick={handleNotesSubmit} style={{ flex: 1 }}>
-              Simpan
+              {t('staffPortal.checklist.modal.save')}
             </button>
           </div>
         </Modal>

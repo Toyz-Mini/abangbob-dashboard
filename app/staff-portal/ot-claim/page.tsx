@@ -21,12 +21,14 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { useTranslation } from '@/lib/contexts/LanguageContext';
 
 // Default OT settings
 const DEFAULT_OT_RATE = 5; // BND per hour
 const DEFAULT_MULTIPLIER = 1.5;
 
 export default function OTClaimPage() {
+    const { t } = useTranslation();
     const { currentStaff, isStaffLoggedIn } = useAuth();
     const { otClaims, addOTClaim, getStaffOTClaims } = useStaffPortal();
 
@@ -102,22 +104,22 @@ export default function OTClaimPage() {
         if (!formData.reason.trim()) {
             setConfirmModal({
                 isOpen: true,
-                title: 'Maklumat Tidak Lengkap',
-                message: 'Sila masukkan sebab untuk tuntutan OT ini.',
+                title: t('staffPortal.ot.alerts.incompleteTitle'),
+                message: t('staffPortal.ot.alerts.incompleteDesc'),
                 type: 'warning',
                 showCancel: false,
-                confirmText: 'Faham'
+                confirmText: t('staffPortal.ot.alerts.understand')
             });
             return;
         }
         if (hoursWorked <= 0) {
             setConfirmModal({
                 isOpen: true,
-                title: 'Masa Tidak Sah',
-                message: 'Sila pastikan masa mula dan tamat adalah betul.',
+                title: t('staffPortal.ot.alerts.invalidTimeTitle'),
+                message: t('staffPortal.ot.alerts.invalidTimeDesc'),
                 type: 'warning',
                 showCancel: false,
-                confirmText: 'Faham'
+                confirmText: t('staffPortal.ot.alerts.understand')
             });
             return;
         }
@@ -152,11 +154,11 @@ export default function OTClaimPage() {
 
         setConfirmModal({
             isOpen: true,
-            title: 'Berjaya Dihantar',
-            message: 'Tuntutan OT anda telah berjaya dihantar untuk semakan.',
+            title: t('staffPortal.ot.alerts.successTitle'),
+            message: t('staffPortal.ot.alerts.successDesc'),
             type: 'success',
             showCancel: false,
-            confirmText: 'Selesai'
+            confirmText: t('staffPortal.ot.alerts.done')
         });
     };
 
@@ -166,8 +168,8 @@ export default function OTClaimPage() {
                 <div className="flex flex-col items-center justify-center min-h-[60vh] text-center p-8">
                     <div className="bg-amber-50 p-6 rounded-2xl max-w-sm w-full border border-amber-100">
                         <AlertCircle size={48} className="text-amber-500 mb-4 mx-auto" />
-                        <h2 className="text-lg font-bold text-gray-900 mb-2">Sila Log Masuk</h2>
-                        <p className="text-sm text-gray-600">Anda perlu log masuk sebagai staf untuk mengakses halaman ini.</p>
+                        <h2 className="text-lg font-bold text-gray-900 mb-2">{t('staffPortal.ot.alerts.loginTitle')}</h2>
+                        <p className="text-sm text-gray-600">{t('staffPortal.ot.alerts.loginDesc')}</p>
                     </div>
                 </div>
             </StaffLayout>
@@ -181,8 +183,8 @@ export default function OTClaimPage() {
                 {/* Modern Header */}
                 <header className="mb-6 flex items-center justify-between">
                     <div>
-                        <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Tuntutan OT</h1>
-                        <p className="text-sm text-gray-500 font-medium">Rekod kerja lebih masa</p>
+                        <h1 className="text-2xl font-bold text-gray-900 tracking-tight">{t('staffPortal.ot.title')}</h1>
+                        <p className="text-sm text-gray-500 font-medium">{t('staffPortal.ot.subtitle')}</p>
                     </div>
                     <button
                         className="p-3 bg-red-600 text-white rounded-xl shadow-lg shadow-red-200 hover:bg-red-700 active:scale-95 transition-all"
@@ -200,7 +202,7 @@ export default function OTClaimPage() {
                             <Clock size={16} />
                         </div>
                         <span className="text-xl font-bold text-gray-900 leading-none">{stats.pending}</span>
-                        <span className="text-[10px] uppercase tracking-wider font-semibold text-gray-400">Menunggu</span>
+                        <span className="text-[10px] uppercase tracking-wider font-semibold text-gray-400">{t('staffPortal.ot.stats.pending')}</span>
                     </div>
 
                     {/* Approved Stat */}
@@ -209,7 +211,7 @@ export default function OTClaimPage() {
                             <CheckCircle size={16} />
                         </div>
                         <span className="text-xl font-bold text-gray-900 leading-none">{stats.approved}</span>
-                        <span className="text-[10px] uppercase tracking-wider font-semibold text-gray-400">Lulus</span>
+                        <span className="text-[10px] uppercase tracking-wider font-semibold text-gray-400">{t('staffPortal.ot.stats.approved')}</span>
                     </div>
 
                     {/* Amount Stat */}
@@ -221,7 +223,7 @@ export default function OTClaimPage() {
                             <span className="text-xs font-medium text-gray-400">BND</span>
                             <span className="text-xl font-bold text-gray-900 leading-none">{stats.totalApprovedAmount.toFixed(0)}</span>
                         </div>
-                        <span className="text-[10px] uppercase tracking-wider font-semibold text-gray-400">Jumlah</span>
+                        <span className="text-[10px] uppercase tracking-wider font-semibold text-gray-400">{t('staffPortal.ot.stats.total')}</span>
                     </div>
 
                     {/* Hours Stat */}
@@ -230,7 +232,7 @@ export default function OTClaimPage() {
                             <Briefcase size={16} />
                         </div>
                         <span className="text-xl font-bold text-gray-900 leading-none">{stats.totalHours.toFixed(0)}h</span>
-                        <span className="text-[10px] uppercase tracking-wider font-semibold text-gray-400">Jam OT</span>
+                        <span className="text-[10px] uppercase tracking-wider font-semibold text-gray-400">{t('staffPortal.ot.stats.hours')}</span>
                     </div>
                 </div>
 
@@ -247,10 +249,7 @@ export default function OTClaimPage() {
                                     : "bg-white text-gray-500 border-gray-200 hover:bg-gray-50"
                             )}
                         >
-                            {status === 'all' ? 'Semua' :
-                                status === 'pending' ? 'Menunggu' :
-                                    status === 'approved' ? 'Diluluskan' :
-                                        status === 'rejected' ? 'Ditolak' : 'Dibayar'}
+                            {t(`staffPortal.ot.filter.${status}`)}
                         </button>
                     ))}
                 </div>
@@ -282,7 +281,7 @@ export default function OTClaimPage() {
                                         <div>
                                             <div className="flex items-center gap-2 mb-1">
                                                 <h3 className="font-bold text-gray-900 text-sm">
-                                                    OT: {claim.startTime} - {claim.endTime}
+                                                    {t('staffPortal.ot.list.title', { start: claim.startTime, end: claim.endTime })}
                                                 </h3>
                                                 {claim.status === 'pending' && <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />}
                                                 {claim.status === 'approved' && <span className="w-2 h-2 rounded-full bg-emerald-500" />}
@@ -291,7 +290,7 @@ export default function OTClaimPage() {
 
                                             <div className="flex items-center gap-3 mt-2">
                                                 <span className="text-[10px] font-medium px-2 py-0.5 bg-gray-100 text-gray-600 rounded-lg">
-                                                    {claim.hoursWorked.toFixed(1)} Jam
+                                                    {t('staffPortal.ot.list.hours', { count: claim.hoursWorked.toFixed(1) })}
                                                 </span>
                                                 <span className="text-[10px] font-bold px-2 py-0.5 bg-primary/5 text-primary rounded-lg border border-primary/10">
                                                     BND {claim.totalAmount.toFixed(2)}
@@ -300,7 +299,7 @@ export default function OTClaimPage() {
 
                                             {claim.rejectionReason && (
                                                 <div className="mt-2 text-[10px] text-red-500 bg-red-50 px-2 py-1 rounded-lg border border-red-100">
-                                                    Rejected: {claim.rejectionReason}
+                                                    {t('staffPortal.ot.list.rejected', { reason: claim.rejectionReason })}
                                                 </div>
                                             )}
                                         </div>
@@ -315,9 +314,7 @@ export default function OTClaimPage() {
                                                     claim.status === 'rejected' ? "bg-red-50 text-red-600" :
                                                         "bg-blue-50 text-blue-600"
                                         )}>
-                                            {claim.status === 'pending' ? 'Processing' :
-                                                claim.status === 'approved' ? 'Approved' :
-                                                    claim.status === 'rejected' ? 'Rejected' : 'Paid'}
+                                            {t(`staffPortal.ot.filter.${claim.status}`)}
                                         </span>
                                     </div>
                                 </motion.div>
@@ -327,9 +324,9 @@ export default function OTClaimPage() {
                                 <div className="bg-gray-50 p-4 rounded-full mb-3">
                                     <FileText size={24} className="text-gray-300" />
                                 </div>
-                                <h3 className="text-sm font-semibold text-gray-900 mb-1">Tiada Rekod</h3>
+                                <h3 className="text-sm font-semibold text-gray-900 mb-1">{t('staffPortal.ot.list.emptyTitle')}</h3>
                                 <p className="text-xs text-gray-400 max-w-[200px]">
-                                    Belum ada tuntutan OT untuk status pilihan ini.
+                                    {t('staffPortal.ot.list.emptyDesc')}
                                 </p>
                             </div>
                         )}
@@ -340,12 +337,12 @@ export default function OTClaimPage() {
                 <Modal
                     isOpen={showModal}
                     onClose={() => setShowModal(false)}
-                    title="Tuntutan OT Baru"
+                    title={t('staffPortal.ot.new')}
                     maxWidth="500px"
                 >
                     <div className="space-y-4">
                         <div className="form-group">
-                            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 ml-1">Tarikh OT</label>
+                            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 ml-1">{t('staffPortal.ot.form.date')}</label>
                             <input
                                 type="date"
                                 className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm font-medium"
@@ -357,7 +354,7 @@ export default function OTClaimPage() {
 
                         <div className="grid grid-cols-2 gap-3">
                             <div>
-                                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 ml-1">Masa Mula</label>
+                                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 ml-1">{t('staffPortal.ot.form.startTime')}</label>
                                 <input
                                     type="time"
                                     className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm font-medium"
@@ -366,7 +363,7 @@ export default function OTClaimPage() {
                                 />
                             </div>
                             <div>
-                                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 ml-1">Masa Tamat</label>
+                                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 ml-1">{t('staffPortal.ot.form.endTime')}</label>
                                 <input
                                     type="time"
                                     className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm font-medium"
@@ -377,29 +374,29 @@ export default function OTClaimPage() {
                         </div>
 
                         <div>
-                            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 ml-1">Sebab OT</label>
+                            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 ml-1">{t('staffPortal.ot.form.reason')}</label>
                             <textarea
                                 className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm"
                                 rows={3}
                                 value={formData.reason}
                                 onChange={(e) => setFormData(prev => ({ ...prev, reason: e.target.value }))}
-                                placeholder="Contoh: Kena siapkan order untuk event..."
+                                placeholder={t('staffPortal.ot.form.reasonPlaceholder')}
                             />
                         </div>
 
                         {/* Summary Card */}
                         <div className="bg-gray-50 rounded-xl p-4 border border-gray-200/50">
-                            <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Ringkasan Tuntutan</h4>
+                            <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">{t('staffPortal.ot.form.summaryTitle')}</h4>
                             <div className="flex justify-between items-center mb-2">
-                                <span className="text-sm text-gray-600">Jam Bekerja</span>
+                                <span className="text-sm text-gray-600">{t('staffPortal.ot.form.hoursWorked')}</span>
                                 <span className="text-sm font-bold text-gray-900">{hoursWorked.toFixed(1)} jam</span>
                             </div>
                             <div className="flex justify-between items-center mb-3">
-                                <span className="text-sm text-gray-600">Kadar Gandaan</span>
+                                <span className="text-sm text-gray-600">{t('staffPortal.ot.form.multiplier')}</span>
                                 <span className="text-sm font-bold text-gray-900">{formData.multiplier}x</span>
                             </div>
                             <div className="border-t border-gray-200 pt-3 flex justify-between items-center">
-                                <span className="text-sm font-bold text-gray-900">Anggaran Bayaran</span>
+                                <span className="text-sm font-bold text-gray-900">{t('staffPortal.ot.form.estimatedPay')}</span>
                                 <span className="text-lg font-bold text-primary">BND {totalAmount.toFixed(2)}</span>
                             </div>
                         </div>
@@ -409,14 +406,14 @@ export default function OTClaimPage() {
                                 className="flex-1 py-3 px-4 rounded-xl border border-gray-200 text-gray-600 font-semibold hover:bg-gray-50 active:scale-95 transition-all"
                                 onClick={() => setShowModal(false)}
                             >
-                                Batal
+                                {t('staffPortal.ot.form.cancel')}
                             </button>
                             <button
                                 className="flex-1 py-3 px-4 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold shadow-lg shadow-red-600/20 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                                 onClick={handleSubmit}
                                 disabled={isProcessing || hoursWorked <= 0 || !formData.reason.trim()}
                             >
-                                {isProcessing ? <LoadingSpinner size="sm" /> : 'Hantar Tuntutan'}
+                                {isProcessing ? <LoadingSpinner size="sm" /> : t('staffPortal.ot.form.submit')}
                             </button>
                         </div>
                     </div>

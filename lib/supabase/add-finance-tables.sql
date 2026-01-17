@@ -44,3 +44,4 @@ CREATE TRIGGER update_daily_cash_flows_updated_at BEFORE UPDATE ON public.daily_
 COMMENT ON TABLE public.daily_cash_flows IS 'Daily cash flow tracking for financial reconciliation';
 COMMENT ON COLUMN public.daily_cash_flows.date IS 'Unique date per outlet for cash flow record';
 
+

@@ -2,11 +2,13 @@
 
 import { useState, useMemo } from 'react';
 import { CartItem, Order } from '@/lib/types'; // Import Order type
+import { useToast } from '@/lib/contexts/ToastContext';
 import { UtensilsCrossed, Sandwich, Coffee, Loader2 } from 'lucide-react';
 import { useMenuQuery, useMenuCategoriesQuery } from '@/lib/hooks/queries/useMenuQueries';
 import { useCreateOrderMutation } from '@/lib/hooks/mutations/useOrderMutations';
 
 export default function WebOrderPage() {
+  const { showToast } = useToast();
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [cart, setCart] = useState<CartItem[]>([]);
   const [showCheckout, setShowCheckout] = useState(false);
@@ -82,7 +84,7 @@ export default function WebOrderPage() {
 
   const handlePlaceOrder = async () => {
     if (!customerName) {
-      alert('Sila masukkan nama');
+      showToast('Sila masukkan nama', 'warning');
       return;
     }
 

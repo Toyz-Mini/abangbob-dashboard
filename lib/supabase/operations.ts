@@ -3880,7 +3880,7 @@ export async function fetchMaintenanceSchedules() {
   const { data, error } = await supabase
     .from('maintenance_schedule')
     .select('*')
-    .order('next_date', { ascending: true });
+    .order('next_due', { ascending: true });
 
   if (error) {
     console.error('Error fetching maintenance schedules:', error);
@@ -3930,7 +3930,7 @@ export async function fetchMaintenanceLogs() {
   const { data, error } = await supabase
     .from('maintenance_logs')
     .select('*')
-    .order('date', { ascending: false });
+    .order('performed_at', { ascending: false });
 
   if (error) {
     console.error('Error fetching maintenance logs:', error);
@@ -4194,3 +4194,4 @@ export async function fetchStaffComplaints() {
 
   return toCamelCase(data || []);
 }
+

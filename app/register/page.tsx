@@ -3,7 +3,7 @@
 import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { signUp } from '@/lib/auth-client';
+import { useAuth } from '@/lib/contexts/AuthContext';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import Turnstile from '@/components/Turnstile';
 import PasswordStrength from '@/components/PasswordStrength';
@@ -22,6 +22,7 @@ import {
 
 export default function RegisterPage() {
   const router = useRouter();
+  const { signUp } = useAuth();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -65,24 +66,12 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
-      const result = await signUp.email({
-        name,
-        email,
-        password,
-      });
+      const result = await signUp(email, password, name);
 
-      if (result.error) {
-        setError(result.error.message || 'Pendaftaran gagal');
+      if (!result.success) {
+        setError(result.error || 'Pendaftaran gagal');
       } else {
-        await fetch('/api/send-verification', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            userId: result.data?.user?.id,
-            email,
-            name,
-          }),
-        });
+        // Note: Supabase handles email verification automatically
         setSuccess(true);
       }
     } catch (err) {

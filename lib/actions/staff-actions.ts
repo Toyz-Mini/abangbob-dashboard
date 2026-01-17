@@ -1,14 +1,11 @@
 'use server';
 
-import { auth } from '@/lib/auth';
+import { getServerSession } from '@/lib/supabase/server-auth';
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
-import { headers } from 'next/headers';
 import { toSnakeCase, toCamelCase } from '@/lib/supabase/operations';
 
 export async function fetchStaffAction() {
-    const session = await auth.api.getSession({
-        headers: await headers()
-    });
+    const session = await getServerSession();
     if (!session) throw new Error('Unauthorized');
 
     const adminClient = getSupabaseAdmin();
@@ -34,9 +31,7 @@ export async function fetchStaffAction() {
 }
 
 export async function insertStaffAction(staff: any) {
-    const session = await auth.api.getSession({
-        headers: await headers()
-    });
+    const session = await getServerSession();
     if (!session) throw new Error('Unauthorized');
 
     const adminClient = getSupabaseAdmin();
@@ -123,9 +118,7 @@ export async function insertStaffAction(staff: any) {
 }
 
 export async function updateStaffAction(id: string, updates: any) {
-    const session = await auth.api.getSession({
-        headers: await headers()
-    });
+    const session = await getServerSession();
     if (!session) throw new Error('Unauthorized');
 
     const adminClient = getSupabaseAdmin();
@@ -187,9 +180,7 @@ export async function updateStaffAction(id: string, updates: any) {
 }
 
 export async function deleteStaffAction(id: string) {
-    const session = await auth.api.getSession({
-        headers: await headers()
-    });
+    const session = await getServerSession();
     if (!session) throw new Error('Unauthorized');
 
     const adminClient = getSupabaseAdmin();
@@ -203,12 +194,7 @@ export async function deleteStaffAction(id: string) {
 // ============ STAFF POSITIONS ============
 
 export async function fetchStaffPositionsAction() {
-    const session = await auth.api.getSession({
-        headers: await headers()
-    });
-    // Return empty if unauthorized, similar to other fetchers? 
-    // Or throw? Given the UI shows empty state, empty array is safer for now, 
-    // but ideally we want to see them if we are staff.
+    const session = await getServerSession();
     if (!session) return [];
 
     const adminClient = getSupabaseAdmin();
@@ -226,9 +212,7 @@ export async function fetchStaffPositionsAction() {
 }
 
 export async function insertStaffPositionAction(position: any) {
-    const session = await auth.api.getSession({
-        headers: await headers()
-    });
+    const session = await getServerSession();
     if (!session) throw new Error('Unauthorized');
 
     const adminClient = getSupabaseAdmin();
@@ -246,9 +230,7 @@ export async function insertStaffPositionAction(position: any) {
 }
 
 export async function updateStaffPositionAction(id: string, updates: any) {
-    const session = await auth.api.getSession({
-        headers: await headers()
-    });
+    const session = await getServerSession();
     if (!session) throw new Error('Unauthorized');
 
     const adminClient = getSupabaseAdmin();
@@ -267,9 +249,7 @@ export async function updateStaffPositionAction(id: string, updates: any) {
 }
 
 export async function deleteStaffPositionAction(id: string) {
-    const session = await auth.api.getSession({
-        headers: await headers()
-    });
+    const session = await getServerSession();
     if (!session) throw new Error('Unauthorized');
 
     const adminClient = getSupabaseAdmin();

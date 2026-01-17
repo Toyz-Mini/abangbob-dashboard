@@ -75,7 +75,30 @@
     "staffOnDuty": "Staff Bertugas",
     "lowStock": "Stok Rendah",
     "salesTrend": "Trend Jualan",
-    "recentOrders": "Pesanan Terkini"
+    "recentOrders": "Pesanan Terkini",
+    "welcome": "Selamat kembali, pengurus.",
+    "newOrder": "Pesanan Baru",
+    "viewReport": "Lihat Laporan",
+    "kitchen": "Dapur",
+    "prep": "KITCHEN",
+    "queued": "BARISAN",
+    "kitchenDisplay": "Paparan Dapur",
+    "manageTeam": "Urus Pasukan",
+    "open": "Buka",
+    "closed": "Tutup",
+    "restockNeeded": "Perlu Tambah Stok",
+    "inventoryTypes": "Jenis Inventori",
+    "moreItems": "lagi item",
+    "allStockHealthy": "Semua Stok Baik",
+    "monthlyRevenue": "Hasil Bulanan",
+    "ordersThisMonth": "pesanan bulan ini",
+    "viewPerformance": "Lihat Prestasi",
+    "avgOrderValue": "Purata Nilai Pesanan",
+    "customerSpend": "Purata berbelanja pelanggan",
+    "seeAll": "Lihat Semua",
+    "order": "Pesanan",
+    "amount": "Jumlah",
+    "noOrdersYet": "Tiada pesanan lagi"
   },
   "hr": {
     "title": "HR & Staf",
@@ -91,30 +114,375 @@
     "searchPlaceholder": "Cari item...",
     "allCategories": "Semua Kategori",
     "lowStockAlert": "Item Stok Rendah",
-    "pleaseRestock": "Sila tambah stok"
+    "pleaseRestock": "Sila tambah stok",
+    "weather": {
+      "forecastTitle": "Ramalan Cuaca Esok",
+      "logic": "Logik Inventori",
+      "impact": {
+        "normal": "Pesanan Normal",
+        "reduce": "Kurangkan {{percent}}%",
+        "increase": "Lebihkan {{percent}}%"
+      }
+    },
+    "tabs": {
+      "stock": "Stok Inventori",
+      "waste": "Log Pembaziran",
+      "smartReorder": "Smart Reorder",
+      "new": "Baru"
+    },
+    "table": {
+      "item": "Item",
+      "category": "Kategori",
+      "quantity": "Kuantiti Semasa",
+      "min": "Minimum",
+      "unit": "Unit",
+      "cost": "Kos",
+      "supplier": "Supplier",
+      "status": "Status",
+      "action": "Tindakan",
+      "date": "Tarikh",
+      "type": "Jenis",
+      "reason": "Sebab",
+      "variance": "Variance",
+      "value": "Nilai"
+    },
+    "buttons": {
+      "addItem": "Tambah Item",
+      "importStock": "Import Stok",
+      "adjust": "Laras",
+      "history": "Sejarah",
+      "edit": "Edit",
+      "delete": "Padam",
+      "save": "Simpan Perubahan",
+      "cancel": "Batal",
+      "processing": "Memproses...",
+      "close": "Tutup",
+      "addStock": "Tambah Item Semasa"
+    },
+    "modal": {
+      "addTitle": "Tambah Item Stok Baru",
+      "editTitle": "Edit Item Stok",
+      "adjustTitle": "Laras Stok",
+      "deleteTitle": "Padam Item Stok",
+      "historyTitle": "Sejarah Stok",
+      "form": {
+        "name": "Nama Item *",
+        "category": "Kategori",
+        "unit": "Unit",
+        "currentQty": "Kuantiti Semasa",
+        "minQty": "Kuantiti Minimum",
+        "cost": "Kos per Unit",
+        "supplier": "Supplier",
+        "supplierPlaceholder": "Nama supplier",
+        "namePlaceholder": "Contoh: Ayam, Nasi, dll"
+      },
+      "dailyCount": {
+        "label": "Audit Setiap Hari (Daily Count)",
+        "desc": "Wajib dikira semasa Opening/Closing kedai"
+      },
+      "adjust": {
+        "quantity": "Kuantiti",
+        "quantityPlaceholder": "Masukkan kuantiti",
+        "type": "Jenis Pelarasan",
+        "stockIn": "Stok Masuk",
+        "stockOut": "Stok Keluar",
+        "reason": "Sebab",
+        "otherReason": "Sebab Lain",
+        "newQty": "Kuantiti baru:"
+      },
+      "delete": {
+        "confirm": "Anda pasti mahu padam <strong>{{name}}</strong>?",
+        "warning": "Tindakan ini tidak boleh dibatalkan."
+      },
+      "history": {
+        "empty": "Tiada sejarah perubahan untuk item ini"
+      }
+    },
+    "alert": {
+      "enterName": "Sila masukkan nama item",
+      "enterValidQty": "Sila masukkan kuantiti yang sah",
+      "importSuccess": "Import berjaya!",
+      "duplicate": {
+        "found": "\"{{name}}\" sudah wujud",
+        "resolve": "Laras stok →"
+      },
+      "loadError": "Gagal Memuatkan Inventori"
+    },
+    "categories": {
+      "Protein": "Protein",
+      "Staple": "Staple",
+      "Condiment": "Condiment",
+      "Bread": "Roti",
+      "Dairy": "Tenusu",
+      "Beverage": "Minuman",
+      "Packaging": "Bungkusan",
+      "Other": "Lain-lain"
+    },
+    "reasons": {
+      "new_purchase": "Pembelian baru",
+      "restock": "Penambahan stok",
+      "daily_use": "Penggunaan harian",
+      "damaged": "Rosak/Expired",
+      "waste": "Pembaziran",
+      "stock_take": "Stock take adjustment",
+      "other": "Lain-lain"
+    },
+    "status": {
+      "low": "Rendah",
+      "warning": "Awas",
+      "good": "Cukup"
+    },
+    "importer": {
+      "title": "Import Stok (CSV)",
+      "error": {
+        "fileType": "Sila muat naik fail CSV.",
+        "read": "Gagal membaca CSV. Sila pastikan format betul.",
+        "noData": "Tiada data item yang sah ditemui.",
+        "import": "Gagal import data. Sila cuba lagi."
+      },
+      "dropzone": {
+        "processing": "Memproses fail...",
+        "click": "Klik untuk upload CSV",
+        "drag": "atau drag & drop file ke sini"
+      },
+      "template": {
+        "use": "Gunakan Template",
+        "download": "Download CSV Template",
+        "instruction": "Pastikan column header mengikut format:"
+      },
+      "success": "{{count}} item berjaya dibaca.",
+      "buttons": {
+        "back": "Kembali",
+        "confirm": "Sahkan Import",
+        "cancel": "Batal"
+      }
+    },
+    "waste": {
+      "title": "Lapor Pembaziran: {{name}}",
+      "quantity": "Kuantiti Terpukul ({{unit}})",
+      "currentStock": "Stok Semasa: {{qty}} {{unit}}",
+      "loss": "Anggaran Kehilangan (Loss)",
+      "basedOnCost": "Berdasarkan kos: {{cost}} / {{unit}}",
+      "reason": "Sebab",
+      "notes": "Nota (Pilihan)",
+      "notesPlaceholder": "Maklumat tambahan...",
+      "confirm": "Sahkan Pembaziran",
+      "reasons": {
+        "expired": "Luput / Rosak",
+        "burned": "Hangus / Salah Masak",
+        "customer_return": "Pulangan Pelanggan",
+        "staff_meal": "Makanan Staf",
+        "other": "Lain-lain"
+      }
+    },
+    "variance": {
+      "title": "Laporan Ketidaksamaan Stok (Audit)",
+      "loss": "Total Nilai Hilang (Loss)",
+      "incidents": "Jumlah Insiden",
+      "records": "Rekod",
+      "empty": "Tiada rekod variance ditemui.",
+      "info": "Laporan ini menunjukkan perbezaan stok yang dikesan semasa Shift Count (Blind) atau pelarasan manual. Jika nilai negatif, bermaksud stok fizikal kurang daripada sistem (Potensi Kehilangan)."
+    },
+    "smartReorder": {
+      "title": "Cadangan Restock (Smart Reorder)",
+      "empty": {
+        "title": "Stok Dalam Keadaan Baik",
+        "desc": "Tiada item yang perlu di-restock berdasarkan analisis penggunaan 30 hari lepas."
+      },
+      "cards": {
+        "restock": "Item Perlu Restock",
+        "cost": "Anggaran Kos",
+        "suppliers": "Supplier Terlibat"
+      },
+      "button": {
+        "generate": "Jana Purchase Order (PO)",
+        "generating": "Menjana...",
+        "success": "Berjaya menjana {{count}} Purchase Orders",
+        "error": "Gagal menjana Purchase Order"
+      },
+      "table": {
+        "usage": "Usage / Hari",
+        "reorderPoint": "Reorder Point",
+        "suggestion": "Cadangan Order",
+        "estCost": "Kos (Est)"
+      },
+      "info": {
+        "title": "Bagaimana ini dikira?",
+        "desc": "Formula: (Purata Guna Harian × 3 Hari Lead Time) + 20% Safety Stock. System mencadangkan order apabila stok jatuh bawah paras ini, untuk menampung penggunaan selama 7 hari."
+      }
+    },
+    "wasteHistory": {
+      "stats": {
+        "value": "Total Nilai Bazir",
+        "incidents": "Jumlah Insiden",
+        "reason": "Sebab Terbanyak"
+      },
+      "search": "Cari item, nota, atau staf...",
+      "export": "Eksport CSV",
+      "exportSoon": "Fungsi akan datang!",
+      "empty": "Tiada rekod pembaziran ditemui."
+    }
   },
   "finance": {
     "title": "Kewangan",
     "subtitle": "Rekod perbelanjaan, aliran tunai dan untung rugi",
-    "cashFlowToday": "Aliran Tunai Hari Ini",
-    "addExpense": "Tambah Belanja"
-  },
-  "pos": {
-    "title": "Titik Jualan",
-    "orderQueue": "Barisan Pesanan",
-    "orderHistory": "Sejarah Pesanan",
-    "totalOrders": "Jumlah Pesanan",
-    "ordersToday": "Pesanan Hari Ini",
-    "noOrders": "Tiada Pesanan",
-    "pending": "Menunggu",
-    "waiting": "Sedang Menunggu",
-    "allProcessed": "Semua Diproses",
-    "preparing": "Sedang Disediakan",
-    "beingPrepared": "Sedang Dibuat",
-    "noneInKitchen": "Tiada di Dapur",
-    "ready": "Siap",
-    "readyForPickup": "Sedia Diambil",
-    "noneReady": "Tiada Siap"
+    "cashFlowToday": "Cash Flow Hari Ini",
+    "addExpense": "Tambah Belanja",
+    "actions": {
+      "csv": "CSV",
+      "pdf": "PDF",
+      "refresh": "Refresh",
+      "save": "Simpan",
+      "cancel": "Batal",
+      "add": "Tambah",
+      "delete": "Padam",
+      "processing": "Memproses..."
+    },
+    "tabs": {
+      "expenses": "Perbelanjaan",
+      "cashflow": "Cash Flow",
+      "pnl": "Penyata Untung Rugi",
+      "moneyOut": "Wang Keluar"
+    },
+    "stats": {
+      "sales": "Jualan Bulan Ini",
+      "expenses": "Perbelanjaan Bulan Ini",
+      "netProfit": "Untung/Rugi Bersih",
+      "margin": "Margin Keuntungan",
+      "change": {
+        "revenue": "pendapatan keseluruhan",
+        "costs": "kos operasi",
+        "profit": "keuntungan",
+        "loss": "kerugian",
+        "healthy": "sihat",
+        "moderate": "sederhana",
+        "low": "rendah"
+      }
+    },
+    "expenses": {
+      "title": "Senarai Perbelanjaan",
+      "byCategory": "Mengikut Kategori",
+      "filterMonth": "Bulan",
+      "allCategories": "Semua Kategori",
+      "table": {
+        "date": "Tarikh",
+        "category": "Kategori",
+        "description": "Keterangan",
+        "amount": "Jumlah",
+        "payment": "Bayaran",
+        "actions": "Tindakan",
+        "vendor": "Vendor"
+      },
+      "empty": "Tiada perbelanjaan untuk bulan ini",
+      "total": "Jumlah:",
+      "today": {
+        "title": "Hari Ini",
+        "expenses": "Perbelanjaan",
+        "cashBalance": "Baki Tunai"
+      }
+    },
+    "cashflow": {
+      "title": "Cash Flow Harian",
+      "subtitle": "7 hari terakhir",
+      "table": {
+        "date": "Tarikh",
+        "opening": "Pembukaan",
+        "salesCash": "Jualan Tunai",
+        "salesCard": "Jualan Kad",
+        "expenses": "Perbelanjaan",
+        "closing": "Penutup"
+      },
+      "summary": {
+        "title": "Ringkasan Aliran Tunai",
+        "salesCash": "Jumlah Jualan Tunai",
+        "salesCard": "Jumlah Jualan Kad/E-Wallet",
+        "expensesCash": "Jumlah Perbelanjaan Tunai"
+      }
+    },
+    "pnl": {
+      "title": "Penyata Untung Rugi",
+      "revenue": "Hasil Jualan",
+      "cogs": "Kos Bahan Mentah (COGS)",
+      "grossProfit": "Untung Kasar",
+      "operatingExpenses": "Perbelanjaan Operasi:",
+      "totalExpenses": "Jumlah Perbelanjaan",
+      "netProfit": "Untung/Rugi Bersih",
+      "margin": "Margin",
+      "analysis": {
+        "title": "Analisis",
+        "profitAlert": "Tahniah! Kedai anda untung {{amount}} bulan ini.",
+        "lossAlert": "Perhatian! Kedai anda rugi {{amount}} bulan ini.",
+        "recommendations": "Cadangan:",
+        "lowMargin": "Margin keuntungan rendah. Pertimbangkan untuk naikkan harga atau kurangkan kos.",
+        "highCogs": "Kos bahan mentah tinggi ({{percentage}}% daripada jualan). Cari supplier lebih murah.",
+        "trackExpenses": "Track semua perbelanjaan dengan teliti untuk analisis yang lebih tepat."
+      }
+    },
+    "moneyOut": {
+      "title": "Rekod Pengeluaran Tunai (Money Out)",
+      "table": {
+        "dateTime": "Tarikh & Masa",
+        "amount": "Jumlah",
+        "category": "Kategori",
+        "reason": "Sebab",
+        "issuedBy": "Dikeluarkan oleh",
+        "approvedBy": "Diluluskan oleh"
+      },
+      "empty": "Tiada rekod pengeluaran untuk bulan ini",
+      "total": "Jumlah Pengeluaran:"
+    },
+    "modals": {
+      "addExpense": "Tambah Perbelanjaan",
+      "editExpense": "Edit Perbelanjaan",
+      "deleteExpense": "Padam Perbelanjaan",
+      "cashFlow": "Laporan Cash Flow Harian",
+      "labels": {
+        "date": "Tarikh *",
+        "category": "Kategori *",
+        "amount": "Jumlah (BND) *",
+        "amountOnly": "Jumlah",
+        "paymentMethod": "Cara Bayaran *",
+        "description": "Keterangan *",
+        "vendor": "Vendor/Supplier (Optional)",
+        "openingCash": "Wang Buka Kedai (Simple)",
+        "salesCash": "Jualan Tunai System",
+        "salesCard": "Jualan Kad/QR",
+        "salesEwallet": "Jualan E-Wallet (BND)",
+        "expensesCash": "Perbelanjaan Tunai (Petty Cash)",
+        "closingCash": "Tunai Penutup:",
+        "closingNote": "Pastikan duit dalam laci sama dengan jumlah ini.",
+        "pettyCashNote": "Wang tunai yang dikeluarkan dari laci untuk beli barang."
+      },
+      "placeholders": {
+        "amount": "0.00",
+        "description": "Contoh: Ayam 10kg",
+        "vendor": "Nama Kedai / Syarikat"
+      },
+      "deleteConfirm": "Anda pasti mahu padam perbelanjaan <strong>{{description}}</strong>?"
+    },
+    "toast": {
+      "invalidForm": "Sila masukkan keterangan dan jumlah yang sah",
+      "addSuccess": "Perbelanjaan berjaya ditambah",
+      "editSuccess": "Perbelanjaan berjaya dikemaskini",
+      "deleteSuccess": "Perbelanjaan berjaya dihapus",
+      "cashFlowSaved": "Laporan Cash Flow berjaya disimpan",
+      "exportCsvSuccess": "Berjaya export CSV",
+      "exportCsvError": "Gagal export CSV",
+      "exportPdfSuccess": "Berjaya export PDF",
+      "exportPdfError": "Gagal export PDF",
+      "claimPaid": "Tuntutan berjaya dibayar & direkod dalam Perbelanjaan"
+    },
+    "expenseCategories": {
+      "rent": "Sewa",
+      "utilities": "Utiliti (Air/Elektrik)",
+      "supplies": "Bekalan Kedai",
+      "wages": "Gaji Staf",
+      "marketing": "Marketing",
+      "maintenance": "Penyelenggaraan",
+      "ingredients": "Bahan Mentah",
+      "equipment": "Peralatan",
+      "other": "Lain-lain"
+    }
   },
   "kds": {
     "title": "Paparan Dapur",
@@ -145,6 +513,12 @@
     "settingsMenu": "Menu Tetapan",
     "outletProfile": "Profil Kedai",
     "operatingHours": "Waktu Operasi",
+    "operatingHoursDesc": "Tetapkan waktu buka dan tutup kedai anda",
+    "day": "Hari",
+    "status": "Status",
+    "open": "Buka",
+    "close": "Waktu Tutup",
+    "closed": "Tutup",
     "receiptSettings": "Resit & Dapur",
     "paymentMethods": "Kaedah Bayaran",
     "appearance": "Penampilan",
@@ -158,6 +532,952 @@
     "email": "Emel",
     "currency": "Mata Wang",
     "timezone": "Zon Masa",
-    "taxRate": "Kadar Cukai (%)"
+    "taxRate": "Kadar Cukai (%)",
+    "notificationSettings": "Tetapan Notifikasi",
+    "notificationSettingsDesc": "Tetapkan bagaimana anda menerima makluman dan peringatan",
+    "lowStockAlert": "Amaran Stok Rendah",
+    "lowStockAlertDesc": "Terima notifikasi apabila stok inventori semakin rendah",
+    "newOrderSound": "Bunyi Pesanan Baharu",
+    "newOrderSoundDesc": "Mainkan bunyi apabila pesanan baharu masuk",
+    "dailySummary": "Ringkasan Harian",
+    "dailySummaryDesc": "Terima ringkasan jualan dan prestasi harian",
+    "equipmentReminder": "Peringatan Peralatan",
+    "equipmentReminderDesc": "Terima peringatan untuk penyelenggaraan peralatan"
+  },
+  "promotions": {
+    "title": "Pengurusan Promosi",
+    "subtitle": "Urus diskaun, promo codes dan tawaran istimewa",
+    "create": "Buat Promosi",
+    "metrics": {
+      "total": "Jumlah Promosi",
+      "active": "Aktif",
+      "usage": "Penggunaan",
+      "expiringSoon": "Tamat Tidak Lama",
+      "available": "promosi tersedia",
+      "running": "sedang berjalan",
+      "timesUsed": "kali digunakan",
+      "needsAttention": "perlu perhatian",
+      "noExpiring": "tiada yang tamat"
+    },
+    "filter": {
+      "all": "Semua",
+      "active": "Aktif",
+      "inactive": "Tidak Aktif",
+      "expired": "Tamat"
+    },
+    "card": {
+      "active": "Aktif",
+      "inactive": "Tidak Aktif",
+      "expired": "Tamat",
+      "minPurchase": "Min. pembelian",
+      "expiresIn": "Tamat dalam {{days}} hari",
+      "used": "Digunakan",
+      "activate": "Aktifkan",
+      "deactivate": "Nyahaktif",
+      "copy": "Salin"
+    },
+    "empty": {
+      "noPromotionsFilter": "Tiada promosi untuk filter ini",
+      "noPromotions": "Belum ada promosi",
+      "createFirst": "Buat Promosi Pertama"
+    },
+    "modal": {
+      "createTitle": "Buat Promosi Baru",
+      "editTitle": "Edit Promosi",
+      "nameLabel": "Nama Promosi *",
+      "namePlaceholder": "Contoh: Diskaun Raya 2024",
+      "typeLabel": "Jenis Promosi",
+      "valueLabel": "Nilai",
+      "maxDiscountLabel": "Max Diskaun (BND)",
+      "maxDiscountPlaceholder": "0 = tiada had",
+      "buyXGetYTitle": "Setup Buy X Get Y",
+      "buyQuantityLabel": "Beli Berapa?",
+      "getQuantityLabel": "Dapat Berapa?",
+      "freeItemLabel": "Item Percuma",
+      "sameItem": "Item Sama",
+      "discountPercentLabel": "Diskaun %",
+      "discountPercentPlaceholder": "100 = Percuma",
+      "discountPercentHelp": "100% = Percuma, 50% = Separuh Harga",
+      "preview": "Preview",
+      "previewText": "Beli {{buy}}, Dapat {{get}} {{discount}}",
+      "free": "PERCUMA",
+      "withDiscount": "dengan diskaun {{percent}}%",
+      "promoCodeLabel": "Kod Promo (Optional)",
+      "promoCodePlaceholder": "Contoh: RAYA2024",
+      "generate": "Generate",
+      "startDateLabel": "Tarikh Mula",
+      "endDateLabel": "Tarikh Tamat",
+      "minPurchaseLabel": "Min. Pembelian (BND)",
+      "minPurchasePlaceholder": "0 = tiada minimum",
+      "usageLimitLabel": "Had Penggunaan",
+      "usageLimitPlaceholder": "0 = tiada had",
+      "daysValidLabel": "Hari Sah (Kosong = Setiap Hari)",
+      "timeValidLabel": "Masa Sah (Kosong = Sepanjang Hari)",
+      "startTimePlaceholder": "Mula",
+      "endTimePlaceholder": "Tamat",
+      "happyHour": "Happy Hour",
+      "descriptionLabel": "Keterangan",
+      "descriptionPlaceholder": "Penerangan promosi...",
+      "cancel": "Batal",
+      "save": "Simpan",
+      "enterNameWarning": "Sila masukkan nama promosi"
+    },
+    "types": {
+      "percentage": "Diskaun %",
+      "fixed_amount": "Potongan Tetap",
+      "bogo": "Buy 1 Get 1",
+      "buy_x_get_y": "Buy X Get Y",
+      "free_item": "Item Percuma"
+    },
+    "days": {
+      "sun": "Ahad",
+      "mon": "Isnin",
+      "tue": "Selasa",
+      "wed": "Rabu",
+      "thu": "Khamis",
+      "fri": "Jumaat",
+      "sat": "Sabtu",
+      "short": {
+        "sun": "Ahd",
+        "mon": "Isn",
+        "tue": "Sel",
+        "wed": "Rab",
+        "thu": "Kha",
+        "fri": "Jum",
+        "sat": "Sab"
+      }
+    }
+  },
+  "pos": {
+    "title": "Point of Sale",
+    "orderQueue": "Barisan Pesanan",
+    "orderHistory": "Sejarah Pesanan",
+    "totalOrders": "Jumlah Pesanan",
+    "ordersToday": "Pesanan Hari Ini",
+    "noOrders": "Tiada pesanan lagi",
+    "pending": "Pending",
+    "waiting": "Menunggu",
+    "allProcessed": "Semua Diproses",
+    "preparing": "Preparing",
+    "beingPrepared": "Sedang Disediakan",
+    "noneInKitchen": "Tiada di dapur",
+    "ready": "Ready",
+    "readyForPickup": "Sedia untuk diambil",
+    "noneReady": "Tiada yang siap",
+    "moneyOut": {
+      "title": "Money Out",
+      "tooltip": "Rekod pengeluaran tunai",
+      "openRegisterFirst": "Buka register dahulu",
+      "amountLabel": "Jumlah (BND) *",
+      "categoryLabel": "Kategori",
+      "reasonLabel": "Sebab Pengeluaran *",
+      "reasonPlaceholder": "Cth: Beli bekalan pembersihan",
+      "approvedByLabel": "Diluluskan oleh *",
+      "selectManager": "-- Pilih Manager --",
+      "notesLabel": "Nota Tambahan (Optional)",
+      "notesPlaceholder": "Nota tambahan...",
+      "info": "Pengeluaran akan dicatat dalam laporan harian dan tolak dari baki tunai.",
+      "submit": "Rekod Pengeluaran",
+      "submitting": "Merekod...",
+      "cancel": "Batal",
+      "categories": {
+        "petty_cash": "Petty Cash",
+        "refund": "Refund",
+        "change": "Tukar Duit",
+        "supplier": "Bayar Supplier",
+        "other": "Lain-lain"
+      },
+      "toast": {
+        "invalidAmount": "Sila masukkan jumlah yang sah",
+        "invalidReason": "Sila masukkan sebab pengeluaran",
+        "invalidApprover": "Sila pilih siapa yang approve",
+        "success": "Pengeluaran BND {{amount}} telah direkodkan",
+        "error": "Gagal merekod pengeluaran. Sila cuba lagi."
+      }
+    },
+    "menu": {
+      "emptyCategory": "Tiada menu dalam kategori ini"
+    },
+    "alert": {
+      "modifiersRequired": "Sila pilih semua modifier yang wajib"
+    },
+    "inventory": {
+      "sale": "Jualan"
+    },
+    "cart": {
+      "title": "Keranjang",
+      "empty": "Tiada item dalam keranjang",
+      "subtotal": "Subtotal",
+      "total": "Jumlah",
+      "checkout": "Checkout",
+      "items": "items",
+      "bndEach": "BND {{price}} seunit",
+      "validation": {
+        "modifiersRequired": "Sila pilih semua modifier yang wajib"
+      }
+    },
+    "modal": {
+      "modifiers": {
+        "title": "Pilih Options",
+        "required": "* Wajib",
+        "basePrice": "Harga Asas",
+        "addToCart": "Tambah ke Keranjang",
+        "cancel": "Batal"
+      },
+      "upsell": {
+        "title": "Tambah Lagi?",
+        "description": "Jangan lupa minuman! Pilih di bawah:",
+        "add": "Tambah",
+        "added": "{{count}} minuman ditambah",
+        "back": "Kembali",
+        "continue": "Teruskan Checkout"
+      },
+      "checkout": {
+        "title": "Checkout",
+        "step1": {
+          "title": "Bagaimana pesanan ini?",
+          "subtitle": "Pilih jenis pesanan untuk teruskan",
+          "takeaway": "Bungkus",
+          "takeawayDesc": "Takeaway",
+          "delivery": "GoMamam",
+          "deliveryDesc": "Delivery"
+        },
+        "step2": {
+          "title": "Maklumat Pelanggan",
+          "subtitle": "Cari ahli atau masukkan maklumat baru",
+          "phoneLabel": "Nombor Telefon",
+          "nameLabel": "Nama Pelanggan (Optional)",
+          "whatsappLabel": "Hantar Resit WhatsApp",
+          "whatsappDesc": "Resit digital terus ke pelanggan",
+          "pointsAvailable": "{{points}} Points Available"
+        },
+        "step3": {
+          "totalPayable": "Jumlah Perlu Dibayar",
+          "redeemPoints": "Redeem Points",
+          "paymentMethod": "Cara Pembayaran",
+          "cashReceived": "Tunai Diterima",
+          "change": "Baki / Change",
+          "exact": "Exact",
+          "pay": "Bayar",
+          "processing": "Memproses..."
+        },
+        "next": "Seterusnya",
+        "cancel": "Batal"
+      },
+      "receipt": {
+        "title": "Pesanan Berjaya!",
+        "customer": "Pelanggan",
+        "print": "Cetak Resit",
+        "whatsapp": "Hantar Resit (WhatsApp)",
+        "close": "Tutup",
+        "printerConnected": "✓ Thermal printer disambung - cetak terus ke printer",
+        "printerDisconnected": "Tiada thermal printer - akan cetak melalui browser"
+      },
+      "networkError": {
+        "title": "Ralat Rangkaian",
+        "messageConnection": "Masalah Sambungan",
+        "messageError": "Ralat rangkaian berlaku semasa memproses pembayaran.",
+        "retry": "Cuba Semula",
+        "retrying": "Cuba Semula...",
+        "cancel": "Batal",
+        "tipsTitle": "Apa yang boleh anda lakukan:",
+        "tip1": "Semak sambungan internet anda",
+        "tip2": "Cuba semula dalam beberapa saat",
+        "tip3": "Jika masalah berterusan, hubungi sokongan",
+        "attempt": "Percubaan semula: {{count}}/2"
+      },
+      "queue": {
+        "title": "Order Queue",
+        "subtitle": "Kitchen Display",
+        "pending": "Pending",
+        "preparing": "Preparing",
+        "ready": "Ready",
+        "startPreparing": "Start Preparing",
+        "markReady": "Mark Ready",
+        "complete": "Complete",
+        "noOrders": "Tiada pesanan"
+      },
+      "history": {
+        "title": "Sejarah Pesanan Hari Ini",
+        "subtitle": "{{count}} pesanan",
+        "table": {
+          "orderNo": "No. Pesanan",
+          "items": "Items",
+          "total": "Total",
+          "type": "Jenis",
+          "status": "Status",
+          "time": "Masa",
+          "action": "Tindakan"
+        },
+        "noOrders": "Tiada pesanan hari ini",
+        "totalSales": "Jumlah Jualan Hari Ini",
+        "reprint": "Cetak Semula Resit"
+      }
+    },
+    "toast": {
+      "enterPhone": "Sila masukkan nombor telefon pelanggan",
+      "enterName": "Sila masukkan nama pelanggan",
+      "enterValidPhone": "Sila masukkan nombor telefon yang sah",
+      "insufficientCash": "Sila masukkan jumlah bayaran yang mencukupi",
+      "noInternet": "Tiada sambungan internet. Sila semak rangkaian anda.",
+      "duplicateOrder": "Pesanan ini sudah diproses. Sila tunggu atau buat pesanan baru.",
+      "orderSuccess": "Pesanan {{orderNumber}} berjaya!",
+      "retrying": "Cuba semula... ({{attempt}}/2)"
+    }
+  },
+  "staffPortal": {
+    "title": "Portal Staff",
+    "welcome": "Selamat datang, {{name}}!",
+    "greeting": {
+      "morning": "Selamat Pagi, {{name}}!",
+      "afternoon": "Selamat Petang, {{name}}!",
+      "evening": "Selamat Malam, {{name}}!"
+    },
+    "header": {
+      "today": "Hari Ini"
+    },
+    "clock": {
+      "in": "Clock In",
+      "out": "Clock Out",
+      "done": "Selesai ✓",
+      "shift": "Shift: {{shift}}",
+      "noShift": "Tiada Shift",
+      "timeIn": "Masuk",
+      "timeOut": "Keluar",
+      "status": {
+        "present": "✓ HADIR",
+        "absent": "—"
+      },
+      "message": {
+        "success": "Kehadiran berjaya direkod!",
+        "error": "Ralat semasa rekod kehadiran."
+      }
+    },
+    "stats": {
+      "today": "Hari Ini",
+      "level": "Level",
+      "xp": "XP"
+    },
+    "checklist": {
+      "title": "Checklist Shift",
+      "pending": "Pending",
+      "completed": "Semua tugas selesai!",
+      "progress": "{{completed}}/{{total}} selesai",
+      "shift": {
+        "opening": "☀️ Opening",
+        "closing": "🌙 Closing",
+        "daily": "📋 Harian"
+      },
+      "tasks": {
+        "cleanTable": "Bersihkan meja",
+        "checkFridge": "Cek suhu fridge",
+        "arrangeDisplay": "Susun display"
+      }
+    },
+    "quickActions": {
+      "schedule": "Jadual",
+      "leave": "Cuti",
+      "claims": "Claim",
+      "ot": "OT",
+      "payslip": "Gaji",
+      "swap": "Swap",
+      "advance": "Advance",
+      "issue": "Issue",
+      "stock": "Stock"
+    },
+    "widgets": {
+      "leaveBalance": {
+        "title": "Baki Cuti",
+        "annual": "Annual",
+        "mc": "MC",
+        "el": "EL",
+        "compassionate": "Ehsan",
+        "unpaid": "Unpaid"
+      },
+      "requests": {
+        "title": "Permohonan Saya",
+        "pendingCount": "{{count}} Pending",
+        "leave": "Cuti",
+        "descLeave": "{{count}} permohonan menunggu kelulusan",
+        "claims": "Tuntutan",
+        "descClaims": "{{count}} tuntutan menunggu kelulusan",
+        "advance": "Pendahuluan Gaji",
+        "descAdvance": "{{count}} permohonan menunggu kelulusan",
+        "ot": "OT Claim",
+        "descOt": "{{count}} tuntutan OT menunggu kelulusan",
+        "other": "Permohonan Lain",
+        "descOther": "{{count}} permohonan (swap shift, dll)",
+        "pendingBadge": "PENDING",
+        "allDone": "Semua Selesai! ✨",
+        "noPending": "Tiada permohonan yang pending"
+      },
+      "nextShift": {
+        "title": "Shift Seterusnya",
+        "tomorrow": "Esok",
+        "noShift": "Tiada shift dijadualkan esok."
+      }
+    },
+    "schedule": {
+      "title": "Jadual Kerja",
+      "subtitle": "Mingguan anda",
+      "thisWeek": "Minggu Ini",
+      "nextShift": "Shift Seterusnya",
+      "noUpcomingShift": "Tiada shift akan datang",
+      "performance": "Prestasi",
+      "rank": "Rank #{{rank}}",
+      "leaveBalance": "Baki Cuti",
+      "days": "Hari",
+      "available": "Available",
+      "work": "Kerja",
+      "hours": "Jam",
+      "off": "Cuti",
+      "offDay": "Cuti / Off Day",
+      "today": "HARI INI",
+      "colleagues": "{{count}} Rakan",
+      "accessError": {
+        "title": "Akses Gagal",
+        "message": "Rekod staff anda tidak dapat dijumpai. Sila hubungi Admin untuk bantuan."
+      },
+      "timer": {
+        "now": "Sekarang",
+        "daysLeft": "{{count}} Hari lagi",
+        "hoursLeft": "{{hours}}j {{minutes}}m lagi"
+      }
+    },
+    "leave": {
+      "title": "Pengurusan Cuti",
+      "subtitle": "Lihat baki dan mohon cuti",
+      "apply": "Mohon Cuti",
+      "balanceTitle": "Baki Cuti {{year}}",
+      "historyTitle": "Sejarah Permohonan",
+      "historyCount": "{{count}} permohonan",
+      "noHistory": "Tiada rekod permohonan cuti",
+      "types": {
+        "annual": "Cuti Tahunan",
+        "replacement": "Cuti Ganti",
+        "medical": "Cuti Sakit",
+        "emergency": "Cuti Kecemasan",
+        "compassionate": "Cuti Ehsan",
+        "unpaid": "Tanpa Gaji"
+      },
+      "details": {
+        "taken": "Diambil: {{count}}",
+        "pending": "Pending: {{count}}",
+        "available": "Available: {{count}}",
+        "used": "Used: {{count}}",
+        "takenThisYear": "Diambil tahun ini",
+        "days": "({{count}} hari)",
+        "reason": "Sebab: {{reason}}",
+        "approvedBy": "Diluluskan oleh: {{name}}",
+        "rejectedBy": "Ditolak oleh: {{name}}",
+        "rejectionReason": "Sebab ditolak: {{reason}}"
+      }
+    },
+    "claims": {
+      "title": "Tuntutan Saya",
+      "subtitle": "Submit dan track tuntutan",
+      "new": "Tuntutan Baru",
+      "listTitle": "Senarai Tuntutan",
+      "listCount": "{{count}} tuntutan",
+      "noHistory": "Tiada rekod tuntutan",
+      "stats": {
+        "pending": "Menunggu Kelulusan",
+        "approved": "Diluluskan",
+        "paid": "Telah Dibayar"
+      },
+      "item": {
+        "date": "Tarikh claim: {{date}}",
+        "viewDetail": "Lihat Butiran",
+        "rejectionReason": "Sebab ditolak: {{reason}}"
+      }
+    },
+    "ot": {
+      "title": "Tuntutan OT",
+      "subtitle": "Rekod kerja lebih masa",
+      "new": "Tuntutan OT Baru",
+      "stats": {
+        "pending": "Menunggu",
+        "approved": "Lulus",
+        "total": "Jumlah",
+        "hours": "Jam OT"
+      },
+      "filter": {
+        "all": "Semua",
+        "pending": "Menunggu",
+        "approved": "Diluluskan",
+        "rejected": "Ditolak",
+        "paid": "Dibayar"
+      },
+      "list": {
+        "title": "OT: {{start}} - {{end}}",
+        "hours": "{{count}} Jam",
+        "rejected": "Rejected: {{reason}}",
+        "emptyTitle": "Tiada Rekod",
+        "emptyDesc": "Belum ada tuntutan OT untuk status pilihan ini."
+      },
+      "form": {
+        "date": "Tarikh OT",
+        "startTime": "Masa Mula",
+        "endTime": "Masa Tamat",
+        "reason": "Sebab OT",
+        "reasonPlaceholder": "Contoh: Kena siapkan order untuk event...",
+        "summaryTitle": "Ringkasan Tuntutan",
+        "hoursWorked": "Jam Bekerja",
+        "multiplier": "Kadar Gandaan",
+        "estimatedPay": "Anggaran Bayaran",
+        "cancel": "Batal",
+        "submit": "Hantar Tuntutan"
+      },
+      "alerts": {
+        "loginTitle": "Sila Log Masuk",
+        "loginDesc": "Anda perlu log masuk sebagai staf untuk mengakses halaman ini.",
+        "incompleteTitle": "Maklumat Tidak Lengkap",
+        "incompleteDesc": "Sila masukkan sebab untuk tuntutan OT ini.",
+        "invalidTimeTitle": "Masa Tidak Sah",
+        "invalidTimeDesc": "Sila pastikan masa mula dan tamat adalah betul.",
+        "successTitle": "Berjaya Dihantar",
+        "successDesc": "Tuntutan OT anda telah berjaya dihantar untuk semakan.",
+        "understand": "Faham",
+        "done": "Selesai"
+      }
+    },
+    "payslip": {
+      "title": "Slip Gaji",
+      "subtitle": "Lihat dan muat turun slip gaji anda",
+      "selectMonth": "Pilih Bulan",
+      "status": {
+        "paid": "Dibayar",
+        "pending": "Pending"
+      },
+      "actions": {
+        "print": "Cetak",
+        "download": "Muat Turun"
+      },
+      "employee": {
+        "name": "Nama:",
+        "role": "Jawatan:",
+        "id": "Nombor Staff:"
+      },
+      "earnings": {
+        "title": "Pendapatan",
+        "basic": "Gaji Pokok",
+        "ot": "Elaun Kerja Lebih Masa",
+        "allowance": "Elaun Lain",
+        "total": "Jumlah Pendapatan"
+      },
+      "deductions": {
+        "title": "Potongan",
+        "tap": "TAP (Pekerja)",
+        "scp": "SCP",
+        "other": "Potongan Lain",
+        "total": "Jumlah Potongan"
+      },
+      "net": {
+        "label": "Gaji Bersih",
+        "paidOn": "Dibayar pada {{date}}"
+      },
+      "employer": "Caruman Majikan TAP: BND {{amount}}",
+      "footer": "Ini adalah slip gaji yang dijana secara automatik. Sila simpan untuk rekod anda."
+    },
+    "swap": {
+      "title": "Tukar Shift",
+      "subtitle": "Mohon pertukaran shift dengan rakan sekerja",
+      "apply": "Mohon Tukar",
+      "myShiftsTitle": "Shift Saya (7 Hari Akan Datang)",
+      "noShifts": "Tiada shift dijadualkan dalam 7 hari akan datang",
+      "contactAdmin": "Sila hubungi admin untuk maklumat jadual kerja anda",
+      "requestsTitle": "Permohonan Pertukaran",
+      "count": "{{count}} permohonan",
+      "noRequests": "Tiada permohonan pertukaran",
+      "with": "Dengan: {{name}}",
+      "from": "Dari: {{name}}",
+      "feedback": "Maklum balas: {{note}}",
+      "status": {
+        "completed": "Diluluskan",
+        "rejected": "Ditolak",
+        "in_progress": "Dalam Proses",
+        "pending": "Menunggu"
+      },
+      "actions": {
+        "cancel": "Batal Permohonan",
+        "decline": "Tolak",
+        "accept": "Terima",
+        "back": "Kembali"
+      },
+      "form": {
+        "title": "Mohon Pertukaran Shift",
+        "selectMyShift": "Pilih Shift Anda",
+        "selectDatePlaceholder": "-- Pilih tarikh --",
+        "noShiftHint": "Tiada shift dijadualkan. Sila hubungi admin.",
+        "swapWith": "Tukar Dengan",
+        "selectColleaguePlaceholder": "-- Pilih rakan sekerja --",
+        "noColleagueHint": "Tiada rakan sekerja yang available untuk tarikh ini",
+        "selectTheirShift": "Pilih Shift Mereka",
+        "selectShiftPlaceholder": "-- Pilih shift --",
+        "noShiftAvailable": "Tiada shift tersedia",
+        "reason": "Sebab Pertukaran",
+        "reasonPlaceholder": "Nyatakan sebab pertukaran (optional)",
+        "note": "Permohonan anda akan dihantar kepada Manager untuk kelulusan.",
+        "cancel": "Batal",
+        "submit": "Hantar",
+        "submitting": "Menghantar...",
+        "successTitle": "Permohonan Dihantar!",
+        "successDesc": "Permohonan anda akan disemak oleh pengurus."
+      },
+      "request": {
+        "title": "Tukar Shift: {{date}}",
+        "desc": "Permohonan tukar shift pada {{date}} ({{shift}}). Sebab: {{reason}}"
+      },
+      "modals": {
+        "invalidTitle": "Tindakan Tidak Sah",
+        "invalidMessage": "Anda tidak boleh menukar shift yang telah berlalu.",
+        "requiredTitle": "Maklumat Diperlukan",
+        "requiredMessage": "Sila berikan sebab penukaran shift.",
+        "cancelTitle": "Batal Permohonan",
+        "cancelMsg": "Adakah anda benar-benar mahukan membatalkan permohonan pertukaran ini?",
+        "cancelConfirm": "Ya, Batal",
+        "cancelDecline": "Tidak",
+        "acceptTitle": "Terima Pertukaran",
+        "acceptMsg": "Adakah anda bersetuju untuk menukar shift dengan rakan sekerja anda?",
+        "acceptConfirm": "Ya, Setuju",
+        "acceptSuccessTitle": "Berjaya",
+        "acceptSuccessMsg": "Terima kasih! Persetujuan anda telah direkodkan. Kini menunggu kelulusan pengurus.",
+        "acceptNote": "Bersetuju dengan pertukaran. Menunggu maklum balas pengurus.",
+        "declineTitle": "Tolak Pertukaran",
+        "declineMsg": "Adakah anda mahu menolak permohonan pertukaran ini?",
+        "declineConfirm": "Ya, Tolak",
+        "declineNote": "Ditolak oleh rakan sekerja.",
+        "errorTitle": "Ralat Penghantaran",
+        "errorMsg": "Gagal menghantar permohonan pertukaran. Sila cuba lagi sebentar.",
+        "successTitle": "Permohonan Dihantar",
+        "successMessage": "Permohonan tukar shift berjaya dihantar dan sedang menunggu kelulusan pengurus."
+      },
+      "salaryAdvance": {
+        "title": "Pendahuluan Gaji",
+        "subtitle": "Mohon pendahuluan gaji - berdasarkan hari bekerja bulan ini",
+        "apply": "Mohon Pendahuluan",
+        "loginReq": {
+          "title": "Sila Log Masuk",
+          "desc": "Anda perlu log masuk sebagai staf untuk memohon pendahuluan gaji."
+        },
+        "eligibility": {
+          "workedDays": "Hari Bekerja:",
+          "currentEarnings": "Pendapatan Setakat Ini:",
+          "advanced": "Dah Advance:",
+          "monthlyLimit": "Had Bulanan (50%):",
+          "canApply": "Boleh Mohon: BND {{amount}}",
+          "daysSuffix": "hari"
+        },
+        "stats": {
+          "pending": "Menunggu Kelulusan",
+          "approved": "Diluluskan",
+          "dailyRate": "Kadar Harian",
+          "totalApproved": "jumlah diluluskan",
+          "rateDesc": "gaji / {{days}} hari"
+        },
+        "filters": {
+          "all": "Semua",
+          "pending": "Menunggu",
+          "approved": "Diluluskan",
+          "rejected": "Ditolak",
+          "deducted": "Dipotong"
+        },
+        "list": {
+          "title": "Senarai Permohonan",
+          "empty": "Tiada permohonan pendahuluan gaji",
+          "table": {
+            "date": "Tarikh",
+            "amount": "Jumlah",
+            "reason": "Sebab",
+            "status": "Status",
+            "note": "Catatan"
+          },
+          "approvedBy": "Diluluskan oleh {{name}}",
+          "deductedMonth": "Dipotong bulan {{month}}"
+        },
+        "modal": {
+          "title": "Mohon Pendahuluan Gaji",
+          "cannotApplyTitle": "Tidak Boleh Mohon",
+          "cannotApplyDesc": "Anda sudah advance maksimum berdasarkan hari bekerja bulan ini.",
+          "form": {
+            "amount": "Jumlah (BND) *",
+            "amountHint": "Maksimum BND {{amount}} (had 50% gaji atau hari bekerja)",
+            "reason": "Sebab Permohonan *",
+            "reasonPlaceholder": "Nyatakan sebab permohonan...",
+            "cancel": "Batal",
+            "submit": "Hantar Permohonan"
+          },
+          "warning": {
+            "title": "Perhatian:",
+            "desc": "Pendahuluan gaji akan dipotong secara automatik dari gaji bulan ini selepas diluluskan."
+          }
+        },
+        "alerts": {
+          "incompleteTitle": "Maklumat Tidak Lengkap",
+          "incompleteMsg": "Sila isi jumlah dan sebab permohonan.",
+          "invalidAmountTitle": "Jumlah Tidak Sah",
+          "invalidAmountMsg": "Sila masukkan jumlah permohonan yang sah.",
+          "limitExceededTitle": "Melebihi Had",
+          "limitExceededMsg": "Maksimum yang boleh dipohon berdasarkan hari bekerja anda adalah BND {{amount}}.",
+          "successTitle": "Berjaya Dihantar",
+          "successMsg": "Permohonan pendahuluan gaji anda telah dihantar dan akan disemak oleh pihak pengurusan."
+        }
+      },
+      "requests": {
+        "title": "Permohonan Lain",
+        "subtitle": "Submit pelbagai jenis permohonan",
+        "new": "Permohonan Baru",
+        "back": "Kembali",
+        "list": {
+          "title": "Senarai Permohonan",
+          "count": "{{count}} permohonan",
+          "empty": "Tiada rekod permohonan",
+          "viewDetail": "Lihat Butiran",
+          "feedback": "Maklum balas:"
+        },
+        "priority": {
+          "high": "Urgent",
+          "medium": "Sederhana",
+          "low": "Rendah"
+        },
+        "status": {
+          "pending": "Menunggu",
+          "approved": "Diluluskan",
+          "rejected": "Ditolak",
+          "cancelled": "Dibatalkan",
+          "in_progress": "Dalam Proses",
+          "completed": "Selesai",
+          "paid": "Dibayar"
+        },
+        "categories": {
+          "shift_swap": "Tukar Shift",
+          "off_day": "Permohonan Cuti",
+          "ot_request": "Permohonan OT",
+          "schedule_change": "Tukar Jadual",
+          "salary_advance": "Pinjaman Gaji",
+          "payslip": "Salinan Payslip",
+          "letter": "Permohonan Surat",
+          "training": "Permohonan Latihan",
+          "equipment": "Permohonan Peralatan",
+          "complaint": "Aduan",
+          "resignation": "Notis Berhenti",
+          "bank_change": "Tukar Akaun Bank",
+          "other": "Lain-lain"
+        },
+        "form": {
+          "title": "Permohonan Baru",
+          "category": "Kategori *",
+          "subject": "Tajuk *",
+          "subjectPlaceholder": "Contoh: Surat Pengesahan Kerja",
+          "description": "Penerangan *",
+          "descPlaceholder": "Terangkan permohonan anda...",
+          "priority": "Prioriti",
+          "cancel": "Batal",
+          "submit": "Hantar"
+        },
+        "alerts": {
+          "incompleteTitle": "Maklumat Tidak Lengkap",
+          "incompleteMsg": "Sila isi tajuk dan penerangan permohonan anda.",
+          "successTitle": "Berjaya Dihantar",
+          "successMsg": "Permohonan anda telah berjaya dihantar dan akan diproses secepat mungkin."
+        },
+        "detail": {
+          "title": "Butiran Permohonan",
+          "status": "Status",
+          "priority": "Prioriti",
+          "subject": "Tajuk",
+          "category": "Kategori",
+          "applicant": "Pemohon",
+          "date": "Dihantar Pada",
+          "description": "Keterangan",
+          "feedback": "Maklum Balas / Nota",
+          "handledBy": "Dikendalikan oleh: {{name}}",
+          "reject": "Tolak",
+          "approve": "Selesai / Lulus",
+          "close": "Tutup"
+        }
+      },
+      "profile": {
+        "title": "Profil Saya",
+        "active": "Aktif",
+        "onLeave": "Cuti",
+        "upload": {
+          "loading": "Memuat naik...",
+          "errorTitle": "Gagal Muat Naik",
+          "errorMsg": "Gambar tidak dapat dimuat naik: {{error}}",
+          "techErrorTitle": "Ralat Teknikal",
+          "techErrorMsg": "Berlaku ralat semasa memuat naik gambar. Sila cuba lagi nanti.",
+          "success": "Gambar profil berjaya dikemaskini"
+        },
+        "stats": {
+          "workedDays": "Hari Bekerja",
+          "leaveBalance": "Baki Cuti",
+          "kpiScore": "Skor KPI",
+          "ranking": "Ranking"
+        },
+        "personal": {
+          "title": "Maklumat Peribadi",
+          "ic": "No. Kad Pengenalan",
+          "dob": "Tarikh Lahir",
+          "age": "({{age}} tahun)",
+          "phone": "Nombor Telefon",
+          "email": "Email",
+          "address": "Alamat",
+          "notSet": "Tidak ditetapkan"
+        },
+        "emergency": {
+          "title": "Kenalan Kecemasan",
+          "name": "Nama",
+          "relation": "Hubungan",
+          "phone": "Nombor Telefon"
+        },
+        "employment": {
+          "title": "Maklumat Pekerjaan",
+          "position": "Jawatan",
+          "department": "Jabatan",
+          "type": "Jenis Pekerjaan",
+          "location": "Lokasi Kerja",
+          "startDate": "Tarikh Mula Bekerja",
+          "types": {
+            "permanent": "Tetap",
+            "contract": "Kontrak",
+            "part_time": "Separuh Masa",
+            "probation": "Percubaan"
+          }
+        },
+        "salary": {
+          "title": "Maklumat Gaji",
+          "base": "Gaji Asas",
+          "hourly": "Kadar Jam",
+          "perHour": "/jam",
+          "otRate": "Kadar OT",
+          "bank": "Bank",
+          "tapScp": "Caruman TAP/SCP",
+          "tapNo": "No. TAP",
+          "tapRate": "Kadar TAP",
+          "scpNo": "No. SCP",
+          "scpRate": "Kadar SCP",
+          "employeeShare": "(Pekerja)"
+        },
+        "leave": {
+          "title": "Baki Cuti Tahun Ini",
+          "annual": "Cuti Tahunan",
+          "medical": "Cuti Sakit (MC)",
+          "emergency": "Cuti Kecemasan",
+          "compassionate": "Cuti Ehsan",
+          "daysSuffix": "hari",
+          "viewAll": "Lihat Semua Cuti"
+        },
+        "skills": {
+          "title": "Kemahiran & Sijil",
+          "skills": "Kemahiran:",
+          "certs": "Sijil:"
+        },
+        "kpi": {
+          "title": "Prestasi Semasa",
+          "month": "Bulan",
+          "attendance": "Kehadiran",
+          "customerRating": "Rating Pelanggan",
+          "upselling": "Upselling",
+          "viewReport": "Lihat Laporan Penuh"
+        }
+      },
+      "attendance": {
+        "title": "Kehadiran",
+        "todayStatus": "Status Hari Ini",
+        "pendingSync": "Pending Sync",
+        "in": "Masuk",
+        "out": "Keluar",
+        "verifiedLocation": "Lokasi Disahkan",
+        "noRecord": "Belum ada rekod kehadiran hari ini.",
+        "clockIn": "Clock In",
+        "clockOut": "Clock Out",
+        "shiftComplete": "Shift Selesai!",
+        "thankYou": "Terima kasih atas kerja keras anda.",
+        "offlineQueued": "Disimpan secara offline.",
+        "offlineInMsg": "Tiada internet. Kehadiran disimpan secara offline dan akan sync bila online.",
+        "offlineOutMsg": "Tiada internet. Clock-out disimpan secara offline.",
+        "successIn": "Berjaya Clock In!",
+        "successOut": "Berjaya Clock Out!",
+        "errorGeneric": "Ralat berlaku.",
+        "errorUnexpected": "Ralat tidak dijangka.",
+        "errorNoRecord": "Tiada rekod kehadiran untuk clock out."
+      },
+      "checklist": {
+        "title": "Checklist Harian",
+        "history": "Sejarah",
+        "shift": {
+          "title": "Shift {{name}}",
+          "noSchedule": "Tiada Jadual",
+          "noScheduleDesc": "Anda tiada shift berjadual hari ini"
+        },
+        "tabs": {
+          "opening": "Opening",
+          "closing": "Closing"
+        },
+        "list": {
+          "openingTitle": "Opening Checklist",
+          "closingTitle": "Closing Checklist",
+          "completedCount": "{{completed}}/{{total}} selesai",
+          "notStarted": "Checklist {{type}} belum dimulakan",
+          "start": "Mula Checklist",
+          "empty": "Tiada checklist items dikonfigurasi",
+          "photoOk": "Gambar OK",
+          "needPhoto": "Perlu gambar",
+          "notesOk": "Ada nota",
+          "needNotes": "Perlu nota",
+          "completedAt": "Selesai pada",
+          "noteLabel": "Catatan:"
+        },
+        "actions": {
+          "submitting": "Menghantar...",
+          "remaining": "Selesaikan {{count}} item lagi",
+          "submit": "Hantar Checklist",
+          "completed": "Checklist Selesai!"
+        },
+        "modal": {
+          "photoTitle": "Upload Gambar",
+          "photoDesc": "Ambil gambar sebagai bukti",
+          "clickPhoto": "Klik untuk ambil gambar",
+          "notesTitle": "Tambah Catatan",
+          "notesLabel": "Catatan",
+          "notesPlaceholder": "Masukkan catatan...",
+          "cancel": "Batal",
+          "save": "Simpan"
+        }
+      },
+      "training": {
+        "title": "Latihan & Sijil",
+        "subtitle": "Track progress latihan dan sijil anda",
+        "stats": {
+          "completed": "Selesai",
+          "inProgress": "Sedang Berjalan",
+          "mandatoryPending": "Wajib Belum Selesai"
+        },
+        "tabs": {
+          "training": "Latihan",
+          "certificates": "Sijil"
+        },
+        "list": {
+          "title": "Senarai Latihan",
+          "mandatory": "WAJIB",
+          "start": "Mula",
+          "completed": "Selesai",
+          "inProgress": "Sedang Berjalan",
+          "duration": "{{minutes}} minit"
+        },
+        "certificates": {
+          "title": "Sijil Saya",
+          "issued": "Dikeluarkan:",
+          "expiry": "Tamat:",
+          "empty": "Tiada sijil",
+          "status": {
+            "valid": "Sah",
+            "expiring_soon": "Hampir Tamat",
+            "expired": "Tamat Tempoh"
+          }
+        }
+      }
+    }
   }
 }

@@ -34,3 +34,4 @@ ALTER PUBLICATION supabase_realtime ADD TABLE public.inventory_logs;
 -- Add trigger for updated_at (if needed in future)
 COMMENT ON TABLE public.inventory_logs IS 'Tracks all inventory stock adjustments with audit trail';
 
+

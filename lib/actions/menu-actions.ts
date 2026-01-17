@@ -1,8 +1,8 @@
 'use server';
 
-import { auth } from '@/lib/auth';
+import { getServerSession } from '@/lib/supabase/server-auth';
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
-import { headers } from 'next/headers';
+
 import { toSnakeCase, toCamelCase } from '@/lib/supabase/operations';
 
 // ============ MENU ITEMS ============
@@ -37,9 +37,7 @@ export async function fetchMenuItemsAction() {
     // If public needs it, we can create `fetchPublicMenuAction` later or use standard client.
 
     // However, better safe than sorry: Checking session allows us to fix the "Staff" view.
-    const session = await auth.api.getSession({
-        headers: await headers()
-    });
+    const session = await getServerSession();
 
     // If no session, rely on standard RLS (fallback)? 
     // Or just fail? The goal is to fix "Staff" seeing blank page.
@@ -69,9 +67,7 @@ export async function fetchMenuItemsAction() {
 }
 
 export async function insertMenuItemAction(item: any) {
-    const session = await auth.api.getSession({
-        headers: await headers()
-    });
+    const session = await getServerSession();
     if (!session) throw new Error('Unauthorized');
 
     const adminClient = getSupabaseAdmin();
@@ -90,9 +86,7 @@ export async function insertMenuItemAction(item: any) {
 }
 
 export async function updateMenuItemAction(id: string, updates: any) {
-    const session = await auth.api.getSession({
-        headers: await headers()
-    });
+    const session = await getServerSession();
     if (!session) throw new Error('Unauthorized');
 
     const adminClient = getSupabaseAdmin();
@@ -111,9 +105,7 @@ export async function updateMenuItemAction(id: string, updates: any) {
 }
 
 export async function deleteMenuItemAction(id: string) {
-    const session = await auth.api.getSession({
-        headers: await headers()
-    });
+    const session = await getServerSession();
     if (!session) throw new Error('Unauthorized');
 
     const adminClient = getSupabaseAdmin();
@@ -128,9 +120,7 @@ export async function deleteMenuItemAction(id: string) {
 // ============ MODIFIER GROUPS ============
 
 export async function fetchModifierGroupsAction() {
-    const session = await auth.api.getSession({
-        headers: await headers()
-    });
+    const session = await getServerSession();
     if (!session) return [];
 
     const adminClient = getSupabaseAdmin();
@@ -144,9 +134,7 @@ export async function fetchModifierGroupsAction() {
 }
 
 export async function insertModifierGroupAction(group: any) {
-    const session = await auth.api.getSession({
-        headers: await headers()
-    });
+    const session = await getServerSession();
     if (!session) throw new Error('Unauthorized');
 
     const adminClient = getSupabaseAdmin();
@@ -164,9 +152,7 @@ export async function insertModifierGroupAction(group: any) {
 }
 
 export async function updateModifierGroupAction(id: string, updates: any) {
-    const session = await auth.api.getSession({
-        headers: await headers()
-    });
+    const session = await getServerSession();
     if (!session) throw new Error('Unauthorized');
 
     const adminClient = getSupabaseAdmin();
@@ -185,9 +171,7 @@ export async function updateModifierGroupAction(id: string, updates: any) {
 }
 
 export async function deleteModifierGroupAction(id: string) {
-    const session = await auth.api.getSession({
-        headers: await headers()
-    });
+    const session = await getServerSession();
     if (!session) throw new Error('Unauthorized');
 
     const adminClient = getSupabaseAdmin();
@@ -202,9 +186,7 @@ export async function deleteModifierGroupAction(id: string) {
 // ============ MODIFIER OPTIONS ============
 
 export async function fetchModifierOptionsAction() {
-    const session = await auth.api.getSession({
-        headers: await headers()
-    });
+    const session = await getServerSession();
     if (!session) return [];
 
     const adminClient = getSupabaseAdmin();
@@ -218,9 +200,7 @@ export async function fetchModifierOptionsAction() {
 }
 
 export async function insertModifierOptionAction(option: any) {
-    const session = await auth.api.getSession({
-        headers: await headers()
-    });
+    const session = await getServerSession();
     if (!session) throw new Error('Unauthorized');
 
     const adminClient = getSupabaseAdmin();
@@ -238,9 +218,7 @@ export async function insertModifierOptionAction(option: any) {
 }
 
 export async function updateModifierOptionAction(id: string, updates: any) {
-    const session = await auth.api.getSession({
-        headers: await headers()
-    });
+    const session = await getServerSession();
     if (!session) throw new Error('Unauthorized');
 
     const adminClient = getSupabaseAdmin();
@@ -259,9 +237,7 @@ export async function updateModifierOptionAction(id: string, updates: any) {
 }
 
 export async function deleteModifierOptionAction(id: string) {
-    const session = await auth.api.getSession({
-        headers: await headers()
-    });
+    const session = await getServerSession();
     if (!session) throw new Error('Unauthorized');
 
     const adminClient = getSupabaseAdmin();

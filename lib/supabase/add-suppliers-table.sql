@@ -108,3 +108,4 @@ CREATE INDEX IF NOT EXISTS idx_inventory_supplier ON public.inventory(supplier_i
 -- 2. Run the seed script to populate suppliers and inventory data
 
 
+

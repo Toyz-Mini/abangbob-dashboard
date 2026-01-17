@@ -110,3 +110,10 @@ export {
 } from './network';
 export type { ApiResult } from './network';
 
+// Offline Queue Service
+export {
+  offlineQueue,
+} from './offline-queue';
+export type { QueuedItem as QueuedOrder } from './offline-queue';
+
+

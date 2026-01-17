@@ -371,7 +371,7 @@ export default function OrderHistoryPage() {
           rightContent={
             <div style={{ display: 'flex', gap: '0.5rem' }}>
               <PremiumButton
-                variant="glass"
+                variant="glass-white"
                 icon={Filter}
                 onClick={() => setShowFilters(!showFilters)}
                 isActive={showFilters}
@@ -379,7 +379,7 @@ export default function OrderHistoryPage() {
                 Filter
               </PremiumButton>
               {canExportData && (
-                <PremiumButton variant="outline" icon={Download} onClick={handleExport}>
+                <PremiumButton variant="white-outline" icon={Download} onClick={handleExport}>
                   Export CSV
                 </PremiumButton>
               )}

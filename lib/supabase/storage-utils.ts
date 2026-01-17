@@ -44,7 +44,7 @@ export const saveToLocalStorage = async (
 ): Promise<StorageResult> => {
   try {
     const base64 = await fileToBase64(file);
-    
+
     // Check localStorage space
     const estimatedSize = base64.length * 2; // rough estimate in bytes
     if (estimatedSize > 5 * 1024 * 1024) { // 5MB limit for localStorage
@@ -56,7 +56,7 @@ export const saveToLocalStorage = async (
     }
 
     localStorage.setItem(storageKey, base64);
-    
+
     // Store metadata
     const metadata = {
       fileName: file.name,
@@ -201,7 +201,7 @@ export const uploadFile = async (
         console.log('⚠️ Falling back to local storage...');
         const storageKey = `${options.bucket}_${Date.now()}_${file.name}`;
         const localResult = await saveToLocalStorage(file, storageKey);
-        
+
         if (localResult.success) {
           return {
             ...localResult,
@@ -230,7 +230,7 @@ export const uploadFile = async (
     };
   } catch (error) {
     console.error('❌ Upload exception:', error);
-    
+
     // Final fallback to local storage
     console.log('⚠️ Final fallback to local storage');
     const storageKey = `${options.bucket}_${Date.now()}_${file.name}`;
@@ -319,7 +319,7 @@ export const migrateLocalFilesToSupabase = async (
   folder?: string
 ): Promise<{ success: number; failed: number; errors: string[] }> => {
   const supabase = getSupabaseClient();
-  
+
   if (!supabase) {
     return {
       success: 0,
@@ -338,7 +338,7 @@ export const migrateLocalFilesToSupabase = async (
       // Convert base64 to blob
       const response = await fetch(fileData.url);
       const blob = await response.blob();
-      
+
       const fileName = fileData.metadata?.fileName || `migrated_${Date.now()}.bin`;
       const fileType = fileData.metadata?.fileType || blob.type;
       const file = new File([blob], fileName, { type: fileType });
@@ -367,3 +367,63 @@ export const migrateLocalFilesToSupabase = async (
 };
 
 
+
+
+/**
+ * Compress image before upload using Canvas
+ */
+export const compressImage = async (
+  file: File | Blob,
+  maxWidth = 1200, // Reasonable default for mobile screens
+  quality = 0.8
+): Promise<Blob> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (event) => {
+      const img = new Image();
+      img.src = event.target?.result as string;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+
+        // Calculate new dimensions
+        if (width > maxWidth) {
+          height = Math.round((height * maxWidth) / width);
+          width = maxWidth;
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          reject(new Error('Could not get canvas context'));
+          return;
+        }
+
+        // Smooth scaling
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+
+        ctx.drawImage(img, 0, 0, width, height);
+
+        canvas.toBlob(
+          (blob) => {
+            if (blob) {
+              console.log(`📉 Image compressed: ${Math.round(file.size / 1024)}KB -> ${Math.round(blob.size / 1024)}KB`);
+              resolve(blob);
+            } else {
+              reject(new Error('Canvas to Blob failed'));
+            }
+          },
+          'image/jpeg',
+          quality
+        );
+      };
+      img.onerror = (error) => reject(error);
+    };
+    reader.onerror = (error) => reject(error);
+  });
+};

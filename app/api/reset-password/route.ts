@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { rateLimit, getClientIP } from '@/lib/rate-limit';
-import { auth } from '@/lib/auth/server';
+import { getSupabaseAdmin } from '@/lib/supabase/admin';
 
 export async function POST(request: NextRequest) {
     try {
@@ -50,23 +50,40 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // Update password in account table (Better Auth stores hashed passwords there)
-        // Note: Better Auth uses its own hashing, we update via their mechanism
-        // For now, let's update direct - in production, use Better Auth's API
-
         // Delete the verification token
         await query(
             `DELETE FROM "verification" WHERE identifier = $1`,
             [`reset:${email}`]
         );
 
-        // Update password using Better Auth's internal adapter
-        const userResult = await query(`SELECT id FROM "user" WHERE email = $1`, [email]);
-        if (userResult.rowCount && userResult.rowCount > 0) {
-            await (auth as any).internalAdapter.updatePassword({
-                userId: userResult.rows[0].id,
-                newPassword: password
-            });
+        // Get user ID from auth.users to update password via Supabase Admin
+        const adminClient = getSupabaseAdmin();
+
+        // Find user by email in auth.users
+        const { data: { users }, error: listError } = await adminClient.auth.admin.listUsers();
+        const authUser = users?.find(u => u.email?.toLowerCase() === email.toLowerCase());
+
+        if (authUser) {
+            // Update password using Supabase Admin API
+            const { error: updateError } = await adminClient.auth.admin.updateUserById(
+                authUser.id,
+                { password }
+            );
+
+            if (updateError) {
+                console.error('Supabase password update error:', updateError);
+                return NextResponse.json(
+                    { error: 'Gagal menukar password' },
+                    { status: 500 }
+                );
+            }
+        } else {
+            // User not in auth.users yet - this is expected for legacy Better Auth users
+            // They will need to re-register with Supabase
+            return NextResponse.json(
+                { error: 'User perlu mendaftar semula kerana sistem telah dikemaskini' },
+                { status: 400 }
+            );
         }
 
         return NextResponse.json({
