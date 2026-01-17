@@ -1,11 +1,12 @@
 // Centralized Sync Error Logging Utility
 // Tracks sync operations, errors, and provides debugging information
 
-export type SyncOperation = 
+export type SyncOperation =
   | 'insert' | 'update' | 'delete' | 'fetch' | 'upsert'
-  | 'connection_check' | 'initial_load';
+  | 'connection_check' | 'initial_load' | 'initial_load_secondary';
 
-export type SyncEntity = 
+
+export type SyncEntity =
   | 'menu_items' | 'modifier_groups' | 'modifier_options'
   | 'inventory' | 'staff' | 'orders' | 'customers'
   | 'expenses' | 'attendance' | 'suppliers' | 'purchase_orders'
@@ -77,7 +78,7 @@ export function logSync(entry: Omit<SyncLogEntry, 'id' | 'timestamp'>): SyncLogE
   };
 
   syncLogs.unshift(fullEntry);
-  
+
   // Trim to max entries
   if (syncLogs.length > MAX_LOG_ENTRIES) {
     syncLogs = syncLogs.slice(0, MAX_LOG_ENTRIES);
@@ -136,8 +137,8 @@ export function logSyncError(
   metadata?: Record<string, unknown>
 ): SyncLogEntry {
   const errorMessage = error instanceof Error ? error.message : error;
-  const errorCode = error instanceof Error && 'code' in error 
-    ? String((error as { code?: string }).code) 
+  const errorCode = error instanceof Error && 'code' in error
+    ? String((error as { code?: string }).code)
     : undefined;
 
   return logSync({
@@ -207,7 +208,7 @@ export function getSyncStats(): {
   const success = syncLogs.filter(log => log.status === 'success').length;
   const errors = syncLogs.filter(log => log.status === 'error').length;
   const pending = syncLogs.filter(log => log.status === 'pending' || log.status === 'retrying').length;
-  
+
   const lastError = syncLogs.find(log => log.status === 'error') || null;
   const lastSuccess = syncLogs.find(log => log.status === 'success') || null;
 
@@ -232,32 +233,32 @@ export async function withRetry<T>(
   } = {}
 ): Promise<T> {
   const { maxRetries = 3, baseDelayMs = 1000, maxDelayMs = 10000, onRetry } = options;
-  
+
   let lastError: Error | null = null;
-  
+
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
       return await operation();
     } catch (error) {
       lastError = error instanceof Error ? error : new Error(String(error));
-      
+
       if (attempt < maxRetries) {
         const delay = Math.min(baseDelayMs * Math.pow(2, attempt), maxDelayMs);
-        
+
         if (onRetry) {
           onRetry(attempt + 1, lastError);
         }
-        
+
         await new Promise(resolve => setTimeout(resolve, delay));
       }
     }
   }
-  
+
   throw lastError;
 }
 
 // Sync result type for better error handling
-export type SyncResult<T> = 
+export type SyncResult<T> =
   | { success: true; data: T; error: null }
   | { success: false; data: null; error: string };
 
