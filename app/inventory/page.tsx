@@ -330,22 +330,7 @@ export default function InventoryPage() {
     );
   }
 
-  if (isError) {
-    return (
-      <MainLayout>
-        <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', minHeight: '50vh', gap: '1rem', color: 'var(--danger)' }}>
-          <AlertCircle size={48} />
-          <h2 className="text-xl font-bold">{t('inventory.alert.loadError')}</h2>
-          <p className="text-gray-500 max-w-md text-center">
-            {error instanceof Error ? error.message : 'Unknown error occurred'}
-          </p>
-          <button onClick={() => refetchInventory()} className="btn btn-primary">
-            {t('pos.modal.networkError.retry')}
-          </button>
-        </div>
-      </MainLayout>
-    );
-  }
+
 
 
 
@@ -462,7 +447,7 @@ export default function InventoryPage() {
 
         {
           activeTab === 'dashboard' ? (
-            <StockDashboard onRefresh={() => refetchInventory()} />
+            <StockDashboard onRefresh={() => refreshInventory()} />
           ) : activeTab === 'waste' ? (
             <WasteHistoryView />
           ) : activeTab === 'smart-reorder' ? (
