@@ -1592,7 +1592,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       return { success: false, message: 'Staf tidak dijumpai' };
     }
 
-    if (staffMember.pin !== pin) {
+    // Only validate PIN if staff has one set
+    if (staffMember.pin && pin && staffMember.pin !== pin) {
       return { success: false, message: 'PIN salah' };
     }
 
