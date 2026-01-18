@@ -1,0 +1,230 @@
+
+/Users/aliffmarwan/abangbob dashboard/app/delivery/page.tsx
+  64:9  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/Users/aliffmarwan/abangbob dashboard/app/delivery/page.tsx:64:9
+  62 |       try {
+  63 |         const parsed = JSON.parse(saved);
+> 64 |         setPlatforms(parsed);
+     |         ^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  65 |       } catch (e) {
+  66 |         console.error('Failed to parse platform settings:', e);
+  67 |       }  react-hooks/set-state-in-effect
+
+/Users/aliffmarwan/abangbob dashboard/components/LocationSettings.tsx
+  60:9  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/Users/aliffmarwan/abangbob dashboard/components/LocationSettings.tsx:60:9
+  58 |
+  59 |     useEffect(() => {
+> 60 |         loadLocations();
+     |         ^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  61 |     }, []);
+  62 |
+  63 |     const handleGetCurrentLocation = () => {  react-hooks/set-state-in-effect
+
+/Users/aliffmarwan/abangbob dashboard/components/SupabaseSetupChecker.tsx
+  313:5   warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/Users/aliffmarwan/abangbob dashboard/components/SupabaseSetupChecker.tsx:313:5
+  311 |
+  312 |   useEffect(() => {
+> 313 |     runChecks();
+      |     ^^^^^^^^^ Avoid calling setState() directly within an effect
+  314 |   }, [runChecks]);
+  315 |
+  316 |   const copyToClipboard = (text: string, id: string) => {                                                                                                                                                                                                                                            react-hooks/set-state-in-effect
+  395:16  error    Error: Cannot create components during render
+
+Components created during render will reset their state each time they are created. Declare components outside of render.
+
+/Users/aliffmarwan/abangbob dashboard/components/SupabaseSetupChecker.tsx:395:16
+  393 |           <div className="checks-list">
+  394 |             <div className="check-item">
+> 395 |               <StatusIcon status={status.envVars.status} />
+      |                ^^^^^^^^^^ This component is created during render
+  396 |               <div className="check-content">
+  397 |                 <div className="check-title">
+  398 |                   <Key size={14} />
+
+/Users/aliffmarwan/abangbob dashboard/components/SupabaseSetupChecker.tsx:337:22
+  335 |   const overallStatus = getOverallStatus();
+  336 |
+> 337 |   const StatusIcon = ({ status }: { status: string }) => {
+      |                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 338 |     switch (status) {
+      | ^^^^^^^^^^^^^^^^^^^^^
+> 339 |       case 'success':
+      …
+      | ^^^^^^^^^^^^^^^^^^^^^
+> 347 |     }
+      | ^^^^^^^^^^^^^^^^^^^^^
+> 348 |   };
+      | ^^^^ The component is created during render here
+  349 |
+  350 |   return (
+  351 |     <div className="supabase-setup-checker">  react-hooks/static-components
+  409:16  error    Error: Cannot create components during render
+
+Components created during render will reset their state each time they are created. Declare components outside of render.
+
+/Users/aliffmarwan/abangbob dashboard/components/SupabaseSetupChecker.tsx:409:16
+  407 |
+  408 |             <div className="check-item">
+> 409 |               <StatusIcon status={status.connection.status} />
+      |                ^^^^^^^^^^ This component is created during render
+  410 |               <div className="check-content">
+  411 |                 <div className="check-title">
+  412 |                   <Cloud size={14} />
+
+/Users/aliffmarwan/abangbob dashboard/components/SupabaseSetupChecker.tsx:337:22
+  335 |   const overallStatus = getOverallStatus();
+  336 |
+> 337 |   const StatusIcon = ({ status }: { status: string }) => {
+      |                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 338 |     switch (status) {
+      | ^^^^^^^^^^^^^^^^^^^^^
+> 339 |       case 'success':
+      …
+      | ^^^^^^^^^^^^^^^^^^^^^
+> 347 |     }
+      | ^^^^^^^^^^^^^^^^^^^^^
+> 348 |   };
+      | ^^^^ The component is created during render here
+  349 |
+  350 |   return (
+  351 |     <div className="supabase-setup-checker">                                     react-hooks/static-components
+  423:16  error    Error: Cannot create components during render
+
+Components created during render will reset their state each time they are created. Declare components outside of render.
+
+/Users/aliffmarwan/abangbob dashboard/components/SupabaseSetupChecker.tsx:423:16
+  421 |
+  422 |             <div className="check-item">
+> 423 |               <StatusIcon status={status.bucket.status} />
+      |                ^^^^^^^^^^ This component is created during render
+  424 |               <div className="check-content">
+  425 |                 <div className="check-title">
+  426 |                   <HardDrive size={14} />
+
+/Users/aliffmarwan/abangbob dashboard/components/SupabaseSetupChecker.tsx:337:22
+  335 |   const overallStatus = getOverallStatus();
+  336 |
+> 337 |   const StatusIcon = ({ status }: { status: string }) => {
+      |                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 338 |     switch (status) {
+      | ^^^^^^^^^^^^^^^^^^^^^
+> 339 |       case 'success':
+      …
+      | ^^^^^^^^^^^^^^^^^^^^^
+> 347 |     }
+      | ^^^^^^^^^^^^^^^^^^^^^
+> 348 |   };
+      | ^^^^ The component is created during render here
+  349 |
+  350 |   return (
+  351 |     <div className="supabase-setup-checker">                                     react-hooks/static-components
+  437:16  error    Error: Cannot create components during render
+
+Components created during render will reset their state each time they are created. Declare components outside of render.
+
+/Users/aliffmarwan/abangbob dashboard/components/SupabaseSetupChecker.tsx:437:16
+  435 |
+  436 |             <div className="check-item">
+> 437 |               <StatusIcon status={status.permissions.status} />
+      |                ^^^^^^^^^^ This component is created during render
+  438 |               <div className="check-content">
+  439 |                 <div className="check-title">
+  440 |                   <Database size={14} />
+
+/Users/aliffmarwan/abangbob dashboard/components/SupabaseSetupChecker.tsx:337:22
+  335 |   const overallStatus = getOverallStatus();
+  336 |
+> 337 |   const StatusIcon = ({ status }: { status: string }) => {
+      |                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 338 |     switch (status) {
+      | ^^^^^^^^^^^^^^^^^^^^^
+> 339 |       case 'success':
+      …
+      | ^^^^^^^^^^^^^^^^^^^^^
+> 347 |     }
+      | ^^^^^^^^^^^^^^^^^^^^^
+> 348 |   };
+      | ^^^^ The component is created during render here
+  349 |
+  350 |   return (
+  351 |     <div className="supabase-setup-checker">                                 react-hooks/static-components
+
+/Users/aliffmarwan/abangbob dashboard/components/staff-portal/BirthdayBanner.tsx
+  57:26   error  Error: Cannot call impure function during render
+
+`Math.random` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+/Users/aliffmarwan/abangbob dashboard/components/staff-portal/BirthdayBanner.tsx:57:26
+  55 |               className="confetti"
+  56 |               style={{
+> 57 |                 left: `${Math.random() * 100}%`,
+     |                          ^^^^^^^^^^^^^ Cannot call impure function
+  58 |                 animationDelay: `${Math.random() * 2}s`,
+  59 |                 backgroundColor: ['#6366f1', '#f59e0b', '#10b981', '#ec4899', '#8b5cf6'][Math.floor(Math.random() * 5)]
+  60 |               }}                                                 react-hooks/purity
+  58:36   error  Error: Cannot call impure function during render
+
+`Math.random` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+/Users/aliffmarwan/abangbob dashboard/components/staff-portal/BirthdayBanner.tsx:58:36
+  56 |               style={{
+  57 |                 left: `${Math.random() * 100}%`,
+> 58 |                 animationDelay: `${Math.random() * 2}s`,
+     |                                    ^^^^^^^^^^^^^ Cannot call impure function
+  59 |                 backgroundColor: ['#6366f1', '#f59e0b', '#10b981', '#ec4899', '#8b5cf6'][Math.floor(Math.random() * 5)]
+  60 |               }}
+  61 |             />                                                           react-hooks/purity
+  59:101  error  Error: Cannot call impure function during render
+
+`Math.random` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+/Users/aliffmarwan/abangbob dashboard/components/staff-portal/BirthdayBanner.tsx:59:101
+  57 |                 left: `${Math.random() * 100}%`,
+  58 |                 animationDelay: `${Math.random() * 2}s`,
+> 59 |                 backgroundColor: ['#6366f1', '#f59e0b', '#10b981', '#ec4899', '#8b5cf6'][Math.floor(Math.random() * 5)]
+     |                                                                                                     ^^^^^^^^^^^^^ Cannot call impure function
+  60 |               }}
+  61 |             />
+  62 |           ))}  react-hooks/purity
+
+/Users/aliffmarwan/abangbob dashboard/lib/contexts/KeyboardShortcutsContext.tsx
+  206:33  error    Error: Cannot call impure function during render
+
+`Math.random` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+/Users/aliffmarwan/abangbob dashboard/lib/contexts/KeyboardShortcutsContext.tsx:206:33
+  204 |   const idRef = useRef<string | null>(null);
+  205 |   if (!idRef.current) {
+> 206 |     idRef.current = `shortcut-${Math.random().toString(36).substr(2, 9)}`;
+      |                                 ^^^^^^^^^^^^^ Cannot call impure function
+  207 |   }
+  208 |   const id = idRef as MutableRefObject<string>;
+  209 |  react-hooks/purity
+  222:6   warning  React Hook useEffect has a missing dependency: 'id'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           react-hooks/exhaustive-deps
+
+✖ 12 problems (8 errors, 4 warnings)
+

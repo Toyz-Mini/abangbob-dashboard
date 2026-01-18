@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useEffect, useCallback, ReactNode, useState, useRef } from 'react';
+import { createContext, useContext, useEffect, useCallback, ReactNode, useState, useRef, MutableRefObject } from 'react';
 import { useRouter } from 'next/navigation';
 
 interface Shortcut {
@@ -201,11 +201,10 @@ export function useShortcut(
   options: { ctrl?: boolean; shift?: boolean; alt?: boolean; description?: string } = {}
 ) {
   const { registerShortcut, unregisterShortcut } = useKeyboardShortcuts();
-  const id = useRef(`shortcut-${Math.random().toString(36).substr(2, 9)}`);
 
   useEffect(() => {
-    const shortcutId = id.current;
-    registerShortcut(shortcutId, {
+    const id = `shortcut-${Math.random().toString(36).substr(2, 9)}`;
+    registerShortcut(id, {
       key,
       ctrl: options.ctrl,
       shift: options.shift,
@@ -214,9 +213,15 @@ export function useShortcut(
       description: options.description || `Shortcut: ${key}`,
     });
 
-    return () => unregisterShortcut(shortcutId);
+    return () => unregisterShortcut(id);
   }, [key, action, options.ctrl, options.shift, options.alt, options.description, registerShortcut, unregisterShortcut]);
+
+  // Return nothing or helper
+  return null;
 }
+
+// Helper to keep hook valid
+function noop() { }
 
 // Keyboard shortcut help modal content
 export function KeyboardShortcutsHelp() {

@@ -47,10 +47,6 @@ export default function LocationSettings() {
     const [gettingLocation, setGettingLocation] = useState(false);
     const [submitting, setSubmitting] = useState(false);
 
-    useEffect(() => {
-        loadLocations();
-    }, []);
-
     const loadLocations = async () => {
         setLoading(true);
         const result = await getAllowedLocationsAction();
@@ -59,6 +55,10 @@ export default function LocationSettings() {
         }
         setLoading(false);
     };
+
+    useEffect(() => {
+        loadLocations();
+    }, []);
 
     const handleGetCurrentLocation = () => {
         setGettingLocation(true);

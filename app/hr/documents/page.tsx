@@ -167,6 +167,9 @@ export default function DocumentsPage() {
         );
     }
 
+
+    const now = new Date();
+
     return (
         <MainLayout>
             <div className="animate-fade-in">
@@ -268,8 +271,8 @@ export default function DocumentsPage() {
                                 </thead>
                                 <tbody>
                                     {filteredDocs.map(doc => {
-                                        const isExpired = doc.expiryDate && new Date(doc.expiryDate) < new Date();
-                                        const isExpiringSoon = doc.expiryDate && !isExpired && new Date(doc.expiryDate) <= new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+                                        const isExpired = doc.expiryDate && new Date(doc.expiryDate) < now;
+                                        const isExpiringSoon = doc.expiryDate && !isExpired && new Date(doc.expiryDate) <= new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
                                         return (
                                             <tr key={doc.id}>
                                                 <td>

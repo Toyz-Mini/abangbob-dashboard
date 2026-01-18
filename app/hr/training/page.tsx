@@ -205,6 +205,9 @@ export default function TrainingPage() {
         );
     }
 
+
+    const now = new Date();
+
     return (
         <MainLayout>
             <div className="animate-fade-in">
@@ -325,7 +328,7 @@ export default function TrainingPage() {
                                 <tbody>
                                     {filteredTraining.map(training => {
                                         const statusInfo = getStatusInfo(training.status);
-                                        const isExpiringSoon = training.expiresAt && new Date(training.expiresAt) <= new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+                                        const isExpiringSoon = training.expiresAt && new Date(training.expiresAt) <= new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
                                         return (
                                             <tr key={training.id}>
                                                 <td>

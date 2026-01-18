@@ -30,6 +30,19 @@ interface SetupStatus {
   permissions: CheckResult;
 }
 
+const StatusIcon = ({ status }: { status: string }) => {
+  switch (status) {
+    case 'success':
+      return <CheckCircle size={16} color="#059669" />;
+    case 'warning':
+      return <AlertTriangle size={16} color="#d97706" />;
+    case 'error':
+      return <XCircle size={16} color="#dc2626" />;
+    default:
+      return <RefreshCw size={16} className="animate-spin" />;
+  }
+};
+
 export default function SupabaseSetupChecker() {
   const [status, setStatus] = useState<SetupStatus>({
     envVars: { status: 'checking', message: 'Memeriksa...' },
@@ -81,52 +94,7 @@ INSERT INTO storage.buckets (id, name, public)
 VALUES ('outlet-logos', 'outlet-logos', true);`
   };
 
-  const runChecks = useCallback(async () => {
-    setIsTesting(true);
 
-    // 1. Check environment variables
-    const envCheck = checkEnvironmentVars();
-    setStatus(prev => ({ ...prev, envVars: envCheck }));
-
-    if (envCheck.status === 'error') {
-      setStatus(prev => ({
-        ...prev,
-        connection: { status: 'error', message: 'Tidak boleh sambung tanpa env variables' },
-        bucket: { status: 'error', message: 'Tidak boleh check tanpa sambungan' },
-        permissions: { status: 'error', message: 'Tidak boleh check tanpa sambungan' },
-      }));
-      setIsTesting(false);
-      return;
-    }
-
-    // 2. Check connection
-    const connectionCheck = await checkConnection();
-    setStatus(prev => ({ ...prev, connection: connectionCheck }));
-
-    if (connectionCheck.status === 'error') {
-      setStatus(prev => ({
-        ...prev,
-        bucket: { status: 'error', message: 'Tidak boleh check tanpa sambungan' },
-        permissions: { status: 'error', message: 'Tidak boleh check tanpa sambungan' },
-      }));
-      setIsTesting(false);
-      return;
-    }
-
-    // 3. Check bucket exists
-    const bucketCheck = await checkBucket();
-    setStatus(prev => ({ ...prev, bucket: bucketCheck }));
-
-    // 4. Check permissions
-    const permCheck = await checkPermissions();
-    setStatus(prev => ({ ...prev, permissions: permCheck }));
-
-    setIsTesting(false);
-  }, []);
-
-  useEffect(() => {
-    runChecks();
-  }, [runChecks]);
 
   const checkEnvironmentVars = (): CheckResult => {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -311,6 +279,53 @@ VALUES ('outlet-logos', 'outlet-logos', true);`
     }
   };
 
+  const runChecks = useCallback(async () => {
+    setIsTesting(true);
+
+    // 1. Check environment variables
+    const envCheck = checkEnvironmentVars();
+    setStatus(prev => ({ ...prev, envVars: envCheck }));
+
+    if (envCheck.status === 'error') {
+      setStatus(prev => ({
+        ...prev,
+        connection: { status: 'error', message: 'Tidak boleh sambung tanpa env variables' },
+        bucket: { status: 'error', message: 'Tidak boleh check tanpa sambungan' },
+        permissions: { status: 'error', message: 'Tidak boleh check tanpa sambungan' },
+      }));
+      setIsTesting(false);
+      return;
+    }
+
+    // 2. Check connection
+    const connectionCheck = await checkConnection();
+    setStatus(prev => ({ ...prev, connection: connectionCheck }));
+
+    if (connectionCheck.status === 'error') {
+      setStatus(prev => ({
+        ...prev,
+        bucket: { status: 'error', message: 'Tidak boleh check tanpa sambungan' },
+        permissions: { status: 'error', message: 'Tidak boleh check tanpa sambungan' },
+      }));
+      setIsTesting(false);
+      return;
+    }
+
+    // 3. Check bucket exists
+    const bucketCheck = await checkBucket();
+    setStatus(prev => ({ ...prev, bucket: bucketCheck }));
+
+    // 4. Check permissions
+    const permCheck = await checkPermissions();
+    setStatus(prev => ({ ...prev, permissions: permCheck }));
+
+    setIsTesting(false);
+  }, []);
+
+  useEffect(() => {
+    runChecks();
+  }, [runChecks]);
+
   const copyToClipboard = (text: string, id: string) => {
     navigator.clipboard.writeText(text);
     setCopiedSql(id);
@@ -332,18 +347,7 @@ VALUES ('outlet-logos', 'outlet-logos', true);`
 
   const overallStatus = getOverallStatus();
 
-  const StatusIcon = ({ status }: { status: string }) => {
-    switch (status) {
-      case 'success':
-        return <CheckCircle size={16} color="#059669" />;
-      case 'warning':
-        return <AlertTriangle size={16} color="#d97706" />;
-      case 'error':
-        return <XCircle size={16} color="#dc2626" />;
-      default:
-        return <RefreshCw size={16} className="animate-spin" />;
-    }
-  };
+
 
   return (
     <div className="supabase-setup-checker">

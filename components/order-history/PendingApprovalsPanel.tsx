@@ -31,6 +31,7 @@ export default function PendingApprovalsPanel({
   const [rejectingId, setRejectingId] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState('');
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [now] = useState(() => Date.now()); // Stable reference time for relative formatting
 
   const handleApprove = (requestId: string) => {
     onApprove(requestId);
@@ -62,7 +63,7 @@ export default function PendingApprovalsPanel({
   };
 
   const getTimeSince = (dateStr: string) => {
-    const diff = Date.now() - new Date(dateStr).getTime();
+    const diff = now - new Date(dateStr).getTime();
     const minutes = Math.floor(diff / 60000);
     const hours = Math.floor(diff / 3600000);
     const days = Math.floor(diff / 86400000);

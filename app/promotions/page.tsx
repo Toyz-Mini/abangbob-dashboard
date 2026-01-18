@@ -57,6 +57,7 @@ export default function PromotionsPage() {
   }, [refreshPromotions]);
 
   usePromotionsRealtime(handlePromotionsChange);
+  const now = new Date();
   const { t } = useTranslation();
   const { showToast } = useToast();
   const [modalType, setModalType] = useState<ModalType>(null);
@@ -65,7 +66,7 @@ export default function PromotionsPage() {
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive' | 'expired'>('all');
 
   // Form state
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState(() => ({
     name: '',
     description: '',
     type: 'percentage' as 'percentage' | 'fixed_amount' | 'bogo' | 'free_item' | 'buy_x_get_y',
@@ -86,7 +87,7 @@ export default function PromotionsPage() {
     getQuantity: 1,
     getFreeItemId: '',
     getDiscountPercent: 100, // 100 = free
-  });
+  }));
 
   // Calculate metrics
   const metrics = useMemo(() => {
@@ -278,8 +279,7 @@ export default function PromotionsPage() {
 
   const isExpiringSoon = (promo: Promotion) => {
     const endDate = new Date(promo.endDate);
-    const today = new Date();
-    const diff = (endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24);
+    const diff = (endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
     return diff > 0 && diff <= 7;
   };
 

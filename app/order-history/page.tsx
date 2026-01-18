@@ -93,7 +93,7 @@ export default function OrderHistoryPage() {
   const [showFilters, setShowFilters] = useState(false);
 
   // Filters
-  const [filters, setFilters] = useState<Partial<OrderHistoryFilters>>({
+  const [filters, setFilters] = useState<Partial<OrderHistoryFilters>>(() => ({
     status: 'all',
     paymentMethod: 'all',
     orderType: 'all',
@@ -102,7 +102,7 @@ export default function OrderHistoryPage() {
       end: new Date().toISOString().split('T')[0],
     },
     searchQuery: '',
-  });
+  }));
 
   const searchParams = useSearchParams();
 

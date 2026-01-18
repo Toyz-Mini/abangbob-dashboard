@@ -10,6 +10,7 @@ import LoadingSpinner from '@/components/LoadingSpinner';
 import { useToast } from '@/lib/contexts/ToastContext';
 import { Volume2, VolumeX, Printer, Bell, RefreshCw, ShoppingBag, ChefHat, CheckCircle, Truck, UserPlus } from 'lucide-react';
 import StatCard from '@/components/StatCard';
+import { DeliveryKanbanColumn } from '@/components/delivery/DeliveryKanbanColumn';
 
 // Platform config interface
 interface PlatformConfig {
@@ -34,6 +35,19 @@ const AVAILABLE_DRIVERS = [
   { id: 'd3', name: 'Faizal', phone: '0812345670', plate: 'BKC 9012' },
   { id: 'd4', name: 'Syafiq', phone: '0812345671', plate: 'BKC 3456' },
 ];
+
+const getPlatformColor = (platform: string) => {
+  switch (platform) {
+    case 'GoMamam': return 'var(--primary)';
+    case 'Grab': return '#00b14f';
+    case 'GrabFood': return '#00b14f';
+    case 'Panda': return '#d70f64';
+    case 'FoodPanda': return '#d70f64';
+    case 'Shopee': return '#ee4d2d';
+    case 'ShopeeFood': return '#ee4d2d';
+    default: return 'var(--primary)';
+  }
+};
 
 export default function DeliveryHubPage() {
   const { deliveryOrders, updateDeliveryStatus, refreshDeliveryOrders, isInitialized } = useStore();
@@ -67,7 +81,7 @@ export default function DeliveryHubPage() {
   const [showDriverModal, setShowDriverModal] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<DeliveryOrder | null>(null);
   const [selectedDriver, setSelectedDriver] = useState<string>('');
-  const [lastOrderCount, setLastOrderCount] = useState(0);
+  const lastOrderCountRef = useRef(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const slipRef = useRef<HTMLDivElement>(null);
 
@@ -80,14 +94,14 @@ export default function DeliveryHubPage() {
   useEffect(() => {
     const newOrders = deliveryOrders.filter(o => o.status === 'new');
 
-    if (newOrders.length > lastOrderCount && soundEnabled && audioRef.current) {
+    if (newOrders.length > lastOrderCountRef.current && soundEnabled && audioRef.current) {
       audioRef.current.play().catch(() => {
         // Autoplay might be blocked, that's okay
       });
     }
 
-    setLastOrderCount(newOrders.length);
-  }, [deliveryOrders, soundEnabled, lastOrderCount]);
+    lastOrderCountRef.current = newOrders.length;
+  }, [deliveryOrders, soundEnabled]);
 
   const getOrdersByStatus = (status: DeliveryOrder['status']) => {
     return deliveryOrders.filter(order => order.status === status);
@@ -103,18 +117,7 @@ export default function DeliveryHubPage() {
     }
   };
 
-  const getPlatformColor = (platform: string) => {
-    switch (platform) {
-      case 'GoMamam': return 'var(--primary)';
-      case 'Grab': return '#00b14f';
-      case 'GrabFood': return '#00b14f';
-      case 'Panda': return '#d70f64';
-      case 'FoodPanda': return '#d70f64';
-      case 'Shopee': return '#ee4d2d';
-      case 'ShopeeFood': return '#ee4d2d';
-      default: return 'var(--primary)';
-    }
-  };
+
 
   const handlePrintSlip = (e: React.MouseEvent, orderId: string) => {
     e.stopPropagation();
@@ -162,142 +165,7 @@ export default function DeliveryHubPage() {
     }
   };
 
-  const KanbanColumn = ({ title, orders, status, emoji }: { title: string; orders: DeliveryOrder[]; status: DeliveryOrder['status']; emoji: string }) => {
-    const canMoveTo = (currentStatus: DeliveryOrder['status']): DeliveryOrder['status'] | null => {
-      const flow: DeliveryOrder['status'][] = ['new', 'preparing', 'ready', 'picked_up'];
-      const currentIndex = flow.indexOf(currentStatus);
-      return currentIndex < flow.length - 1 ? flow[currentIndex + 1] : null;
-    };
 
-    return (
-      <div className="card" style={{ minHeight: '450px' }}>
-        <div className="card-header">
-          <div className="card-title">{emoji} {title}</div>
-          <div className="card-subtitle">{orders.length} order(s)</div>
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '1rem', maxHeight: '350px', overflowY: 'auto' }}>
-          {orders.map(order => {
-            const nextStatus = canMoveTo(order.status);
-            const platformColor = getPlatformColor(order.platform);
-
-            return (
-              <div
-                key={order.id}
-                style={{
-                  padding: '1rem',
-                  border: '1px solid var(--gray-200)',
-                  borderRadius: 'var(--radius-md)',
-                  background: 'var(--bg-primary)',
-                  borderLeft: `4px solid ${platformColor}`
-                }}
-              >
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                  <div>
-                    <div style={{ fontWeight: 700, marginBottom: '0.25rem' }}>
-                      {order.customerName}
-                    </div>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                      #{order.id.slice(-6)}
-                    </div>
-                  </div>
-                  <span
-                    style={{
-                      padding: '0.25rem 0.5rem',
-                      borderRadius: 'var(--radius-sm)',
-                      background: `${platformColor}20`,
-                      color: platformColor,
-                      fontWeight: 600,
-                      fontSize: '0.75rem'
-                    }}
-                  >
-                    {order.platform}
-                  </span>
-                </div>
-
-                <div style={{ marginBottom: '0.75rem', fontSize: '0.875rem' }}>
-                  {order.items.map(item => (
-                    <div key={item.id} style={{ marginBottom: '0.25rem' }}>
-                      <strong>{item.quantity}x</strong> {item.name}
-                    </div>
-                  ))}
-                </div>
-
-                <div style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  paddingTop: '0.75rem',
-                  borderTop: '1px solid var(--gray-200)'
-                }}>
-                  <div style={{ fontWeight: 700, color: 'var(--primary)' }}>
-                    BND {order.totalAmount.toFixed(2)}
-                  </div>
-                  <div style={{ display: 'flex', gap: '0.25rem' }}>
-                    {status !== 'picked_up' && (
-                      <button
-                        onClick={(e) => handlePrintSlip(e, order.id)}
-                        className="btn btn-sm btn-outline"
-                        title="Print Slip"
-                        style={{ padding: '0.25rem 0.5rem' }}
-                      >
-                        <Printer size={14} />
-                      </button>
-                    )}
-                    {/* Assign Driver Button */}
-                    {(status === 'ready' || status === 'preparing') && !order.driverName && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedOrder(order);
-                          setSelectedDriver('');
-                          setShowDriverModal(true);
-                        }}
-                        className="btn btn-sm btn-outline"
-                        title="Assign Driver"
-                        style={{ padding: '0.25rem 0.5rem', color: 'var(--warning)' }}
-                      >
-                        <UserPlus size={14} />
-                      </button>
-                    )}
-                    {nextStatus && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          updateDeliveryStatus(order.id, nextStatus);
-                        }}
-                        className="btn btn-primary btn-sm"
-                      >
-                        → {nextStatus === 'preparing' ? 'Prepare' :
-                          nextStatus === 'ready' ? 'Ready' : 'Picked Up'}
-                      </button>
-                    )}
-                  </div>
-                </div>
-
-                {order.driverName && (
-                  <div style={{
-                    marginTop: '0.5rem',
-                    fontSize: '0.75rem',
-                    color: 'var(--text-secondary)',
-                    padding: '0.5rem',
-                    background: 'var(--gray-100)',
-                    borderRadius: 'var(--radius-sm)'
-                  }}>
-                    🚗 {order.driverName} ({order.driverPlate})
-                  </div>
-                )}
-              </div>
-            );
-          })}
-          {orders.length === 0 && (
-            <p style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '2rem' }}>
-              Tiada pesanan
-            </p>
-          )}
-        </div>
-      </div>
-    );
-  };
 
   if (!isInitialized) {
     return (
@@ -435,10 +303,46 @@ export default function DeliveryHubPage() {
 
         {/* Kanban Board */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4" style={{ gap: '1.5rem' }}>
-          <KanbanColumn title="New Orders" orders={newOrders} status="new" emoji="🆕" />
-          <KanbanColumn title="Preparing" orders={preparingOrders} status="preparing" emoji="👨‍🍳" />
-          <KanbanColumn title="Ready" orders={readyOrders} status="ready" emoji="✅" />
-          <KanbanColumn title="Picked Up" orders={pickedUpOrders} status="picked_up" emoji="🚚" />
+          <DeliveryKanbanColumn
+            title="New Orders"
+            orders={newOrders}
+            status="new"
+            emoji="🆕"
+            getPlatformColor={getPlatformColor}
+            onPrintSlip={handlePrintSlip}
+            onAssignDriver={(order) => { setSelectedOrder(order); setSelectedDriver(''); setShowDriverModal(true); }}
+            onUpdateStatus={updateDeliveryStatus}
+          />
+          <DeliveryKanbanColumn
+            title="Preparing"
+            orders={preparingOrders}
+            status="preparing"
+            emoji="👨‍🍳"
+            getPlatformColor={getPlatformColor}
+            onPrintSlip={handlePrintSlip}
+            onAssignDriver={(order) => { setSelectedOrder(order); setSelectedDriver(''); setShowDriverModal(true); }}
+            onUpdateStatus={updateDeliveryStatus}
+          />
+          <DeliveryKanbanColumn
+            title="Ready"
+            orders={readyOrders}
+            status="ready"
+            emoji="✅"
+            getPlatformColor={getPlatformColor}
+            onPrintSlip={handlePrintSlip}
+            onAssignDriver={(order) => { setSelectedOrder(order); setSelectedDriver(''); setShowDriverModal(true); }}
+            onUpdateStatus={updateDeliveryStatus}
+          />
+          <DeliveryKanbanColumn
+            title="Picked Up"
+            orders={pickedUpOrders}
+            status="picked_up"
+            emoji="🚚"
+            getPlatformColor={getPlatformColor}
+            onPrintSlip={handlePrintSlip}
+            onAssignDriver={(order) => { setSelectedOrder(order); setSelectedDriver(''); setShowDriverModal(true); }}
+            onUpdateStatus={updateDeliveryStatus}
+          />
         </div>
 
         {/* Print Slip Modal */}

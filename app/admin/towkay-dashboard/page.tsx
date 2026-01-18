@@ -11,7 +11,6 @@ import { formatCurrency } from '@/lib/utils';
 import { useStore, useOrders, useInventory, useStaff, useKPI, useSchedules, useMenu } from '@/lib/store';
 
 export default function TowkayDashboard() {
-    const [stats, setStats] = useState<TowkayStats | null>(null);
     const [currentTime, setCurrentTime] = useState(new Date());
 
     const { cashRegisters, attendance } = useStore();
@@ -22,24 +21,22 @@ export default function TowkayDashboard() {
     const { schedules, shifts } = useSchedules();
     const { menuItems } = useMenu();
 
-    // Re-calculate stats whenever underlying data changes
-    useEffect(() => {
-        const dataContext: DataContext = {
-            orders: orders || [],
-            inventoryLogs: inventoryLogs || [],
-            cashRegisters: cashRegisters || [],
-            staff: staff || [],
-            staffKPI: staffKPI || [],
-            attendance: attendance || [],
-            schedules: schedules || [],
-            shifts: shifts || [],
-            menuItems: menuItems || [],
-            inventory: inventory || []
-        };
+    // Memoize the data context to prevent unnecessary recalculations
+    const dataContext: DataContext = React.useMemo(() => ({
+        orders: orders || [],
+        inventoryLogs: inventoryLogs || [],
+        cashRegisters: cashRegisters || [],
+        staff: staff || [],
+        staffKPI: staffKPI || [],
+        attendance: attendance || [],
+        schedules: schedules || [],
+        shifts: shifts || [],
+        menuItems: menuItems || [],
+        inventory: inventory || []
+    }), [orders, inventoryLogs, cashRegisters, staff, staffKPI, attendance, schedules, shifts, menuItems, inventory]);
 
-        const calculatedStats = calculateTowkayStats(dataContext);
-        setStats(calculatedStats);
-    }, [orders, inventoryLogs, cashRegisters, staff, staffKPI, attendance, schedules, shifts, menuItems, inventory]);
+    // Calculate stats synchronously using useMemo
+    const stats = React.useMemo(() => calculateTowkayStats(dataContext), [dataContext]);
 
     useEffect(() => {
         // Simulate live clock
