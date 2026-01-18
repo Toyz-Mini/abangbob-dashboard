@@ -255,16 +255,21 @@ export async function clockIn(data: ClockInData) {
             };
         }
 
+        const now = new Date();
+        const dateStr = now.toISOString().split('T')[0];
+        const timeStr = now.toLocaleTimeString('en-GB', { hour12: false }); // HH:MM:SS format
+
+        // Prepare location metadata for notes (since we don't have dedicated columns for these yet)
+        const locationMeta = `[Location Stats] Lat: ${data.latitude}, Lng: ${data.longitude}, Dist: ${Math.round(verification.distance || 0)}m`;
+
         const attendance_data = {
             staff_id: data.staff_id,
-            clock_in: new Date().toISOString(),
-            date: new Date().toISOString().split('T')[0],
-            location_verified: true,
-            location_id: verification.nearest_location?.id || null,
-            actual_latitude: data.latitude,
-            actual_longitude: data.longitude,
-            distance_meters: verification.distance,
-            selfie_url,
+            date: dateStr,
+            clock_in_time: timeStr,
+            clock_in_photo_url: selfie_url,
+            outlet_id: verification.nearest_location?.id || null,
+            notes: locationMeta,
+            // location_verified: true, // Column missing in DB
         };
 
         const { data: record, error: insertError } = await (supabase as any)
@@ -343,9 +348,8 @@ export async function clockOut(data: ClockOutData) {
             };
         }
 
-        // We'll append clock-out metadata to notes since we don't have dedicated columns yet
-        // This ensures the data is preserved without requiring immediate schema migration
-        const noteEntry = `[Clock Out Verified] Lat: ${data.latitude}, Lng: ${data.longitude}, Dist: ${Math.round(verification.distance || 0)}m, Selfie: ${selfie_url}`;
+        const now = new Date();
+        const timeStr = now.toLocaleTimeString('en-GB', { hour12: false });
 
         // Fetch current notes first to append
         const { data: currentRecord, error: fetchError } = await (supabase as any)
@@ -355,9 +359,11 @@ export async function clockOut(data: ClockOutData) {
             .single();
 
         const currentNotes = currentRecord?.notes ? `${currentRecord.notes}\n` : '';
+        const noteEntry = `[Clock Out] Time: ${timeStr} Verified at: Lat ${data.latitude}, Lng ${data.longitude}`;
 
         const updates = {
-            clock_out: new Date().toISOString(),
+            clock_out_time: timeStr,
+            clock_out_photo_url: selfie_url,
             notes: `${currentNotes}${noteEntry}`
         };
 

@@ -8,6 +8,7 @@ import LoadingSpinner from '@/components/LoadingSpinner';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { useStaff } from '@/lib/store';
 import { getAllAttendance, AttendanceRecord as AttendanceSyncRecord } from '@/lib/supabase/attendance-sync';
+import { getSupabaseClient } from '@/lib/supabase/client';
 import {
     Clock,
     MapPin,
@@ -126,6 +127,31 @@ export default function AttendanceLogPage() {
 
     useEffect(() => {
         loadAttendance();
+
+        // Realtime subscription
+        const supabase = getSupabaseClient();
+        if (!supabase) return;
+
+        const channel = supabase
+            .channel('attendance-db-changes')
+            .on(
+                'postgres_changes',
+                {
+                    event: '*',
+                    schema: 'public',
+                    table: 'attendance',
+                },
+                (payload: any) => {
+                    console.log('Realtime attendance update:', payload);
+                    // Reload to get full details including joined staff data
+                    loadAttendance();
+                }
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
     }, [loadAttendance]);
 
     // Filter and sort records
