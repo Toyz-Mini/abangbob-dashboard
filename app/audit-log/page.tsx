@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import MainLayout from '@/components/MainLayout';
 import { useStore } from '@/lib/store';
 import LoadingSpinner from '@/components/LoadingSpinner';
@@ -35,12 +35,7 @@ export default function AuditLogPage() {
   const [filterDate, setFilterDate] = useState('');
   const [isLoading, setIsLoading] = useState(true);
 
-  // Load audit logs
-  useEffect(() => {
-    loadLogs();
-  }, [filterDate]); // Reload if date changes server-side filter
-
-  const loadLogs = async () => {
+  const loadLogs = useCallback(async () => {
     setIsLoading(true);
     try {
       // Use server action - pass date filter if present
@@ -57,7 +52,12 @@ export default function AuditLogPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [filterDate, showToast]);
+
+  // Load audit logs
+  useEffect(() => {
+    loadLogs();
+  }, [filterDate, loadLogs]); // Reload if date changes server-side filter
 
   // Filter logs
   const filteredLogs = useMemo(() => {

@@ -556,7 +556,7 @@ export default function POSPage() {
     finalPayable, currentTransactionId, cart, cartTotal, customerName,
     selectedCustomer, pointsToRedeem, redemptionAmount, orderType,
     currentStaff, inventory, addOrder, adjustStock, receiptSettings,
-    handlePrintReceipt, playSound
+    handlePrintReceipt, playSound, selectedPromotion, t
   ]);
 
   // Retry payment after network error

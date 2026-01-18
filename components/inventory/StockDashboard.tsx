@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import GlassCard from '@/components/GlassCard';
 import PremiumButton from '@/components/PremiumButton';
 import LoadingSpinner from '@/components/LoadingSpinner';
@@ -78,11 +78,7 @@ export default function StockDashboard({ onRefresh }: StockDashboardProps) {
     const [movement, setMovement] = useState<MovementSummary | null>(null);
     const [alerts, setAlerts] = useState<StockAlert[]>([]);
 
-    useEffect(() => {
-        loadData();
-    }, []);
-
-    const loadData = async () => {
+    const loadData = useCallback(async () => {
         setIsLoading(true);
         try {
             const [overviewData, movementData, alertsData] = await Promise.all([
@@ -100,7 +96,11 @@ export default function StockDashboard({ onRefresh }: StockDashboardProps) {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [showToast]);
+
+    useEffect(() => {
+        loadData();
+    }, [loadData]);
 
     const handleRefresh = () => {
         loadData();

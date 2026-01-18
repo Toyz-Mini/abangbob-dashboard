@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Modal from '@/components/Modal';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import GlassCard from '@/components/GlassCard';
@@ -79,12 +79,25 @@ export default function ProductionWorkflowModal({
     // Result
     const [productionResult, setProductionResult] = useState<ProductionResult | null>(null);
 
+    const loadRecipes = useCallback(async () => {
+        setIsLoading(true);
+        try {
+            const data = await getProductionRecipesAction();
+            setRecipes(data);
+        } catch (error) {
+            console.error('Error loading recipes:', error);
+            showToast('Gagal memuatkan recipe', 'error');
+        } finally {
+            setIsLoading(false);
+        }
+    }, [showToast]);
+
     // Load recipes on open
     useEffect(() => {
         if (isOpen) {
             loadRecipes();
         }
-    }, [isOpen]);
+    }, [isOpen, loadRecipes]);
 
     // Reset on close
     useEffect(() => {
@@ -97,19 +110,6 @@ export default function ProductionWorkflowModal({
             setIngredientStatus([]);
         }
     }, [isOpen]);
-
-    const loadRecipes = async () => {
-        setIsLoading(true);
-        try {
-            const data = await getProductionRecipesAction();
-            setRecipes(data);
-        } catch (error) {
-            console.error('Error loading recipes:', error);
-            showToast('Gagal memuatkan recipe', 'error');
-        } finally {
-            setIsLoading(false);
-        }
-    };
 
     const handleSelectRecipe = async (recipe: Recipe) => {
         setSelectedRecipe(recipe);
@@ -268,7 +268,7 @@ export default function ProductionWorkflowModal({
                             <ChefHat size={48} style={{ opacity: 0.3, marginBottom: '1rem' }} />
                             <p>Tiada production recipe dijumpai.</p>
                             <p style={{ fontSize: '0.85rem', marginTop: '0.5rem' }}>
-                                Sila buat recipe dengan jenis "Production" dahulu.
+                                Sila buat recipe dengan jenis &quot;Production&quot; dahulu.
                             </p>
                         </div>
                     ) : (
