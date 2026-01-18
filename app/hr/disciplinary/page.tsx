@@ -115,6 +115,13 @@ export default function DisciplinaryPage() {
             issuedAt: new Date().toISOString(),
         });
 
+        // Show simple success feedback (can be upgraded to toast later)
+        if (form.type === 'termination') {
+            alert(`Tindakan ${form.type} telah direkodkan. Status staf ${selectedStaff.name} telah dikemaskini kepada 'Terminated'.`);
+        } else {
+            alert('Tindakan disiplin telah berjaya direkodkan.');
+        }
+
         resetForm();
         setShowAddModal(false);
         setIsProcessing(false);

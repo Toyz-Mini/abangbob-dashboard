@@ -2605,6 +2605,279 @@ export async function upsertStaffKPI(kpi: any) {
   return toCamelCase(data);
 }
 
+// Recalculate KPI for all staff using Postgres function
+export async function recalculateKPI(period?: string) {
+  const supabase = getSupabaseClient();
+  if (!supabase) throw new Error('Supabase not connected');
+
+  const targetPeriod = period || new Date().toISOString().slice(0, 7);
+
+  const { data, error } = await supabase.rpc('calculate_staff_kpi', {
+    target_period: targetPeriod
+  });
+
+  if (error) {
+    console.error('Error recalculating KPI:', error);
+    throw error;
+  }
+
+  console.log('[KPI] Recalculated for period:', targetPeriod, 'Staff count:', data?.length || 0);
+  return data;
+}
+
+// Fetch KPI bonus for a specific staff member and period
+export async function fetchStaffKPIBonus(staffId: string, period: string): Promise<number> {
+  const supabase = getSupabaseClient();
+  if (!supabase) return 0;
+
+  const { data, error } = await supabase
+    .from('staff_kpi')
+    .select('bonus_amount')
+    .eq('staff_id', staffId)
+    .eq('period', period)
+    .single();
+
+  if (error || !data) {
+    console.log(`[KPI] No KPI bonus found for staff ${staffId} in ${period}`);
+    return 0;
+  }
+
+  return Number(data.bonus_amount) || 0;
+}
+
+// Fetch all KPI bonuses for a period (for batch payroll generation)
+export async function fetchAllKPIBonuses(period: string): Promise<Record<string, number>> {
+  const supabase = getSupabaseClient();
+  if (!supabase) return {};
+
+  const { data, error } = await supabase
+    .from('staff_kpi')
+    .select('staff_id, bonus_amount')
+    .eq('period', period);
+
+  if (error || !data) {
+    console.error('[KPI] Error fetching KPI bonuses:', error);
+    return {};
+  }
+
+  // Create a map of staffId -> bonus
+  const bonusMap: Record<string, number> = {};
+  data.forEach((row: any) => {
+    bonusMap[row.staff_id] = Number(row.bonus_amount) || 0;
+  });
+
+  console.log('[KPI] Fetched bonuses for period', period, ':', Object.keys(bonusMap).length, 'staff');
+  return bonusMap;
+}
+
+// ============ OT (OVERTIME) PAYROLL INTEGRATION ============
+
+// Fetch approved OT amount for a specific staff member and period
+export async function fetchApprovedOT(staffId: string, period: string): Promise<{ hours: number; amount: number }> {
+  const supabase = getSupabaseClient();
+  if (!supabase) return { hours: 0, amount: 0 };
+
+  const [year, month] = period.split('-').map(Number);
+  const startDate = `${period}-01`;
+  const endDate = new Date(year, month, 0).toISOString().split('T')[0]; // Last day of month
+
+  const { data, error } = await supabase
+    .from('ot_records')
+    .select('hours, amount')
+    .eq('staff_id', staffId)
+    .eq('status', 'approved')
+    .gte('date', startDate)
+    .lte('date', endDate);
+
+  if (error || !data) {
+    console.log(`[OT] No approved OT found for staff ${staffId} in ${period}`);
+    return { hours: 0, amount: 0 };
+  }
+
+  const totalHours = data.reduce((sum, row) => sum + (Number(row.hours) || 0), 0);
+  const totalAmount = data.reduce((sum, row) => sum + (Number(row.amount) || 0), 0);
+
+  return { hours: totalHours, amount: totalAmount };
+}
+
+// Fetch all approved OT for a period (for batch payroll generation)
+export async function fetchAllApprovedOT(period: string): Promise<Record<string, { hours: number; amount: number }>> {
+  const supabase = getSupabaseClient();
+  if (!supabase) return {};
+
+  const [year, month] = period.split('-').map(Number);
+  const startDate = `${period}-01`;
+  const endDate = new Date(year, month, 0).toISOString().split('T')[0];
+
+  const { data, error } = await supabase
+    .from('ot_records')
+    .select('staff_id, hours, amount')
+    .eq('status', 'approved')
+    .gte('date', startDate)
+    .lte('date', endDate);
+
+  if (error || !data) {
+    console.error('[OT] Error fetching approved OT:', error);
+    return {};
+  }
+
+  // Aggregate by staff_id
+  const otMap: Record<string, { hours: number; amount: number }> = {};
+  data.forEach((row: any) => {
+    const staffId = row.staff_id;
+    if (!otMap[staffId]) {
+      otMap[staffId] = { hours: 0, amount: 0 };
+    }
+    otMap[staffId].hours += Number(row.hours) || 0;
+    otMap[staffId].amount += Number(row.amount) || 0;
+  });
+
+  console.log('[OT] Fetched approved OT for period', period, ':', Object.keys(otMap).length, 'staff');
+  return otMap;
+}
+
+// ============ LEAVE PAYROLL INTEGRATION ============
+
+// Fetch unpaid leave days for a specific staff member and period
+export async function fetchUnpaidLeaveDays(staffId: string, period: string): Promise<number> {
+  const supabase = getSupabaseClient();
+  if (!supabase) return 0;
+
+  const [year, month] = period.split('-').map(Number);
+  const startDate = `${period}-01`;
+  const endDate = new Date(year, month, 0).toISOString().split('T')[0];
+
+  const { data, error } = await supabase
+    .from('leave_requests')
+    .select('duration, is_half_day')
+    .eq('staff_id', staffId)
+    .eq('status', 'approved')
+    .eq('leave_type', 'unpaid')
+    .gte('start_date', startDate)
+    .lte('start_date', endDate);
+
+  if (error || !data) {
+    console.log(`[Leave] No unpaid leave found for staff ${staffId} in ${period}`);
+    return 0;
+  }
+
+  // Calculate total unpaid leave days
+  const totalDays = data.reduce((sum, row) => {
+    const days = Number(row.duration) || 0;
+    return sum + (row.is_half_day ? 0.5 : days);
+  }, 0);
+
+  return totalDays;
+}
+
+// Fetch all unpaid leave days for a period (for batch payroll generation)
+export async function fetchAllUnpaidLeaveDays(period: string): Promise<Record<string, number>> {
+  const supabase = getSupabaseClient();
+  if (!supabase) return {};
+
+  const [year, month] = period.split('-').map(Number);
+  const startDate = `${period}-01`;
+  const endDate = new Date(year, month, 0).toISOString().split('T')[0];
+
+  const { data, error } = await supabase
+    .from('leave_requests')
+    .select('staff_id, duration, is_half_day')
+    .eq('status', 'approved')
+    .eq('leave_type', 'unpaid')
+    .gte('start_date', startDate)
+    .lte('start_date', endDate);
+
+  if (error || !data) {
+    console.error('[Leave] Error fetching unpaid leave:', error);
+    return {};
+  }
+
+  // Aggregate by staff_id
+  const leaveMap: Record<string, number> = {};
+  data.forEach((row: any) => {
+    const staffId = row.staff_id;
+    const days = row.is_half_day ? 0.5 : (Number(row.duration) || 0);
+    leaveMap[staffId] = (leaveMap[staffId] || 0) + days;
+  });
+
+  console.log('[Leave] Fetched unpaid leave for period', period, ':', Object.keys(leaveMap).length, 'staff');
+  return leaveMap;
+}
+
+// ============ SALARY ADVANCE PAYROLL INTEGRATION ============
+
+// Fetch salary advance deduction for a specific staff member and period
+export async function fetchSalaryAdvanceDeduction(staffId: string, period: string): Promise<number> {
+  const supabase = getSupabaseClient();
+  if (!supabase) return 0;
+
+  const { data, error } = await supabase
+    .from('staff_advances')
+    .select('deduction_amount, remaining_balance')
+    .eq('staff_id', staffId)
+    .eq('status', 'approved')
+    .eq('deduction_month', period)
+    .gt('remaining_balance', 0); // Only fetch if there's still balance to deduct
+
+  if (error || !data) {
+    console.log(`[Advance] No salary advance found for staff ${staffId} in ${period}`);
+    return 0;
+  }
+
+  // Sum all deductions for this period
+  const totalDeduction = data.reduce((sum, row) => sum + (Number(row.deduction_amount) || 0), 0);
+  return totalDeduction;
+}
+
+// Fetch all salary advance deductions for a period (for batch payroll generation)
+export async function fetchAllSalaryAdvanceDeductions(period: string): Promise<Record<string, number>> {
+  const supabase = getSupabaseClient();
+  if (!supabase) return {};
+
+  const { data, error } = await supabase
+    .from('staff_advances')
+    .select('staff_id, deduction_amount, remaining_balance')
+    .eq('status', 'approved')
+    .eq('deduction_month', period)
+    .gt('remaining_balance', 0);
+
+  if (error || !data) {
+    console.error('[Advance] Error fetching salary advances:', error);
+    return {};
+  }
+
+  // Aggregate by staff_id
+  const advanceMap: Record<string, number> = {};
+  data.forEach((row: any) => {
+    const staffId = row.staff_id;
+    advanceMap[staffId] = (advanceMap[staffId] || 0) + (Number(row.deduction_amount) || 0);
+  });
+
+  console.log('[Advance] Fetched salary advances for period', period, ':', Object.keys(advanceMap).length, 'staff');
+  return advanceMap;
+}
+
+// Update remaining balance after payroll is processed
+export async function updateSalaryAdvanceBalance(advanceId: string, newBalance: number): Promise<boolean> {
+  const supabase = getSupabaseClient();
+  if (!supabase) return false;
+
+  const { error } = await supabase
+    .from('staff_advances')
+    .update({
+      remaining_balance: newBalance,
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', advanceId);
+
+  if (error) {
+    console.error('[Advance] Error updating balance:', error);
+    return false;
+  }
+
+  return true;
+}
+
 export async function fetchTrainingRecords(staffId?: string) {
   const supabase = getSupabaseClient();
   if (!supabase) return [];

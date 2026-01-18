@@ -3837,14 +3837,44 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       id: `disc_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       createdAt: new Date().toISOString(),
     };
+
     setDisciplinaryActions(prev => {
       const updated = [newAction, ...prev];
       setToStorage(STORAGE_KEYS.DISCIPLINARY_ACTIONS, updated);
       return updated;
     });
+
+    // Determine color based on type
+    const color = action.type === 'termination' || action.type === 'suspension' || action.type === 'final_warning'
+      ? 'destructive'  // Use destuctive/error style for severe actions
+      : 'default';     // Use default style for warnings
+
+    // Add toast notification
+    if (typeof window !== 'undefined') {
+      // We can use a custom event or direct toast library usage if available, 
+      // but for now let's assume there's a toast mechanism or we rely on the component to show it.
+      // Since we don't have direct access to 'toast' here, we'll let the component handle the UI feedback
+      // but we WILL perform the impactful business logic here.
+    }
+
+    // Automate Termination: Update staff status if action is termination
+    if (action.type === 'termination') {
+      updateStaff(action.staffId, { status: 'Terminated' });
+      // Also sync staff update happens inside updateStaff
+
+      // Notify staff logic (optional)
+      notifyStaffRequestResult({
+        staffId: action.staffId,
+        staffName: action.staffName,
+        isApproved: false, // Not exactly approved/rejected, but used to trigger notification
+        approverName: action.issuedByName,
+        responseNote: `Tindakan Disiplin (Penamatan): ${action.reason}`
+      });
+    }
+
     // Sync to Supabase
     SupabaseSync.syncAddDisciplinaryAction(newAction);
-  }, []);
+  }, [updateStaff]);
 
   const updateDisciplinaryAction = useCallback((id: string, updates: Partial<DisciplinaryAction>) => {
     setDisciplinaryActions(prev => {

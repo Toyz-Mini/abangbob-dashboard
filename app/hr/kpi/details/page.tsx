@@ -363,7 +363,7 @@ export default function StaffKPIProfilePage() {
                         <div style={{ textAlign: 'center' }}>
                             <DollarSign size={32} style={{ marginBottom: '0.5rem', opacity: 0.9 }} />
                             <div style={{ fontSize: '2rem', fontWeight: 700 }}>
-                                RM{currentKPI?.bonusAmount || 0}
+                                BND{currentKPI?.bonusAmount || 0}
                             </div>
                             <div style={{ fontSize: '0.875rem', opacity: 0.9 }}>
                                 Bonus Bulan Ini
@@ -624,7 +624,7 @@ export default function StaffKPIProfilePage() {
                                                 </span>
                                             </td>
                                             <td style={{ textAlign: 'right', color: 'var(--success)', fontWeight: 600 }}>
-                                                RM{kpi.bonusAmount}
+                                                BND{kpi.bonusAmount}
                                             </td>
                                             <td>
                                                 <span style={{

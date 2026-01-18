@@ -89,6 +89,8 @@ export interface Order {
   readyAt?: string;             // Bila order siap
   preparedByStaffId?: string;   // Staff mana yang prepare
   loyaltyPointsEarned?: number; // Points earned from this order (for void/refund reversal)
+  promotionId?: string;         // Applied promotion ID
+  promoCode?: string;           // Applied promo code
 }
 
 export type InventoryItemType = 'raw' | 'semi-finished' | 'finished';

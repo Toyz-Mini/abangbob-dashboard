@@ -22,7 +22,8 @@ export interface PayrollEntry {
     baseSalary: number;
     overtimePay: number;
     allowances: number;
-    bonus: number;
+    bonus: number;           // Manual bonus
+    kpiBonus: number;        // Auto-calculated from KPI score
     otherEarnings: number;
     grossSalary: number;
 
@@ -103,11 +104,19 @@ export function calculateSCP(
 
 /**
  * Calculate full payroll for a staff member
+ * @param staff - Staff profile
+ * @param overtimePay - Overtime pay amount
+ * @param bonus - Manual bonus
+ * @param kpiBonus - Auto-calculated KPI bonus (from staff_kpi table)
+ * @param otherEarnings - Other earnings
+ * @param otherDeductions - Other deductions
+ * @param unpaidLeaveDays - Number of unpaid leave days
  */
 export function calculatePayroll(
     staff: StaffProfile,
     overtimePay: number = 0,
     bonus: number = 0,
+    kpiBonus: number = 0,
     otherEarnings: number = 0,
     otherDeductions: number = 0,
     unpaidLeaveDays: number = 0
@@ -123,8 +132,8 @@ export function calculatePayroll(
     // Calculate total allowances
     const allowances = (staff.allowances || []).reduce((sum, a) => sum + a.amount, 0);
 
-    // Calculate gross salary
-    const grossSalary = staff.baseSalary + overtimePay + allowances + bonus + otherEarnings;
+    // Calculate gross salary (now includes kpiBonus)
+    const grossSalary = staff.baseSalary + overtimePay + allowances + bonus + kpiBonus + otherEarnings;
 
     // Calculate statutory contributions
     const tap = calculateTAP(grossSalary, tapEnabled, tapEmployeeRate, tapEmployerRate);
@@ -151,6 +160,7 @@ export function calculatePayroll(
         overtimePay,
         allowances,
         bonus,
+        kpiBonus,
         otherEarnings,
         grossSalary,
         tapEmployee: tap.employee,
@@ -197,6 +207,7 @@ export const MOCK_PAYROLL_ENTRIES: PayrollEntry[] = [
         overtimePay: 150,
         allowances: 100,
         bonus: 0,
+        kpiBonus: 0,
         otherEarnings: 0,
         grossSalary: 1750,
         tapEmployee: 87.50,
@@ -225,6 +236,7 @@ export const MOCK_PAYROLL_ENTRIES: PayrollEntry[] = [
         overtimePay: 0,
         allowances: 50,
         bonus: 0,
+        kpiBonus: 0,
         otherEarnings: 0,
         grossSalary: 1250,
         tapEmployee: 62.50,
@@ -253,6 +265,7 @@ export const MOCK_PAYROLL_ENTRIES: PayrollEntry[] = [
         overtimePay: 0,
         allowances: 0,
         bonus: 0,
+        kpiBonus: 0,
         otherEarnings: 0,
         grossSalary: 600,
         tapEmployee: 0, // TAP disabled for part-time

@@ -9,7 +9,7 @@ import { useTranslation } from '@/lib/contexts/LanguageContext';
 import { useSound } from '@/lib/contexts/SoundContext';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { useToast } from '@/lib/contexts/ToastContext';
-import { CartItem, Order, MenuItem, SelectedModifier, ReceiptSettings, DEFAULT_RECEIPT_SETTINGS, Customer } from '@/lib/types';
+import { CartItem, Order, MenuItem, SelectedModifier, ReceiptSettings, DEFAULT_RECEIPT_SETTINGS, Customer, Promotion } from '@/lib/types';
 import { getUpsellSuggestions } from '@/lib/menu-data';
 import {
   thermalPrinter,
@@ -21,6 +21,7 @@ import {
   isTransactionSubmitted,
   markTransactionSubmitted,
 } from '@/lib/services';
+import { isPromotionValid, calculatePromotionDiscount } from '@/lib/utils/promotion-helpers';
 // Dynamic Imports for Heavy Components
 const ReceiptPreview = dynamic(() => import('@/components/ReceiptPreview'), { ssr: false });
 const ShiftWizardModal = dynamic(() => import('@/components/cash-management/ShiftWizardModal'), { ssr: false });
@@ -28,7 +29,7 @@ const RegisterStatus = dynamic(() => import('@/components/cash-management/Regist
 const MoneyOutModal = dynamic(() => import('@/components/pos/MoneyOutModal'), { ssr: false });
 import POSMenuItem from '@/components/pos/POSMenuItem'; // Memoized Item
 
-import { ArrowLeft, UtensilsCrossed, Sandwich, Coffee, History, Printer, Clock, ChefHat, CheckCircle, ShoppingBag, Plus, Minus, X, Sparkles, AlertTriangle, User, DollarSign, CreditCard, QrCode, Wallet, WifiOff, RefreshCw, MessageCircle, Check, Globe, Send, ChevronRight, Banknote } from 'lucide-react';
+import { ArrowLeft, UtensilsCrossed, Sandwich, Coffee, History, Printer, Clock, ChefHat, CheckCircle, ShoppingBag, Plus, Minus, X, Sparkles, AlertTriangle, User, DollarSign, CreditCard, QrCode, Wallet, WifiOff, RefreshCw, MessageCircle, Check, Globe, Send, ChevronRight, Banknote, Tag } from 'lucide-react';
 import { WhatsAppService } from '@/lib/services/whatsapp';
 import Modal from '@/components/Modal';
 import LoadingSpinner from '@/components/LoadingSpinner';
@@ -51,7 +52,7 @@ export default function POSPage() {
   const router = useRouter();
 
   // Cash Register State
-  const { currentRegister, isInitialized: storeInitialized } = useStore();
+  const { currentRegister, isInitialized: storeInitialized, promotions } = useStore();
   const [registerModalOpen, setRegisterModalOpen] = useState(false);
   const [registerModalMode, setRegisterModalMode] = useState<'open' | 'close'>('open');
   const [moneyOutModalOpen, setMoneyOutModalOpen] = useState(false);
@@ -124,6 +125,10 @@ export default function POSPage() {
   const [checkoutStep, setCheckoutStep] = useState(1); // Wizard Step (1-3)
   const [receiptSettings, setReceiptSettings] = useState<ReceiptSettings>(DEFAULT_RECEIPT_SETTINGS);
   const receiptRef = useRef<HTMLDivElement>(null);
+
+  // Promotion State
+  const [selectedPromotion, setSelectedPromotion] = useState<Promotion | null>(null);
+  const [showPromotionModal, setShowPromotionModal] = useState(false);
 
   // Customer Selection State
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
@@ -254,7 +259,26 @@ export default function POSPage() {
 
   // Calculate cart totals
   const cartSubtotal = cart.reduce((sum, item) => sum + (item.itemTotal * item.quantity), 0);
-  const discountAmount = (cartSubtotal * discountPercent) / 100;
+
+  // Promotion Logic
+  const validPromotions = useMemo(() => {
+    return promotions.filter(p => isPromotionValid(p, cartSubtotal).isValid);
+  }, [promotions, cartSubtotal]);
+
+  // If a promotion is selected but becomes invalid (e.g. total drops), clear it
+  useEffect(() => {
+    if (selectedPromotion) {
+      const validity = isPromotionValid(selectedPromotion, cartSubtotal);
+      if (!validity.isValid) {
+        setSelectedPromotion(null);
+        showToast(t('pos.toast.promotionInvalid', { reason: validity.reason }), 'warning');
+      }
+    }
+  }, [cartSubtotal, selectedPromotion, showToast, t]);
+
+  const discountAmount = selectedPromotion
+    ? calculatePromotionDiscount(selectedPromotion, cartSubtotal)
+    : (cartSubtotal * discountPercent) / 100;
 
   const cartTotal = cartSubtotal - discountAmount;
 
@@ -461,6 +485,8 @@ export default function POSPage() {
         createdAt: new Date().toISOString(),
         staffId: currentStaff?.id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(currentStaff.id) ? currentStaff.id : undefined,
         staffName: currentStaff?.name, // Store staff name for reference
+        promotionId: selectedPromotion?.id,
+        promoCode: selectedPromotion?.promoCode,
       });
 
       // Decrement inventory based on sold items (simple mapping by category)
@@ -512,6 +538,7 @@ export default function POSPage() {
       setCustomerPhone('+673');
       setPaymentMethod('cash');
       setDiscountPercent(0);
+      setSelectedPromotion(null);
       setCashReceived(0);
       setUsePoints(false); // Reset redemption
       setCurrentTransactionId(null);
@@ -835,6 +862,51 @@ export default function POSPage() {
                         <span>{t('pos.cart.subtotal')}:</span>
                         <span>BND {cartSubtotal.toFixed(2)}</span>
                       </div>
+
+                      {/* Promotion Section */}
+                      <div style={{ marginBottom: '1rem' }}>
+                        {selectedPromotion ? (
+                          <div style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            background: 'var(--primary-light)',
+                            padding: '0.5rem 0.75rem',
+                            borderRadius: 'var(--radius-md)',
+                            border: '1px dashed var(--primary)'
+                          }}>
+                            <div>
+                              <div style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--primary-dark)' }}>
+                                {selectedPromotion.name}
+                              </div>
+                              <div style={{ fontSize: '0.75rem', color: 'var(--primary)' }}>
+                                - BND {discountAmount.toFixed(2)}
+                              </div>
+                            </div>
+                            <button
+                              onClick={() => setSelectedPromotion(null)}
+                              style={{ color: 'var(--primary-dark)', cursor: 'pointer', background: 'none', border: 'none' }}
+                            >
+                              <X size={16} />
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => setShowPromotionModal(true)}
+                            className="btn btn-outline btn-sm"
+                            style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', border: '1px dashed var(--gray-300)' }}
+                          >
+                            <Tag size={16} />
+                            {t('pos.cart.applyPromotion')}
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Discount Amount Display */}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', fontSize: '0.875rem', color: 'var(--success)' }}>
+                        <span>{t('pos.cart.discount')}:</span>
+                        <span>- BND {discountAmount.toFixed(2)}</span>
+                      </div>
                       <div style={{
                         display: 'flex',
                         justifyContent: 'space-between',
@@ -1008,6 +1080,76 @@ export default function POSPage() {
               </div>
             </>
           )}
+        </Modal>
+
+        {/* Promotion Selection Modal */}
+        <Modal
+          isOpen={showPromotionModal}
+          onClose={() => setShowPromotionModal(false)}
+          title={t('pos.modal.promotion.title') || "Pilih Promosi"}
+          maxWidth="450px"
+        >
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: '60vh', overflowY: 'auto' }}>
+            {validPromotions.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>
+                <Tag size={32} style={{ margin: '0 auto 0.5rem', opacity: 0.5 }} />
+                <p>{t('pos.modal.promotion.empty') || "Tiada promosi yang sah untuk pesanan ini."}</p>
+              </div>
+            ) : (
+              validPromotions.map(promo => (
+                <button
+                  key={promo.id}
+                  onClick={() => {
+                    setSelectedPromotion(promo);
+                    setShowPromotionModal(false);
+                  }}
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'flex-start',
+                    padding: '1rem',
+                    border: '1px solid var(--gray-200)',
+                    borderRadius: 'var(--radius-md)',
+                    background: 'white',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    transition: 'all 0.2s',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = 'var(--primary)';
+                    e.currentTarget.style.backgroundColor = 'var(--bg-secondary)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = 'var(--gray-200)';
+                    e.currentTarget.style.backgroundColor = 'white';
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', marginBottom: '0.25rem' }}>
+                    <span style={{ fontWeight: 600, fontSize: '1rem' }}>{promo.name}</span>
+                    <span style={{
+                      fontWeight: 700,
+                      color: 'var(--primary)',
+                      background: 'var(--primary-light)',
+                      padding: '0.1rem 0.5rem',
+                      borderRadius: '4px',
+                      fontSize: '0.75rem'
+                    }}>
+                      {promo.type === 'percentage' ? `${promo.value}%` : `$${promo.value}`}
+                    </span>
+                  </div>
+                  <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                    {promo.promoCode && <span style={{ fontFamily: 'monospace', background: '#f1f5f9', padding: '0.1rem 0.3rem', borderRadius: '4px', marginRight: '0.5rem' }}>{promo.promoCode}</span>}
+                    {promo.minPurchase ? `Min. spend $${promo.minPurchase}` : ''}
+                  </div>
+                </button>
+              ))
+            )}
+          </div>
+          <div style={{ marginTop: '1rem', display: 'flex', justifyContent: 'flex-end' }}>
+            <button onClick={() => setShowPromotionModal(false)} className="btn btn-ghost">
+              {t('common.cancel') || "Batal"}
+            </button>
+          </div>
         </Modal>
 
         {/* Upsell Modal - Product Cards */}

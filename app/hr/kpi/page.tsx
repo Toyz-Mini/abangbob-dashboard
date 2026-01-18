@@ -4,6 +4,8 @@ import { useState } from 'react';
 import MainLayout from '@/components/MainLayout';
 import { useKPI } from '@/lib/store';
 import { KPI_METRICS_CONFIG, getRankTier, getScoreColor, DEFAULT_KPI_CONFIG } from '@/lib/kpi-data';
+import { recalculateKPI } from '@/lib/supabase/operations';
+import { loadStaffKPIFromSupabase } from '@/lib/supabase-sync';
 import Link from 'next/link';
 import {
   Trophy,
@@ -17,13 +19,15 @@ import {
   Users,
   Crown,
   Award,
-  Target
+  Target,
+  RefreshCw
 } from 'lucide-react';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import StatCard from '@/components/StatCard';
 
 export default function KPIDashboardPage() {
   const { staffKPI, staff, getKPILeaderboard, isInitialized } = useKPI();
+  const [isRecalculating, setIsRecalculating] = useState(false);
 
   const currentMonth = new Date().toISOString().slice(0, 7);
   const lastMonth = new Date(new Date().setMonth(new Date().getMonth() - 1)).toISOString().slice(0, 7);
@@ -31,6 +35,23 @@ export default function KPIDashboardPage() {
   const [selectedPeriod, setSelectedPeriod] = useState(currentMonth);
 
   const leaderboard = getKPILeaderboard(selectedPeriod);
+
+  // Handle recalculate KPI
+  const handleRecalculateKPI = async () => {
+    setIsRecalculating(true);
+    try {
+      await recalculateKPI(selectedPeriod);
+      // Refresh data from Supabase
+      await loadStaffKPIFromSupabase();
+      // Force page refresh to get new data
+      window.location.reload();
+    } catch (error) {
+      console.error('Failed to recalculate KPI:', error);
+      alert('Gagal mengira semula KPI. Sila cuba lagi.');
+    } finally {
+      setIsRecalculating(false);
+    }
+  };
 
   // Get staff info for display
   const getStaffInfo = (staffId: string) => {
@@ -82,7 +103,7 @@ export default function KPIDashboardPage() {
           </div>
 
           {/* Period Selector */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <Calendar size={18} color="var(--text-secondary)" />
             <select
               value={selectedPeriod}
@@ -96,6 +117,27 @@ export default function KPIDashboardPage() {
                 </option>
               ))}
             </select>
+
+            {/* Recalculate KPI Button */}
+            <button
+              onClick={handleRecalculateKPI}
+              disabled={isRecalculating}
+              className="btn btn-primary"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                minWidth: '140px'
+              }}
+            >
+              <RefreshCw
+                size={16}
+                style={{
+                  animation: isRecalculating ? 'spin 1s linear infinite' : 'none'
+                }}
+              />
+              {isRecalculating ? 'Mengira...' : 'Kira Semula'}
+            </button>
           </div>
         </div>
 
@@ -119,7 +161,7 @@ export default function KPIDashboardPage() {
           />
           <StatCard
             label="Jumlah Bonus"
-            value={`RM${totalBonus}`}
+            value={`BND${totalBonus}`}
             change="bulan ini"
             changeType="positive"
             icon={DollarSign}
@@ -200,7 +242,7 @@ export default function KPIDashboardPage() {
                           {kpi.overallScore}%
                         </div>
                         <div style={{ fontSize: '0.75rem', color: 'var(--success)' }}>
-                          +RM{kpi.bonusAmount}
+                          +BND{kpi.bonusAmount}
                         </div>
                       </div>
                     </div>
@@ -306,7 +348,7 @@ export default function KPIDashboardPage() {
                         </td>
                         <td style={{ textAlign: 'right' }}>
                           <span style={{ color: 'var(--success)', fontWeight: 600 }}>
-                            RM{kpi.bonusAmount}
+                            BND{kpi.bonusAmount}
                           </span>
                         </td>
                         <td>
@@ -406,11 +448,11 @@ export default function KPIDashboardPage() {
             <div>
               <div style={{ fontWeight: 600 }}>Formula Bonus</div>
               <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
-                Bonus = RM{DEFAULT_KPI_CONFIG.baseBonus} × (KPI Score / 100)
+                Bonus = BND{DEFAULT_KPI_CONFIG.baseBonus} × (KPI Score / 100)
               </div>
             </div>
             <div style={{ marginLeft: 'auto', padding: '0.5rem 1rem', background: 'var(--success)', color: 'white', borderRadius: 'var(--radius-md)', fontWeight: 600 }}>
-              Base: RM{DEFAULT_KPI_CONFIG.baseBonus}
+              Base: BND{DEFAULT_KPI_CONFIG.baseBonus}
             </div>
           </div>
         </div>
