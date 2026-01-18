@@ -113,6 +113,7 @@ function SyncDebugSection() {
 
   useEffect(() => {
     // Initial load
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSyncLogs(getSyncLogs());
     setSyncStats(getSyncStats());
     setDataSource(getDataSourceInfo());

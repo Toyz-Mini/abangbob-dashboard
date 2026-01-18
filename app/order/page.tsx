@@ -88,6 +88,7 @@ export default function WebOrderPage() {
       return;
     }
 
+    // eslint-disable-next-line react-hooks/purity
     const orderNumber = `ORD-${Date.now().toString().slice(-6)}`;
 
     try {

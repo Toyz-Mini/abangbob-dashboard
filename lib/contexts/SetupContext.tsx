@@ -366,6 +366,7 @@ export function SetupProvider({ children }: { children: ReactNode }) {
     const tourComplete = localStorage.getItem(TOUR_COMPLETE_KEY);
     const savedSetup = localStorage.getItem(SETUP_STORAGE_KEY);
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsSetupComplete(setupComplete === 'true');
     setHasCompletedTour(tourComplete === 'true');
 

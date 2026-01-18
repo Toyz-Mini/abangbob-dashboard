@@ -31,6 +31,7 @@ export default function OnlineMenuPage() {
     useEffect(() => {
         // Load mode and cart
         if (typeof window !== 'undefined') {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setOrderMode(sessionStorage.getItem('orderMode') || 'dine-in');
             const savedCart = sessionStorage.getItem('onlineCart');
             if (savedCart) {

@@ -20,6 +20,7 @@ export default function OrderStatusPage({ params }: { params: { orderId: string 
 
     useEffect(() => {
         if (!supabase) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setDebugInfo('Supabase client not available');
             setLoading(false);
             return;

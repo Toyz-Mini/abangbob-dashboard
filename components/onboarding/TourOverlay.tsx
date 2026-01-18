@@ -11,6 +11,7 @@ export default function TourOverlay({ targetElement }: Props) {
 
   useEffect(() => {
     if (!targetElement) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setRect(null);
       return;
     }

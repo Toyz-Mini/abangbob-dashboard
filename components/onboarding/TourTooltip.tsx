@@ -2,10 +2,10 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { TourStep } from '@/lib/contexts/SetupContext';
-import { 
-  ChevronLeft, 
-  ChevronRight, 
-  X, 
+import {
+  ChevronLeft,
+  ChevronRight,
+  X,
   Sparkles,
   CheckCircle2
 } from 'lucide-react';
@@ -39,6 +39,7 @@ export default function TourTooltip({
   useEffect(() => {
     if (!targetElement || !tooltipRef.current) {
       // Center in viewport if no target
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setPosition({
         top: window.innerHeight / 2,
         left: window.innerWidth / 2,
@@ -144,7 +145,7 @@ export default function TourTooltip({
     >
       {/* Arrow */}
       {targetElement && <div className={getArrowStyles()} />}
-      
+
       {/* Tooltip Card */}
       <div className="bg-slate-800 border border-slate-700 rounded-2xl shadow-2xl shadow-black/50 overflow-hidden">
         {/* Header */}
@@ -174,13 +175,12 @@ export default function TourTooltip({
           {Array.from({ length: totalSteps }).map((_, idx) => (
             <div
               key={idx}
-              className={`h-1.5 rounded-full transition-all ${
-                idx === currentStep 
-                  ? 'w-6 bg-teal-500' 
-                  : idx < currentStep 
-                    ? 'w-1.5 bg-teal-500/50' 
+              className={`h-1.5 rounded-full transition-all ${idx === currentStep
+                  ? 'w-6 bg-teal-500'
+                  : idx < currentStep
+                    ? 'w-1.5 bg-teal-500/50'
                     : 'w-1.5 bg-slate-600'
-              }`}
+                }`}
             />
           ))}
         </div>
@@ -192,8 +192,8 @@ export default function TourTooltip({
             disabled={isFirstStep}
             className={`
               flex items-center gap-1 px-4 py-2 rounded-xl text-sm font-medium transition-all
-              ${isFirstStep 
-                ? 'bg-slate-700/50 text-slate-500 cursor-not-allowed' 
+              ${isFirstStep
+                ? 'bg-slate-700/50 text-slate-500 cursor-not-allowed'
                 : 'bg-slate-700 text-white hover:bg-slate-600'
               }
             `}

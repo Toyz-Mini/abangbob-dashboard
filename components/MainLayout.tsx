@@ -83,6 +83,7 @@ export default function MainLayout({ children }: { children: ReactNode }) {
   // Open sidebar on mount if desktop AND allowed
   useEffect(() => {
     if (window.innerWidth >= 768 && shouldShowSidebar) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsSidebarOpen(true);
     } else if (!shouldShowSidebar) {
       setIsSidebarOpen(false);

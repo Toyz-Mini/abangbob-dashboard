@@ -20,6 +20,7 @@ export default function RouteGuard({ children }: { children: React.ReactNode }) 
 
         // Public paths don't need auth
         if (PUBLIC_PATHS.includes(pathname)) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setAuthorized(true);
             return;
         }

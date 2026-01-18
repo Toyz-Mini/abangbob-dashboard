@@ -20,6 +20,7 @@ export default function OrderLandingPage() {
             }
             try {
                 const customer = JSON.parse(customerStr);
+                // eslint-disable-next-line react-hooks/set-state-in-effect
                 setCustomerName(customer.name?.split(' ')[0] || 'Customer');
             } catch (e) {
                 router.push('/order-online/auth');

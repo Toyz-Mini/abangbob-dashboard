@@ -36,7 +36,7 @@ const ROLE_ROUTES: Record<string, ('Admin' | 'Manager' | 'Staff')[]> = {
   // Admin only
   '/settings': ['Admin', 'Manager'],
   '/audit-log': ['Admin', 'Manager'],
-  
+
   // Admin and Manager
   '/hr': ['Admin', 'Manager'],
   '/hr/staff': ['Admin', 'Manager'],
@@ -49,7 +49,7 @@ const ROLE_ROUTES: Record<string, ('Admin' | 'Manager' | 'Staff')[]> = {
   '/analytics': ['Admin', 'Manager'],
   '/customers': ['Admin', 'Manager'],
   '/promotions': ['Admin', 'Manager'],
-  
+
   // Admin, Manager, and Staff
   '/': ['Admin', 'Manager', 'Staff'],
   '/pos': ['Admin', 'Manager', 'Staff'],
@@ -63,7 +63,7 @@ const ROLE_ROUTES: Record<string, ('Admin' | 'Manager' | 'Staff')[]> = {
   '/order-display': ['Admin', 'Manager', 'Staff'],
   '/notifications': ['Admin', 'Manager', 'Staff'],
   '/help': ['Admin', 'Manager', 'Staff'],
-  
+
   // Staff portal - accessible by all authenticated users
   '/staff-portal': ['Admin', 'Manager', 'Staff'],
   '/hr/timeclock': ['Admin', 'Manager', 'Staff'],
@@ -84,18 +84,18 @@ export function useAuthGuard(options: AuthGuardOptions = {}): AuthGuardResult {
     allowStaffLogin = true,
     customCheck,
   } = options;
-  
+
   const router = useRouter();
   const pathname = usePathname();
-  const { 
-    user, 
-    currentStaff, 
-    isStaffLoggedIn, 
+  const {
+    user,
+    currentStaff,
+    isStaffLoggedIn,
     loading,
   } = useAuth();
-  
+
   const [isLoading, setIsLoading] = useState(true);
-  
+
   // Determine current user and role
   const getCurrentUser = () => {
     if (user) {
@@ -107,7 +107,7 @@ export function useAuthGuard(options: AuthGuardOptions = {}): AuthGuardResult {
         role: 'Admin' as const,
       };
     }
-    
+
     if (allowStaffLogin && currentStaff) {
       return {
         id: currentStaff.id,
@@ -116,64 +116,65 @@ export function useAuthGuard(options: AuthGuardOptions = {}): AuthGuardResult {
         role: currentStaff.role,
       };
     }
-    
+
     return null;
   };
-  
+
   const currentUser = getCurrentUser();
   const userRole = currentUser?.role || null;
-  
+
   // Check if route is public
-  const isPublicRoute = PUBLIC_ROUTES.some(route => 
+  const isPublicRoute = PUBLIC_ROUTES.some(route =>
     pathname === route || pathname?.startsWith(`${route}/`)
   );
-  
+
   // Check authentication
   const isAuthenticated = !!(user || (allowStaffLogin && isStaffLoggedIn));
-  
+
   // Check authorization (role-based)
   const isAuthorized = (() => {
     if (!isAuthenticated) return false;
-    
+
     // Custom check takes precedence
     if (customCheck) return customCheck();
-    
+
     // Check required role from options
     if (requiredRole && requiredRole.length > 0) {
       return userRole ? requiredRole.includes(userRole) : false;
     }
-    
+
     // Check route-specific roles
     if (pathname && ROLE_ROUTES[pathname]) {
       return userRole ? ROLE_ROUTES[pathname].includes(userRole) : false;
     }
-    
+
     // Check parent route
     const parentRoute = pathname?.split('/').slice(0, 2).join('/');
     if (parentRoute && ROLE_ROUTES[parentRoute]) {
       return userRole ? ROLE_ROUTES[parentRoute].includes(userRole) : false;
     }
-    
+
     // Default: authenticated is enough
     return true;
   })();
-  
+
   // Handle redirects
   useEffect(() => {
     if (loading) return;
-    
+
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsLoading(false);
-    
+
     // Skip for public routes
     if (isPublicRoute) return;
-    
+
     // Redirect if not authenticated
     if (!isAuthenticated) {
       const returnUrl = pathname !== '/' ? `?returnUrl=${encodeURIComponent(pathname || '')}` : '';
       router.push(`${redirectTo}${returnUrl}`);
       return;
     }
-    
+
     // Redirect if not authorized
     if (!isAuthorized) {
       // Redirect to appropriate page based on role
@@ -184,7 +185,7 @@ export function useAuthGuard(options: AuthGuardOptions = {}): AuthGuardResult {
       }
     }
   }, [loading, isAuthenticated, isAuthorized, isPublicRoute, pathname, redirectTo, router, userRole]);
-  
+
   return {
     isAuthenticated,
     isAuthorized: isAuthenticated && isAuthorized,
@@ -198,22 +199,22 @@ export function useAuthGuard(options: AuthGuardOptions = {}): AuthGuardResult {
  * Check if a user has permission to access a specific route
  */
 export function canAccessRoute(
-  route: string, 
+  route: string,
   userRole: 'Admin' | 'Manager' | 'Staff' | null
 ): boolean {
   if (!userRole) return false;
-  
+
   // Check exact match
   if (ROLE_ROUTES[route]) {
     return ROLE_ROUTES[route].includes(userRole);
   }
-  
+
   // Check parent route
   const parentRoute = route.split('/').slice(0, 2).join('/');
   if (ROLE_ROUTES[parentRoute]) {
     return ROLE_ROUTES[parentRoute].includes(userRole);
   }
-  
+
   // Default: Admin and Manager can access everything
   return userRole === 'Admin' || userRole === 'Manager';
 }
@@ -223,7 +224,7 @@ export function canAccessRoute(
  */
 export function getAllowedRoutes(userRole: 'Admin' | 'Manager' | 'Staff' | null): string[] {
   if (!userRole) return [];
-  
+
   return Object.entries(ROLE_ROUTES)
     .filter(([_, roles]) => roles.includes(userRole))
     .map(([route]) => route);

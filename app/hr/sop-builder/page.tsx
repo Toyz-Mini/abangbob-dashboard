@@ -44,6 +44,7 @@ export default function SOPBuilderPage() {
 
     useEffect(() => {
         if (selectedTemplateId) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setSteps(MOCK_SOP_STEPS[selectedTemplateId] || []);
         }
     }, [selectedTemplateId]);

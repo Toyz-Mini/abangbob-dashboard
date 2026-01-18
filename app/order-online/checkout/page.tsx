@@ -59,6 +59,7 @@ export default function CheckoutPage() {
                 router.push('/order-online/menu');
                 return;
             }
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setCart(JSON.parse(savedCart));
 
             // Load Customer

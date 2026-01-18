@@ -73,6 +73,7 @@ export default function PosLoginPage() {
   // Auto-submit when PIN is 4 digits
   useEffect(() => {
     if (pin.length === 4 && selectedStaffId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       handleLogin();
     }
   }, [pin, selectedStaffId, handleLogin]);

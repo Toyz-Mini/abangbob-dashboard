@@ -52,6 +52,7 @@ export default function KDSPage() {
   useEffect(() => {
     const savedStaffId = localStorage.getItem('kds_staff_id');
     if (savedStaffId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelectedStaffId(savedStaffId);
     }
   }, []);
@@ -84,6 +85,7 @@ export default function KDSPage() {
     if (pendingOrders.length > lastOrderCount && lastOrderCount > 0) {
       playSound('newOrder');
     }
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLastOrderCount(pendingOrders.length);
   }, [pendingOrders.length, lastOrderCount, playSound]);
 

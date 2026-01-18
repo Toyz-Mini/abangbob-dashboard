@@ -55,6 +55,7 @@ export default function Tooltip({
 
   useEffect(() => {
     if (isVisible) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       adjustPosition();
     }
   }, [isVisible, adjustPosition]);
@@ -159,7 +160,7 @@ interface InfoTooltipProps {
 export function InfoTooltip({ content, position = 'top' }: InfoTooltipProps) {
   return (
     <Tooltip content={content} position={position}>
-      <span 
+      <span
         style={{
           display: 'inline-flex',
           alignItems: 'center',

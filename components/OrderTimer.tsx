@@ -50,6 +50,7 @@ export default function OrderTimer({
     const elapsedMinutes = elapsed / 60;
 
     if (elapsedMinutes >= urgentThreshold && !hasTriggeredUrgent) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setHasTriggeredUrgent(true);
       onUrgent?.();
     } else if (elapsedMinutes >= warningThreshold && !hasTriggeredWarning) {
@@ -183,8 +184,8 @@ export function TimerBadge({
   }, [startDate]);
 
   const elapsedMinutes = elapsed / 60;
-  const status = elapsedMinutes >= urgentThreshold ? 'danger' : 
-                 elapsedMinutes >= warningThreshold ? 'warning' : 'info';
+  const status = elapsedMinutes >= urgentThreshold ? 'danger' :
+    elapsedMinutes >= warningThreshold ? 'warning' : 'info';
 
   const formatTime = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);

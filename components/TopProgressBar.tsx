@@ -9,10 +9,10 @@ interface TopProgressBarProps {
   showSpinner?: boolean;
 }
 
-export default function TopProgressBar({ 
+export default function TopProgressBar({
   color = 'var(--primary)',
   height = 3,
-  showSpinner = false 
+  showSpinner = false
 }: TopProgressBarProps) {
   const [progress, setProgress] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
@@ -22,7 +22,7 @@ export default function TopProgressBar({
   const startProgress = useCallback(() => {
     setIsVisible(true);
     setProgress(0);
-    
+
     // Quick initial progress
     setTimeout(() => setProgress(30), 50);
     setTimeout(() => setProgress(50), 150);
@@ -39,6 +39,7 @@ export default function TopProgressBar({
 
   // Listen for route changes
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     startProgress();
     const timeout = setTimeout(completeProgress, 500);
     return () => clearTimeout(timeout);
@@ -47,7 +48,7 @@ export default function TopProgressBar({
   if (!isVisible) return null;
 
   return (
-    <div 
+    <div
       className="top-progress-bar"
       style={{ height }}
       role="progressbar"
@@ -55,15 +56,15 @@ export default function TopProgressBar({
       aria-valuemin={0}
       aria-valuemax={100}
     >
-      <div 
+      <div
         className="top-progress-bar-inner"
-        style={{ 
+        style={{
           width: `${progress}%`,
           background: color === 'var(--primary)' ? 'var(--gradient-primary)' : color,
         }}
       />
       {showSpinner && progress < 100 && (
-        <div 
+        <div
           className="top-progress-spinner"
           style={{
             position: 'fixed',

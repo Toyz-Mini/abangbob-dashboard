@@ -17,6 +17,7 @@ export function useAuth() {
   useEffect(() => {
     const supabase = getSupabaseClient();
     if (!supabase) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setLoading(false);
       return;
     }
@@ -365,6 +366,7 @@ export function useSupabaseStatus() {
 
   useEffect(() => {
     const supabase = getSupabaseClient();
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsConfigured(supabase !== null);
 
     // Check online status

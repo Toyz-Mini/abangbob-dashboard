@@ -16,13 +16,14 @@ export default function SetupCheck({ children }: { children: React.ReactNode }) 
   useEffect(() => {
     // Skip check for exempt pages
     if (EXEMPT_PAGES.some(page => pathname?.startsWith(page))) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsChecking(false);
       return;
     }
 
     // Check if setup is complete
     const setupComplete = localStorage.getItem(SETUP_COMPLETE_KEY);
-    
+
     if (setupComplete !== 'true') {
       // Redirect to setup if not complete
       router.push('/setup');

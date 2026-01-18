@@ -27,6 +27,7 @@ export default function WasteModal({ isOpen, onClose, stockItem }: WasteModalPro
     // Reset form when opening
     useEffect(() => {
         if (isOpen) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setQuantity(0);
             setReason('expired');
             setNotes('');

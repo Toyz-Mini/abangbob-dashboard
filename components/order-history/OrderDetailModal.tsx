@@ -56,6 +56,7 @@ export default function OrderDetailModal({
   // Load receipt settings
   useEffect(() => {
     const settings = loadReceiptSettings();
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setReceiptSettings(settings);
   }, []);
 

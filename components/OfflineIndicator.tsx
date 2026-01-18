@@ -23,6 +23,7 @@ export function OnlineStatusProvider({ children }: OnlineStatusProviderProps) {
 
   useEffect(() => {
     // Set initial state
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsOnline(navigator.onLine);
 
     const handleOnline = () => setIsOnline(true);
@@ -50,9 +51,9 @@ interface OfflineBannerProps {
   showReconnecting?: boolean;
 }
 
-export default function OfflineIndicator({ 
+export default function OfflineIndicator({
   message = 'You are currently offline. Some features may not be available.',
-  showReconnecting = true 
+  showReconnecting = true
 }: OfflineBannerProps) {
   const { isOnline } = useOnlineStatus();
   const [showReconnected, setShowReconnected] = useState(false);
@@ -60,6 +61,7 @@ export default function OfflineIndicator({
 
   useEffect(() => {
     if (!isOnline) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setWasOffline(true);
     } else if (wasOffline && isOnline) {
       setShowReconnected(true);
@@ -74,8 +76,8 @@ export default function OfflineIndicator({
   // Show reconnected message
   if (showReconnecting && showReconnected) {
     return (
-      <div 
-        className="offline-banner" 
+      <div
+        className="offline-banner"
         style={{ background: 'var(--success)' }}
         role="status"
         aria-live="polite"
@@ -89,7 +91,7 @@ export default function OfflineIndicator({
   // Show offline banner
   if (!isOnline) {
     return (
-      <div 
+      <div
         className="offline-banner"
         role="alert"
         aria-live="assertive"
@@ -108,7 +110,7 @@ export function OfflineStatusBadge() {
   const { isOnline } = useOnlineStatus();
 
   return (
-    <div 
+    <div
       className="status-indicator"
       style={{ color: isOnline ? 'var(--success)' : 'var(--danger)' }}
     >

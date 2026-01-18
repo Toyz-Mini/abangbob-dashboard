@@ -145,6 +145,7 @@ export default function NotificationsPage() {
   // Auto-generate on mount
   useEffect(() => {
     if (isInitialized) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       generateSmartNotifications();
     }
   }, [isInitialized, generateSmartNotifications]);

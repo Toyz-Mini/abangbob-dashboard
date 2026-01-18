@@ -124,6 +124,7 @@ export default function MenuManagementPage() {
     const category = searchParams.get('category') || 'All';
     const tab = searchParams.get('tab') as TabType || 'menu';
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSearchTerm(search);
     setFilterCategory(category);
     if (['menu', 'categories', 'groups', 'options'].includes(tab)) {

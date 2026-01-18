@@ -1,10 +1,10 @@
 'use client';
 
 import { useMemo, useState, useEffect } from 'react';
-import { 
-  Brain, 
-  TrendingUp, 
-  TrendingDown, 
+import {
+  Brain,
+  TrendingUp,
+  TrendingDown,
   Minus,
   AlertTriangle,
   Lightbulb,
@@ -16,10 +16,10 @@ import {
   Calendar
 } from 'lucide-react';
 import { useStore } from '@/lib/store';
-import { 
-  getForecastSummary, 
+import {
+  getForecastSummary,
   ForecastSummary,
-  SalesDataPoint 
+  SalesDataPoint
 } from '@/lib/services/forecasting';
 import Link from 'next/link';
 
@@ -83,6 +83,7 @@ export default function AIInsightsWidget({ compact = false }: AIInsightsWidgetPr
 
   useEffect(() => {
     if (isInitialized) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsLoading(false);
       setLastUpdated(new Date());
     }
@@ -100,10 +101,10 @@ export default function AIInsightsWidget({ compact = false }: AIInsightsWidgetPr
     return null;
   }
 
-  const TrendIcon = forecastSummary?.trend === 'up' 
-    ? TrendingUp 
-    : forecastSummary?.trend === 'down' 
-      ? TrendingDown 
+  const TrendIcon = forecastSummary?.trend === 'up'
+    ? TrendingUp
+    : forecastSummary?.trend === 'down'
+      ? TrendingDown
       : Minus;
 
   const trendColor = forecastSummary?.trend === 'up'
@@ -150,7 +151,7 @@ export default function AIInsightsWidget({ compact = false }: AIInsightsWidgetPr
             <p className="ai-subtitle">Ramalan & Cadangan Pintar</p>
           </div>
         </div>
-        <button 
+        <button
           className="btn btn-ghost btn-sm"
           onClick={handleRefresh}
           disabled={isLoading}

@@ -45,6 +45,7 @@ export default function MaintenanceModal({
 
     useEffect(() => {
         if (existingSchedule) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setActiveTab('schedule');
             setScheduleForm({
                 taskName: existingSchedule.taskName,

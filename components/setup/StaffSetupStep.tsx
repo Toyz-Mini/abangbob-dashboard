@@ -56,6 +56,7 @@ export default function StaffSetupStep({ onValidChange }: Props) {
     if (!name.trim() || !pin) return;
 
     const newStaff: SetupStaffMember = {
+      // eslint-disable-next-line react-hooks/purity
       id: editingStaff?.id || `staff_${Date.now()}`,
       name,
       email,

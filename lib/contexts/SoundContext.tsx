@@ -2,12 +2,12 @@
 
 import { createContext, useContext, useEffect, useState, useCallback, ReactNode, useRef } from 'react';
 
-type SoundType = 
-  | 'newOrder' 
-  | 'orderReady' 
-  | 'alert' 
-  | 'success' 
-  | 'error' 
+type SoundType =
+  | 'newOrder'
+  | 'orderReady'
+  | 'alert'
+  | 'success'
+  | 'error'
   | 'notification'
   | 'clockIn'
   | 'clockOut'
@@ -75,6 +75,7 @@ export function SoundProvider({ children }: { children: ReactNode }) {
     if (stored) {
       try {
         const parsed = JSON.parse(stored);
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setSettings({ ...DEFAULT_SETTINGS, ...parsed });
       } catch {
         // Use defaults
@@ -104,7 +105,7 @@ export function SoundProvider({ children }: { children: ReactNode }) {
 
     try {
       const audioContext = getAudioContext();
-      
+
       // Resume if suspended
       if (audioContext.state === 'suspended') {
         audioContext.resume();
@@ -118,7 +119,7 @@ export function SoundProvider({ children }: { children: ReactNode }) {
 
       oscillator.frequency.value = frequency;
       oscillator.type = type;
-      
+
       gainNode.gain.setValueAtTime(settings.volume * 0.3, audioContext.currentTime);
       gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
 
@@ -144,7 +145,7 @@ export function SoundProvider({ children }: { children: ReactNode }) {
     // Try to play audio file first
     const audio = new Audio(SOUND_URLS[type]);
     audio.volume = settings.volume;
-    
+
     audio.play().catch(() => {
       // Fallback to generated beeps if audio file not found
       switch (type) {
@@ -218,7 +219,7 @@ export function SoundProvider({ children }: { children: ReactNode }) {
   const testSound = useCallback((type: SoundType) => {
     const audio = new Audio(SOUND_URLS[type]);
     audio.volume = settings.volume;
-    
+
     audio.play().catch(() => {
       // Fallback to generated beep for testing
       playBeep(800, 0.2, 'sine');

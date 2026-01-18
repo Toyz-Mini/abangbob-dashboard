@@ -30,21 +30,21 @@ export default function EmergencySOS() {
     // In real app, initiate call to primary contact
     const primaryContact = emergencyContacts[0];
     setCallingContact(primaryContact);
-    
+
     // Simulate call initiation
     setTimeout(() => {
-      window.location.href = `tel:${primaryContact.phone.replace(/\s/g, '')}`;
+      window.location.assign(`tel:${primaryContact.phone.replace(/\s/g, '')}`);
     }, 500);
   };
 
   const handleCallContact = (contact: EmergencyContact) => {
-    window.location.href = `tel:${contact.phone.replace(/\s/g, '')}`;
+    window.location.assign(`tel:${contact.phone.replace(/\s/g, '')}`);
   };
 
   return (
     <>
       {/* SOS Button */}
-      <button 
+      <button
         className="emergency-sos-btn"
         onClick={handleSOSClick}
         aria-label="Emergency SOS"
@@ -54,14 +54,14 @@ export default function EmergencySOS() {
       </button>
 
       {/* SOS Modal */}
-      <Modal 
-        isOpen={isOpen} 
+      <Modal
+        isOpen={isOpen}
         onClose={() => {
           setIsOpen(false);
           setIsConfirming(false);
           setCallingContact(null);
-        }} 
-        title="" 
+        }}
+        title=""
         maxWidth="400px"
       >
         <div className="sos-modal">
@@ -86,7 +86,7 @@ export default function EmergencySOS() {
 
               <div className="sos-contacts">
                 {emergencyContacts.map((contact, index) => (
-                  <button 
+                  <button
                     key={index}
                     className="sos-contact-item"
                     onClick={() => handleCallContact(contact)}
@@ -103,8 +103,8 @@ export default function EmergencySOS() {
                 ))}
               </div>
 
-              <button 
-                className="btn btn-outline" 
+              <button
+                className="btn btn-outline"
                 style={{ width: '100%', marginTop: '1rem' }}
                 onClick={() => setIsOpen(false)}
               >

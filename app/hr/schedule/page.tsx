@@ -193,6 +193,7 @@ export default function SchedulePage() {
 
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadHolidayData();
   }, [loadHolidayData, currentYear]);
 

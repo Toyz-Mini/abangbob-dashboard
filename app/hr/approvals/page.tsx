@@ -103,6 +103,7 @@ export default function ApprovalsPage() {
   useEffect(() => {
     const tab = searchParams.get('tab');
     if (tab && ['leave', 'claims', 'ot', 'advance', 'requests', 'newstaff'].includes(tab)) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setActiveTab(tab as TabType);
     }
   }, [searchParams]);

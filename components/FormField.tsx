@@ -19,14 +19,14 @@ interface FormFieldProps {
   className?: string;
 }
 
-export function FormField({ 
-  label, 
-  error, 
-  hint, 
-  success, 
-  required = false, 
+export function FormField({
+  label,
+  error,
+  hint,
+  success,
+  required = false,
   children,
-  className = '' 
+  className = ''
 }: FormFieldProps) {
   return (
     <div className={`form-field ${error ? 'form-field-error' : ''} ${className}`}>
@@ -83,11 +83,11 @@ export const ValidatedInput = forwardRef<HTMLInputElement, ValidatedInputProps>(
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       const newValue = e.target.value;
       setValue(newValue);
-      
+
       if (touched && showValidation) {
         setError(validate(newValue));
       }
-      
+
       onChange?.(e);
     };
 
@@ -202,10 +202,10 @@ export const ValidatedTextarea = forwardRef<HTMLTextAreaElement, ValidatedTextar
     };
 
     return (
-      <FormField 
-        label={label} 
-        error={touched ? error || undefined : undefined} 
-        hint={showCount && maxLength ? `${charCount}/${maxLength} characters` : hint} 
+      <FormField
+        label={label}
+        error={touched ? error || undefined : undefined}
+        hint={showCount && maxLength ? `${charCount}/${maxLength} characters` : hint}
         required={required}
       >
         <textarea
@@ -295,8 +295,9 @@ export function useAutoSave(
 
   useEffect(() => {
     if (deps.some(d => d !== undefined && d !== null && d !== '')) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setStatus('saving');
-      
+
       const timeout = setTimeout(async () => {
         try {
           await saveFunction();

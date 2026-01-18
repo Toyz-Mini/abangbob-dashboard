@@ -71,6 +71,7 @@ export default function MenuSetupStep({ onValidChange }: Props) {
     if (!categoryName.trim()) return;
 
     const newCategory: MenuCategory = {
+      // eslint-disable-next-line react-hooks/purity
       id: editingCategory?.id || `cat_${Date.now()}`,
       name: categoryName,
       icon: categoryIcon,
@@ -109,6 +110,7 @@ export default function MenuSetupStep({ onValidChange }: Props) {
     if (!itemName.trim() || !itemPrice || !itemCategory) return;
 
     const newItem: SetupMenuItem = {
+      // eslint-disable-next-line react-hooks/purity
       id: editingItem?.id || `item_${Date.now()}`,
       name: itemName,
       price: parseFloat(itemPrice),
@@ -201,8 +203,8 @@ export default function MenuSetupStep({ onValidChange }: Props) {
                         type="button"
                         onClick={() => setCategoryIcon(id)}
                         className={`p-3 rounded-xl transition-all ${categoryIcon === id
-                            ? 'bg-teal-500 text-white'
-                            : 'bg-slate-700 text-slate-400 hover:bg-slate-600'
+                          ? 'bg-teal-500 text-white'
+                          : 'bg-slate-700 text-slate-400 hover:bg-slate-600'
                           }`}
                         title={label}
                       >

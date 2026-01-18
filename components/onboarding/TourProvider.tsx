@@ -40,6 +40,7 @@ export function TourProvider({ children }: { children: ReactNode }) {
   // Find and highlight target element
   useEffect(() => {
     if (!isTourActive || !currentStepData) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setTargetElement(null);
       return;
     }
@@ -132,6 +133,7 @@ export function TourProvider({ children }: { children: ReactNode }) {
       const urlParams = new URLSearchParams(window.location.search);
       if (urlParams.get('tour') === 'start') {
         // Start appropriate tour based on role (default to admin)
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         startTour('admin-full-tour');
         // Clean URL
         window.history.replaceState({}, '', window.location.pathname);

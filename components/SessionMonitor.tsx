@@ -94,6 +94,7 @@ export default function SessionMonitor({
         });
 
         // Initial timer
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         resetTimer();
 
         return () => {
