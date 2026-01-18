@@ -51,11 +51,17 @@ export function calculateDistance(
     lat2: number,
     lon2: number
 ): number {
+    // Explicitly cast to number to avoid string concatenation or NaN issues from DB values
+    const lat1Num = Number(lat1);
+    const lon1Num = Number(lon1);
+    const lat2Num = Number(lat2);
+    const lon2Num = Number(lon2);
+
     const R = 6371e3; // Earth radius in meters
-    const φ1 = (lat1 * Math.PI) / 180;
-    const φ2 = (lat2 * Math.PI) / 180;
-    const Δφ = ((lat2 - lat1) * Math.PI) / 180;
-    const Δλ = ((lon2 - lon1) * Math.PI) / 180;
+    const φ1 = (lat1Num * Math.PI) / 180;
+    const φ2 = (lat2Num * Math.PI) / 180;
+    const Δφ = ((lat2Num - lat1Num) * Math.PI) / 180;
+    const Δλ = ((lon2Num - lon1Num) * Math.PI) / 180;
 
     const a =
         Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +

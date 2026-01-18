@@ -82,7 +82,7 @@ export default function VerificationWizard({ isOpen, onClose, onSuccess, staffNa
                         }
                     }
 
-                    if (nearest && minDistance <= nearest.radiusMeters) {
+                    if (nearest && minDistance <= Number(nearest.radiusMeters)) {
                         setNearestOutlet(nearest);
                         setIsLocating(false);
                         // Auto-advance to camera after brief success visual
@@ -91,6 +91,15 @@ export default function VerificationWizard({ isOpen, onClose, onSuccess, staffNa
                         setIsLocating(false);
                         const distText = nearest ? `${Math.round(minDistance)}m dari ${nearest.name}` : 'Tiada outlet berhampiran';
                         const radiusText = nearest ? ` (Radius max: ${nearest.radiusMeters}m)` : '';
+                        console.warn('[Location Check Failed]', {
+                            userLat: currentLat,
+                            userLng: currentLng,
+                            nearestName: nearest?.name,
+                            distance: minDistance,
+                            allowedRadius: nearest?.radiusMeters,
+                            distanceType: typeof minDistance,
+                            radiusType: typeof nearest?.radiusMeters
+                        });
                         setLocationError(`Anda berada di luar radius yang dibenarkan. ${distText}${radiusText}`);
                     }
                 },
