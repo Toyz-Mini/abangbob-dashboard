@@ -95,7 +95,7 @@ describe('Payroll Logic', () => {
         it('should handle unpaid leave deductions', () => {
             // Unpaid leave deduction = (Base Salary / 26) * Days
             const unpaidDays = 2;
-            const result = calculatePayroll(mockStaff, 0, 0, 0, 0, unpaidDays);
+            const result = calculatePayroll(mockStaff, 0, 0, 0, 0, 0, unpaidDays);
 
             const expectedDeduction = (1000 / 26) * 2;
             expect(result.unpaidLeaveDeduction).toBeCloseTo(expectedDeduction, 2);
