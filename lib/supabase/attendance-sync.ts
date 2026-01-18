@@ -163,13 +163,17 @@ export async function verifyLocation(latitude: number, longitude: number) {
         }
     }
 
-    const verified = nearest_location ? min_distance <= nearest_location.radiusMeters : false;
+    // DB returns snake_case for raw queries, but our interface might expect camelCase.
+    // Check both or prefer the DB column name since we are querying directly.
+    const radius = (nearest_location as any).radius_meters || nearest_location?.radiusMeters || 0;
+    const verified = nearest_location ? min_distance <= Number(radius) : false;
 
     return {
         verified,
         nearest_location,
         distance: min_distance,
         error: null,
+        debug: `Rad: ${radius} (${typeof radius}), Dist: ${min_distance}, Loc: ${nearest_location?.name}, Count: ${locations.length}`
     };
 }
 
@@ -181,37 +185,67 @@ export async function uploadAttendancePhoto(staffId: string, file: File | Blob):
     const supabase = getSupabaseClient();
     if (!supabase) return { path: null, error: 'Supabase not configured' };
 
-    // Handle both File and Blob objects - Blob doesn't have a name property
-    let fileExt = 'jpg'; // Default to jpg since webcam captures are usually jpeg
-    if (file instanceof File && file.name) {
-        fileExt = file.name.split('.').pop() || 'jpg';
-    } else if (file.type) {
-        // Fallback: extract extension from MIME type (e.g., 'image/jpeg' -> 'jpeg')
-        const mimeExt = file.type.split('/').pop();
-        if (mimeExt) {
-            fileExt = mimeExt === 'jpeg' ? 'jpg' : mimeExt;
+    try {
+        // Get current auth user ID (more reliable for RLS)
+        const { data: { user } } = await supabase.auth.getUser();
+        const uploadUserId = user?.id || staffId; // Use auth ID if available, fallback to staffId
+
+        console.log('[Photo Upload] Starting upload for user:', uploadUserId);
+        console.log('[Photo Upload] File size:', file.size, 'bytes, type:', file.type);
+
+        // Handle both File and Blob objects - Blob doesn't have a name property
+        let fileExt = 'jpg'; // Default to jpg since webcam captures are usually jpeg
+        if (file instanceof File && file.name) {
+            fileExt = file.name.split('.').pop() || 'jpg';
+        } else if (file.type) {
+            // Fallback: extract extension from MIME type (e.g., 'image/jpeg' -> 'jpeg')
+            const mimeExt = file.type.split('/').pop();
+            if (mimeExt) {
+                fileExt = mimeExt === 'jpeg' ? 'jpg' : mimeExt;
+            }
         }
+        const fileName = `${uploadUserId}/${Date.now()}.${fileExt}`;
+        console.log('[Photo Upload] Uploading to path:', fileName);
+
+        // Upload with timeout wrapper for mobile reliability
+        const uploadPromise = (supabase as any).storage
+            .from('attendance-photos')
+            .upload(fileName, file, {
+                cacheControl: '3600',
+                upsert: false,
+            });
+
+        // 30 second timeout for mobile networks
+        const timeoutPromise = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('Upload timeout - slow network')), 30000)
+        );
+
+        const { data, error } = await Promise.race([uploadPromise, timeoutPromise]) as any;
+
+        if (error) {
+            console.error('[Photo Upload] Storage error:', error);
+            console.error('[Photo Upload] Error code:', error.statusCode, 'message:', error.message);
+            return { path: null, error: `Upload failed: ${error.message || 'Unknown error'}` };
+        }
+
+        // Get public URL
+        const { data: { publicUrl } } = (supabase as any).storage
+            .from('attendance-photos')
+            .getPublicUrl(data.path);
+
+        console.log('[Photo Upload] ✅ Success, URL:', publicUrl);
+        return { path: publicUrl, error: null };
+    } catch (err: any) {
+        console.error('[Photo Upload] Exception:', err);
+        // Provide more helpful error messages
+        if (err.message?.includes('Load failed') || err.message?.includes('fetch')) {
+            return { path: null, error: 'Sambungan rangkaian gagal. Cuba semula.' };
+        }
+        if (err.message?.includes('timeout')) {
+            return { path: null, error: 'Rangkaian terlalu perlahan. Cuba semula.' };
+        }
+        return { path: null, error: err.message || 'Ralat tidak diketahui' };
     }
-    const fileName = `${staffId}/${Date.now()}.${fileExt}`;
-
-    const { data, error } = await (supabase as any).storage
-        .from('attendance-photos')
-        .upload(fileName, file, {
-            cacheControl: '3600',
-            upsert: false,
-        });
-
-    if (error) {
-        console.error('Error uploading photo:', error);
-        return { path: null, error: error.message };
-    }
-
-    // Get public URL
-    const { data: { publicUrl } } = (supabase as any).storage
-        .from('attendance-photos')
-        .getPublicUrl(data.path);
-
-    return { path: publicUrl, error: null };
 }
 
 // =====================================================

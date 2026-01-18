@@ -158,14 +158,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = async () => {
     try {
       console.log('[AuthContext] Starting signOut...');
+
+      // Clear local state first
+      setSession(null);
+      setSupabaseUser(null);
+      setUserStatus(null);
+      setUserRole('Staff');
+      setDbRole(null);
+
       const supabase = getSupabaseClient();
       if (supabase) {
-        await supabase.auth.signOut();
+        const { error } = await supabase.auth.signOut();
+        if (error) {
+          console.error('[AuthContext] Supabase signOut error:', error);
+        }
       }
       console.log('[AuthContext] Supabase signOut completed');
+
+      // Clear any cached data
+      if (typeof window !== 'undefined') {
+        // Clear localStorage items related to auth
+        localStorage.removeItem('supabase.auth.token');
+
+        // Small delay to ensure cookies are cleared
+        await new Promise(resolve => setTimeout(resolve, 100));
+
+        // Force redirect to login
+        window.location.href = '/login';
+      }
     } catch (error) {
       console.error('[AuthContext] Sign out error:', error);
-    } finally {
+      // Force redirect even on error
       if (typeof window !== 'undefined') {
         window.location.href = '/login';
       }

@@ -23,6 +23,8 @@ interface ProfileFormData {
     phone: string;
     icNumber: string;
     dateOfBirth: string;
+    district: string;
+    kampung: string;
     address: string;
     emergencyContactName: string;
     emergencyContactRelation: string;
@@ -36,23 +38,24 @@ interface ProfileFormData {
 
 const SHIRT_SIZES = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL'];
 const SHOE_SIZES = ['35', '36', '37', '38', '39', '40', '41', '42', '43', '44', '45', '46'];
+
+// Brunei Banks
 const BANKS = [
-    'Maybank',
-    'CIMB Bank',
-    'Public Bank',
-    'RHB Bank',
-    'Hong Leong Bank',
-    'AmBank',
-    'Bank Islam',
-    'Bank Rakyat',
-    'BSN',
-    'HSBC',
-    'OCBC',
-    'Standard Chartered',
-    'UOB',
-    'Alliance Bank',
-    'Affin Bank',
-    'MBSB Bank'
+    'BIBD (Bank Islam Brunei Darussalam)',
+    'Baiduri Bank',
+    'Standard Chartered Bank Brunei',
+    'HSBC Brunei',
+    'Maybank Brunei',
+    'RHB Bank Brunei',
+    'Bank Simpanan Nasional Brunei'
+];
+
+// Brunei Districts
+const DISTRICTS = [
+    { value: 'brunei-muara', label: 'Brunei-Muara' },
+    { value: 'tutong', label: 'Tutong' },
+    { value: 'belait', label: 'Belait' },
+    { value: 'temburong', label: 'Temburong' }
 ];
 
 export default function CompleteProfilePage() {
@@ -63,6 +66,8 @@ export default function CompleteProfilePage() {
         phone: '',
         icNumber: '',
         dateOfBirth: '',
+        district: '',
+        kampung: '',
         address: '',
         emergencyContactName: '',
         emergencyContactRelation: '',
@@ -90,8 +95,8 @@ export default function CompleteProfilePage() {
     };
 
     const validateStep1 = () => {
-        if (!formData.phone || !formData.icNumber || !formData.dateOfBirth || !formData.address) {
-            setError('Sila isi semua maklumat peribadi (Telefon, No. KP, Tarikh Lahir, Alamat)');
+        if (!formData.phone || !formData.icNumber || !formData.dateOfBirth || !formData.district) {
+            setError('Sila isi semua maklumat peribadi (Telefon, No. KP, Tarikh Lahir, Daerah)');
             return false;
         }
         return true;
@@ -212,20 +217,20 @@ export default function CompleteProfilePage() {
                                     type="tel"
                                     value={formData.phone}
                                     onChange={(e) => handleInputChange('phone', e.target.value)}
-                                    placeholder="+60 1X-XXXXXXX"
+                                    placeholder="+673 XXX XXXX"
                                 />
                             </div>
 
                             <div className="form-group">
                                 <label>
                                     <FileText size={16} />
-                                    No. Kad Pengenalan *
+                                    No. Kad Pengenalan Brunei *
                                 </label>
                                 <input
                                     type="text"
                                     value={formData.icNumber}
                                     onChange={(e) => handleInputChange('icNumber', e.target.value)}
-                                    placeholder="XXXXXX-XX-XXXX"
+                                    placeholder="XX-XXXXXX"
                                 />
                             </div>
 
@@ -244,13 +249,42 @@ export default function CompleteProfilePage() {
                             <div className="form-group">
                                 <label>
                                     <MapPin size={16} />
-                                    Alamat Rumah *
+                                    Daerah *
+                                </label>
+                                <select
+                                    value={formData.district}
+                                    onChange={(e) => handleInputChange('district', e.target.value)}
+                                >
+                                    <option value="">Pilih Daerah</option>
+                                    {DISTRICTS.map(d => (
+                                        <option key={d.value} value={d.value}>{d.label}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="form-group">
+                                <label>
+                                    <MapPin size={16} />
+                                    Kampung / Mukim
+                                </label>
+                                <input
+                                    type="text"
+                                    value={formData.kampung}
+                                    onChange={(e) => handleInputChange('kampung', e.target.value)}
+                                    placeholder="Nama kampung atau mukim"
+                                />
+                            </div>
+
+                            <div className="form-group">
+                                <label>
+                                    <MapPin size={16} />
+                                    Alamat Rumah
                                 </label>
                                 <textarea
                                     value={formData.address}
                                     onChange={(e) => handleInputChange('address', e.target.value)}
-                                    placeholder="Alamat penuh surat-menyurat"
-                                    rows={3}
+                                    placeholder="No. rumah, jalan, dll."
+                                    rows={2}
                                 />
                             </div>
                         </div>
@@ -299,7 +333,7 @@ export default function CompleteProfilePage() {
                                     type="tel"
                                     value={formData.emergencyContactPhone}
                                     onChange={(e) => handleInputChange('emergencyContactPhone', e.target.value)}
-                                    placeholder="+60 1X-XXXXXXX"
+                                    placeholder="+673 XXX XXXX"
                                 />
                             </div>
                         </div>

@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { query } from '@/lib/db';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 
@@ -15,9 +14,10 @@ export async function POST(request: NextRequest) {
             phone,
             icNumber,
             dateOfBirth,
+            district,
+            kampung,
             address,
             emergencyContact,
-            // New fields
             bankName,
             bankAccountNo,
             bankAccountHolder,
@@ -27,6 +27,9 @@ export async function POST(request: NextRequest) {
 
         console.log('[CompleteProfile] UserId:', userId);
 
+        // Combine address fields into one
+        const fullAddress = [kampung, district, address].filter(Boolean).join(', ');
+
         if (!userId) {
             return NextResponse.json(
                 { error: 'User ID is required' },
@@ -34,15 +37,21 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // Verify session
+        // Create Supabase client with service role for database operations
         const cookieStore = await cookies();
+        const supabase = createServerClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.SUPABASE_SERVICE_ROLE_KEY!,
+            { cookies: { get(name: string) { return cookieStore.get(name)?.value; } } }
+        );
+
+        // Also create auth client to verify session
         const supabaseAuth = createServerClient(
             process.env.NEXT_PUBLIC_SUPABASE_URL!,
             process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
             { cookies: { get(name: string) { return cookieStore.get(name)?.value; } } }
         );
         const { data: { session } } = await supabaseAuth.auth.getSession();
-
 
         if (!session || session.user.id !== userId) {
             console.error('[CompleteProfile] Unauthorized - session mismatch');
@@ -52,31 +61,30 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // Check current user status and fetch extendedData
-        const existingUser = await query(
-            'SELECT status, phone, "icNumber", "extendedData" FROM "user" WHERE id = $1',
-            [userId]
-        );
+        // Check current user status using Supabase client
+        const { data: existingUser, error: fetchError } = await supabase
+            .from('user')
+            .select('status, phone, icNumber, extendedData')
+            .eq('id', userId)
+            .single();
 
-        if (existingUser.rows.length === 0) {
+        if (fetchError || !existingUser) {
+            console.error('[CompleteProfile] Fetch error:', fetchError);
             return NextResponse.json(
                 { error: 'User not found' },
                 { status: 404 }
             );
         }
 
-        const currentStatus = existingUser.rows[0].status;
-        const currentExtendedData = existingUser.rows[0].extendedData || {}; // Get existing JSONB
+        const currentStatus = existingUser.status;
+        const currentExtendedData = existingUser.extendedData || {};
         console.log('[CompleteProfile] Current status:', currentStatus);
 
-        // Determine new status:
-        // - If user is already approved/active, keep that status (don't revert to pending)
-        // - If user is incomplete_profile or pending_approval, set to pending_approval
+        // Determine new status
         let newStatus = currentStatus;
         if (currentStatus === 'incomplete_profile' || currentStatus === 'pending_approval') {
             newStatus = 'pending_approval';
         }
-        // If already 'approved' or 'active', keep the current status
 
         console.log('[CompleteProfile] New status will be:', newStatus);
 
@@ -88,46 +96,40 @@ export async function POST(request: NextRequest) {
             bankAccountHolder: bankAccountHolder || currentExtendedData.bankAccountHolder,
             tshirtSize: tshirtSize || currentExtendedData.tshirtSize,
             shoeSize: shoeSize || currentExtendedData.shoeSize,
+            district: district || currentExtendedData.district,
+            kampung: kampung || currentExtendedData.kampung,
         };
 
-        // Update user profile
-        const result = await query(
-            `UPDATE "user" 
-             SET 
-               phone = COALESCE($1, phone),
-               "icNumber" = COALESCE($2, "icNumber"),
-               "dateOfBirth" = COALESCE($3, "dateOfBirth"),
-               address = COALESCE($4, address),
-               "emergencyContact" = COALESCE($5, "emergencyContact"),
-               status = $6,
-               "extendedData" = $7,
-               "updatedAt" = NOW()
-             WHERE id = $8
-             RETURNING id, name, email, status`,
-            [
-                phone || null,
-                icNumber || null,
-                dateOfBirth || null,
-                address || null,
-                emergencyContact ? JSON.stringify(emergencyContact) : null,
-                newStatus,
-                JSON.stringify(newExtendedData), // Create json string for the column
-                userId,
-            ]
-        );
+        // Update user profile using Supabase client
+        const { data: updatedUser, error: updateError } = await supabase
+            .from('user')
+            .update({
+                phone: phone || existingUser.phone,
+                icNumber: icNumber || existingUser.icNumber,
+                dateOfBirth: dateOfBirth || null,
+                address: fullAddress || null,
+                emergencyContact: emergencyContact || null,
+                status: newStatus,
+                extendedData: newExtendedData,
+                updatedAt: new Date().toISOString(),
+            })
+            .eq('id', userId)
+            .select('id, name, email, status')
+            .single();
 
-        if (result.rowCount === 0) {
+        if (updateError) {
+            console.error('[CompleteProfile] Update error:', updateError);
             return NextResponse.json(
-                { error: 'User not found' },
-                { status: 404 }
+                { error: 'Failed to update profile', details: updateError.message },
+                { status: 500 }
             );
         }
 
-        console.log('[CompleteProfile] ✅ Profile updated:', result.rows[0]);
+        console.log('[CompleteProfile] ✅ Profile updated:', updatedUser);
 
         return NextResponse.json({
             success: true,
-            user: result.rows[0],
+            user: updatedUser,
         });
     } catch (error: any) {
         console.error('[CompleteProfile] Error:', error.message || error);
@@ -137,5 +139,3 @@ export async function POST(request: NextRequest) {
         );
     }
 }
-
-

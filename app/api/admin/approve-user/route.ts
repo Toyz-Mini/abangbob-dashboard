@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { query } from '@/lib/db';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 
@@ -18,35 +17,56 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // Verify session and admin role
-        console.log('[approve-user] Verifying session...');
+        // Create Supabase clients
         const cookieStore = await cookies();
         const supabaseAuth = createServerClient(
             process.env.NEXT_PUBLIC_SUPABASE_URL!,
             process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
             { cookies: { get(name: string) { return cookieStore.get(name)?.value; } } }
         );
-        const { data: { session } } = await supabaseAuth.auth.getSession();
-        console.log('[approve-user] Session:', session ? { userId: session.user?.id, role: (session.user as any)?.role } : 'null');
 
-        if (!session || (session.user as any).role !== 'Admin') {
-            console.log('[approve-user] Unauthorized - session:', !!session, 'role:', (session?.user as any)?.role);
+        // Use service role for database queries
+        const supabase = createServerClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.SUPABASE_SERVICE_ROLE_KEY!,
+            { cookies: { get(name: string) { return cookieStore.get(name)?.value; } } }
+        );
+
+        const { data: { session } } = await supabaseAuth.auth.getSession();
+
+        if (!session) {
             return NextResponse.json(
-                { error: 'Unauthorized: Admin access required' },
+                { error: 'Unauthorized: Not logged in' },
+                { status: 401 }
+            );
+        }
+
+        // Fetch current user role from database
+        const { data: currentUser, error: userError } = await supabase
+            .from('user')
+            .select('role')
+            .eq('id', session.user.id)
+            .single();
+
+        if (userError || !currentUser || !['Admin', 'Manager'].includes(currentUser.role)) {
+            console.log('[approve-user] Unauthorized - role:', currentUser?.role);
+            return NextResponse.json(
+                { error: 'Unauthorized: Admin/Manager access required' },
                 { status: 401 }
             );
         }
 
         if (action === 'approve') {
             console.log('[approve-user] Processing approve action for userId:', userId);
-            // First get user data including phone and extendedData
-            const userResult = await query(
-                `SELECT id, name, email, phone, "icNumber", "extendedData" FROM "user" WHERE id = $1`,
-                [userId]
-            );
-            console.log('[approve-user] User query result:', userResult.rowCount, 'rows');
 
-            if (userResult.rowCount === 0) {
+            // Fetch user data using Supabase client
+            const { data: userData, error: fetchError } = await supabase
+                .from('user')
+                .select('id, name, email, phone, icNumber, extendedData')
+                .eq('id', userId)
+                .single();
+
+            if (fetchError || !userData) {
                 console.log('[approve-user] User not found');
                 return NextResponse.json(
                     { error: 'User not found' },
@@ -54,7 +74,6 @@ export async function POST(request: NextRequest) {
                 );
             }
 
-            const userData = userResult.rows[0];
             console.log('[approve-user] User data:', { name: userData.name, email: userData.email });
             const extendedData = userData.extendedData || {};
 
@@ -62,54 +81,64 @@ export async function POST(request: NextRequest) {
             const bankDetails = {
                 bankName: extendedData.bankName || '',
                 accountNumber: extendedData.bankAccountNo || '',
-                accountName: extendedData.bankAccountName || '',
+                accountName: extendedData.bankAccountHolder || '',
             };
 
             // Update user status to approved
             console.log('[approve-user] Updating user status to approved...');
-            await query(
-                `UPDATE "user" 
-                 SET 
-                   status = 'approved',
-                   "approvedAt" = NOW(),
-                   "updatedAt" = NOW()
-                 WHERE id = $1`,
-                [userId]
-            );
-            console.log('[approve-user] User status updated');
+            const { error: updateError } = await supabase
+                .from('user')
+                .update({
+                    status: 'approved',
+                    approvedAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString(),
+                })
+                .eq('id', userId);
 
-            // Create staff record using direct insert to public.staff
-            // This ensures it goes to the same table that Supabase reads from
-            console.log('[approve-user] Inserting into public.staff...');
-            const staffInsertResult = await query(
-                `INSERT INTO public.staff (
-                    id, name, email, phone, role, status, pin, 
-                    hourly_rate, employment_type, join_date, 
-                    bank_details,
-                    created_at, updated_at
-                )
-                 VALUES ($1, $2, $3, $4, 'Staff', 'active', '0000', 0, 'part-time', NOW(), $5, NOW(), NOW())
-                 ON CONFLICT (id) DO UPDATE SET
-                   name = EXCLUDED.name,
-                   email = EXCLUDED.email,
-                   phone = EXCLUDED.phone,
-                   bank_details = EXCLUDED.bank_details,
-                   status = 'active',
-                   updated_at = NOW()
-                 RETURNING id, name, email`,
-                [
-                    userId,
-                    userData.name,
-                    userData.email,
-                    userData.phone || '',
-                    JSON.stringify(bankDetails)
-                ]
-            );
+            if (updateError) {
+                console.error('[approve-user] Update error:', updateError);
+                throw updateError;
+            }
 
-            console.log('[approve-user] Staff insert result:', staffInsertResult.rows);
+            // Check if staff already exists with this email (different ID)
+            console.log('[approve-user] Checking for existing staff with email...');
+            const { data: existingStaff } = await supabase
+                .from('staff')
+                .select('id')
+                .eq('email', userData.email)
+                .single();
 
+            if (existingStaff && existingStaff.id !== userId) {
+                // Update the existing staff record to use the new user ID
+                console.log('[approve-user] Found existing staff, deleting old record...');
+                await supabase.from('staff').delete().eq('id', existingStaff.id);
+            }
 
-            // TODO: Send approval email notification
+            // Create/update staff record using Supabase client
+            console.log('[approve-user] Upserting staff record...');
+            const { error: staffError } = await supabase
+                .from('staff')
+                .upsert({
+                    id: userId,
+                    name: userData.name,
+                    email: userData.email,
+                    phone: userData.phone || '',
+                    role: 'Staff',
+                    status: 'active',
+                    pin: '0000',
+                    hourly_rate: 0,
+                    employment_type: 'part-time',
+                    join_date: new Date().toISOString().split('T')[0],
+                    bank_details: bankDetails,
+                    updated_at: new Date().toISOString(),
+                }, { onConflict: 'id' });
+
+            if (staffError) {
+                console.error('[approve-user] Staff upsert error:', staffError);
+                // Don't throw - user is already approved, staff record is secondary
+            }
+
+            console.log('[approve-user] ✅ User approved successfully');
 
             return NextResponse.json({
                 success: true,
@@ -118,30 +147,28 @@ export async function POST(request: NextRequest) {
             });
         } else if (action === 'reject') {
             // Update user status to rejected
-            const result = await query(
-                `UPDATE "user" 
-         SET 
-           status = 'rejected',
-           "rejectionReason" = $1,
-           "updatedAt" = NOW()
-         WHERE id = $2
-         RETURNING id, name, email, status`,
-                [reason || null, userId]
-            );
+            const { data: updatedUser, error: updateError } = await supabase
+                .from('user')
+                .update({
+                    status: 'rejected',
+                    rejectionReason: reason || null,
+                    updatedAt: new Date().toISOString(),
+                })
+                .eq('id', userId)
+                .select('id, name, email, status')
+                .single();
 
-            if (result.rowCount === 0) {
+            if (updateError || !updatedUser) {
                 return NextResponse.json(
                     { error: 'User not found' },
                     { status: 404 }
                 );
             }
 
-            // TODO: Send rejection email notification
-
             return NextResponse.json({
                 success: true,
                 message: 'User rejected',
-                user: result.rows[0],
+                user: updatedUser,
             });
         } else {
             return NextResponse.json(
@@ -149,10 +176,10 @@ export async function POST(request: NextRequest) {
                 { status: 400 }
             );
         }
-    } catch (error) {
+    } catch (error: any) {
         console.error('User approval error:', error);
         return NextResponse.json(
-            { error: 'Failed to process approval' },
+            { error: 'Failed to process approval', details: error.message },
             { status: 500 }
         );
     }
