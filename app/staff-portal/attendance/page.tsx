@@ -182,7 +182,7 @@ export default function AttendancePage() {
         } catch (err: any) {
             console.error(err);
             setMessage({ type: 'error', text: err.message || t('staffPortal.attendance.errorUnexpected') });
-            // throw err; // Don't throw, just show error
+            throw err;
         } finally {
             setTimeout(() => setMessage(null), 5000);
         }

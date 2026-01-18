@@ -176,13 +176,20 @@ export default function StaffPortalV2() {
       } else {
         result = await clockOut(staffId, pin, photoBlob, location.lat, location.lng);
       }
-      setClockMessage(result.message);
-      setTimeout(() => setClockMessage(''), 5000);
+      if (result.success) {
+        setClockMessage(result.message);
+        setTimeout(() => setClockMessage(''), 5000);
+        setIsVerificationOpen(false);
+      } else {
+        const errorMsg = result.message || t('staffPortal.clock.message.error');
+        setClockMessage(errorMsg);
+        throw new Error(errorMsg);
+      }
     } catch (error) {
-      setClockMessage(t('staffPortal.clock.message.error'));
+      setClockMessage(error instanceof Error ? error.message : t('staffPortal.clock.message.error'));
+      throw error;
     } finally {
       setIsClocking(false);
-      setIsVerificationOpen(false);
     }
   };
 

@@ -137,9 +137,16 @@ export default function VerificationWizard({ isOpen, onClose, onSuccess, staffNa
 
             // Compress to reduce size (max 800px width, 0.7 quality)
             try {
-                blob = await compressImage(blob, 800, 0.7);
+                // Add timeout to compression to prevent hanging
+                const compressionPromise = compressImage(blob, 800, 0.7);
+                const timeoutPromise = new Promise<Blob>((_, reject) =>
+                    setTimeout(() => reject(new Error('Compression timeout')), 1500)
+                );
+
+                blob = await Promise.race([compressionPromise, timeoutPromise]);
             } catch (e) {
-                console.warn('Compression failed, using original size', e);
+                console.warn('Compression failed or timed out, using original size', e);
+                // Proceed with original blob
             }
 
             await onSuccess(blob, location);
