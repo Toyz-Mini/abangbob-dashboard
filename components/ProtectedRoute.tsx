@@ -1,6 +1,7 @@
 'use client';
 
 import { ReactNode } from 'react';
+import Link from 'next/link';
 import { useAuthGuard } from '@/lib/hooks/useAuthGuard';
 import { hasPermission, type UserRole, type PermissionCategory, type ActionType } from '@/lib/permissions';
 import LoadingSpinner from './LoadingSpinner';
@@ -59,13 +60,13 @@ export default function ProtectedRoute({
     allowStaffLogin,
     redirectTo,
   });
-  
+
   // Check additional permission requirements
   const hasRequiredPermission = () => {
     if (!requiredPermission) return true;
     return hasPermission(userRole, requiredPermission, requiredAction);
   };
-  
+
   // Show loading state
   if (isLoading) {
     return loadingComponent || (
@@ -89,12 +90,12 @@ export default function ProtectedRoute({
       </div>
     );
   }
-  
+
   // Not authenticated - redirect is handled by useAuthGuard
   if (!isAuthenticated) {
     return null;
   }
-  
+
   // Not authorized (role check failed)
   if (!isAuthorized || !hasRequiredPermission()) {
     return unauthorizedComponent || (
@@ -109,9 +110,9 @@ export default function ProtectedRoute({
               <p>Peranan diperlukan: <strong>{requiredRole.join(', ')}</strong></p>
             )}
           </div>
-          <a href="/" className="btn btn-primary">
+          <Link href="/" className="btn btn-primary">
             Kembali ke Dashboard
-          </a>
+          </Link>
         </div>
         <style jsx>{`
           .protected-route-unauthorized {
@@ -157,7 +158,7 @@ export default function ProtectedRoute({
       </div>
     );
   }
-  
+
   // Authorized - render children
   return <>{children}</>;
 }
@@ -193,11 +194,11 @@ export function RequirePermission({
   fallback?: ReactNode;
 }) {
   const { userRole } = useAuthGuard();
-  
+
   if (!hasPermission(userRole, category, action)) {
     return <>{fallback}</>;
   }
-  
+
   return <>{children}</>;
 }
 
@@ -214,11 +215,11 @@ export function RequireRole({
   fallback?: ReactNode;
 }) {
   const { userRole } = useAuthGuard();
-  
+
   if (!userRole || !roles.includes(userRole)) {
     return <>{fallback}</>;
   }
-  
+
   return <>{children}</>;
 }
 

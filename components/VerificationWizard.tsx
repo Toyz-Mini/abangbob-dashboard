@@ -306,8 +306,8 @@ export default function VerificationWizard({ isOpen, onClose, onSuccess, staffNa
                                             {error.includes('ditolak') && (
                                                 <div className="ml-6 text-[10px] text-red-500/80 leading-tight">
                                                     1. Check ada icon <Camera size={10} className="inline mx-1" /> di address bar<br />
-                                                    2. Tekan & pilih "Allow"<br />
-                                                    3. Tekan butang "Cuba Lagi"
+                                                    2. Tekan &amp; pilih &quot;Allow&quot;<br />
+                                                    3. Tekan butang &quot;Cuba Lagi&quot;
                                                 </div>
                                             )}
                                         </div>
