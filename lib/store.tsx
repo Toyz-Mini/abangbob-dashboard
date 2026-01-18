@@ -1635,6 +1635,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           setAttendance(prev => [...prev, newRecord]);
           return { success: true, message: `Clock in berjaya di ${syncResult.location_name || 'Lokasi'}` };
         } else {
+          // Check if it's a network/upload error -> Throw to trigger offline mode
+          const errLower = (syncResult.error || '').toLowerCase();
+          if (errLower.includes('load failed') || errLower.includes('network') || errLower.includes('fetch') || errLower.includes('sambungan') || errLower.includes('upload failed')) {
+            throw new Error(syncResult.error || 'Network error');
+          }
+
           // Return specific error from sync layer (e.g. "Outside allowed radius")
           return { success: false, message: syncResult.error || 'Gagal clock in' };
         }
@@ -1700,6 +1706,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           ));
           return { success: true, message: 'Clock out berjaya' };
         } else {
+          // Check if it's a network/upload error -> Throw to trigger offline mode
+          const errLower = (syncResult.error || '').toLowerCase();
+          if (errLower.includes('load failed') || errLower.includes('network') || errLower.includes('fetch') || errLower.includes('sambungan') || errLower.includes('upload failed')) {
+            throw new Error(syncResult.error || 'Network error');
+          }
           return { success: false, message: syncResult.error || 'Gagal clock out' };
         }
       } catch (err) {

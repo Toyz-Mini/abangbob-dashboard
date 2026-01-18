@@ -244,7 +244,7 @@ export default function VerificationWizard({ isOpen, onClose, onSuccess, staffNa
                                 <div className="text-center mb-1">
                                     <div className="flex items-center justify-center gap-2 mb-1">
                                         <ScanFace size={18} className="text-primary" />
-                                        <h3 className="text-lg font-bold text-gray-900">Verifikasi Wajah</h3>
+                                        <h3 className="text-lg font-bold text-gray-900">Verifikasi Wajah (v2.1)</h3>
                                     </div>
                                     <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Selfie di {nearestOutlet?.name}</p>
                                 </div>
