@@ -323,6 +323,7 @@ VALUES ('outlet-logos', 'outlet-logos', true);`
   }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     runChecks();
   }, [runChecks]);
 

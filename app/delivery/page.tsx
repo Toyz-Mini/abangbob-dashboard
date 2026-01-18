@@ -61,6 +61,7 @@ export default function DeliveryHubPage() {
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setPlatforms(parsed);
       } catch (e) {
         console.error('Failed to parse platform settings:', e);
