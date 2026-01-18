@@ -41,13 +41,15 @@ export default function BirthdayBanner({ currentStaffId }: BirthdayBannerProps) 
     }
   }, [showConfetti]);
 
-  const confettiItems = useMemo(() => {
-    return [...Array(20)].map((_, i) => ({
+  const [confettiItems, setConfettiItems] = useState<any[]>([]);
+
+  useEffect(() => {
+    setConfettiItems([...Array(20)].map((_, i) => ({
       id: i,
       left: `${Math.random() * 100}%`,
       delay: `${Math.random() * 2}s`,
       color: ['#6366f1', '#f59e0b', '#10b981', '#ec4899', '#8b5cf6'][Math.floor(Math.random() * 5)]
-    }));
+    })));
   }, []);
 
   if (dismissed || (!isBirthday && !isAnniversary)) {
