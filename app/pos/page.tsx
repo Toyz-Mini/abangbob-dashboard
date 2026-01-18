@@ -271,7 +271,7 @@ export default function POSPage() {
       const validity = isPromotionValid(selectedPromotion, cartSubtotal);
       if (!validity.isValid) {
         setSelectedPromotion(null);
-        showToast(t('pos.toast.promotionInvalid', { reason: validity.reason }), 'warning');
+        showToast(t('pos.toast.promotionInvalid', { reason: validity.reason || '' }), 'warning');
       }
     }
   }, [cartSubtotal, selectedPromotion, showToast, t]);

@@ -3859,16 +3859,18 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
     // Automate Termination: Update staff status if action is termination
     if (action.type === 'termination') {
-      updateStaff(action.staffId, { status: 'Terminated' });
+      updateStaff(action.staffId, { status: 'terminated' });
       // Also sync staff update happens inside updateStaff
 
       // Notify staff logic (optional)
       notifyStaffRequestResult({
         staffId: action.staffId,
         staffName: action.staffName,
-        isApproved: false, // Not exactly approved/rejected, but used to trigger notification
+        isApproved: false,
         approverName: action.issuedByName,
-        responseNote: `Tindakan Disiplin (Penamatan): ${action.reason}`
+        category: 'other',
+        title: 'Penamatan Perkhidmatan (Termination)',
+        rejectionReason: `Tindakan Disiplin (Penamatan): ${action.reason}`
       });
     }
 
