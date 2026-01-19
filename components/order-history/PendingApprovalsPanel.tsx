@@ -178,7 +178,7 @@ export default function PendingApprovalsPanel({
                     {request.itemsToRefund.map((item, idx) => (
                       <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.25rem 0.5rem', borderBottom: idx < (request.itemsToRefund?.length || 0) - 1 ? '1px solid var(--gray-200)' : 'none' }}>
                         <span>{item.itemName} <span style={{ opacity: 0.6 }}>×{item.quantity}</span></span>
-                        <span style={{ fontWeight: 500 }}>BND {item.amount.toFixed(2)}</span>
+                        <span style={{ fontWeight: 500 }}>BND {(item.amount || 0).toFixed(2)}</span>
                       </div>
                     ))}
                   </div>

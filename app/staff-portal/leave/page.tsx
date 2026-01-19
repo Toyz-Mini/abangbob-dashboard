@@ -315,7 +315,14 @@ export default function LeavePage() {
               ))}
             </div>
           ) : (
-            <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '2rem',
+              color: 'var(--text-secondary)'
+            }}>
               <Plane size={40} color="var(--gray-300)" style={{ marginBottom: '0.75rem' }} />
               <div>{t('staffPortal.leave.noHistory')}</div>
             </div>

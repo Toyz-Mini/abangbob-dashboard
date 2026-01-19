@@ -917,6 +917,77 @@
         "noShift": "Tiada shift dijadualkan esok."
       }
     },
+    "salaryAdvance": {
+      "title": "Pendahuluan Gaji",
+      "subtitle": "Mohon pendahuluan gaji - berdasarkan hari bekerja bulan ini",
+      "apply": "Mohon Pendahuluan",
+      "loginReq": {
+        "title": "Sila Log Masuk",
+        "desc": "Anda perlu log masuk sebagai staf untuk memohon pendahuluan gaji."
+      },
+      "eligibility": {
+        "workedDays": "Hari Bekerja:",
+        "currentEarnings": "Pendapatan Setakat Ini:",
+        "advanced": "Dah Advance:",
+        "monthlyLimit": "Had Bulanan (50%):",
+        "canApply": "Boleh Mohon: BND {{amount}}",
+        "daysSuffix": "hari"
+      },
+      "stats": {
+        "pending": "Menunggu Kelulusan",
+        "approved": "Diluluskan",
+        "dailyRate": "Kadar Harian",
+        "totalApproved": "jumlah diluluskan",
+        "rateDesc": "gaji / {{days}} hari"
+      },
+      "filters": {
+        "all": "Semua",
+        "pending": "Menunggu",
+        "approved": "Diluluskan",
+        "rejected": "Ditolak",
+        "deducted": "Dipotong"
+      },
+      "list": {
+        "title": "Senarai Permohonan",
+        "empty": "Tiada permohonan pendahuluan gaji",
+        "table": {
+          "date": "Tarikh",
+          "amount": "Jumlah",
+          "reason": "Sebab",
+          "status": "Status",
+          "note": "Catatan"
+        },
+        "approvedBy": "Diluluskan oleh {{name}}",
+        "deductedMonth": "Dipotong bulan {{month}}"
+      },
+      "modal": {
+        "title": "Mohon Pendahuluan Gaji",
+        "cannotApplyTitle": "Tidak Boleh Mohon",
+        "cannotApplyDesc": "Anda sudah advance maksimum berdasarkan hari bekerja bulan ini.",
+        "form": {
+          "amount": "Jumlah (BND) *",
+          "amountHint": "Maksimum BND {{amount}} (had 50% gaji atau hari bekerja)",
+          "reason": "Sebab Permohonan *",
+          "reasonPlaceholder": "Nyatakan sebab permohonan...",
+          "cancel": "Batal",
+          "submit": "Hantar Permohonan"
+        },
+        "warning": {
+          "title": "Perhatian:",
+          "desc": "Pendahuluan gaji akan dipotong secara automatik dari gaji bulan ini selepas diluluskan."
+        }
+      },
+      "alerts": {
+        "incompleteTitle": "Maklumat Tidak Lengkap",
+        "incompleteMsg": "Sila isi jumlah dan sebab permohonan.",
+        "invalidAmountTitle": "Jumlah Tidak Sah",
+        "invalidAmountMsg": "Sila masukkan jumlah permohonan yang sah.",
+        "limitExceededTitle": "Melebihi Had",
+        "limitExceededMsg": "Maksimum yang boleh dipohon berdasarkan hari bekerja anda adalah BND {{amount}}.",
+        "successTitle": "Berjaya Dihantar",
+        "successMsg": "Permohonan pendahuluan gaji anda telah dihantar dan akan disemak oleh pihak pengurusan."
+      }
+    },
     "schedule": {
       "title": "Jadual Kerja",
       "subtitle": "Mingguan anda",

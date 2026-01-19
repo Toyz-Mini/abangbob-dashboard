@@ -537,7 +537,7 @@ export default function StaffPortalV2() {
             </div>
           </Link>
 
-          <Link href="/equipment" style={{ textDecoration: 'none' }}>
+          <Link href="/staff-portal/issue" style={{ textDecoration: 'none' }}>
             <div style={{ background: 'var(--bg-primary)', padding: '1rem 0.5rem', borderRadius: '12px', textAlign: 'center', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)' }}>
               <div style={{ background: 'var(--primary-50)', margin: '0 auto', width: '40px', height: '40px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '0.5rem' }}>
                 <Wrench size={20} color="var(--primary)" />

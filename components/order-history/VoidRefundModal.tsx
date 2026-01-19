@@ -156,7 +156,7 @@ export default function VoidRefundModal({
           </div>
           <div style={{ textAlign: 'right' }}>
             <div style={{ fontWeight: 700, color: 'var(--primary)' }}>
-              BND {order.total.toFixed(2)}
+              BND {(order.total || 0).toFixed(2)}
             </div>
           </div>
         </div>
@@ -243,7 +243,7 @@ export default function VoidRefundModal({
                     <div style={{ flex: 1 }}>
                       <div style={{ fontWeight: 500, fontSize: '0.875rem' }}>{item.name}</div>
                       <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                        BND {item.itemTotal.toFixed(2)} ×
+                        BND {(item.itemTotal || 0).toFixed(2)} ×
                         {selection?.selected && (
                           <input
                             type="number"
@@ -265,7 +265,7 @@ export default function VoidRefundModal({
                       </div>
                     </div>
                     <div style={{ fontWeight: 600, fontSize: '0.875rem' }}>
-                      BND {((selection?.selected ? selection.quantity : item.quantity) * item.itemTotal).toFixed(2)}
+                      BND {((selection?.selected ? selection.quantity : item.quantity) * (item.itemTotal || 0)).toFixed(2)}
                     </div>
                   </div>
                 );
@@ -287,7 +287,7 @@ export default function VoidRefundModal({
             {mode === 'void' ? 'Jumlah Void:' : 'Jumlah Refund:'}
           </span>
           <span style={{ fontWeight: 700, fontSize: '1.25rem', color: 'var(--danger)' }}>
-            BND {refundAmount.toFixed(2)}
+            BND {(refundAmount || 0).toFixed(2)}
           </span>
         </div>
 

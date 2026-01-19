@@ -289,7 +289,7 @@ export default function OrderHistoryPage() {
       header: 'Jumlah',
       accessor: (row) => (
         <span style={{ fontWeight: 600 }}>
-          BND {row.total.toFixed(2)}
+          BND {(row.total || 0).toFixed(2)}
         </span>
       ),
       sortable: true,
@@ -411,8 +411,8 @@ export default function OrderHistoryPage() {
           />
           <StatCard
             label="Jumlah Jualan"
-            value={`BND ${stats.totalSales.toFixed(2)}`}
-            change={stats.refundedAmount > 0 ? `-BND ${stats.refundedAmount.toFixed(2)} refund` : undefined}
+            value={`BND ${(stats.totalSales || 0).toFixed(2)}`}
+            change={stats.refundedAmount > 0 ? `-BND ${(stats.refundedAmount || 0).toFixed(2)} refund` : undefined}
             changeType={stats.refundedAmount > 0 ? 'negative' : 'neutral'}
             icon={DollarSign}
             gradient="info"

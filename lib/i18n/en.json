@@ -916,6 +916,77 @@
         "noShift": "No shift scheduled for tomorrow."
       }
     },
+    "salaryAdvance": {
+      "title": "Salary Advance",
+      "subtitle": "Request salary advance - based on working days this month",
+      "apply": "Request Advance",
+      "loginReq": {
+        "title": "Please Login",
+        "desc": "You need to login as staff to request salary advance."
+      },
+      "eligibility": {
+        "workedDays": "Working Days:",
+        "currentEarnings": "Earnings So Far:",
+        "advanced": "Advanced:",
+        "monthlyLimit": "Monthly Limit (50%):",
+        "canApply": "Available: BND {{amount}}",
+        "daysSuffix": "days"
+      },
+      "stats": {
+        "pending": "Pending Approval",
+        "approved": "Approved",
+        "dailyRate": "Daily Rate",
+        "totalApproved": "total approved",
+        "rateDesc": "salary / {{days}} days"
+      },
+      "filters": {
+        "all": "All",
+        "pending": "Pending",
+        "approved": "Approved",
+        "rejected": "Rejected",
+        "deducted": "Deducted"
+      },
+      "list": {
+        "title": "Request History",
+        "empty": "No salary advance requests",
+        "table": {
+          "date": "Date",
+          "amount": "Amount",
+          "reason": "Reason",
+          "status": "Status",
+          "note": "Note"
+        },
+        "approvedBy": "Approved by {{name}}",
+        "deductedMonth": "Deducted in {{month}}"
+      },
+      "modal": {
+        "title": "Request Salary Advance",
+        "cannotApplyTitle": "Cannot Request",
+        "cannotApplyDesc": "You have already reached the maximum advance limit for this month.",
+        "form": {
+          "amount": "Amount (BND) *",
+          "amountHint": "Max BND {{amount}} (50% salary limit or working days)",
+          "reason": "Reason *",
+          "reasonPlaceholder": "State your reason...",
+          "cancel": "Cancel",
+          "submit": "Submit Request"
+        },
+        "warning": {
+          "title": "Notice:",
+          "desc": "Salary advance will be automatically deducted from this month's salary upon approval."
+        }
+      },
+      "alerts": {
+        "incompleteTitle": "Incomplete Information",
+        "incompleteMsg": "Please provide amount and reason.",
+        "invalidAmountTitle": "Invalid Amount",
+        "invalidAmountMsg": "Please enter a valid amount.",
+        "limitExceededTitle": "Limit Exceeded",
+        "limitExceededMsg": "Maximum amount you can request based on working days is BND {{amount}}.",
+        "successTitle": "Successfully Submitted",
+        "successMsg": "Your salary advance request has been submitted for review."
+      }
+    },
     "schedule": {
       "title": "Work Schedule",
       "subtitle": "Your weekly schedule",

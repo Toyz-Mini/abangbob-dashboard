@@ -248,54 +248,243 @@ export default function SalaryAdvancePage() {
     return (
         <StaffLayout>
             <div className="animate-fade-in">
-                {/* Header */}
-                <div style={{ marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '1rem' }}>
-                    <div>
-                        <h1 style={{ fontSize: '2rem', fontWeight: 700, marginBottom: '0.5rem' }}>
-                            {t('staffPortal.salaryAdvance.title')}
-                        </h1>
-                        <p style={{ color: 'var(--text-secondary)' }}>
-                            {t('staffPortal.salaryAdvance.subtitle')}
-                        </p>
+                {/* Hero Header with Gradient */}
+                <div style={{
+                    background: 'var(--gradient-primary)',
+                    borderRadius: 'var(--radius-xl)',
+                    padding: '1.5rem',
+                    marginBottom: '1.5rem',
+                    color: 'white',
+                    position: 'relative',
+                    overflow: 'hidden'
+                }}>
+                    {/* Decorative circles */}
+                    <div style={{
+                        position: 'absolute',
+                        top: '-30px',
+                        right: '-30px',
+                        width: '120px',
+                        height: '120px',
+                        borderRadius: '50%',
+                        background: 'rgba(255,255,255,0.1)',
+                    }} />
+                    <div style={{
+                        position: 'absolute',
+                        bottom: '-20px',
+                        right: '60px',
+                        width: '80px',
+                        height: '80px',
+                        borderRadius: '50%',
+                        background: 'rgba(255,255,255,0.05)',
+                    }} />
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', position: 'relative', zIndex: 1 }}>
+                        <div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
+                                <div style={{
+                                    background: 'rgba(255,255,255,0.2)',
+                                    borderRadius: 'var(--radius-md)',
+                                    padding: '0.625rem',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center'
+                                }}>
+                                    <DollarSign size={22} color="white" />
+                                </div>
+                                <h1 style={{ fontSize: '1.5rem', fontWeight: 700, margin: 0 }}>
+                                    {t('staffPortal.salaryAdvance.title')}
+                                </h1>
+                            </div>
+                            <p style={{ opacity: 0.9, margin: 0, fontSize: '0.875rem' }}>
+                                {t('staffPortal.salaryAdvance.subtitle')}
+                            </p>
+                        </div>
+                        <button
+                            className="btn"
+                            onClick={() => setShowAddModal(true)}
+                            disabled={maxAdvance <= 0}
+                            style={{
+                                background: 'white',
+                                color: 'var(--primary)',
+                                fontWeight: 600,
+                                padding: '0.625rem 1.25rem',
+                                borderRadius: 'var(--radius-md)',
+                                border: 'none',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.5rem',
+                                boxShadow: 'var(--shadow-md)',
+                                cursor: maxAdvance <= 0 ? 'not-allowed' : 'pointer',
+                                opacity: maxAdvance <= 0 ? 0.6 : 1,
+                                transition: 'all 0.2s ease'
+                            }}
+                        >
+                            <Plus size={18} />
+                            {t('staffPortal.salaryAdvance.apply')}
+                        </button>
                     </div>
-                    <button
-                        className="btn btn-primary"
-                        onClick={() => setShowAddModal(true)}
-                        disabled={maxAdvance <= 0}
-                    >
-                        <Plus size={18} />
-                        {t('staffPortal.salaryAdvance.apply')}
-                    </button>
                 </div>
 
-                {/* Eligibility Info */}
-                <div className="card" style={{ marginBottom: '2rem', padding: '1rem', background: 'var(--info-light)', border: '1px solid var(--info)' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <Briefcase size={18} color="var(--info)" />
-                            <span><strong>{t('staffPortal.salaryAdvance.eligibility.workedDays')}</strong> {daysWorkedThisMonth} {t('staffPortal.salaryAdvance.eligibility.daysSuffix')}</span>
+                {/* Eligibility Card - Glass Effect */}
+                <div className="card" style={{
+                    marginBottom: '1.5rem',
+                    padding: '1.25rem'
+                }}>
+                    <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+                        gap: '0.75rem'
+                    }}>
+                        {/* Working Days */}
+                        <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.75rem',
+                            padding: '0.875rem',
+                            background: 'var(--gray-50)',
+                            borderRadius: 'var(--radius-md)',
+                            border: '1px solid var(--border-color)'
+                        }}>
+                            <div style={{
+                                background: 'var(--primary)',
+                                borderRadius: 'var(--radius-sm)',
+                                padding: '0.5rem',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                            }}>
+                                <Briefcase size={18} color="white" />
+                            </div>
+                            <div>
+                                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 500 }}>
+                                    {t('staffPortal.salaryAdvance.eligibility.workedDays')}
+                                </div>
+                                <div style={{ fontSize: '1.125rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                                    {daysWorkedThisMonth} {t('staffPortal.salaryAdvance.eligibility.daysSuffix')}
+                                </div>
+                            </div>
                         </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <DollarSign size={18} color="var(--info)" />
-                            <span><strong>{t('staffPortal.salaryAdvance.eligibility.currentEarnings')}</strong> BND {earnedSoFar.toFixed(2)}</span>
+
+                        {/* Earnings So Far */}
+                        <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.75rem',
+                            padding: '0.875rem',
+                            background: 'var(--gray-50)',
+                            borderRadius: 'var(--radius-md)',
+                            border: '1px solid var(--border-color)'
+                        }}>
+                            <div style={{
+                                background: 'var(--success)',
+                                borderRadius: 'var(--radius-sm)',
+                                padding: '0.5rem',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                            }}>
+                                <DollarSign size={18} color="white" />
+                            </div>
+                            <div>
+                                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 500 }}>
+                                    {t('staffPortal.salaryAdvance.eligibility.currentEarnings')}
+                                </div>
+                                <div style={{ fontSize: '1.125rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                                    BND {earnedSoFar.toFixed(2)}
+                                </div>
+                            </div>
                         </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <Clock size={18} color="var(--info)" />
-                            <span><strong>{t('staffPortal.salaryAdvance.eligibility.advanced')}</strong> BND {alreadyAdvanced.toFixed(2)}</span>
+
+                        {/* Already Advanced */}
+                        <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.75rem',
+                            padding: '0.875rem',
+                            background: 'var(--gray-50)',
+                            borderRadius: 'var(--radius-md)',
+                            border: '1px solid var(--border-color)'
+                        }}>
+                            <div style={{
+                                background: 'var(--warning)',
+                                borderRadius: 'var(--radius-sm)',
+                                padding: '0.5rem',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                            }}>
+                                <Clock size={18} color="white" />
+                            </div>
+                            <div>
+                                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 500 }}>
+                                    {t('staffPortal.salaryAdvance.eligibility.advanced')}
+                                </div>
+                                <div style={{ fontSize: '1.125rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                                    BND {alreadyAdvanced.toFixed(2)}
+                                </div>
+                            </div>
                         </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <AlertCircle size={18} color="var(--warning)" />
-                            <span><strong>{t('staffPortal.salaryAdvance.eligibility.monthlyLimit')}</strong> BND {monthlyLimit.toFixed(2)}</span>
+
+                        {/* Monthly Limit */}
+                        <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.75rem',
+                            padding: '0.875rem',
+                            background: 'var(--gray-50)',
+                            borderRadius: 'var(--radius-md)',
+                            border: '1px solid var(--border-color)'
+                        }}>
+                            <div style={{
+                                background: 'var(--gray-500)',
+                                borderRadius: 'var(--radius-sm)',
+                                padding: '0.5rem',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                            }}>
+                                <AlertCircle size={18} color="white" />
+                            </div>
+                            <div>
+                                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 500 }}>
+                                    {t('staffPortal.salaryAdvance.eligibility.monthlyLimit')}
+                                </div>
+                                <div style={{ fontSize: '1.125rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                                    BND {monthlyLimit.toFixed(2)}
+                                </div>
+                            </div>
                         </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 700, color: maxAdvance > 0 ? 'var(--success)' : 'var(--danger)' }}>
-                            <CheckCircle size={18} />
-                            <span>{t('staffPortal.salaryAdvance.eligibility.canApply', { amount: maxAdvance.toFixed(2) })}</span>
+                    </div>
+
+                    {/* Available Amount - Highlight */}
+                    <div style={{
+                        marginTop: '1rem',
+                        padding: '0.875rem 1.25rem',
+                        background: maxAdvance > 0
+                            ? 'var(--gradient-success)'
+                            : 'var(--gradient-primary)',
+                        borderRadius: 'var(--radius-md)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        color: 'white',
+                        flexWrap: 'wrap',
+                        gap: '0.5rem'
+                    }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <CheckCircle size={20} />
+                            <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>
+                                {maxAdvance > 0 ? t('staffPortal.salaryAdvance.eligibility.canApply', { amount: '' }).replace('BND', '').trim() : 'Had maksimum telah dicapai'}
+                            </span>
+                        </div>
+                        <div style={{ fontSize: '1.25rem', fontWeight: 700 }}>
+                            BND {maxAdvance.toFixed(2)}
                         </div>
                     </div>
                 </div>
 
-                {/* Stats */}
-                <div className="content-grid cols-3" style={{ marginBottom: '2rem' }}>
+                {/* Stats Row */}
+                <div className="content-grid cols-3" style={{ marginBottom: '1.5rem' }}>
                     <StatCard
                         label={t('staffPortal.salaryAdvance.stats.pending')}
                         value={pendingCount}

@@ -122,7 +122,7 @@ export default function OrderDetailModal({
           </div>
           <div style={{ textAlign: 'right' }}>
             <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--primary)' }}>
-              BND {order.total.toFixed(2)}
+              BND {(order.total || 0).toFixed(2)}
             </div>
             <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
               {getPaymentMethodLabel(order.paymentMethod || '-')}
@@ -171,9 +171,9 @@ export default function OrderDetailModal({
                     )}
                   </td>
                   <td style={{ textAlign: 'center' }}>{item.quantity}</td>
-                  <td style={{ textAlign: 'right' }}>BND {item.itemTotal.toFixed(2)}</td>
+                  <td style={{ textAlign: 'right' }}>BND {(item.itemTotal || 0).toFixed(2)}</td>
                   <td style={{ textAlign: 'right', fontWeight: 500 }}>
-                    BND {(item.itemTotal * item.quantity).toFixed(2)}
+                    BND {((item.itemTotal || 0) * (item.quantity || 1)).toFixed(2)}
                   </td>
                 </tr>
               ))}
@@ -193,7 +193,7 @@ export default function OrderDetailModal({
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', fontSize: '0.875rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
               <span>Subtotal:</span>
-              <span>BND {(order.total - (order.discount || 0)).toFixed(2)}</span>
+              <span>BND {((order.total || 0) - (order.discount || 0)).toFixed(2)}</span>
             </div>
             {order.discount && order.discount > 0 && (
               <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--success)' }}>
@@ -209,7 +209,7 @@ export default function OrderDetailModal({
             )}
             <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, fontSize: '1rem', paddingTop: '0.5rem', borderTop: '1px dashed var(--gray-300)', marginTop: '0.25rem' }}>
               <span>Jumlah:</span>
-              <span>BND {order.total.toFixed(2)}</span>
+              <span>BND {(order.total || 0).toFixed(2)}</span>
             </div>
           </div>
         </div>

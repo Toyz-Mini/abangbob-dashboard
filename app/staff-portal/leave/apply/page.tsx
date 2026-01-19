@@ -195,6 +195,122 @@ export default function ApplyLeavePage() {
           </p>
         </div>
 
+        {/* Leave Balance Summary - Always show, with default 0 */}
+        <div className="card" style={{ maxWidth: '600px', marginBottom: '1rem', background: 'linear-gradient(135deg, var(--gray-50) 0%, var(--background) 100%)' }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            marginBottom: '0.75rem',
+            fontWeight: 600,
+            color: 'var(--text-primary)'
+          }}>
+            <Calendar size={18} color="var(--primary)" />
+            Baki Cuti Anda
+          </div>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(3, 1fr)',
+            gap: '0.75rem'
+          }}>
+            {/* Annual */}
+            <div style={{
+              textAlign: 'center',
+              padding: '0.75rem 0.5rem',
+              borderRadius: 'var(--radius-md)',
+              background: 'var(--background)',
+              border: '1px solid var(--border-color)'
+            }}>
+              <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--primary)' }}>
+                {leaveBalance?.annual?.balance ?? 0}
+              </div>
+              <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
+                Tahunan
+              </div>
+            </div>
+
+            {/* Medical */}
+            <div style={{
+              textAlign: 'center',
+              padding: '0.75rem 0.5rem',
+              borderRadius: 'var(--radius-md)',
+              background: 'var(--background)',
+              border: '1px solid var(--border-color)'
+            }}>
+              <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--success)' }}>
+                {leaveBalance?.medical?.balance ?? 0}
+              </div>
+              <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
+                MC
+              </div>
+            </div>
+
+            {/* Emergency */}
+            <div style={{
+              textAlign: 'center',
+              padding: '0.75rem 0.5rem',
+              borderRadius: 'var(--radius-md)',
+              background: 'var(--background)',
+              border: '1px solid var(--border-color)'
+            }}>
+              <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--warning)' }}>
+                {leaveBalance?.emergency?.balance ?? 0}
+              </div>
+              <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
+                Kecemasan
+              </div>
+            </div>
+
+            {/* Compassionate */}
+            <div style={{
+              textAlign: 'center',
+              padding: '0.75rem 0.5rem',
+              borderRadius: 'var(--radius-md)',
+              background: 'var(--background)',
+              border: '1px solid var(--border-color)'
+            }}>
+              <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--info)' }}>
+                {leaveBalance?.compassionate?.balance ?? 0}
+              </div>
+              <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
+                Ehsan
+              </div>
+            </div>
+
+            {/* Replacement */}
+            <div style={{
+              textAlign: 'center',
+              padding: '0.75rem 0.5rem',
+              borderRadius: 'var(--radius-md)',
+              background: 'var(--background)',
+              border: '1px solid var(--border-color)'
+            }}>
+              <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--accent)' }}>
+                {replacementAvailable ?? 0}
+              </div>
+              <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
+                Ganti
+              </div>
+            </div>
+
+            {/* Unpaid - show as unlimited */}
+            <div style={{
+              textAlign: 'center',
+              padding: '0.75rem 0.5rem',
+              borderRadius: 'var(--radius-md)',
+              background: 'var(--background)',
+              border: '1px solid var(--border-color)'
+            }}>
+              <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-secondary)' }}>
+                ∞
+              </div>
+              <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
+                Tanpa Gaji
+              </div>
+            </div>
+          </div>
+        </div>
+
         <form onSubmit={handleSubmit}>
           <div className="card" style={{ maxWidth: '600px' }}>
             <div className="form-group">
