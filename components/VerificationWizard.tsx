@@ -9,6 +9,20 @@ import PremiumButton from './PremiumButton';
 import { getAllowedLocations, calculateDistance, type AllowedLocation } from '@/lib/supabase/attendance-sync';
 import { compressImage } from '@/lib/supabase/storage-utils';
 
+// Helper to convert Data URI to Blob safely (avoids fetch "Load failed" on some browsers)
+const dataURItoBlob = (dataURI: string): Blob => {
+    const byteString = atob(dataURI.split(',')[1]);
+    const mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0];
+    const ab = new ArrayBuffer(byteString.length);
+    const ia = new Uint8Array(ab);
+
+    for (let i = 0; i < byteString.length; i++) {
+        ia[i] = byteString.charCodeAt(i);
+    }
+
+    return new Blob([ab], { type: mimeString });
+};
+
 interface VerificationWizardProps {
     isOpen: boolean;
     onClose: () => void;
@@ -140,9 +154,9 @@ export default function VerificationWizard({ isOpen, onClose, onSuccess, staffNa
         setStep('verifying');
 
         try {
-            // Convert dataURL to Blob
-            const res = await fetch(capturedImage);
-            let blob = await res.blob();
+            // Convert dataURL to Blob safely using helper instead of fetch
+            // fetch(dataURI) can fail on iOS/WebKit with "Load failed"
+            let blob = dataURItoBlob(capturedImage);
 
             // Compress to reduce size (max 800px width, 0.7 quality)
             try {
@@ -244,7 +258,7 @@ export default function VerificationWizard({ isOpen, onClose, onSuccess, staffNa
                                 <div className="text-center mb-1">
                                     <div className="flex items-center justify-center gap-2 mb-1">
                                         <ScanFace size={18} className="text-primary" />
-                                        <h3 className="text-lg font-bold text-gray-900">Verifikasi Wajah (v2.1)</h3>
+                                        <h3 className="text-lg font-bold text-gray-900">Verifikasi Wajah (v2.2)</h3>
                                     </div>
                                     <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Selfie di {nearestOutlet?.name}</p>
                                 </div>

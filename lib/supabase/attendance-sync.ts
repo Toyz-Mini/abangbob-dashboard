@@ -225,7 +225,11 @@ export async function uploadAttendancePhoto(staffId: string, file: File | Blob):
         if (error) {
             console.error('[Photo Upload] Storage error:', error);
             console.error('[Photo Upload] Error code:', error.statusCode, 'message:', error.message);
-            return { path: null, error: `Upload failed: ${error.message || 'Unknown error'}` };
+            // Return specific message for common errors
+            if (error.message === 'The resource was not found') {
+                return { path: null, error: `Bucket 'attendance-photos' belum diwujudkan.` };
+            }
+            return { path: null, error: `Upload gagal: ${error.message || 'Unknown error'}` };
         }
 
         // Get public URL
