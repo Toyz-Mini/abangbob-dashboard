@@ -2278,7 +2278,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       ...orderData,
       id: generateUUID(),
       orderNumber: `${orderPrefix}-${timestamp.toString().slice(-6)}`,
+      outletId: currentRegister?.outletId, // Auto-populate outletId from current register
     };
+
+    if (!newOrder.outletId) {
+      console.warn('[Order] Created without outletId (no open register found). Sync may fail or be filtered.');
+    }
 
     // Sync to Supabase
     try {
@@ -4945,6 +4950,17 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         approvedAt: now,
         salesReversed: true,
         inventoryReversed: true,
+      });
+
+      // Also update the Orders table to reflect the new status
+      await SupabaseSync.syncUpdateOrder(request.orderId, {
+        void_refund_status: newStatus,
+        refund_amount: reversalAmount,
+        refund_reason: request.reason,
+        ...(request.type === 'void'
+          ? { voided_at: now, voided_by: approvedBy, voided_by_name: approvedByName }
+          : { refunded_at: now, refunded_by: approvedBy, refunded_by_name: approvedByName }
+        )
       });
     } catch (error) {
       console.error('Failed to sync approval to Supabase:', error);

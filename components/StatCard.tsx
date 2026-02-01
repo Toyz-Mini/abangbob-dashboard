@@ -37,7 +37,16 @@ export default function StatCard({
   };
 
   const glassGradient = glassGradientMap[gradient] || 'none';
-  const changeClass = changeType !== 'neutral' ? changeType : '';
+
+  // Resolve color for change text
+  const getChangeColor = () => {
+    switch (changeType) {
+      case 'positive': return 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20';
+      case 'negative': return 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20';
+      case 'warning': return 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20';
+      default: return 'text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-white/5';
+    }
+  };
 
   // Calculate sparkline heights
   const getSparklineHeight = (point: number) => {
@@ -52,30 +61,37 @@ export default function StatCard({
     <GlassCard
       gradient={glassGradient}
       hoverEffect={true}
-      className="stat-card"
+      className="flex flex-col justify-between h-full min-h-[140px]"
     >
-      <div className="stat-card-header">
-        <div className="stat-label">{label}</div>
+      <div className="flex justify-between items-start mb-2">
+        <span className="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{label}</span>
         {Icon && (
-          <div className="stat-icon">
-            <Icon size={20} />
+          <div className="p-2 rounded-lg bg-white/50 dark:bg-white/10 text-gray-400 group-hover:text-primary transition-colors">
+            <Icon size={18} />
           </div>
         )}
       </div>
-      <div className="stat-value">{value}</div>
-      {change && (
-        <div className={`stat-change ${changeClass}`}>
-          {changeType === 'positive' && '↑ '}
-          {changeType === 'negative' && '↓ '}
-          {change}
+
+      <div className="mt-auto">
+        <div className="text-3xl font-black text-gray-900 dark:text-white tracking-tight leading-none mb-2">
+          {value}
         </div>
-      )}
+
+        {change && (
+          <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-bold w-fit ${getChangeColor()}`}>
+            {changeType === 'positive' && '↑'}
+            {changeType === 'negative' && '↓'}
+            {change}
+          </div>
+        )}
+      </div>
+
       {sparkline && sparkline.length > 0 && (
-        <div className="sparkline">
+        <div className="flex items-end gap-1 h-8 mt-3 opacity-60">
           {sparkline.map((point, index) => (
             <div
               key={index}
-              className="sparkline-bar"
+              className="flex-1 bg-primary rounded-t-sm transition-all hover:bg-primary-dark"
               style={{ height: `${getSparklineHeight(point)}%` }}
             />
           ))}

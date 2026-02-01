@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { WhatsAppService } from '@/lib/services/whatsapp';
+import { triggerNotification } from '@/lib/notifications/dispatcher';
 
 type OrderColumn = 'pending' | 'preparing' | 'ready';
 
@@ -140,6 +141,19 @@ export default function KDSPage() {
     updateOrderStatus(orderId, newStatus, selectedStaffId || undefined);
     if (newStatus === 'ready') {
       playSound('orderReady');
+      
+      // Auto-Notify Customer via WhatsApp Gateway
+      const order = todayOrders.find(o => o.id === orderId);
+      if (order && order.customerPhone) {
+        triggerNotification('ORDER_READY', {
+          to: order.customerPhone,
+          data: {
+            name: order.customerName || 'Pelanggan',
+            orderId: order.orderNumber
+          }
+        });
+      }
+
     } else if (newStatus === 'preparing') {
       playSound('success');
     }

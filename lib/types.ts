@@ -91,6 +91,8 @@ export interface Order {
   loyaltyPointsEarned?: number; // Points earned from this order (for void/refund reversal)
   promotionId?: string;         // Applied promotion ID
   promoCode?: string;           // Applied promo code
+  refundAmount?: number;        // Total refunded amount for this order
+  outletId?: string;            // Outlet where this order was created
 }
 
 export type InventoryItemType = 'raw' | 'semi-finished' | 'finished';
@@ -114,6 +116,31 @@ export interface StockItem {
   lastRestockDate?: string;
   sku?: string;
   location?: string;
+}
+
+export type TransferStatus = 'pending' | 'approved' | 'fulfilled' | 'rejected' | 'cancelled';
+
+export interface StockTransferRequest {
+  id: string;
+  fromOutletId: string; // maps to from_outlet_id
+  toOutletId: string;   // maps to to_outlet_id
+  stockItemId: string;  // maps to stock_item_id (assumed)
+  requestedQuantity: number;
+  approvedQuantity?: number;
+  status: TransferStatus;
+  requestedBy: string;
+  approvedBy?: string;
+  fulfilledBy?: string;
+  notes?: string;
+  createdAt: string;
+  approvedAt?: string;
+  fulfilledAt?: string;
+  // Expanded fields for UI
+  stockItemName?: string;
+  stockItemUnit?: string;
+  fromOutletName?: string;
+  toOutletName?: string;
+  requesterName?: string;
 }
 
 // ==================== STAFF PROFILE TYPES ====================
@@ -651,6 +678,8 @@ export interface ProfitLossReport {
   period: string; // YYYY-MM format
   revenue: {
     posSales: number;
+    refundAmount?: number;
+    deliveryFee?: number;
     deliverySales: number;
     otherIncome: number;
     totalRevenue: number;
@@ -985,6 +1014,7 @@ export interface PrinterSettings {
   openDrawerOnCashPayment: boolean;
   useRawbt?: boolean; // Legacy - use printMethod instead
   printMethod?: PrintMethod; // Print method selector
+  printerModel?: 'generic' | 'zywell_zy907' | 'epson_tm_t82' | 'xprinter_n160ii'; // Printer model for specific command tweaks
 }
 
 // ==================== PIXEL & ANALYTICS SETTINGS ====================
@@ -1962,5 +1992,15 @@ export interface SettingsAuditLog {
   newValue: string;
   changedBy: string;
   changedAt: string;
+}
+
+// ==================== CONFIGURATION TYPES ====================
+
+export interface PayslipConfig {
+  template: 'professional' | 'simple';
+  showLogo: boolean;
+  showCompanyInfo: boolean;
+  showEmployerContributions: boolean;
+  customNote: string;
 }
 

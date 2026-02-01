@@ -221,7 +221,7 @@ export default function CustomersPage() {
   if (!isInitialized) {
     return (
       <MainLayout>
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
+        <div className="flex justify-center items-center min-h-[50vh]">
           <LoadingSpinner />
         </div>
       </MainLayout>
@@ -231,12 +231,12 @@ export default function CustomersPage() {
   return (
     <MainLayout>
       <div className="animate-fade-in">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
+        <div className="flex justify-between items-center mb-8 flex-wrap gap-4">
           <div>
-            <h1 style={{ fontSize: '2rem', fontWeight: 700, marginBottom: '0.5rem' }}>
+            <h1 className="text-3xl font-bold mb-2">
               Pengurusan Pelanggan
             </h1>
-            <p style={{ color: 'var(--text-secondary)' }}>
+            <p className="text-gray-500">
               Database pelanggan dan program kesetiaan
             </p>
           </div>
@@ -281,32 +281,30 @@ export default function CustomersPage() {
           />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-4" style={{ gap: '1.5rem' }}>
+        <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-4 gap-6">
           {/* Customer List */}
           <div className="md:col-span-3 lg:col-span-3">
             <div className="card">
               <div className="card-header">
-                <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <div className="card-title flex items-center gap-2">
                   <UserCheck size={20} />
                   Senarai Pelanggan
                 </div>
-                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                  <div style={{ position: 'relative' }}>
-                    <Search size={16} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
+                <div className="flex gap-2 flex-wrap">
+                  <div className="relative">
+                    <Search size={16} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-500" />
                     <input
                       type="text"
-                      className="form-input"
+                      className="form-input pl-8 w-[200px]"
                       placeholder="Cari nama/telefon..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      style={{ paddingLeft: '2rem', width: '200px' }}
                     />
                   </div>
                   <select
-                    className="form-select"
+                    className="form-select w-auto"
                     value={filterSegment}
                     onChange={(e) => setFilterSegment(e.target.value as 'all' | 'new' | 'regular' | 'vip')}
-                    style={{ width: 'auto' }}
                   >
                     <option value="all">Semua Segment</option>
                     <option value="vip">VIP</option>
@@ -317,7 +315,7 @@ export default function CustomersPage() {
               </div>
 
               {filteredCustomers.length > 0 ? (
-                <div style={{ overflowX: 'auto' }}>
+                <div className="overflow-x-auto">
                   <table className="table">
                     <thead>
                       <tr>
@@ -331,41 +329,41 @@ export default function CustomersPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {filteredCustomers.map(customer => {
-                        const badge = getSegmentBadge(customer.segment);
-                        const BadgeIcon = badge.icon;
-                        return (
-                          <tr key={customer.id}>
-                            <td>
-                              <div style={{ fontWeight: 600 }}>{customer.name}</div>
-                              {customer.birthday && (
-                                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                                  🎂 {new Date(customer.birthday).toLocaleDateString('ms-MY', { day: 'numeric', month: 'short' })}
-                                </div>
-                              )}
-                            </td>
-                            <td>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                <Phone size={14} color="var(--text-secondary)" />
-                                {customer.phone}
-                              </div>
-                            </td>
-                            <td>
-                              <span className={`badge ${badge.class}`} style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', width: 'fit-content' }}>
-                                <BadgeIcon size={12} />
-                                {badge.label}
-                              </span>
-                            </td>
-                            <td>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                                <Gift size={14} color="var(--primary)" />
-                                <strong>{customer.loyaltyPoints}</strong>
-                              </div>
-                            </td>
-                            <td>{customer.totalOrders}</td>
-                            <td style={{ fontWeight: 600 }}>BND {(customer.totalSpent || 0).toFixed(2)}</td>
-                            <td>
-                              <div style={{ display: 'flex', gap: '0.25rem' }}>
+                       {filteredCustomers.map(customer => {
+                         const badge = getSegmentBadge(customer.segment);
+                         const BadgeIcon = badge.icon;
+                         return (
+                           <tr key={customer.id}>
+                             <td>
+                               <div className="font-semibold">{customer.name}</div>
+                               {customer.birthday && (
+                                 <div className="text-xs text-gray-500">
+                                   🎂 {new Date(customer.birthday).toLocaleDateString('ms-MY', { day: 'numeric', month: 'short' })}
+                                 </div>
+                               )}
+                             </td>
+                             <td>
+                               <div className="flex items-center gap-2">
+                                 <Phone size={14} className="text-gray-500" />
+                                 {customer.phone}
+                               </div>
+                             </td>
+                             <td>
+                               <span className={`badge ${badge.class} flex items-center gap-1 w-fit`}>
+                                 <BadgeIcon size={12} />
+                                 {badge.label}
+                               </span>
+                             </td>
+                             <td>
+                               <div className="flex items-center gap-1">
+                                 <Gift size={14} className="text-primary" />
+                                 <strong>{customer.loyaltyPoints}</strong>
+                               </div>
+                             </td>
+                             <td>{customer.totalOrders}</td>
+                             <td className="font-semibold">BND {(customer.totalSpent || 0).toFixed(2)}</td>
+                             <td>
+                               <div className="flex gap-1">
                                 <button
                                   className="btn btn-sm btn-outline"
                                   onClick={() => openViewModal(customer)}
@@ -396,9 +394,9 @@ export default function CustomersPage() {
                   </table>
                 </div>
               ) : (
-                <div style={{ textAlign: 'center', padding: '3rem' }}>
-                  <UserCheck size={48} color="var(--gray-400)" style={{ marginBottom: '1rem' }} />
-                  <p style={{ color: 'var(--text-secondary)', marginBottom: '1rem' }}>
+                <div className="text-center py-12">
+                  <UserCheck size={48} color="var(--gray-400)" className="mb-4 mx-auto" />
+                  <p className="text-gray-500 mb-4">
                     {searchTerm ? 'Tiada pelanggan dijumpai' : 'Belum ada pelanggan'}
                   </p>
                   <button className="btn btn-primary" onClick={openAddModal}>
@@ -413,27 +411,27 @@ export default function CustomersPage() {
           {/* Sidebar */}
           <div>
             {/* Loyalty Program Info */}
-            <div className="card" style={{ marginBottom: '1.5rem' }}>
+            <div className="card mb-6">
               <div className="card-header">
-                <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <div className="card-title flex items-center gap-2">
                   <Award size={20} color="var(--warning)" />
                   Program Kesetiaan
                 </div>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                <div style={{ padding: '0.75rem', background: 'var(--gray-100)', borderRadius: 'var(--radius-sm)' }}>
-                  <div style={{ fontWeight: 600, fontSize: '0.875rem' }}>Cara Dapat Points</div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+              <div className="flex flex-col gap-3">
+                <div className="p-3 bg-gray-100 dark:bg-white/5 rounded-md">
+                  <div className="font-semibold text-sm">Cara Dapat Points</div>
+                  <div className="text-xs text-gray-500">
                     BND 1 = 1 Point
                   </div>
                 </div>
-                <div style={{ padding: '0.75rem', background: '#d1fae5', borderRadius: 'var(--radius-sm)' }}>
-                  <div style={{ fontWeight: 600, fontSize: '0.875rem', color: '#065f46' }}>Regular (100+ pts)</div>
-                  <div style={{ fontSize: '0.75rem', color: '#065f46' }}>5% diskaun</div>
+                <div className="p-3 bg-success-light rounded-sm">
+                  <div className="font-semibold text-sm text-success-dark">Regular (100+ pts)</div>
+                  <div className="text-xs text-success-dark">5% diskaun</div>
                 </div>
-                <div style={{ padding: '0.75rem', background: '#fef3c7', borderRadius: 'var(--radius-sm)' }}>
-                  <div style={{ fontWeight: 600, fontSize: '0.875rem', color: '#92400e' }}>VIP (500+ pts)</div>
-                  <div style={{ fontSize: '0.75rem', color: '#92400e' }}>10% diskaun + Free drink</div>
+                <div className="p-3 bg-warning-light rounded-sm">
+                  <div className="font-semibold text-sm text-warning-dark">VIP (500+ pts)</div>
+                  <div className="text-xs text-warning-dark">10% diskaun + Free drink</div>
                 </div>
               </div>
             </div>
@@ -441,27 +439,20 @@ export default function CustomersPage() {
             {/* Upcoming Birthdays */}
             <div className="card">
               <div className="card-header">
-                <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <div className="card-title flex items-center gap-2">
                   🎂 Birthday Minggu Ini
                 </div>
               </div>
               {upcomingBirthdays.length > 0 ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                <div className="flex flex-col gap-2">
                   {upcomingBirthdays.map(customer => (
                     <div
                       key={customer.id}
-                      style={{
-                        padding: '0.75rem',
-                        background: 'var(--gray-100)',
-                        borderRadius: 'var(--radius-sm)',
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center'
-                      }}
+                      className="p-3 bg-gray-100 dark:bg-white/5 rounded-md flex justify-between items-center"
                     >
                       <div>
-                        <div style={{ fontWeight: 600, fontSize: '0.875rem' }}>{customer.name}</div>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                        <div className="font-semibold text-sm">{customer.name}</div>
+                        <div className="text-xs text-gray-500">
                           {new Date(customer.birthday!).toLocaleDateString('ms-MY', { day: 'numeric', month: 'short' })}
                         </div>
                       </div>
@@ -470,7 +461,7 @@ export default function CustomersPage() {
                   ))}
                 </div>
               ) : (
-                <p style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '1rem', fontSize: '0.875rem' }}>
+                <p className="text-center text-gray-500 p-4 text-sm">
                   Tiada birthday minggu ini
                 </p>
               )}
@@ -539,13 +530,12 @@ export default function CustomersPage() {
             />
           </div>
 
-          <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1.5rem' }}>
-            <button className="btn btn-outline" onClick={closeModal} style={{ flex: 1 }}>Batal</button>
+          <div className="flex gap-2 mt-6">
+            <button className="btn btn-outline flex-1" onClick={closeModal}>Batal</button>
             <button
-              className="btn btn-primary"
+              className="btn btn-primary flex-1"
               onClick={modalType === 'add' ? handleAddCustomer : handleEditCustomer}
               disabled={isProcessing}
-              style={{ flex: 1 }}
             >
               {isProcessing ? <LoadingSpinner size="sm" /> : 'Simpan'}
             </button>
@@ -561,71 +551,55 @@ export default function CustomersPage() {
         >
           {selectedCustomer && (
             <>
-              <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-                <div style={{
-                  width: '80px',
-                  height: '80px',
-                  background: selectedCustomer.segment === 'vip' ? '#fef3c7' : '#dbeafe',
-                  borderRadius: '50%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  margin: '0 auto 1rem',
-                  fontSize: '2rem'
-                }}>
+              <div className="text-center mb-6">
+                <div className={`w-20 h-20 mx-auto mb-4 rounded-full flex items-center justify-center text-4xl ${selectedCustomer.segment === 'vip' ? 'bg-warning-light' : 'bg-info-light'}`}>
                   {selectedCustomer.segment === 'vip' ? '👑' : '⭐'}
                 </div>
-                <h3 style={{ margin: 0, fontSize: '1.25rem' }}>{selectedCustomer.name}</h3>
-                <div style={{ color: 'var(--text-secondary)', marginTop: '0.25rem' }}>{selectedCustomer.phone}</div>
-                <span className={`badge ${getSegmentBadge(selectedCustomer.segment).class}`} style={{ marginTop: '0.5rem' }}>
+                <h3 className="text-xl font-medium m-0">{selectedCustomer.name}</h3>
+                <div className="text-gray-500 mt-1">{selectedCustomer.phone}</div>
+                <span className={`badge ${getSegmentBadge(selectedCustomer.segment).class} mt-2`}>
                   {getSegmentBadge(selectedCustomer.segment).label}
                 </span>
               </div>
 
-              <div className="grid grid-cols-3" style={{ gap: '1rem', marginBottom: '1.5rem' }}>
-                <div style={{ textAlign: 'center', padding: '1rem', background: 'var(--gray-100)', borderRadius: 'var(--radius-md)' }}>
-                  <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--primary)' }}>
+              <div className="grid grid-cols-3 gap-4 mb-6">
+                <div className="text-center p-4 bg-gray-100 dark:bg-white/5 rounded-lg">
+                  <div className="text-2xl font-bold text-primary">
                     {selectedCustomer.loyaltyPoints}
                   </div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Points</div>
+                  <div className="text-xs text-gray-500">Points</div>
                 </div>
-                <div style={{ textAlign: 'center', padding: '1rem', background: 'var(--gray-100)', borderRadius: 'var(--radius-md)' }}>
-                  <div style={{ fontSize: '1.5rem', fontWeight: 700 }}>{selectedCustomer.totalOrders}</div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Orders</div>
+                <div className="text-center p-4 bg-gray-100 dark:bg-white/5 rounded-lg">
+                  <div className="text-2xl font-bold">{selectedCustomer.totalOrders}</div>
+                  <div className="text-xs text-gray-500">Orders</div>
                 </div>
-                <div style={{ textAlign: 'center', padding: '1rem', background: 'var(--gray-100)', borderRadius: 'var(--radius-md)' }}>
-                  <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--success)' }}>
+                <div className="text-center p-4 bg-gray-100 dark:bg-white/5 rounded-lg">
+                  <div className="text-2xl font-bold text-success">
                     {(selectedCustomer.totalSpent || 0).toFixed(0)}
                   </div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Spent</div>
+                  <div className="text-xs text-gray-500">Spent</div>
                 </div>
               </div>
 
               {/* Order History */}
               <div>
-                <div style={{ fontWeight: 600, marginBottom: '0.5rem' }}>Sejarah Pesanan Terkini</div>
+                <div className="font-semibold mb-2">Sejarah Pesanan Terkini</div>
                 {getCustomerOrders(selectedCustomer.phone).slice(0, 5).length > 0 ? (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  <div className="flex flex-col gap-2">
                     {getCustomerOrders(selectedCustomer.phone).slice(0, 5).map(order => (
                       <div
                         key={order.id}
-                        style={{
-                          padding: '0.75rem',
-                          background: 'var(--gray-100)',
-                          borderRadius: 'var(--radius-sm)',
-                          display: 'flex',
-                          justifyContent: 'space-between'
-                        }}
+                        className="p-3 bg-gray-100 dark:bg-white/5 rounded-md flex justify-between"
                       >
                         <div>
-                          <div style={{ fontWeight: 600, fontSize: '0.875rem' }}>{order.orderNumber}</div>
-                          <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                          <div className="font-semibold text-sm">{order.orderNumber}</div>
+                          <div className="text-xs text-gray-500">
                             {new Date(order.createdAt).toLocaleDateString('ms-MY')}
                           </div>
                         </div>
-                        <div style={{ textAlign: 'right' }}>
-                          <div style={{ fontWeight: 600 }}>BND {(order.total || 0).toFixed(2)}</div>
-                          <span className={`badge badge-${order.status === 'completed' ? 'success' : 'warning'}`} style={{ fontSize: '0.6rem' }}>
+                        <div className="text-right">
+                          <div className="font-semibold">BND {(order.total || 0).toFixed(2)}</div>
+                          <span className={`badge badge-${order.status === 'completed' ? 'success' : 'warning'} text-[10px]`}>
                             {order.status}
                           </span>
                         </div>
@@ -633,13 +607,13 @@ export default function CustomersPage() {
                     ))}
                   </div>
                 ) : (
-                  <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', textAlign: 'center', padding: '1rem' }}>
+                  <p className="text-gray-500 text-sm text-center p-4">
                     Tiada sejarah pesanan
                   </p>
                 )}
               </div>
 
-              <button className="btn btn-outline" onClick={closeModal} style={{ width: '100%', marginTop: '1.5rem' }}>
+              <button className="btn btn-outline w-full mt-6" onClick={closeModal}>
                 Tutup
               </button>
             </>
@@ -656,35 +630,27 @@ export default function CustomersPage() {
         >
           {selectedCustomer && (
             <>
-              <div style={{
-                textAlign: 'center',
-                padding: '1.5rem',
-                background: 'var(--gray-100)',
-                borderRadius: 'var(--radius-md)',
-                marginBottom: '1.5rem'
-              }}>
-                <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
+              <div className="text-center p-6 bg-gray-100 dark:bg-white/5 rounded-lg mb-6">
+                <div className="text-sm text-gray-500 mb-2">
                   Baki Points Semasa
                 </div>
-                <div style={{ fontSize: '2.5rem', fontWeight: 700, color: 'var(--primary)' }}>
+                <div className="text-4xl font-bold text-primary">
                   {selectedCustomer.loyaltyPoints}
                 </div>
               </div>
 
               <div className="form-group">
                 <label className="form-label">Tindakan</label>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <div className="flex gap-2">
                   <button
                     onClick={() => setPointsForm(prev => ({ ...prev, action: 'add' }))}
-                    className={`btn ${pointsForm.action === 'add' ? 'btn-primary' : 'btn-outline'}`}
-                    style={{ flex: 1 }}
+                    className={`btn flex-1 ${pointsForm.action === 'add' ? 'btn-primary' : 'btn-outline'}`}
                   >
                     + Tambah
                   </button>
                   <button
                     onClick={() => setPointsForm(prev => ({ ...prev, action: 'redeem' }))}
-                    className={`btn ${pointsForm.action === 'redeem' ? 'btn-danger' : 'btn-outline'}`}
-                    style={{ flex: 1 }}
+                    className={`btn flex-1 ${pointsForm.action === 'redeem' ? 'btn-danger' : 'btn-outline'}`}
                   >
                     - Tebus
                   </button>
@@ -714,13 +680,12 @@ export default function CustomersPage() {
                 </div>
               )}
 
-              <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1.5rem' }}>
-                <button className="btn btn-outline" onClick={closeModal} style={{ flex: 1 }}>Batal</button>
+              <div className="flex gap-2 mt-6">
+                <button className="btn btn-outline flex-1" onClick={closeModal}>Batal</button>
                 <button
-                  className={`btn ${pointsForm.action === 'add' ? 'btn-primary' : 'btn-danger'}`}
+                  className={`btn flex-1 ${pointsForm.action === 'add' ? 'btn-primary' : 'btn-danger'}`}
                   onClick={handlePointsAction}
                   disabled={isProcessing || pointsForm.points <= 0}
-                  style={{ flex: 1 }}
                 >
                   {isProcessing ? <LoadingSpinner size="sm" /> : pointsForm.action === 'add' ? 'Tambah Points' : 'Tebus Points'}
                 </button>

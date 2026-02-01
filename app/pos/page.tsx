@@ -22,14 +22,16 @@ import {
   markTransactionSubmitted,
 } from '@/lib/services';
 import { isPromotionValid, calculatePromotionDiscount } from '@/lib/utils/promotion-helpers';
+import { triggerNotification } from '@/lib/notifications/dispatcher'; // Import Notification Dispatcher
 // Dynamic Imports for Heavy Components
 const ReceiptPreview = dynamic(() => import('@/components/ReceiptPreview'), { ssr: false });
 const ShiftWizardModal = dynamic(() => import('@/components/cash-management/ShiftWizardModal'), { ssr: false });
 const RegisterStatus = dynamic(() => import('@/components/cash-management/RegisterStatus'), { ssr: false });
 const MoneyOutModal = dynamic(() => import('@/components/pos/MoneyOutModal'), { ssr: false });
+const PinEntryModal = dynamic(() => import('@/components/pos/PinEntryModal'), { ssr: false });
 import POSMenuItem from '@/components/pos/POSMenuItem'; // Memoized Item
 
-import { ArrowLeft, UtensilsCrossed, Sandwich, Coffee, History, Printer, Clock, ChefHat, CheckCircle, ShoppingBag, Plus, Minus, X, Sparkles, AlertTriangle, User, DollarSign, CreditCard, QrCode, Wallet, WifiOff, RefreshCw, MessageCircle, Check, Globe, Send, ChevronRight, Banknote, Tag } from 'lucide-react';
+import { ArrowLeft, UtensilsCrossed, Sandwich, Coffee, History, Printer, Clock, ChefHat, CheckCircle, ShoppingBag, Plus, Minus, X, Sparkles, AlertTriangle, User, DollarSign, CreditCard, QrCode, Wallet, WifiOff, RefreshCw, MessageCircle, Check, Globe, Send, ChevronRight, Banknote, Tag, Lock } from 'lucide-react';
 import { WhatsAppService } from '@/lib/services/whatsapp';
 import Modal from '@/components/Modal';
 import LoadingSpinner from '@/components/LoadingSpinner';
@@ -111,6 +113,12 @@ export default function POSPage() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [modalType, setModalType] = useState<ModalType>(null);
   const [isCartOpen, setIsCartOpen] = useState(false);
+
+
+  // PIN Security State
+  const [showPinModal, setShowPinModal] = useState(false);
+  const [pinAction, setPinAction] = useState<{ type: 'void', index: number } | { type: 'discount' } | null>(null);
+  const [showDiscountInput, setShowDiscountInput] = useState(false);
 
   // Checkout State
   const [customerName, setCustomerName] = useState('');
@@ -254,7 +262,27 @@ export default function POSPage() {
   };
 
   const removeFromCart = (index: number) => {
+    // SECURITY: Require Manager PIN for voids
+    setPinAction({ type: 'void', index });
+    setShowPinModal(true);
+  };
+
+  const processVoid = (index: number) => {
     setCart(prev => prev.filter((_, i) => i !== index));
+    showToast(t('pos.toast.itemVoided') || 'Item voided', 'info');
+  };
+
+  const handlePinSuccess = () => {
+    if (!pinAction) return;
+
+    if (pinAction.type === 'void') {
+      processVoid(pinAction.index);
+    } else if (pinAction.type === 'discount') {
+      setShowDiscountInput(true);
+    }
+
+    setPinAction(null);
+    setShowPinModal(false);
   };
 
   // Calculate cart totals
@@ -511,6 +539,18 @@ export default function POSPage() {
 
       setLastOrder(newOrder);
 
+      // Trigger WhatsApp Notification
+      if (newOrder.customerPhone) {
+        triggerNotification('ORDER_CONFIRMED', {
+          to: newOrder.customerPhone,
+          data: {
+            name: newOrder.customerName || 'Pelanggan',
+            orderId: newOrder.orderNumber,
+            prepTime: '15' // Default prep time
+          }
+        });
+      }
+
       // Show success toast
       showToast(t('pos.toast.orderSuccess', { orderNumber: newOrder.orderNumber }), 'success');
 
@@ -586,6 +626,28 @@ export default function POSPage() {
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', background: 'var(--bg-secondary)' }}>
           <LoadingSpinner />
         </div>
+        {/* PIN Entry Modal */}
+        <PinEntryModal
+          isOpen={showPinModal}
+          onClose={() => {
+            setShowPinModal(false);
+            setPinAction(null);
+          }}
+          onSuccess={handlePinSuccess}
+          title={pinAction?.type === 'void' ? 'Void Authorization' : 'Manager Discount'}
+          requiredRole="Manager"
+        />
+        {/* PIN Entry Modal */}
+        <PinEntryModal
+          isOpen={showPinModal}
+          onClose={() => {
+            setShowPinModal(false);
+            setPinAction(null);
+          }}
+          onSuccess={handlePinSuccess}
+          title={pinAction?.type === 'void' ? 'Void Authorization' : 'Manager Discount'}
+          requiredRole="Manager"
+        />
       </RouteGuard>
     );
   }
@@ -899,6 +961,41 @@ export default function POSPage() {
                             <Tag size={16} />
                             {t('pos.cart.applyPromotion')}
                           </button>
+                        )}
+                      </div>
+
+                      {/* Manual Discount Section (Manager Protected) */}
+                      <div style={{ marginBottom: '1rem' }}>
+                        {showDiscountInput ? (
+                          <div className="flex items-center gap-2 bg-yellow-50 p-2 rounded border border-yellow-200">
+                            <span className="text-sm font-bold text-yellow-700">Manual%:</span>
+                            <input
+                              type="number"
+                              min="0"
+                              max="100"
+                              value={discountPercent}
+                              onChange={(e) => setDiscountPercent(Number(e.target.value))}
+                              className="w-16 p-1 border rounded text-center font-bold"
+                              autoFocus
+                            />
+                            <button onClick={() => setShowDiscountInput(false)} className="text-gray-500 hover:text-gray-700">
+                              <Check size={18} />
+                            </button>
+                          </div>
+                        ) : (
+                          !selectedPromotion && (
+                            <button
+                              onClick={() => {
+                                setPinAction({ type: 'discount' });
+                                setShowPinModal(true);
+                              }}
+                              className="btn btn-sm"
+                              style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', background: 'transparent', color: 'var(--text-secondary)', fontSize: '0.75rem', marginTop: '0.5rem' }}
+                            >
+                              <Lock size={12} />
+                              {t('pos.cart.manualDiscount') || "Manual Discount (Manager)"}
+                            </button>
+                          )
                         )}
                       </div>
 
@@ -2090,6 +2187,17 @@ export default function POSPage() {
         isOpen={moneyOutModalOpen}
         onClose={() => setMoneyOutModalOpen(false)}
         registerId={currentRegister?.id}
+      />
+      {/* PIN Entry Modal */}
+      <PinEntryModal
+        isOpen={showPinModal}
+        onClose={() => {
+          setShowPinModal(false);
+          setPinAction(null);
+        }}
+        onSuccess={handlePinSuccess}
+        title={pinAction?.type === 'void' ? 'Void Authorization' : 'Manager Discount'}
+        requiredRole="Manager"
       />
     </RouteGuard>
   );

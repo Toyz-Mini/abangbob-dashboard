@@ -32,7 +32,8 @@ import {
   BookOpen,
   ChevronLeft,
   ChevronRight,
-  Menu
+  Menu,
+  Store
 } from 'lucide-react';
 
 import { usePathname } from 'next/navigation';
@@ -246,6 +247,7 @@ export default function MainLayout({ children }: { children: ReactNode }) {
     { href: '/inventory', label: 'Inventori', icon: Package, color: 'var(--primary)' },
     { href: '/hr', label: 'HR', icon: Users, color: 'var(--text-primary)' },
     { href: '/pos', label: 'POS', icon: ShoppingCart, color: 'var(--secondary)' },
+    { href: '/outlets', label: 'Outlet', icon: Store, color: 'var(--primary)' },
     { href: '/customers', label: 'Pelanggan', icon: UserCheck, color: 'var(--primary)' },
     { href: '/recipes', label: 'Resipi', icon: ChefHat, color: 'var(--secondary)' },
     { href: '/suppliers', label: 'Pembekal', icon: Boxes, color: 'var(--text-primary)' },
@@ -313,32 +315,28 @@ export default function MainLayout({ children }: { children: ReactNode }) {
             className="desktop-only"
             style={{
               position: 'fixed',
-              left: isSidebarOpen ? '280px' : '80px',
-              top: '50%',
-              transform: 'translateY(-50%) translateX(-50%)',
-              zIndex: 100, // Above sidebar content
+              left: isSidebarOpen ? '265px' : '85px', // Adjusted for visual balance
+              top: '88px', // Align near top
+              zIndex: 100,
               width: '24px',
-              height: '48px', // Pill shape
-              borderRadius: '0 12px 12px 0',
-              background: 'var(--primary)',
-              color: 'white',
-              border: 'none',
+              height: '24px',
+              borderRadius: '50%',
+              background: 'white',
+              color: 'var(--primary)',
+              border: '1px solid var(--border-color)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               cursor: 'pointer',
               transition: 'left 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-              boxShadow: '2px 0 8px rgba(0,0,0,0.1)',
-              opacity: 0.8,
+              boxShadow: 'var(--shadow-md)',
             }}
-            onMouseEnter={(e) => e.currentTarget.style.opacity = '1'}
-            onMouseLeave={(e) => e.currentTarget.style.opacity = '0.8'}
             title={isSidebarOpen ? "Collapse" : "Expand"}
           >
             {isSidebarOpen ? (
-              <ChevronLeft size={16} />
+              <ChevronLeft size={14} />
             ) : (
-              <ChevronRight size={16} />
+              <ChevronRight size={14} />
             )}
           </button>
         )}

@@ -166,7 +166,7 @@ export default function HRDashboardPage() {
   if (!isInitialized) {
     return (
       <MainLayout>
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
+        <div className="flex justify-center items-center min-h-[50vh]">
           <LoadingSpinner />
         </div>
       </MainLayout>
@@ -228,377 +228,193 @@ export default function HRDashboardPage() {
           {/* Main Column */}
           <div className="lg:col-span-2 flex flex-col gap-6">
 
-            {/* Live Roster (ID Card Style) */}
-            <GlassCard className="animate-slide-up" style={{ animationDelay: '0.1s' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                  <div style={{ padding: '0.5rem', background: 'rgba(16, 185, 129, 0.1)', borderRadius: 'var(--radius-md)', color: 'var(--success)' }}>
-                    <Users size={20} />
-                  </div>
-                  <div>
-                    <h3 style={{ fontSize: '1.1rem', fontWeight: 700 }}>Live Roster</h3>
-                    <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{onDutyStaff.length} staf sedang bertugas</div>
-                  </div>
-                </div>
-                <Link href="/hr/timeclock">
-                  <PremiumButton size="sm" variant="outline">Clock In/Out</PremiumButton>
-                </Link>
-              </div>
+             {/* Live Roster (ID Card Style) */}
+             <GlassCard className="animate-slide-up">
+               <div className="flex items-center justify-between mb-6">
+                 <div className="flex items-center gap-3">
+                   <div className="p-2 bg-green-500/10 rounded-lg text-success">
+                     <Users size={20} />
+                   </div>
+                   <div>
+                     <h3 className="text-lg font-bold">Live Roster</h3>
+                     <div className="text-sm text-gray-500">{onDutyStaff.length} staf sedang bertugas</div>
+                   </div>
+                 </div>
+                 <Link href="/hr/timeclock">
+                   <PremiumButton size="sm" variant="outline">Clock In/Out</PremiumButton>
+                 </Link>
+               </div>
 
-              {onDutyStaff.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {onDutyStaff.map(staffMember => {
-                    const record = getStaffAttendanceToday(staffMember.id);
-                    return (
-                      <div key={staffMember.id} className="hover-lift" style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '1rem',
-                        padding: '1rem',
-                        borderRadius: 'var(--radius-lg)',
-                        background: 'var(--bg-card)',
-                        border: '1px solid var(--border-light)',
-                        borderLeft: '4px solid var(--success)'
-                      }}>
-                        <div style={{
-                          width: '48px', height: '48px',
-                          borderRadius: '50%',
-                          background: 'var(--primary-light)',
-                          color: 'var(--primary)',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          fontWeight: 700, fontSize: '1.1rem'
-                        }}>
-                          {staffMember.name.substring(0, 2).toUpperCase()}
-                        </div>
-                        <div style={{ flex: 1 }}>
-                          <div style={{ fontWeight: 700, fontSize: '1rem' }}>{staffMember.name}</div>
-                          <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{staffMember.role}</div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '0.25rem', fontSize: '0.75rem', color: 'var(--success)' }}>
-                            <Clock size={12} /> Live sejak {record?.clockInTime || '-'}
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div style={{ textAlign: 'center', padding: '3rem', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-lg)' }}>
-                  <p style={{ color: 'var(--text-secondary)', marginBottom: '1rem' }}>Tiada staf bekerja pada masa ini</p>
-                  <Link href="/hr/timeclock">
-                    <PremiumButton size="sm" icon={Clock}>Pergi ke Clock In</PremiumButton>
-                  </Link>
-                </div>
-              )}
-            </GlassCard>
+               {onDutyStaff.length > 0 ? (
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                   {onDutyStaff.map(staffMember => {
+                     const record = getStaffAttendanceToday(staffMember.id);
+                     return (
+                       <div key={staffMember.id} className="hover-lift flex items-center gap-4 p-4 rounded-lg bg-white dark:bg-white/5 border border-gray-100 dark:border-white/10 border-l-4 border-l-success">
+                         <div className="w-12 h-12 rounded-full bg-primary-light text-primary flex items-center justify-center font-bold text-xl">
+                           {staffMember.name.substring(0, 2).toUpperCase()}
+                         </div>
+                         <div className="flex-1">
+                           <div className="font-bold text-base">{staffMember.name}</div>
+                           <div className="text-sm text-gray-500">{staffMember.role}</div>
+                           <div className="flex items-center gap-1.5 mt-1 text-xs text-success">
+                             <Clock size={12} /> Live sejak {record?.clockInTime || '-'}
+                           </div>
+                         </div>
+                       </div>
+                     );
+                   })}
+                 </div>
+               ) : (
+                 <div className="text-center p-12 bg-gray-100 dark:bg-white/5 rounded-lg">
+                   <p className="text-gray-500 mb-4">Tiada staf bekerja pada masa ini</p>
+                   <Link href="/hr/timeclock">
+                     <PremiumButton size="sm" icon={Clock}>Pergi ke Clock In</PremiumButton>
+                   </Link>
+                 </div>
+               )}
+             </GlassCard>
 
-            {/* HR Hub - All Features */}
-            <GlassCard className="animate-slide-up" style={{ animationDelay: '0.2s' }}>
-              <h3 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <Zap size={20} color="var(--warning)" /> Modul HR & Staf
-              </h3>
+             {/* HR Hub - All Features */}
+             <GlassCard className="animate-slide-up">
+               <h3 className="text-lg font-bold mb-6 flex items-center gap-2">
+                 <Zap size={20} color="var(--warning)" /> Modul HR & Staf
+               </h3>
 
               {/* Pengurusan Staf */}
-              <div style={{ marginBottom: '1.5rem' }}>
-                <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                  👥 Pengurusan Staf
-                </div>
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-                  <Link href="/hr/staff">
-                    <div className="hover-lift" style={{
-                      padding: '1.25rem 1rem',
-                      background: 'var(--bg-card)',
-                      borderRadius: 'var(--radius-md)',
-                      textAlign: 'center',
-                      cursor: 'pointer',
-                      border: '1px solid var(--border-light)',
-                      boxShadow: 'var(--shadow-sm)'
-                    }}>
-                      <div style={{
-                        width: '40px', height: '40px', margin: '0 auto 0.75rem',
-                        borderRadius: '10px', background: 'var(--primary-50)', color: 'var(--primary)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center'
-                      }}>
-                        <List size={20} />
-                      </div>
-                      <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-primary)' }}>Senarai Staf</div>
-                    </div>
-                  </Link>
-                  <Link href="/hr/timeclock">
-                    <div className="hover-lift" style={{
-                      padding: '1.25rem 1rem',
-                      background: 'var(--bg-card)',
-                      borderRadius: 'var(--radius-md)',
-                      textAlign: 'center',
-                      cursor: 'pointer',
-                      border: '1px solid var(--border-light)',
-                      boxShadow: 'var(--shadow-sm)'
-                    }}>
-                      <div style={{
-                        width: '40px', height: '40px', margin: '0 auto 0.75rem',
-                        borderRadius: '10px', background: 'var(--primary-50)', color: 'var(--primary)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center'
-                      }}>
-                        <Clock size={20} />
-                      </div>
-                      <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-primary)' }}>Timeclock</div>
-                    </div>
-                  </Link>
-                  <Link href="/hr/schedule">
-                    <div className="hover-lift" style={{
-                      padding: '1.25rem 1rem',
-                      background: 'var(--bg-card)',
-                      borderRadius: 'var(--radius-md)',
-                      textAlign: 'center',
-                      cursor: 'pointer',
-                      border: '1px solid var(--border-light)',
-                      boxShadow: 'var(--shadow-sm)'
-                    }}>
-                      <div style={{
-                        width: '40px', height: '40px', margin: '0 auto 0.75rem',
-                        borderRadius: '10px', background: 'var(--primary-50)', color: 'var(--primary)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center'
-                      }}>
-                        <Calendar size={20} />
-                      </div>
-                      <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-primary)' }}>Jadual Shift</div>
-                    </div>
-                  </Link>
-                  <Link href="/hr/kpi">
-                    <div className="hover-lift" style={{
-                      padding: '1.25rem 1rem',
-                      background: 'var(--bg-card)',
-                      borderRadius: 'var(--radius-md)',
-                      textAlign: 'center',
-                      cursor: 'pointer',
-                      border: '1px solid var(--border-light)',
-                      boxShadow: 'var(--shadow-sm)'
-                    }}>
-                      <div style={{
-                        width: '40px', height: '40px', margin: '0 auto 0.75rem',
-                        borderRadius: '10px', background: 'var(--primary-50)', color: 'var(--primary)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center'
-                      }}>
-                        <Trophy size={20} />
-                      </div>
-                      <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-primary)' }}>KPI</div>
-                    </div>
-                  </Link>
-                  <Link href="/hr/attendance-log">
-                    <div className="hover-lift" style={{
-                      padding: '1.25rem 1rem',
-                      background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.05))',
-                      borderRadius: 'var(--radius-md)',
-                      textAlign: 'center',
-                      cursor: 'pointer',
-                      border: '2px solid rgba(16, 185, 129, 0.3)',
-                      boxShadow: 'var(--shadow-sm)'
-                    }}>
-                      <div style={{
-                        width: '40px', height: '40px', margin: '0 auto 0.75rem',
-                        borderRadius: '10px', background: 'rgba(16, 185, 129, 0.2)', color: 'var(--success)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center'
-                      }}>
-                        <ClipboardList size={20} />
-                      </div>
-                      <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-primary)' }}>Log Kehadiran</div>
-                    </div>
-                  </Link>
+               <div className="mb-6">
+                 <div className="section-header">
+                   👥 Pengurusan Staf
+                 </div>
+                 <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                   <Link href="/hr/staff">
+                     <div className="feature-card hover-lift">
+                       <div className="feature-icon">
+                         <List size={20} />
+                       </div>
+                       <div className="feature-card-label">Senarai Staf</div>
+                     </div>
+                   </Link>
+                   <Link href="/hr/timeclock">
+                     <div className="feature-card hover-lift">
+                       <div className="feature-icon">
+                         <Clock size={20} />
+                       </div>
+                       <div className="feature-card-label">Timeclock</div>
+                     </div>
+                   </Link>
+                   <Link href="/hr/schedule">
+                     <div className="feature-card hover-lift">
+                       <div className="feature-icon">
+                         <Calendar size={20} />
+                       </div>
+                       <div className="feature-card-label">Jadual Shift</div>
+                     </div>
+                   </Link>
+                   <Link href="/hr/kpi">
+                     <div className="feature-card hover-lift">
+                       <div className="feature-icon">
+                         <Trophy size={20} />
+                       </div>
+                       <div className="feature-card-label">KPI</div>
+                     </div>
+                   </Link>
+                   <Link href="/hr/attendance-log">
+                     <div className="feature-card feature-card-highlight hover-lift">
+                       <div className="feature-icon feature-icon-success">
+                         <ClipboardList size={20} />
+                       </div>
+                       <div className="feature-card-label">Log Kehadiran</div>
+                     </div>
+                   </Link>
                 </div>
               </div>
 
               {/* Kelulusan */}
-              <div style={{ marginBottom: '1.5rem' }}>
-                <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              <div className="mb-6">
+                <div className="section-header">
                   ✅ Kelulusan & Permohonan
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
                   <Link href="/hr/pending-users">
-                    <div className="hover-lift" style={{
-                      padding: '1.25rem 1rem',
-                      background: 'linear-gradient(135deg, rgba(234, 179, 8, 0.1), rgba(251, 191, 36, 0.05))',
-                      borderRadius: 'var(--radius-md)',
-                      textAlign: 'center',
-                      cursor: 'pointer',
-                      border: '2px solid rgba(234, 179, 8, 0.3)',
-                      boxShadow: 'var(--shadow-sm)'
-                    }}>
-                      <div style={{
-                        width: '40px', height: '40px', margin: '0 auto 0.75rem',
-                        borderRadius: '10px', background: 'rgba(234, 179, 8, 0.2)', color: 'var(--warning)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center'
-                      }}>
+                    <div className="feature-card feature-card-warning hover-lift">
+                      <div className="feature-icon feature-icon-warning">
                         <UserPlus size={20} />
                       </div>
-                      <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-primary)' }}>Pending Users</div>
+                      <div className="feature-card-label">Pending Users</div>
                     </div>
                   </Link>
                   <Link href="/hr/approvals?tab=leave">
-                    <div className="hover-lift" style={{
-                      padding: '1.25rem 1rem',
-                      background: 'var(--bg-card)',
-                      borderRadius: 'var(--radius-md)',
-                      textAlign: 'center',
-                      cursor: 'pointer',
-                      border: '1px solid var(--border-light)',
-                      boxShadow: 'var(--shadow-sm)'
-                    }}>
-                      <div style={{
-                        width: '40px', height: '40px', margin: '0 auto 0.75rem',
-                        borderRadius: '10px', background: 'rgba(5, 150, 105, 0.1)', color: 'var(--success)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center'
-                      }}>
+                    <div className="feature-card hover-lift">
+                      <div className="feature-icon feature-icon-success">
                         <Calendar size={20} />
                       </div>
-                      <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-primary)' }}>Cuti</div>
+                      <div className="feature-card-label">Cuti</div>
                     </div>
                   </Link>
                   <Link href="/hr/approvals?tab=claims">
-                    <div className="hover-lift" style={{
-                      padding: '1.25rem 1rem',
-                      background: 'var(--bg-card)',
-                      borderRadius: 'var(--radius-md)',
-                      textAlign: 'center',
-                      cursor: 'pointer',
-                      border: '1px solid var(--border-light)',
-                      boxShadow: 'var(--shadow-sm)'
-                    }}>
-                      <div style={{
-                        width: '40px', height: '40px', margin: '0 auto 0.75rem',
-                        borderRadius: '10px', background: 'rgba(5, 150, 105, 0.1)', color: 'var(--success)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center'
-                      }}>
+                    <div className="feature-card hover-lift">
+                      <div className="feature-icon feature-icon-success">
                         <CheckCircle size={20} />
                       </div>
-                      <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-primary)' }}>Approval</div>
+                      <div className="feature-card-label">Approval</div>
                     </div>
                   </Link>
                   <Link href="/hr/approvals?tab=ot">
-                    <div className="hover-lift" style={{
-                      padding: '1.25rem 1rem',
-                      background: 'var(--bg-card)',
-                      borderRadius: 'var(--radius-md)',
-                      textAlign: 'center',
-                      cursor: 'pointer',
-                      border: '1px solid var(--border-light)',
-                      boxShadow: 'var(--shadow-sm)'
-                    }}>
-                      <div style={{
-                        width: '40px', height: '40px', margin: '0 auto 0.75rem',
-                        borderRadius: '10px', background: 'rgba(5, 150, 105, 0.1)', color: 'var(--success)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center'
-                      }}>
+                    <div className="feature-card hover-lift">
+                      <div className="feature-icon feature-icon-success">
                         <Clock size={20} />
                       </div>
-                      <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-primary)' }}>OT</div>
+                      <div className="feature-card-label">OT</div>
                     </div>
                   </Link>
                   <Link href="/hr/refund-approvals">
-                    <div className="hover-lift" style={{
-                      padding: '1.25rem 1rem',
-                      background: 'var(--bg-card)',
-                      borderRadius: 'var(--radius-md)',
-                      textAlign: 'center',
-                      cursor: 'pointer',
-                      border: '1px solid var(--border-light)',
-                      boxShadow: 'var(--shadow-sm)'
-                    }}>
-                      <div style={{
-                        width: '40px', height: '40px', margin: '0 auto 0.75rem',
-                        borderRadius: '10px', background: 'rgba(5, 150, 105, 0.1)', color: 'var(--success)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center'
-                      }}>
+                    <div className="feature-card hover-lift">
+                      <div className="feature-icon feature-icon-success">
                         <BarChart3 size={20} />
                       </div>
-                      <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-primary)' }}>Void/Refund</div>
+                      <div className="feature-card-label">Void/Refund</div>
                     </div>
                   </Link>
                 </div>
               </div>
 
               {/* Cuti & Gaji */}
-              <div style={{ marginBottom: '1.5rem' }}>
-                <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              <div className="mb-6">
+                <div className="section-header">
                   💰 Cuti & Kewangan
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                   <Link href="/hr/leave-calendar">
-                    <div className="hover-lift" style={{
-                      padding: '1.25rem 1rem',
-                      background: 'var(--bg-card)',
-                      borderRadius: 'var(--radius-md)',
-                      textAlign: 'center',
-                      cursor: 'pointer',
-                      border: '1px solid var(--border-light)',
-                      boxShadow: 'var(--shadow-sm)'
-                    }}>
-                      <div style={{
-                        width: '40px', height: '40px', margin: '0 auto 0.75rem',
-                        borderRadius: '10px', background: 'rgba(234, 179, 8, 0.1)', color: 'var(--warning)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center'
-                      }}>
+                    <div className="feature-card hover-lift">
+                      <div className="feature-icon feature-icon-warning">
                         <Calendar size={20} />
                       </div>
-                      <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-primary)' }}>Kalendar Cuti</div>
+                      <div className="feature-card-label">Kalendar Cuti</div>
                     </div>
                   </Link>
                   <Link href="/hr/leave-settings">
-                    <div className="hover-lift" style={{
-                      padding: '1.25rem 1rem',
-                      background: 'var(--bg-card)',
-                      borderRadius: 'var(--radius-md)',
-                      textAlign: 'center',
-                      cursor: 'pointer',
-                      border: '1px solid var(--border-light)',
-                      boxShadow: 'var(--shadow-sm)'
-                    }}>
-                      <div style={{
-                        width: '40px', height: '40px', margin: '0 auto 0.75rem',
-                        borderRadius: '10px', background: 'rgba(234, 179, 8, 0.1)', color: 'var(--warning)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center'
-                      }}>
+                    <div className="feature-card hover-lift">
+                      <div className="feature-icon feature-icon-warning">
                         <List size={20} />
                       </div>
-                      <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-primary)' }}>Tetapan Cuti</div>
+                      <div className="feature-card-label">Tetapan Cuti</div>
                     </div>
                   </Link>
                   <Link href="/finance/payroll">
-                    <div className="hover-lift" style={{
-                      padding: '1.25rem 1rem',
-                      background: 'var(--bg-card)',
-                      borderRadius: 'var(--radius-md)',
-                      textAlign: 'center',
-                      cursor: 'pointer',
-                      border: '1px solid var(--border-light)',
-                      boxShadow: 'var(--shadow-sm)'
-                    }}>
-                      <div style={{
-                        width: '40px', height: '40px', margin: '0 auto 0.75rem',
-                        borderRadius: '10px', background: 'rgba(234, 179, 8, 0.1)', color: 'var(--warning)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center'
-                      }}>
+                    <div className="feature-card hover-lift">
+                      <div className="feature-icon feature-icon-warning">
                         <DollarSign size={20} />
                       </div>
-                      <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-primary)' }}>Payroll</div>
+                      <div className="feature-card-label">Payroll</div>
                     </div>
                   </Link>
                   <Link href="/hr/ot-report">
-                    <div className="hover-lift" style={{
-                      padding: '1.25rem 1rem',
-                      background: 'var(--bg-card)',
-                      borderRadius: 'var(--radius-md)',
-                      textAlign: 'center',
-                      cursor: 'pointer',
-                      border: '1px solid var(--border-light)',
-                      boxShadow: 'var(--shadow-sm)'
-                    }}>
-                      <div style={{
-                        width: '40px', height: '40px', margin: '0 auto 0.75rem',
-                        borderRadius: '10px', background: 'rgba(234, 179, 8, 0.1)', color: 'var(--warning)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center'
-                      }}>
+                    <div className="feature-card hover-lift">
+                      <div className="feature-icon feature-icon-warning">
                         <Clock size={20} />
                       </div>
-                      <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-primary)' }}>Laporan OT</div>
+                      <div className="feature-card-label">Laporan OT</div>
                     </div>
                   </Link>
                 </div>
@@ -606,215 +422,163 @@ export default function HRDashboardPage() {
 
               {/* Rekod & Dokumen */}
               <div>
-                <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                <div className="section-header">
                   📋 Rekod & Dokumen
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                   <Link href="/hr/performance">
-                    <div className="hover-lift" style={{
-                      padding: '1.25rem 1rem',
-                      background: 'var(--bg-card)',
-                      borderRadius: 'var(--radius-md)',
-                      textAlign: 'center',
-                      cursor: 'pointer',
-                      border: '1px solid var(--border-light)',
-                      boxShadow: 'var(--shadow-sm)'
-                    }}>
-                      <div style={{
-                        width: '40px', height: '40px', margin: '0 auto 0.75rem',
-                        borderRadius: '10px', background: 'var(--gray-100)', color: 'var(--text-secondary)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center'
-                      }}>
+                    <div className="feature-card hover-lift">
+                      <div className="feature-icon feature-icon-neutral">
                         <TrendingUp size={20} />
                       </div>
-                      <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-primary)' }}>Prestasi</div>
+                      <div className="feature-card-label">Prestasi</div>
                     </div>
                   </Link>
                   <Link href="/hr/training">
-                    <div className="hover-lift" style={{
-                      padding: '1.25rem 1rem',
-                      background: 'var(--bg-card)',
-                      borderRadius: 'var(--radius-md)',
-                      textAlign: 'center',
-                      cursor: 'pointer',
-                      border: '1px solid var(--border-light)',
-                      boxShadow: 'var(--shadow-sm)'
-                    }}>
-                      <div style={{
-                        width: '40px', height: '40px', margin: '0 auto 0.75rem',
-                        borderRadius: '10px', background: 'var(--gray-100)', color: 'var(--text-secondary)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center'
-                      }}>
+                    <div className="feature-card hover-lift">
+                      <div className="feature-icon feature-icon-neutral">
                         <Award size={20} />
                       </div>
-                      <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-primary)' }}>Training</div>
+                      <div className="feature-card-label">Training</div>
                     </div>
                   </Link>
                   <Link href="/hr/documents">
-                    <div className="hover-lift" style={{
-                      padding: '1.25rem 1rem',
-                      background: 'var(--bg-card)',
-                      borderRadius: 'var(--radius-md)',
-                      textAlign: 'center',
-                      cursor: 'pointer',
-                      border: '1px solid var(--border-light)',
-                      boxShadow: 'var(--shadow-sm)'
-                    }}>
-                      <div style={{
-                        width: '40px', height: '40px', margin: '0 auto 0.75rem',
-                        borderRadius: '10px', background: 'var(--gray-100)', color: 'var(--text-secondary)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center'
-                      }}>
+                    <div className="feature-card hover-lift">
+                      <div className="feature-icon feature-icon-neutral">
                         <List size={20} />
                       </div>
-                      <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-primary)' }}>Dokumen</div>
+                      <div className="feature-card-label">Dokumen</div>
                     </div>
                   </Link>
                   <Link href="/hr/disciplinary">
-                    <div className="hover-lift" style={{
-                      padding: '1.25rem 1rem',
-                      background: 'var(--bg-card)',
-                      borderRadius: 'var(--radius-md)',
-                      textAlign: 'center',
-                      cursor: 'pointer',
-                      border: '1px solid var(--border-light)',
-                      boxShadow: 'var(--shadow-sm)'
-                    }}>
-                      <div style={{
-                        width: '40px', height: '40px', margin: '0 auto 0.75rem',
-                        borderRadius: '10px', background: 'var(--gray-100)', color: 'var(--text-secondary)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center'
-                      }}>
+                    <div className="feature-card hover-lift">
+                      <div className="feature-icon feature-icon-neutral">
                         <Users size={20} />
                       </div>
-                      <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-primary)' }}>Disiplin</div>
+                      <div className="feature-card-label">Disiplin</div>
                     </div>
                   </Link>
                 </div>
               </div>
 
               {/* More Features Row */}
-              <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--border-light)' }}>
+              <div className="mt-4 pt-4 border-t border-gray-200 dark:border-white/10">
                 <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
-                  <Link href="/hr/onboarding" style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textAlign: 'center', padding: '0.5rem' }}>
+                  <Link href="/hr/onboarding" className="text-xs text-gray-500 text-center p-2">
                     Onboarding
                   </Link>
-                  <Link href="/hr/exit-interview" style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textAlign: 'center', padding: '0.5rem' }}>
+                  <Link href="/hr/exit-interview" className="text-xs text-gray-500 text-center p-2">
                     Exit Interview
                   </Link>
-                  <Link href="/hr/complaints" style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textAlign: 'center', padding: '0.5rem' }}>
+                  <Link href="/hr/complaints" className="text-xs text-gray-500 text-center p-2">
                     Aduan
                   </Link>
-                  <Link href="/hr/checklist-config" style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textAlign: 'center', padding: '0.5rem' }}>
+                  <Link href="/hr/checklist-config" className="text-xs text-gray-500 text-center p-2">
                     Checklist
                   </Link>
-                  <Link href="/hr/approvals?tab=advance" style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textAlign: 'center', padding: '0.5rem' }}>
+                  <Link href="/hr/approvals?tab=advance" className="text-xs text-gray-500 text-center p-2">
                     Salary Advance
                   </Link>
-                  <Link href="/hr/staff/new" style={{ fontSize: '0.75rem', color: 'var(--primary)', textAlign: 'center', padding: '0.5rem', fontWeight: 600 }}>
+                  <Link href="/hr/staff/new" className="text-xs text-primary text-center p-2 font-semibold">
                     + Tambah Staf
                   </Link>
                 </div>
               </div>
             </GlassCard>
 
-            {/* Staff Speed Analytics */}
-            <GlassCard className="animate-slide-up" style={{ animationDelay: '0.3s' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
-                <Timer size={22} color="var(--primary)" />
-                <div>
-                  <h3 style={{ fontSize: '1.1rem', fontWeight: 700 }}>Prestasi Kecepatan</h3>
-                  <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Analitik KDS Live</div>
-                </div>
-              </div>
+             {/* Staff Speed Analytics */}
+             <GlassCard className="animate-slide-up">
+               <div className="flex items-center gap-3 mb-6">
+                 <Timer size={22} color="var(--primary)" />
+                 <div>
+                   <h3 className="text-lg font-bold">Prestasi Kecepatan</h3>
+                   <div className="text-sm text-gray-500">Analitik KDS Live</div>
+                 </div>
+               </div>
 
-              {/* Speed Metrics */}
-              <div className="grid grid-cols-3 gap-4 mb-6">
-                <div style={{ textAlign: 'center', padding: '1rem', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-md)' }}>
-                  <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Purata Masa</div>
-                  <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--primary)' }}>{overallSpeedMetrics.avgPrepTime > 0 ? formatTime(overallSpeedMetrics.avgPrepTime) : '-'}</div>
-                </div>
-                <div style={{ textAlign: 'center', padding: '1rem', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-md)' }}>
-                  <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Orders</div>
-                  <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--success)' }}>{overallSpeedMetrics.totalOrders}</div>
-                </div>
-                <div style={{ textAlign: 'center', padding: '1rem', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-md)' }}>
-                  <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Terpantas</div>
-                  <div style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--warning)' }}>{overallSpeedMetrics.fastestStaff?.staffName || '-'}</div>
-                </div>
-              </div>
+               {/* Speed Metrics */}
+               <div className="grid grid-cols-3 gap-4 mb-6">
+                 <div className="text-center p-4 bg-gray-100 dark:bg-white/5 rounded-md">
+                   <div className="text-xs text-gray-500">Purata Masa</div>
+                   <div className="text-xl font-bold text-primary">{overallSpeedMetrics.avgPrepTime > 0 ? formatTime(overallSpeedMetrics.avgPrepTime) : '-'}</div>
+                 </div>
+                 <div className="text-center p-4 bg-gray-100 dark:bg-white/5 rounded-md">
+                   <div className="text-xs text-gray-500">Orders</div>
+                   <div className="text-xl font-bold text-success">{overallSpeedMetrics.totalOrders}</div>
+                 </div>
+                 <div className="text-center p-4 bg-gray-100 dark:bg-white/5 rounded-md">
+                   <div className="text-xs text-gray-500">Terpantas</div>
+                   <div className="text-xl font-bold text-warning">{overallSpeedMetrics.fastestStaff?.staffName || '-'}</div>
+                 </div>
+               </div>
 
-              {/* Table */}
-              {staffSpeedStats.length > 0 ? (
-                <div style={{ overflowX: 'auto' }}>
-                  <table className="table">
-                    <thead>
-                      <tr>
-                        <th>Rank</th>
-                        <th>Nama</th>
-                        <th className="text-center">Avg</th>
-                        <th className="text-center">Speed</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {staffSpeedStats.slice(0, 5).map((stat, idx) => (
-                        <tr key={stat.staffId}>
-                          <td>#{idx + 1}</td>
-                          <td style={{ fontWeight: 600 }}>{stat.staffName}</td>
-                          <td className="text-center font-mono">{formatTime(stat.avgPrepTime)}</td>
-                          <td className="text-center">
-                            <span className="badge badge-neutral">{stat.ordersPerHour}/j</span>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              ) : (
-                <div className="text-center text-secondary py-4">Tiada data KDS hari ini</div>
-              )}
-            </GlassCard>
+               {/* Table */}
+               {staffSpeedStats.length > 0 ? (
+                 <div className="overflow-x-auto">
+                   <table className="table">
+                     <thead>
+                       <tr>
+                         <th>Rank</th>
+                         <th>Nama</th>
+                         <th className="text-center">Avg</th>
+                         <th className="text-center">Speed</th>
+                       </tr>
+                     </thead>
+                     <tbody>
+                       {staffSpeedStats.slice(0, 5).map((stat, idx) => (
+                         <tr key={stat.staffId}>
+                           <td>#{idx + 1}</td>
+                           <td className="font-semibold">{stat.staffName}</td>
+                           <td className="text-center font-mono">{formatTime(stat.avgPrepTime)}</td>
+                           <td className="text-center">
+                             <span className="badge badge-neutral">{stat.ordersPerHour}/j</span>
+                           </td>
+                         </tr>
+                       ))}
+                     </tbody>
+                   </table>
+                 </div>
+               ) : (
+                 <div className="text-center text-secondary py-4">Tiada data KDS hari ini</div>
+               )}
+             </GlassCard>
           </div>
 
           {/* Sidebar Column */}
           <div className="flex flex-col gap-6">
-            {/* KPI Widget */}
-            <GlassCard gradient="primary" className="animate-slide-up" style={{ animationDelay: '0.2s' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <Trophy size={18} color="var(--primary)" /> <span style={{ fontWeight: 700 }}>KPI Leaderboard</span>
-                </div>
-                <Link href="/hr/kpi" style={{ fontSize: '0.85rem', color: 'var(--primary)', textDecoration: 'underline' }}>Lihat Semua</Link>
-              </div>
+             {/* KPI Widget */}
+             <GlassCard gradient="primary" className="animate-slide-up">
+               <div className="flex items-center justify-between mb-4">
+                 <div className="flex items-center gap-2">
+                   <Trophy size={18} color="var(--primary)" /> <span className="font-bold">KPI Leaderboard</span>
+                 </div>
+                 <Link href="/hr/kpi" className="text-sm text-primary underline">Lihat Semua</Link>
+               </div>
 
-              {leaderboard.length > 0 ? (
-                <div className="flex flex-col gap-3">
-                  {leaderboard.slice(0, 3).map((kpi, idx) => {
-                    const staffInfo = staff.find(s => s.id === kpi.staffId);
-                    const medals = ['🥇', '🥈', '🥉'];
-                    return (
-                      <div key={kpi.id} style={{
-                        display: 'flex', alignItems: 'center', gap: '0.75rem',
-                        padding: '0.75rem', background: 'var(--bg-secondary)',
-                        borderRadius: 'var(--radius-md)', border: '1px solid var(--border-light)'
-                      }}>
-                        <span style={{ fontSize: '1.2rem' }}>{medals[idx]}</span>
-                        <div style={{ flex: 1 }}>
-                          <div style={{ fontWeight: 600, fontSize: '0.95rem', color: 'var(--text-primary)' }}>{staffInfo?.name}</div>
-                          <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Score: {kpi.overallScore}%</div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div style={{ textAlign: 'center', padding: '1rem', color: 'var(--text-secondary)' }}>Tiada data KPI bulan ini</div>
-              )}
+               {leaderboard.length > 0 ? (
+                 <div className="flex flex-col gap-3">
+                   {leaderboard.slice(0, 3).map((kpi, idx) => {
+                     const staffInfo = staff.find(s => s.id === kpi.staffId);
+                     const medals = ['🥇', '🥈', '🥉'];
+                     return (
+                       <div key={kpi.id} className="flex items-center gap-3 p-3 bg-gray-100 dark:bg-white/5 rounded-md border border-gray-200 dark:border-white/10">
+                         <span className="text-xl">{medals[idx]}</span>
+                         <div className="flex-1">
+                           <div className="font-semibold text-sm text-gray-900 dark:text-white">{staffInfo?.name}</div>
+                           <div className="text-xs text-gray-500">Score: {kpi.overallScore}%</div>
+                         </div>
+                       </div>
+                     );
+                   })}
+                 </div>
+               ) : (
+                 <div className="text-center p-4 text-gray-500">Tiada data KPI bulan ini</div>
+               )}
             </GlassCard>
 
-            {/* Completed Attendance */}
-            {completedStaff.length > 0 && (
-              <GlassCard className="animate-slide-up" style={{ animationDelay: '0.4s' }}>
+             {/* Completed Attendance */}
+             {completedStaff.length > 0 && (
+               <GlassCard className="animate-slide-up">
                 <div className="card-header border-b border-gray-100 pb-2 mb-2">
                   <div className="card-title text-base flex items-center gap-2">
                     <CheckCircle size={16} /> Selesai Hari Ini
@@ -834,77 +598,77 @@ export default function HRDashboardPage() {
               </GlassCard>
             )}
 
-            {/* Overtime Report */}
-            <GlassCard className="animate-slide-up" style={{ animationDelay: '0.5s' }}>
-              <div className="card-header border-b border-gray-100 pb-2 mb-2">
-                <div className="card-title text-base flex items-center gap-2">
-                  <Clock size={16} color="var(--warning)" /> Overtime Report
-                </div>
-              </div>
-              <div className="flex flex-col gap-2">
-                {/* Calculate overtime for completed staff */}
-                {(() => {
-                  const overtimeData = completedStaff.map(staffMember => {
-                    const record = getStaffAttendanceToday(staffMember.id);
-                    if (!record?.clockInTime || !record?.clockOutTime) return null;
+             {/* Overtime Report */}
+             <GlassCard className="animate-slide-up">
+               <div className="card-header border-b border-gray-100 pb-2 mb-2">
+                 <div className="card-title text-base flex items-center gap-2">
+                   <Clock size={16} color="var(--warning)" /> Overtime Report
+                 </div>
+               </div>
+               <div className="flex flex-col gap-2">
+                 {/* Calculate overtime for completed staff */}
+                 {(() => {
+                   const overtimeData = completedStaff.map(staffMember => {
+                     const record = getStaffAttendanceToday(staffMember.id);
+                     if (!record?.clockInTime || !record?.clockOutTime) return null;
+ 
+                     // Parse times (assume HH:MM format)
+                     const parseTime = (timeStr: string) => {
+                       const [hours, minutes] = timeStr.split(':').map(Number);
+                       return hours * 60 + minutes;
+                     };
+ 
+                     const clockIn = parseTime(record.clockInTime);
+                     const clockOut = parseTime(record.clockOutTime);
+                     const totalMinutes = clockOut - clockIn;
+                     const regularMinutes = 8 * 60; // 8 hours regular
+                     const overtimeMinutes = Math.max(0, totalMinutes - regularMinutes);
+ 
+                     return {
+                       name: staffMember.name,
+                       totalHours: (totalMinutes / 60).toFixed(1),
+                       overtimeHours: (overtimeMinutes / 60).toFixed(1),
+                       overtimeMinutes,
+                       rate: staffMember.overtimeRate || 1.5
+                     };
+                   }).filter(Boolean).filter((d: any) => d.overtimeMinutes > 0) as any[];
 
-                    // Parse times (assume HH:MM format)
-                    const parseTime = (timeStr: string) => {
-                      const [hours, minutes] = timeStr.split(':').map(Number);
-                      return hours * 60 + minutes;
-                    };
+                   if (overtimeData.length === 0) {
+                     return (
+                       <div className="text-center text-secondary py-4 text-sm">
+                         Tiada overtime hari ini
+                       </div>
+                     );
+                   }
 
-                    const clockIn = parseTime(record.clockInTime);
-                    const clockOut = parseTime(record.clockOutTime);
-                    const totalMinutes = clockOut - clockIn;
-                    const regularMinutes = 8 * 60; // 8 hours regular
-                    const overtimeMinutes = Math.max(0, totalMinutes - regularMinutes);
+                   const totalOvertimeHours = overtimeData.reduce((sum: number, d: any) => sum + parseFloat(d.overtimeHours), 0);
 
-                    return {
-                      name: staffMember.name,
-                      totalHours: (totalMinutes / 60).toFixed(1),
-                      overtimeHours: (overtimeMinutes / 60).toFixed(1),
-                      overtimeMinutes,
-                      rate: staffMember.overtimeRate || 1.5
-                    };
-                  }).filter(Boolean).filter((d: any) => d.overtimeMinutes > 0) as any[];
-
-                  if (overtimeData.length === 0) {
-                    return (
-                      <div className="text-center text-secondary py-4" style={{ fontSize: '0.85rem' }}>
-                        Tiada overtime hari ini
-                      </div>
-                    );
-                  }
-
-                  const totalOvertimeHours = overtimeData.reduce((sum: number, d: any) => sum + parseFloat(d.overtimeHours), 0);
-
-                  return (
-                    <>
-                      {overtimeData.slice(0, 5).map((data: any, idx: number) => (
-                        <div key={idx} className="flex justify-between items-center text-sm p-2 rounded" style={{ background: 'var(--warning-light)' }}>
-                          <span style={{ fontWeight: 500 }}>{data.name}</span>
-                          <div style={{ textAlign: 'right' }}>
-                            <div style={{ fontWeight: 600, color: 'var(--warning)' }}>
-                              +{data.overtimeHours}j OT
-                            </div>
-                            <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>
-                              Total: {data.totalHours}j @ {data.rate}x
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                      <div style={{ marginTop: '0.5rem', padding: '0.75rem', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-md)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>Total OT Hari Ini</span>
-                        <span style={{ fontWeight: 700, color: 'var(--warning)', fontSize: '1.1rem' }}>
-                          {totalOvertimeHours.toFixed(1)} jam
-                        </span>
-                      </div>
-                    </>
-                  );
-                })()}
-              </div>
-            </GlassCard>
+                   return (
+                     <>
+                       {overtimeData.slice(0, 5).map((data: any, idx: number) => (
+                         <div key={idx} className="flex justify-between items-center text-sm p-2 rounded bg-warning-light">
+                           <span className="font-medium">{data.name}</span>
+                           <div className="text-right">
+                             <div className="font-semibold text-warning">
+                               +{data.overtimeHours}j OT
+                             </div>
+                             <div className="text-xs text-gray-500">
+                               Total: {data.totalHours}j @ {data.rate}x
+                             </div>
+                           </div>
+                         </div>
+                       ))}
+                       <div className="mt-2 p-3 bg-gray-100 dark:bg-white/5 rounded-md flex justify-between items-center">
+                         <span className="font-semibold text-sm">Total OT Hari Ini</span>
+                         <span className="font-bold text-warning text-xl">
+                           {totalOvertimeHours.toFixed(1)} jam
+                         </span>
+                       </div>
+                     </>
+                   );
+                 })()}
+               </div>
+             </GlassCard>
           </div>
         </div>
       </div>

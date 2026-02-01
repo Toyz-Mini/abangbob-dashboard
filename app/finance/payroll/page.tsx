@@ -22,6 +22,9 @@ import {
     SCP_EMPLOYEE_RATE,
     SCP_EMPLOYER_RATE,
 } from '@/lib/payroll-data';
+import { generatePayslipPDF } from '@/lib/pdf-generator';
+import PayslipSettingsModal, { DEFAULT_CONFIG } from '@/components/PayslipSettingsModal';
+import { PayslipConfig } from '@/lib/types';
 import {
     Users,
     DollarSign,
@@ -34,7 +37,8 @@ import {
     Eye,
     Edit2,
     Printer,
-    RefreshCw
+    RefreshCw,
+    Settings
 } from 'lucide-react';
 
 
@@ -51,6 +55,26 @@ export default function PayrollPage() {
     const [isGenerating, setIsGenerating] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [editForm, setEditForm] = useState<Partial<PayrollEntry>>({});
+
+    // Settings State
+    const [showSettingsModal, setShowSettingsModal] = useState(false);
+    const [payslipConfig, setPayslipConfig] = useState<PayslipConfig>(DEFAULT_CONFIG);
+
+    useEffect(() => {
+        const saved = localStorage.getItem('payslipConfig');
+        if (saved) {
+            try {
+                setPayslipConfig(JSON.parse(saved));
+            } catch (e) {
+                console.error('Failed to parse payslip config', e);
+            }
+        }
+    }, []);
+
+    const handleSaveConfig = (newConfig: PayslipConfig) => {
+        setPayslipConfig(newConfig);
+        localStorage.setItem('payslipConfig', JSON.stringify(newConfig));
+    };
 
     // Get approved unpaid leave days for a staff member in the selected month
     const getApprovedUnpaidLeaveDays = useCallback((staffId: string, month: string): number => {
@@ -350,6 +374,20 @@ export default function PayrollPage() {
         showToast('Payslip updated', 'success');
     };
 
+    const handleStatusUpdate = (entry: PayrollEntry, newStatus: PayrollEntry['status']) => {
+        const updatedEntry = {
+            ...entry,
+            status: newStatus,
+            paidAt: newStatus === 'paid' ? new Date().toISOString() : entry.paidAt
+        };
+
+        setPayrollEntries(prev => prev.map(e => e.id === entry.id ? updatedEntry : e));
+        setSelectedEntry(updatedEntry);
+
+        const label = getPayrollStatusLabel(newStatus).label;
+        showToast(`Status dikemaskini: ${label}`, 'success');
+    };
+
     return (
         <MainLayout>
             <div className="animate-fade-in">
@@ -461,7 +499,7 @@ export default function PayrollPage() {
                     </div>
 
                     {filteredEntries.length === 0 ? (
-                        <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-secondary)' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '3rem', color: 'var(--text-secondary)' }}>
                             <Calendar size={48} style={{ marginBottom: '1rem', opacity: 0.5 }} />
                             <p>Tiada rekod gaji untuk bulan ini</p>
                             <button className="btn btn-sm btn-primary mt-sm" onClick={handleGeneratePayroll}>
@@ -494,17 +532,17 @@ export default function PayrollPage() {
                                                 <td>
                                                     <div style={{ fontWeight: 500 }}>{entry.staffName}</div>
                                                 </td>
-                                                <td style={{ textAlign: 'right' }}>{entry.baseSalary.toFixed(2)}</td>
-                                                <td style={{ textAlign: 'right' }}>{entry.overtimePay.toFixed(2)}</td>
-                                                <td style={{ textAlign: 'right' }}>{entry.allowances.toFixed(2)}</td>
+                                                <td style={{ textAlign: 'right' }}>{(entry.baseSalary || 0).toFixed(2)}</td>
+                                                <td style={{ textAlign: 'right' }}>{(entry.overtimePay || 0).toFixed(2)}</td>
+                                                <td style={{ textAlign: 'right' }}>{(entry.allowances || 0).toFixed(2)}</td>
                                                 <td style={{ textAlign: 'right', fontWeight: 600 }}>
-                                                    {entry.grossSalary.toFixed(2)}
+                                                    {(entry.grossSalary || 0).toFixed(2)}
                                                 </td>
                                                 <td style={{ textAlign: 'center' }}>
                                                     {entry.tapEnabled ? (
                                                         <span style={{ color: 'var(--success)' }}>
                                                             <CheckCircle size={14} style={{ display: 'inline', marginRight: '2px' }} />
-                                                            {entry.tapEmployee.toFixed(2)}
+                                                            {(entry.tapEmployee || 0).toFixed(2)}
                                                         </span>
                                                     ) : (
                                                         <span style={{ color: 'var(--text-light)' }}>-</span>
@@ -514,17 +552,17 @@ export default function PayrollPage() {
                                                     {entry.scpEnabled ? (
                                                         <span style={{ color: 'var(--success)' }}>
                                                             <CheckCircle size={14} style={{ display: 'inline', marginRight: '2px' }} />
-                                                            {entry.scpEmployee.toFixed(2)}
+                                                            {(entry.scpEmployee || 0).toFixed(2)}
                                                         </span>
                                                     ) : (
                                                         <span style={{ color: 'var(--text-light)' }}>-</span>
                                                     )}
                                                 </td>
                                                 <td style={{ textAlign: 'right', color: 'var(--danger)' }}>
-                                                    -{entry.totalDeductions.toFixed(2)}
+                                                    -{(entry.totalDeductions || 0).toFixed(2)}
                                                 </td>
                                                 <td style={{ textAlign: 'right', fontWeight: 700, color: 'var(--primary)' }}>
-                                                    BND {entry.netPay.toFixed(2)}
+                                                    BND {(entry.netPay || 0).toFixed(2)}
                                                 </td>
                                                 <td style={{ textAlign: 'center' }}>
                                                     <span className={`badge badge-${status.color}`}>
@@ -547,17 +585,17 @@ export default function PayrollPage() {
                                 <tfoot>
                                     <tr style={{ background: 'var(--gray-100)', fontWeight: 600 }}>
                                         <td>JUMLAH</td>
-                                        <td style={{ textAlign: 'right' }}>{filteredEntries.reduce((s, e) => s + e.baseSalary, 0).toFixed(2)}</td>
-                                        <td style={{ textAlign: 'right' }}>{filteredEntries.reduce((s, e) => s + e.overtimePay, 0).toFixed(2)}</td>
-                                        <td style={{ textAlign: 'right' }}>{filteredEntries.reduce((s, e) => s + e.allowances, 0).toFixed(2)}</td>
-                                        <td style={{ textAlign: 'right' }}>{summary.totalGrossSalary.toFixed(2)}</td>
-                                        <td style={{ textAlign: 'center' }}>{summary.totalTapEmployee.toFixed(2)}</td>
-                                        <td style={{ textAlign: 'center' }}>{summary.totalScpEmployee.toFixed(2)}</td>
+                                        <td style={{ textAlign: 'right' }}>{filteredEntries.reduce((s, e) => s + (e.baseSalary || 0), 0).toFixed(2)}</td>
+                                        <td style={{ textAlign: 'right' }}>{filteredEntries.reduce((s, e) => s + (e.overtimePay || 0), 0).toFixed(2)}</td>
+                                        <td style={{ textAlign: 'right' }}>{filteredEntries.reduce((s, e) => s + (e.allowances || 0), 0).toFixed(2)}</td>
+                                        <td style={{ textAlign: 'right' }}>{(summary.totalGrossSalary || 0).toFixed(2)}</td>
+                                        <td style={{ textAlign: 'center' }}>{(summary.totalTapEmployee || 0).toFixed(2)}</td>
+                                        <td style={{ textAlign: 'center' }}>{(summary.totalScpEmployee || 0).toFixed(2)}</td>
                                         <td style={{ textAlign: 'right', color: 'var(--danger)' }}>
-                                            -{(summary.totalTapEmployee + summary.totalScpEmployee).toFixed(2)}
+                                            -{((summary.totalTapEmployee || 0) + (summary.totalScpEmployee || 0)).toFixed(2)}
                                         </td>
                                         <td style={{ textAlign: 'right', color: 'var(--primary)' }}>
-                                            BND {summary.totalNetPay.toFixed(2)}
+                                            BND {(summary.totalNetPay || 0).toFixed(2)}
                                         </td>
                                         <td colSpan={2}></td>
                                     </tr>
@@ -575,168 +613,257 @@ export default function PayrollPage() {
                     maxWidth="500px"
                 >
                     {selectedEntry && (
-                        <div>
-                            <div style={{ marginBottom: '1.5rem', paddingBottom: '1rem', borderBottom: '1px solid var(--gray-200)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <div>
-                                    <h3 style={{ margin: '0 0 0.25rem', fontSize: '1.25rem' }}>{selectedEntry.staffName}</h3>
-                                    <p style={{ margin: 0, color: 'var(--text-secondary)' }}>{getMonthLabel(selectedEntry.month)}</p>
+                        <div className="space-y-6 w-full">
+                            {/* Header Section */}
+                            <div className="flex justify-between items-start border-b border-gray-100 pb-4 gap-4">
+                                <div className="flex-1">
+                                    <h3 className="text-xl font-bold text-gray-900 leading-tight">{selectedEntry.staffName}</h3>
+                                    <p className="text-sm text-gray-500 font-medium mt-1">{getMonthLabel(selectedEntry.month)}</p>
+                                    {!isEditing && (
+                                        <div className="mt-2">
+                                            <span className={`badge badge-${getPayrollStatusLabel(selectedEntry.status).color}`}>
+                                                {getPayrollStatusLabel(selectedEntry.status).label}
+                                            </span>
+                                        </div>
+                                    )}
                                 </div>
                                 {!isEditing && (
-                                    <button className="btn btn-sm btn-outline" onClick={handleEditClick}>
-                                        <Edit2 size={14} /> Edit
-                                    </button>
-                                )}
-                            </div>
-
-                            {/* Earnings */}
-                            <div style={{ marginBottom: '1rem' }}>
-                                <h4 style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>PENDAPATAN</h4>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
-                                    <span>Gaji Pokok</span>
-                                    <span>{selectedEntry.baseSalary.toFixed(2)}</span>
-                                </div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
-                                    <span>Overtime</span>
-                                    <span>{selectedEntry.overtimePay.toFixed(2)}</span>
-                                </div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem', alignItems: 'center' }}>
-                                    <span>Elaun</span>
-                                    {isEditing ? (
-                                        <input
-                                            type="number"
-                                            className="form-input"
-                                            style={{ width: '100px', padding: '2px 5px', textAlign: 'right' }}
-                                            value={editForm.allowances}
-                                            onChange={e => setEditForm({ ...editForm, allowances: Number(e.target.value) })}
-                                        />
-                                    ) : (
-                                        <span>{selectedEntry.allowances.toFixed(2)}</span>
-                                    )}
-                                </div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem', alignItems: 'center' }}>
-                                    <span>Bonus</span>
-                                    {isEditing ? (
-                                        <input
-                                            type="number"
-                                            className="form-input"
-                                            style={{ width: '100px', padding: '2px 5px', textAlign: 'right' }}
-                                            value={editForm.bonus}
-                                            onChange={e => setEditForm({ ...editForm, bonus: Number(e.target.value) })}
-                                        />
-                                    ) : (
-                                        <span>{selectedEntry.bonus.toFixed(2)}</span>
-                                    )}
-                                </div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 600, paddingTop: '0.5rem', borderTop: '1px solid var(--gray-200)' }}>
-                                    <span>Jumlah Pendapatan</span>
-                                    <span>BND {selectedEntry.grossSalary.toFixed(2)}</span>
-                                </div>
-                            </div>
-
-                            {/* Deductions */}
-                            <div style={{ marginBottom: '1rem' }}>
-                                <h4 style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>POTONGAN</h4>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
-                                    <span>TAP (Pekerja {TAP_EMPLOYEE_RATE}%)</span>
-                                    <span style={{ color: selectedEntry.tapEnabled ? 'inherit' : 'var(--text-light)' }}>
-                                        {selectedEntry.tapEnabled ? selectedEntry.tapEmployee.toFixed(2) : '- (Tidak Aktif)'}
-                                    </span>
-                                </div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
-                                    <span>SCP (Pekerja {SCP_EMPLOYEE_RATE}%)</span>
-                                    <span style={{ color: selectedEntry.scpEnabled ? 'inherit' : 'var(--text-light)' }}>
-                                        {selectedEntry.scpEnabled ? selectedEntry.scpEmployee.toFixed(2) : '- (Tidak Aktif)'}
-                                    </span>
-                                </div>
-
-                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem', color: 'var(--danger)', alignItems: 'center' }}>
-                                    <span>
-                                        Cuti Tanpa Gaji
-                                        {isEditing ? (
-                                            <span style={{ display: 'inline-flex', alignItems: 'center', marginLeft: '5px' }}>
-                                                (Hari: <input
-                                                    type="number"
-                                                    className="form-input"
-                                                    style={{ width: '50px', padding: '0 5px', height: '24px', marginLeft: '5px' }}
-                                                    value={editForm.unpaidLeaveDays}
-                                                    onChange={e => setEditForm({ ...editForm, unpaidLeaveDays: Number(e.target.value) })}
-                                                />)
-                                            </span>
-                                        ) : (
-                                            selectedEntry.unpaidLeaveDays > 0 ? ` (${selectedEntry.unpaidLeaveDays} hari)` : ''
-                                        )}
-                                    </span>
-                                    <span>-{selectedEntry.unpaidLeaveDeduction.toFixed(2)}</span>
-                                </div>
-
-                                {getStaffAdvanceDeduction(selectedEntry.staffId) > 0 && (
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem', color: 'var(--warning)' }}>
-                                        <span>Pendahuluan Gaji</span>
-                                        <span>-{getStaffAdvanceDeduction(selectedEntry.staffId).toFixed(2)}</span>
+                                    <div className="flex gap-2">
+                                        <button
+                                            className="btn btn-sm btn-ghost hover:bg-gray-100 text-gray-400 w-8 h-8 p-0 rounded-full flex items-center justify-center shrink-0"
+                                            onClick={() => setShowSettingsModal(true)}
+                                            title="Payslip Settings"
+                                        >
+                                            <Settings size={16} />
+                                        </button>
+                                        <button
+                                            className="btn btn-sm btn-outline h-8 px-3 rounded-full flex items-center justify-center shrink-0 gap-2 hover:bg-gray-50 transition-colors"
+                                            onClick={() => generatePayslipPDF(selectedEntry, payslipConfig)}
+                                            title="Download PDF"
+                                        >
+                                            <Download size={14} />
+                                            <span>PDF</span>
+                                        </button>
+                                        <button
+                                            className="btn btn-sm btn-outline h-8 px-3 rounded-full flex items-center justify-center shrink-0 gap-2 hover:bg-gray-50 transition-colors"
+                                            onClick={handleEditClick}
+                                            title="Edit Slip Gaji"
+                                        >
+                                            <Edit2 size={14} />
+                                            <span>Edit</span>
+                                        </button>
                                     </div>
                                 )}
-                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem', alignItems: 'center' }}>
-                                    <span>Potongan Lain</span>
-                                    {isEditing ? (
-                                        <input
-                                            type="number"
-                                            className="form-input"
-                                            style={{ width: '100px', padding: '2px 5px', textAlign: 'right' }}
-                                            value={editForm.otherDeductions}
-                                            onChange={e => setEditForm({ ...editForm, otherDeductions: Number(e.target.value) })}
-                                        />
-                                    ) : (
-                                        <span>{selectedEntry.otherDeductions.toFixed(2)}</span>
-                                    )}
+                            </div>
+
+                            {/* Earnings Section */}
+                            <div>
+                                <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Pendapatan</h4>
+                                <div className="space-y-2">
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-gray-600">Gaji Pokok</span>
+                                        <span className="font-medium">{(selectedEntry.baseSalary || 0).toFixed(2)}</span>
+                                    </div>
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-gray-600">Overtime</span>
+                                        <span className="font-medium">{(selectedEntry.overtimePay || 0).toFixed(2)}</span>
+                                    </div>
+                                    <div className="flex justify-between text-sm items-center">
+                                        <span className="text-gray-600">Elaun</span>
+                                        {isEditing ? (
+                                            <input
+                                                type="number"
+                                                className="form-input py-1 px-2 w-24 text-right text-sm"
+                                                value={editForm.allowances}
+                                                onChange={e => setEditForm({ ...editForm, allowances: Number(e.target.value) })}
+                                            />
+                                        ) : (
+                                            <span className="font-medium">{(selectedEntry.allowances || 0).toFixed(2)}</span>
+                                        )}
+                                    </div>
+                                    <div className="flex justify-between text-sm items-center">
+                                        <span className="text-gray-600">Bonus</span>
+                                        {isEditing ? (
+                                            <input
+                                                type="number"
+                                                className="form-input py-1 px-2 w-24 text-right text-sm"
+                                                value={editForm.bonus}
+                                                onChange={e => setEditForm({ ...editForm, bonus: Number(e.target.value) })}
+                                            />
+                                        ) : (
+                                            <span className="font-medium">{(selectedEntry.bonus || 0).toFixed(2)}</span>
+                                        )}
+                                    </div>
                                 </div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 600, paddingTop: '0.5rem', borderTop: '1px solid var(--gray-200)', color: 'var(--danger)' }}>
-                                    <span>Jumlah Potongan</span>
-                                    <span>-BND {(selectedEntry.totalDeductions + getStaffAdvanceDeduction(selectedEntry.staffId)).toFixed(2)}</span>
+                                <div className="flex justify-between items-center mt-3 pt-3 border-t border-gray-100 font-bold text-gray-900">
+                                    <span>Jumlah Pendapatan</span>
+                                    <span>BND {(selectedEntry.grossSalary || 0).toFixed(2)}</span>
                                 </div>
                             </div>
 
-                            {/* Employer Contributions (for reference) */}
-                            <div style={{ marginBottom: '1rem', padding: '0.75rem', background: 'var(--gray-50)', borderRadius: 'var(--radius-md)' }}>
-                                <h4 style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>CARUMAN MAJIKAN (Untuk Rujukan)</h4>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem' }}>
-                                    <span>TAP Majikan ({TAP_EMPLOYER_RATE}%)</span>
-                                    <span>{selectedEntry.tapEnabled ? selectedEntry.tapEmployer.toFixed(2) : '-'}</span>
+                            {/* Deductions Section */}
+                            <div>
+                                <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Potongan</h4>
+                                <div className="space-y-2">
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-gray-600">TAP (Pekerja {TAP_EMPLOYEE_RATE}%)</span>
+                                        <span className={selectedEntry.tapEnabled ? "font-medium" : "text-gray-400"}>
+                                            {selectedEntry.tapEnabled ? (selectedEntry.tapEmployee || 0).toFixed(2) : '-'}
+                                        </span>
+                                    </div>
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-gray-600">SCP (Pekerja {SCP_EMPLOYEE_RATE}%)</span>
+                                        <span className={selectedEntry.scpEnabled ? "font-medium" : "text-gray-400"}>
+                                            {selectedEntry.scpEnabled ? (selectedEntry.scpEmployee || 0).toFixed(2) : '-'}
+                                        </span>
+                                    </div>
+
+                                    <div className="flex justify-between text-sm items-center text-red-600">
+                                        <span className="flex items-center gap-1">
+                                            Cuti Tanpa Gaji
+                                            {isEditing && (
+                                                <span className="flex items-center bg-red-50 px-1 rounded text-xs ml-2">
+                                                    Hari: <input
+                                                        type="number"
+                                                        className="bg-transparent w-8 text-center border-b border-red-200 focus:outline-none"
+                                                        value={editForm.unpaidLeaveDays}
+                                                        onChange={e => setEditForm({ ...editForm, unpaidLeaveDays: Number(e.target.value) })}
+                                                    />
+                                                </span>
+                                            )}
+                                            {!isEditing && selectedEntry.unpaidLeaveDays > 0 && (
+                                                <span className="text-xs bg-red-50 px-1.5 py-0.5 rounded ml-2">
+                                                    {selectedEntry.unpaidLeaveDays} hari
+                                                </span>
+                                            )}
+                                        </span>
+                                        <span className="font-medium">{(selectedEntry.unpaidLeaveDeduction || 0).toFixed(2)}</span>
+                                    </div>
+
+                                    {getStaffAdvanceDeduction(selectedEntry.staffId) > 0 && (
+                                        <div className="flex justify-between text-sm text-yellow-600">
+                                            <span>Pendahuluan Gaji</span>
+                                            <span>{(getStaffAdvanceDeduction(selectedEntry.staffId) || 0).toFixed(2)}</span>
+                                        </div>
+                                    )}
+
+                                    <div className="flex justify-between text-sm items-center">
+                                        <span className="text-gray-600">Potongan Lain</span>
+                                        {isEditing ? (
+                                            <input
+                                                type="number"
+                                                className="form-input py-1 px-2 w-24 text-right text-sm"
+                                                value={editForm.otherDeductions}
+                                                onChange={e => setEditForm({ ...editForm, otherDeductions: Number(e.target.value) })}
+                                            />
+                                        ) : (
+                                            <span className="font-medium">{(selectedEntry.otherDeductions || 0).toFixed(2)}</span>
+                                        )}
+                                    </div>
                                 </div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem' }}>
-                                    <span>SCP Majikan ({SCP_EMPLOYER_RATE}%)</span>
-                                    <span>{selectedEntry.scpEnabled ? selectedEntry.scpEmployer.toFixed(2) : '-'}</span>
+                                <div
+                                    className="flex justify-between items-center mt-3 pt-3 border-t border-gray-100 font-bold"
+                                    style={{ color: 'var(--danger)' }}
+                                >
+                                    <span>Jumlah Potongan</span>
+                                    <span>-BND {((selectedEntry.totalDeductions || 0) + (getStaffAdvanceDeduction(selectedEntry.staffId) || 0)).toFixed(2)}</span>
+                                </div>
+                            </div>
+
+                            {/* Employer Contributions (Reference) */}
+                            <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
+                                <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Caruman Majikan (Rujukan)</h4>
+                                <div className="space-y-1">
+                                    <div className="flex justify-between text-xs text-gray-600">
+                                        <span>TAP Majikan ({TAP_EMPLOYER_RATE}%)</span>
+                                        <span>{selectedEntry.tapEnabled ? (selectedEntry.tapEmployer || 0).toFixed(2) : '-'}</span>
+                                    </div>
+                                    <div className="flex justify-between text-xs text-gray-600">
+                                        <span>SCP Majikan ({SCP_EMPLOYER_RATE}%)</span>
+                                        <span>{selectedEntry.scpEnabled ? (selectedEntry.scpEmployer || 0).toFixed(2) : '-'}</span>
+                                    </div>
                                 </div>
                             </div>
 
                             {/* Net Pay */}
-                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.25rem', fontWeight: 700, padding: '1rem', background: 'var(--primary)', color: 'white', borderRadius: 'var(--radius-md)' }}>
-                                <span>GAJI BERSIH</span>
-                                <span>BND {(selectedEntry.netPay - getStaffAdvanceDeduction(selectedEntry.staffId)).toFixed(2)}</span>
+                            <div
+                                className="text-white p-4 rounded-xl shadow-lg flex justify-between items-center transform transition-transform hover:scale-[1.02]"
+                                style={{ background: 'var(--primary)' }}
+                            >
+                                <div className="flex flex-col">
+                                    <span className="text-white/80 text-xs font-bold uppercase tracking-widest">Gaji Bersih</span>
+                                    {selectedEntry.paidAt && (
+                                        <span className="text-[10px] bg-white/20 px-1.5 rounded w-fit mt-1">
+                                            Dibayar: {new Date(selectedEntry.paidAt).toLocaleDateString('ms-MY')}
+                                        </span>
+                                    )}
+                                </div>
+                                <span className="text-2xl font-bold tracking-tight">
+                                    BND {((selectedEntry.netPay || 0) - (getStaffAdvanceDeduction(selectedEntry.staffId) || 0)).toFixed(2)}
+                                </span>
                             </div>
 
                             {isEditing && (
-                                <div style={{ marginTop: '1.5rem', display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
-                                    <button className="btn btn-ghost" onClick={() => setIsEditing(false)}>Batal</button>
-                                    <button className="btn btn-primary" onClick={handleSaveEdit}>Simpan & Kira Semula</button>
+                                <div className="flex gap-3 justify-end pt-4 border-t border-gray-100">
+                                    <button
+                                        className="btn btn-ghost hover:bg-gray-100 text-gray-600"
+                                        onClick={() => setIsEditing(false)}
+                                    >
+                                        Batal
+                                    </button>
+                                    <button
+                                        className="btn btn-primary px-6"
+                                        onClick={handleSaveEdit}
+                                    >
+                                        Simpan
+                                    </button>
                                 </div>
                             )}
-
-                            {/* Status */}
+                            {/* Status Actions */}
                             {!isEditing && (
-                                <div style={{ marginTop: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                    <span className={`badge badge-${getPayrollStatusLabel(selectedEntry.status).color}`}>
-                                        {getPayrollStatusLabel(selectedEntry.status).label}
-                                    </span>
-                                    {selectedEntry.paidAt && (
-                                        <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                                            Dibayar: {new Date(selectedEntry.paidAt).toLocaleDateString('ms-MY')}
-                                        </span>
+                                <div className="mt-6 flex flex-col gap-3">
+                                    {selectedEntry.status === 'draft' && (
+                                        <button
+                                            className="btn btn-primary w-full shadow-md"
+                                            onClick={() => handleStatusUpdate(selectedEntry, 'approved')}
+                                        >
+                                            <CheckCircle size={18} className="mr-2" />
+                                            Luluskan Payslip
+                                        </button>
+                                    )}
+                                    {selectedEntry.status === 'approved' && (
+                                        <button
+                                            className="btn btn-success w-full shadow-md text-white"
+                                            onClick={() => handleStatusUpdate(selectedEntry, 'paid')}
+                                            style={{ backgroundColor: 'var(--success)', borderColor: 'var(--success)' }}
+                                        >
+                                            <CheckCircle size={18} className="mr-2" />
+                                            Tandai Selesai Dibayar
+                                        </button>
+                                    )}
+                                    {selectedEntry.status === 'paid' && (
+                                        <div className="text-center">
+                                            <p className="text-sm text-gray-500 mb-2">Slip gaji telah dibayar pada {new Date(selectedEntry.paidAt!).toLocaleDateString('ms-MY')}</p>
+                                            <button
+                                                className="text-xs text-gray-400 hover:text-gray-600 underline"
+                                                onClick={() => handleStatusUpdate(selectedEntry, 'approved')}
+                                            >
+                                                Kembalikan ke status Diluluskan
+                                            </button>
+                                        </div>
                                     )}
                                 </div>
                             )}
                         </div>
                     )}
                 </Modal>
+
+                <PayslipSettingsModal
+                    isOpen={showSettingsModal}
+                    onClose={() => setShowSettingsModal(false)}
+                    config={payslipConfig}
+                    onSave={handleSaveConfig}
+                />
             </div>
         </MainLayout>
     );

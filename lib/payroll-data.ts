@@ -197,12 +197,16 @@ export function calculatePayrollSummary(entries: PayrollEntry[]): PayrollSummary
 
 // ==================== MOCK DATA ====================
 
+// Dynamic month for mock data
+const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
+const lastMonth = new Date(new Date().setMonth(new Date().getMonth() - 1)).toISOString().slice(0, 7);
+
 export const MOCK_PAYROLL_ENTRIES: PayrollEntry[] = [
     {
         id: 'pay_001',
         staffId: '1',
         staffName: 'Ahmad Bin Hassan',
-        month: '2024-12',
+        month: currentMonth,
         baseSalary: 1500,
         overtimePay: 150,
         allowances: 100,
@@ -220,18 +224,18 @@ export const MOCK_PAYROLL_ENTRIES: PayrollEntry[] = [
         totalDeductions: 148.75,
         netPay: 1601.25,
         status: 'paid',
-        paidAt: '2024-12-25T10:00:00Z',
+        paidAt: `${currentMonth}-25T10:00:00Z`,
         paidBy: 'Admin',
         tapEnabled: true,
         scpEnabled: true,
-        createdAt: '2024-12-20T08:00:00Z',
-        updatedAt: '2024-12-25T10:00:00Z',
+        createdAt: `${currentMonth}-20T08:00:00Z`,
+        updatedAt: `${currentMonth}-25T10:00:00Z`,
     },
     {
         id: 'pay_002',
         staffId: '2',
         staffName: 'Siti Nurhaliza',
-        month: '2024-12',
+        month: currentMonth,
         baseSalary: 1200,
         overtimePay: 0,
         allowances: 50,
@@ -249,18 +253,18 @@ export const MOCK_PAYROLL_ENTRIES: PayrollEntry[] = [
         totalDeductions: 106.25,
         netPay: 1143.75,
         status: 'paid',
-        paidAt: '2024-12-25T10:00:00Z',
+        paidAt: `${currentMonth}-25T10:00:00Z`,
         paidBy: 'Admin',
         tapEnabled: true,
         scpEnabled: true,
-        createdAt: '2024-12-20T08:00:00Z',
-        updatedAt: '2024-12-25T10:00:00Z',
+        createdAt: `${currentMonth}-20T08:00:00Z`,
+        updatedAt: `${currentMonth}-25T10:00:00Z`,
     },
     {
         id: 'pay_003',
         staffId: '3',
         staffName: 'Rahman Ali (Part-time)',
-        month: '2024-12',
+        month: currentMonth,
         baseSalary: 600,
         overtimePay: 0,
         allowances: 0,
@@ -278,12 +282,12 @@ export const MOCK_PAYROLL_ENTRIES: PayrollEntry[] = [
         totalDeductions: 0,
         netPay: 600,
         status: 'paid',
-        paidAt: '2024-12-25T10:00:00Z',
+        paidAt: `${currentMonth}-25T10:00:00Z`,
         paidBy: 'Admin',
         tapEnabled: false,
         scpEnabled: false,
-        createdAt: '2024-12-20T08:00:00Z',
-        updatedAt: '2024-12-25T10:00:00Z',
+        createdAt: `${currentMonth}-20T08:00:00Z`,
+        updatedAt: `${currentMonth}-25T10:00:00Z`,
     },
 ];
 

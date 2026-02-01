@@ -11,6 +11,7 @@ import { useAuth } from '@/lib/contexts/AuthContext';
 import Link from 'next/link';
 import { useNotifications } from '@/lib/store';
 import { useNotificationsRealtime } from '@/lib/supabase/realtime-hooks';
+import AppsLauncher from './AppsLauncher';
 
 interface TopNavProps {
   onMenuClick?: () => void;
@@ -115,6 +116,11 @@ export default function TopNav({ onMenuClick }: TopNavProps) {
 
       {/* Right Side Actions */}
       <div className="top-nav-right">
+        {/* Apps Launcher (Admin/Manager Only) */}
+        {['Admin', 'Manager'].includes(currentStaff?.role || '') && (
+          <AppsLauncher />
+        )}
+
         {/* Language Toggle */}
         <button
           onClick={handleLanguageToggle}

@@ -20,12 +20,14 @@ export async function fetchAuditLogsAction(
         await requireRole(['admin', 'manager']);
 
         const supabase = getSupabaseAdmin();
-        // Cast to any to bypass missing type definition for new table
+        // Use 'created_at' for sorting, not 'timestamp'
         let query = (supabase.from('audit_logs') as any)
             .select('*', { count: 'exact' })
-            .order('timestamp', { ascending: false });
+            .order('created_at', { ascending: false });
 
         if (filters?.search) {
+            // Search inside JSONB details or user_name
+            // Note: JSONB search might need different syntax, keeping simple OR for now
             query = query.or(`details.ilike.%${filters.search}%,user_name.ilike.%${filters.search}%`);
         }
 
@@ -41,7 +43,7 @@ export async function fetchAuditLogsAction(
             // Filter by date (ignoring time)
             const nextDate = new Date(filters.date);
             nextDate.setDate(nextDate.getDate() + 1);
-            query = query.gte('timestamp', filters.date).lt('timestamp', nextDate.toISOString().split('T')[0]);
+            query = query.gte('created_at', filters.date).lt('created_at', nextDate.toISOString().split('T')[0]);
         }
 
         if (filters?.limit) {
@@ -59,18 +61,28 @@ export async function fetchAuditLogsAction(
             throw new Error(error.message);
         }
 
-        // Map DB fields to frontend format if necessary (snake_case to camelCase)
-        const mappedData = data?.map((item: any) => ({
-            id: item.id,
-            timestamp: item.timestamp,
-            userName: item.user_name,
-            userId: item.user_id,
-            action: item.action,
-            module: item.module,
-            details: item.details,
-            ipAddress: item.ip_address,
-            metadata: item.metadata
-        }));
+        // Map DB fields to frontend format
+        const mappedData = data?.map((item: any) => {
+            // Parse details if JSONB
+            let detailsStr = '';
+            if (typeof item.details === 'object' && item.details !== null) {
+                detailsStr = item.details.message || JSON.stringify(item.details);
+            } else {
+                detailsStr = String(item.details || '');
+            }
+
+            return {
+                id: item.id,
+                timestamp: item.created_at, // Map created_at to timestamp
+                userName: item.user_name || 'System',
+                userId: item.user_id,
+                action: item.action,
+                module: item.module || item.resource, // Fallback to resource
+                details: detailsStr,
+                ipAddress: item.ip_address,
+                metadata: item.metadata
+            };
+        });
 
         return { logs: mappedData as AuditLog[], total: count || 0 };
 
@@ -95,7 +107,7 @@ export async function logAuditAction(
 
         const supabase = getSupabaseAdmin();
 
-        // Get user name if available (from metadata or fetch from staff table)
+        // Get user name if available
         let userName = 'System';
         if (user) {
             userName = user.name || user.email || 'Unknown User';
@@ -106,8 +118,9 @@ export async function logAuditAction(
             user_name: userName,
             action: entry.action,
             module: entry.module,
-            details: entry.details,
-            ip_address: null, // Hard to get IP in server action reliably without headers
+            // Insert details as JSON object to satisfy JSONB column
+            details: { message: entry.details },
+            ip_address: null,
             metadata: entry.metadata || {}
         });
 
@@ -117,6 +130,5 @@ export async function logAuditAction(
 
     } catch (error) {
         console.error('[logAuditAction] Failed:', error);
-        // Don't throw, just log error so we don't block the main action
     }
 }

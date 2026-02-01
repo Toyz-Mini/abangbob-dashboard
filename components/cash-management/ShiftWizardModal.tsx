@@ -6,6 +6,7 @@ import { useAuth } from '../../lib/contexts/AuthContext';
 import { formatCurrency } from '../../lib/utils';
 import { X, Lock, Unlock, ArrowRight, ArrowLeft, CheckCircle, Package } from 'lucide-react';
 import { StockItem } from '../../lib/types';
+import { triggerNotification } from '../../lib/notifications/dispatcher';
 
 interface ShiftWizardModalProps {
     isOpen: boolean;
@@ -151,6 +152,30 @@ export default function ShiftWizardModal({ isOpen, onClose, mode }: ShiftWizardM
             } else {
                 const result = await closeRegister(numericAmount, staffId, notes);
                 if (!result.success) throw new Error(result.error);
+
+                // --- TRIGGER SALES REPORT (Auto-WhatsApp) ---
+                // Calculate report data
+                const reportOrders = orders.filter(o =>
+                    o.status === 'completed' &&
+                    currentRegister && 
+                    new Date(o.createdAt) >= new Date(currentRegister.openedAt)
+                );
+                
+                const totalSales = reportOrders.reduce((sum, o) => sum + o.total, 0);
+                const cashSales = reportOrders.filter(o => o.paymentMethod === 'cash').reduce((sum, o) => sum + o.total, 0);
+                const onlineSales = totalSales - cashSales;
+
+                // Send to Admin (Hardcoded boss number for now, later dynamic)
+                triggerNotification('DAILY_SALES_REPORT', {
+                    to: '60126764769', // Boss Phone Number
+                    data: {
+                        date: new Date().toLocaleDateString('en-MY'),
+                        total: totalSales.toFixed(2),
+                        count: reportOrders.length,
+                        cash: cashSales.toFixed(2),
+                        online: onlineSales.toFixed(2)
+                    }
+                });
             }
 
             onClose(true);
@@ -173,6 +198,8 @@ export default function ShiftWizardModal({ isOpen, onClose, mode }: ShiftWizardM
                         <span className="text-gray-600">Float Mula:</span>
                         <span className="font-bold">{formatCurrency(currentRegister.startCash)}</span>
                     </div>
+                    {/* BLIND DROP: Hiding Sales and Expected Cash from staff */}
+                    {/* 
                     <div className="flex justify-between">
                         <span className="text-gray-600">Jualan Tunai:</span>
                         <span className="font-bold text-green-600">+{formatCurrency(totalSales)}</span>
@@ -180,6 +207,10 @@ export default function ShiftWizardModal({ isOpen, onClose, mode }: ShiftWizardM
                     <div className="border-t border-blue-200 pt-2 flex justify-between font-bold text-lg">
                         <span className="text-blue-900">Patut Ada:</span>
                         <span className="text-blue-600">{formatCurrency(expectedCash)}</span>
+                    </div> 
+                    */}
+                    <div className="mt-2 text-xs text-blue-800 italic">
+                        Input actual cash count. Variance will be calculated in the backend.
                     </div>
                 </div>
             )}
@@ -200,11 +231,13 @@ export default function ShiftWizardModal({ isOpen, onClose, mode }: ShiftWizardM
                         style={{ paddingLeft: '2.5rem' }}
                     />
                 </div>
+                {/* BLIND DROP: Hiding Variance
                 {mode === 'close' && amount && (
                     <div className={`mt-2 text-right text-sm font-bold ${parseFloat(amount) - expectedCash === 0 ? 'text-green-600' : 'text-red-500'}`}>
                         Variance: {formatCurrency(parseFloat(amount) - expectedCash)}
                     </div>
-                )}
+                )} 
+                */}
             </div>
 
             <div>

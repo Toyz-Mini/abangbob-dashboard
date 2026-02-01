@@ -524,6 +524,9 @@ export const MOCK_STAFF: StaffProfile[] = [
   },
 ];
 
+// Dynamic month for payroll data
+const currentPayrollMonth = new Date().toISOString().slice(0, 7);
+
 export const MOCK_ATTENDANCE: AttendanceRecord[] = [
   {
     id: '1',
@@ -555,7 +558,7 @@ export const MOCK_PAYROLL: PayrollEntry[] = [
   {
     id: '1',
     staffId: '1',
-    month: '2024-01',
+    month: currentPayrollMonth,
     totalHours: 160,
     otHours: 10,
     deductions: 250,
@@ -565,7 +568,7 @@ export const MOCK_PAYROLL: PayrollEntry[] = [
   {
     id: '2',
     staffId: '2',
-    month: '2024-01',
+    month: currentPayrollMonth,
     totalHours: 160,
     otHours: 5,
     deductions: 150,

@@ -57,12 +57,13 @@ import {
   XCircle,
   MapPin,
   BarChart3,
+  Monitor,
 } from 'lucide-react';
 import Image from 'next/image';
 import SupabaseStatusIndicator from '@/components/SupabaseStatusIndicator';
 import { getDataSourceInfo, DataSource } from '@/lib/store';
 import { getSyncLogs, getSyncStats, clearSyncLogs, SyncLogEntry } from '@/lib/utils/sync-logger';
-import { checkSupabaseConnection } from '@/lib/supabase/client';
+import { checkSupabaseConnection, getSupabaseClient } from '@/lib/supabase/client';
 import { loadSettingsFromSupabase, saveSettingsToSupabase, loadSettingsFromLocalStorage } from '@/lib/supabase/settings-sync';
 import { PixelSettings, PixelConfig, DEFAULT_PIXEL_SETTINGS } from '@/lib/types';
 import { pixelTracker } from '@/lib/services/pixel-tracker';
@@ -71,7 +72,7 @@ import DeliveryPlatformSettings from '@/components/settings/DeliveryPlatformSett
 import ShiftSettings from '@/components/settings/ShiftSettings';
 import PositionSettings from '@/components/settings/PositionSettings';
 
-type SettingSection = 'outlet' | 'operations' | 'receipt' | 'printer' | 'data' | 'notifications' | 'supabase' | 'payment' | 'tax' | 'appearance' | 'security' | 'locations' | 'pixel' | 'payslip' | 'delivery' | 'shifts' | 'positions';
+type SettingSection = 'outlet' | 'device' | 'operations' | 'receipt' | 'printer' | 'data' | 'notifications' | 'supabase' | 'payment' | 'tax' | 'appearance' | 'security' | 'locations' | 'pixel' | 'payslip' | 'delivery' | 'shifts' | 'positions';
 type PaymentModalType = 'add-payment' | 'edit-payment' | 'delete-payment' | null;
 // Stable English days for database persistence
 const STABLE_DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -99,7 +100,7 @@ const DEFAULT_PAYSLIP_BRANDING: PayslipBranding = {
   companyEmail: 'hr@abangbob.com',
   companyRegNo: 'RC/00012345',
   showLogo: true,
-  primaryColor: '#4F46E5',
+  primaryColor: 'var(--primary)',
   footerNote: 'Ini adalah slip gaji yang dijana secara automatik. Sila simpan untuk rekod anda.'
 };
 
@@ -157,7 +158,7 @@ function SyncDebugSection() {
   return (
     <div className="card">
       <div className="card-header">
-        <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <div className="card-title flex items-center gap-2">
           <Activity size={20} />
           Sync Status & Debugging
         </div>
@@ -165,38 +166,38 @@ function SyncDebugSection() {
       </div>
 
       {/* Connection Status Indicator */}
-      <div style={{ marginBottom: '1.5rem' }}>
+      <div className="mb-6">
         <SupabaseStatusIndicator showDetails />
       </div>
 
       {/* Data Source Info */}
-      <div style={{ marginBottom: '1.5rem' }}>
-        <h4 style={{ fontWeight: 600, marginBottom: '0.75rem', fontSize: '0.875rem' }}>
+      <div className="mb-6">
+        <h4 className="font-semibold mb-3 text-sm">
           Data Sources (Last Load: {dataSource.lastLoadTime?.toLocaleTimeString() || 'Never'})
         </h4>
-        <div className="grid grid-cols-3" style={{ gap: '0.5rem' }}>
-          <div style={{ padding: '0.5rem', background: 'var(--gray-100)', borderRadius: 'var(--radius-sm)' }}>
-            <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Menu Items</div>
+        <div className="grid grid-cols-3 gap-2">
+          <div className="p-2 bg-gray-100 dark:bg-white/5 rounded-md">
+            <div className="text-xs text-gray-500">Menu Items</div>
             {getDataSourceBadge(dataSource.menuItems)}
           </div>
-          <div style={{ padding: '0.5rem', background: 'var(--gray-100)', borderRadius: 'var(--radius-sm)' }}>
-            <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Modifiers</div>
+          <div className="p-2 bg-gray-100 dark:bg-white/5 rounded-md">
+            <div className="text-xs text-gray-500">Modifiers</div>
             {getDataSourceBadge(dataSource.modifierGroups)}
           </div>
-          <div style={{ padding: '0.5rem', background: 'var(--gray-100)', borderRadius: 'var(--radius-sm)' }}>
-            <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Inventory</div>
+          <div className="p-2 bg-gray-100 dark:bg-white/5 rounded-md">
+            <div className="text-xs text-gray-500">Inventory</div>
             {getDataSourceBadge(dataSource.inventory)}
           </div>
-          <div style={{ padding: '0.5rem', background: 'var(--gray-100)', borderRadius: 'var(--radius-sm)' }}>
-            <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Staff</div>
+          <div className="p-2 bg-gray-100 dark:bg-white/5 rounded-md">
+            <div className="text-xs text-gray-500">Staff</div>
             {getDataSourceBadge(dataSource.staff)}
           </div>
-          <div style={{ padding: '0.5rem', background: 'var(--gray-100)', borderRadius: 'var(--radius-sm)' }}>
-            <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Orders</div>
+          <div className="p-2 bg-gray-100 dark:bg-white/5 rounded-md">
+            <div className="text-xs text-gray-500">Orders</div>
             {getDataSourceBadge(dataSource.orders)}
           </div>
-          <div style={{ padding: '0.5rem', background: 'var(--gray-100)', borderRadius: 'var(--radius-sm)' }}>
-            <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Supabase</div>
+          <div className="p-2 bg-gray-100 dark:bg-white/5 rounded-md">
+            <div className="text-xs text-gray-500">Supabase</div>
             <span className={`badge ${dataSource.supabaseConnected ? 'badge-success' : 'badge-danger'}`}>
               {dataSource.supabaseConnected ? 'Connected' : 'Offline'}
             </span>
@@ -205,33 +206,33 @@ function SyncDebugSection() {
       </div>
 
       {/* Sync Statistics */}
-      <div style={{ marginBottom: '1.5rem' }}>
-        <h4 style={{ fontWeight: 600, marginBottom: '0.75rem', fontSize: '0.875rem' }}>Sync Statistics</h4>
-        <div className="grid grid-cols-4" style={{ gap: '0.5rem' }}>
-          <div style={{ padding: '0.75rem', background: 'var(--gray-100)', borderRadius: 'var(--radius-sm)', textAlign: 'center' }}>
-            <div style={{ fontSize: '1.25rem', fontWeight: 700 }}>{syncStats.total}</div>
-            <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Total Ops</div>
+      <div className="mb-6">
+        <h4 className="font-semibold mb-3 text-sm">Sync Statistics</h4>
+        <div className="grid grid-cols-4 gap-2">
+          <div className="p-3 bg-gray-100 dark:bg-white/5 rounded-md text-center">
+            <div className="text-xl font-bold">{syncStats.total}</div>
+            <div className="text-xs text-gray-500">Total Ops</div>
           </div>
-          <div style={{ padding: '0.75rem', background: '#d1fae5', borderRadius: 'var(--radius-sm)', textAlign: 'center' }}>
-            <div style={{ fontSize: '1.25rem', fontWeight: 700, color: '#059669' }}>{syncStats.success}</div>
-            <div style={{ fontSize: '0.7rem', color: '#047857' }}>Success</div>
+          <div className="p-3 bg-emerald-100 dark:bg-emerald-900/20 rounded-md text-center">
+            <div className="text-xl font-bold text-emerald-700 dark:text-emerald-400">{syncStats.success}</div>
+            <div className="text-xs text-emerald-800/60 dark:text-emerald-500">Success</div>
           </div>
-          <div style={{ padding: '0.75rem', background: syncStats.errors > 0 ? '#fee2e2' : 'var(--gray-100)', borderRadius: 'var(--radius-sm)', textAlign: 'center' }}>
-            <div style={{ fontSize: '1.25rem', fontWeight: 700, color: syncStats.errors > 0 ? '#dc2626' : 'inherit' }}>{syncStats.errors}</div>
-            <div style={{ fontSize: '0.7rem', color: syncStats.errors > 0 ? '#b91c1c' : 'var(--text-secondary)' }}>Errors</div>
+          <div className={`p-3 rounded-md text-center ${syncStats.errors > 0 ? 'bg-red-100 dark:bg-red-900/20' : 'bg-gray-100 dark:bg-white/5'}`}>
+            <div className={`text-xl font-bold ${syncStats.errors > 0 ? 'text-red-700 dark:text-red-400' : ''}`}>{syncStats.errors}</div>
+            <div className={`text-xs ${syncStats.errors > 0 ? 'text-red-800/60 dark:text-red-500' : 'text-gray-500'}`}>Errors</div>
           </div>
-          <div style={{ padding: '0.75rem', background: 'var(--gray-100)', borderRadius: 'var(--radius-sm)', textAlign: 'center' }}>
-            <div style={{ fontSize: '1.25rem', fontWeight: 700 }}>{syncStats.pending}</div>
-            <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Pending</div>
+          <div className="p-3 bg-gray-100 dark:bg-white/5 rounded-md text-center">
+            <div className="text-xl font-bold">{syncStats.pending}</div>
+            <div className="text-xs text-gray-500">Pending</div>
           </div>
         </div>
       </div>
 
       {/* Recent Sync Logs */}
-      <div style={{ marginBottom: '1rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-          <h4 style={{ fontWeight: 600, fontSize: '0.875rem' }}>Recent Sync Operations</h4>
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
+      <div className="mb-4">
+        <div className="flex justify-between items-center mb-3">
+          <h4 className="font-semibold text-sm">Recent Sync Operations</h4>
+          <div className="flex gap-2">
             <button
               className="btn btn-sm btn-outline"
               onClick={() => setShowAllLogs(!showAllLogs)}
@@ -250,82 +251,56 @@ function SyncDebugSection() {
         </div>
 
         {syncLogs.length > 0 ? (
-          <div style={{
-            maxHeight: showAllLogs ? '400px' : '200px',
-            overflowY: 'auto',
-            border: '1px solid var(--gray-200)',
-            borderRadius: 'var(--radius-sm)',
-          }}>
+          <div className={`border border-gray-200 dark:border-white/10 rounded-md overflow-y-auto ${showAllLogs ? 'max-h-[400px]' : 'max-h-[200px]'}`}>
             {syncLogs.slice(0, showAllLogs ? 50 : 10).map((log) => (
               <div
                 key={log.id}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  padding: '0.5rem 0.75rem',
-                  borderBottom: '1px solid var(--gray-100)',
-                  fontSize: '0.75rem',
-                  background: log.status === 'error' ? 'rgba(239, 68, 68, 0.05)' : 'transparent',
-                }}
+                className={`flex items-center gap-2 p-2 px-3 border-b border-gray-100 dark:border-white/5 text-xs ${log.status === 'error' ? 'bg-red-50/50' : ''}`}
               >
                 {log.status === 'success' && <CheckCircle size={14} color="#059669" />}
                 {log.status === 'error' && <XCircle size={14} color="#dc2626" />}
                 {log.status === 'pending' && <RefreshCw size={14} color="#3b82f6" className="animate-spin" />}
                 {log.status === 'retrying' && <RefreshCw size={14} color="#f59e0b" />}
 
-                <span style={{
-                  fontWeight: 500,
-                  textTransform: 'uppercase',
-                  fontSize: '0.65rem',
-                  padding: '0.125rem 0.25rem',
-                  background: 'var(--gray-100)',
-                  borderRadius: '2px',
-                }}>
+                <span className="font-medium uppercase text-[10px] px-0.5 py-0.25 bg-gray-100 dark:bg-white/10 rounded-sm">
                   {log.operation}
                 </span>
 
-                <span style={{ color: 'var(--text-secondary)' }}>{log.entity}</span>
+                <span className="text-gray-500">{log.entity}</span>
 
                 {log.entityId && (
-                  <span style={{ color: 'var(--gray-400)', fontFamily: 'monospace', fontSize: '0.65rem' }}>
+                  <span className="text-gray-400 font-mono text-[10px]">
                     {log.entityId.substring(0, 8)}...
                   </span>
                 )}
 
                 {log.error && (
-                  <span style={{ color: 'var(--danger)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <span className="text-red-600 flex-1 overflow-hidden text-ellipsis whitespace-nowrap">
                     {log.error}
                   </span>
                 )}
 
                 {log.durationMs !== undefined && (
-                  <span style={{ color: 'var(--gray-400)', marginLeft: 'auto' }}>
+                  <span className="text-gray-400 ml-auto">
                     {log.durationMs}ms
                   </span>
                 )}
 
-                <span style={{ color: 'var(--gray-400)', fontSize: '0.65rem' }}>
+                <span className="text-gray-400 text-[10px]">
                   {log.timestamp.toLocaleTimeString()}
                 </span>
               </div>
             ))}
           </div>
         ) : (
-          <div style={{
-            padding: '2rem',
-            textAlign: 'center',
-            color: 'var(--text-secondary)',
-            background: 'var(--gray-50)',
-            borderRadius: 'var(--radius-sm)',
-          }}>
+          <div className="p-8 text-center text-gray-500 bg-gray-50 dark:bg-white/5 rounded-md">
             No sync operations recorded yet
           </div>
         )}
       </div>
 
       {/* Actions */}
-      <div style={{ display: 'flex', gap: '0.5rem' }}>
+      <div className="flex gap-2">
         <button
           className="btn btn-outline"
           onClick={handleRefreshConnection}
@@ -471,6 +446,30 @@ export default function SettingsPage() {
     ga4: { id: '', name: '' },
     gtm: { id: '', name: '' },
   });
+
+  // Device Outlet Config
+  const [deviceOutletId, setDeviceOutletId] = useState('');
+  const [availableOutlets, setAvailableOutlets] = useState<{ id: string, name: string }[]>([]);
+
+  useEffect(() => {
+    // Load device outlet from local storage
+    const saved = localStorage.getItem('abangbob_device_outlet_id');
+    if (saved) setDeviceOutletId(saved);
+
+    // Fetch outlets
+    const fetchOutlets = async () => {
+      const supabase = getSupabaseClient();
+      const { data } = await supabase.from('outlets').select('id, name').eq('status', 'active');
+      if (data) setAvailableOutlets(data);
+    };
+    fetchOutlets();
+  }, []);
+
+  const handleSaveDeviceOutlet = (id: string) => {
+    setDeviceOutletId(id);
+    localStorage.setItem('abangbob_device_outlet_id', id);
+    showToast('Device outlet updated. Please refresh.', 'success');
+  };
 
   // Load saved receipt settings on mount (from Supabase with localStorage fallback)
   useEffect(() => {
@@ -683,6 +682,7 @@ export default function SettingsPage() {
   // Menu items with translations
   const menuItems = [
     { id: 'outlet', labelKey: 'settings.outletProfile', icon: Store },
+    { id: 'device', labelKey: 'Device Configuration', icon: Monitor },
     { id: 'operations', labelKey: 'settings.operatingHours', icon: Clock },
     { id: 'receipt', labelKey: 'settings.receiptSettings', icon: Receipt },
     { id: 'printer', labelKey: 'Printer & Drawer', icon: Printer },
@@ -773,7 +773,7 @@ export default function SettingsPage() {
   if (!isInitialized) {
     return (
       <MainLayout>
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
+        <div className="flex justify-center items-center min-h-[50vh]">
           <LoadingSpinner />
         </div>
       </MainLayout>
@@ -783,12 +783,12 @@ export default function SettingsPage() {
   return (
     <MainLayout>
       <div className="animate-fade-in">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
+        <div className="flex justify-between items-center mb-8 flex-wrap gap-4">
           <div>
-            <h1 style={{ fontSize: '2rem', fontWeight: 700, marginBottom: '0.5rem' }}>
+            <h1 className="text-3xl font-bold mb-2">
               {t('settings.title')}
             </h1>
-            <p style={{ color: 'var(--text-secondary)' }}>
+            <p className="text-gray-500">
               {t('settings.subtitle')}
             </p>
           </div>
@@ -805,33 +805,28 @@ export default function SettingsPage() {
           </button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-4" style={{ gap: '1.5rem' }}>
+        <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-4 gap-6">
           {/* Sidebar Navigation */}
           <div>
-            <div className="card" style={{ padding: 0 }}>
-              <div style={{ padding: '1rem', borderBottom: '1px solid var(--gray-200)' }}>
+            <div className="card p-0">
+              <div className="p-4 border-b border-gray-200">
                 <strong>{t('settings.settingsMenu')}</strong>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <div className="flex flex-col">
                 {menuItems.map(item => {
                   const Icon = item.icon;
+                  const isActive = activeSection === item.id;
                   return (
                     <button
                       key={item.id}
                       onClick={() => setActiveSection(item.id as SettingSection)}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.75rem',
-                        padding: '0.75rem 1rem',
-                        border: 'none',
-                        background: activeSection === item.id ? 'var(--primary-light)' : 'transparent',
-                        color: activeSection === item.id ? 'var(--primary)' : 'var(--text-primary)',
-                        cursor: 'pointer',
-                        textAlign: 'left',
-                        borderLeft: activeSection === item.id ? '3px solid var(--primary)' : '3px solid transparent',
-                        fontWeight: activeSection === item.id ? 600 : 400,
-                      }}
+                      className={`
+                        flex items-center gap-3 p-3 border-none cursor-pointer text-left border-l-3
+                        ${isActive 
+                          ? 'bg-primary-light text-primary font-semibold border-primary' 
+                          : 'bg-transparent text-gray-900 font-normal border-transparent'
+                        }
+                      `}
                     >
                       <Icon size={18} />
                       {t(item.labelKey)}
@@ -842,60 +837,49 @@ export default function SettingsPage() {
             </div>
 
             {/* Quick Stats */}
-            <div className="card" style={{ marginTop: '1.5rem' }}>
+            <div className="card mt-6">
               <div className="card-header">
                 <div className="card-title">{t('settings.systemStatus')}</div>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: '0.875rem' }}>Supabase</span>
+              <div className="flex flex-col gap-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm">Supabase</span>
                   <span className={`badge ${isSupabaseConnected ? 'badge-success' : 'badge-warning'}`}>
                     {isSupabaseConnected ? t('settings.connected') : t('settings.offline')}
                   </span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: '0.875rem' }}>Storage</span>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm">Storage</span>
                   <span className="badge badge-info">localStorage</span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: '0.875rem' }}>{t('settings.version')}</span>
-                  <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>v1.0.0</span>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm">{t('settings.version')}</span>
+                  <span className="text-sm text-gray-500">v1.0.0</span>
                 </div>
               </div>
             </div>
 
             {/* Current Staff */}
             {currentStaff && (
-              <div className="card" style={{ marginTop: '1rem' }}>
+              <div className="card mt-4">
                 <div className="card-header">
-                  <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <div className="card-title flex items-center gap-2">
                     <User size={16} />
                     {t('settings.staffLogin')}
                   </div>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
-                  <div style={{
-                    width: '40px',
-                    height: '40px',
-                    background: 'linear-gradient(135deg, var(--primary), #0d9488)',
-                    borderRadius: '50%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: 'white',
-                    fontWeight: 700
-                  }}>
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold bg-gradient-to-br from-primary to-teal-600">
                     {currentStaff.name.charAt(0).toUpperCase()}
                   </div>
                   <div>
-                    <div style={{ fontWeight: 600 }}>{currentStaff.name}</div>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{currentStaff.role}</div>
+                    <div className="font-semibold">{currentStaff.name}</div>
+                    <div className="text-xs text-gray-500">{currentStaff.role}</div>
                   </div>
                 </div>
                 <button
-                  className="btn btn-outline btn-sm"
+                  className="btn btn-outline btn-sm w-full"
                   onClick={logoutStaff}
-                  style={{ width: '100%' }}
                 >
                   <LogOut size={14} />
                   {t('topnav.logout')}
@@ -906,11 +890,11 @@ export default function SettingsPage() {
 
           {/* Main Content */}
           <div className="md:col-span-3 lg:col-span-3">
-            {/* Outlet Profile */}
+             {/* Outlet Profile */}
             {activeSection === 'outlet' && (
               <div className="card">
                 <div className="card-header">
-                  <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <div className="card-title flex items-center gap-2">
                     <Store size={20} />
                     {t('settings.outletProfile')}
                   </div>
@@ -918,15 +902,15 @@ export default function SettingsPage() {
                 </div>
 
                 {/* Logo Upload Section */}
-                <div style={{ display: 'flex', gap: '1.5rem', marginBottom: '1.5rem', flexWrap: 'wrap', alignItems: 'flex-start' }}>
+                <div className="flex gap-6 mb-6 flex-wrap items-start">
                   <div>
-                    <label className="form-label" style={{ marginBottom: '0.5rem', display: 'block' }}>Logo Kedai</label>
+                    <label className="form-label mb-2 block">Logo Kedai</label>
                     <LogoUpload
                       currentLogoUrl={outletSettings.logoUrl}
                       onLogoChange={(url) => setOutletSettings(prev => ({ ...prev, logoUrl: url || '' }))}
                     />
                   </div>
-                  <div style={{ flex: 1, minWidth: '250px' }}>
+                  <div className="flex-1 min-w-[250px]">
                     <div className="form-group">
                       <label className="form-label">{t('settings.outletName')}</label>
                       <input
@@ -948,7 +932,7 @@ export default function SettingsPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2" style={{ gap: '1rem' }}>
+                <div className="grid grid-cols-2 gap-4">
                   <div className="form-group">
                     <label className="form-label">{t('settings.phone')}</label>
                     <input
@@ -969,7 +953,7 @@ export default function SettingsPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-3" style={{ gap: '1rem' }}>
+                <div className="grid grid-cols-3 gap-4">
                   <div className="form-group">
                     <label className="form-label">{t('settings.currency')}</label>
                     <select
@@ -1017,21 +1001,21 @@ export default function SettingsPage() {
                       step="0.01"
                       placeholder="0.60"
                     />
-                    <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
+                    <div className="text-xs text-gray-500 mt-1">
                       Kadar tuntutan perjalanan default.
                     </div>
                   </div>
                 </div>
 
                 {/* Social Media Section */}
-                <div style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid var(--gray-200)' }}>
-                  <h4 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', fontSize: '1rem', fontWeight: 600 }}>
+                <div className="mt-6 pt-6 border-t border-gray-200">
+                  <h4 className="flex items-center gap-2 mb-4 text-base font-semibold">
                     <MessageCircle size={18} />
                     Media Sosial
                   </h4>
-                  <div className="grid grid-cols-2" style={{ gap: '1rem' }}>
+                  <div className="grid grid-cols-2 gap-4">
                     <div className="form-group">
-                      <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <label className="form-label flex items-center gap-2">
                         <Instagram size={16} />
                         Instagram
                       </label>
@@ -1044,7 +1028,7 @@ export default function SettingsPage() {
                       />
                     </div>
                     <div className="form-group">
-                      <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <label className="form-label flex items-center gap-2">
                         <Facebook size={16} />
                         Facebook
                       </label>
@@ -1057,9 +1041,9 @@ export default function SettingsPage() {
                       />
                     </div>
                     <div className="form-group">
-                      <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <label className="form-label flex items-center gap-2">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                          <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z" />
+                          <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.89 2.89 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z" />
                         </svg>
                         TikTok
                       </label>
@@ -1072,7 +1056,7 @@ export default function SettingsPage() {
                       />
                     </div>
                     <div className="form-group">
-                      <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <label className="form-label flex items-center gap-2">
                         <MessageCircle size={16} />
                         WhatsApp
                       </label>
@@ -1088,20 +1072,44 @@ export default function SettingsPage() {
                 </div>
 
                 {/* Multi-outlet Ready Banner */}
-                <div style={{
-                  marginTop: '1.5rem',
-                  padding: '1rem',
-                  background: 'linear-gradient(135deg, #dbeafe 0%, #ede9fe 100%)',
-                  borderRadius: 'var(--radius-md)',
-                  border: '1px solid #818cf8'
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                <div className="mt-6 p-4 rounded-lg border border-indigo-400 bg-gradient-to-r from-blue-100 to-purple-100">
+                  <div className="flex items-center gap-2 mb-2">
                     <Globe size={18} color="#4f46e5" />
-                    <strong style={{ color: '#4f46e5' }}>{t('settings.multiOutletReady')}</strong>
+                    <strong className="text-indigo-700">{t('settings.multiOutletReady')}</strong>
                     <span className="badge badge-info">{t('settings.comingSoon')}</span>
                   </div>
-                  <p style={{ fontSize: '0.875rem', color: '#4338ca' }}>
+                  <p className="text-sm text-indigo-800">
                     {t('settings.multiOutletDesc')}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {activeSection === 'device' && (
+              <div className="card">
+                <div className="card-header">
+                  <div className="card-title flex items-center gap-2">
+                    <Monitor size={20} />
+                    Device Configuration
+                  </div>
+                  <div className="card-subtitle">
+                    Configure this specific device settings.
+                  </div>
+                </div>
+                <div className="form-group max-w-md">
+                  <label className="form-label">Assigned Outlet</label>
+                  <select
+                    className="form-select"
+                    value={deviceOutletId}
+                    onChange={(e) => handleSaveDeviceOutlet(e.target.value)}
+                  >
+                    <option value="">-- No Outlet Assigned --</option>
+                    {availableOutlets.map(o => (
+                      <option key={o.id} value={o.id}>{o.name}</option>
+                    ))}
+                  </select>
+                  <p className="text-xs text-gray-500 mt-2">
+                    This setting is saved on this device (LocalStorage) and determines which outlet's menu and orders are displayed in POS mode.
                   </p>
                 </div>
               </div>
@@ -1110,13 +1118,13 @@ export default function SettingsPage() {
             {/* Operating Hours */}
             {activeSection === 'operations' && (
               <div className="card">
-                <div className="card-header">
-                  <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <Clock size={20} />
-                    {t('settings.operatingHours')}
-                  </div>
-                  <div className="card-subtitle">{t('settings.operatingHoursDesc')}</div>
-                </div>
+                 <div className="card-header">
+                   <div className="card-title flex items-center gap-2">
+                     <Clock size={20} />
+                     {t('settings.operatingHours')}
+                   </div>
+                   <div className="card-subtitle">{t('settings.operatingHoursDesc')}</div>
+                 </div>
 
                 <table className="table">
                   <thead>
@@ -1173,18 +1181,18 @@ export default function SettingsPage() {
 
             {/* Receipt Settings - Enhanced with ReceiptDesigner */}
             {activeSection === 'receipt' && (
-              <div>
-                <div className="card" style={{ marginBottom: '1.5rem' }}>
-                  <div className="card-header">
-                    <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <Receipt size={20} />
-                      Receipt Designer
-                    </div>
-                    <div className="card-subtitle">
-                      Customize receipt dengan logo, teks, QR code dan banyak lagi. Preview secara langsung!
-                    </div>
-                  </div>
-                </div>
+               <div>
+                 <div className="card mb-6">
+                   <div className="card-header">
+                     <div className="card-title flex items-center gap-2">
+                       <Receipt size={20} />
+                       Receipt Designer
+                     </div>
+                     <div className="card-subtitle">
+                       Customize receipt dengan logo, teks, QR code dan banyak lagi. Preview secara langsung!
+                     </div>
+                   </div>
+                 </div>
 
                 <ReceiptDesigner
                   initialSettings={receiptSettings}
@@ -1199,16 +1207,16 @@ export default function SettingsPage() {
 
             {/* Printer & Hardware Settings */}
             {activeSection === 'printer' && (
-              <div className="card">
-                <div className="card-header">
-                  <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <Printer size={20} />
-                    Printer & Cash Drawer
-                  </div>
-                  <div className="card-subtitle">
-                    Sambungkan thermal printer USB dan cash drawer
-                  </div>
-                </div>
+               <div className="card">
+                 <div className="card-header">
+                   <div className="card-title flex items-center gap-2">
+                     <Printer size={20} />
+                     Printer & Cash Drawer
+                   </div>
+                   <div className="card-subtitle">
+                     Sambungkan thermal printer USB dan cash drawer
+                   </div>
+                 </div>
 
                 {/* Browser Support Notice */}
                 {!thermalPrinter.isSupported() && (
@@ -1302,6 +1310,49 @@ export default function SettingsPage() {
                         </>
                       )}
                     </button>
+                  )}
+                </div>
+
+                {/* Printer Model Selection */}
+                <div className="form-group">
+                  <div className="form-label-group">
+                    <label className="form-label">Model Printer</label>
+                    {printerSettings.printerModel === 'zywell_zy907' && (
+                      <span className="badge badge-success" style={{ fontSize: '0.7rem' }}>Recommended</span>
+                    )}
+                  </div>
+                  <select
+                    className="form-select"
+                    value={printerSettings.printerModel || 'generic'}
+                    onChange={(e) => {
+                      const model = e.target.value as any;
+                      const isZywell = model === 'zywell_zy907';
+
+                      setPrinterSettings(prev => ({
+                        ...prev,
+                        printerModel: model,
+                        // Auto-configure width based on model
+                        paperWidth: isZywell ? '80mm' : prev.paperWidth
+                      }));
+
+                      if (isZywell) {
+                        setReceiptSettings(prev => ({
+                          ...prev,
+                          receiptWidth: '80mm'
+                        }));
+                        showToast('Settings auto-configured for ZyWell Zy907', 'info');
+                      }
+                    }}
+                  >
+                    <option value="generic">Generic ESC/POS</option>
+                    <option value="zywell_zy907">ZyWell Zy907 (80mm)</option>
+                    <option value="epson_tm_t82">Epson TM-T82 (80mm)</option>
+                    <option value="xprinter_n160ii">XPrinter N160II (80mm)</option>
+                  </select>
+                  {printerSettings.printerModel === 'zywell_zy907' && (
+                    <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
+                      Optimized for ZyWell Zy907: 80mm width, standard ESC/POS commands.
+                    </div>
                   )}
                 </div>
 
@@ -1563,7 +1614,7 @@ export default function SettingsPage() {
               <div className="card">
                 <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <div>
-                    <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <div className="card-title flex items-center gap-2">
                       <CreditCard size={20} />
                       Kaedah Pembayaran
                     </div>
@@ -1695,7 +1746,7 @@ export default function SettingsPage() {
               <div className="card">
                 <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <div>
-                    <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <div className="card-title flex items-center gap-2">
                       <Percent size={20} />
                       Cukai
                     </div>
@@ -1823,7 +1874,7 @@ export default function SettingsPage() {
             {activeSection === 'appearance' && (
               <div className="card">
                 <div className="card-header">
-                  <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <div className="card-title flex items-center gap-2">
                     <Palette size={20} />
                     Paparan
                   </div>
@@ -1914,7 +1965,7 @@ export default function SettingsPage() {
             {activeSection === 'security' && (
               <div className="card">
                 <div className="card-header">
-                  <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <div className="card-title flex items-center gap-2">
                     <Lock size={20} />
                     Keselamatan
                   </div>
@@ -2027,7 +2078,7 @@ export default function SettingsPage() {
             {activeSection === 'notifications' && (
               <div className="card">
                 <div className="card-header">
-                  <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <div className="card-title flex items-center gap-2">
                     <Bell size={20} />
                     {t('settings.notificationSettings')}
                   </div>
@@ -2136,7 +2187,7 @@ export default function SettingsPage() {
                 {/* Facebook/Meta Pixel */}
                 <div className="card">
                   <div className="card-header">
-                    <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <div className="card-title flex items-center gap-2">
                       <Facebook size={20} style={{ color: '#1877f2' }} />
                       Facebook / Meta Pixel
                     </div>
@@ -2215,7 +2266,7 @@ export default function SettingsPage() {
                 {/* TikTok Pixel */}
                 <div className="card">
                   <div className="card-header">
-                    <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <div className="card-title flex items-center gap-2">
                       <span style={{ fontSize: '1.25rem' }}>🎵</span>
                       TikTok Pixel
                     </div>
@@ -2292,7 +2343,7 @@ export default function SettingsPage() {
                 {/* Google Analytics 4 */}
                 <div className="card">
                   <div className="card-header">
-                    <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <div className="card-title flex items-center gap-2">
                       <BarChart3 size={20} style={{ color: '#e37400' }} />
                       Google Analytics 4
                     </div>
@@ -2369,7 +2420,7 @@ export default function SettingsPage() {
                 {/* Google Tag Manager */}
                 <div className="card">
                   <div className="card-header">
-                    <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <div className="card-title flex items-center gap-2">
                       <span style={{ fontSize: '1.25rem' }}>🏷️</span>
                       Google Tag Manager
                     </div>
@@ -2542,7 +2593,7 @@ export default function SettingsPage() {
             {activeSection === 'delivery' && (
               <div className="card">
                 <div className="card-header">
-                  <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <div className="card-title flex items-center gap-2">
                     <Truck size={20} color="var(--primary)" />
                     Delivery Platforms
                   </div>
@@ -2559,7 +2610,7 @@ export default function SettingsPage() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                 <div className="card">
                   <div className="card-header">
-                    <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <div className="card-title flex items-center gap-2">
                       <FileText size={20} color="var(--primary)" />
                       Tetapan Slip Gaji
                     </div>
@@ -2790,7 +2841,7 @@ export default function SettingsPage() {
                 {/* Storage Setup Checker */}
                 <div className="card">
                   <div className="card-header">
-                    <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <div className="card-title flex items-center gap-2">
                       <Cloud size={20} />
                       Supabase Storage Configuration
                     </div>
@@ -2802,7 +2853,7 @@ export default function SettingsPage() {
                 {/* Connection Status */}
                 <div className="card">
                   <div className="card-header">
-                    <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <div className="card-title flex items-center gap-2">
                       <Cloud size={20} />
                       {t('settings.supabaseStatus')}
                     </div>
@@ -2918,7 +2969,7 @@ export default function SettingsPage() {
             {activeSection === 'data' && (
               <div className="card">
                 <div className="card-header">
-                  <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <div className="card-title flex items-center gap-2">
                     <Database size={20} />
                     {t('settings.dataManagement')}
                   </div>

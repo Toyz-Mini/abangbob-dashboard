@@ -41,7 +41,7 @@ interface AuthContextType {
 
   // Auth methods
   signOut: () => Promise<void>;
-  signInWithEmail: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  signInWithEmail: (email: string, password: string) => Promise<{ success: boolean; error?: string; requiresMFA?: boolean; userId?: string }>;
   signUp: (email: string, password: string, name: string) => Promise<{ success: boolean; error?: string }>;
 
   // Legacy methods (no-op for backwards compatibility)
@@ -159,6 +159,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       console.log('[AuthContext] Starting signOut...');
 
+      const userEmail = supabaseUser?.email;
+
+      // Call admin logout if it's an admin
+      if (userEmail && (userRole === 'Admin' || userRole === 'Manager')) {
+        try {
+          await fetch('/api/admin/logout', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: userEmail }),
+          });
+        } catch (adminLogoutError) {
+          console.warn('[AuthContext] Admin logout failed:', adminLogoutError);
+        }
+      }
+
       // Clear local state first
       setSession(null);
       setSupabaseUser(null);
@@ -211,7 +226,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { success: false, error: error.message };
       }
 
-      return { success: true };
+      // Note: Admin security (MFA, session limits) is enforced server-side
+      // via API routes and middleware. Client just needs to authenticate.
+      return { success: true, userId: data.user?.id };
     } catch (error: any) {
       return { success: false, error: error.message || 'Login failed' };
     }

@@ -456,29 +456,28 @@ export default function PayrollPage() {
   return (
     <MainLayout>
       <div className="animate-fade-in">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
+        <div className="flex flex-col md:flex-row justify-between items-end md:items-center gap-6 mb-12">
           <div>
-            <h1 style={{ fontSize: '2rem', fontWeight: 700, marginBottom: '0.5rem' }}>
+            <h1 className="text-4xl font-extrabold tracking-tight text-gray-900 dark:text-white mb-2">
               Payroll Generator v2.0
             </h1>
-            <p style={{ color: 'var(--text-secondary)' }}>
+            <p className="text-gray-500 font-medium">
               Integrated payroll with Leaves, Claims, Advances & Statutory
             </p>
           </div>
-          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-            <Calendar size={20} color="var(--text-secondary)" />
+          <div className="flex items-center gap-2 bg-white dark:bg-white/5 p-2 rounded-xl border border-gray-200 dark:border-white/10">
+            <Calendar size={20} className="text-gray-500" />
             <input
               type="month"
-              className="form-input"
+              className="bg-transparent border-none focus:ring-0 text-sm font-bold text-gray-700 dark:text-white"
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(e.target.value)}
-              style={{ width: 'auto' }}
             />
           </div>
         </div>
 
         {/* Summary Cards */}
-        <div className="content-grid cols-4 mb-lg">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 mb-12">
           <StatCard
             label="Total Staff"
             value={summary.totalStaff}
@@ -512,12 +511,12 @@ export default function PayrollPage() {
           />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-4" style={{ gap: '1.5rem' }}>
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-12">
           {/* Settings */}
           <div>
-            <div className="card">
-              <div className="card-header">
-                <div className="card-title">Parameter Gaji</div>
+            <div className="glass-panel p-8 rounded-2xl mb-8">
+              <div className="mb-6">
+                <div className="text-lg font-bold text-gray-900 dark:text-white">Parameter Gaji</div>
               </div>
 
               <div className="form-group">
@@ -547,9 +546,9 @@ export default function PayrollPage() {
               </div>
             </div>
 
-            <div className="card" style={{ marginTop: '1rem' }}>
-              <div className="card-header"><div className="card-title">Info</div></div>
-              <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+            <div className="glass-panel p-8 rounded-2xl">
+              <div className="mb-4"><div className="text-lg font-bold text-gray-900 dark:text-white">Info</div></div>
+              <div className="text-sm text-gray-500 space-y-2">
                 <p>✅ <strong>Monthly:</strong> Based on {workingDaysPerMonth} days. Unpaid leaves deduct daily rate.</p>
                 <p>✅ <strong>Hourly:</strong> Based on clocked hours + Approved Paid Leave (8h).</p>
                 <p>✅ <strong>Deductions:</strong> Advance & TAP/SCP auto-calculated.</p>
@@ -558,11 +557,11 @@ export default function PayrollPage() {
           </div>
 
           {/* Payroll Table */}
-          <div className="md:col-span-3 lg:col-span-3">
-            <div className="card">
-              <div className="card-header">
-                <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <FileText size={20} />
+          <div className="lg:col-span-3">
+            <div className="glass-panel p-8 rounded-2xl">
+              <div className="mb-6 flex items-center gap-3 border-b border-gray-100 dark:border-white/10 pb-4">
+                <FileText size={24} className="text-primary" />
+                <div className="text-xl font-bold text-gray-900 dark:text-white">
                   Senarai Gaji - {getMonthName(selectedMonth)}
                 </div>
               </div>

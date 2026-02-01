@@ -44,3 +44,15 @@ next-env.d.ts
 
 # Git worktrees
 .worktrees
+
+# Agent artifacts
+.gemini
+.agent
+
+# Editor
+.vscode
+
+# Backup files
+*.bak
+*.backup
+*.backup2

@@ -3,6 +3,7 @@
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
 import { toCamelCase } from '@/lib/supabase/operations';
 import { RecipeIngredient } from '@/lib/types';
+import { triggerNotification } from '@/lib/notifications/dispatcher';
 
 // Type definition for inventory item from DB
 interface InventoryItem {
@@ -162,8 +163,18 @@ export async function deductInventoryForOrderAction(params: {
                 let warning: string | undefined;
                 if (newQuantity < 0) {
                     warning = `NEGATIVE STOCK: ${newQuantity} ${ingredient.unit}`;
+                    // Trigger Urgent Alert
+                    triggerNotification('LOW_STOCK_ALERT', {
+                        to: '60126764769', // Hardcoded Boss Phone
+                        data: { itemName: ingredient.stockItemName, qty: newQuantity, unit: ingredient.unit }
+                    });
                 } else if (newQuantity <= (stockData.min_quantity || 0)) {
                     warning = `LOW STOCK: ${newQuantity} ${ingredient.unit} (min: ${stockData.min_quantity})`;
+                    // Trigger Low Stock Alert
+                    triggerNotification('LOW_STOCK_ALERT', {
+                        to: '60126764769', // Hardcoded Boss Phone
+                        data: { itemName: ingredient.stockItemName, qty: newQuantity, unit: ingredient.unit }
+                    });
                 }
 
                 itemDeductions.push({
