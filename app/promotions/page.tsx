@@ -350,14 +350,14 @@ export default function PromotionsPage() {
         </div>
 
         {/* Filter */}
-        <div style={{ marginBottom: '1.5rem', display: 'flex', gap: '0.5rem' }}>
-          {['all', 'active', 'inactive', 'expired'].map(status => (
+        <div className="flex gap-2 overflow-x-auto pb-2">
+          {(['active', 'scheduled', 'expired'] as const).map(status => (
             <button
               key={status}
-              onClick={() => setFilterStatus(status as 'all' | 'active' | 'inactive' | 'expired')}
-              className={`btn btn-sm ${filterStatus === status ? 'btn-primary' : 'btn-outline'}`}
+              onClick={() => setFilterStatus(status)}
+              className={`btn ${filterStatus === status ? 'btn-primary' : 'btn-outline'}`}
             >
-              {t(`promotions.filter.${status}`)}
+              {status.charAt(0).toUpperCase() + status.slice(1)}
             </button>
           ))}
         </div>

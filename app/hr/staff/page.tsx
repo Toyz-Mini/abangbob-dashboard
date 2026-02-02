@@ -1253,24 +1253,24 @@ export default function StaffListPage() {
             onChange={(e) => setSearchTerm(e.target.value)}
             style={{ maxWidth: '300px' }}
           />
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <div className="flex gap-2 mb-6 border-b border-gray-200 pb-2 overflow-x-auto">
             <button
               onClick={() => setFilter('all')}
-              className={`btn btn-sm ${filter === 'all' ? 'btn-primary' : 'btn-outline'}`}
+              className={`btn ${filter === 'all' ? 'btn-primary' : 'btn-outline'}`}
             >
-              Semua ({staff.length})
+              Semua Staff ({staff.length})
             </button>
             <button
               onClick={() => setFilter('active')}
-              className={`btn btn-sm ${filter === 'active' ? 'btn-primary' : 'btn-outline'}`}
+              className={`btn ${filter === 'active' ? 'btn-primary' : 'btn-outline'}`}
             >
-              Aktif ({staff.filter(s => s.status === 'active').length})
+              Clocked In ({activeStaff.length})
             </button>
             <button
               onClick={() => setFilter('on-leave')}
-              className={`btn btn-sm ${filter === 'on-leave' ? 'btn-primary' : 'btn-outline'}`}
+              className={`btn ${filter === 'on-leave' ? 'btn-primary' : 'btn-outline'}`}
             >
-              Cuti ({staff.filter(s => s.status === 'on-leave').length})
+              On Leave ({onLeaveStaff.length})
             </button>
           </div>
         </div>

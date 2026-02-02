@@ -146,19 +146,18 @@ export default function DashboardPage() {
                   </div>
                 </div>
               }
-              children={
-                <div className="mt-4 flex gap-4">
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-4xl font-extrabold text-gray-900 dark:text-white tracking-tight">
-                      <CountUp end={salesToday} decimals={2} prefix="BND " />
-                    </span>
-                    <span className="text-sm font-bold text-green-600 bg-green-100 px-2 py-0.5 rounded-md">
-                      +12%
-                    </span>
-                  </div>
+            >
+              <div className="mt-4 flex gap-4">
+                <div className="flex items-baseline gap-2">
+                  <span className="text-4xl font-extrabold text-gray-900 dark:text-white tracking-tight">
+                    <CountUp end={salesToday} decimals={2} prefix="BND " />
+                  </span>
+                  <span className="text-sm font-bold text-green-600 bg-green-100 px-2 py-0.5 rounded-md">
+                    +12%
+                  </span>
                 </div>
-              }
-            />
+              </div>
+            </BentoCard>
 
             {/* Quick POS Action */}
             <Link href="/pos" className="md:col-span-1 group">
@@ -175,84 +174,80 @@ export default function DashboardPage() {
               colSpan={2}
               title={t('dashboard.salesTrend')}
               icon={<TrendingUp size={20} className="text-primary" />}
-              children={
-                <div className="h-[200px] w-full mt-4">
-                  <SalesTrendChart data={salesTrendData} />
-                </div>
-              }
-            />
+            >
+              <div className="h-[200px] w-full mt-4">
+                <SalesTrendChart data={salesTrendData} />
+              </div>
+            </BentoCard>
 
             {/* Stats Grid - Kitchen */}
             <BentoCard
               title={t('dashboard.kitchen')}
               icon={<Utensils size={20} className="text-orange-500" />}
-              children={
-                <div className="grid grid-cols-2 gap-3 mt-4">
-                  <div className="bg-orange-50 dark:bg-orange-900/20 p-3 rounded-xl text-center">
-                    <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">{preparingOrders}</div>
-                    <div className="text-[10px] uppercase font-bold text-gray-500">{t('dashboard.prep')}</div>
-                  </div>
-                  <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-xl text-center">
-                    <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{pendingOrders}</div>
-                    <div className="text-[10px] uppercase font-bold text-gray-500">{t('dashboard.queued')}</div>
-                  </div>
-                  <Link href="/kds" className="col-span-2 text-center text-xs font-semibold text-gray-500 hover:text-primary py-2 bg-gray-50 dark:bg-white/5 rounded-lg transition-colors">
-                    {t('dashboard.kitchenDisplay')} →
-                  </Link>
+            >
+              <div className="grid grid-cols-2 gap-3 mt-4">
+                <div className="bg-orange-50 dark:bg-orange-900/20 p-3 rounded-xl text-center">
+                  <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">{preparingOrders}</div>
+                  <div className="text-[10px] uppercase font-bold text-gray-500">{t('dashboard.prep')}</div>
                 </div>
-              }
-            />
+                <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-xl text-center">
+                  <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{pendingOrders}</div>
+                  <div className="text-[10px] uppercase font-bold text-gray-500">{t('dashboard.queued')}</div>
+                </div>
+                <Link href="/kds" className="col-span-2 text-center text-xs font-semibold text-gray-500 hover:text-primary py-2 bg-gray-50 dark:bg-white/5 rounded-lg transition-colors">
+                  {t('dashboard.kitchenDisplay')} →
+                </Link>
+              </div>
+            </BentoCard>
 
             {/* Stats - Inventory */}
             <BentoCard
               title={t('dashboard.inventoryTypes')}
               icon={<Package size={20} className={lowStockItems.length > 0 ? "text-red-500" : "text-green-500"} />}
               className={lowStockItems.length > 0 ? "border-red-500/20 bg-red-50/10" : ""}
-              children={
-                <div className="mt-4 space-y-3">
-                  {lowStockItems.length > 0 ? (
-                    lowStockItems.slice(0, 2).map((item, i) => (
-                      <div key={i} className="flex justify-between items-center text-xs p-2 bg-red-50 dark:bg-red-900/20 rounded-lg text-red-700 dark:text-red-300">
-                        <span className="font-bold truncate max-w-[120px]">{item.name}</span>
-                        <span>{item.currentQuantity} {item.unit}</span>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="text-center py-4 text-gray-400 text-sm">
-                      All Items Stocked
+            >
+              <div className="mt-4 space-y-3">
+                {lowStockItems.length > 0 ? (
+                  lowStockItems.slice(0, 2).map((item, i) => (
+                    <div key={i} className="flex justify-between items-center text-xs p-2 bg-red-50 dark:bg-red-900/20 rounded-lg text-red-700 dark:text-red-300">
+                      <span className="font-bold truncate max-w-[120px]">{item.name}</span>
+                      <span>{item.currentQuantity} {item.unit}</span>
                     </div>
-                  )}
-                  <Link href="/inventory" className="block text-center text-xs font-bold text-gray-500 hover:text-primary">
-                    {t('dashboard.checkInventory')}
-                  </Link>
-                </div>
-              }
-            />
+                  ))
+                ) : (
+                  <div className="text-center py-4 text-gray-400 text-sm">
+                    All Items Stocked
+                  </div>
+                )}
+                <Link href="/inventory" className="block text-center text-xs font-bold text-gray-500 hover:text-primary">
+                  {t('dashboard.checkInventory')}
+                </Link>
+              </div>
+            </BentoCard>
 
             {/* Stats - Staff */}
             <BentoCard
               title={t('dashboard.staffOnDuty')}
               icon={<Users size={20} className="text-blue-500" />}
-              children={
-                <div className="mt-4">
-                  <div className="flex items-end justify-between mb-2">
-                    <span className="text-3xl font-bold text-gray-900 dark:text-white leading-none">
-                      {onDutyStaff.length}
-                      <span className="text-sm text-gray-400 font-medium ml-1">/ {activeStaff.length}</span>
-                    </span>
-                  </div>
-                  <div className="w-full bg-gray-100 dark:bg-white/10 rounded-full h-2 overflow-hidden">
-                    <div
-                      className="bg-blue-500 h-full rounded-full transition-all duration-500"
-                      style={{ width: `${(onDutyStaff.length / (activeStaff.length || 1)) * 100}%` }}
-                    />
-                  </div>
-                  <Link href="/hr" className="mt-4 block text-center text-xs font-semibold text-gray-500 hover:text-primary">
-                    {t('dashboard.manageTeam')}
-                  </Link>
+            >
+              <div className="mt-4">
+                <div className="flex items-end justify-between mb-2">
+                  <span className="text-3xl font-bold text-gray-900 dark:text-white leading-none">
+                    {onDutyStaff.length}
+                    <span className="text-sm text-gray-400 font-medium ml-1">/ {activeStaff.length}</span>
+                  </span>
                 </div>
-              }
-            />
+                <div className="w-full bg-gray-100 dark:bg-white/10 rounded-full h-2 overflow-hidden">
+                  <div
+                    className="bg-blue-500 h-full rounded-full transition-all duration-500"
+                    style={{ width: `${(onDutyStaff.length / (activeStaff.length || 1)) * 100}%` }}
+                  />
+                </div>
+                <Link href="/hr" className="mt-4 block text-center text-xs font-semibold text-gray-500 hover:text-primary">
+                  {t('dashboard.manageTeam')}
+                </Link>
+              </div>
+            </BentoCard>
 
           </BentoGrid>
         )}

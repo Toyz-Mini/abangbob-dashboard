@@ -40,7 +40,8 @@ import {
   Store,
   Briefcase,
   LogOut,
-  Sparkles
+  Sparkles,
+  Smartphone
 } from 'lucide-react';
 
 // Original Nav for Staff / Operation focused roles
@@ -134,6 +135,7 @@ const ADMIN_NAV_ITEMS = [
       { href: '/settings', labelKey: 'nav.settings', icon: Settings },
       { href: '/audit-log', labelKey: 'nav.auditLog', icon: FileText },
       { href: '/notifications', labelKey: 'nav.notifications', icon: Bell },
+      { href: '/admin/whatsapp-config', labelKey: 'nav.whatsapp', icon: Smartphone },
     ]
   }
 ];
@@ -217,7 +219,7 @@ const Sidebar = forwardRef<HTMLElement, SidebarProps>(({ isOpen, onToggle, onNav
       {/* Floating Sidebar Container */}
       <aside
         ref={ref}
-        className={`fixed top-0 left-0 z-50 h-screen transition-all duration-300 ease-in-out ${isOpen ? 'w-[280px] p-4' : 'w-[96px] p-4'
+        className={`fixed inset-y-0 left-0 z-50 transition-all duration-300 ease-in-out ${isOpen ? 'w-[280px] p-4' : 'w-[96px] p-4'
           }`}
       >
         {/* Glass Panel Content */}

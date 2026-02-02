@@ -1068,28 +1068,28 @@ export default function MenuManagementPage() {
         <div style={{ marginBottom: '1.5rem', display: 'flex', gap: '0.5rem', borderBottom: '2px solid var(--gray-200)', overflowX: 'auto', whiteSpace: 'nowrap', paddingBottom: '1rem' }}>
           <button
             onClick={() => handleTabChange('menu')}
-            className={`btn btn-sm ${activeTab === 'menu' ? 'btn-primary' : 'btn-outline'}`}
+            className={`btn ${activeTab === 'menu' ? 'btn-primary' : 'btn-outline'}`}
           >
             <UtensilsCrossed size={16} />
             Menu Items ({menuItems.length})
           </button>
           <button
             onClick={() => handleTabChange('categories')}
-            className={`btn btn-sm ${activeTab === 'categories' ? 'btn-primary' : 'btn-outline'}`}
+            className={`btn ${activeTab === 'categories' ? 'btn-primary' : 'btn-outline'}`}
           >
             <FolderOpen size={16} />
             Kategori ({menuCategories.length})
           </button>
           <button
             onClick={() => handleTabChange('groups')}
-            className={`btn btn-sm ${activeTab === 'groups' ? 'btn-primary' : 'btn-outline'}`}
+            className={`btn ${activeTab === 'groups' ? 'btn-primary' : 'btn-outline'}`}
           >
             <Layers size={16} />
             Modifier Groups ({modifierGroups.length})
           </button>
           <button
             onClick={() => handleTabChange('options')}
-            className={`btn btn-sm ${activeTab === 'options' ? 'btn-primary' : 'btn-outline'}`}
+            className={`btn ${activeTab === 'options' ? 'btn-primary' : 'btn-outline'}`}
           >
             <Settings size={16} />
             Options ({modifierOptions.length})

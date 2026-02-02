@@ -2422,7 +2422,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }
 
     return newOrder;
-  }, [recipes, inventory, addLoyaltyPoints, redeemLoyaltyPoints, addCustomer, customers, modifierOptions]);
+  }, [recipes, inventory, addLoyaltyPoints, redeemLoyaltyPoints, addCustomer, customers, modifierOptions, currentRegister]);
 
 
 

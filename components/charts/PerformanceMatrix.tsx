@@ -18,8 +18,8 @@ interface PerformanceMatrixProps {
 export default function PerformanceMatrix({ items, maxItems = 10 }: PerformanceMatrixProps) {
   const { analyzedItems, avgMargin, avgRevenue } = useMemo(() => {
     const analyzed = items.map(item => {
-      const margin = item.revenue > 0 
-        ? ((item.revenue - item.cost) / item.revenue) * 100 
+      const margin = item.revenue > 0
+        ? ((item.revenue - item.cost) / item.revenue) * 100
         : 0;
       return {
         ...item,
@@ -30,12 +30,12 @@ export default function PerformanceMatrix({ items, maxItems = 10 }: PerformanceM
 
     const totalRevenue = analyzed.reduce((sum, i) => sum + i.revenue, 0);
     const avgRev = items.length > 0 ? totalRevenue / items.length : 0;
-    const avgMarg = analyzed.length > 0 
-      ? analyzed.reduce((sum, i) => sum + i.margin, 0) / analyzed.length 
+    const avgMarg = analyzed.length > 0
+      ? analyzed.reduce((sum, i) => sum + i.margin, 0) / analyzed.length
       : 0;
 
-    return { 
-      analyzedItems: analyzed.slice(0, maxItems), 
+    return {
+      analyzedItems: analyzed.slice(0, maxItems),
       avgMargin: avgMarg,
       avgRevenue: avgRev,
     };
@@ -73,7 +73,7 @@ export default function PerformanceMatrix({ items, maxItems = 10 }: PerformanceM
           const Icon = style.icon;
           return (
             <div key={key} className="matrix-legend-item">
-              <div 
+              <div
                 className="matrix-legend-color"
                 style={{ backgroundColor: style.bg, borderColor: style.border }}
               >
@@ -95,10 +95,10 @@ export default function PerformanceMatrix({ items, maxItems = 10 }: PerformanceM
           const revenueWidth = maxRevenue > 0 ? (item.revenue / maxRevenue) * 100 : 0;
 
           return (
-            <div 
-              key={item.id} 
+            <div
+              key={`${item.id}-${idx}`}
               className="matrix-item"
-              style={{ 
+              style={{
                 backgroundColor: style.bg,
                 borderLeftColor: style.border,
               }}
@@ -119,9 +119,9 @@ export default function PerformanceMatrix({ items, maxItems = 10 }: PerformanceM
                   </span>
                 </div>
                 <div className="matrix-item-bar">
-                  <div 
+                  <div
                     className="matrix-item-bar-fill"
-                    style={{ 
+                    style={{
                       width: `${revenueWidth}%`,
                       backgroundColor: style.border,
                     }}

@@ -2129,13 +2129,26 @@ export async function syncDeleteStaffDocument(id: string) {
 
 // ============ LOYALTY SYNC ============
 
-export async function syncAddLoyaltyTransaction(transaction: any) {
+export async function syncAddLoyaltyTransaction(transaction: any, options?: { fromQueue?: boolean }) {
   if (!isSupabaseSyncEnabled()) return null;
+
+  if (options?.fromQueue) {
+    return await ops.insertLoyaltyTransaction(transaction);
+  }
 
   try {
     return await ops.insertLoyaltyTransaction(transaction);
   } catch (error) {
     console.error('Failed to sync loyalty transaction to Supabase:', error);
+    if (typeof error === 'object' && error !== null) {
+      const err = error as any;
+      console.error('Error info:', {
+        message: err.message,
+        code: err.code,
+        details: err.details,
+        hint: err.hint
+      });
+    }
     addToSyncQueue({ id: transaction.id, table: 'loyalty_transactions', action: 'CREATE', payload: transaction });
     return null;
   }

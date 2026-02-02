@@ -215,7 +215,7 @@ export default function OTApprovalPage() {
                         {(['pending', 'approved', 'rejected', 'all'] as FilterStatus[]).map((status) => (
                             <button
                                 key={status}
-                                className={`btn btn-sm ${filterStatus === status ? 'btn-primary' : 'btn-outline'}`}
+                                className={`btn ${filterStatus === status ? 'btn-primary' : 'btn-outline'}`}
                                 onClick={() => setFilterStatus(status)}
                             >
                                 {status === 'pending' && 'Menunggu'}

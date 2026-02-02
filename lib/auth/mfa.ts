@@ -177,6 +177,7 @@ export async function enableMFA(userId: string, userEmail: string): Promise<TOTP
 
     const { error: updateError } = await supabase
       .from('staff')
+      // @ts-ignore - Supabase types don't recognize StaffExtendedData
       .update({ extended_data: currentExtended })
       .eq('id', userId);
 
@@ -233,6 +234,7 @@ export async function verifyAndConfirmMFA(userId: string, code: string): Promise
 
     const { error: updateError } = await supabase
       .from('staff')
+      // @ts-ignore - Supabase types don't recognize StaffExtendedData
       .update({ extended_data: extendedData })
       .eq('id', userId);
 
@@ -296,6 +298,7 @@ export async function verifyMFAForLogin(userId: string, code: string): Promise<b
 
     await supabase
       .from('staff')
+      // @ts-ignore - Supabase types don't recognize StaffExtendedData
       .update({ extended_data: extendedData })
       .eq('id', userId);
 
@@ -386,19 +389,23 @@ export async function useBackupCode(userId: string, code: string): Promise<boole
       .eq('id', userId)
       .single();
 
-    if (!staff?.extended_data?.mfa?.backupCodes || !staff.extended_data.mfa.backupCodes.includes(code)) {
+    const typedStaff = staff as StaffRecord | null;
+
+    if (!typedStaff?.extended_data?.mfa?.backupCodes || !typedStaff.extended_data.mfa.backupCodes.includes(code)) {
       console.log('[MFA] Invalid backup code');
       return false;
     }
 
     // Remove used code
-    const remainingCodes = staff.extended_data.mfa.backupCodes.filter((c: string) => c !== code);
-    staff.extended_data.mfa.backupCodes = remainingCodes;
-    staff.extended_data.mfa.lastUsed = new Date().toISOString();
+    const extendedData = typedStaff.extended_data;
+    const remainingCodes = extendedData.mfa!.backupCodes!.filter((c: string) => c !== code);
+    extendedData.mfa!.backupCodes = remainingCodes;
+    extendedData.mfa!.lastUsed = new Date().toISOString();
 
     const { error } = await supabase
       .from('staff')
-      .update({ extended_data: staff.extended_data })
+      // @ts-ignore - Supabase types don't recognize StaffExtendedData
+      .update({ extended_data: extendedData })
       .eq('id', userId);
 
     if (error) {
@@ -442,6 +449,7 @@ export async function disableMFA(userId: string, reason: string): Promise<void> 
 
       const { error } = await supabase
         .from('staff')
+        // @ts-ignore - Supabase types don't recognize StaffExtendedData
         .update({ extended_data: extendedData })
         .eq('id', userId);
 
@@ -475,11 +483,12 @@ export async function regenerateBackupCodes(userId: string): Promise<string[]> {
 
     if (typedStaff?.extended_data?.mfa) {
       const extendedData = typedStaff.extended_data;
-      extendedData.mfa.backup_codes = newCodes;
-      extendedData.mfa.lastUsed = new Date().toISOString();
+      extendedData.mfa!.backup_codes = newCodes;
+      extendedData.mfa!.lastUsed = new Date().toISOString();
 
       const { error } = await supabase
         .from('staff')
+        // @ts-ignore - Supabase types don't recognize StaffExtendedData
         .update({ extended_data: extendedData })
         .eq('id', userId);
 

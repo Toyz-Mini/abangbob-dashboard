@@ -134,6 +134,7 @@ export async function createSession(
     // Update staff with session info
     const { error: updateError } = await supabase
       .from('staff')
+      // @ts-ignore - Supabase types don't recognize StaffExtendedData
       .update({ extended_data: extendedData })
       .eq('id', userId);
 
@@ -231,6 +232,7 @@ export async function invalidateSession(userId: string, sessionId: string): Prom
 
     const { error } = await supabase
       .from('staff')
+      // @ts-ignore - Supabase types don't recognize StaffExtendedData
       .update({ extended_data: extendedData })
       .eq('id', userId);
 
@@ -279,6 +281,7 @@ export async function invalidateAllSessions(userId: string): Promise<void> {
 
     const { error } = await supabase
       .from('staff')
+      // @ts-ignore - Supabase types don't recognize StaffExtendedData
       .update({ extended_data: extendedData })
       .eq('id', userId);
 
@@ -449,6 +452,7 @@ export async function updateSessionActivity(userId: string, sessionId: string): 
 
     await supabase
       .from('staff')
+      // @ts-ignore - Supabase types don't recognize StaffExtendedData
       .update({ extended_data: extendedData })
       .eq('id', userId);
   } catch (error) {

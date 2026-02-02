@@ -88,12 +88,7 @@ export default function OutletsPage() {
     const [availableStaff, setAvailableStaff] = useState<Staff[]>([]);
     const [selectedStaffId, setSelectedStaffId] = useState('');
 
-    useEffect(() => {
-        setIsMounted(true);
-        fetchOutlets();
-    }, []);
-
-    const fetchOutlets = async () => {
+    const fetchOutlets = useCallback(async () => {
         setLoading(true);
         const { data, error } = await supabase
             .from('outlets')
@@ -107,7 +102,12 @@ export default function OutletsPage() {
             setOutlets(data || []);
         }
         setLoading(false);
-    };
+    }, [showToast]);
+
+    useEffect(() => {
+        setIsMounted(true);
+        fetchOutlets();
+    }, [fetchOutlets]);
 
     const fetchStaffAssignments = async (outletId: string) => {
         const today = new Date().toISOString().split('T')[0];

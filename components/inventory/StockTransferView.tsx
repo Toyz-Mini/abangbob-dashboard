@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { getSupabaseClient } from '@/lib/supabase/client';
 import { StockTransferRequest, TransferStatus, StockItem } from '@/lib/types'; // Import types
 import Modal from '@/components/Modal';
@@ -49,53 +49,12 @@ export default function StockTransferView() {
     // Admin sees all? Let's implement for specific outlet view first.
     const [myOutletId, setMyOutletId] = useState<string | null>(null);
 
-    useEffect(() => {
-        // Determine my outlet
-        const fetchMyOutlet = async () => {
-            // If staff, get assignment. 
-            // For simplified v1, let's assume `user` puts us in Main or we find assignment.
-            // Actually, let's look at `staff_outlet_assignments` for today.
-            if (currentStaff) {
-                const today = new Date().toISOString().split('T')[0];
-                const { data } = await supabase
-                    .from('staff_outlet_assignments')
-                    .select('outlet_id')
-                    .eq('staff_id', currentStaff.id)
-                    .eq('assignment_date', today)
-                    .maybeSingle(); // Use maybeSingle to avoid error if none
-
-                if (data) {
-                    setMyOutletId(data.outlet_id);
-                } else {
-                    // Fallback or Admin view?
-                    // If Admin, maybe select *?
-                }
-            } else if (user?.role === 'Admin') {
-                // Admin sees all? Or toggle?
-                // For now, let's set to 'MAIN' or Warehouse for testing
-                // or fetch the first active outlet
-                const { data } = await supabase.from('outlets').select('id').eq('is_warehouse', true).single();
-                if (data) setMyOutletId(data.id);
-            }
-        };
-
-        fetchMyOutlet();
-        fetchOutlets();
-        fetchStockItems();
-    }, [user, currentStaff]);
-
-    useEffect(() => {
-        if (myOutletId) {
-            fetchRequests();
-        }
-    }, [myOutletId, activeTab]);
-
-    const fetchOutlets = async () => {
+    const fetchOutlets = useCallback(async () => {
         const { data } = await supabase.from('outlets').select('id, name, is_warehouse').eq('status', 'active');
         if (data) setOutlets(data);
-    };
+    }, []);
 
-    const fetchStockItems = async () => {
+    const fetchStockItems = useCallback(async () => {
         // Fetch generic list of items to request
         // Actually we should fetch items available in the *Source* outlet?
         // Or just all known stock items defined in system?
@@ -116,9 +75,9 @@ export default function StockTransferView() {
             }, []);
             setAvailableStockItems(unique);
         }
-    };
+    }, []);
 
-    const fetchRequests = async () => {
+    const fetchRequests = useCallback(async () => {
         if (!myOutletId) return;
         setLoading(true);
 
@@ -205,7 +164,48 @@ export default function StockTransferView() {
             setRequests(mapped);
         }
         setLoading(false);
-    };
+    }, [myOutletId, activeTab, showToast]);
+
+    useEffect(() => {
+        // Determine my outlet
+        const fetchMyOutlet = async () => {
+            // If staff, get assignment. 
+            // For simplified v1, let's assume `user` puts us in Main or we find assignment.
+            // Actually, let's look at `staff_outlet_assignments` for today.
+            if (currentStaff) {
+                const today = new Date().toISOString().split('T')[0];
+                const { data } = await supabase
+                    .from('staff_outlet_assignments')
+                    .select('outlet_id')
+                    .eq('staff_id', currentStaff.id)
+                    .eq('assignment_date', today)
+                    .maybeSingle(); // Use maybeSingle to avoid error if none
+
+                if (data) {
+                    setMyOutletId(data.outlet_id);
+                } else {
+                    // Fallback or Admin view?
+                    // If Admin, maybe select *?
+                }
+            } else if (user?.role === 'Admin') {
+                // Admin sees all? Or toggle?
+                // For now, let's set to 'MAIN' or Warehouse for testing
+                // or fetch the first active outlet
+                const { data } = await supabase.from('outlets').select('id').eq('is_warehouse', true).single();
+                if (data) setMyOutletId(data.id);
+            }
+        };
+
+        fetchMyOutlet();
+        fetchOutlets();
+        fetchStockItems();
+    }, [user, currentStaff, fetchOutlets, fetchStockItems]);
+
+    useEffect(() => {
+        if (myOutletId) {
+            fetchRequests();
+        }
+    }, [myOutletId, activeTab, fetchRequests]);
 
     const handleCreateRequest = async () => {
         if (!formData.stockItemId || formData.quantity <= 0 || !formData.toOutletId) {

@@ -297,43 +297,43 @@ export default function NotificationsPage() {
         <div style={{ marginBottom: '1.5rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
           <button
             onClick={() => setFilterType('all')}
-            className={`btn btn-sm ${filterType === 'all' ? 'btn-primary' : 'btn-outline'}`}
+            className={`btn ${filterType === 'all' ? 'btn-primary' : 'btn-outline'}`}
           >
             Semua
           </button>
           <button
             onClick={() => setFilterType('unread')}
-            className={`btn btn-sm ${filterType === 'unread' ? 'btn-primary' : 'btn-outline'}`}
+            className={`btn ${filterType === 'unread' ? 'btn-primary' : 'btn-outline'}`}
           >
-            Belum Dibaca ({stats.unread})
+            Belum Baca ({stats.unread})
           </button>
           <button
             onClick={() => setFilterType('low_stock')}
-            className={`btn btn-sm ${filterType === 'low_stock' ? 'btn-primary' : 'btn-outline'}`}
+            className={`btn ${filterType === 'low_stock' ? 'btn-primary' : 'btn-outline'}`}
           >
             <Package size={14} />
-            Stok
+            Inventory
           </button>
           <button
             onClick={() => setFilterType('new_order')}
-            className={`btn btn-sm ${filterType === 'new_order' ? 'btn-primary' : 'btn-outline'}`}
+            className={`btn ${filterType === 'new_order' ? 'btn-primary' : 'btn-outline'}`}
           >
             <ShoppingCart size={14} />
-            Pesanan
+            Orders
           </button>
           <button
             onClick={() => setFilterType('equipment')}
-            className={`btn btn-sm ${filterType === 'equipment' ? 'btn-primary' : 'btn-outline'}`}
+            className={`btn ${filterType === 'equipment' ? 'btn-primary' : 'btn-outline'}`}
           >
             <ChefHat size={14} />
             Equipment
           </button>
           <button
             onClick={() => setFilterType('staff')}
-            className={`btn btn-sm ${filterType === 'staff' ? 'btn-primary' : 'btn-outline'}`}
+            className={`btn ${filterType === 'staff' ? 'btn-primary' : 'btn-outline'}`}
           >
             <Users size={14} />
-            Staf
+            Staff
           </button>
         </div>
 

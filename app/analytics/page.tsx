@@ -518,8 +518,8 @@ export default function AnalyticsPage() {
             <button
               onClick={() => setComparisonMode(!comparisonMode)}
               className={`text-xs font-bold px-4 py-2 rounded-lg flex items-center gap-2 border transition-all ${comparisonMode
-                  ? 'bg-primary/10 text-primary border-primary/20'
-                  : 'bg-white dark:bg-white/5 text-gray-600 border-gray-200 hover:border-gray-300'
+                ? 'bg-primary/10 text-primary border-primary/20'
+                : 'bg-white dark:bg-white/5 text-gray-600 border-gray-200 hover:border-gray-300'
                 }`}
             >
               <TrendingUp size={14} />
@@ -605,14 +605,13 @@ export default function AnalyticsPage() {
               title="Busy Time Heatmap"
               description="Peak order times by day and hour"
               icon={<Flame size={20} className="text-orange-500" />}
-              children={
-                <div className="mt-4 overflow-x-auto pb-2">
-                  <div className="min-w-[600px]">
-                    <TimeHeatmap data={heatmapData} />
-                  </div>
+            >
+              <div className="mt-4 overflow-x-auto pb-2">
+                <div className="min-w-[600px]">
+                  <TimeHeatmap data={heatmapData} />
                 </div>
-              }
-            />
+              </div>
+            </BentoCard>
 
             {/* Operational Summary */}
             <div className="glass-panel p-6 rounded-2xl flex flex-col justify-between space-y-6 md:col-span-1 border border-white/10">
@@ -655,58 +654,57 @@ export default function AnalyticsPage() {
               colSpan={3}
               title="Daily Sales Performance"
               icon={<TrendingUp size={20} className="text-green-500" />}
-              children={
-                <div className="mt-4 w-full overflow-x-auto pb-4 custom-scrollbar">
-                  <div className="h-[240px] flex items-end gap-3 min-w-[800px] px-2">
-                    {dailySalesTrend.length > 0 ? (
-                      dailySalesTrend.slice(-30).map((day) => {
-                        const maxRevenue = Math.max(...dailySalesTrend.map(d => d.revenue));
-                        const height = maxRevenue > 0 ? (day.revenue / maxRevenue) * 100 : 0;
-                        return (
-                          <div
-                            key={day.date}
-                            className="flex-1 flex flex-col items-center group cursor-pointer relative"
-                          >
-                            {/* Tooltip */}
-                            <div className="mb-2 opacity-0 group-hover:opacity-100 transition-opacity absolute bottom-full bg-gray-900 text-white text-[10px] font-bold px-2 py-1 rounded pointer-events-none whitespace-nowrap z-10">
-                              ${day.revenue.toFixed(0)} | {day.orders} ord
-                            </div>
-
-                            <div className="w-full relative h-[200px] flex items-end">
-                              <div
-                                style={{ height: `${Math.max(height, 2)}%` }}
-                                className={`w-full rounded-t-lg transition-all duration-300 ${day.revenue === maxRevenue
-                                    ? 'bg-gradient-to-t from-primary to-orange-400'
-                                    : 'bg-primary/20 hover:bg-primary/60'
-                                  }`}
-                              />
-                            </div>
-                            <div className="mt-2 text-[10px] font-bold text-gray-400 rotate-0 truncate w-full text-center">
-                              {format(new Date(day.date), 'dd MMM')}
-                            </div>
+            >
+              <div className="mt-4 w-full overflow-x-auto pb-4 custom-scrollbar">
+                <div className="h-[240px] flex items-end gap-3 min-w-[800px] px-2">
+                  {dailySalesTrend.length > 0 ? (
+                    dailySalesTrend.slice(-30).map((day, i) => {
+                      const maxRevenue = Math.max(...dailySalesTrend.map(d => d.revenue));
+                      const height = maxRevenue > 0 ? (day.revenue / maxRevenue) * 100 : 0;
+                      return (
+                        <div
+                          key={`${day.date}-${i}`}
+                          className="flex-1 flex flex-col items-center group cursor-pointer relative"
+                        >
+                          {/* Tooltip */}
+                          <div className="mb-2 opacity-0 group-hover:opacity-100 transition-opacity absolute bottom-full bg-gray-900 text-white text-[10px] font-bold px-2 py-1 rounded pointer-events-none whitespace-nowrap z-10">
+                            ${day.revenue.toFixed(0)} | {day.orders} ord
                           </div>
-                        );
-                      })
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-gray-400">
-                        No sales data found for this period
-                      </div>
-                    )}
-                  </div>
+
+                          <div className="w-full relative h-[200px] flex items-end">
+                            <div
+                              style={{ height: `${Math.max(height, 2)}%` }}
+                              className={`w-full rounded-t-lg transition-all duration-300 ${day.revenue === maxRevenue
+                                ? 'bg-gradient-to-t from-primary to-orange-400'
+                                : 'bg-primary/20 hover:bg-primary/60'
+                                }`}
+                            />
+                          </div>
+                          <div className="mt-2 text-[10px] font-bold text-gray-400 rotate-0 truncate w-full text-center">
+                            {format(new Date(day.date), 'dd MMM')}
+                          </div>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-gray-400">
+                      No sales data found for this period
+                    </div>
+                  )}
                 </div>
-              }
-            />
+              </div>
+            </BentoCard>
           </BentoGrid>
         )}
 
         {/* Other Tabs Placeholder Logic (Preserved but styled) */}
         {activeTab === 'sales' && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <BentoCard title="Sales Heatmap" className="min-h-[400px]" children={<TimeHeatmap data={heatmapData} />} />
+            <BentoCard title="Sales Heatmap" className="min-h-[400px]"><TimeHeatmap data={heatmapData} /></BentoCard>
             <div className="space-y-4">
               <h3 className="font-bold text-lg">Top 10 Best Sellers</h3>
               {menuPerformance.slice(0, 10).map((item, idx) => (
-                <div key={item.id} className="flex items-center gap-4 bg-white dark:bg-white/5 p-3 rounded-xl border border-gray-100 dark:border-white/5">
+                <div key={`${item.id}-${idx}`} className="flex items-center gap-4 bg-white dark:bg-white/5 p-3 rounded-xl border border-gray-100 dark:border-white/5">
                   <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm ${idx < 3 ? 'bg-primary text-white' : 'bg-gray-100 text-gray-500'}`}>
                     {idx + 1}
                   </div>

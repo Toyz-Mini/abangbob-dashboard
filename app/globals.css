@@ -802,6 +802,8 @@ body {
 .btn-sm {
   padding: var(--spacing-sm) var(--spacing-md);
   font-size: 0.75rem;
+  min-width: 32px;
+  min-height: 32px;
 }
 
 .btn-lg {

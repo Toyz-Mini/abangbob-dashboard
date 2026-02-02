@@ -305,7 +305,7 @@ export async function processSyncQueue(ops: any): Promise<{ successCount: number
                     break;
 
                 case 'loyalty_transactions':
-                    if (item.action === 'CREATE') await ops.syncAddLoyaltyTransaction(item.payload);
+                    if (item.action === 'CREATE') await ops.syncAddLoyaltyTransaction(item.payload, { fromQueue: true });
                     break;
 
                 case 'performance_reviews':

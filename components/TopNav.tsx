@@ -84,29 +84,31 @@ export default function TopNav({ onMenuClick }: TopNavProps) {
   };
 
   return (
-    <div className="top-nav">
-      <div className="top-nav-left">
+    <div className="fixed top-0 right-0 left-0 h-[70px] bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-200 dark:border-white/5 z-40 flex items-center px-4 md:px-6 transition-all duration-300 md:ml-[280px]">
+      <div className="flex items-center gap-4 flex-1">
         {!isMobile && (
-          <button onClick={onMenuClick} className="mobile-menu-btn icon-btn">
+          <button onClick={onMenuClick} className="p-2 -ml-2 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 text-gray-500 transition-colors md:hidden">
             <Menu size={24} />
           </button>
         )}
 
         {/* Logo untuk mobile */}
-        <Image
-          src="/logo.png"
-          alt="Abang Bob"
-          className="topnav-logo"
-          width={40}
-          height={40}
-        />
+        <div className="md:hidden">
+          <Image
+            src="/logo.png"
+            alt="Abang Bob"
+            width={32}
+            height={32}
+            className="w-8 h-8 object-contain"
+          />
+        </div>
 
         {/* Search Bar */}
-        <div className="search-container">
-          <Search size={18} className="search-icon" />
+        <div className="relative hidden md:flex items-center w-full max-w-md">
+          <Search size={18} className="absolute left-3 text-gray-400" />
           <input
             type="text"
-            className="search-input"
+            className="w-full pl-10 pr-4 py-2 bg-gray-100 dark:bg-white/5 border-none rounded-xl focus:ring-2 focus:ring-primary/20 focus:bg-white dark:focus:bg-black/20 transition-all text-sm"
             placeholder={t('common.search') + '...'}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -115,7 +117,7 @@ export default function TopNav({ onMenuClick }: TopNavProps) {
       </div>
 
       {/* Right Side Actions */}
-      <div className="top-nav-right">
+      <div className="flex items-center gap-2 md:gap-3">
         {/* Apps Launcher (Admin/Manager Only) */}
         {['Admin', 'Manager'].includes(currentStaff?.role || '') && (
           <AppsLauncher />
@@ -124,17 +126,17 @@ export default function TopNav({ onMenuClick }: TopNavProps) {
         {/* Language Toggle */}
         <button
           onClick={handleLanguageToggle}
-          className="lang-toggle"
+          className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 text-xs font-bold text-gray-600 dark:text-gray-300 transition-colors"
           title={t('topnav.switchLanguage')}
         >
           <Languages size={16} />
-          <span>{language.toUpperCase()}</span>
+          <span className="hidden sm:inline">{language.toUpperCase()}</span>
         </button>
 
         {/* Theme Toggle */}
         <button
           onClick={handleThemeToggle}
-          className="icon-btn"
+          className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 text-gray-500 transition-colors"
           title={resolvedTheme === 'dark' ? t('settings.light') : t('settings.dark')}
         >
           {resolvedTheme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
@@ -143,63 +145,65 @@ export default function TopNav({ onMenuClick }: TopNavProps) {
         {/* Sound Toggle */}
         <button
           onClick={handleSoundToggle}
-          className={`icon-btn ${!settings.enabled ? 'muted' : ''}`}
+          className={`w-9 h-9 flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 text-gray-500 transition-colors ${!settings.enabled ? 'opacity-50' : ''}`}
           title={settings.enabled ? t('settings.soundEnabled') : t('topnav.soundMuted')}
         >
           {settings.enabled ? <Volume2 size={20} /> : <VolumeX size={20} />}
         </button>
 
         {/* Notifications */}
-        <Link href="/notifications" className="icon-btn">
+        <Link href="/notifications" className="relative w-9 h-9 flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 text-gray-500 transition-colors">
           <Bell size={20} />
           {unreadCount > 0 && (
-            <span className="notification-badge">
-              {unreadCount > 9 ? '9+' : unreadCount}
+            <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white dark:border-gray-900">
             </span>
           )}
         </Link>
 
         {/* User Profile with Dropdown */}
-        <div className="user-dropdown-container" ref={userMenuRef}>
+        <div className="relative" ref={userMenuRef}>
           <button
-            className={`user-profile-btn ${isUserMenuOpen ? 'active' : ''}`}
+            className={`flex items-center gap-3 pl-2 pr-1 py-1 rounded-xl hover:bg-gray-50 dark:hover:bg-white/5 transition-all border border-transparent hover:border-gray-100 dark:hover:border-white/10 ${isUserMenuOpen ? 'bg-gray-50 dark:bg-white/5 border-gray-100 dark:border-white/10' : ''}`}
             onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
           >
-            <div className="user-avatar">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-orange-500 flex items-center justify-center text-white shadow-sm">
               <User size={18} />
             </div>
-            <span className="user-name">{currentStaff?.name || t('topnav.admin')}</span>
-            <ChevronDown size={16} className={`dropdown-chevron ${isUserMenuOpen ? 'open' : ''}`} />
+            <div className="hidden md:flex flex-col items-start mr-2">
+              <span className="text-sm font-bold text-gray-700 dark:text-gray-200 leading-none">{currentStaff?.name || t('topnav.admin')}</span>
+              <span className="text-[10px] text-gray-400 font-medium leading-none mt-1">{currentStaff?.role || 'Admin'}</span>
+            </div>
+            <ChevronDown size={14} className={`text-gray-400 transition-transform hidden md:block ${isUserMenuOpen ? 'rotate-180' : ''}`} />
           </button>
 
           {isUserMenuOpen && (
-            <div className="user-dropdown-menu">
-              <div className="dropdown-header">
-                <div className="dropdown-user-avatar">
-                  <User size={24} />
+            <div className="absolute right-0 top-full mt-2 w-64 bg-white dark:bg-gray-900 rounded-2xl shadow-xl border border-gray-100 dark:border-white/10 p-2 animate-in fade-in slide-in-from-top-2 duration-200">
+              <div className="p-3 bg-gray-50 dark:bg-white/5 rounded-xl mb-2 flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                  <User size={20} />
                 </div>
-                <div className="dropdown-user-info">
-                  <div className="dropdown-user-name">{currentStaff?.name || t('topnav.administrator')}</div>
-                  <div className="dropdown-user-role">{currentStaff?.role || t('topnav.systemManager')}</div>
+                <div>
+                  <div className="font-bold text-gray-900 dark:text-white">{currentStaff?.name || t('topnav.administrator')}</div>
+                  <div className="text-xs text-gray-500">{currentStaff?.role || t('topnav.systemManager')}</div>
                 </div>
               </div>
 
-              <div className="dropdown-divider" />
+              <div className="h-px bg-gray-100 dark:bg-white/5 my-1" />
 
-              <Link href="/settings" className="dropdown-item" onClick={() => setIsUserMenuOpen(false)}>
-                <Settings size={18} />
+              <Link href="/settings" className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors" onClick={() => setIsUserMenuOpen(false)}>
+                <Settings size={16} />
                 <span>{t('topnav.accountSettings')}</span>
               </Link>
 
-              <button className="dropdown-item">
-                <Store size={18} />
+              <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors text-left">
+                <Store size={16} />
                 <span>{t('topnav.switchOutlet')}</span>
               </button>
 
-              <div className="dropdown-divider" />
+              <div className="h-px bg-gray-100 dark:bg-white/5 my-1" />
 
-              <button className="dropdown-item dropdown-item-danger" onClick={handleLogout}>
-                <LogOut size={18} />
+              <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors text-left font-medium" onClick={handleLogout}>
+                <LogOut size={16} />
                 <span>{t('topnav.logout')}</span>
               </button>
             </div>

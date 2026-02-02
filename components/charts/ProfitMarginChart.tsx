@@ -36,9 +36,9 @@ export default function ProfitMarginChart({ data, showTrend = true }: ProfitMarg
       ? secondHalf.reduce((sum, d) => sum + d.margin, 0) / secondHalf.length
       : 0;
 
-    const trendDirection = secondAvgMargin > firstAvgMargin ? 'up' : 
-                          secondAvgMargin < firstAvgMargin ? 'down' : 'stable';
-    const trendPercent = firstAvgMargin > 0 
+    const trendDirection = secondAvgMargin > firstAvgMargin ? 'up' :
+      secondAvgMargin < firstAvgMargin ? 'down' : 'stable';
+    const trendPercent = firstAvgMargin > 0
       ? ((secondAvgMargin - firstAvgMargin) / firstAvgMargin) * 100
       : 0;
 
@@ -112,8 +112,8 @@ export default function ProfitMarginChart({ data, showTrend = true }: ProfitMarg
             const marginHeight = maxMargin > 0 ? (day.margin / maxMargin) * 150 : 0;
 
             return (
-              <div key={day.date} className="chart-bar-group">
-                <div 
+              <div key={`${day.date}-${idx}`} className="chart-bar-group">
+                <div
                   className="chart-tooltip"
                   style={{ display: 'none' }}
                 >
@@ -124,18 +124,18 @@ export default function ProfitMarginChart({ data, showTrend = true }: ProfitMarg
                   <p>Margin: {day.margin.toFixed(1)}%</p>
                 </div>
                 <div className="bar-stack">
-                  <div 
+                  <div
                     className="bar revenue-bar"
                     style={{ height: `${revenueHeight}px` }}
                     title={`Revenue: BND ${day.revenue.toFixed(2)}`}
                   />
-                  <div 
+                  <div
                     className="bar cost-bar"
                     style={{ height: `${costHeight}px` }}
                     title={`Kos: BND ${day.cost.toFixed(2)}`}
                   />
                 </div>
-                <div 
+                <div
                   className="margin-line"
                   style={{ bottom: `${marginHeight}px` }}
                 >

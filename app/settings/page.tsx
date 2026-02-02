@@ -822,8 +822,8 @@ export default function SettingsPage() {
                       onClick={() => setActiveSection(item.id as SettingSection)}
                       className={`
                         flex items-center gap-3 p-3 border-none cursor-pointer text-left border-l-3
-                        ${isActive 
-                          ? 'bg-primary-light text-primary font-semibold border-primary' 
+                        ${isActive
+                          ? 'bg-primary-light text-primary font-semibold border-primary'
                           : 'bg-transparent text-gray-900 font-normal border-transparent'
                         }
                       `}
@@ -890,7 +890,7 @@ export default function SettingsPage() {
 
           {/* Main Content */}
           <div className="md:col-span-3 lg:col-span-3">
-             {/* Outlet Profile */}
+            {/* Outlet Profile */}
             {activeSection === 'outlet' && (
               <div className="card">
                 <div className="card-header">
@@ -1109,7 +1109,7 @@ export default function SettingsPage() {
                     ))}
                   </select>
                   <p className="text-xs text-gray-500 mt-2">
-                    This setting is saved on this device (LocalStorage) and determines which outlet's menu and orders are displayed in POS mode.
+                    This setting is saved on this device (LocalStorage) and determines which outlet&apos;s menu and orders are displayed in POS mode.
                   </p>
                 </div>
               </div>
@@ -1118,13 +1118,13 @@ export default function SettingsPage() {
             {/* Operating Hours */}
             {activeSection === 'operations' && (
               <div className="card">
-                 <div className="card-header">
-                   <div className="card-title flex items-center gap-2">
-                     <Clock size={20} />
-                     {t('settings.operatingHours')}
-                   </div>
-                   <div className="card-subtitle">{t('settings.operatingHoursDesc')}</div>
-                 </div>
+                <div className="card-header">
+                  <div className="card-title flex items-center gap-2">
+                    <Clock size={20} />
+                    {t('settings.operatingHours')}
+                  </div>
+                  <div className="card-subtitle">{t('settings.operatingHoursDesc')}</div>
+                </div>
 
                 <table className="table">
                   <thead>
@@ -1181,18 +1181,18 @@ export default function SettingsPage() {
 
             {/* Receipt Settings - Enhanced with ReceiptDesigner */}
             {activeSection === 'receipt' && (
-               <div>
-                 <div className="card mb-6">
-                   <div className="card-header">
-                     <div className="card-title flex items-center gap-2">
-                       <Receipt size={20} />
-                       Receipt Designer
-                     </div>
-                     <div className="card-subtitle">
-                       Customize receipt dengan logo, teks, QR code dan banyak lagi. Preview secara langsung!
-                     </div>
-                   </div>
-                 </div>
+              <div>
+                <div className="card mb-6">
+                  <div className="card-header">
+                    <div className="card-title flex items-center gap-2">
+                      <Receipt size={20} />
+                      Receipt Designer
+                    </div>
+                    <div className="card-subtitle">
+                      Customize receipt dengan logo, teks, QR code dan banyak lagi. Preview secara langsung!
+                    </div>
+                  </div>
+                </div>
 
                 <ReceiptDesigner
                   initialSettings={receiptSettings}
@@ -1207,16 +1207,16 @@ export default function SettingsPage() {
 
             {/* Printer & Hardware Settings */}
             {activeSection === 'printer' && (
-               <div className="card">
-                 <div className="card-header">
-                   <div className="card-title flex items-center gap-2">
-                     <Printer size={20} />
-                     Printer & Cash Drawer
-                   </div>
-                   <div className="card-subtitle">
-                     Sambungkan thermal printer USB dan cash drawer
-                   </div>
-                 </div>
+              <div className="card">
+                <div className="card-header">
+                  <div className="card-title flex items-center gap-2">
+                    <Printer size={20} />
+                    Printer & Cash Drawer
+                  </div>
+                  <div className="card-subtitle">
+                    Sambungkan thermal printer USB dan cash drawer
+                  </div>
+                </div>
 
                 {/* Browser Support Notice */}
                 {!thermalPrinter.isSupported() && (

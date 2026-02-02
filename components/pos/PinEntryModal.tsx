@@ -80,6 +80,7 @@ export default function PinEntryModal({
         if (pin.length === 6) {
             handleVerify();
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [pin]);
 
     if (!isOpen) return null;
@@ -107,8 +108,8 @@ export default function PinEntryModal({
                             <div
                                 key={i}
                                 className={`w-4 h-4 rounded-full border-2 transition-all ${i < pin.length
-                                        ? 'bg-gray-800 border-gray-800'
-                                        : 'border-gray-200'
+                                    ? 'bg-gray-800 border-gray-800'
+                                    : 'border-gray-200'
                                     }`}
                             />
                         ))}

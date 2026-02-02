@@ -171,10 +171,13 @@ export default function LoginPage() {
           </div>
 
           {/* Register Link */}
-          <div className="auth-footer">
-            <p>Belum ada akaun?</p>
-            <Link href="/register" className="register-link">
-              <UserPlus size={20} />
+          <div className="mt-8 text-center">
+            <p className="text-gray-500 text-sm mb-3">Belum ada akaun?</p>
+            <Link
+              href="/register"
+              className="inline-flex items-center px-6 py-2.5 rounded-xl border border-red-200 bg-red-50/50 text-red-700 font-semibold text-sm hover:bg-red-100 hover:border-red-300 transition-all duration-200 hover:-translate-y-0.5"
+            >
+              <UserPlus size={18} className="mr-2" />
               <span>Daftar Sekarang</span>
             </Link>
           </div>
@@ -466,40 +469,7 @@ export default function LoginPage() {
           font-size: 0.85rem;
         }
 
-        .auth-footer {
-          text-align: center;
-        }
 
-        .auth-footer p {
-          color: #666;
-          font-size: 0.875rem;
-          margin: 0 0 0.75rem;
-        }
-
-        .register-link {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          gap: 0.5rem;
-          padding: 0.75rem 1.5rem;
-          background: #f8f9fa;
-          border: 2px solid #e9ecef;
-          color: #333;
-          text-decoration: none;
-          border-radius: 10px;
-          font-weight: 600;
-          transition: all 0.2s;
-        }
-
-        /* Verify user icon alignment */
-        .register-link :global(svg) {
-          transform: translateY(-1px); /* Nudge icon up slightly to fix optical alignment */
-        }
-
-        .register-link:hover {
-          background: #e9ecef;
-          border-color: #dee2e6;
-        }
 
         .copyright {
           text-align: center;

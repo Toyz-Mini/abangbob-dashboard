@@ -649,14 +649,14 @@ export default function ApprovalsPage() {
 
           <div style={{ display: 'flex', background: 'var(--gray-100)', padding: '0.25rem', borderRadius: 'var(--radius-md)' }}>
             <button
-              className={`btn btn-sm ${viewMode === 'pending' ? 'btn-white shadow-sm' : 'btn-ghost'}`}
+              className={`btn ${viewMode === 'pending' ? 'btn-white shadow-sm' : 'btn-ghost'}`}
               onClick={() => setViewMode('pending')}
               style={{ borderRadius: 'var(--radius-sm)' }}
             >
               Menunggu ({totalPending})
             </button>
             <button
-              className={`btn btn-sm ${viewMode === 'history' ? 'btn-white shadow-sm' : 'btn-ghost'}`}
+              className={`btn ${viewMode === 'history' ? 'btn-white shadow-sm' : 'btn-ghost'}`}
               onClick={() => setViewMode('history')}
               style={{ borderRadius: 'var(--radius-sm)' }}
             >

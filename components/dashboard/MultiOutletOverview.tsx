@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { getSupabaseClient } from '@/lib/supabase/client';
 import { BentoGrid, BentoCard } from '@/components/BentoGrid';
 import {
@@ -44,13 +44,7 @@ export default function MultiOutletOverview() {
         activeAlerts: 0
     });
 
-    useEffect(() => {
-        fetchDashboardData();
-        const interval = setInterval(fetchDashboardData, 60000);
-        return () => clearInterval(interval);
-    }, []);
-
-    const fetchDashboardData = async () => {
+    const fetchDashboardData = useCallback(async () => {
         setLoading(true);
         const today = new Date().toISOString().split('T')[0];
 
@@ -126,7 +120,13 @@ export default function MultiOutletOverview() {
             activeAlerts: gAlerts
         });
         setLoading(false);
-    };
+    }, []);
+
+    useEffect(() => {
+        fetchDashboardData();
+        const interval = setInterval(fetchDashboardData, 60000);
+        return () => clearInterval(interval);
+    }, [fetchDashboardData]);
 
     const filteredMetrics = metrics.filter(m =>
         m.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -179,20 +179,19 @@ export default function MultiOutletOverview() {
                     colSpan={2}
                     title="Total Network Revenue"
                     header={<DollarSign size={24} className="text-primary mb-2" />}
-                    children={
-                        <div className="mt-2">
-                            <div className="text-5xl font-black text-gray-900 dark:text-white tracking-tighter">
-                                <CountUp end={globalStats.totalRevenue} prefix="BND " decimals={2} />
-                            </div>
-                            <div className="flex items-center gap-2 mt-2">
-                                <Activity size={14} className="text-green-500" />
-                                <span className="text-sm font-medium text-gray-500">
-                                    <span className="text-gray-900 dark:text-gray-300 font-bold">{globalStats.totalOrders}</span> transactions today
-                                </span>
-                            </div>
+                >
+                    <div className="mt-2">
+                        <div className="text-5xl font-black text-gray-900 dark:text-white tracking-tighter">
+                            <CountUp end={globalStats.totalRevenue} prefix="BND " decimals={2} />
                         </div>
-                    }
-                />
+                        <div className="flex items-center gap-2 mt-2">
+                            <Activity size={14} className="text-green-500" />
+                            <span className="text-sm font-medium text-gray-500">
+                                <span className="text-gray-900 dark:text-gray-300 font-bold">{globalStats.totalOrders}</span> transactions today
+                            </span>
+                        </div>
+                    </div>
+                </BentoCard>
 
                 {/* Alerts & Staff (Stacked) */}
                 <div className="space-y-10 md:col-span-1 flex flex-col h-full">

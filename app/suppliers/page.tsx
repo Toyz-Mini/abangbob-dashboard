@@ -613,21 +613,21 @@ Thank you.`;
         <div style={{ marginBottom: '1.5rem', display: 'flex', gap: '0.5rem', borderBottom: '2px solid var(--gray-200)', paddingBottom: '0.5rem' }}>
           <button
             onClick={() => setViewMode('suppliers')}
-            className={`btn btn-sm ${viewMode === 'suppliers' ? 'btn-primary' : 'btn-outline'}`}
+            className={`btn ${viewMode === 'suppliers' ? 'btn-primary' : 'btn-outline'}`}
           >
             <Boxes size={16} />
             Supplier ({suppliers.length})
           </button>
           <button
             onClick={() => setViewMode('orders')}
-            className={`btn btn-sm ${viewMode === 'orders' ? 'btn-primary' : 'btn-outline'}`}
+            className={`btn ${viewMode === 'orders' ? 'btn-primary' : 'btn-outline'}`}
           >
             <FileText size={16} />
             Purchase Orders ({purchaseOrders.length})
           </button>
           <button
             onClick={() => setViewMode('reorder')}
-            className={`btn btn-sm ${viewMode === 'reorder' ? 'btn-primary' : 'btn-outline'}`}
+            className={`btn ${viewMode === 'reorder' ? 'btn-primary' : 'btn-outline'}`}
           >
             <AlertTriangle size={16} />
             Perlu Reorder ({lowStockItems.length})
@@ -707,25 +707,25 @@ Thank you.`;
 
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
                       <button
-                        className="btn btn-sm btn-outline"
+                        className="btn btn-outline"
                         onClick={() => openCreatePOModal(supplier.id)}
                         style={{ flex: 1 }}
                       >
-                        <ShoppingCart size={14} />
+                        <ShoppingCart size={16} />
                         Order
                       </button>
                       <button
-                        className="btn btn-sm btn-outline"
+                        className="btn btn-outline"
                         onClick={() => openEditSupplierModal(supplier)}
                       >
-                        <Edit2 size={14} />
+                        <Edit2 size={16} />
                       </button>
                       <button
-                        className="btn btn-sm btn-outline"
+                        className="btn btn-outline"
                         onClick={() => openDeleteSupplierModal(supplier)}
                         style={{ color: 'var(--danger)' }}
                       >
-                        <Trash2 size={14} />
+                        <Trash2 size={16} />
                       </button>
                     </div>
                   </div>

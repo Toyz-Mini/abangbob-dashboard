@@ -413,8 +413,8 @@ export default function FinancePage() {
               key={tab.id}
               onClick={() => { setViewMode(tab.id as ViewMode); if (tab.id === 'moneyout') loadPayouts(); }}
               className={`px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 transition-all ${viewMode === tab.id
-                  ? 'bg-gray-900 text-white dark:bg-white dark:text-black shadow-md'
-                  : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-white/10'
+                ? 'bg-gray-900 text-white dark:bg-white dark:text-black shadow-md'
+                : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-white/10'
                 }`}
             >
               <tab.icon size={16} /> {tab.label}
@@ -490,7 +490,7 @@ export default function FinancePage() {
               </BentoCard>
 
               <GlassCard className="bg-gradient-to-br from-gray-900 to-gray-800 text-white p-6">
-                <h3 className="font-bold text-gray-400 text-xs uppercase tracking-widest mb-4">Today's Snapshot</h3>
+                <h3 className="font-bold text-gray-400 text-xs uppercase tracking-widest mb-4">Today&apos;s Snapshot</h3>
                 <div className="flex justify-between items-end mb-2">
                   <span className="text-sm font-medium">Expenses</span>
                   <span className="text-2xl font-bold text-red-400">${todayExpenseTotal.toFixed(2)}</span>

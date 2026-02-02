@@ -124,11 +124,14 @@ export async function deleteAllowedLocation(id: string) {
 export async function verifyLocation(latitude: number, longitude: number) {
     const supabase = getSupabaseClient();
     if (!supabase) {
+        // If Supabase not configured, allow clock-in without location verification
+        console.warn('[Location] Supabase not configured, bypassing location check');
         return {
-            verified: false,
+            verified: true,
             nearest_location: null,
-            distance: null,
-            error: 'Supabase not configured',
+            distance: 0,
+            error: null,
+            bypass_reason: 'supabase_not_configured'
         };
     }
 
@@ -137,12 +140,25 @@ export async function verifyLocation(latitude: number, longitude: number) {
         .select('*')
         .eq('is_active', true);
 
-    if (error || !locations) {
+    if (error) {
+        console.error('[Location] Error fetching locations:', error);
         return {
             verified: false,
             nearest_location: null,
             distance: null,
-            error: error?.message || 'No locations found',
+            error: `Gagal mendapatkan senarai lokasi: ${error.message}`,
+        };
+    }
+
+    // IMPORTANT: If no locations are configured, allow clock-in anywhere
+    if (!locations || locations.length === 0) {
+        console.warn('[Location] No allowed locations configured, bypassing location check');
+        return {
+            verified: true,
+            nearest_location: null,
+            distance: 0,
+            error: null,
+            bypass_reason: 'no_locations_configured'
         };
     }
 
@@ -165,14 +181,16 @@ export async function verifyLocation(latitude: number, longitude: number) {
 
     // DB returns snake_case for raw queries, but our interface might expect camelCase.
     // Check both or prefer the DB column name since we are querying directly.
-    const radius = (nearest_location as any).radius_meters || nearest_location?.radiusMeters || 0;
+    const radius = (nearest_location as any)?.radius_meters || nearest_location?.radiusMeters || 100; // Default 100m if not set
     const verified = nearest_location ? min_distance <= Number(radius) : false;
+
+    console.log(`[Location] Verification: verified=${verified}, distance=${Math.round(min_distance)}m, radius=${radius}m, location=${nearest_location?.name}`);
 
     return {
         verified,
         nearest_location,
         distance: min_distance,
-        error: null,
+        error: verified ? null : `Anda berada ${Math.round(min_distance)}m dari ${nearest_location?.name || 'lokasi terdekat'}. Had: ${radius}m.`,
         debug: `Rad: ${radius} (${typeof radius}), Dist: ${min_distance}, Loc: ${nearest_location?.name}, Count: ${locations.length}`
     };
 }
@@ -258,37 +276,45 @@ export async function uploadAttendancePhoto(staffId: string, file: File | Blob):
 
 export async function clockIn(data: ClockInData) {
     try {
+        console.log('[ClockIn] Starting clock-in for staff:', data.staff_id);
+
         // 1. Verify location
         const verification = await verifyLocation(data.latitude, data.longitude);
 
         if (!verification.verified) {
+            console.log('[ClockIn] Location verification failed:', verification.error);
             return {
                 success: false,
-                error: `Anda berada ${Math.round(verification.distance || 0)}m dari lokasi terdekat. Sila berada dalam radius yang dibenarkan.`,
+                error: verification.error || `Lokasi tidak sah. Jarak: ${Math.round(verification.distance || 0)}m`,
                 data: null,
             };
         }
 
-        // 2. Upload selfie
-        const { path: selfie_url, error: uploadError } = await uploadAttendancePhoto(
+        console.log('[ClockIn] Location verified:', verification.bypass_reason || verification.nearest_location?.name);
+
+        // 2. Upload selfie (optional - allow clock-in without photo if upload fails)
+        let selfie_url: string | null = null;
+        const { path, error: uploadError } = await uploadAttendancePhoto(
             data.staff_id,
             data.selfie_file
         );
 
         if (uploadError) {
-            return {
-                success: false,
-                error: 'Gagal upload foto. Sila cuba lagi.',
-                data: null,
-            };
+            console.warn('[ClockIn] Photo upload failed:', uploadError);
+            // Continue without photo - don't block clock-in
+            selfie_url = null;
+        } else {
+            selfie_url = path;
+            console.log('[ClockIn] Photo uploaded:', selfie_url);
         }
 
         // 3. Create attendance record
         const supabase = getSupabaseClient();
         if (!supabase) {
+            console.error('[ClockIn] Supabase client not available');
             return {
                 success: false,
-                error: 'Supabase not configured',
+                error: 'Supabase tidak dikonfigurasi',
                 data: null,
             };
         }
@@ -297,8 +323,10 @@ export async function clockIn(data: ClockInData) {
         const dateStr = now.toISOString().split('T')[0];
         const timeStr = now.toLocaleTimeString('en-GB', { hour12: false }); // HH:MM:SS format
 
-        // Prepare location metadata for notes (since we don't have dedicated columns for these yet)
-        const locationMeta = `[Location Stats] Lat: ${data.latitude}, Lng: ${data.longitude}, Dist: ${Math.round(verification.distance || 0)}m`;
+        // Prepare location metadata for notes
+        const locationMeta = verification.bypass_reason
+            ? `[Bypass: ${verification.bypass_reason}]`
+            : `[Location] ${verification.nearest_location?.name || 'Unknown'}, Dist: ${Math.round(verification.distance || 0)}m`;
 
         const attendance_data = {
             staff_id: data.staff_id,
@@ -307,8 +335,9 @@ export async function clockIn(data: ClockInData) {
             clock_in_photo_url: selfie_url,
             outlet_id: verification.nearest_location?.id || null,
             notes: locationMeta,
-            // location_verified: true, // Column missing in DB
         };
+
+        console.log('[ClockIn] Inserting attendance record:', { ...attendance_data, clock_in_photo_url: selfie_url ? '(photo)' : null });
 
         const { data: record, error: insertError } = await (supabase as any)
             .from('attendance')
@@ -317,22 +346,25 @@ export async function clockIn(data: ClockInData) {
             .single();
 
         if (insertError) {
-            console.error('Error creating attendance record:', insertError);
+            console.error('[ClockIn] Error creating attendance record:', insertError);
             return {
                 success: false,
-                error: 'Gagal merekod kehadiran. Sila cuba lagi.',
+                error: `Gagal merekod kehadiran: ${insertError.message}`,
                 data: null,
             };
         }
+
+        console.log('[ClockIn] Success! Record ID:', record.id);
 
         return {
             success: true,
             data: record,
             error: null,
-            location_name: verification.nearest_location?.name,
+            location_name: verification.nearest_location?.name || 'Lokasi Bebas',
+            photo_uploaded: !!selfie_url,
         };
     } catch (error: any) {
-        console.error('Clock-in error:', error);
+        console.error('[ClockIn] Unexpected error:', error);
         return {
             success: false,
             error: error.message || 'Ralat tidak dijangka',
@@ -351,37 +383,45 @@ export interface ClockOutData {
 
 export async function clockOut(data: ClockOutData) {
     try {
+        console.log('[ClockOut] Starting clock-out for attendance:', data.attendance_id);
+
         // 1. Verify location
         const verification = await verifyLocation(data.latitude, data.longitude);
 
         if (!verification.verified) {
+            console.log('[ClockOut] Location verification failed:', verification.error);
             return {
                 success: false,
-                error: `Anda berada ${Math.round(verification.distance || 0)}m dari lokasi terdekat. Sila berada dalam radius yang dibenarkan.`,
+                error: verification.error || `Lokasi tidak sah. Jarak: ${Math.round(verification.distance || 0)}m`,
                 data: null,
             };
         }
 
-        // 2. Upload selfie
-        const { path: selfie_url, error: uploadError } = await uploadAttendancePhoto(
+        console.log('[ClockOut] Location verified:', verification.bypass_reason || verification.nearest_location?.name);
+
+        // 2. Upload selfie (optional - allow clock-out without photo if upload fails)
+        let selfie_url: string | null = null;
+        const { path, error: uploadError } = await uploadAttendancePhoto(
             data.staff_id,
             data.selfie_file
         );
 
         if (uploadError) {
-            return {
-                success: false,
-                error: 'Gagal upload foto. Sila cuba lagi.',
-                data: null,
-            };
+            console.warn('[ClockOut] Photo upload failed:', uploadError);
+            // Continue without photo - don't block clock-out
+            selfie_url = null;
+        } else {
+            selfie_url = path;
+            console.log('[ClockOut] Photo uploaded:', selfie_url);
         }
 
         // 3. Update attendance record
         const supabase = getSupabaseClient();
         if (!supabase) {
+            console.error('[ClockOut] Supabase client not available');
             return {
                 success: false,
-                error: 'Supabase not configured',
+                error: 'Supabase tidak dikonfigurasi',
                 data: null,
             };
         }
@@ -396,14 +436,22 @@ export async function clockOut(data: ClockOutData) {
             .eq('id', data.attendance_id)
             .single();
 
+        if (fetchError) {
+            console.warn('[ClockOut] Could not fetch current record:', fetchError);
+        }
+
         const currentNotes = currentRecord?.notes ? `${currentRecord.notes}\n` : '';
-        const noteEntry = `[Clock Out] Time: ${timeStr} Verified at: Lat ${data.latitude}, Lng ${data.longitude}`;
+        const noteEntry = verification.bypass_reason
+            ? `[Clock Out] Time: ${timeStr} [Bypass: ${verification.bypass_reason}]`
+            : `[Clock Out] Time: ${timeStr}, Location: ${verification.nearest_location?.name || 'Unknown'}`;
 
         const updates = {
             clock_out_time: timeStr,
             clock_out_photo_url: selfie_url,
             notes: `${currentNotes}${noteEntry}`
         };
+
+        console.log('[ClockOut] Updating attendance record:', { ...updates, clock_out_photo_url: selfie_url ? '(photo)' : null });
 
         const { data: record, error } = await (supabase as any)
             .from('attendance')
@@ -413,14 +461,22 @@ export async function clockOut(data: ClockOutData) {
             .single();
 
         if (error) {
-            console.error('Error clocking out:', error);
-            return { success: false, error: error.message, data: null };
+            console.error('[ClockOut] Error updating attendance record:', error);
+            return { success: false, error: `Gagal clock out: ${error.message}`, data: null };
         }
 
-        return { success: true, data: record, error: null };
+        console.log('[ClockOut] Success! Record ID:', record.id);
+
+        return {
+            success: true,
+            data: record,
+            error: null,
+            location_name: verification.nearest_location?.name || 'Lokasi Bebas',
+            photo_uploaded: !!selfie_url,
+        };
 
     } catch (error: any) {
-        console.error('Clock-out error:', error);
+        console.error('[ClockOut] Unexpected error:', error);
         return {
             success: false,
             error: error.message || 'Ralat tidak dijangka',

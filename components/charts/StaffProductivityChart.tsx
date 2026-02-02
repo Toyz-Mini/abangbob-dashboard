@@ -28,12 +28,12 @@ export default function StaffProductivityChart({ data, period = 'bulan ini' }: S
       const maxHours = Math.max(...data.map(s => s.hoursWorked), 1);
       const maxOrders = Math.max(...data.map(s => s.ordersProcessed), 1);
       const minTime = Math.min(...data.map(s => s.avgOrderTime), 1);
-      
+
       const hoursScore = (staff.hoursWorked / maxHours) * 30;
       const ordersScore = (staff.ordersProcessed / maxOrders) * 30;
       const timeScore = staff.avgOrderTime > 0 ? (minTime / staff.avgOrderTime) * 20 : 0;
       const ratingScore = (staff.rating / 5) * 20;
-      
+
       const totalScore = hoursScore + ordersScore + timeScore + ratingScore;
 
       return {
@@ -44,8 +44,8 @@ export default function StaffProductivityChart({ data, period = 'bulan ini' }: S
 
     const sorted = scored.sort((a, b) => b.score - a.score);
     const top = sorted[0] || null;
-    const avgEff = data.length > 0 
-      ? data.reduce((sum, s) => sum + s.efficiency, 0) / data.length 
+    const avgEff = data.length > 0
+      ? data.reduce((sum, s) => sum + s.efficiency, 0) / data.length
       : 0;
 
     return { rankedStaff: sorted, topPerformer: top, avgEfficiency: avgEff };
@@ -99,15 +99,15 @@ export default function StaffProductivityChart({ data, period = 'bulan ini' }: S
           const isTop3 = idx < 3;
 
           return (
-            <div 
-              key={staff.id} 
+            <div
+              key={`${staff.id}-${idx}`}
               className={`staff-rank-item ${isTop3 ? 'top-3' : ''}`}
             >
               <div className="rank-number" style={{
                 background: idx === 0 ? 'linear-gradient(135deg, #fbbf24, #f59e0b)' :
-                           idx === 1 ? 'linear-gradient(135deg, #94a3b8, #64748b)' :
-                           idx === 2 ? 'linear-gradient(135deg, #d97706, #b45309)' :
-                           'var(--gray-200)'
+                  idx === 1 ? 'linear-gradient(135deg, #94a3b8, #64748b)' :
+                    idx === 2 ? 'linear-gradient(135deg, #d97706, #b45309)' :
+                      'var(--gray-200)'
               }}>
                 {idx + 1}
               </div>
@@ -129,14 +129,14 @@ export default function StaffProductivityChart({ data, period = 'bulan ini' }: S
                 </div>
               </div>
               <div className="score-bar">
-                <div 
+                <div
                   className="score-bar-fill"
-                  style={{ 
+                  style={{
                     width: `${scoreWidth}%`,
                     background: idx === 0 ? 'linear-gradient(90deg, #fbbf24, #f59e0b)' :
-                               idx === 1 ? 'linear-gradient(90deg, #94a3b8, #64748b)' :
-                               idx === 2 ? 'linear-gradient(90deg, #d97706, #b45309)' :
-                               'var(--primary)',
+                      idx === 1 ? 'linear-gradient(90deg, #94a3b8, #64748b)' :
+                        idx === 2 ? 'linear-gradient(90deg, #d97706, #b45309)' :
+                          'var(--primary)',
                   }}
                 />
               </div>
@@ -150,9 +150,9 @@ export default function StaffProductivityChart({ data, period = 'bulan ini' }: S
       <div className="productivity-summary">
         <div className="summary-stat">
           <span className="label">Purata Efisiensi</span>
-          <span className="value" style={{ 
-            color: avgEfficiency >= 80 ? 'var(--success)' : 
-                   avgEfficiency >= 60 ? 'var(--warning)' : 'var(--danger)'
+          <span className="value" style={{
+            color: avgEfficiency >= 80 ? 'var(--success)' :
+              avgEfficiency >= 60 ? 'var(--warning)' : 'var(--danger)'
           }}>
             {avgEfficiency.toFixed(1)}%
           </span>
