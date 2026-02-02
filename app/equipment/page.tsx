@@ -58,7 +58,7 @@ export default function EquipmentPage() {
 
   // Forms
   const [assetForm, setAssetForm] = useState<Partial<Equipment>>({
-    name: '', type: 'fryer', location: '', status: 'active'
+    name: '', type: 'fryer', location: '', status: 'good'
   });
   const [oilActionForm, setOilActionForm] = useState({
     topupPercentage: 20
