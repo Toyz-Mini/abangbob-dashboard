@@ -35,6 +35,7 @@ import {
   Wrench,
   RefreshCw,
   MessageCircle,
+  Phone,
   type LucideIcon
 } from 'lucide-react';
 import Image from 'next/image';
@@ -119,7 +120,7 @@ const navGroupsConfig: NavGroup[] = [
       { href: '/audit-log', labelKey: 'nav.auditLog', icon: FileText },
       { href: '/notifications', labelKey: 'nav.notifications', icon: Bell },
       { href: '/settings', labelKey: 'nav.settings', icon: Settings, tourId: 'settings' },
-      { href: '/admin/whatsapp-config', labelKey: 'WhatsApp Gateway', icon: Smartphone },
+      { href: '/admin/whatsapp-config', labelKey: 'WhatsApp Gateway', icon: Phone },
     ]
   },
   {
