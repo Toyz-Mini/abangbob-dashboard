@@ -8,25 +8,25 @@ import { useOilTrackersRealtime } from '@/lib/supabase/realtime-hooks';
 import { OilTracker, OilChangeRequest, OilActionHistory, OilActionType, Equipment, MaintenanceLog } from '@/lib/types';
 import NextImage from 'next/image';
 import {
-import {
-    Plus,
-    Wrench,
-    AlertTriangle,
-    Camera,
-    Check,
-    X,
-    Edit2,
-    Trash2,
-    Droplets,
-    History,
-    Clock,
-    Image as ImageIcon,
-    LayoutGrid,
-    Calendar as CalendarIcon,
-    Server,
-    Thermometer,
-    ClipboardCheck
-  } from 'lucide-react';
+
+  Plus,
+  Wrench,
+  AlertTriangle,
+  Camera,
+  Check,
+  X,
+  Edit2,
+  Trash2,
+  Droplets,
+  History,
+  Clock,
+  Image as ImageIcon,
+  LayoutGrid,
+  Calendar as CalendarIcon,
+  Server,
+  Thermometer,
+  ClipboardCheck
+} from 'lucide-react';
 // ... imports
 
 // ... existing code ...
