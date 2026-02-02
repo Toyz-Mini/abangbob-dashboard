@@ -120,13 +120,14 @@ export default function EquipmentPage() {
 
   const handleSubmitOilRequest = async () => {
     if (selectedAsset) {
-      await submitOilRequest({
-        fryerId: selectedAsset.id,
+      await submitOilRequest(
+        selectedAsset.id,
         actionType,
-        photoProof: capturedPhoto,
-        requestedBy: currentUserName,
-        topupAmount: actionType === 'topup' ? oilActionForm.topupPercentage : undefined
-      });
+        capturedPhoto,
+        user?.id || '',
+        currentUserName,
+        actionType === 'topup' ? oilActionForm.topupPercentage : undefined
+      );
     }
     setShowOilActionModal(false);
   };
