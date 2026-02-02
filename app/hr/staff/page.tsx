@@ -118,6 +118,9 @@ export default function StaffListPage() {
   // Edit form state
   const [editForm, setEditForm] = useState<Partial<StaffProfile>>({});
 
+  const activeStaff = staff.filter(s => s.status === 'active');
+  const onLeaveStaff = staff.filter(s => s.status === 'on-leave');
+
   const filteredStaff = staff.filter(s => {
     const matchesFilter = filter === 'all' || s.status === filter;
     const matchesSearch = s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
