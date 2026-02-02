@@ -63,7 +63,7 @@ export default function PromotionsPage() {
   const [modalType, setModalType] = useState<ModalType>(null);
   const [selectedPromo, setSelectedPromo] = useState<Promotion | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive' | 'expired'>('all');
+  const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive' | 'expired' | 'scheduled'>('all');
 
   // Form state
   const [formData, setFormData] = useState(() => ({
@@ -109,6 +109,9 @@ export default function PromotionsPage() {
       if (filterStatus === 'all') return true;
       if (filterStatus === 'expired') {
         return new Date(p.endDate) < new Date();
+      }
+      if (filterStatus === 'scheduled') {
+        return new Date(p.startDate) > new Date();
       }
       return p.status === filterStatus;
     });
