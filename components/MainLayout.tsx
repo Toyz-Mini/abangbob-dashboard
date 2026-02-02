@@ -33,7 +33,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Menu,
-  Store
+  Store,
+  Smartphone
 } from 'lucide-react';
 
 import { usePathname } from 'next/navigation';
@@ -258,6 +259,7 @@ export default function MainLayout({ children }: { children: ReactNode }) {
     { href: '/audit-log', label: 'Audit', icon: FileText, color: 'var(--text-secondary)' },
     { href: '/notifications', label: 'Notifikasi', icon: Bell, color: 'var(--warning)' },
     { href: '/settings', label: 'Tetapan', icon: Settings, color: 'var(--text-secondary)' },
+    { href: '/admin/whatsapp-config', label: 'WhatsApp', icon: Smartphone, color: 'var(--success)' },
     { href: '/help', label: 'Bantuan', icon: HelpCircle, color: 'var(--info)' },
   ] : [
     { href: '/staff-portal', label: 'Portal', icon: LayoutDashboard, color: 'var(--primary)' },
@@ -344,15 +346,12 @@ export default function MainLayout({ children }: { children: ReactNode }) {
         {shouldShowTopNav && <TopNav onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)} />}
         <main
           id="main-content"
-          className={`main-content page-enter ${shouldShowSidebar && isSidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}
+          className={`flex-1 transition-all duration-300 ease-in-out min-h-screen p-6 ${shouldShowSidebar
+            ? (isSidebarOpen ? 'ml-[280px]' : 'ml-[96px]')
+            : 'ml-0 w-full'
+            }`}
           style={{
-            paddingTop: shouldShowTopNav ? undefined : '1rem',
-            // If sidebar is hidden, we might need to reset margin-left logic handled by CSS classes?
-            // "sidebar-closed" usually implies small margin. "sidebar-open" large.
-            // If sidebar is hidden completely (shouldShowSidebar=false), we want full width.
-            // Classes handle open/closed. We might need a "sidebar-hidden" class or override.
-            marginLeft: shouldShowSidebar ? undefined : 0,
-            width: shouldShowSidebar ? undefined : '100%'
+            paddingTop: shouldShowTopNav ? '90px' : '1rem', // Ensure content clears fixed header
           }}
         >
           <Breadcrumb />
