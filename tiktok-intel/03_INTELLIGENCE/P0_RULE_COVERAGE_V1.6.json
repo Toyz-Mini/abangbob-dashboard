@@ -1,0 +1,390 @@
+{
+  "version": "1.6.0",
+  "launch_scope": "MVP P0",
+  "rules": [
+    {
+      "id": "DATA-001",
+      "required_fields": [
+        "trigger",
+        "evidence",
+        "minimum_sample",
+        "suppression",
+        "severity",
+        "priority",
+        "confidence",
+        "recommendation",
+        "dont_touch",
+        "monitor",
+        "golden_vector_ids"
+      ]
+    },
+    {
+      "id": "DATA-002",
+      "required_fields": [
+        "trigger",
+        "evidence",
+        "minimum_sample",
+        "suppression",
+        "severity",
+        "priority",
+        "confidence",
+        "recommendation",
+        "dont_touch",
+        "monitor",
+        "golden_vector_ids"
+      ]
+    },
+    {
+      "id": "TRAFFIC-001",
+      "required_fields": [
+        "trigger",
+        "evidence",
+        "minimum_sample",
+        "suppression",
+        "severity",
+        "priority",
+        "confidence",
+        "recommendation",
+        "dont_touch",
+        "monitor",
+        "golden_vector_ids"
+      ]
+    },
+    {
+      "id": "TRAFFIC-002",
+      "required_fields": [
+        "trigger",
+        "evidence",
+        "minimum_sample",
+        "suppression",
+        "severity",
+        "priority",
+        "confidence",
+        "recommendation",
+        "dont_touch",
+        "monitor",
+        "golden_vector_ids"
+      ]
+    },
+    {
+      "id": "ATC-001",
+      "required_fields": [
+        "trigger",
+        "evidence",
+        "minimum_sample",
+        "suppression",
+        "severity",
+        "priority",
+        "confidence",
+        "recommendation",
+        "dont_touch",
+        "monitor",
+        "golden_vector_ids"
+      ]
+    },
+    {
+      "id": "CONV-001",
+      "required_fields": [
+        "trigger",
+        "evidence",
+        "minimum_sample",
+        "suppression",
+        "severity",
+        "priority",
+        "confidence",
+        "recommendation",
+        "dont_touch",
+        "monitor",
+        "golden_vector_ids"
+      ]
+    },
+    {
+      "id": "CONV-002",
+      "required_fields": [
+        "trigger",
+        "evidence",
+        "minimum_sample",
+        "suppression",
+        "severity",
+        "priority",
+        "confidence",
+        "recommendation",
+        "dont_touch",
+        "monitor",
+        "golden_vector_ids"
+      ]
+    },
+    {
+      "id": "AOV-001",
+      "required_fields": [
+        "trigger",
+        "evidence",
+        "minimum_sample",
+        "suppression",
+        "severity",
+        "priority",
+        "confidence",
+        "recommendation",
+        "dont_touch",
+        "monitor",
+        "golden_vector_ids"
+      ]
+    },
+    {
+      "id": "ADS-001",
+      "required_fields": [
+        "trigger",
+        "evidence",
+        "minimum_sample",
+        "suppression",
+        "severity",
+        "priority",
+        "confidence",
+        "recommendation",
+        "dont_touch",
+        "monitor",
+        "golden_vector_ids"
+      ]
+    },
+    {
+      "id": "ADS-002",
+      "required_fields": [
+        "trigger",
+        "evidence",
+        "minimum_sample",
+        "suppression",
+        "severity",
+        "priority",
+        "confidence",
+        "recommendation",
+        "dont_touch",
+        "monitor",
+        "golden_vector_ids"
+      ]
+    },
+    {
+      "id": "GMVMAX-001",
+      "required_fields": [
+        "trigger",
+        "evidence",
+        "minimum_sample",
+        "suppression",
+        "severity",
+        "priority",
+        "confidence",
+        "recommendation",
+        "dont_touch",
+        "monitor",
+        "golden_vector_ids"
+      ]
+    },
+    {
+      "id": "GMVMAX-002",
+      "required_fields": [
+        "trigger",
+        "evidence",
+        "minimum_sample",
+        "suppression",
+        "severity",
+        "priority",
+        "confidence",
+        "recommendation",
+        "dont_touch",
+        "monitor",
+        "golden_vector_ids"
+      ]
+    },
+    {
+      "id": "GMVMAX-003",
+      "required_fields": [
+        "trigger",
+        "evidence",
+        "minimum_sample",
+        "suppression",
+        "severity",
+        "priority",
+        "confidence",
+        "recommendation",
+        "dont_touch",
+        "monitor",
+        "golden_vector_ids"
+      ]
+    },
+    {
+      "id": "PROD-001",
+      "required_fields": [
+        "trigger",
+        "evidence",
+        "minimum_sample",
+        "suppression",
+        "severity",
+        "priority",
+        "confidence",
+        "recommendation",
+        "dont_touch",
+        "monitor",
+        "golden_vector_ids"
+      ]
+    },
+    {
+      "id": "PROD-002",
+      "required_fields": [
+        "trigger",
+        "evidence",
+        "minimum_sample",
+        "suppression",
+        "severity",
+        "priority",
+        "confidence",
+        "recommendation",
+        "dont_touch",
+        "monitor",
+        "golden_vector_ids"
+      ]
+    },
+    {
+      "id": "PROD-003",
+      "required_fields": [
+        "trigger",
+        "evidence",
+        "minimum_sample",
+        "suppression",
+        "severity",
+        "priority",
+        "confidence",
+        "recommendation",
+        "dont_touch",
+        "monitor",
+        "golden_vector_ids"
+      ]
+    },
+    {
+      "id": "LIVE-001",
+      "required_fields": [
+        "trigger",
+        "evidence",
+        "minimum_sample",
+        "suppression",
+        "severity",
+        "priority",
+        "confidence",
+        "recommendation",
+        "dont_touch",
+        "monitor",
+        "golden_vector_ids"
+      ]
+    },
+    {
+      "id": "LIVE-002",
+      "required_fields": [
+        "trigger",
+        "evidence",
+        "minimum_sample",
+        "suppression",
+        "severity",
+        "priority",
+        "confidence",
+        "recommendation",
+        "dont_touch",
+        "monitor",
+        "golden_vector_ids"
+      ]
+    },
+    {
+      "id": "AFF-001",
+      "required_fields": [
+        "trigger",
+        "evidence",
+        "minimum_sample",
+        "suppression",
+        "severity",
+        "priority",
+        "confidence",
+        "recommendation",
+        "dont_touch",
+        "monitor",
+        "golden_vector_ids"
+      ]
+    },
+    {
+      "id": "AFF-002",
+      "required_fields": [
+        "trigger",
+        "evidence",
+        "minimum_sample",
+        "suppression",
+        "severity",
+        "priority",
+        "confidence",
+        "recommendation",
+        "dont_touch",
+        "monitor",
+        "golden_vector_ids"
+      ]
+    },
+    {
+      "id": "CONTENT-001",
+      "required_fields": [
+        "trigger",
+        "evidence",
+        "minimum_sample",
+        "suppression",
+        "severity",
+        "priority",
+        "confidence",
+        "recommendation",
+        "dont_touch",
+        "monitor",
+        "golden_vector_ids"
+      ]
+    },
+    {
+      "id": "CONTENT-002",
+      "required_fields": [
+        "trigger",
+        "evidence",
+        "minimum_sample",
+        "suppression",
+        "severity",
+        "priority",
+        "confidence",
+        "recommendation",
+        "dont_touch",
+        "monitor",
+        "golden_vector_ids"
+      ]
+    },
+    {
+      "id": "ANOM-001",
+      "required_fields": [
+        "trigger",
+        "evidence",
+        "minimum_sample",
+        "suppression",
+        "severity",
+        "priority",
+        "confidence",
+        "recommendation",
+        "dont_touch",
+        "monitor",
+        "golden_vector_ids"
+      ]
+    },
+    {
+      "id": "ANOM-002",
+      "required_fields": [
+        "trigger",
+        "evidence",
+        "minimum_sample",
+        "suppression",
+        "severity",
+        "priority",
+        "confidence",
+        "recommendation",
+        "dont_touch",
+        "monitor",
+        "golden_vector_ids"
+      ]
+    }
+  ]
+}

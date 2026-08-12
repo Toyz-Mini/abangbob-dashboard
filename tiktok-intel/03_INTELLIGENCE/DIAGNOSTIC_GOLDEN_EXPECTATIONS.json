@@ -1,0 +1,30 @@
+{
+  "version": "1.0",
+  "vectors": [
+    {
+      "id": "CONV-001-positive-001",
+      "rule": "CONV-001",
+      "expected": {
+        "triggered": true,
+        "severity": "HIGH",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "CONV-001-suppressed-stockout-001",
+      "rule": "CONV-001",
+      "expected": {
+        "triggered": false,
+        "suppressed": true,
+        "suppression_reason": "STOCKOUT_CONFOUNDER"
+      }
+    },
+    {
+      "id": "DATA-001-missing-funnel-001",
+      "rule": "DATA-001",
+      "expected": {
+        "status": "INSUFFICIENT_EVIDENCE"
+      }
+    }
+  ]
+}

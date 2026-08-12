@@ -1,0 +1,127 @@
+{
+  "version": "1.4.0",
+  "threshold_policy": "Initial production defaults; every threshold is configurable only through versioned rule changes and golden regression tests.",
+  "rules": [
+    {
+      "id": "DATA-001",
+      "name": "Insufficient Funnel Data",
+      "trigger": "Required funnel metric missing for the requested analysis",
+      "suppression": [],
+      "severity": "HIGH"
+    },
+    {
+      "id": "DATA-002",
+      "name": "Low Sample Warning",
+      "trigger": "Orders < 10 OR product_views < 100 for a conversion/product diagnosis",
+      "suppression": [],
+      "severity": "MEDIUM"
+    },
+    {
+      "id": "TRAFFIC-001",
+      "name": "Traffic Decline",
+      "trigger": "traffic_change_pct <= -15% AND current_traffic >= 100",
+      "suppression": [],
+      "severity": "HIGH"
+    },
+    {
+      "id": "TRAFFIC-002",
+      "name": "Traffic Growth Without GMV Response",
+      "trigger": "traffic_change_pct >= 20% AND gmv_change_pct <= 5% AND current_traffic >= 100",
+      "suppression": [
+        "DATA-INVALID"
+      ],
+      "severity": "HIGH"
+    },
+    {
+      "id": "ATC-001",
+      "name": "ATC Rate Decline",
+      "trigger": "atc_rate_change_pct <= -15% AND product_views >= 100",
+      "suppression": [
+        "STOCKOUT_CONFOUNDER"
+      ],
+      "severity": "HIGH"
+    },
+    {
+      "id": "CONV-001",
+      "name": "Conversion Bottleneck",
+      "trigger": "cvr_change_pct <= -15% AND orders >= 10 AND comparison_valid=true",
+      "suppression": [
+        "STOCKOUT_CONFOUNDER",
+        "DATA-INVALID"
+      ],
+      "severity": "HIGH"
+    },
+    {
+      "id": "CONV-002",
+      "name": "High Traffic Low Conversion",
+      "trigger": "traffic_change_pct >= 15% AND cvr_change_pct <= -20% AND orders >= 10",
+      "suppression": [
+        "DATA-INVALID"
+      ],
+      "severity": "HIGH"
+    },
+    {
+      "id": "AOV-001",
+      "name": "AOV Decline",
+      "trigger": "aov_change_pct <= -15% AND orders >= 10",
+      "suppression": [
+        "DATA-INVALID"
+      ],
+      "severity": "MEDIUM"
+    },
+    {
+      "id": "ADS-001",
+      "name": "Efficiency Decline",
+      "trigger": "ad_roi_change_pct <= -20% AND spend_change_pct >= 10% AND spend_current >= 100",
+      "suppression": [
+        "ATTRIBUTION-INCOMPATIBLE"
+      ],
+      "severity": "HIGH"
+    },
+    {
+      "id": "ADS-002",
+      "name": "Spend Growth Without Revenue Response",
+      "trigger": "spend_change_pct >= 20% AND paid_gmv_change_pct <= 5% AND spend_current >= 100",
+      "suppression": [
+        "ATTRIBUTION-INCOMPATIBLE"
+      ],
+      "severity": "HIGH"
+    },
+    {
+      "id": "GMVMAX-001",
+      "name": "GMV Max ROI Decline With Gross Revenue Growth",
+      "trigger": "gmvmax_roi_change_pct <= -20% AND gross_revenue_change_pct >= 10%",
+      "suppression": [
+        "ATTRIBUTION-INCOMPATIBLE"
+      ],
+      "severity": "MEDIUM"
+    },
+    {
+      "id": "PROD-001",
+      "name": "High Traffic Low CVR Product",
+      "trigger": "product_views >= 100 AND product_cvr_change_pct <= -20%",
+      "suppression": [
+        "STOCKOUT_CONFOUNDER"
+      ],
+      "severity": "HIGH"
+    },
+    {
+      "id": "PROD-002",
+      "name": "High CVR Low Traffic Opportunity",
+      "trigger": "product_cvr_change_pct >= 15% AND product_views_change_pct <= -20% AND product_views >= 100",
+      "suppression": [
+        "DATA-INVALID"
+      ],
+      "severity": "MEDIUM"
+    },
+    {
+      "id": "ANOM-001",
+      "name": "GMV Anomaly",
+      "trigger": "abs(gmv_z_score) >= 3 AND historical_observations >= 14",
+      "suppression": [
+        "DATA-INVALID"
+      ],
+      "severity": "HIGH"
+    }
+  ]
+}

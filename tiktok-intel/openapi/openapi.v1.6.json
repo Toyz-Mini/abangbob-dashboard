@@ -1,0 +1,839 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "TikTok Shop Intelligence API",
+    "version": "1.6.0"
+  },
+  "servers": [
+    {
+      "url": "/api/v1"
+    }
+  ],
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "paths": {
+    "/shops": {
+      "post": {
+        "operationId": "createShop",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateShopRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShopResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ]
+      },
+      "get": {
+        "operationId": "listShops",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Cursor"
+          },
+          {
+            "$ref": "#/components/parameters/PageSize"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated shops",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShopListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/imports": {
+      "post": {
+        "operationId": "createImport",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateImportRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "413": {
+            "$ref": "#/components/responses/PayloadTooLarge"
+          },
+          "415": {
+            "$ref": "#/components/responses/UnsupportedMediaType"
+          }
+        }
+      }
+    },
+    "/imports/{importId}": {
+      "get": {
+        "operationId": "getImport",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ImportId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Import",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/imports/{importId}/validate": {
+      "post": {
+        "operationId": "validateImport",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ImportId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Validation queued",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          }
+        }
+      }
+    },
+    "/imports/{importId}/confirm": {
+      "post": {
+        "operationId": "confirmImport",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ImportId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Import confirmation queued",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          }
+        }
+      }
+    },
+    "/analyses": {
+      "post": {
+        "operationId": "createAnalysis",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAnalysisRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Analysis queued",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          }
+        }
+      }
+    },
+    "/analyses/{analysisId}": {
+      "get": {
+        "operationId": "getAnalysis",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AnalysisId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Analysis",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnalysisResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/analyses/{analysisId}/explanation": {
+      "post": {
+        "operationId": "generateExplanation",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AnalysisId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Explanation queued",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          }
+        }
+      }
+    },
+    "/experiments": {
+      "post": {
+        "operationId": "createExperiment",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateExperimentRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created"
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          }
+        }
+      }
+    },
+    "/imports/upload-url": {
+      "post": {
+        "operationId": "createUploadUrl",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateUploadUrlRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Upload target created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UploadUrlResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "413": {
+            "$ref": "#/components/responses/PayloadTooLarge"
+          },
+          "415": {
+            "$ref": "#/components/responses/UnsupportedMediaType"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "parameters": {
+      "IdempotencyKey": {
+        "name": "Idempotency-Key",
+        "in": "header",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "minLength": 16,
+          "maxLength": 128
+        }
+      },
+      "ImportId": {
+        "name": "importId",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        }
+      },
+      "AnalysisId": {
+        "name": "analysisId",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        }
+      },
+      "Cursor": {
+        "name": "cursor",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "maxLength": 2048
+        }
+      },
+      "PageSize": {
+        "name": "page_size",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 200,
+          "default": 50
+        }
+      }
+    },
+    "responses": {
+      "ValidationError": {
+        "description": "Validation error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      },
+      "Unauthorized": {
+        "description": "Authentication required",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      },
+      "Forbidden": {
+        "description": "Not authorized",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "Resource not found",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      },
+      "Conflict": {
+        "description": "State or idempotency conflict",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      },
+      "PayloadTooLarge": {
+        "description": "Payload too large",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      },
+      "UnsupportedMediaType": {
+        "description": "Unsupported media type",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "ErrorResponse": {
+        "type": "object",
+        "required": [
+          "error"
+        ],
+        "properties": {
+          "error": {
+            "type": "object",
+            "required": [
+              "code",
+              "message",
+              "request_id"
+            ],
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "details": {
+                "type": "object"
+              },
+              "request_id": {
+                "type": "string",
+                "format": "uuid"
+              }
+            }
+          }
+        }
+      },
+      "CreateShopRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "currency": {
+            "type": "string",
+            "default": "MYR"
+          },
+          "timezone": {
+            "type": "string",
+            "default": "Asia/Kuala_Lumpur"
+          }
+        }
+      },
+      "ShopResponse": {
+        "type": "object",
+        "required": [
+          "shop"
+        ],
+        "properties": {
+          "shop": {
+            "$ref": "#/components/schemas/Shop"
+          }
+        }
+      },
+      "Shop": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "currency",
+          "timezone"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "timezone": {
+            "type": "string"
+          }
+        }
+      },
+      "CreateImportRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "shop_id",
+          "source_id",
+          "source_schema_version",
+          "storage_key"
+        ],
+        "properties": {
+          "shop_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "source_id": {
+            "type": "string"
+          },
+          "source_schema_version": {
+            "type": "string"
+          },
+          "storage_key": {
+            "type": "string"
+          }
+        }
+      },
+      "JobResponse": {
+        "type": "object",
+        "required": [
+          "job_id",
+          "status"
+        ],
+        "properties": {
+          "job_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string"
+          }
+        }
+      },
+      "ImportResponse": {
+        "type": "object",
+        "required": [
+          "id",
+          "status"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string"
+          },
+          "validation_summary": {
+            "type": "object"
+          }
+        }
+      },
+      "CreateAnalysisRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "shop_id",
+          "period_start",
+          "period_end"
+        ],
+        "properties": {
+          "shop_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "period_start": {
+            "type": "string",
+            "format": "date"
+          },
+          "period_end": {
+            "type": "string",
+            "format": "date"
+          },
+          "comparison": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "PREVIOUS_EQUIVALENT_PERIOD",
+                  "CUSTOM"
+                ]
+              },
+              "start": {
+                "type": "string",
+                "format": "date"
+              },
+              "end": {
+                "type": "string",
+                "format": "date"
+              }
+            }
+          }
+        }
+      },
+      "AnalysisResponse": {
+        "type": "object",
+        "required": [
+          "id",
+          "status"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string"
+          },
+          "decision": {
+            "type": "object"
+          },
+          "snapshot": {
+            "type": "object"
+          }
+        }
+      },
+      "CreateExperimentRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "shop_id",
+          "hypothesis",
+          "control",
+          "variant",
+          "target_metric"
+        ],
+        "properties": {
+          "shop_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "diagnosis_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "hypothesis": {
+            "type": "string"
+          },
+          "control": {
+            "type": "object"
+          },
+          "variant": {
+            "type": "object"
+          },
+          "target_metric": {
+            "type": "string"
+          }
+        }
+      },
+      "CreateUploadUrlRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "shop_id",
+          "filename",
+          "content_type",
+          "size_bytes"
+        ],
+        "properties": {
+          "shop_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "filename": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "content_type": {
+            "type": "string",
+            "enum": [
+              "text/csv",
+              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            ]
+          },
+          "size_bytes": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 52428800
+          }
+        }
+      },
+      "UploadUrlResponse": {
+        "type": "object",
+        "required": [
+          "upload_id",
+          "storage_key",
+          "upload_url",
+          "expires_at"
+        ],
+        "properties": {
+          "upload_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "storage_key": {
+            "type": "string"
+          },
+          "upload_url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ShopListResponse": {
+        "type": "object",
+        "required": [
+          "items",
+          "next_cursor"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Shop"
+            }
+          },
+          "next_cursor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      }
+    }
+  }
+}
