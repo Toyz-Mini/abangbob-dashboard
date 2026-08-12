@@ -1,0 +1,13 @@
+{
+  "fixture_id": "GMVMAX-SYN-001",
+  "type": "SYNTHETIC",
+  "not_real_tiktok_export": true,
+  "required_fields": [
+    "date",
+    "orders_sku",
+    "gross_revenue",
+    "cost",
+    "roi",
+    "cost_per_order"
+  ]
+}

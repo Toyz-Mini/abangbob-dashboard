@@ -1,0 +1,3 @@
+-- Version-controlled DB contract.
+-- Final implementation must be generated from DATABASE_SCHEMA_CONTRACT.sql.
+-- Never edit production schema ad hoc.

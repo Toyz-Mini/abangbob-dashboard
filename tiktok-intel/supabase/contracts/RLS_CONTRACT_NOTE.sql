@@ -1,0 +1,3 @@
+-- RLS contract.
+-- Every tenant-owned table must have policies resolving authorization
+-- through workspace membership. Add automated cross-tenant tests.

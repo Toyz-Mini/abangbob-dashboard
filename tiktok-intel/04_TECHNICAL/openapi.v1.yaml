@@ -1,0 +1,26 @@
+openapi: 3.1.0
+info:
+  title: TikTok Shop Intelligence API
+  version: 1.4.0
+servers:
+  - url: /api/v1
+paths:
+  /shops:
+    post: {"operationId": "createShop", "responses": {"201": {"description": "Created"}, "400": {"$ref": "#/components/responses/ValidationError"}, "401": {"$ref": "#/components/responses/Unauthorized"}, "403": {"$ref": "#/components/responses/Forbidden"}}}
+  /imports:
+    post: {"operationId": "createImport", "parameters": [{"$ref": "#/components/parameters/IdempotencyKey"}], "responses": {"202": {"description": "Accepted"}, "400": {"$ref": "#/components/responses/ValidationError"}, "401": {"$ref": "#/components/responses/Unauthorized"}, "403": {"$ref": "#/components/responses/Forbidden"}, "409": {"$ref": "#/components/responses/Conflict"}}}
+  /imports/{importId}:
+    get: {"operationId": "getImport", "parameters": [{"$ref": "#/components/parameters/ImportId"}], "responses": {"200": {"description": "Import"}, "404": {"$ref": "#/components/responses/NotFound"}}}
+  /imports/{importId}/validate:
+    post: {"operationId": "validateImport", "parameters": [{"$ref": "#/components/parameters/ImportId"}, {"$ref": "#/components/parameters/IdempotencyKey"}], "responses": {"202": {"description": "Validation job accepted"}, "404": {"$ref": "#/components/responses/NotFound"}}}
+  /imports/{importId}/confirm:
+    post: {"operationId": "confirmImport", "parameters": [{"$ref": "#/components/parameters/ImportId"}, {"$ref": "#/components/parameters/IdempotencyKey"}], "responses": {"202": {"description": "Import confirmation accepted"}, "400": {"$ref": "#/components/responses/ValidationError"}, "409": {"$ref": "#/components/responses/Conflict"}}}
+  /analyses:
+    post: {"operationId": "createAnalysis", "parameters": [{"$ref": "#/components/parameters/IdempotencyKey"}], "responses": {"202": {"description": "Analysis job accepted"}, "400": {"$ref": "#/components/responses/ValidationError"}, "409": {"$ref": "#/components/responses/Conflict"}}}
+  /analyses/{analysisId}:
+    get: {"operationId": "getAnalysis", "parameters": [{"$ref": "#/components/parameters/AnalysisId"}], "responses": {"200": {"description": "Analysis"}, "404": {"$ref": "#/components/responses/NotFound"}}}
+  /analyses/{analysisId}/explanation:
+    post: {"operationId": "generateExplanation", "parameters": [{"$ref": "#/components/parameters/AnalysisId"}, {"$ref": "#/components/parameters/IdempotencyKey"}], "responses": {"202": {"description": "Explanation job accepted"}, "409": {"$ref": "#/components/responses/Conflict"}}}
+  /experiments:
+    post: {"operationId": "createExperiment", "parameters": [{"$ref": "#/components/parameters/IdempotencyKey"}], "responses": {"201": {"description": "Created"}, "400": {"$ref": "#/components/responses/ValidationError"}}}
+# Full machine-readable contract is represented by the accompanying API_CONTRACT.md; convert/validate during implementation.

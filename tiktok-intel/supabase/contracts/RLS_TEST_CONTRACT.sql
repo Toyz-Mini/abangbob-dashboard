@@ -1,0 +1,8 @@
+-- V1.6 RLS test contract.
+-- These tests are executed in CI against a disposable Supabase database.
+-- Required assertions:
+-- 1. User A can read only Workspace A.
+-- 2. User A cannot read/update/delete Workspace B.
+-- 3. User A cannot insert a shop into Workspace B.
+-- 4. User without membership cannot read any tenant-owned table.
+-- 5. Server/service-role operations are never exposed to browser clients.

@@ -1,0 +1,37 @@
+name: tiktok-intel
+
+on:
+  push:
+    paths: ['tiktok-intel/**']
+  pull_request:
+    paths: ['tiktok-intel/**']
+
+defaults:
+  run:
+    working-directory: tiktok-intel
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: tiktok-intel/package-lock.json
+
+      - run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      # Golden vectors gate the rule engine. A rule that loses a required
+      # vector category fails here, not in review.
+      - name: Unit, contract and golden tests
+        run: npm test
+
+      - name: Production build
+        run: npm run build
+        env:
+          DEMO_MODE: '1'
